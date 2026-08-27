@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "repository": "FlappiBakuse/NexusPipeline-Plugins",
+  "generatedAt": "2026-08-27T00:00:00Z",
+  "plugins": [
+    {
+      "name": "bettergi",
+      "displayName": "BetterGI",
+      "gameName": "原神",
+      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [],
+      "minHostVersion": "0.10.8",
+      "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/bettergi-0.1.0.zip",
+      "sha256": "b3fd8c447831d82fe6c647ff89de3fae5deae1b405ceec7825b631e0e47b151c",
+      "sizeBytes": 3320
+    },
+    {
+      "name": "maaend",
+      "displayName": "MaaEnd",
+      "gameName": "明日方舟：终末地",
+      "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": ["emulator"],
+      "minHostVersion": "0.10.8",
+      "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/maaend-0.1.0.zip",
+      "sha256": "6f48f5490d4a7de4e3c8e5a723cc67a6b192c6a1fc5fd6c143a6deb23d53e5c8",
+      "sizeBytes": 7203
+    },
+    {
+      "name": "march7th",
+      "displayName": "March7thAssistant",
+      "gameName": "崩坏：星穹铁道",
+      "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [],
+      "minHostVersion": "0.10.8",
+      "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/march7th-0.1.0.zip",
+      "sha256": "20bdfd9af1119b4d8fc3fef0ca402cda6ba7a60080d13b11d7175cb8aa59b809",
+      "sizeBytes": 1342
+    },
+    {
+      "name": "zzzonedragon",
+      "displayName": "ZenlessZoneZeroOneDragon",
+      "gameName": "绝区零",
+      "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [],
+      "minHostVersion": "0.10.8",
+      "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/zzzonedragon-0.1.0.zip",
+      "sha256": "acde076accb47ec4101b5a2947ea0ef7b26f704521a987747961b0e9e0bd6932",
+      "sizeBytes": 1407
+    }
+  ]
+}
