@@ -13,10 +13,10 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 例如：
 
 ```text
-hoyolab-checkin-v0.1.1
+game-checkin-v0.1.2
 ```
 
-该 Release 对应的唯一插件资产为 `hoyolab-checkin-0.1.1.zip`。Release 说明可以记录变更内容，但不得把其他插件的 ZIP 放入同一 Release。仓库历史 `v0.1.0` 组合 Release 保留不变，不迁移、不改写，也不追加资产；后续版本均创建插件独立 tag。
+该 Release 对应的唯一插件资产为 `game-checkin-0.1.2.zip`。Release 说明可以记录变更内容，但不得把其他插件的 ZIP 放入同一 Release。仓库历史 `v0.1.0` 组合 Release 保留不变，不迁移、不改写，也不追加资产；后续版本均创建插件独立 tag。
 
 ## 发布前准备
 
@@ -24,7 +24,7 @@ hoyolab-checkin-v0.1.1
 
 - plugins/<name>/plugin.json 的 name、version、kind 与目标发行版本一致；
 - `data-specialized` 插件的 resolve、judgeScript 和可选模板目录都位于插件目录内；`managed-code` 插件的 entryAssembly、entryType、apiVersion 和依赖输出已验证；
-- 若 manifest 声明 `frontend-module`，Frontend API 必须为宿主支持的 `1.0`，`frontend.entry` 与 `frontend.styles` 必须位于 `web/` 且文件均存在；公开目录不得放置配置、密钥、程序集或调试符号；
+- 若 manifest 声明 `frontend-module`，Frontend API 必须为宿主支持的 `1.1`，`frontend.entry` 与 `frontend.styles` 必须位于 `web/` 且文件均存在；公开目录不得放置配置、密钥、程序集或调试符号；
 - require、主程序路径、配置路径和日志路径已在目标软件目录验证；
 - judge 的输出、超时和配置替换行为已验证；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存和仓库外文件；
@@ -127,6 +127,7 @@ asset:  bettergi-0.1.1.zip
 | packageUrl | 指向该版本 GitHub Release 资产的 URL |
 | sha256 | ZIP 的 64 位小写十六进制 SHA256 |
 | sizeBytes | ZIP 的实际字节数 |
+| replaces | 可选的旧插件机器标识数组；需要改名的插件必须与 manifest 保持一致 |
 
 catalog.plugins[].name、version、kind 与插件包内 manifest 必须一致。catalog 允许宿主提前筛掉版本不兼容或完整性信息不完整的包。
 

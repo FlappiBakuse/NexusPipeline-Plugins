@@ -1,0 +1,29 @@
+.wallpaper-settings-card { display: block; }
+.wallpaper-settings-body { display: grid; gap: var(--space-4); }
+.wallpaper-status-row, .wallpaper-card-footer, .wallpaper-upload-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.wallpaper-status-row { min-width: 0; }
+.wallpaper-status-row > .muted { min-width: 0; }
+.wallpaper-enabled-row { margin: 0; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); }
+.wallpaper-controls, .wallpaper-effects { align-items: end; }
+.wallpaper-mode-field { grid-column: 1 / -1; }
+.wallpaper-range-row { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.wallpaper-range-row input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: var(--accent); }
+.wallpaper-range-row output { flex: 0 0 4ch; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.wallpaper-upload-row { justify-content: flex-start; flex-wrap: wrap; padding-top: var(--space-4); border-top: 1px solid var(--border); }
+.wallpaper-file-label { position: relative; overflow: hidden; display: inline-flex; align-items: center; min-height: var(--control-height); padding: 0 var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text); cursor: pointer; }
+.wallpaper-file-label input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+.wallpaper-list { display: grid; gap: var(--space-2); }
+.wallpaper-item { display: grid; grid-template-columns: 32px 72px minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-2); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-soft); transition: border-color 120ms ease, opacity 120ms ease; }
+.wallpaper-item.is-dragging { opacity: .55; }
+.wallpaper-item.is-drag-over { border-color: var(--accent); }
+.wallpaper-drag-handle { display: inline-flex; align-items: center; justify-content: center; width: 32px; min-height: 40px; padding: 0; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--muted); font-size: 20px; line-height: 1; cursor: grab; user-select: none; }
+.wallpaper-drag-handle:hover, .wallpaper-drag-handle:focus-visible { border-color: var(--border-strong); color: var(--text); }
+.wallpaper-drag-handle:active { cursor: grabbing; }
+.wallpaper-item img { width: 72px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); background: var(--bg-raised); }
+.wallpaper-item-copy { display: grid; min-width: 0; gap: 2px; }
+.wallpaper-item-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wallpaper-item-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-2); }
+.wallpaper-item-actions button { min-height: 32px; padding-inline: 10px; }
+.wallpaper-empty { margin: 0; padding: var(--space-4); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); text-align: center; }
+@media (max-width: 900px) { .wallpaper-controls, .wallpaper-effects { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .wallpaper-controls, .wallpaper-effects { grid-template-columns: minmax(0, 1fr); } .wallpaper-item { grid-template-columns: 32px 64px minmax(0, 1fr); } .wallpaper-item img { width: 64px; } .wallpaper-item-actions { grid-column: 3 / -1; justify-content: flex-start; } .wallpaper-card-footer { align-items: stretch; flex-direction: column; } }

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "game-checkin",
+  "displayName": "游戏自动签到",
+  "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到。",
+  "version": "0.1.2",
+  "kind": "managed-code",
+  "apiVersion": "1.2",
+  "entryAssembly": "NexusPipeline.Plugin.GameCheckIn.dll",
+  "entryType": "NexusPipeline.Plugin.GameCheckIn.EntryPoint",
+  "replaces": [
+    "hoyolab-checkin"
+  ],
+  "capabilities": [
+    "user-global-management",
+    "user-run-events",
+    "user-list-badges"
+  ]
+}

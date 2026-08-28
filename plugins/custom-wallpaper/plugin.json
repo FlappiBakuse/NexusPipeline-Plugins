@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "name": "custom-wallpaper",
+  "displayName": "自定义壁纸",
+  "description": "同步管理 NexusPipeline 的多张自定义壁纸、轮换方式、模糊、变暗和自适应配色。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "apiVersion": "1.3",
+  "entryAssembly": "NexusPipeline.Plugin.CustomWallpaper.dll",
+  "entryType": "NexusPipeline.Plugin.CustomWallpaper.EntryPoint",
+  "capabilities": [
+    "frontend-module"
+  ],
+  "frontend": {
+    "apiVersion": "1.1",
+    "entry": "web/main.js",
+    "styles": [
+      "web/style.css"
+    ]
+  }
+}

@@ -1,10 +1,10 @@
-# Frontend API 1.0 插件指南
+# Frontend API 1.1 插件指南
 
 NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在用户确认信任后加载同源 JavaScript/CSS，增加页面、导航、路由、主题和壁纸能力。
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示或插件 Web API 的插件使用宿主 Plugin API v1.3。现有 `hoyolab-checkin` v0.1.1 保持 Plugin API v1.2 和原 manifest，不需要为了宿主 v0.11.2 改写。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示或插件 Web API 的插件使用宿主 Plugin API v1.3。前端 API 1.1 增加 `settings.cards` slot 和服务端同步外观访问。
 
 ## 目录与 manifest
 
@@ -37,7 +37,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
   "frontend": {
-    "apiVersion": "1.0",
+    "apiVersion": "1.1",
     "entry": "web/main.js",
     "styles": ["web/style.css"]
   }
@@ -95,7 +95,8 @@ scripts.editor.sections         queues.list.badges
 queues.editor.sections          dispatch.cards
 dispatch.running.badges         dispatch.run.sections
 history.list.badges             history.detail.sections
-settings.sections               shell.nav
+settings.sections               settings.cards
+shell.nav
 ```
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
@@ -119,6 +120,10 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 插件 Web API 的最终路径为 `/api/plugin-api/<plugin>/<route>`。每次调用最多执行 30 秒，JSON 响应上限为 2 MiB；插件异常使用 `code: "plugin_error"` 返回。UI 处理器和历史处理器也有独立超时，超限内容会被宿主丢弃。
 
+`host.appearance.wallpaperStore` 提供 `get()`、`upload(blob, metadata)`、`remove(id)`、`save(config)`、`savePalette(id, tokens)`、`startup()`、`refresh()` 和 `subscribe(callback)`。服务端保存壁纸文件、显示顺序、当前资源、轮换模式、模糊和变暗参数；所有浏览器通过 revision 同步。`startup()` 只用于启动 Web 时推进一次 `startup` 轮换游标。
+
+宿主限制每张壁纸 20 MiB、总容量 128 MiB、最多 20 张，允许 JPEG、PNG、WebP，并校验 MIME、文件头和 SHA256。自定义壁纸启用后仍可使用宿主内置主题选择；配色应使用 `host.appearance.derivePalette(blob)` 生成完整实色 token，再调用 `savePalette` 保存。
+
 ## 信任与运行条件
 
 `frontend-module` 表示插件请求前端能力，不能替代用户确认。插件需要同时满足以下条件，入口才会出现在 `GET /api/plugin-runtime/frontend`：
@@ -135,14 +140,14 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 - 资源只从 `/plugin-assets/<plugin>/web/...` 读取，支持 GET/HEAD；宿主拒绝路径越界、目录浏览和非白名单扩展名；
 - `plugin.json`、配置、密钥、DLL、PDB、日志和用户数据不属于前端公开资源；
 - 插件前端不应把 Token、Cookie、密码或用户配置写入 localStorage、IndexedDB、URL、日志或 DOM；
-- 主题 token 名称和值会经过宿主前端校验；壁纸 Blob 使用 IndexedDB，外观元数据使用 localStorage；
+- 主题 token 名称和值会经过宿主前端校验；服务端壁纸资产使用 `user-assets/appearance/wallpapers/`，外观配置使用 `config/appearance.json`，轮换运行状态使用 `.nxp/state/appearance-runtime.json`；浏览器仅保留当前显示 Blob 的短期缓存；
 - 业务数据优先通过插件 Web API 和声明式 UI DTO 传递，界面展示使用 `textContent` 或 DOM API 写入文本。
 
 ## 发布前检查
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与 `IPluginHostContextV1_3` 使用情况一致，旧版 HoYoLAB 插件保持 v1.2；
+- managed-code 插件 API 版本与 `IPluginHostContextV1_3` 使用情况一致；`game-checkin` 使用 Plugin API v1.2；
 - `activate(host)` 在宿主页面加载，停用、撤销信任和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API、UI slot、主题/壁纸和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；

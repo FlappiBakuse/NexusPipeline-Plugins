@@ -8,7 +8,7 @@
 - `plugin.json` 中的 `name` 必须与插件目录名、`catalog.json` 条目名称和发行包名称保持一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 catalog 的 `minHostVersion`。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.0`。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.1`。
 
 ## 开发流程
 
@@ -17,15 +17,15 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.0`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.1`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 更新插件版本；需要发布时再生成 ZIP、计算 SHA256、更新 catalog，并按单插件 Release 规则创建独立 tag。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。现有 `hoyolab-checkin` v0.1.1 继续使用 API v1.2。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.2 使用 API v1.2，并声明旧身份替换迁移。
 
 ## 发布规则
 
 - 一个 GitHub Release 只对应一个插件和一个插件版本，发行资产只上传该插件的一个 ZIP。
-- Release tag 使用 `<plugin-name>-v<version>`，例如 `hoyolab-checkin-v0.1.1`；ZIP 文件名使用 `<plugin-name>-<version>.zip`。
+- Release tag 使用 `<plugin-name>-v<version>`，例如 `game-checkin-v0.1.2`；ZIP 文件名使用 `<plugin-name>-<version>.zip`。
 - `catalog.json` 的 `packageUrl`、`version`、`sha256` 和 `sizeBytes` 必须与该 Release 资产逐项一致。
 - 历史 `v0.1.0` 组合 Release 保留不变；新版本创建插件独立 tag，不向历史组合 Release 追加资产。
 
