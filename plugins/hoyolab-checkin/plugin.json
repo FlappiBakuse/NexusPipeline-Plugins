@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "hoyolab-checkin",
+  "displayName": "HoYoLAB 自动签到",
+  "description": "在用户脚本实际开始运行时，为已配置的 HoYoLAB 游戏执行一次当日签到。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "apiVersion": "1.1",
+  "entryAssembly": "NexusPipeline.Plugin.HoyoLabCheckIn.dll",
+  "entryType": "NexusPipeline.Plugin.HoyoLabCheckIn.EntryPoint",
+  "capabilities": [
+    "user-global-management",
+    "user-run-events"
+  ]
+}

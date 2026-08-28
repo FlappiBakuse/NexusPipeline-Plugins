@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-27T00:00:00Z",
+  "generatedAt": "2026-08-28T00:00:00Z",
   "plugins": [
     {
       "name": "bettergi",
@@ -58,6 +58,20 @@
       "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/zzzonedragon-0.1.0.zip",
       "sha256": "acde076accb47ec4101b5a2947ea0ef7b26f704521a987747961b0e9e0bd6932",
       "sizeBytes": 1407
+    },
+    {
+      "name": "hoyolab-checkin",
+      "displayName": "HoYoLAB 自动签到",
+      "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
+      "description": "在用户脚本实际开始运行时，为已配置且当天尚未成功的游戏执行签到。",
+      "version": "0.1.0",
+      "kind": "managed-code",
+      "apiVersion": "1.1",
+      "capabilities": ["user-global-management", "user-run-events"],
+      "minHostVersion": "0.11.0",
+      "packageUrl": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/releases/download/v0.1.0/hoyolab-checkin-0.1.0.zip",
+      "sha256": "2edaf535f03a71ab4abb47ccd6fca7951c21c618b53139d0757f3a0f21ebb0e6",
+      "sizeBytes": 27764
     }
   ]
 }

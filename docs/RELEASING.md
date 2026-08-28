@@ -7,7 +7,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 确认以下内容：
 
 - plugins/<name>/plugin.json 的 name、version、kind 与目标发行版本一致；
-- resolve、judgeScript 和可选模板目录都位于插件目录内；
+- `data-specialized` 插件的 resolve、judgeScript 和可选模板目录都位于插件目录内；`managed-code` 插件的 entryAssembly、entryType、apiVersion 和依赖输出已验证；
 - require、主程序路径、配置路径和日志路径已在目标软件目录验证；
 - judge 的输出、超时和配置替换行为已验证；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存和仓库外文件；
@@ -29,6 +29,17 @@ data/resolve.json
 data/judge.js 或 data/judge.py
 data/config-template/...
 ~~~
+
+managed-code 插件使用以下布局：
+
+~~~text
+plugin.json
+NexusPipeline.Plugin.<Name>.dll
+NexusPipeline.Plugin.Abstractions.dll
+其余运行时依赖.dll
+~~~
+
+代码包不包含 `src/`、README、测试文件、obj 或调试符号；入口 DLL 名称和相对路径必须与 manifest 一致。
 
 当前官方包示例：
 
@@ -81,9 +92,9 @@ ZIP 根目录不再套一层 bettergi/ 目录，避免宿主解压后找不到 p
 | gameName | 游戏名称 |
 | description | 插件说明 |
 | version | 与 manifest 版本一致 |
-| kind | 当前专项插件为 data-specialized |
-| apiVersion | 需要时填写宿主 API 版本；数据化插件当前可为空字符串 |
-| capabilities | 能力 key 列表，例如 emulator |
+| kind | `data-specialized` 或 `managed-code` |
+| apiVersion | managed-code 插件填写宿主 API 版本；数据化插件当前可为空字符串 |
+| capabilities | 能力 key 列表，例如 `emulator`、`user-global-management`、`user-run-events` |
 | minHostVersion | 最低兼容宿主版本 |
 | packageUrl | 指向该版本 GitHub Release 资产的 URL |
 | sha256 | ZIP 的 64 位小写十六进制 SHA256 |

@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢为 NexusPipeline 编写专项适配。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。
+感谢为 NexusPipeline 编写插件。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。
 
 ## 目录与命名
 
@@ -8,17 +8,18 @@
 - `plugin.json` 中的 `name` 必须与插件目录名、`catalog.json` 条目名称和发行包名称保持一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 catalog 的 `minHostVersion`。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.1`。
 
 ## 开发流程
 
 1. 从现有插件中选择运行目录结构相近的参考实现。
-2. 创建 `plugins/<name>/`，补齐 manifest、resolve 和 judge。
-3. 在真实的目标软件目录上验证 `require` 条件、启动路径、配置路径和日志路径。
-4. 验证判断脚本的等待、成功、失败和重复调用行为。
-5. 检查配置模板不含个人数据，并确认模板目录结构与 `configPath` 类型相符。
+2. 创建 `plugins/<name>/`，按插件类型补齐 manifest、data 资源或 .NET 项目。
+3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
+4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
+5. 检查配置模板、源码和发行包不含个人数据。
 6. 更新插件版本；需要发布时再生成 ZIP、计算 SHA256 和更新 catalog。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)。
 
 ## 本地检查
 
@@ -35,6 +36,8 @@ tar -tf packages\<name>-<version>.zip
 # 计算发行包摘要
 Get-FileHash packages\<name>-<version>.zip -Algorithm SHA256
 ```
+
+managed-code 插件还应在 `plugins/<name>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 
