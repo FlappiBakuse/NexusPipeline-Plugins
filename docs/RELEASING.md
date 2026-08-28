@@ -2,6 +2,22 @@
 
 NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一份可校验的发布事实。宿主通过 catalog 的包地址、SHA256、大小和最低宿主版本判断是否可以安装。
 
+## 单插件 Release 规则
+
+每个 GitHub Release 只发布一个插件的一个版本，发行资产只包含该插件的一个 ZIP。Release tag 使用：
+
+```text
+<plugin-name>-v<version>
+```
+
+例如：
+
+```text
+hoyolab-checkin-v0.1.1
+```
+
+该 Release 对应的唯一插件资产为 `hoyolab-checkin-0.1.1.zip`。Release 说明可以记录变更内容，但不得把其他插件的 ZIP 放入同一 Release。仓库历史 `v0.1.0` 组合 Release 保留不变，不迁移、不改写，也不追加资产；后续版本均创建插件独立 tag。
+
 ## 发布前准备
 
 确认以下内容：
@@ -54,6 +70,13 @@ bettergi-0.1.0.zip
 
 ZIP 根目录不再套一层 bettergi/ 目录，避免宿主解压后找不到 plugin.json。
 
+Release tag 与包名示例：
+
+~~~text
+tag:    bettergi-v0.1.1
+asset:  bettergi-0.1.1.zip
+~~~
+
 ## 推荐发布顺序
 
 1. 修改 plugins/<name>/ 内容。
@@ -65,7 +88,7 @@ ZIP 根目录不再套一层 bettergi/ 目录，避免宿主解压后找不到 p
 7. 将最终 ZIP 放入 packages/。
 8. 更新 catalog.json 中对应条目的版本、packageUrl、sha256、sizeBytes 和必要的 minHostVersion。
 9. 再次校验 catalog 与 manifest 的名称、版本、类型一致。
-10. 创建 GitHub Release，并上传与 catalog 完全一致的 ZIP。
+10. 创建 tag 为 `<name>-v<version>` 的 GitHub Release，并只上传与 catalog 完全一致的该插件 ZIP。
 11. 通过 NexusPipeline 的插件商店流程验证安装或更新，再验证重启后的运行状态。
 
 摘要和大小必须针对最终上传的 ZIP 计算。重新压缩、修改文件顺序或改变 ZIP 元数据都会改变摘要；任何改动后都要重新计算。
@@ -78,7 +101,7 @@ ZIP 根目录不再套一层 bettergi/ 目录，避免宿主解压后找不到 p
 {
   "schemaVersion": 1,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-27T00:00:00Z",
+  "generatedAt": "2026-08-28T00:00:00Z",
   "plugins": []
 }
 ~~~
@@ -94,7 +117,7 @@ ZIP 根目录不再套一层 bettergi/ 目录，避免宿主解压后找不到 p
 | version | 与 manifest 版本一致 |
 | kind | `data-specialized` 或 `managed-code` |
 | apiVersion | managed-code 插件填写宿主 API 版本；数据化插件当前可为空字符串 |
-| capabilities | 能力 key 列表，例如 `emulator`、`user-global-management`、`user-run-events` |
+| capabilities | 能力 key 列表，例如 `emulator`、`user-global-management`、`user-run-events`、`user-list-badges` |
 | minHostVersion | 最低兼容宿主版本 |
 | packageUrl | 指向该版本 GitHub Release 资产的 URL |
 | sha256 | ZIP 的 64 位小写十六进制 SHA256 |
@@ -124,6 +147,7 @@ $package.Length
 
 发布页面完成后，逐项核对：
 
+- Release tag 为 `<name>-v<version>`，且该 Release 只包含目标插件的一个 ZIP 资产；
 - 资产文件名与 packageUrl 末尾一致；
 - 下载后的 ZIP SHA256 与 catalog 一致；
 - 下载后的字节数与 sizeBytes 一致；

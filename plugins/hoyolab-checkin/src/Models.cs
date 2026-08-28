@@ -31,6 +31,9 @@ public sealed class UserSettings
 
 public sealed class GameState
 {
+    [JsonPropertyName("lastAttemptDate")]
+    public string? LastAttemptDate { get; set; }
+
     [JsonPropertyName("lastSuccessDate")]
     public string? LastSuccessDate { get; set; }
 

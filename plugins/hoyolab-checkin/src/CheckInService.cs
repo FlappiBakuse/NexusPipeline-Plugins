@@ -7,11 +7,11 @@ namespace NexusPipeline.Plugin.HoyoLabCheckIn;
 internal sealed class CheckInService
 {
     private const int MaxCookieBytes = 16 * 1024;
-    private readonly IPluginHostContextV1_1 _context;
+    private readonly IPluginHostContextV1_2 _context;
     private readonly HoyoLabClient _client;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _userFlights = new(StringComparer.OrdinalIgnoreCase);
 
-    public CheckInService(IPluginHostContextV1_1 context)
+    public CheckInService(IPluginHostContextV1_2 context)
     {
         _context = context;
         _client = new HoyoLabClient(context.Http);
@@ -83,13 +83,9 @@ internal sealed class CheckInService
         }
 
         settings.LastAttemptAt = DateTimeOffset.Now.ToLocalTime().ToString("O");
-        foreach (CheckInResult result in results.Where(item => item.Success))
+        foreach (CheckInResult result in results)
         {
-            settings.GameState[result.GameCode] = new GameState
-            {
-                LastSuccessDate = today,
-                LastResult = result.Code,
-            };
+            ApplyResult(settings, result, today);
         }
         try
         {
@@ -129,6 +125,21 @@ internal sealed class CheckInService
     private static bool HasSucceededToday(UserSettings settings, string gameCode, string today) =>
         settings.GameState.TryGetValue(gameCode, out GameState? state)
         && string.Equals(state.LastSuccessDate, today, StringComparison.Ordinal);
+
+    internal static void ApplyResult(UserSettings settings, CheckInResult result, string today)
+    {
+        if (!settings.GameState.TryGetValue(result.GameCode, out GameState? state) || state is null)
+        {
+            state = new GameState();
+        }
+        state.LastAttemptDate = today;
+        state.LastResult = result.Code;
+        if (result.Success)
+        {
+            state.LastSuccessDate = today;
+        }
+        settings.GameState[result.GameCode] = state;
+    }
 
     internal static bool IsValidCookie(string? cookie)
     {

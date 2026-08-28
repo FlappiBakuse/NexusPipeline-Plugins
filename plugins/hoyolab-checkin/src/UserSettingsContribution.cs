@@ -6,9 +6,9 @@ namespace NexusPipeline.Plugin.HoyoLabCheckIn;
 internal sealed class UserSettingsContribution
 {
     private const string ContributionId = "user-settings";
-    private readonly IPluginHostContextV1_1 _context;
+    private readonly IPluginHostContextV1_2 _context;
 
-    public UserSettingsContribution(IPluginHostContextV1_1 context)
+    public UserSettingsContribution(IPluginHostContextV1_2 context)
     {
         _context = context;
     }
@@ -113,7 +113,8 @@ internal sealed class UserSettingsContribution
             return "尚未尝试";
         }
         List<string> states = settings.GameState
-            .Where(pair => !string.IsNullOrWhiteSpace(pair.Value.LastSuccessDate))
+            .Where(pair => !string.IsNullOrWhiteSpace(pair.Value.LastAttemptDate)
+                || !string.IsNullOrWhiteSpace(pair.Value.LastSuccessDate))
             .Select(pair => $"{GameDefinitions.Find(pair.Key)?.DisplayName ?? pair.Key}：{pair.Value.LastResult}")
             .ToList();
         return states.Count == 0 ? $"最近尝试：{settings.LastAttemptAt}" : string.Join("；", states);

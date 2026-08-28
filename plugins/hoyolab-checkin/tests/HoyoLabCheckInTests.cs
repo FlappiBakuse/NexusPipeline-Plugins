@@ -37,6 +37,85 @@ public sealed class HoyoLabCheckInTests
         Assert.True(settings.GameState.ContainsKey("GI"));
     }
 
+    [Fact]
+    public void UserListBadge_UsesAggregatedStatusAndIgnoresStaleInvalidCookieAfterUpdate()
+    {
+        const string today = "2026-08-28";
+        var disabled = new UserSettings { Enabled = false };
+        Assert.Null(UserListBadgeContribution.Build(disabled, "ltuid=1; ltoken=2", today));
+
+        var noGames = new UserSettings { Games = new List<string>() };
+        PluginUserListBadge? unselected = UserListBadgeContribution.Build(noGames, "ltuid=1; ltoken=2", today);
+        Assert.NotNull(unselected);
+        Assert.Equal("签到 · 未选择游戏", unselected!.Label);
+        Assert.Equal("warn", unselected.Tone);
+
+        var noCookie = new UserSettings();
+        PluginUserListBadge? unconfigured = UserListBadgeContribution.Build(noCookie, null, today);
+        Assert.NotNull(unconfigured);
+        Assert.Equal("签到 · 未配置", unconfigured!.Label);
+
+        var completed = new UserSettings
+        {
+            Games = new List<string> { "gi", "hsr" },
+            GameState = new Dictionary<string, GameState>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["gi"] = new GameState { LastAttemptDate = today, LastSuccessDate = today, LastResult = "success" },
+                ["hsr"] = new GameState { LastAttemptDate = today, LastSuccessDate = today, LastResult = "already" },
+            },
+        };
+        PluginUserListBadge? done = UserListBadgeContribution.Build(completed, "ltuid=1; ltoken=2", today);
+        Assert.NotNull(done);
+        Assert.Equal("签到 · 今日完成", done!.Label);
+        Assert.Equal("ok", done.Tone);
+
+        var failed = new UserSettings
+        {
+            Games = new List<string> { "gi", "hsr" },
+            GameState = new Dictionary<string, GameState>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["gi"] = new GameState { LastAttemptDate = today, LastResult = "api_error" },
+            },
+        };
+        PluginUserListBadge? failure = UserListBadgeContribution.Build(failed, "ltuid=1; ltoken=2", today);
+        Assert.NotNull(failure);
+        Assert.Equal("签到 · 有失败", failure!.Label);
+        Assert.Equal("bad", failure.Tone);
+
+        var staleCookieFailure = new UserSettings
+        {
+            Games = new List<string> { "gi" },
+            GameState = new Dictionary<string, GameState>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["gi"] = new GameState { LastAttemptDate = today, LastResult = "invalid_cookie" },
+            },
+        };
+        PluginUserListBadge? pending = UserListBadgeContribution.Build(staleCookieFailure, "ltuid=1; ltoken=updated", today);
+        Assert.NotNull(pending);
+        Assert.Equal("签到 · 待签到", pending!.Label);
+        Assert.Equal("blue", pending.Tone);
+    }
+
+    [Fact]
+    public void ApplyResult_RecordsEveryAttemptAndPreservesEarlierSuccessDate()
+    {
+        const string today = "2026-08-28";
+        var settings = new UserSettings
+        {
+            GameState = new Dictionary<string, GameState>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["gi"] = new GameState { LastSuccessDate = today },
+            },
+        };
+
+        CheckInService.ApplyResult(settings, new CheckInResult("gi", "api_error", "失败", false), today);
+
+        GameState state = Assert.Single(settings.GameState).Value;
+        Assert.Equal(today, state.LastAttemptDate);
+        Assert.Equal(today, state.LastSuccessDate);
+        Assert.Equal("api_error", state.LastResult);
+    }
+
     [Theory]
     [InlineData(0, "success", true)]
     [InlineData(-5003, "already", true)]
