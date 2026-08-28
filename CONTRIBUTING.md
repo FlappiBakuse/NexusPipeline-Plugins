@@ -8,7 +8,7 @@
 - `plugin.json` 中的 `name` 必须与插件目录名、`catalog.json` 条目名称和发行包名称保持一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 catalog 的 `minHostVersion`。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.2`。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.0`。
 
 ## 开发流程
 
@@ -17,9 +17,10 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
-6. 更新插件版本；需要发布时再生成 ZIP、计算 SHA256、更新 catalog，并按单插件 Release 规则创建独立 tag。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.0`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
+7. 更新插件版本；需要发布时再生成 ZIP、计算 SHA256、更新 catalog，并按单插件 Release 规则创建独立 tag。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。现有 `hoyolab-checkin` v0.1.1 继续使用 API v1.2。
 
 ## 发布规则
 
@@ -44,7 +45,7 @@ tar -tf packages\<name>-<version>.zip
 Get-FileHash packages\<name>-<version>.zip -Algorithm SHA256
 ```
 
-managed-code 插件还应在 `plugins/<name>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。
+managed-code 插件还应在 `plugins/<name>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 

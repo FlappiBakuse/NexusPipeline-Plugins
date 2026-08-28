@@ -24,6 +24,7 @@ hoyolab-checkin-v0.1.1
 
 - plugins/<name>/plugin.json 的 name、version、kind 与目标发行版本一致；
 - `data-specialized` 插件的 resolve、judgeScript 和可选模板目录都位于插件目录内；`managed-code` 插件的 entryAssembly、entryType、apiVersion 和依赖输出已验证；
+- 若 manifest 声明 `frontend-module`，Frontend API 必须为宿主支持的 `1.0`，`frontend.entry` 与 `frontend.styles` 必须位于 `web/` 且文件均存在；公开目录不得放置配置、密钥、程序集或调试符号；
 - require、主程序路径、配置路径和日志路径已在目标软件目录验证；
 - judge 的输出、超时和配置替换行为已验证；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存和仓库外文件；
@@ -44,6 +45,8 @@ plugin.json
 data/resolve.json
 data/judge.js 或 data/judge.py
 data/config-template/...
+web/main.js
+web/style.css
 ~~~
 
 managed-code 插件使用以下布局：
@@ -53,6 +56,8 @@ plugin.json
 NexusPipeline.Plugin.<Name>.dll
 NexusPipeline.Plugin.Abstractions.dll
 其余运行时依赖.dll
+web/main.js
+web/style.css
 ~~~
 
 代码包不包含 `src/`、README、测试文件、obj 或调试符号；入口 DLL 名称和相对路径必须与 manifest 一致。
@@ -117,7 +122,7 @@ asset:  bettergi-0.1.1.zip
 | version | 与 manifest 版本一致 |
 | kind | `data-specialized` 或 `managed-code` |
 | apiVersion | managed-code 插件填写宿主 API 版本；数据化插件当前可为空字符串 |
-| capabilities | 能力 key 列表，例如 `emulator`、`user-global-management`、`user-run-events`、`user-list-badges` |
+| capabilities | 能力 key 列表，例如 `emulator`、`user-global-management`、`user-run-events`、`user-list-badges`、`ui-contributions`、`frontend-module` |
 | minHostVersion | 最低兼容宿主版本 |
 | packageUrl | 指向该版本 GitHub Release 资产的 URL |
 | sha256 | ZIP 的 64 位小写十六进制 SHA256 |
@@ -152,6 +157,7 @@ $package.Length
 - 下载后的 ZIP SHA256 与 catalog 一致；
 - 下载后的字节数与 sizeBytes 一致；
 - 宿主安装后能够发现 manifest；
+- 若使用前端能力，入口 ES module 导出 `activate(host)`，资源位于 `web/`，信任确认前后 `/api/plugin-runtime/frontend` 清单符合预期；
 - /api/status 中插件名称、版本、类型和运行状态符合预期；
 - 重启宿主后专项脚本实例仍能按 profile 运行。
 
