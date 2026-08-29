@@ -15,17 +15,17 @@ NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、
 | `game-checkin` | 米游社 / HoYoLAB 多游戏 | `managed-code` | `user-global-management`, `user-run-events`, `user-list-badges` |
 | `custom-wallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 
-宿主使用 `catalog.json` 发现可安装版本，再从 GitHub Release 下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。
+宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。
 
 ## 发布规则
 
-从新版本开始，每个 GitHub Release 只发布一个插件的一个版本，并且发行资产只包含该插件的一个 ZIP。Release tag 统一使用：
+插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。每个插件使用正式大小写的 artifact 名称建立独立目录，并最多保留最近三个 SemVer 包：
 
 ```text
-<plugin-name>-v<version>
+packages/<ArtifactName>/<ArtifactName>-<version>.zip
 ```
 
-例如 `game-checkin-v0.1.2` 对应 `game-checkin-0.1.2.zip`。`catalog.json` 的 `packageUrl` 必须指向该插件自己的 tag 与资产。历史 `v0.1.0` 组合 Release 保留为旧版本记录，不追加其他插件资产，也不迁移或改写；后续版本不得继续复用组合 tag。
+例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.2.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。`plugin.json` 和 catalog 中的机器标识仍保持稳定的小写名称；artifact 名称只用于发行目录和 ZIP 文件名。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
 
 ## 仓库结构
 
@@ -40,11 +40,12 @@ NexusPipeline-Plugins/
 │       ├── resolve.json                 # 脚本根目录推导规则
 │       ├── judge.js 或 judge.py         # 运行中完成/失败判定
 │       └── config-template/             # 可选默认配置
-├── packages/<name>-<version>.zip        # 发行包
+├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
+│   └── <ArtifactName>-<version>.zip
 └── docs/
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南
-    └── RELEASING.md                     # 打包、catalog 与 Release 流程
+    └── RELEASING.md                     # 打包、catalog 与包校验流程
 ```
 
 发行 ZIP 的根目录直接对应运行时插件目录内容。`data-specialized` 包含 `plugin.json` 与 `data/`；`managed-code` 包含 `plugin.json`、入口 DLL 及其依赖 DLL；带前端的插件额外包含 manifest 声明的 `web/` 资源。源码目录中的文档、测试草稿和个人配置不应进入发行包。
@@ -57,7 +58,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导脚本 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `catalog.json`，然后生成并校验发行包。
+5. 更新插件自身版本和 `catalog.json`，使用 `tools/Pack-Plugin.ps1` 生成包，再用 `tools/Validate-Packages.ps1` 校验全部发行包。
 
 ## 重要运行语义
 
@@ -65,7 +66,7 @@ NexusPipeline-Plugins/
 - 专项插件解析成功后，宿主会把主程序、参数、配置路径、日志路径和判断脚本保存到脚本实例 profile 中。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.3 的通用端口处理。`game-checkin` v0.1.2 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.0 通过 Frontend API 1.1 管理服务端同步壁纸。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.3 的通用端口处理。`game-checkin` v0.1.2 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.1 通过 Frontend API 1.1 管理服务端同步壁纸。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 
 ## 数据与安全

@@ -5,7 +5,8 @@
 ## 目录与命名
 
 - 插件目录使用稳定的小写机器标识，例如 `bettergi`、`maaend`。
-- `plugin.json` 中的 `name` 必须与插件目录名、`catalog.json` 条目名称和发行包名称保持一致。
+- `plugin.json` 中的 `name` 必须与插件目录名和 `catalog.json` 条目名称保持一致；发行包使用 catalog 中的正式 `artifactName`，不改动机器标识。
+- `artifactName` 使用 ASCII 字母和数字，首字符为字母，至少包含一个大写字母；正式包目录和 ZIP 文件名必须保持完全一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 catalog 的 `minHostVersion`。
 - `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.1`。
@@ -18,16 +19,16 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.1`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 更新插件版本；需要发布时再生成 ZIP、计算 SHA256、更新 catalog，并按单插件 Release 规则创建独立 tag。
+7. 更新插件版本；运行 `tools/Pack-Plugin.ps1 -PluginName <name> -UpdateCatalog` 生成包、回写 SHA256/大小并按 SemVer 保留最近三个包，再运行 `tools/Validate-Packages.ps1`。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.2 使用 API v1.2，并声明旧身份替换迁移。
 
-## 发布规则
+## 发行包规则
 
-- 一个 GitHub Release 只对应一个插件和一个插件版本，发行资产只上传该插件的一个 ZIP。
-- Release tag 使用 `<plugin-name>-v<version>`，例如 `game-checkin-v0.1.2`；ZIP 文件名使用 `<plugin-name>-<version>.zip`。
-- `catalog.json` 的 `packageUrl`、`version`、`sha256` 和 `sizeBytes` 必须与该 Release 资产逐项一致。
-- 历史 `v0.1.0` 组合 Release 保留不变；新版本创建插件独立 tag，不向历史组合 Release 追加资产。
+- 插件包直接提交到 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
+- 每个插件目录最多保留最近三个数值 SemVer 包；旧包仅用于仓库存档，插件平台不提供降级安装。
+- ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。
+- `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
 
 ## 本地检查
 
@@ -38,11 +39,11 @@
 Get-ChildItem -LiteralPath . -Recurse -Filter *.json |
   ForEach-Object { Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json | Out-Null }
 
-# 检查单个发行包内容
-tar -tf packages\<name>-<version>.zip
+# 生成一个插件的发行包并回写 catalog
+pwsh -NoProfile -File tools\Pack-Plugin.ps1 -PluginName <name> -UpdateCatalog
 
-# 计算发行包摘要
-Get-FileHash packages\<name>-<version>.zip -Algorithm SHA256
+# 校验全部 catalog 条目、包内容、摘要和目录保留数
+pwsh -NoProfile -File tools\Validate-Packages.ps1
 ```
 
 managed-code 插件还应在 `plugins/<name>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。

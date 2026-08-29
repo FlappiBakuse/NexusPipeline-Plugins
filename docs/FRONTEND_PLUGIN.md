@@ -151,4 +151,4 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 - `activate(host)` 在宿主页面加载，停用、撤销信任和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API、UI slot、主题/壁纸和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
-- 最终 ZIP 的文件名、SHA256、sizeBytes、Release tag 和 catalog 条目完全一致。
+- 最终 ZIP 的 artifact 文件名、SHA256、sizeBytes 和 catalog 条目完全一致；插件包提交到 `packages/<ArtifactName>/`，不创建插件 Release 或 tag。

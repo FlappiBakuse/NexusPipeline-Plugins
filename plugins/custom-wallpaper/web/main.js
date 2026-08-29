@@ -1,6 +1,6 @@
 const allGames = [
-  { value: "timer", label: "按时间轮换" },
-  { value: "startup", label: "每次启动 Web 轮换" },
+  { value: "timer", label: "按时间随机轮换" },
+  { value: "startup", label: "每次启动 Web 随机轮换" },
   { value: "off", label: "不轮换" },
 ];
 
@@ -35,6 +35,7 @@ function renderCard(container, _context, host) {
         <div class="form-grid wallpaper-effects">
           <label class="field"><span class="field-label">模糊（像素）</span><span class="wallpaper-range-row"><input type="range" min="0" max="40" step="1" data-wallpaper-blur><output data-wallpaper-blur-value></output></span></label>
           <label class="field"><span class="field-label">变暗</span><span class="wallpaper-range-row"><input type="range" min="0" max="80" step="1" data-wallpaper-dim><output data-wallpaper-dim-value></output></span></label>
+          <label class="field"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row"><input type="range" min="0" max="50" step="1" data-wallpaper-surface-transparency><output data-wallpaper-surface-transparency-value></output></span></label>
         </div>
         <div class="wallpaper-upload-row"><label class="ghost wallpaper-file-label">添加壁纸<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-wallpaper-files></label><span class="muted">JPEG、PNG、WebP，单张最大 20 MiB</span></div>
         <div class="wallpaper-list" data-wallpaper-list></div>
@@ -51,6 +52,7 @@ function renderCard(container, _context, host) {
   const interval = card.querySelector("[data-wallpaper-interval]");
   const blur = card.querySelector("[data-wallpaper-blur]");
   const dim = card.querySelector("[data-wallpaper-dim]");
+  const surfaceTransparency = card.querySelector("[data-wallpaper-surface-transparency]");
   const list = card.querySelector("[data-wallpaper-list]");
   const status = card.querySelector("[data-wallpaper-status]");
   const help = card.querySelector("[data-wallpaper-help]");
@@ -76,6 +78,7 @@ function renderCard(container, _context, host) {
     effects: {
       blurPx: Number(blur.value) || 0,
       dimPercent: Number(dim.value) || 0,
+      surfaceTransparencyPercent: Number(surfaceTransparency.value) || 0,
     },
     provider: { enabled: enabledToggle.getAttribute("aria-pressed") === "true" },
   });
@@ -100,7 +103,7 @@ function renderCard(container, _context, host) {
   const syncLabels = () => {
     card.querySelector("[data-wallpaper-blur-value]").textContent = `${blur.value}px`;
     card.querySelector("[data-wallpaper-dim-value]").textContent = `${dim.value}%`;
-    card.querySelector("[data-wallpaper-interval-field]").hidden = mode.value !== "timer";
+    card.querySelector("[data-wallpaper-surface-transparency-value]").textContent = `${surfaceTransparency.value}%`;
   };
   const syncFallbackPanel = expanded => {
     card.classList.toggle("is-expanded", expanded);
@@ -133,6 +136,7 @@ function renderCard(container, _context, host) {
       interval.value = snapshot.rotation?.intervalMinutes || 30;
       blur.value = snapshot.effects?.blurPx || 0;
       dim.value = snapshot.effects?.dimPercent ?? 20;
+      surfaceTransparency.value = Math.max(0, Math.min(50, Number(snapshot.effects?.surfaceTransparencyPercent) || 0));
       renderList();
       syncLabels();
       lastSavedSignature = settingsSignature(readSettings());
@@ -272,7 +276,7 @@ function renderCard(container, _context, host) {
       setStatus("上传失败", "bad");
     }
   });
-  [mode, interval, blur, dim].forEach(control => {
+  [mode, interval, blur, dim, surfaceTransparency].forEach(control => {
     control.addEventListener("change", () => {
       syncLabels();
       requestSave();
