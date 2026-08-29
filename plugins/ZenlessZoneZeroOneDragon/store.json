@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "gameName": "绝区零",
+  "authors": [],
+  "tags": ["绝区零", "专项插件", "配置接管"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
   "changelog": [
     {
       "version": "0.1.1",

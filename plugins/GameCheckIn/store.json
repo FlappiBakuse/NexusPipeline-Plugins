@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
+  "authors": [],
+  "tags": ["签到", "米游社", "HoYoLAB", "用户管理"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
   "changelog": [
     {
       "version": "0.1.3",

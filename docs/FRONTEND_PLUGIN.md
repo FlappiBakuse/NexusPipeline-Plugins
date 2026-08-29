@@ -1,6 +1,6 @@
 # Frontend API 1.2 插件指南
 
-NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在用户确认信任后加载同源 JavaScript/CSS，增加页面、导航、路由、主题、壁纸和运行画面预览能力。
+NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且兼容后加载同源 JavaScript/CSS，增加页面、导航、路由、主题、壁纸和运行画面预览能力。
 
 ## 适用范围
 
@@ -131,16 +131,16 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式只读取宿主按进程识别的游戏客户区，模拟器模式使用宿主冻结的 Generic ADB 或 MuMuManager 驱动；插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
 
-## 信任与运行条件
+## 运行条件
 
-`frontend-module` 表示插件请求前端能力，不能替代用户确认。插件需要同时满足以下条件，入口才会出现在 `GET /api/plugin-runtime/frontend`：
+`frontend-module` 表示插件请求前端能力。插件需要同时满足以下条件，入口才会出现在 `GET /api/plugin-runtime/frontend`：
 
 1. 插件已启用且运行时状态为 Active；
 2. Plugin API 与 Frontend API 版本兼容；
 3. 入口和样式文件通过 manifest 与安装包检查；
-4. 用户在插件页明确确认当前插件版本的前端信任。
+4. 入口和样式文件位于插件目录的公开 `web/` 路径，并通过资源扩展名和文件存在性校验。
 
-前端信任按插件版本与前端声明指纹保存。插件更新版本或改变前端声明后，用户需要再次确认；撤销信任会停止后续加载。由于可信前端模块与管理页面同源运行，它可以使用 DOM、同源 fetch 和当前页面可用的管理 API。开发者应把前端代码与发行包一并纳入人工审查。
+前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。开发者应把前端代码与发行包一并纳入人工审查。
 
 ## 安全与资源边界
 
@@ -155,7 +155,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
 - managed-code 插件 API 版本与宿主当前 Plugin API v1.4 兼容；需要通用扩展端口的插件继续检查 `IPluginHostContextV1_3`；`game-checkin` 使用 Plugin API v1.2；
-- `activate(host)` 在宿主页面加载，停用、撤销信任和页面切换时无残留定时器、监听器或节点；
+- `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API、UI slot、主题/壁纸和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
 - 最终 ZIP 的 artifact 文件名、SHA256、sizeBytes 和 catalog 条目完全一致；插件包提交到 `packages/<ArtifactName>/`，不创建插件 Release 或 tag。

@@ -18,7 +18,7 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式和同源 DOM 行为；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 更新索引，最后运行仓库级一键校验。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.3 使用 API v1.2，并声明旧身份替换迁移。
@@ -52,7 +52,7 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
 pwsh -NoProfile -File tools\Test-Repository.ps1
 ```
 
-managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。
+managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 

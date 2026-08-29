@@ -108,6 +108,11 @@ New-Item -ItemType Directory -Path $payloadRoot -Force | Out-Null
 
 try {
     Copy-Item -LiteralPath $manifestPath -Destination (Join-Path $payloadRoot "plugin.json")
+    Copy-Item -LiteralPath $storePath -Destination (Join-Path $payloadRoot "store.json")
+    $readmePath = Join-Path $pluginDir "README.md"
+    if (Test-Path -LiteralPath $readmePath) {
+        Copy-Item -LiteralPath $readmePath -Destination (Join-Path $payloadRoot "README.md")
+    }
 
     if ($kind -eq "data-specialized") {
         $dataRoot = Join-Path $pluginDir "data"

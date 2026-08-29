@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "gameName": "明日方舟：终末地",
+  "authors": [],
+  "tags": ["明日方舟：终末地", "专项插件", "模拟器"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
   "changelog": [
     {
       "version": "0.1.1",

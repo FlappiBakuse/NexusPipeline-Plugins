@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "gameName": "通用游戏与安卓模拟器",
+  "authors": [],
+  "tags": ["实时预览", "模拟器", "运行卡片"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/LiveScreenshot",
   "changelog": [
     {
       "version": "0.1.1",

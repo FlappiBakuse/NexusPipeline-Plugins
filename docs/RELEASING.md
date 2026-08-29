@@ -29,9 +29,9 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 packages/
 ├── BetterGI/BetterGI-0.1.1.zip
 ├── CustomWallpaper/
-│   ├── CustomWallpaper-0.1.1.zip
 │   ├── CustomWallpaper-0.1.2.zip
-│   └── CustomWallpaper-0.1.3.zip
+│   ├── CustomWallpaper-0.1.3.zip
+│   └── CustomWallpaper-0.1.4.zip
 ├── GameCheckIn/GameCheckIn-0.1.3.zip
 ├── LiveScreenshot/LiveScreenshot-0.1.0.zip
 ├── HoYoLABCheckIn/
@@ -53,7 +53,7 @@ web/main.js
 web/style.css
 ```
 
-managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON 运行时文件。包不包含 `src/`、README、测试文件、`obj/`、调试符号或用户数据。
+managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON 运行时文件。包不包含 `src/`、测试文件、`obj/`、调试符号或用户数据；包内包含 `store.json`，有插件说明时包含 `README.md`。
 
 ## 发布前准备
 
@@ -87,7 +87,7 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
 
 1. 校验 manifest schema、机器 ID、artifactName 和版本；
 2. 构建 managed-code 插件，或复制 data-specialized 插件资源；
-3. 生成根目录带 `plugin.json` 的 ZIP；
+3. 将 `store.json` 和可选 `README.md` 放入包根目录，生成根目录带 `plugin.json` 的 ZIP；
 4. 拒绝覆盖同一 SemVer 下内容不同的既有 ZIP；
 5. 按数值 SemVer 在对应 artifact 目录保留最近三个 ZIP。
 
@@ -106,15 +106,27 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
     {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.1.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.3.zip",
+      "displayName": "自定义壁纸",
+      "gameName": "通用外观",
+      "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
+      "authors": [],
+      "tags": ["外观", "壁纸", "主题"],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
+      "updatedAt": "2026-08-29",
+      "hasReadme": true,
+      "version": "0.1.4",
+      "kind": "managed-code",
+      "apiVersion": "1.4",
+      "capabilities": ["frontend-module"],
+      "minHostVersion": "0.11.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.4.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.1.2",
+          "version": "0.1.4",
           "date": "2026-08-29",
-          "items": ["随机轮换、透明度和主题行为更新。"]
+          "items": ["主界面内容卡片会根据当前壁纸主题色自动适配浅色或深色表面。"]
         }
       ]
     }
@@ -122,7 +134,7 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
 }
 ```
 
-完整条目还包含 `displayName`、`gameName`、`description`、`kind`、`apiVersion`、`capabilities`、`minHostVersion` 和可选的 `replaces`。
+完整条目还包含 `displayName`、`gameName`、`description`、`authors`、`tags`、`homepage`、`updatedAt`、`hasReadme`、`kind`、`apiVersion`、`capabilities`、`minHostVersion` 和可选的 `replaces`。
 
 约束如下：
 

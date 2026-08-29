@@ -83,6 +83,67 @@ function Read-StoreChangelog($store, [string]$version, [string]$artifactName) {
     return $result.ToArray()
 }
 
+function Test-HttpsUrl([string]$value) {
+    if ([string]::IsNullOrWhiteSpace($value)) {
+        return $true
+    }
+    if ($value.Length -gt 2048) {
+        return $false
+    }
+    try {
+        $uri = [Uri]::new($value.Trim(), [UriKind]::Absolute)
+        return $uri.Scheme -ceq "https" -and -not [string]::IsNullOrWhiteSpace($uri.Host) -and [string]::IsNullOrEmpty($uri.UserInfo) -and [string]::IsNullOrEmpty($uri.Fragment)
+    }
+    catch {
+        return $false
+    }
+}
+
+function Read-PresentationMetadata($store, [string]$pluginDirectory, [string]$artifactName) {
+    $authors = @()
+    if ($store.PSObject.Properties.Name -contains "authors") {
+        $authorEntries = @($store.authors)
+        if ($authorEntries.Count -gt 8) {
+            throw "插件 $artifactName 的 authors 数量超过 8"
+        }
+        $authors = @($authorEntries | ForEach-Object {
+            $name = [string]$_.name
+            $url = if ($_.PSObject.Properties.Name -contains "url") { [string]$_.url } else { "" }
+            if ([string]::IsNullOrWhiteSpace($name) -or $name.Trim().Length -gt 64 -or $name.Contains('<') -or $name.Contains('>') -or -not (Test-HttpsUrl $url)) {
+                throw "插件 $artifactName 的作者元数据无效"
+            }
+            [pscustomobject][ordered]@{ name = $name.Trim(); url = $url.Trim() }
+        })
+    }
+
+    $tags = @()
+    if ($store.PSObject.Properties.Name -contains "tags") {
+        $tagEntries = @($store.tags)
+        if ($tagEntries.Count -gt 16) {
+            throw "插件 $artifactName 的 tags 数量超过 16"
+        }
+        $seenTags = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        $tags = @($tagEntries | ForEach-Object {
+            $tag = ([string]$_).Trim()
+            if ($tag.Length -lt 1 -or $tag.Length -gt 32 -or $tag.Contains('<') -or $tag.Contains('>') -or -not $seenTags.Add($tag)) {
+                throw "插件 $artifactName 的标签元数据无效"
+            }
+            $tag
+        })
+    }
+
+    $homepage = if ($store.PSObject.Properties.Name -contains "homepage") { ([string]$store.homepage).Trim() } else { "" }
+    if (-not (Test-HttpsUrl $homepage)) {
+        throw "插件 $artifactName 的 homepage 必须是 HTTPS 地址"
+    }
+    [pscustomobject][ordered]@{
+        authors = $authors
+        tags = $tags
+        homepage = $homepage
+        hasReadme = Test-Path -LiteralPath (Join-Path $pluginDirectory "README.md")
+    }
+}
+
 function New-Catalog([string]$generatedAt) {
     Assert-Path $pluginsRoot "缺少插件源码目录：$pluginsRoot"
     Assert-Path $packagesRoot "缺少插件发行目录：$packagesRoot"
@@ -156,6 +217,7 @@ function New-Catalog([string]$generatedAt) {
             }
         }
         $changelog = @(Read-StoreChangelog $store $version $artifactName)
+        $presentation = Read-PresentationMetadata $store $pluginDirectory.FullName $artifactName
         $packageDirectory = Join-Path $packagesRoot $artifactName
         $packageDirectories = @(Get-ChildItem -LiteralPath $packagesRoot -Directory | Where-Object { $_.Name -ceq $artifactName })
         if ($packageDirectories.Count -ne 1) {
@@ -171,6 +233,11 @@ function New-Catalog([string]$generatedAt) {
             displayName = [string]$manifest.displayName
             gameName = [string]$store.gameName
             description = [string]$manifest.description
+            authors = $presentation.authors
+            tags = $presentation.tags
+            homepage = $presentation.homepage
+            updatedAt = [string]$changelog[0].date
+            hasReadme = [bool]$presentation.hasReadme
             version = $version
             kind = $kind
             apiVersion = $apiVersion
