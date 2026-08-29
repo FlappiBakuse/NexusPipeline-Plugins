@@ -9,7 +9,7 @@
 - `artifactName` 使用 ASCII 字母和数字，首字符为字母，至少包含一个大写字母；正式包目录和 ZIP 文件名必须保持完全一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.1`。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.4`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.2`。
 
 ## 开发流程
 
@@ -18,8 +18,8 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.1`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 和 `tools/Validate-Packages.ps1`。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
+7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 更新索引，最后运行仓库级一键校验。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.3 使用 API v1.2，并声明旧身份替换迁移。
 
@@ -47,6 +47,9 @@ pwsh -NoProfile -File tools\Generate-Catalog.ps1
 
 # 校验全部 catalog 条目、包内容、摘要和目录保留数
 pwsh -NoProfile -File tools\Validate-Packages.ps1
+
+# 推荐的仓库级一键校验：JSON、manifest、数据化契约、脚本语法、catalog、发行包、构建和测试
+pwsh -NoProfile -File tools\Test-Repository.ps1
 ```
 
 managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。

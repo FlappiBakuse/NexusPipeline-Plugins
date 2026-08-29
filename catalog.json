@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-29T09:12:39Z",
+  "generatedAt": "2026-08-29T10:08:25Z",
   "plugins": [
     {
       "name": "bettergi",
@@ -121,17 +121,25 @@
       "displayName": "实时截图窗口",
       "gameName": "通用游戏与安卓模拟器",
       "description": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
+        "execution-preview-client",
         "frontend-module"
       ],
-      "minHostVersion": "0.11.6",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.0.zip",
-      "sha256": "50e5f063b3fbccee7532026de0201b0525a2d3389d5d42409cf77c4c80c814f4",
-      "sizeBytes": 26981,
+      "minHostVersion": "0.11.7",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.1.zip",
+      "sha256": "656c5b2ff89b54eae01e0a9b4e5529cb0c781f3e87502e8debbc9385e5037332",
+      "sizeBytes": 26998,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-08-29",

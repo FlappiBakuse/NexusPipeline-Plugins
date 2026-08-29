@@ -77,12 +77,11 @@ pwsh -NoProfile -File tools\Pack-Plugin.ps1 -ArtifactName CustomWallpaper
 # 从各插件的 manifest、store.json 和当前 ZIP 生成 catalog
 pwsh -NoProfile -File tools\Generate-Catalog.ps1
 
-# 检查 catalog 是否仍可由源数据重建
-pwsh -NoProfile -File tools\Generate-Catalog.ps1 -Verify
-
-# 校验 catalog、目录命名、每个包的 SHA256/大小、ZIP 路径和 manifest
-pwsh -NoProfile -File tools\Validate-Packages.ps1
+# 推荐的仓库级一键校验：JSON、manifest、数据化契约、脚本语法、catalog、发行包、构建和测试
+pwsh -NoProfile -File tools\Test-Repository.ps1
 ```
+
+`Test-Repository.ps1` 会检查 catalog 可重建性、发行包完整性、所有 managed-code 项目构建和测试；`Generate-Catalog.ps1` 与 `Validate-Packages.ps1` 仍可单独运行以定位索引或发行包问题。
 
 `Pack-Plugin.ps1` 会：
 

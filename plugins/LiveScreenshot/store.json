@@ -3,6 +3,13 @@
   "gameName": "通用游戏与安卓模拟器",
   "changelog": [
     {
+      "version": "0.1.1",
+      "date": "2026-08-29",
+      "items": [
+        "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
+      ]
+    },
+    {
       "version": "0.1.0",
       "date": "2026-08-29",
       "items": [

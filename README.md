@@ -14,7 +14,7 @@ NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | — |
 | `game-checkin` | `GameCheckIn` | 米游社 / HoYoLAB 多游戏 | `managed-code` | `user-global-management`, `user-run-events`, `user-list-badges` |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
-| `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module` |
+| `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
 
 宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。
 
@@ -44,6 +44,8 @@ NexusPipeline-Plugins/
 │       └── config-template/             # 可选默认配置
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
+├── tools/
+│   └── Test-Repository.ps1              # 一键执行仓库级校验
 └── docs/
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南
@@ -60,7 +62,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导脚本 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，使用 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再用 `tools/Generate-Catalog.ps1` 生成索引，最后执行 `tools/Validate-Packages.ps1`。
+5. 更新插件自身版本和 `store.json`，使用 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再用 `tools/Generate-Catalog.ps1` 更新索引，最后执行 `pwsh -NoProfile -File tools/Test-Repository.ps1` 完成仓库级校验；该命令覆盖 JSON、manifest、数据化契约、脚本语法、catalog、发行包和 managed-code 构建/测试。
 
 ## 重要运行语义
 
@@ -68,7 +70,7 @@ NexusPipeline-Plugins/
 - 专项插件解析成功后，宿主会把主程序、参数、配置路径、日志路径和判断脚本保存到脚本实例 profile 中。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.3 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.3 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.0 通过调度中心 sidecar 显示受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.3 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.3 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 
 ## 数据与安全
