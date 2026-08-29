@@ -7,19 +7,20 @@
 ## 最小目录
 
 ```text
-plugins/example/
+plugins/Example/
 ├── plugin.json
+├── store.json
 └── data/
     ├── resolve.json
 └── judge.js
 ```
 
-上例中的 `example` 仅是文档占位标识；实际插件必须替换为仓库内唯一的机器标识，并让目录名、`plugin.json` 的 `name` 以及 `catalog.json` 中的 `name` 保持一致。
+上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
 需要默认配置时：
 
 ```text
-plugins/example/data/config-template/
+plugins/Example/data/config-template/
 └── example.json
 ```
 
@@ -31,13 +32,15 @@ plugins/example/data/config-template/
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "example",
+  "artifactName": "Example",
   "displayName": "Example Assistant",
   "gameName": "示例游戏",
   "description": "示例专项脚本实例配置接管",
   "version": "0.1.0",
   "kind": "data-specialized",
+  "minHostVersion": "0.11.5",
   "capabilities": [],
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
@@ -49,12 +52,14 @@ plugins/example/data/config-template/
 
 | 字段 | 用途 | 约束 |
 |---|---|---|
-| `schemaVersion` | manifest 格式版本 | 当前仓库使用 `1` |
-| `name` | 稳定机器标识，保存到脚本实例 `PluginType` | 必须非空；建议只使用小写字母、数字、连字符 |
+| `schemaVersion` | manifest 格式版本 | 当前仓库使用 `2`；宿主兼容旧版 `1` |
+| `name` | 稳定机器标识，保存到脚本实例 `PluginType` | 必须使用小写 kebab-case：`^[a-z0-9]+(?:-[a-z0-9]+)*$` |
+| `artifactName` | 源码、安装和发行文件系统身份 | ASCII 字母/数字，首字符为字母，至少包含一个大写字母；必须与源码目录完全一致 |
 | `displayName` | UI 展示名称 | 建议提供 |
 | `gameName` | UI 中的游戏名称 | 建议提供 |
 | `description` | 插件说明 | 建议提供 |
-| `version` | 插件自身版本 | 与宿主版本独立 |
+| `version` | 插件自身版本 | 与宿主版本独立；使用三段 SemVer |
+| `minHostVersion` | 最低宿主版本 | 使用三段 SemVer |
 | `kind` | 插件类型 | 数据化专项插件使用 `data-specialized` |
 | `capabilities` | 能力 key 列表 | 例如 `emulator` |
 | `supportsEmulator` | 旧版兼容字段 | 为 `true` 时也会映射为 `emulator`，新插件优先使用 `capabilities` |
@@ -64,7 +69,7 @@ plugins/example/data/config-template/
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
-`name` 参与脚本实例、catalog 和运行时状态关联。改名会使旧脚本实例失去原有专项身份，应把它当作迁移操作处理。
+`name` 参与脚本实例、catalog 和运行时状态关联；`artifactName` 参与文件系统路径和发行包名称。改动 `name` 会使旧脚本实例失去原有专项身份，应把它当作迁移操作处理。改动 `artifactName` 需要同步源码目录、包目录和 ZIP 名称。
 
 ## resolve.json
 
@@ -153,7 +158,7 @@ BetterGI 的 `data/config-template/NexusPipeline.json` 和 MaaEnd 的两个模�
 
 ## 发布前检查
 
-- 插件目录名、manifest `name`、catalog `name` 一致。
+- 插件目录名与 manifest `artifactName` 严格一致，manifest `name` 使用小写机器标识。
 - `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在。
 - 所有 `require` 在目标软件目录中都能找到，向上搜索不超过 4 层。
 - `mainExe` 能解析到真实文件。

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-29T01:49:14Z",
+  "generatedAt": "2026-08-29T03:58:01Z",
   "plugins": [
     {
       "name": "bettergi",
@@ -9,15 +9,22 @@
       "displayName": "BetterGI",
       "gameName": "原神",
       "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.0.zip",
-      "sha256": "b3fd8c447831d82fe6c647ff89de3fae5deae1b405ceec7825b631e0e47b151c",
-      "sizeBytes": 3320,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.1.zip",
+      "sha256": "ef45b74507dfb76c66dcf795a39f2f6b2230a46a7c5c961ab92f59bcc530af71",
+      "sizeBytes": 3344,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-08-28",
@@ -28,22 +35,109 @@
       ]
     },
     {
+      "name": "custom-wallpaper",
+      "artifactName": "CustomWallpaper",
+      "displayName": "自定义壁纸",
+      "gameName": "通用外观",
+      "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
+      "version": "0.1.2",
+      "kind": "managed-code",
+      "apiVersion": "1.3",
+      "capabilities": [
+        "frontend-module"
+      ],
+      "minHostVersion": "0.11.4",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.2.zip",
+      "sha256": "d88803d3d807d7866c6afcc806a0c4b766f0837ac8283afaaf312d5ce7cff2a7",
+      "sizeBytes": 30808,
+      "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "加入卡片与侧边栏半透明效果，透明度最高 50%。",
+            "定时和启动 Web 壁纸轮换改为随机选择，并避免连续重复。",
+            "恢复浅色、深色与跟随系统主题切换，同时保留壁纸自适应配色。"
+          ]
+        },
+        {
+          "version": "0.1.0",
+          "date": "2026-08-28",
+          "items": [
+            "首次提供服务端同步多壁纸、轮换、模糊、变暗、自适应配色和拖拽排序。"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "game-checkin",
+      "artifactName": "GameCheckIn",
+      "displayName": "游戏自动签到",
+      "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
+      "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到，并提供用户列表聚合签到状态。",
+      "version": "0.1.3",
+      "kind": "managed-code",
+      "apiVersion": "1.2",
+      "capabilities": [
+        "user-global-management",
+        "user-list-badges",
+        "user-run-events"
+      ],
+      "minHostVersion": "0.11.3",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.3.zip",
+      "sha256": "3c8b236d647aa51b6882a3f10fe4b8a81e5186d2c887069cc4c8c1ced36f5f43",
+      "sizeBytes": 51667,
+      "replaces": [
+        "hoyolab-checkin"
+      ],
+      "changelog": [
+        {
+          "version": "0.1.3",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
+        {
+          "version": "0.1.2",
+          "date": "2026-08-28",
+          "items": [
+            "提供米游社与 HoYoLAB 多游戏签到及用户列表聚合状态。"
+          ]
+        }
+      ]
+    },
+    {
       "name": "maaend",
       "artifactName": "MaaEnd",
       "displayName": "MaaEnd",
       "gameName": "明日方舟：终末地",
       "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.0.zip",
-      "sha256": "6f48f5490d4a7de4e3c8e5a723cc67a6b192c6a1fc5fd6c143a6deb23d53e5c8",
-      "sizeBytes": 7203,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.1.zip",
+      "sha256": "b86d7b5dd759f39b24481e9443d4830b890c85ea56263a012ce23d065be39014",
+      "sizeBytes": 7227,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-08-28",
@@ -59,15 +153,22 @@
       "displayName": "March7thAssistant",
       "gameName": "崩坏：星穹铁道",
       "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.1.0.zip",
-      "sha256": "20bdfd9af1119b4d8fc3fef0ca402cda6ba7a60080d13b11d7175cb8aa59b809",
-      "sizeBytes": 1342,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.1.1.zip",
+      "sha256": "5fb3b3728911c6a102104229890ea83e8116f49246a37bea56b79f5c7aa602c7",
+      "sizeBytes": 1369,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-08-28",
@@ -83,86 +184,27 @@
       "displayName": "ZenlessZoneZeroOneDragon",
       "gameName": "绝区零",
       "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.0.zip",
-      "sha256": "acde076accb47ec4101b5a2947ea0ef7b26f704521a987747961b0e9e0bd6932",
-      "sizeBytes": 1407,
-      "changelog": [
-        {
-          "version": "0.1.0",
-          "date": "2026-08-28",
-          "items": [
-            "首次提供 Zenless Zone Zero OneDragon 专项配置接管。"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "game-checkin",
-      "artifactName": "GameCheckIn",
-      "displayName": "游戏自动签到",
-      "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
-      "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到，并提供用户列表聚合签到状态。",
-      "version": "0.1.2",
-      "kind": "managed-code",
-      "apiVersion": "1.2",
-      "capabilities": [
-        "user-global-management",
-        "user-run-events",
-        "user-list-badges"
-      ],
-      "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.2.zip",
-      "sha256": "0e74a26852506378d4f9acd0d9191176e981445088c79c6f1d57539f3120c754",
-      "sizeBytes": 51227,
-      "replaces": [
-        "hoyolab-checkin"
-      ],
-      "changelog": [
-        {
-          "version": "0.1.2",
-          "date": "2026-08-28",
-          "items": [
-            "提供米游社与 HoYoLAB 多游戏签到及用户列表聚合状态。"
-          ]
-        }
-      ]
-    },
-    {
-      "name": "custom-wallpaper",
-      "artifactName": "CustomWallpaper",
-      "displayName": "自定义壁纸",
-      "gameName": "",
-      "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
-      "version": "0.1.1",
-      "kind": "managed-code",
-      "apiVersion": "1.3",
-      "capabilities": [
-        "frontend-module"
-      ],
-      "minHostVersion": "0.11.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.1.zip",
-      "sha256": "d187aa25cf16510943085c36135f37c3cde3a460e9bd4e15862887184776b625",
-      "sizeBytes": 30783,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.1.zip",
+      "sha256": "f5a64febcee3f683575758d99768df89e3ccbcc2a49b19b770a1c3543089774f",
+      "sizeBytes": 1430,
       "changelog": [
         {
           "version": "0.1.1",
           "date": "2026-08-29",
           "items": [
-            "加入卡片与侧边栏半透明效果，透明度最高 50%。",
-            "定时和启动 Web 壁纸轮换改为随机选择，并避免连续重复。",
-            "恢复浅色、深色与跟随系统主题切换，同时保留壁纸自适应配色。"
+            "统一插件 manifest、源码目录和发行包的物理命名。"
           ]
         },
         {
           "version": "0.1.0",
           "date": "2026-08-28",
           "items": [
-            "首次提供服务端同步多壁纸、轮换、模糊、变暗、自适应配色和拖拽排序。"
+            "首次提供 Zenless Zone Zero OneDragon 专项配置接管。"
           ]
         }
       ]

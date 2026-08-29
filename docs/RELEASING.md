@@ -20,23 +20,24 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 | `custom-wallpaper` | `CustomWallpaper` |
 | 历史 `hoyolab-checkin` | `HoYoLABCheckIn` |
 
-`plugin.json`、插件源码目录、catalog 的 `name` 和运行时数据继续使用稳定机器标识；只有 `packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。
+`plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录、宿主安装目录、`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与源码目录完全一致。
 
 ## 发行包布局
 
 ```text
 packages/
-├── BetterGI/BetterGI-0.1.0.zip
+├── BetterGI/BetterGI-0.1.1.zip
 ├── CustomWallpaper/
 │   ├── CustomWallpaper-0.1.0.zip
-│   └── CustomWallpaper-0.1.1.zip
-├── GameCheckIn/GameCheckIn-0.1.2.zip
+│   ├── CustomWallpaper-0.1.1.zip
+│   └── CustomWallpaper-0.1.2.zip
+├── GameCheckIn/GameCheckIn-0.1.3.zip
 ├── HoYoLABCheckIn/
 │   ├── HoYoLABCheckIn-0.1.0.zip
 │   └── HoYoLABCheckIn-0.1.1.zip
-├── MaaEnd/MaaEnd-0.1.0.zip
-├── March7thAssistant/March7thAssistant-0.1.0.zip
-└── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.0.zip
+├── MaaEnd/MaaEnd-0.1.1.zip
+├── March7thAssistant/March7thAssistant-0.1.1.zip
+└── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.1.zip
 ```
 
 发行 ZIP 的根目录直接对应运行时插件目录内容：
@@ -69,7 +70,13 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 
 ```powershell
 # 生成指定插件的包；managed-code 插件会先以 Release 配置构建
-pwsh -NoProfile -File tools\Pack-Plugin.ps1 -PluginName custom-wallpaper -UpdateCatalog
+pwsh -NoProfile -File tools\Pack-Plugin.ps1 -ArtifactName CustomWallpaper
+
+# 从各插件的 manifest、store.json 和当前 ZIP 生成 catalog
+pwsh -NoProfile -File tools\Generate-Catalog.ps1
+
+# 检查 catalog 是否仍可由源数据重建
+pwsh -NoProfile -File tools\Generate-Catalog.ps1 -Verify
 
 # 校验 catalog、目录命名、每个包的 SHA256/大小、ZIP 路径和 manifest
 pwsh -NoProfile -File tools\Validate-Packages.ps1
@@ -77,11 +84,13 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
 
 `Pack-Plugin.ps1` 会：
 
-1. 校验 manifest、catalog 版本和 artifactName；
+1. 校验 manifest schema、机器 ID、artifactName 和版本；
 2. 构建 managed-code 插件，或复制 data-specialized 插件资源；
 3. 生成根目录带 `plugin.json` 的 ZIP；
-4. 回写当前条目的 raw URL、SHA256、大小和生成时间；
+4. 拒绝覆盖同一 SemVer 下内容不同的既有 ZIP；
 5. 按数值 SemVer 在对应 artifact 目录保留最近三个 ZIP。
+
+`Generate-Catalog.ps1` 扫描 `plugins/<ArtifactName>/plugin.json`、`store.json` 和 `packages/<ArtifactName>/<ArtifactName>-<version>.zip`，生成 catalog 的展示字段、包地址、SHA256、大小和时间。`catalog.json` 是可重建的索引，新增插件与版本由各插件目录提供事实输入。
 
 脚本在临时目录完成构建和压缩，结束后清理暂存内容。包写入 `packages/<ArtifactName>/` 后，必须再次运行全量校验。
 
@@ -96,13 +105,13 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
     {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.1.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.1.zip",
+      "version": "0.1.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.2.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.1.1",
+          "version": "0.1.2",
           "date": "2026-08-29",
           "items": ["随机轮换、透明度和主题行为更新。"]
         }
@@ -116,6 +125,7 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
 
 约束如下：
 
+- `name` 为小写 kebab-case 机器 ID，最多 64 字符；
 - `artifactName` 为 ASCII 字母/数字，首字符为字母，至少包含一个大写字母，最多 64 字符；
 - 同一 catalog 内机器标识和 artifactName 均不区分大小写重复；
 - raw packageUrl 必须严格位于官方仓库 `main/packages/` 下，并与 artifactName 和 version 完全匹配；
@@ -143,7 +153,7 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
 
 ## 仓库维护核对
 
-- 新版本只增加或替换 `packages/<ArtifactName>/` 中的对应 ZIP，并更新 catalog；
+- 新版本先更新对应插件的 manifest/store，再生成 `packages/<ArtifactName>/` 中的新 ZIP 和 catalog；
 - 不创建新的插件 tag 或 GitHub Release；
 - 历史插件 Release/Tag 的清理属于仓库迁移维护动作，应在所有包迁移、下载复核和远端备份确认后执行；
 - 修改 ZIP 内容、压缩顺序或包元数据后必须重新生成 SHA256 和 `sizeBytes`；

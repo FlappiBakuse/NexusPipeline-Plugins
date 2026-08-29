@@ -11,8 +11,9 @@ NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件�
 前端公开资源必须位于插件根目录的 `web/` 下：
 
 ```text
-plugins/example/
+plugins/Example/
 ├── plugin.json
+├── store.json
 ├── data/                         # data-specialized 可选
 ├── ExamplePlugin.dll             # managed-code 可选
 └── web/
@@ -26,12 +27,14 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "name": "example",
+  "artifactName": "Example",
   "displayName": "示例扩展",
   "description": "提供额外的管理页面功能",
   "version": "0.1.0",
   "kind": "managed-code",
+  "minHostVersion": "0.11.5",
   "apiVersion": "1.3",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",

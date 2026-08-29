@@ -4,29 +4,29 @@
 
 ## 目录与命名
 
-- 插件目录使用稳定的小写机器标识，例如 `bettergi`、`maaend`。
-- `plugin.json` 中的 `name` 必须与插件目录名和 `catalog.json` 条目名称保持一致；发行包使用 catalog 中的正式 `artifactName`，不改动机器标识。
+- 插件机器标识使用稳定的小写 kebab-case，例如 `bettergi`、`maaend`。
+- 源码目录使用正式大小写的 `artifactName`；`plugin.json` 中的 `name` 是机器标识，`artifactName` 必须与源码目录名保持完全一致。
 - `artifactName` 使用 ASCII 字母和数字，首字符为字母，至少包含一个大写字母；正式包目录和 ZIP 文件名必须保持完全一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
-- 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 catalog 的 `minHostVersion`。
+- 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.3`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.1`。
 
 ## 开发流程
 
 1. 从现有插件中选择运行目录结构相近的参考实现。
-2. 创建 `plugins/<name>/`，按插件类型补齐 manifest、data 资源或 .NET 项目。
+2. 创建 `plugins/<ArtifactName>/`，按插件类型补齐 manifest、`store.json`、data 资源或 .NET 项目。
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查配置模板、源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.1`、`web/` 入口/样式、同源 DOM 行为和信任提示；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 更新插件版本；运行 `tools/Pack-Plugin.ps1 -PluginName <name> -UpdateCatalog` 生成包、回写 SHA256/大小并按 SemVer 保留最近三个包，再运行 `tools/Validate-Packages.ps1`。
+7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 和 `tools/Validate-Packages.ps1`。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.2 使用 API v1.2，并声明旧身份替换迁移。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.3 使用 API v1.2，并声明旧身份替换迁移。
 
 ## 发行包规则
 
 - 插件包直接提交到 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
-- 每个插件目录最多保留最近三个数值 SemVer 包；旧包仅用于仓库存档，插件平台不提供降级安装。
+- 每个 artifact 目录最多保留最近三个数值 SemVer 包；旧包仅用于仓库存档，插件平台不提供降级安装。
 - ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
 
@@ -39,14 +39,17 @@
 Get-ChildItem -LiteralPath . -Recurse -Filter *.json |
   ForEach-Object { Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json | Out-Null }
 
-# 生成一个插件的发行包并回写 catalog
-pwsh -NoProfile -File tools\Pack-Plugin.ps1 -PluginName <name> -UpdateCatalog
+# 生成一个插件的发行包
+pwsh -NoProfile -File tools\Pack-Plugin.ps1 -ArtifactName <ArtifactName>
+
+# 从各插件自身的 manifest/store/package 生成 catalog
+pwsh -NoProfile -File tools\Generate-Catalog.ps1
 
 # 校验全部 catalog 条目、包内容、摘要和目录保留数
 pwsh -NoProfile -File tools\Validate-Packages.ps1
 ```
 
-managed-code 插件还应在 `plugins/<name>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。
+managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，撤销信任后模块不再加载。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 
