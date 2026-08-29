@@ -6,6 +6,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.1.5",
+      "date": "2026-08-29",
+      "items": [
+        "设置页迁移至宿主统一自定义控件层，选择、数字、滑块和文件上传在不同浏览器中保持一致。",
+        "配合 NexusPipeline v0.11.9 的表面透明度 token，壁纸卡片与内嵌卡片保持统一显示效果。"
+      ]
+    },
+    {
       "version": "0.1.4",
       "date": "2026-08-29",
       "items": [
@@ -19,13 +27,6 @@
       "items": [
         "修复首次安装后无法认领外观配置提供方的问题。",
         "将单张壁纸限制调整为 8192 KB、数量限制调整为 32 张，并提示纵向图片显示风险。"
-      ]
-    },
-    {
-      "version": "0.1.2",
-      "date": "2026-08-29",
-      "items": [
-        "统一插件 manifest、源码目录和发行包的物理命名。"
       ]
     }
   ]

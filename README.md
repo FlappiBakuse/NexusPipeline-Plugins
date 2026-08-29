@@ -26,7 +26,7 @@ NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、
 packages/<ArtifactName>/<ArtifactName>-<version>.zip
 ```
 
-例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.3.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于源码目录、宿主安装目录、发行目录和 ZIP 文件名。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
+例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.4.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于源码目录、宿主安装目录、发行目录和 ZIP 文件名。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
 
 ## 仓库结构
 
@@ -70,7 +70,7 @@ NexusPipeline-Plugins/
 - 专项插件解析成功后，宿主会把主程序、参数、配置路径、日志路径和判断脚本保存到脚本实例 profile 中。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.3 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.4 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.4 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.5 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 
 ## 数据与安全

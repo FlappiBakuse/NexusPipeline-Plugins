@@ -1,48 +1,8 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-29T13:08:33Z",
+  "generatedAt": "2026-08-29T17:13:59Z",
   "plugins": [
-    {
-      "name": "bettergi",
-      "artifactName": "BetterGI",
-      "displayName": "BetterGI",
-      "gameName": "原神",
-      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
-      "authors": [],
-      "tags": [
-        "原神",
-        "专项插件",
-        "配置接管"
-      ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
-      "updatedAt": "2026-08-29",
-      "hasReadme": false,
-      "version": "0.1.1",
-      "kind": "data-specialized",
-      "apiVersion": "",
-      "capabilities": [],
-      "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.1.zip",
-      "sha256": "ef45b74507dfb76c66dcf795a39f2f6b2230a46a7c5c961ab92f59bcc530af71",
-      "sizeBytes": 3344,
-      "changelog": [
-        {
-          "version": "0.1.1",
-          "date": "2026-08-29",
-          "items": [
-            "统一插件 manifest、源码目录和发行包的物理命名。"
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-08-28",
-          "items": [
-            "首次提供 BetterGenshinImpact 专项配置接管。"
-          ]
-        }
-      ]
-    },
     {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
@@ -58,17 +18,25 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
       "updatedAt": "2026-08-29",
       "hasReadme": true,
-      "version": "0.1.4",
+      "version": "0.1.5",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.11.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.4.zip",
-      "sha256": "e0525969e6b39127d61495e155f81b16c7dc6ec2fe2288d96dfb6a6984cb1bfb",
-      "sizeBytes": 32574,
+      "minHostVersion": "0.11.9",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.5.zip",
+      "sha256": "ee6db3cf29b56a635644419667a246e91472cd07548714147e4cd236235eaf98",
+      "sizeBytes": 32682,
       "changelog": [
+        {
+          "version": "0.1.5",
+          "date": "2026-08-29",
+          "items": [
+            "设置页迁移至宿主统一自定义控件层，选择、数字、滑块和文件上传在不同浏览器中保持一致。",
+            "配合 NexusPipeline v0.11.9 的表面透明度 token，壁纸卡片与内嵌卡片保持统一显示效果。"
+          ]
+        },
         {
           "version": "0.1.4",
           "date": "2026-08-29",
@@ -83,13 +51,6 @@
           "items": [
             "修复首次安装后无法认领外观配置提供方的问题。",
             "将单张壁纸限制调整为 8192 KB、数量限制调整为 32 张，并提示纵向图片显示风险。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-29",
-          "items": [
-            "统一插件 manifest、源码目录和发行包的物理命名。"
           ]
         }
       ]
@@ -108,9 +69,9 @@
         "用户管理"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": true,
-      "version": "0.1.3",
+      "version": "0.1.4",
       "kind": "managed-code",
       "apiVersion": "1.2",
       "capabilities": [
@@ -119,13 +80,20 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.3.zip",
-      "sha256": "3c8b236d647aa51b6882a3f10fe4b8a81e5186d2c887069cc4c8c1ced36f5f43",
-      "sizeBytes": 51667,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.4.zip",
+      "sha256": "653756bf187af80371992a1ebe782bcfe4324aee4dd9f46af7a634bcb037dda7",
+      "sizeBytes": 52953,
       "replaces": [
         "hoyolab-checkin"
       ],
       "changelog": [
+        {
+          "version": "0.1.4",
+          "date": "2026-08-30",
+          "items": [
+            "米游社与 HoYoLAB 签到游戏统一使用宿主多选选择器，支持同时选择多个游戏。"
+          ]
+        },
         {
           "version": "0.1.3",
           "date": "2026-08-29",
@@ -182,6 +150,46 @@
           "items": [
             "在调度中心运行卡片中提供 PC 游戏窗口和模拟器画面的 360p 实时预览。",
             "每 5 秒更新一次，并随运行任务生命周期自动清理。"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bettergi",
+      "artifactName": "BetterGI",
+      "displayName": "BetterGI",
+      "gameName": "原神",
+      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
+      "authors": [],
+      "tags": [
+        "原神",
+        "专项插件",
+        "配置接管"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
+      "updatedAt": "2026-08-29",
+      "hasReadme": false,
+      "version": "0.1.1",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [],
+      "minHostVersion": "0.10.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.1.zip",
+      "sha256": "ef45b74507dfb76c66dcf795a39f2f6b2230a46a7c5c961ab92f59bcc530af71",
+      "sizeBytes": 3344,
+      "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-08-29",
+          "items": [
+            "统一插件 manifest、源码目录和发行包的物理命名。"
+          ]
+        },
+        {
+          "version": "0.1.0",
+          "date": "2026-08-28",
+          "items": [
+            "首次提供 BetterGenshinImpact 专项配置接管。"
           ]
         }
       ]

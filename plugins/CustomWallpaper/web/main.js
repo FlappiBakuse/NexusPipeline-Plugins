@@ -33,15 +33,15 @@ function renderCard(container, _context, host) {
           <button class="mode-toggle switch-control" type="button" aria-label="启用自定义壁纸" aria-pressed="false" data-state="off" data-toggle-text="false" data-wallpaper-enabled-toggle><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="sr-only" data-switch-state>已停用</span></button>
         </div>
         <div class="form-grid wallpaper-controls">
-          <label class="field wallpaper-mode-field"><span class="field-label">轮换方式</span><select data-wallpaper-mode>${allGames.map(item => `<option value="${item.value}">${item.label}</option>`).join("")}</select></label>
-          <label class="field" data-wallpaper-interval-field><span class="field-label">轮换间隔（分钟）</span><input type="number" min="1" max="1440" step="1" data-wallpaper-interval></label>
+          <div class="field wallpaper-mode-field"><span class="field-label">轮换方式</span>${host.controls.select({ id: "wallpaper-mode", value: "off", options: allGames, extra: "data-wallpaper-mode", ariaLabel: "轮换方式" })}</div>
+          <div class="field" data-wallpaper-interval-field><span class="field-label">轮换间隔（分钟）</span>${host.controls.number({ id: "wallpaper-interval", value: 30, extra: 'min="1" max="1440" step="1" data-wallpaper-interval', ariaLabel: "轮换间隔（分钟）" })}</div>
         </div>
         <div class="form-grid wallpaper-effects">
-          <label class="field"><span class="field-label">模糊（像素）</span><span class="wallpaper-range-row"><input type="range" min="0" max="40" step="1" data-wallpaper-blur><output data-wallpaper-blur-value></output></span></label>
-          <label class="field"><span class="field-label">变暗</span><span class="wallpaper-range-row"><input type="range" min="0" max="80" step="1" data-wallpaper-dim><output data-wallpaper-dim-value></output></span></label>
-          <label class="field"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row"><input type="range" min="0" max="50" step="1" data-wallpaper-surface-transparency><output data-wallpaper-surface-transparency-value></output></span></label>
+          <div class="field"><span class="field-label">模糊（像素）</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-blur", value: 0, extra: 'min="0" max="40" step="1" data-wallpaper-blur', ariaLabel: "模糊（像素）" })}<output data-wallpaper-blur-value></output></span></div>
+          <div class="field"><span class="field-label">变暗</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-dim", value: 20, extra: 'min="0" max="80" step="1" data-wallpaper-dim', ariaLabel: "变暗" })}<output data-wallpaper-dim-value></output></span></div>
+          <div class="field"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-surface-transparency", value: 0, extra: 'min="0" max="50" step="1" data-wallpaper-surface-transparency', ariaLabel: "卡片与侧边栏透明度" })}<output data-wallpaper-surface-transparency-value></output></span></div>
         </div>
-        <div class="wallpaper-upload-row"><label class="ghost wallpaper-file-label">添加壁纸<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-wallpaper-files></label><span class="muted">JPEG、PNG、WebP，单张最大 8192 KB</span></div>
+        <div class="wallpaper-upload-row">${host.controls.file({ id: "wallpaper-files", accept: "image/jpeg,image/png,image/webp", multiple: true, extra: "data-wallpaper-files", label: "添加壁纸" })}<span class="muted">JPEG、PNG、WebP，单张最大 8192 KB</span></div>
         <div class="wallpaper-list" data-wallpaper-list></div>
         <div class="wallpaper-card-footer"><span class="muted" data-wallpaper-help>最多 32 张，实例总容量 256 MiB。</span></div>
       </div>

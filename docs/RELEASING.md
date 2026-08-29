@@ -31,7 +31,7 @@ packages/
 ├── CustomWallpaper/
 │   ├── CustomWallpaper-0.1.2.zip
 │   ├── CustomWallpaper-0.1.3.zip
-│   └── CustomWallpaper-0.1.4.zip
+│   └── CustomWallpaper-0.1.5.zip
 ├── GameCheckIn/GameCheckIn-0.1.3.zip
 ├── LiveScreenshot/LiveScreenshot-0.1.0.zip
 ├── HoYoLABCheckIn/
@@ -114,19 +114,19 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
       "updatedAt": "2026-08-29",
       "hasReadme": true,
-      "version": "0.1.4",
+      "version": "0.1.5",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": ["frontend-module"],
-      "minHostVersion": "0.11.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.4.zip",
+      "minHostVersion": "0.11.9",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.5.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.1.4",
+          "version": "0.1.5",
           "date": "2026-08-29",
-          "items": ["主界面内容卡片会根据当前壁纸主题色自动适配浅色或深色表面。"]
+          "items": ["设置页迁移至宿主统一自定义控件层，壁纸卡片与内嵌卡片保持统一显示效果。"]
         }
       ]
     }

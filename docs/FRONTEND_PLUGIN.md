@@ -81,6 +81,7 @@ export function activate(host) {
 | `host.nav.register(item)` | 增加 `shell.nav` 导航项，item 包含 id、title、route、icon、order |
 | `host.slots.register(slot, renderer)` | 为稳定 UI slot 注册自定义 renderer |
 | `host.ui.query/save/action` | 读取或提交宿主声明式 UI 贡献 |
+| `host.controls.select/number/range/time/file/color` | 生成宿主统一的自定义交互控件；控件保留稳定的隐藏值载体与 `data-*` 标记 |
 | `host.lifecycle.*` | 订阅页面进入、离开、更新和释放事件 |
 | `host.appearance` | 注册主题、设置 CSS token、切换主题和管理壁纸 |
 | `host.executionPreview.capture(runId, signal)` | 读取宿主绑定的当前 PC 游戏客户区或模拟器画面；返回 360p JPEG 或等待状态 |
@@ -140,7 +141,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 3. 入口和样式文件通过 manifest 与安装包检查；
 4. 入口和样式文件位于插件目录的公开 `web/` 路径，并通过资源扩展名和文件存在性校验。
 
-前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。开发者应把前端代码与发行包一并纳入人工审查。
+前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。可见选择、数字、时间、文件和颜色交互应优先使用 `host.controls`；文件选择器和取色器的浏览器载体保持隐藏，range 使用可访问的语义 input 并由宿主 CSS 绘制视觉层。开发者应把前端代码与发行包一并纳入人工审查。
 
 ## 安全与资源边界
 

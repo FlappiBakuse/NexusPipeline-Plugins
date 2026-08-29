@@ -253,11 +253,15 @@ function New-Catalog([string]$generatedAt) {
         $entry.changelog = $changelog
         $entries.Add([pscustomobject]$entry)
     }
+    # The catalog is a user-facing index. Keep general-purpose plugins first,
+    # then data-specialized plugins, with a deterministic machine-id order in
+    # each group so generation is stable across machines and file systems.
+    $orderedEntries = @($entries | Sort-Object @{ Expression = { if ([string]$_.kind -eq "data-specialized") { 1 } else { 0 } } }, @{ Expression = { [string]$_.name }; Ascending = $true })
     return [pscustomobject][ordered]@{
         schemaVersion = 2
         repository = "FlappiBakuse/NexusPipeline-Plugins"
         generatedAt = $generatedAt
-        plugins = $entries.ToArray()
+        plugins = $orderedEntries
     }
 }
 

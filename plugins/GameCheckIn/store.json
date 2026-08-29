@@ -6,6 +6,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
   "changelog": [
     {
+      "version": "0.1.4",
+      "date": "2026-08-30",
+      "items": [
+        "米游社与 HoYoLAB 签到游戏统一使用宿主多选选择器，支持同时选择多个游戏。"
+      ]
+    },
+    {
       "version": "0.1.3",
       "date": "2026-08-29",
       "items": [

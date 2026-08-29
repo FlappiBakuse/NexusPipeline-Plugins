@@ -93,6 +93,23 @@ function Assert-ManifestsAndDataContracts {
     }
 }
 
+function Assert-CatalogOrder($catalog) {
+    $entries = @($catalog.plugins)
+    $previousGroup = -1
+    $previousName = ""
+    foreach ($entry in $entries) {
+        $group = if ([string]$entry.kind -eq "data-specialized") { 1 } else { 0 }
+        if ($group -lt $previousGroup) {
+            throw "catalog 插件顺序必须为通用插件在前、专项插件在后"
+        }
+        if ($group -eq $previousGroup -and [string]::Compare([string]$entry.name, $previousName, [StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            throw "catalog 同组插件必须按机器 ID 稳定排序：$previousName / $($entry.name)"
+        }
+        $previousGroup = $group
+        $previousName = [string]$entry.name
+    }
+}
+
 function Invoke-JavaScriptSyntaxChecks {
     $files = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File | Where-Object {
         $_.Extension -in @(".js", ".mjs") -and $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]'
@@ -136,6 +153,9 @@ try {
         Read-Json $file.FullName | Out-Null
     }
     Write-Output "[Test-Repository] JSON 语法：$($jsonFiles.Count) 个文件通过"
+
+    Assert-CatalogOrder (Read-Json $catalogPath)
+    Write-Output "[Test-Repository] catalog 通用插件优先顺序通过"
 
     Assert-ManifestsAndDataContracts
     Write-Output "[Test-Repository] manifest 与 data-specialized contract 通过"
