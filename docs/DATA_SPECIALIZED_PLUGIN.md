@@ -40,7 +40,7 @@ plugins/Example/data/config-template/
   "description": "示例专项脚本实例配置接管",
   "version": "0.1.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.11.5",
+  "minHostVersion": "0.11.6",
   "capabilities": [],
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",

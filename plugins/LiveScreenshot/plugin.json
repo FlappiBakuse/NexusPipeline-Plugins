@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "name": "live-screenshot",
+  "artifactName": "LiveScreenshot",
+  "displayName": "实时截图窗口",
+  "description": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.11.6",
+  "apiVersion": "1.4",
+  "entryAssembly": "NexusPipeline.Plugin.LiveScreenshot.dll",
+  "entryType": "NexusPipeline.Plugin.LiveScreenshot.EntryPoint",
+  "capabilities": [
+    "frontend-module"
+  ],
+  "frontend": {
+    "apiVersion": "1.2",
+    "entry": "web/main.js",
+    "styles": [
+      "web/style.css"
+    ]
+  }
+}

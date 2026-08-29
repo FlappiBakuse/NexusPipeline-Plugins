@@ -1,0 +1,10 @@
+.live-screenshot-card { display: grid; min-width: 0; height: 100%; grid-template-rows: auto minmax(180px, 1fr) auto; gap: 10px; padding: 13px; border: 1px solid var(--border); border-radius: 8px; background: var(--log-bg); }
+.live-screenshot-heading, .live-screenshot-footer { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 8px; }
+.live-screenshot-heading strong { font-size: 12px; }
+.live-screenshot-footer { font-size: 11px; }
+.live-screenshot-stage { display: grid; min-width: 0; min-height: 180px; place-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: #090c12; }
+.live-screenshot-image { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.live-screenshot-error { color: var(--bad); }
+@media (max-width: 980px) {
+  .live-screenshot-stage { min-height: 220px; }
+}

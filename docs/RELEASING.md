@@ -18,6 +18,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` |
 | `game-checkin` | `GameCheckIn` |
 | `custom-wallpaper` | `CustomWallpaper` |
+| `live-screenshot` | `LiveScreenshot` |
 | 历史 `hoyolab-checkin` | `HoYoLABCheckIn` |
 
 `plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录、宿主安装目录、`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与源码目录完全一致。
@@ -28,10 +29,11 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 packages/
 ├── BetterGI/BetterGI-0.1.1.zip
 ├── CustomWallpaper/
-│   ├── CustomWallpaper-0.1.0.zip
 │   ├── CustomWallpaper-0.1.1.zip
-│   └── CustomWallpaper-0.1.2.zip
+│   ├── CustomWallpaper-0.1.2.zip
+│   └── CustomWallpaper-0.1.3.zip
 ├── GameCheckIn/GameCheckIn-0.1.3.zip
+├── LiveScreenshot/LiveScreenshot-0.1.0.zip
 ├── HoYoLABCheckIn/
 │   ├── HoYoLABCheckIn-0.1.0.zip
 │   └── HoYoLABCheckIn-0.1.1.zip
@@ -105,8 +107,8 @@ pwsh -NoProfile -File tools\Validate-Packages.ps1
     {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.1.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.2.zip",
+      "version": "0.1.3",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.3.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [

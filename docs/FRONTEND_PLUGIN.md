@@ -1,10 +1,10 @@
-# Frontend API 1.1 插件指南
+# Frontend API 1.2 插件指南
 
-NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在用户确认信任后加载同源 JavaScript/CSS，增加页面、导航、路由、主题和壁纸能力。
+NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在用户确认信任后加载同源 JavaScript/CSS，增加页面、导航、路由、主题、壁纸和运行画面预览能力。
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示或插件 Web API 的插件使用宿主 Plugin API v1.3。前端 API 1.1 增加 `settings.cards` slot 和服务端同步外观访问。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示或插件 Web API 的插件使用宿主 Plugin API v1.4。前端 API 1.2 增加调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面访问和服务端同步外观访问。
 
 ## 目录与 manifest
 
@@ -34,13 +34,13 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "description": "提供额外的管理页面功能",
   "version": "0.1.0",
   "kind": "managed-code",
-  "minHostVersion": "0.11.5",
-  "apiVersion": "1.3",
+  "minHostVersion": "0.11.6",
+  "apiVersion": "1.4",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
   "frontend": {
-    "apiVersion": "1.1",
+    "apiVersion": "1.2",
     "entry": "web/main.js",
     "styles": ["web/style.css"]
   }
@@ -83,6 +83,7 @@ export function activate(host) {
 | `host.ui.query/save/action` | 读取或提交宿主声明式 UI 贡献 |
 | `host.lifecycle.*` | 订阅页面进入、离开、更新和释放事件 |
 | `host.appearance` | 注册主题、设置 CSS token、切换主题和管理壁纸 |
+| `host.executionPreview.capture(runId, signal)` | 读取宿主绑定的当前 PC 游戏客户区或模拟器画面；返回 360p JPEG 或等待状态 |
 
 `renderer(container, context, host)` 可以直接使用 DOM API；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。
 
@@ -96,7 +97,8 @@ users.list.badges               users.binding.sections
 users.global.sections           scripts.list.badges
 scripts.editor.sections         queues.list.badges
 queues.editor.sections          dispatch.cards
-dispatch.running.badges         dispatch.run.sections
+dispatch.running.badges         dispatch.running.sidecar
+dispatch.run.sections
 history.list.badges             history.detail.sections
 settings.sections               settings.cards
 shell.nav
@@ -104,7 +106,7 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API v1.3 配合方式
+## Plugin API v1.4 配合方式
 
 managed-code 插件在初始化时检查 `context is IPluginHostContextV1_3`，再按需使用：
 
@@ -125,7 +127,9 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 `host.appearance.wallpaperStore` 提供 `get()`、`upload(blob, metadata)`、`remove(id)`、`save(config)`、`savePalette(id, tokens)`、`startup()`、`refresh()` 和 `subscribe(callback)`。服务端保存壁纸文件、显示顺序、当前资源、轮换模式、模糊和变暗参数；所有浏览器通过 revision 同步。`startup()` 只用于启动 Web 时推进一次 `startup` 轮换游标。
 
-宿主限制每张壁纸 20 MiB、总容量 128 MiB、最多 20 张，允许 JPEG、PNG、WebP，并校验 MIME、文件头和 SHA256。自定义壁纸启用后仍可使用宿主内置主题选择；配色应使用 `host.appearance.derivePalette(blob)` 生成完整实色 token，再调用 `savePalette` 保存。
+宿主限制每张壁纸 8192 KB、总容量 256 MiB、最多 32 张，允许 JPEG、PNG、WebP，并校验 MIME、文件头和 SHA256。自定义壁纸启用后仍可使用宿主内置主题选择；配色应使用 `host.appearance.derivePalette(blob)` 生成完整实色 token，再调用 `savePalette` 保存。
+
+运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式只读取宿主按进程识别的游戏客户区，模拟器模式使用宿主冻结的 Generic ADB 或 MuMuManager 驱动；插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
 
 ## 信任与运行条件
 
@@ -150,7 +154,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与 `IPluginHostContextV1_3` 使用情况一致；`game-checkin` 使用 Plugin API v1.2；
+- managed-code 插件 API 版本与宿主当前 Plugin API v1.4 兼容；需要通用扩展端口的插件继续检查 `IPluginHostContextV1_3`；`game-checkin` 使用 Plugin API v1.2；
 - `activate(host)` 在宿主页面加载，停用、撤销信任和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API、UI slot、主题/壁纸和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；

@@ -4,6 +4,10 @@ const allGames = [
   { value: "off", label: "不轮换" },
 ];
 
+const MAX_ASSET_BYTES = 8 * 1024 * 1024;
+const MAX_ASSETS = 32;
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>\"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[char]));
 }
@@ -37,9 +41,9 @@ function renderCard(container, _context, host) {
           <label class="field"><span class="field-label">变暗</span><span class="wallpaper-range-row"><input type="range" min="0" max="80" step="1" data-wallpaper-dim><output data-wallpaper-dim-value></output></span></label>
           <label class="field"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row"><input type="range" min="0" max="50" step="1" data-wallpaper-surface-transparency><output data-wallpaper-surface-transparency-value></output></span></label>
         </div>
-        <div class="wallpaper-upload-row"><label class="ghost wallpaper-file-label">添加壁纸<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-wallpaper-files></label><span class="muted">JPEG、PNG、WebP，单张最大 20 MiB</span></div>
+        <div class="wallpaper-upload-row"><label class="ghost wallpaper-file-label">添加壁纸<input type="file" accept="image/jpeg,image/png,image/webp" multiple data-wallpaper-files></label><span class="muted">JPEG、PNG、WebP，单张最大 8192 KB</span></div>
         <div class="wallpaper-list" data-wallpaper-list></div>
-        <div class="wallpaper-card-footer"><span class="muted" data-wallpaper-help>最多 20 张，实例总容量 128 MiB。</span></div>
+        <div class="wallpaper-card-footer"><span class="muted" data-wallpaper-help>最多 32 张，实例总容量 256 MiB。</span></div>
       </div>
     </div>
   </section>`;
@@ -242,6 +246,35 @@ function renderCard(container, _context, host) {
     let failedCount = 0;
     let paletteWarningCount = 0;
     for (const file of files) {
+      if (!ALLOWED_TYPES.has(String(file.type || "").toLowerCase())) {
+        failedCount++;
+        const message = "壁纸仅支持 JPEG、PNG 或 WebP";
+        help.textContent = message;
+        host.ui.toast(message, "error");
+        continue;
+      }
+      if (file.size > MAX_ASSET_BYTES) {
+        failedCount++;
+        const message = "壁纸文件不能超过 8192 KB";
+        help.textContent = message;
+        host.ui.toast(message, "error");
+        continue;
+      }
+      if ((snapshot?.assets?.length || 0) >= MAX_ASSETS) {
+        failedCount++;
+        const message = "壁纸数量不能超过 32 张";
+        help.textContent = message;
+        host.ui.toast(message, "error");
+        continue;
+      }
+      try {
+        const bitmap = await createImageBitmap(file);
+        const portrait = bitmap.height > bitmap.width;
+        bitmap.close?.();
+        if (portrait) host.ui.toast("该图片可能在电脑上显示效果不佳", "warn");
+      } catch {
+        // 图片尺寸解析失败交由服务端图片头校验处理。
+      }
       let uploaded;
       try {
         setStatus(`上传中：${file.name}`, "blue");

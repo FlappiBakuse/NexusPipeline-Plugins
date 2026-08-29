@@ -3,9 +3,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>NexusPipeline.Plugin.CustomWallpaper</RootNamespace>
-    <AssemblyName>NexusPipeline.Plugin.CustomWallpaper</AssemblyName>
-    <Version>0.1.3</Version>
+    <RootNamespace>NexusPipeline.Plugin.LiveScreenshot</RootNamespace>
+    <AssemblyName>NexusPipeline.Plugin.LiveScreenshot</AssemblyName>
+    <Version>0.1.0</Version>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
