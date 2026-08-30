@@ -4,7 +4,7 @@
   "artifactName": "GameCheckIn",
   "displayName": "游戏自动签到",
   "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到，并提供用户列表聚合签到状态。",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "kind": "managed-code",
   "minHostVersion": "0.11.3",
   "apiVersion": "1.2",

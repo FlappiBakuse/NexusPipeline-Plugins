@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>NexusPipeline.Plugin.LiveScreenshot</RootNamespace>
     <AssemblyName>NexusPipeline.Plugin.LiveScreenshot</AssemblyName>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 

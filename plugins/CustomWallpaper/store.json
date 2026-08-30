@@ -1,10 +1,22 @@
 {
   "schemaVersion": 1,
   "gameName": "通用外观",
-  "authors": [],
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
   "tags": ["外观", "壁纸", "主题"],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
   "changelog": [
+    {
+      "version": "0.1.6",
+      "date": "2026-08-30",
+      "items": [
+        "补充官方插件作者元数据，不改变插件运行行为。"
+      ]
+    },
     {
       "version": "0.1.5",
       "date": "2026-08-29",
@@ -19,14 +31,6 @@
       "items": [
         "主界面内容卡片会根据当前壁纸主题色自动适配浅色或深色表面。",
         "插件包现在包含展示元数据与 README，插件详情页可直接查看。"
-      ]
-    },
-    {
-      "version": "0.1.3",
-      "date": "2026-08-29",
-      "items": [
-        "修复首次安装后无法认领外观配置提供方的问题。",
-        "将单张壁纸限制调整为 8192 KB、数量限制调整为 32 张，并提示纵向图片显示风险。"
       ]
     }
   ]

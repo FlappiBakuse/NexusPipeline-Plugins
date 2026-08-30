@@ -1,10 +1,22 @@
 {
   "schemaVersion": 1,
   "gameName": "明日方舟：终末地",
-  "authors": [],
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
   "tags": ["明日方舟：终末地", "专项插件", "模拟器"],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
   "changelog": [
+    {
+      "version": "0.1.2",
+      "date": "2026-08-30",
+      "items": [
+        "补充官方插件作者元数据，不改变插件运行行为。"
+      ]
+    },
     {
       "version": "0.1.1",
       "date": "2026-08-29",

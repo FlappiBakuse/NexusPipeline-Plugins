@@ -17,6 +17,30 @@ function Assert-ValidArtifactName([string]$value) {
     return -not [string]::IsNullOrWhiteSpace($value) -and $value.Length -le 64 -and $value -match '^[A-Za-z][A-Za-z0-9]*$' -and $value -cmatch '[A-Z]'
 }
 
+function Normalize-Authors($value, [string]$source) {
+    if ($null -eq $value) {
+        throw "缺少 authors：$source"
+    }
+    $entries = @($value)
+    if ($entries.Count -lt 1 -or $entries.Count -gt 8) {
+        throw "authors 数量无效：$source"
+    }
+    $normalized = [System.Collections.Generic.List[string]]::new()
+    $separator = [char]0x1f
+    foreach ($entry in $entries) {
+        if ($null -eq $entry) {
+            throw "作者条目无效：$source"
+        }
+        $name = ([string]$entry.name).Trim()
+        $url = if ($entry.PSObject.Properties.Name -contains "url") { ([string]$entry.url).Trim() } else { "" }
+        if ([string]::IsNullOrWhiteSpace($name) -or $name.Length -gt 64 -or $name.Contains('<') -or $name.Contains('>')) {
+            throw "作者条目无效：$source"
+        }
+        $normalized.Add("$name$separator$url")
+    }
+    return $normalized.ToArray()
+}
+
 if (-not (Test-Path -LiteralPath $CatalogPath)) { throw "缺少 catalog.json：$CatalogPath" }
 if (-not (Test-Path -LiteralPath $packagesRoot)) { throw "缺少 packages 目录：$packagesRoot" }
 $catalog = Read-Json $CatalogPath
@@ -56,6 +80,21 @@ foreach ($entry in @($catalog.plugins)) {
         $manifestMismatch = [int]$manifest.schemaVersion -ne 2 -or $manifest.name -cne $entry.name -or $manifest.artifactName -cne $artifact -or $manifest.version -cne $entry.version
         if ($manifestMismatch) {
             throw "ZIP manifest 与 catalog 不一致：$packagePath"
+        }
+        $storeEntry = $archive.Entries | Where-Object { $_.FullName -eq 'store.json' } | Select-Object -First 1
+        if ($null -eq $storeEntry) { throw "ZIP 根目录缺少 store.json：$packagePath" }
+        $storeReader = [System.IO.StreamReader]::new($storeEntry.Open())
+        try { $store = $storeReader.ReadToEnd() | ConvertFrom-Json } finally { $storeReader.Dispose() }
+        if ([int]$store.schemaVersion -ne 1) { throw "ZIP store.json schemaVersion 无效：$packagePath" }
+        $catalogAuthors = @(Normalize-Authors $entry.authors "catalog $($entry.name)")
+        $packageAuthors = @(Normalize-Authors $store.authors "ZIP $packagePath")
+        if ($catalogAuthors.Count -ne $packageAuthors.Count) {
+            throw "ZIP store.json authors 与 catalog 不一致：$packagePath"
+        }
+        for ($authorIndex = 0; $authorIndex -lt $catalogAuthors.Count; $authorIndex++) {
+            if ($catalogAuthors[$authorIndex] -cne $packageAuthors[$authorIndex]) {
+                throw "ZIP store.json authors 与 catalog 不一致：$packagePath"
+            }
         }
     }
     finally { $archive.Dispose() }

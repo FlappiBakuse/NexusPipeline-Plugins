@@ -9,6 +9,7 @@
 - `artifactName` 使用 ASCII 字母和数字，首字符为字母，至少包含一个大写字母；正式包目录和 ZIP 文件名必须保持完全一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
+- `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
 - `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选配置模板；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.4`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.2`。
 
 ## 开发流程

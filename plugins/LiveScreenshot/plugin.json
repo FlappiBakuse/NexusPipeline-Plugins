@@ -4,7 +4,7 @@
   "artifactName": "LiveScreenshot",
   "displayName": "实时截图窗口",
   "description": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "kind": "managed-code",
   "minHostVersion": "0.11.7",
   "apiVersion": "1.4",

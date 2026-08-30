@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-29T17:13:59Z",
+  "generatedAt": "2026-08-30T01:47:24Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -9,26 +9,38 @@
       "displayName": "自定义壁纸",
       "gameName": "通用外观",
       "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "外观",
         "壁纸",
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": true,
-      "version": "0.1.5",
+      "version": "0.1.6",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.11.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.5.zip",
-      "sha256": "ee6db3cf29b56a635644419667a246e91472cd07548714147e4cd236235eaf98",
-      "sizeBytes": 32682,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.6.zip",
+      "sha256": "18ef13b52a17692631f1cb4045bb901193a0d6a0b1fa97d041f6aa95f904bf6c",
+      "sizeBytes": 32636,
       "changelog": [
+        {
+          "version": "0.1.6",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.5",
           "date": "2026-08-29",
@@ -44,14 +56,6 @@
             "主界面内容卡片会根据当前壁纸主题色自动适配浅色或深色表面。",
             "插件包现在包含展示元数据与 README，插件详情页可直接查看。"
           ]
-        },
-        {
-          "version": "0.1.3",
-          "date": "2026-08-29",
-          "items": [
-            "修复首次安装后无法认领外观配置提供方的问题。",
-            "将单张壁纸限制调整为 8192 KB、数量限制调整为 32 张，并提示纵向图片显示风险。"
-          ]
         }
       ]
     },
@@ -61,7 +65,12 @@
       "displayName": "游戏自动签到",
       "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
       "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到，并提供用户列表聚合签到状态。",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "签到",
         "米游社",
@@ -71,7 +80,7 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
       "updatedAt": "2026-08-30",
       "hasReadme": true,
-      "version": "0.1.4",
+      "version": "0.1.5",
       "kind": "managed-code",
       "apiVersion": "1.2",
       "capabilities": [
@@ -80,13 +89,20 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.4.zip",
-      "sha256": "653756bf187af80371992a1ebe782bcfe4324aee4dd9f46af7a634bcb037dda7",
-      "sizeBytes": 52953,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.5.zip",
+      "sha256": "e33523e144ecde252f19fd4cb1a32420d0ad197789e11606f4fb428bf10da5e1",
+      "sizeBytes": 52995,
       "replaces": [
         "hoyolab-checkin"
       ],
       "changelog": [
+        {
+          "version": "0.1.5",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.4",
           "date": "2026-08-30",
@@ -100,13 +116,6 @@
           "items": [
             "统一插件 manifest、源码目录和发行包的物理命名。"
           ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-28",
-          "items": [
-            "提供米游社与 HoYoLAB 多游戏签到及用户列表聚合状态。"
-          ]
         }
       ]
     },
@@ -116,16 +125,21 @@
       "displayName": "实时截图窗口",
       "gameName": "通用游戏与安卓模拟器",
       "description": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "实时预览",
         "模拟器",
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/LiveScreenshot",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": true,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
@@ -133,10 +147,17 @@
         "frontend-module"
       ],
       "minHostVersion": "0.11.7",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.1.zip",
-      "sha256": "656c5b2ff89b54eae01e0a9b4e5529cb0c781f3e87502e8debbc9385e5037332",
-      "sizeBytes": 26998,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.2.zip",
+      "sha256": "eaf950ba332be15792bdf9a7dfbd01624c89099496b7ceff1fcd84ab2aac3eab",
+      "sizeBytes": 28257,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-08-29",
@@ -160,24 +181,36 @@
       "displayName": "BetterGI",
       "gameName": "原神",
       "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "原神",
         "专项插件",
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": false,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.1.zip",
-      "sha256": "ef45b74507dfb76c66dcf795a39f2f6b2230a46a7c5c961ab92f59bcc530af71",
-      "sizeBytes": 3344,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.1.2.zip",
+      "sha256": "9c5883f7497803176117d0a458482696d7d4393124949547d8d0707bc393a448",
+      "sizeBytes": 3887,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-08-29",
@@ -200,26 +233,38 @@
       "displayName": "MaaEnd",
       "gameName": "明日方舟：终末地",
       "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "明日方舟：终末地",
         "专项插件",
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": false,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.1.zip",
-      "sha256": "b86d7b5dd759f39b24481e9443d4830b890c85ea56263a012ce23d065be39014",
-      "sizeBytes": 7227,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.2.zip",
+      "sha256": "100cb75cb392377f5e4ec7272fd59a8a691ed712c8ca846d3b82002ecc442788",
+      "sizeBytes": 7798,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-08-29",
@@ -242,24 +287,36 @@
       "displayName": "March7thAssistant",
       "gameName": "崩坏：星穹铁道",
       "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "崩坏：星穹铁道",
         "专项插件",
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/March7thAssistant",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": false,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.1.1.zip",
-      "sha256": "5fb3b3728911c6a102104229890ea83e8116f49246a37bea56b79f5c7aa602c7",
-      "sizeBytes": 1369,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.1.2.zip",
+      "sha256": "ab0ba843a3095ddc68b112fae8a18acb26b2197df797f42cedf8211bbaec033a",
+      "sizeBytes": 1927,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-08-29",
@@ -282,24 +339,36 @@
       "displayName": "ZenlessZoneZeroOneDragon",
       "gameName": "绝区零",
       "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-      "authors": [],
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
       "tags": [
         "绝区零",
         "专项插件",
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-08-30",
       "hasReadme": false,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.1.zip",
-      "sha256": "f5a64febcee3f683575758d99768df89e3ccbcc2a49b19b770a1c3543089774f",
-      "sizeBytes": 1430,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.2.zip",
+      "sha256": "2a49909326c7f3b601f30f938574f7734a8d5e473f94b6482c29a93580107211",
+      "sizeBytes": 1984,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-08-30",
+          "items": [
+            "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-08-29",

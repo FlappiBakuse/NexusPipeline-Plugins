@@ -100,21 +100,21 @@ function Test-HttpsUrl([string]$value) {
 }
 
 function Read-PresentationMetadata($store, [string]$pluginDirectory, [string]$artifactName) {
-    $authors = @()
-    if ($store.PSObject.Properties.Name -contains "authors") {
-        $authorEntries = @($store.authors)
-        if ($authorEntries.Count -gt 8) {
-            throw "插件 $artifactName 的 authors 数量超过 8"
-        }
-        $authors = @($authorEntries | ForEach-Object {
-            $name = [string]$_.name
-            $url = if ($_.PSObject.Properties.Name -contains "url") { [string]$_.url } else { "" }
-            if ([string]::IsNullOrWhiteSpace($name) -or $name.Trim().Length -gt 64 -or $name.Contains('<') -or $name.Contains('>') -or -not (Test-HttpsUrl $url)) {
-                throw "插件 $artifactName 的作者元数据无效"
-            }
-            [pscustomobject][ordered]@{ name = $name.Trim(); url = $url.Trim() }
-        })
+    if ($store.PSObject.Properties.Name -notcontains "authors" -or $null -eq $store.authors) {
+        throw "插件 $artifactName 的 store.json 必须提供 authors"
     }
+    $authorEntries = @($store.authors)
+    if ($authorEntries.Count -lt 1 -or $authorEntries.Count -gt 8) {
+        throw "插件 $artifactName 的 authors 数量必须为 1 至 8"
+    }
+    $authors = @($authorEntries | ForEach-Object {
+        $name = [string]$_.name
+        $url = if ($_.PSObject.Properties.Name -contains "url") { [string]$_.url } else { "" }
+        if ([string]::IsNullOrWhiteSpace($name) -or $name.Trim().Length -gt 64 -or $name.Contains('<') -or $name.Contains('>') -or -not (Test-HttpsUrl $url)) {
+            throw "插件 $artifactName 的作者元数据无效"
+        }
+        [pscustomobject][ordered]@{ name = $name.Trim(); url = $url.Trim() }
+    })
 
     $tags = @()
     if ($store.PSObject.Properties.Name -contains "tags") {
