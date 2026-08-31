@@ -37,11 +37,11 @@ NexusPipeline-Plugins/
 │   ├── plugin.json                      # 元数据与入口声明
 │   ├── store.json                        # 商店展示元数据与更新记录
 │   ├── data/                            # data-specialized 插件资源
+│   │   ├── resolve.json                 # 脚本根目录推导规则
+│   │   ├── judge.js 或 judge.py         # 运行中完成/失败判定
+│   │   └── config-template/             # 可选默认配置
 │   ├── web/                             # 可选 Frontend API 1.2 模块、样式和静态资源
-│   └── src/                             # managed-code 插件项目
-│       ├── resolve.json                 # 脚本根目录推导规则
-│       ├── judge.js 或 judge.py         # 运行中完成/失败判定
-│       └── config-template/             # 可选默认配置
+│   └── src/                             # managed-code 插件项目（.csproj 与 C# 源码）
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
 ├── tools/
@@ -70,7 +70,7 @@ NexusPipeline-Plugins/
 - 专项插件解析成功后，宿主会把主程序、参数、配置路径、日志路径和判断脚本保存到脚本实例 profile 中。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.4 通过 `replaces: ["hoyolab-checkin"]` 迁移旧插件身份，`custom-wallpaper` v0.1.5 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.6 使用全局用户与用户运行事件能力，`custom-wallpaper` v0.1.5 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 
 ## 数据与安全

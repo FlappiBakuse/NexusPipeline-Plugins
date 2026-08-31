@@ -16,9 +16,6 @@ public sealed class UserSettings
     [JsonPropertyName("osGames")]
     public List<string> OsGames { get; set; } = new();
 
-    [JsonPropertyName("games")]
-    public List<string>? LegacyGames { get; set; }
-
     [JsonPropertyName("cnDeviceId")]
     public string CnDeviceId { get; set; } = "";
 
@@ -30,11 +27,6 @@ public sealed class UserSettings
 
     public void Normalize()
     {
-        if (LegacyGames is not null)
-        {
-            OsGames = LegacyGames;
-            CnGames = new List<string>();
-        }
         CnGames = NormalizeGames(CnGames);
         OsGames = NormalizeGames(OsGames);
         if (string.IsNullOrWhiteSpace(CnDeviceId) || !Guid.TryParse(CnDeviceId, out _))
@@ -46,11 +38,11 @@ public sealed class UserSettings
         {
             if (value is null) continue;
             string normalizedKey = NormalizeStateKey(key);
+            if (string.IsNullOrWhiteSpace(normalizedKey)) continue;
             normalized[normalizedKey] = value;
         }
         GameState = normalized;
         SchemaVersion = 2;
-        LegacyGames = null;
     }
 
     private static List<string> NormalizeGames(IEnumerable<string>? values) =>
@@ -63,15 +55,14 @@ public sealed class UserSettings
     internal static string NormalizeStateKey(string key)
     {
         string[] parts = (key ?? "").Split(':', 2, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 2 && parts[0].Equals("cn", StringComparison.OrdinalIgnoreCase))
+        if (parts.Length != 2
+            || (!parts[0].Equals("cn", StringComparison.OrdinalIgnoreCase)
+                && !parts[0].Equals("os", StringComparison.OrdinalIgnoreCase))
+            || !GameDefinitions.IsKnown(parts[1]))
         {
-            return "cn:" + parts[1].ToLowerInvariant();
+            return "";
         }
-        if (parts.Length == 2 && parts[0].Equals("os", StringComparison.OrdinalIgnoreCase))
-        {
-            return "os:" + parts[1].ToLowerInvariant();
-        }
-        return "os:" + (key ?? "").Trim().ToLowerInvariant();
+        return parts[0].ToLowerInvariant() + ":" + parts[1].ToLowerInvariant();
     }
 }
 

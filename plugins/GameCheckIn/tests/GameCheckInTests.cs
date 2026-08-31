@@ -8,23 +8,23 @@ namespace NexusPipeline.Plugin.GameCheckIn.Tests;
 public sealed class GameCheckInTests
 {
     [Fact]
-    public void Normalize_MigratesLegacyGamesToHoYoLabAndPrefixesStateKeys()
+    public void Normalize_ValidatesCurrentGamesAndPrefixesStateKeys()
     {
         var settings = new UserSettings
         {
-            LegacyGames = new List<string> { "GI", "zzz", "unknown" },
+            CnGames = new List<string> { "GI" },
+            OsGames = new List<string> { "zzz", "unknown" },
             GameState = new Dictionary<string, GameState>
             {
-                ["GI"] = new GameState { LastSuccessDate = "2026-08-28" },
+                ["CN:GI"] = new GameState { LastSuccessDate = "2026-08-28" },
             },
         };
 
         settings.Normalize();
 
-        Assert.Empty(settings.CnGames);
-        Assert.Equal(new[] { "gi", "zzz" }, settings.OsGames);
-        Assert.True(settings.GameState.ContainsKey("os:gi"));
-        Assert.Null(settings.LegacyGames);
+        Assert.Equal(new[] { "gi" }, settings.CnGames);
+        Assert.Equal(new[] { "zzz" }, settings.OsGames);
+        Assert.True(settings.GameState.ContainsKey("cn:gi"));
         Assert.True(Guid.TryParse(settings.CnDeviceId, out _));
     }
 

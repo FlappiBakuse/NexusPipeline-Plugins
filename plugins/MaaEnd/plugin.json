@@ -9,7 +9,6 @@
   "kind": "data-specialized",
   "minHostVersion": "0.10.8",
   "capabilities": ["emulator"],
-  "supportsEmulator": true,
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configTemplate": "data/config-template"

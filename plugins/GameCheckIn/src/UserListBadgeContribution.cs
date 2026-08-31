@@ -17,7 +17,6 @@ internal sealed class UserListBadgeContribution
         settings.Normalize();
         string? cn = await _context.UserData.GetSecretAsync(userId, "cnCookie", cancellationToken).ConfigureAwait(false);
         string? os = await _context.UserData.GetSecretAsync(userId, "osCookie", cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(os)) os = await _context.UserData.GetSecretAsync(userId, "cookie", cancellationToken).ConfigureAwait(false);
         return Build(settings, cn, os, CheckInService.LocalDate());
     }
 

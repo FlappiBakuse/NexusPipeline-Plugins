@@ -52,7 +52,7 @@ plugins/Example/data/config-template/
 
 | 字段 | 用途 | 约束 |
 |---|---|---|
-| `schemaVersion` | manifest 格式版本 | 当前仓库使用 `2`；宿主兼容旧版 `1` |
+| `schemaVersion` | manifest 格式版本 | 当前仓库与宿主均使用 `2` |
 | `name` | 稳定机器标识，保存到脚本实例 `PluginType` | 必须使用小写 kebab-case：`^[a-z0-9]+(?:-[a-z0-9]+)*$` |
 | `artifactName` | 源码、安装和发行文件系统身份 | ASCII 字母/数字，首字符为字母，至少包含一个大写字母；必须与源码目录完全一致 |
 | `displayName` | UI 展示名称 | 建议提供 |
@@ -62,14 +62,13 @@ plugins/Example/data/config-template/
 | `minHostVersion` | 最低宿主版本 | 使用三段 SemVer |
 | `kind` | 插件类型 | 数据化专项插件使用 `data-specialized` |
 | `capabilities` | 能力 key 列表 | 例如 `emulator` |
-| `supportsEmulator` | 旧版兼容字段 | 为 `true` 时也会映射为 `emulator`，新插件优先使用 `capabilities` |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
 | `configTemplate` | 默认配置模板目录，相对插件目录 | 可选，目录存在时才启用 |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
-`name` 参与脚本实例、catalog 和运行时状态关联；`artifactName` 参与文件系统路径和发行包名称。改动 `name` 会使旧脚本实例失去原有专项身份，应把它当作迁移操作处理。改动 `artifactName` 需要同步源码目录、包目录和 ZIP 名称。
+`name` 参与脚本实例、catalog 和运行时状态关联；`artifactName` 参与文件系统路径和发行包名称。改动 `name` 会使现有脚本实例无法继续关联，需要按新插件身份重新配置。改动 `artifactName` 需要同步源码目录、包目录和 ZIP 名称。
 
 ## resolve.json
 

@@ -19,7 +19,6 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 | `game-checkin` | `GameCheckIn` |
 | `custom-wallpaper` | `CustomWallpaper` |
 | `live-screenshot` | `LiveScreenshot` |
-| 历史 `hoyolab-checkin` | `HoYoLABCheckIn` |
 
 `plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录、宿主安装目录、`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与源码目录完全一致。
 
@@ -32,11 +31,8 @@ packages/
 │   ├── CustomWallpaper-0.1.2.zip
 │   ├── CustomWallpaper-0.1.3.zip
 │   └── CustomWallpaper-0.1.5.zip
-├── GameCheckIn/GameCheckIn-0.1.3.zip
+├── GameCheckIn/GameCheckIn-0.1.6.zip
 ├── LiveScreenshot/LiveScreenshot-0.1.0.zip
-├── HoYoLABCheckIn/
-│   ├── HoYoLABCheckIn-0.1.0.zip
-│   └── HoYoLABCheckIn-0.1.1.zip
 ├── MaaEnd/MaaEnd-0.1.1.zip
 ├── March7thAssistant/March7thAssistant-0.1.1.zip
 └── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.1.zip
@@ -134,7 +130,7 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
 }
 ```
 
-完整条目还包含 `displayName`、`gameName`、`description`、`authors`、`tags`、`homepage`、`updatedAt`、`hasReadme`、`kind`、`apiVersion`、`capabilities`、`minHostVersion` 和可选的 `replaces`。
+完整条目还包含 `displayName`、`gameName`、`description`、`authors`、`tags`、`homepage`、`updatedAt`、`hasReadme`、`kind`、`apiVersion`、`capabilities` 和 `minHostVersion`。
 
 约束如下：
 
@@ -145,7 +141,7 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
 - `changelog` 包含 1 至 3 条记录，第一条是当前版本，后续记录按 SemVer 从新到旧排列；日期使用 `YYYY-MM-DD`，条目文本不含 HTML；
 - SHA256 使用最终 ZIP 的 64 位小写十六进制摘要，`sizeBytes` 使用最终 ZIP 的实际字节数。
 
-宿主仍兼容旧缓存中的 catalog schemaVersion 1 和 GitHub Release URL；仓库当前事实使用 schemaVersion 2 和 raw 包地址。
+宿主与仓库当前均要求 catalog schemaVersion 2 和官方 raw 包地址。
 
 ## 本地核对
 

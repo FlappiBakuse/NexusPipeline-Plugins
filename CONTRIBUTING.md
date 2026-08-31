@@ -22,7 +22,7 @@
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式和同源 DOM 行为；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 更新索引，最后运行仓库级一键校验。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` v0.1.3 使用 API v1.2，并声明旧身份替换迁移。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` 使用 API v1.2。
 
 ## 发行包规则
 

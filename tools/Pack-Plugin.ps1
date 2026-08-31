@@ -84,12 +84,14 @@ if ([string]$manifest.artifactName -cne $ArtifactName) {
 if (-not (Test-CanonicalPluginId ([string]$manifest.name))) {
     throw "plugin.json name 不符合小写 kebab-case：$($manifest.name)"
 }
+if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifest.PSObject.Properties.Name -contains "replaces") {
+    throw "plugin.json 不支持历史兼容字段：$ArtifactName"
+}
 $version = [string]$manifest.version
 if ($version -notmatch '^\d+\.\d+\.\d+$' -or @($version.Split('.') | Where-Object { $_.Length -gt 1 -and $_.StartsWith('0') }).Count -gt 0) {
     throw "插件版本不是三段 SemVer：$version"
 }
 $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
-if ($kind -eq "specialized") { $kind = "data-specialized" }
 if ($kind -notin @("data-specialized", "managed-code")) {
     throw "不支持的插件类型：$kind"
 }

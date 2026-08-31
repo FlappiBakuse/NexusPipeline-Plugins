@@ -36,10 +36,6 @@ internal sealed class UserSettingsContribution
         settings.Normalize();
         string? cnCookie = await _context.UserData.GetSecretAsync(userId, "cnCookie", cancellationToken).ConfigureAwait(false);
         string? osCookie = await _context.UserData.GetSecretAsync(userId, "osCookie", cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(osCookie))
-        {
-            osCookie = await _context.UserData.GetSecretAsync(userId, "cookie", cancellationToken).ConfigureAwait(false);
-        }
         return new JsonObject
         {
             ["enabled"] = settings.Enabled,

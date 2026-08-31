@@ -150,8 +150,6 @@ function New-Catalog([string]$generatedAt) {
     $entries = [System.Collections.Generic.List[object]]::new()
     $names = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $artifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-    $replacementSources = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-
     $pluginDirectories = @(Get-ChildItem -LiteralPath $pluginsRoot -Directory | Sort-Object Name)
     if ($pluginDirectories.Count -eq 0) {
         throw "plugins 目录为空"
@@ -185,9 +183,11 @@ function New-Catalog([string]$generatedAt) {
             throw "插件 $artifactName 的版本无效：$version"
         }
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
-        if ($kind -eq "specialized") { $kind = "data-specialized" }
         if ($kind -notin @("data-specialized", "managed-code")) {
             throw "插件 $artifactName 的类型不受支持：$kind"
+        }
+        if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifest.PSObject.Properties.Name -contains "replaces") {
+            throw "插件 $artifactName 的 manifest 不支持历史兼容字段"
         }
         $apiVersion = if ($manifest.PSObject.Properties.Name -contains "apiVersion") { [string]$manifest.apiVersion } else { "" }
         if ($kind -eq "managed-code" -and $apiVersion -notmatch '^\d+\.\d+$') {
@@ -200,21 +200,6 @@ function New-Catalog([string]$generatedAt) {
         $capabilities = @()
         if ($manifest.PSObject.Properties.Name -contains "capabilities") {
             $capabilities = @($manifest.capabilities | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
-        }
-        if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -and $manifest.supportsEmulator -eq $true -and $capabilities -notcontains "emulator") {
-            $capabilities += "emulator"
-            $capabilities = @($capabilities | Sort-Object -Unique)
-        }
-        $replaces = @()
-        if ($manifest.PSObject.Properties.Name -contains "replaces") {
-            $replaces = @($manifest.replaces | ForEach-Object { [string]$_ } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object)
-        }
-        foreach ($replacement in $replaces) {
-            $replacementValid = Test-CanonicalPluginId $replacement
-            $replacementUnique = $replacementSources.Add($replacement)
-            if (-not $replacementValid -or $replacement -ieq ([string]$manifest.name) -or -not $replacementUnique) {
-                throw "插件 $artifactName 的 replaces 包含无效、重复或当前名称：$replacement"
-            }
         }
         $changelog = @(Read-StoreChangelog $store $version $artifactName)
         $presentation = Read-PresentationMetadata $store $pluginDirectory.FullName $artifactName
@@ -246,9 +231,6 @@ function New-Catalog([string]$generatedAt) {
             packageUrl = "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/$artifactName/$artifactName-$version.zip"
             sha256 = $hash
             sizeBytes = [int64]$file.Length
-        }
-        if ($replaces.Count -gt 0) {
-            $entry.replaces = $replaces
         }
         $entry.changelog = $changelog
         $entries.Add([pscustomobject]$entry)

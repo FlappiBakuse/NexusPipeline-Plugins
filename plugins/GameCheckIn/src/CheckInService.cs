@@ -39,11 +39,11 @@ internal sealed class CheckInService
             .ReadConfigAsync<UserSettings>(eventData.UserId, cancellationToken)
             .ConfigureAwait(false) ?? new UserSettings();
         settings.Normalize();
-        await PersistNormalizedSettingsAsync(eventData.UserId, settings, cancellationToken).ConfigureAwait(false);
+        await PersistSettingsAsync(eventData.UserId, settings, cancellationToken).ConfigureAwait(false);
         if (!settings.Enabled) return;
 
         string? cnCookie = await _context.UserData.GetSecretAsync(eventData.UserId, "cnCookie", cancellationToken).ConfigureAwait(false);
-        string? osCookie = await ReadAndMigrateOsCookieAsync(eventData.UserId, cancellationToken).ConfigureAwait(false);
+        string? osCookie = await _context.UserData.GetSecretAsync(eventData.UserId, "osCookie", cancellationToken).ConfigureAwait(false);
         string today = LocalDate();
         string cnFingerprint = CookieFingerprint(cnCookie);
         string osFingerprint = CookieFingerprint(osCookie);
@@ -87,7 +87,7 @@ internal sealed class CheckInService
         await SendSummaryAsync(eventData, results, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task PersistNormalizedSettingsAsync(
+    private async Task PersistSettingsAsync(
         string userId,
         UserSettings settings,
         CancellationToken cancellationToken)
@@ -98,7 +98,7 @@ internal sealed class CheckInService
         }
         catch (Exception ex)
         {
-            _context.Logger.Warn($"用户签到配置迁移保存失败：{ex.Message}");
+            _context.Logger.Warn($"用户签到配置保存失败：{ex.Message}");
         }
     }
 
@@ -135,25 +135,6 @@ internal sealed class CheckInService
                 _context.Logger.Warn($"{platform}:{code} 签到请求异常：{ex.Message}");
                 results.Add(new CheckInResult(platform, code, "transport_error", "请求失败", false));
             }
-        }
-    }
-
-    private async Task<string?> ReadAndMigrateOsCookieAsync(string userId, CancellationToken cancellationToken)
-    {
-        string? cookie = await _context.UserData.GetSecretAsync(userId, "osCookie", cancellationToken).ConfigureAwait(false);
-        if (!string.IsNullOrWhiteSpace(cookie)) return cookie;
-        string? legacy = await _context.UserData.GetSecretAsync(userId, "cookie", cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(legacy)) return legacy;
-        try
-        {
-            await _context.UserData.SetSecretAsync(userId, "osCookie", legacy, cancellationToken).ConfigureAwait(false);
-            await _context.UserData.SetSecretAsync(userId, "cookie", null, cancellationToken).ConfigureAwait(false);
-            return legacy;
-        }
-        catch (Exception ex)
-        {
-            _context.Logger.Warn($"旧签到 Cookie 迁移失败，将继续使用旧密钥：{ex.Message}");
-            return legacy;
         }
     }
 

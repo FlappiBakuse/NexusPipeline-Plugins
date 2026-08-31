@@ -82,11 +82,13 @@ function Assert-ManifestsAndDataContracts {
         if ([string]$manifest.name -notmatch '^[a-z0-9]+(?:-[a-z0-9]+)*$') {
             throw "插件机器 ID 无效：$($manifest.name)"
         }
+        if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifest.PSObject.Properties.Name -contains "replaces") {
+            throw "插件 manifest 不支持历史兼容字段：$($manifest.name)"
+        }
         if ([string]$manifest.version -notmatch '^\d+\.\d+\.\d+$') {
             throw "插件版本无效：$($manifest.name)"
         }
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
-        if ($kind -eq "specialized") { $kind = "data-specialized" }
         if ($kind -eq "data-specialized") {
             Assert-DataSpecializedContract $directory $manifest
         }
