@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-31T02:45:40Z",
+  "generatedAt": "2026-08-31T13:12:36Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,40 +21,38 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
-      "updatedAt": "2026-08-30",
+      "updatedAt": "2026-08-31",
       "hasReadme": true,
-      "version": "0.1.6",
+      "version": "0.1.8",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.11.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.6.zip",
-      "sha256": "18ef13b52a17692631f1cb4045bb901193a0d6a0b1fa97d041f6aa95f904bf6c",
-      "sizeBytes": 32636,
+      "minHostVersion": "0.12.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.8.zip",
+      "sha256": "a1444901c56ac3771b69819c15ff1b4e56ef964955de316fcb10e6acb9fe4863",
+      "sizeBytes": 33103,
       "changelog": [
+        {
+          "version": "0.1.8",
+          "date": "2026-08-31",
+          "items": [
+            "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
+          ]
+        },
+        {
+          "version": "0.1.7",
+          "date": "2026-08-31",
+          "items": [
+            "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
+          ]
+        },
         {
           "version": "0.1.6",
           "date": "2026-08-30",
           "items": [
             "补充官方插件作者元数据，不改变插件运行行为。"
-          ]
-        },
-        {
-          "version": "0.1.5",
-          "date": "2026-08-29",
-          "items": [
-            "设置页迁移至宿主统一自定义控件层，选择、数字、滑块和文件上传在不同浏览器中保持一致。",
-            "配合 NexusPipeline v0.11.9 的表面透明度 token，壁纸卡片与内嵌卡片保持统一显示效果。"
-          ]
-        },
-        {
-          "version": "0.1.4",
-          "date": "2026-08-29",
-          "items": [
-            "主界面内容卡片会根据当前壁纸主题色自动适配浅色或深色表面。",
-            "插件包现在包含展示元数据与 README，插件详情页可直接查看。"
           ]
         }
       ]
@@ -242,19 +240,26 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
-      "updatedAt": "2026-08-30",
+      "updatedAt": "2026-08-31",
       "hasReadme": false,
-      "version": "0.1.2",
+      "version": "0.1.3",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.10.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.2.zip",
-      "sha256": "100cb75cb392377f5e4ec7272fd59a8a691ed712c8ca846d3b82002ecc442788",
-      "sizeBytes": 7798,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.1.3.zip",
+      "sha256": "adc4b4c3fbef450a0b6ea12fe34b00d5687c77219d0eeedf5a9661a4d82c6a7b",
+      "sizeBytes": 7813,
       "changelog": [
+        {
+          "version": "0.1.3",
+          "date": "2026-08-31",
+          "items": [
+            "修正发行包 manifest，改用 capabilities 声明模拟器能力，恢复商店与手动安装识别。"
+          ]
+        },
         {
           "version": "0.1.2",
           "date": "2026-08-30",
@@ -267,13 +272,6 @@
           "date": "2026-08-29",
           "items": [
             "统一插件 manifest、源码目录和发行包的物理命名。"
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-08-28",
-          "items": [
-            "首次提供 MaaEnd 专项配置接管与模拟器能力声明。"
           ]
         }
       ]

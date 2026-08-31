@@ -3,7 +3,7 @@
 .wallpaper-status-row, .wallpaper-card-footer, .wallpaper-upload-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .wallpaper-status-row { min-width: 0; }
 .wallpaper-status-row > .muted { min-width: 0; }
-.wallpaper-enabled-row { margin: 0; border: 1px solid var(--content-card-border); border-radius: var(--radius-md); background: var(--content-card); }
+.wallpaper-enabled-row, .wallpaper-secondary-transparency-row { margin: 0; border: 1px solid var(--content-card-border); border-radius: var(--radius-md); background: var(--content-card-soft); }
 .wallpaper-controls, .wallpaper-effects { align-items: end; }
 .wallpaper-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .wallpaper-effects { grid-template-columns: repeat(3, minmax(0, 1fr)); }

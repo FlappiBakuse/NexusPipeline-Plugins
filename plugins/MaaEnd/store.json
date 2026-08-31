@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
   "changelog": [
     {
+      "version": "0.1.3",
+      "date": "2026-08-31",
+      "items": [
+        "修正发行包 manifest，改用 capabilities 声明模拟器能力，恢复商店与手动安装识别。"
+      ]
+    },
+    {
       "version": "0.1.2",
       "date": "2026-08-30",
       "items": [
@@ -22,13 +29,6 @@
       "date": "2026-08-29",
       "items": [
         "统一插件 manifest、源码目录和发行包的物理命名。"
-      ]
-    },
-    {
-      "version": "0.1.0",
-      "date": "2026-08-28",
-      "items": [
-        "首次提供 MaaEnd 专项配置接管与模拟器能力声明。"
       ]
     }
   ]

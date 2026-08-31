@@ -210,6 +210,56 @@ function New-Catalog([string]$generatedAt) {
         }
         $packagePath = Join-Path $packageDirectory "$artifactName-$version.zip"
         Assert-Path $packagePath "缺少当前版本发行包：$packagePath"
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($packagePath)
+        try {
+            foreach ($zipEntry in $archive.Entries) {
+                $entryName = $zipEntry.FullName.Replace('\', '/').TrimEnd('/')
+                $invalidSegment = @($entryName.Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -gt 0
+                if ($entryName.StartsWith('/') -or $invalidSegment) {
+                    throw "ZIP 条目路径非法：$packagePath -> $entryName"
+                }
+            }
+            $manifestEntry = $archive.Entries | Where-Object { $_.FullName -eq 'plugin.json' } | Select-Object -First 1
+            if ($null -eq $manifestEntry) {
+                throw "ZIP 根目录缺少 plugin.json：$packagePath"
+            }
+            $reader = [System.IO.StreamReader]::new($manifestEntry.Open())
+            try {
+                $packageManifest = $reader.ReadToEnd() | ConvertFrom-Json
+            }
+            finally {
+                $reader.Dispose()
+            }
+            if ($packageManifest.PSObject.Properties.Name -contains "supportsEmulator" -or $packageManifest.PSObject.Properties.Name -contains "replaces") {
+                throw "ZIP manifest 不支持历史兼容字段：$packagePath"
+            }
+            $sourceCapabilities = if ($manifest.PSObject.Properties.Name -contains "capabilities" -and $null -ne $manifest.capabilities) {
+                @($manifest.capabilities | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+            }
+            else {
+                @()
+            }
+            $packageCapabilities = if ($packageManifest.PSObject.Properties.Name -contains "capabilities" -and $null -ne $packageManifest.capabilities) {
+                @($packageManifest.capabilities | ForEach-Object { [string]$_ } | Sort-Object -Unique)
+            }
+            else {
+                @()
+            }
+            $manifestMismatch = (
+                ([int]$packageManifest.schemaVersion -ne $schemaVersion) -or
+                ([string]$packageManifest.name -cne [string]$manifest.name) -or
+                ([string]$packageManifest.artifactName -cne $artifactName) -or
+                ([string]$packageManifest.version -cne $version) -or
+                (([string]$packageManifest.kind).Trim().ToLowerInvariant() -cne $kind) -or
+                (($sourceCapabilities -join ([char]0x1f)) -cne ($packageCapabilities -join ([char]0x1f)))
+            )
+            if ($manifestMismatch) {
+                throw "ZIP manifest 与源码 manifest 不一致：$packagePath"
+            }
+        }
+        finally {
+            $archive.Dispose()
+        }
         $file = Get-Item -LiteralPath $packagePath
         $hash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
         $entry = [ordered]@{

@@ -28,18 +28,22 @@ function renderCard(container, _context, host) {
     <div id="settings-panel-custom-wallpaper" class="settings-card-body" hidden>
       <div class="wallpaper-settings-body">
         <div class="wallpaper-status-row"><span class="muted">服务端同步到当前 NexusPipeline 实例的全部浏览器。</span><span class="badge muted" data-wallpaper-status>读取中</span></div>
-        <div class="switch-row settings-option wallpaper-enabled-row">
-          <div class="switch-copy"><strong>启用自定义壁纸</strong><span class="muted">启用后使用自定义壁纸作为页面背景。</span></div>
-          <button class="mode-toggle switch-control" type="button" aria-label="启用自定义壁纸" aria-pressed="false" data-state="off" data-toggle-text="false" data-wallpaper-enabled-toggle><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="sr-only" data-switch-state>已停用</span></button>
+        <div class="switch-row settings-option switch-card wallpaper-enabled-row">
+          <div class="switch-copy"><strong>启用自定义壁纸</strong><span id="wallpaper-enabled-description" class="muted">启用后使用自定义壁纸作为页面背景。</span></div>
+          <button class="mode-toggle switch-control" type="button" aria-label="启用自定义壁纸" aria-describedby="wallpaper-enabled-description" aria-pressed="false" data-state="off" data-toggle-text="false" data-wallpaper-enabled-toggle><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="sr-only" data-switch-state>已停用</span></button>
+        </div>
+        <div class="switch-row settings-option switch-card wallpaper-secondary-transparency-row">
+          <div class="switch-copy"><strong>透明度运用于非主页面</strong><span id="wallpaper-secondary-transparency-description" class="muted">关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。</span></div>
+          <button class="mode-toggle switch-control" type="button" aria-label="透明度运用于非主页面" aria-describedby="wallpaper-secondary-transparency-description" aria-pressed="true" data-state="on" data-toggle-text="false" data-wallpaper-secondary-transparency-toggle><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="sr-only" data-switch-state>已启用</span></button>
         </div>
         <div class="form-grid wallpaper-controls">
-          <div class="field wallpaper-mode-field"><span class="field-label">轮换方式</span>${host.controls.select({ id: "wallpaper-mode", value: "off", options: allGames, extra: "data-wallpaper-mode", ariaLabel: "轮换方式" })}</div>
-          <div class="field" data-wallpaper-interval-field><span class="field-label">轮换间隔（分钟）</span>${host.controls.number({ id: "wallpaper-interval", value: 30, extra: 'min="1" max="1440" step="1" data-wallpaper-interval', ariaLabel: "轮换间隔（分钟）" })}</div>
+          <div class="field wallpaper-mode-field" data-help="按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。"><span class="field-label">轮换方式</span>${host.controls.select({ id: "wallpaper-mode", value: "off", options: allGames, extra: "data-wallpaper-mode", ariaLabel: "轮换方式" })}</div>
+          <div class="field" data-wallpaper-interval-field data-help="轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。"><span class="field-label">轮换间隔（分钟）</span>${host.controls.number({ id: "wallpaper-interval", value: 30, extra: 'min="1" max="1440" step="1" data-wallpaper-interval', ariaLabel: "轮换间隔（分钟）" })}</div>
         </div>
         <div class="form-grid wallpaper-effects">
-          <div class="field"><span class="field-label">模糊（像素）</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-blur", value: 0, extra: 'min="0" max="40" step="1" data-wallpaper-blur', ariaLabel: "模糊（像素）" })}<output data-wallpaper-blur-value></output></span></div>
-          <div class="field"><span class="field-label">变暗</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-dim", value: 20, extra: 'min="0" max="80" step="1" data-wallpaper-dim', ariaLabel: "变暗" })}<output data-wallpaper-dim-value></output></span></div>
-          <div class="field"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-surface-transparency", value: 0, extra: 'min="0" max="50" step="1" data-wallpaper-surface-transparency', ariaLabel: "卡片与侧边栏透明度" })}<output data-wallpaper-surface-transparency-value></output></span></div>
+          <div class="field" data-help="模糊范围为 0 至 40 像素。"><span class="field-label">模糊（像素）</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-blur", value: 0, extra: 'min="0" max="40" step="1" data-wallpaper-blur', ariaLabel: "模糊（像素）" })}<output data-wallpaper-blur-value></output></span></div>
+          <div class="field" data-help="变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。"><span class="field-label">变暗</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-dim", value: 20, extra: 'min="0" max="80" step="1" data-wallpaper-dim', ariaLabel: "变暗" })}<output data-wallpaper-dim-value></output></span></div>
+          <div class="field" data-help="控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。"><span class="field-label">卡片与侧边栏透明度</span><span class="wallpaper-range-row">${host.controls.range({ id: "wallpaper-surface-transparency", value: 0, extra: 'min="0" max="50" step="1" data-wallpaper-surface-transparency', ariaLabel: "卡片与侧边栏透明度" })}<output data-wallpaper-surface-transparency-value></output></span></div>
         </div>
         <div class="wallpaper-upload-row">${host.controls.file({ id: "wallpaper-files", accept: "image/jpeg,image/png,image/webp", multiple: true, extra: "data-wallpaper-files", label: "添加壁纸" })}<span class="muted">JPEG、PNG、WebP，单张最大 8192 KB</span></div>
         <div class="wallpaper-list" data-wallpaper-list></div>
@@ -52,6 +56,7 @@ function renderCard(container, _context, host) {
   const panelBody = card.querySelector(".settings-card-body");
   const panelArrow = card.querySelector(".settings-card-arrow");
   const enabledToggle = card.querySelector("[data-wallpaper-enabled-toggle]");
+  const secondaryTransparencyToggle = card.querySelector("[data-wallpaper-secondary-transparency-toggle]");
   const mode = card.querySelector("[data-wallpaper-mode]");
   const interval = card.querySelector("[data-wallpaper-interval]");
   const blur = card.querySelector("[data-wallpaper-blur]");
@@ -83,6 +88,7 @@ function renderCard(container, _context, host) {
       blurPx: Number(blur.value) || 0,
       dimPercent: Number(dim.value) || 0,
       surfaceTransparencyPercent: Number(surfaceTransparency.value) || 0,
+      applyTransparencyToSecondarySurfaces: secondaryTransparencyToggle.getAttribute("aria-pressed") === "true",
     },
     provider: { enabled: enabledToggle.getAttribute("aria-pressed") === "true" },
   });
@@ -103,6 +109,11 @@ function renderCard(container, _context, host) {
     const on = enabledToggle.getAttribute("aria-pressed") === "true";
     enabledToggle.dataset.state = on ? "on" : "off";
     enabledToggle.querySelector("[data-switch-state]").textContent = on ? "已启用" : "已停用";
+  };
+  const syncSecondaryTransparency = () => {
+    const on = secondaryTransparencyToggle.getAttribute("aria-pressed") === "true";
+    secondaryTransparencyToggle.dataset.state = on ? "on" : "off";
+    secondaryTransparencyToggle.querySelector("[data-switch-state]").textContent = on ? "已启用" : "已停用";
   };
   const syncLabels = () => {
     card.querySelector("[data-wallpaper-blur-value]").textContent = `${blur.value}px`;
@@ -136,6 +147,8 @@ function renderCard(container, _context, host) {
       snapshot = await host.appearance.wallpaperStore.get();
       enabledToggle.setAttribute("aria-pressed", String(snapshot.provider?.enabled === true));
       syncEnabled();
+      secondaryTransparencyToggle.setAttribute("aria-pressed", String(snapshot.effects?.applyTransparencyToSecondarySurfaces !== false));
+      syncSecondaryTransparency();
       mode.value = snapshot.rotation?.mode || "off";
       interval.value = snapshot.rotation?.intervalMinutes || 30;
       blur.value = snapshot.effects?.blurPx || 0;
@@ -169,6 +182,12 @@ function renderCard(container, _context, host) {
     const next = enabledToggle.getAttribute("aria-pressed") !== "true";
     enabledToggle.setAttribute("aria-pressed", String(next));
     syncEnabled();
+    requestSave();
+  });
+  secondaryTransparencyToggle.addEventListener("click", () => {
+    const next = secondaryTransparencyToggle.getAttribute("aria-pressed") !== "true";
+    secondaryTransparencyToggle.setAttribute("aria-pressed", String(next));
+    syncSecondaryTransparency();
     requestSave();
   });
   panelToggle.addEventListener("click", () => {
@@ -317,6 +336,7 @@ function renderCard(container, _context, host) {
     control.addEventListener("blur", requestSave);
   });
   enabledToggle.addEventListener("blur", requestSave);
+  secondaryTransparencyToggle.addEventListener("blur", requestSave);
   card.addEventListener("click", async event => {
     const remove = event.target.closest("[data-wallpaper-remove]");
     if (remove) {

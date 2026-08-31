@@ -77,7 +77,10 @@ foreach ($entry in @($catalog.plugins)) {
         if ($null -eq $manifestEntry) { throw "ZIP 根目录缺少 plugin.json：$packagePath" }
         $reader = [System.IO.StreamReader]::new($manifestEntry.Open())
         try { $manifest = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
-        $manifestMismatch = [int]$manifest.schemaVersion -ne 2 -or $manifest.name -cne $entry.name -or $manifest.artifactName -cne $artifact -or $manifest.version -cne $entry.version
+        if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifest.PSObject.Properties.Name -contains "replaces") {
+            throw "ZIP manifest 不支持历史兼容字段：$packagePath"
+        }
+        $manifestMismatch = [int]$manifest.schemaVersion -ne 2 -or $manifest.name -cne $entry.name -or $manifest.artifactName -cne $artifact -or $manifest.version -cne $entry.version -or ([string]$manifest.kind).Trim().ToLowerInvariant() -cne ([string]$entry.kind).Trim().ToLowerInvariant()
         if ($manifestMismatch) {
             throw "ZIP manifest 与 catalog 不一致：$packagePath"
         }
