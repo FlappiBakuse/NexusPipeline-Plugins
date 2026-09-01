@@ -90,7 +90,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 | log | 当前尝试累计日志；超过 4 MiB 时只保留尾部 |
 | logTruncated | 日志是否发生截断 |
 | timeScale | 宿主测试加速因子；生产运行通常为 1 |
-| screenshots | 当前运行截图池的元数据；最多 16 张，包含 Id、Ordinal、CapturedAt、AttemptNumber、Width、Height、Source、Trigger，不包含图片字节 |
+| screenshots | 当前 Attempt 截图池的元数据；最多 8 张，包含 Id、Ordinal、CapturedAt、AttemptNumber、Width、Height、Source、Trigger，不包含图片字节 |
 
 files 中每项包含：
 
@@ -108,7 +108,7 @@ Root 为 config 或 script；Path 是相对于对应根目录的路径；Abs 是
 
 ## 运行期截图
 
-一次「脚本实例 × 用户」运行共享一个内存截图池，覆盖全部重试尝试，最多保存 16 张；新截图超过容量时移除最早的一张。截图来源为游戏窗口客户区或模拟器画面，保持原始像素宽高并编码为高质量 JPEG。截图不会写入历史或用户数据，脚本实例收尾后释放。
+一次「脚本实例 × 用户」运行按 Attempt 分别维护内存截图池；每个 Attempt 最多保存 8 张，新截图超过容量时移除该 Attempt 最早的一张。截图来源为游戏窗口客户区或模拟器画面，保持原始像素宽高并编码为高质量 JPEG。运行收尾时，当前保留截图写入本轮运行的 history 目录。
 
 关键字模式会在首次接受成功/失败关键字判定时自动截图；判断脚本模式会在首次接受 `status: "success"` 或 `"failed"` 时自动截图。判断脚本也可以主动截图，所有主动和自动截图共用同一个池。
 
@@ -216,7 +216,7 @@ const restoreExists = nexus.listFiles().some(path =>
 }
 ~~~
 
-`notifyScreenshotId` 留空时，宿主选择当前截图池中仍保留的最新截图；填写已不存在或已被 FIFO 淘汰的 ID 时不附图，并记录警告。截图池在脚本实例通知完成后释放。调度队列汇总通知不附带运行截图。
+`notifyScreenshotId` 留空时，宿主选择最终 Attempt 中仍保留的最新截图；填写已不存在、已被 FIFO 淘汰或属于其他 Attempt 的 ID 时不附图，并记录警告。截图池在脚本实例通知完成后释放。调度队列汇总通知不附带运行截图。
 
 ## Python 信任边界
 

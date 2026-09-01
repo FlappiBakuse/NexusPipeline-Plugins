@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-31T13:12:36Z",
+  "generatedAt": "2026-09-01T10:07:50Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -76,9 +76,9 @@
         "用户管理"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
-      "updatedAt": "2026-08-31",
+      "updatedAt": "2026-09-01",
       "hasReadme": true,
-      "version": "0.1.6",
+      "version": "0.1.7",
       "kind": "managed-code",
       "apiVersion": "1.2",
       "capabilities": [
@@ -87,10 +87,17 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.6.zip",
-      "sha256": "1d91107f5555dc581f0e7b863cd141ce4de8a07899cb0bffb73c0d48ecbab562",
-      "sizeBytes": 52150,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.7.zip",
+      "sha256": "a9453522be0399a759434a1ac28bb963e396f349851b872a2151d405d6e0c50c",
+      "sizeBytes": 52177,
       "changelog": [
+        {
+          "version": "0.1.7",
+          "date": "2026-09-01",
+          "items": [
+            "修复商店展示元数据 JSON 的尾逗号，避免宿主重复记录解析警告。"
+          ]
+        },
         {
           "version": "0.1.6",
           "date": "2026-08-31",
@@ -103,13 +110,6 @@
           "date": "2026-08-30",
           "items": [
             "补充官方插件作者元数据，不改变插件运行行为。"
-          ]
-        },
-        {
-          "version": "0.1.4",
-          "date": "2026-08-30",
-          "items": [
-            "米游社与 HoYoLAB 签到游戏统一使用宿主多选选择器，支持同时选择多个游戏。"
           ]
         }
       ]

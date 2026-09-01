@@ -31,7 +31,7 @@ packages/
 │   ├── CustomWallpaper-0.1.2.zip
 │   ├── CustomWallpaper-0.1.3.zip
 │   └── CustomWallpaper-0.1.5.zip
-├── GameCheckIn/GameCheckIn-0.1.6.zip
+├── GameCheckIn/GameCheckIn-0.1.7.zip
 ├── LiveScreenshot/LiveScreenshot-0.1.0.zip
 ├── MaaEnd/MaaEnd-0.1.1.zip
 ├── March7thAssistant/March7thAssistant-0.1.1.zip

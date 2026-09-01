@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>NexusPipeline.Plugin.GameCheckIn</RootNamespace>
     <AssemblyName>NexusPipeline.Plugin.GameCheckIn</AssemblyName>
-    <Version>0.1.6</Version>
+    <Version>0.1.7</Version>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
