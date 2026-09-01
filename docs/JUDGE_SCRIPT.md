@@ -298,7 +298,7 @@ replaceConfigs 描述下一次尝试使用的配置，config-restore.json 描述
 {
   "files": [
     {
-      "file": "NexusPipeline.json",
+      "file": "默认配置.json",
       "toggles": [
         {
           "type": "map",

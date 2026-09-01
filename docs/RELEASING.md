@@ -44,7 +44,6 @@ packages/
 plugin.json
 data/resolve.json
 data/judge.js 或 data/judge.py
-data/config-template/...
 web/main.js
 web/style.css
 ```

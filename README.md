@@ -38,8 +38,7 @@ NexusPipeline-Plugins/
 │   ├── store.json                        # 商店展示元数据与更新记录
 │   ├── data/                            # data-specialized 插件资源
 │   │   ├── resolve.json                 # 脚本根目录推导规则
-│   │   ├── judge.js 或 judge.py         # 运行中完成/失败判定
-│   │   └── config-template/             # 可选默认配置
+│   │   └── judge.js 或 judge.py         # 运行中完成/失败判定
 │   ├── web/                             # 可选 Frontend API 1.2 模块、样式和静态资源
 │   └── src/                             # managed-code 插件项目（.csproj 与 C# 源码）
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）

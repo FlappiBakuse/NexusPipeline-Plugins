@@ -5,7 +5,7 @@
   "paths": {
     "mainExe": "{main}",
     "args": "--startOneDragon",
-    "configPath": "User/OneDragon/NexusPipeline.json",
+    "configPath": "User/OneDragon",
     "logPath": "log/better-genshin-impact.log"
   }
 }

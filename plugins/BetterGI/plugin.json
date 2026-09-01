@@ -5,10 +5,9 @@
   "displayName": "BetterGI",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.10.8",
+  "minHostVersion": "0.12.8",
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js",
-  "configTemplate": "data/config-template"
+  "judgeScript": "data/judge.js"
 }

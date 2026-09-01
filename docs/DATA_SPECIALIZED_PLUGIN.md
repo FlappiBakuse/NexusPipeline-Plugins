@@ -17,13 +17,6 @@ plugins/Example/
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
-需要默认配置时：
-
-```text
-plugins/Example/data/config-template/
-└── example.json
-```
-
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
 ## plugin.json
@@ -43,8 +36,7 @@ plugins/Example/data/config-template/
   "minHostVersion": "0.11.6",
   "capabilities": [],
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js",
-  "configTemplate": "data/config-template"
+  "judgeScript": "data/judge.js"
 }
 ```
 
@@ -64,7 +56,6 @@ plugins/Example/data/config-template/
 | `capabilities` | 能力 key 列表 | 例如 `emulator` |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
-| `configTemplate` | 默认配置模板目录，相对插件目录 | 可选，目录存在时才启用 |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
@@ -143,17 +134,14 @@ plugins/Example/data/config-template/
 
 当专项插件缺失、禁用或类型不匹配时，宿主会在脚本修改、用户绑定、配置编辑和队列写入等入口执行服务端门禁；删除脚本、解除绑定和移除队列任务等清理操作保持可用。
 
-## config-template
+## 配置编辑与快照
 
-配置模板用于配置编辑会话发现 `ConfigPath` 尚不存在时创建初始配置：
+宿主 v0.12.8 起绑定脚本实例不再建立配置快照，配置模板（config-template）机制已移除：
 
-- `configTemplate` 指向一个目录；目录内容会整体复制到配置目标位置。
-- 模板文件名和相对目录结构应与目标软件的配置布局一致。
-- 模板是公开默认值，禁止包含账号、Token、Cookie、真实用户路径和运行日志。
-- 模板复制属于配置编辑会话的一部分；取消编辑或恢复异常时，宿主按会话清单清理临时文件。
-- 模板不能替代 judge 的运行时替换机制。需要选择性重试时，请使用 `replaceConfigs` 和 `config-restore.json`，详见 [JUDGE_SCRIPT.md](JUDGE_SCRIPT.md)。
-
-BetterGI 的 `data/config-template/NexusPipeline.json` 和 MaaEnd 的两个模板可以作为目录布局参考。
+- `configPath` 可以是文件或目录；目录型配置整体参与快照交换（如 BetterGI 的 `User/OneDragon`）。
+- 用户首次编辑配置且尚无快照时，宿主要求其选择「全新配置文件」（移走原配置，由目标软件生成全新配置）或「复用配置文件」（直接编辑现有配置）；因此插件无需提供默认配置。
+- 首次运行时宿主自动把现场配置复制为初始快照。
+- 需要选择性重试时，请使用 `replaceConfigs` 和 `config-restore.json`，详见 [JUDGE_SCRIPT.md](JUDGE_SCRIPT.md)。
 
 ## 发布前检查
 
@@ -163,4 +151,3 @@ BetterGI 的 `data/config-template/NexusPipeline.json` 和 MaaEnd 的两个模�
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。
 - judge 的语言扩展名、输入读取方式和输出 JSON 符合 [判断脚本指南](JUDGE_SCRIPT.md)。
-- 配置模板可公开分发，ZIP 内没有仓库外文件。

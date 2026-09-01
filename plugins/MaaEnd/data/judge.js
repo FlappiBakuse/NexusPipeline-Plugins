@@ -1,5 +1,32 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const DAILY_TASK_MARKER = "任务完成: 📅日常奖励领取";
+
+// v0.2.0 运行期截图：judge 每次调用相互独立，用 script 目录状态文件记录已截图标志的
+// 字符偏移——同一尝试内每类只截一次，新尝试（偏移变小）自动重置；截图失败不记录，下次重试。
+function loadShotState() {
+  const list = nexus.listFiles() || [];
+  for (let i = 0; i < list.length; i++) {
+    if (list[i].toLowerCase().endsWith("judge-shot-state.json")) {
+      try { return JSON.parse(nexus.readFile(list[i])) || {}; } catch (e) { return {}; }
+    }
+  }
+  return {};
+}
+
+function takeShot(state, key, offset) {
+  if (offset < 0) return;
+  if (state[key] !== null && state[key] !== undefined && offset >= state[key]) return;
+  const id = nexus.captureScreenshot();
+  if (id) {
+    state[key] = offset;
+    nexus.writeFile("judge-shot-state.json", JSON.stringify(state));
+  }
+}
+
+// 特定任务截图：日常奖励领取任务完成时
+const shotState = loadShotState();
+takeShot(shotState, "dailyReward", log.indexOf(DAILY_TASK_MARKER));
 
 // 任务显示名映射表（zh-CN）：interface.json 任务 label，日志「任务开始/完成/失败: X」的 X 即此显示名
 //（customName 优先于 label）。含旧名别名（CreditShoppingN2/Weapon/SimpleProductionBatchStart，用户配置实际所用）。
@@ -115,16 +142,24 @@ if (!cfg || !cfg.settings || !Array.isArray(cfg.instances)) {
       // 4. 运行完成判定：最后一个启用任务出现「任务完成/失败: <显示名>」判定行
       const lastName = displayNameOf(enabledTasks[enabledTasks.length - 1]);
       let done = false;
+      let doneOffset = -1;
       const lines = log.split(/\r?\n/);
+      let cursor = 0;
       for (const line of lines) {
-        if (line.indexOf("任务完成: " + lastName) >= 0 || line.indexOf("任务失败: " + lastName) >= 0) {
+        const donePos = line.indexOf("任务完成: " + lastName);
+        const failPos = line.indexOf("任务失败: " + lastName);
+        if (donePos >= 0 || failPos >= 0) {
           done = true;
+          doneOffset = cursor + Math.max(donePos, failPos);
           break;
         }
+        cursor += line.length + 1;
       }
       if (!done) {
         // 尚未运行完成，持续等待（中途崩溃/停止 → 进程退出最终触发无判定 → 宿主判 failed）
       } else {
+        // 最终运行成功/失败判定输出前截图
+        takeShot(shotState, "final", doneOffset);
         // 5. 提取全部失败任务（行扫描「任务失败: X」，X 为显示名）
         const failed = [];
         for (const line of lines) {
