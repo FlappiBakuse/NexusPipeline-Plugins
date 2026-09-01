@@ -45,7 +45,7 @@ if (log.indexOf("一轮任务完成") >= 0) {
 }
 ~~~
 
-status 只能使用 success 或 failed，reason 必须为非空字符串。可选的 notifyText 会作为额外通知文本，replaceConfigs 用于声明需要在下一次失败重试前应用的配置文件。
+status 只能使用 success 或 failed，reason 必须为非空字符串。可选的 notifyText 会作为额外通知文本，notifyScreenshotId 用于选择脚本通知附带的截图，replaceConfigs 用于声明需要在下一次失败重试前应用的配置文件。
 
 判断脚本模式启用后，脚本判断优先于成功/失败关键字模式。专项插件提供的脚本实例会启用该模式；通用脚本仍可以独立使用自己的判断脚本。
 
@@ -90,6 +90,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 | log | 当前尝试累计日志；超过 4 MiB 时只保留尾部 |
 | logTruncated | 日志是否发生截断 |
 | timeScale | 宿主测试加速因子；生产运行通常为 1 |
+| screenshots | 当前运行截图池的元数据；最多 16 张，包含 Id、Ordinal、CapturedAt、AttemptNumber、Width、Height、Source、Trigger，不包含图片字节 |
 
 files 中每项包含：
 
@@ -105,6 +106,12 @@ Root 为 config 或 script；Path 是相对于对应根目录的路径；Abs 是
 
 输入中的 log 是当前尝试日志，不应假设脚本只会被调用一次。判断代码应能处理重复调用、日志追加和日志文件轮换。
 
+## 运行期截图
+
+一次「脚本实例 × 用户」运行共享一个内存截图池，覆盖全部重试尝试，最多保存 16 张；新截图超过容量时移除最早的一张。截图来源为游戏窗口客户区或模拟器画面，保持原始像素宽高并编码为高质量 JPEG。截图不会写入历史或用户数据，脚本实例收尾后释放。
+
+关键字模式会在首次接受成功/失败关键字判定时自动截图；判断脚本模式会在首次接受 `status: "success"` 或 `"failed"` 时自动截图。判断脚本也可以主动截图，所有主动和自动截图共用同一个池。
+
 ## JavaScript API
 
 宿主在 Jint 中提供以下对象：
@@ -113,8 +120,32 @@ Root 为 config 或 script；Path 是相对于对应根目录的路径；Abs 是
 nexus.readFile(absPath)
 nexus.writeFile(relativePath, content)
 nexus.listFiles()
+nexus.captureScreenshot()
 console.log(value)
 ~~~
+
+### nexus.captureScreenshot()
+
+在判断脚本执行期间随时调用，返回新截图的 ID；采集失败时返回空字符串并记录宿主警告。截图完成后可从下一次输入的 `screenshots` 元数据中读取其 ID 和尺寸。
+
+Python 判断脚本的输入在需要时包含 `screenshotApi.endpoint` 与 `screenshotApi.token`。向 endpoint 发送 `POST` 请求，并设置 `X-Nexus-Screenshot-Token` 请求头，即可主动截图：
+
+~~~python
+import json
+import urllib.request
+
+api = input_data.get("screenshotApi")
+if api:
+    request = urllib.request.Request(
+        api["endpoint"],
+        method="POST",
+        headers={"X-Nexus-Screenshot-Token": api["token"]},
+    )
+    with urllib.request.urlopen(request, timeout=10) as response:
+        screenshot_id = json.load(response).get("id", "")
+~~~
+
+该 endpoint 仅监听本机回环地址，token 为当前判断脚本调用临时生成，调用结束后失效。不要输出 token 或把 endpoint 传给其他进程。
 
 ### nexus.readFile(absPath)
 
@@ -172,6 +203,20 @@ const restoreExists = nexus.listFiles().some(path =>
 其他输出会被忽略。没有合法结果时，本轮保持等待；语法错误、解释器异常和 30 秒超时会记录判断脚本错误，并沿用继续运行语义。
 
 判断脚本单次执行上限为 30 秒，属于真实墙钟时间，不按测试 timeScale 缩放。应避免全盘扫描、无限循环和一次性解析超大文件。
+
+### 通知截图选择
+
+输出示例：
+
+~~~json
+{
+  "status": "success",
+  "reason": "全部任务执行成功",
+  "notifyScreenshotId": "screenshot-0000000003"
+}
+~~~
+
+`notifyScreenshotId` 留空时，宿主选择当前截图池中仍保留的最新截图；填写已不存在或已被 FIFO 淘汰的 ID 时不附图，并记录警告。截图池在脚本实例通知完成后释放。调度队列汇总通知不附带运行截图。
 
 ## Python 信任边界
 
