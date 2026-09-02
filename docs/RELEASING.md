@@ -57,7 +57,7 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 和模板均位于 `data/`；
+- data-specialized 插件的 resolve、judgeScript 以及可选 configValidator 均位于 `data/`；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 

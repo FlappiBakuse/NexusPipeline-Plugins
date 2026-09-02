@@ -150,6 +150,48 @@ function Assert-CatalogOrder($catalog) {
     }
 }
 
+function Assert-DocumentationSemantics {
+    $readmePath = Join-Path $repoRoot "README.md"
+    $contributingPath = Join-Path $repoRoot "CONTRIBUTING.md"
+    $dataGuidePath = Join-Path $repoRoot "docs\DATA_SPECIALIZED_PLUGIN.md"
+    $judgeGuidePath = Join-Path $repoRoot "docs\JUDGE_SCRIPT.md"
+    $releaseGuidePath = Join-Path $repoRoot "docs\RELEASING.md"
+    $documents = @(
+        @{ Path = $readmePath; Text = Get-Content -Raw -LiteralPath $readmePath },
+        @{ Path = $contributingPath; Text = Get-Content -Raw -LiteralPath $contributingPath },
+        @{ Path = $dataGuidePath; Text = Get-Content -Raw -LiteralPath $dataGuidePath },
+        @{ Path = $judgeGuidePath; Text = Get-Content -Raw -LiteralPath $judgeGuidePath },
+        @{ Path = $releaseGuidePath; Text = Get-Content -Raw -LiteralPath $releaseGuidePath }
+    )
+
+    if ($documents[0].Text -notmatch 'PluginType\s*\+\s*RootPath') {
+        throw "README 未说明专项脚本实例的稳定身份：PluginType + RootPath"
+    }
+    if ($documents[0].Text -notmatch 'scripts\.json.*PluginType.*RootPath') {
+        throw "README 未说明专项 profile 从 scripts.json 声明解析"
+    }
+    if ($documents[2].Text -notmatch '每次运行/编辑.*冻结') {
+        throw "数据化专项插件指南未说明运行/编辑时冻结当前 profile"
+    }
+    if ($documents[1].Text -notmatch '不重新保存.*当前 profile') {
+        throw "贡献指南未覆盖插件升级后的历史实例解析检查"
+    }
+
+    $stalePatterns = @(
+        '保存脚本实例时固化解析结果',
+        '宿主固化.*JudgeScript',
+        'config-template',
+        'configTemplate'
+    )
+    foreach ($document in $documents) {
+        foreach ($pattern in $stalePatterns) {
+            if ($document.Text -match $pattern) {
+                throw "插件文档包含已废弃运行语义：$($document.Path) -> $pattern"
+            }
+        }
+    }
+}
+
 function Invoke-JavaScriptSyntaxChecks {
     $files = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File | Where-Object {
         $_.Extension -in @(".js", ".mjs") -and $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]'
@@ -199,6 +241,8 @@ try {
 
     Assert-ManifestsAndDataContracts
     Write-Output "[Test-Repository] manifest 与 data-specialized contract 通过"
+    Assert-DocumentationSemantics
+    Write-Output "[Test-Repository] 插件文档运行语义通过"
 
     Invoke-JavaScriptSyntaxChecks
     Invoke-Checked "catalog 可重建性" "pwsh" @("-NoProfile", "-File", (Join-Path $PSScriptRoot "Generate-Catalog.ps1"), "-Verify")
@@ -208,12 +252,12 @@ try {
         $_.Name -notlike "*.Tests.csproj"
     } | Sort-Object FullName)
     foreach ($project in $projects) {
-        Invoke-Checked "managed-code 构建：$($project.FullName)" "dotnet" @("build", $project.FullName, "--configuration", "Release", "--nologo")
+        Invoke-Checked "managed-code 构建：$($project.FullName)" "dotnet" @("build", $project.FullName, "--configuration", "Release", "--nologo", "-m:1")
     }
 
     $testProjects = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter *.Tests.csproj | Sort-Object FullName)
     foreach ($project in $testProjects) {
-        Invoke-Checked "managed-code 测试：$($project.FullName)" "dotnet" @("test", $project.FullName, "--configuration", "Release", "--nologo")
+        Invoke-Checked "managed-code 测试：$($project.FullName)" "dotnet" @("test", $project.FullName, "--configuration", "Release", "--nologo", "-m:1")
     }
 
     Write-Output "[Test-Repository] NexusPipeline-Plugins 全量验证通过"

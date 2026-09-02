@@ -18,7 +18,7 @@
 2. 创建 `plugins/<ArtifactName>/`，按插件类型补齐 manifest、`store.json`、data 资源或 .NET 项目。
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
-5. 检查配置模板、源码和发行包不含个人数据。
+5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式和同源 DOM 行为；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 更新索引，最后运行仓库级一键校验。
 
@@ -66,6 +66,7 @@ managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build 
 - 若声明 `configValidator`，覆盖配置编辑完成后的读取、修改、提示和超时行为；
 - judge 尚未完成、成功、失败、超时和异常输出；
 - `replaceConfigs` 与 `config-restore.json` 的恢复结果。
+- 插件版本升级后，历史专项实例在不重新保存的情况下能解析到当前 profile；若变更 `configPath` 或文件/目录形态，必须在变更说明中标注配置迁移影响。
 
 ## 配置校验脚本审查
 
@@ -98,7 +99,6 @@ Pull Request 应包含：
 
 - 插件源码目录；
 - 公开、可复现的 resolve 与 judge 说明；
-- 需要时的默认配置模板；
 - 插件版本变化及兼容宿主版本；
 - 本地验证结果和已知兼容限制；
 - 发布版本需要的 ZIP、catalog 元数据和摘要校验。

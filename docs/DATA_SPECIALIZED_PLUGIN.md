@@ -1,6 +1,6 @@
 # 数据化专项插件开发指南
 
-数据化专项插件由静态目录组成。宿主发现插件后，根据 `resolve.json` 从用户选择的脚本根目录推导运行 profile，再把 `judge.js` 或 `judge.py` 固化到脚本实例中。
+数据化专项插件由静态目录组成。宿主发现插件后，根据 `resolve.json` 从用户选择的脚本根目录推导当前运行 profile；`judge.js` 或 `judge.py` 保持为插件资产，由每次运行/编辑解析并在本次操作开始时冻结。
 
 宿主运行时契约的完整定义位于 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)。本指南记录插件仓库作者最常用的目录、字段和验证方法。
 
@@ -139,32 +139,33 @@ plugins/Example/
 
 ## profile 与脚本实例
 
-宿主执行专项探测或保存专项脚本实例时，会将解析结果写入 profile：
+专项脚本实例的持久身份由 `PluginType` 与 `RootPath` 组成，用户声明和宿主运行策略写入 `scripts.json`。宿主在 API 展示、执行准入、配置编辑和运行计划构建时，读取当前插件版本并解析有效 profile：
 
 - `MainExe`
 - `Args`
 - `ConfigPath`
 - `LogPath`
-- `JudgeScriptLanguage`
-- `JudgeScript`
+- `JudgeScriptLanguage` 与 `JudgeScript` 由插件 manifest 指向的当前判断脚本资产确定
 
-专项脚本实例启用自动配置更新，并使用插件提供的判断脚本。保存后的 profile 是脚本实例自己的运行数据；插件更新不会静默改写既有实例的这些字段。插件仓库后续如调整 resolve 或 judge，应通过版本说明和重新探测/保存流程指导用户处理旧实例。
+专项脚本实例启用自动配置更新，并使用当前插件提供的判断脚本。单次运行或编辑开始后，宿主会固定本次有效路径、判断脚本内容和 profile 指纹；插件更新会自动作用于后续新运行与新编辑，无需用户重新保存脚本实例。已经触发的调度 occurrence 延续触发时冻结的运行计划。
+
+修改 `resolve.json` 或判断脚本会影响后续运行；修改 `configPath` 或文件/目录形态会触发宿主的配置快照迁移策略，插件发布说明必须明确列出用户配置影响和恢复建议。
 
 当专项插件缺失、禁用或类型不匹配时，宿主会在脚本修改、用户绑定、配置编辑和队列写入等入口执行服务端门禁；删除脚本、解除绑定和移除队列任务等清理操作保持可用。
 
 ## 配置编辑与快照
 
-宿主 v0.12.8 起绑定脚本实例不再建立配置快照，配置模板（config-template）机制已移除：
+宿主 v0.12.8 起绑定脚本实例不再建立配置快照：
 
 - `configPath` 可以是文件或目录；目录型配置整体参与快照交换（如 BetterGI 的 `User/OneDragon`）。
-- 用户首次编辑配置且尚无快照时，宿主要求其选择「全新配置文件」（移走原配置，由目标软件生成全新配置）或「复用配置文件」（直接编辑现有配置）；因此插件无需提供默认配置。
+- 用户首次编辑配置且尚无快照时，宿主要求其选择「全新配置文件」（移走原配置，由目标软件生成全新配置）或「复用配置文件」（直接编辑现有配置）；插件无需携带默认配置资产。
 - 首次运行时宿主自动把现场配置复制为初始快照。
 - 需要选择性重试时，请使用 `replaceConfigs` 和 `config-restore.json`，详见 [JUDGE_SCRIPT.md](JUDGE_SCRIPT.md)。
 
 ## 发布前检查
 
 - 插件目录名与 manifest `artifactName` 严格一致，manifest `name` 使用小写机器标识。
-- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在。
+- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在；若声明 `configValidator`，对应脚本也必须存在。
 - 所有 `require` 在目标软件目录中都能找到，向上搜索不超过 4 层。
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。

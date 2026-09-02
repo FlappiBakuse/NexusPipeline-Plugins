@@ -58,7 +58,7 @@ NexusPipeline-Plugins/
 新增插件时，可以选择一个结构接近的现有插件作为起点：
 
 1. `data-specialized` 插件在 `plugins/<ArtifactName>/` 创建 `plugin.json`、`store.json`、`data/resolve.json` 和判断脚本；`managed-code` 插件创建 `src/` 项目并引用宿主 Plugin API。
-2. 数据化插件用 `require` 与 `paths` 推导脚本 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
+2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
 5. 更新插件自身版本和 `store.json`，使用 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再用 `tools/Generate-Catalog.ps1` 更新索引，最后执行 `pwsh -NoProfile -File tools/Test-Repository.ps1` 完成仓库级校验；该命令覆盖 JSON、manifest、数据化契约、脚本语法、catalog、发行包和 managed-code 构建/测试。
@@ -66,7 +66,8 @@ NexusPipeline-Plugins/
 ## 重要运行语义
 
 - `plugin.json` 的 `name` 是脚本实例保存的稳定标识；脚本实例的专项身份来自 `PluginType`。
-- 专项插件解析成功后，宿主会把主程序、参数、配置路径、日志路径和判断脚本保存到脚本实例 profile 中。
+- 专项脚本实例在 `scripts.json` 中保存 `PluginType + RootPath` 等稳定声明；宿主在 API 展示、准入、配置编辑和运行时解析当前插件 profile。主程序、参数、配置路径、日志路径和判断脚本属于插件运行时资产，每次新运行或编辑都会自动使用当前版本。
+- 已触发的调度 occurrence 会冻结当时的有效运行计划；尚未触发的 occurrence 在触发时重新解析当前插件。插件变更 `configPath` 或文件/目录形态时，宿主会归档旧用户快照并按新位置重新建立快照，插件发布说明应明确标注这类影响。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
 - managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.7 使用全局用户与用户运行事件能力，`custom-wallpaper` v0.1.5 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
@@ -74,7 +75,7 @@ NexusPipeline-Plugins/
 
 ## 数据与安全
 
-仓库中的配置模板必须使用公开的默认值，禁止提交账号、Token、Cookie、真实路径、用户日志或运行数据。JavaScript 判断脚本使用宿主提供的受控 Jint API；Python 判断脚本以系统 `python.exe` 子进程运行；managed-code 插件构建产物只应在发行包校验通过后进入 `packages/`。插件前端与发行包内容应在发布前完成代码审查，详见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)。
+仓库中的 JSON、脚本和其他公开资源必须使用公开的默认值，禁止提交账号、Token、Cookie、真实路径、用户日志或运行数据。JavaScript 判断脚本使用宿主提供的受控 Jint API；Python 判断脚本以系统 `python.exe` 子进程运行；managed-code 插件构建产物只应在发行包校验通过后进入 `packages/`。插件前端与发行包内容应在发布前完成代码审查，详见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)。
 
 ## 贡献入口
 
