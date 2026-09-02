@@ -12,7 +12,8 @@ plugins/Example/
 ├── store.json
 └── data/
     ├── resolve.json
-└── judge.js
+    ├── judge.js
+    └── config-validator.js
 ```
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
@@ -36,7 +37,8 @@ plugins/Example/
   "minHostVersion": "0.11.6",
   "capabilities": [],
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js"
+  "judgeScript": "data/judge.js",
+  "configValidator": "data/config-validator.js"
 }
 ```
 
@@ -56,8 +58,24 @@ plugins/Example/
 | `capabilities` | 能力 key 列表 | 例如 `emulator` |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
+| `configValidator` | 配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
+
+`configValidator` 是可选能力，不影响没有声明该字段的插件。配置编辑提交成功后，宿主将当前脚本实例、用户和文件快照以稳定 DTO 放入 `nexus.input`，再执行校验脚本。脚本工作根目录固定为当前用户的配置 store，只能通过相对路径访问其中的文件；保存结果不会因为脚本语法、运行时或超时错误回滚，脚本已经写入的文件也会保留。取消配置编辑不会执行校验脚本。
+
+脚本可使用以下宿主 API：
+
+| API | 作用 |
+|---|---|
+| `nexus.listFiles()` | 返回 store 内的相对文件路径列表 |
+| `nexus.readFile(path)` | 读取一个相对文件；无法读取时返回 `null` |
+| `nexus.writeFile(path, content)` | 以单文件原子替换方式写入文本并返回成功状态 |
+| `nexus.exists(path)` | 检查相对文件是否存在 |
+| `nexus.toast(message, kind)` | 排队本次结果中的短提示 |
+| `nexus.notify(title, body, kind)` | 排队本次结果中的角落通知 |
+
+校验脚本使用内置 Jint 执行，受执行时长、单文件读写大小、文件列表和反馈数量限制。脚本没有删除、网络、进程、PowerShell、Node.js、Python、CLR 或环境变量 API；路径必须保持在当前 store 内。建议将修复逻辑设计为幂等操作，并在输入文件缺失、内容不完整或格式错误时保守返回。
 
 `name` 参与脚本实例、catalog 和运行时状态关联；`artifactName` 参与文件系统路径和发行包名称。改动 `name` 会使现有脚本实例无法继续关联，需要按新插件身份重新配置。改动 `artifactName` 需要同步源码目录、包目录和 ZIP 名称。
 

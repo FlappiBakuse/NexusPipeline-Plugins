@@ -25,6 +25,37 @@ function Read-Json([string]$path) {
     }
 }
 
+function Assert-SafePluginRelativeFile([string]$pluginDirectory, [string]$relativePath, [string]$label, [string]$extension) {
+    if ([string]::IsNullOrWhiteSpace($relativePath) -or $relativePath.Contains([char]0)) {
+        throw "$label 不能为空：$relativePath"
+    }
+    if ([IO.Path]::IsPathRooted($relativePath) -or $relativePath.Contains(':')) {
+        throw "$label 必须是插件目录内的相对路径：$relativePath"
+    }
+
+    $normalized = $relativePath.Replace('\', '/')
+    if (-not $normalized.EndsWith($extension, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "$label 必须使用 $extension 扩展名：$relativePath"
+    }
+    if ($normalized.Split('/') | Where-Object { $_ -eq '' -or $_ -eq '.' -or $_ -eq '..' }) {
+        throw "$label 包含不安全的路径段：$relativePath"
+    }
+
+    try {
+        $root = [IO.Path]::GetFullPath($pluginDirectory).TrimEnd([char[]]@('\', '/')) + [IO.Path]::DirectorySeparatorChar
+        $candidate = [IO.Path]::GetFullPath([IO.Path]::Combine($pluginDirectory, $relativePath))
+    }
+    catch {
+        throw "$label 路径无效：$relativePath"
+    }
+    if (-not $candidate.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "$label 越出插件目录：$relativePath"
+    }
+    if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+        throw "$label 文件不存在：$candidate"
+    }
+}
+
 function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
     $resolveRelative = [string]$manifest.resolve
     $judgeRelative = [string]$manifest.judgeScript
@@ -41,6 +72,10 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
         if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
             throw "数据化插件引用文件不存在：$candidate"
         }
+    }
+
+    if ($manifest.PSObject.Properties.Name -contains "configValidator") {
+        Assert-SafePluginRelativeFile $pluginDirectory.FullName ([string]$manifest.configValidator) "configValidator" ".js"
     }
 
     $resolve = Read-Json ([IO.Path]::GetFullPath((Join-Path $pluginDirectory.FullName $resolveRelative)))
@@ -89,6 +124,9 @@ function Assert-ManifestsAndDataContracts {
             throw "插件版本无效：$($manifest.name)"
         }
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
+        if ($manifest.PSObject.Properties.Name -contains "configValidator" -and $kind -ne "data-specialized") {
+            throw "configValidator 仅支持 data-specialized 插件：$($manifest.name)"
+        }
         if ($kind -eq "data-specialized") {
             Assert-DataSpecializedContract $directory $manifest
         }
