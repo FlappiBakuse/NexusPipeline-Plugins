@@ -35,9 +35,9 @@ takeShot(shotState, "dailyReward",
   dailyEndQuoted >= 0 ? dailyEndQuoted : log.indexOf(DAILY_TASK_END_MARKER_PLAIN));
 takeShot(shotState, "dailyRewardFail", log.indexOf(DAILY_TASK_FAIL_MARKER));
 
-// 配置接管范围为一条龙配置目录（User/OneDragon）：默认含「默认配置.json」，用户可能改名或
-// 创建多个配置。约定只识别目录顶层按名称排序的第一个 .json 文件作为生效配置，
-// 多配置共存的判定偏差由用户自行承担。
+// 配置接管范围为实例指定的一条龙配置文件（User/OneDragon/<配置名>.json，文件型 configPath，
+// 由脚本实例的「一条龙配置名」输入决定；v0.2.0 目录形态时目录内通常也只有一个配置，逻辑兼容）。
+// 命令行按配置内容 Name 选择一条龙配置，本文件即该配置。
 function configEntry() {
   const files = input.files || [];
   const entries = [];

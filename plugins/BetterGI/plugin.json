@@ -4,10 +4,10 @@
   "artifactName": "BetterGI",
   "displayName": "BetterGI",
   "gameName": "原神",
-  "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
-  "version": "0.2.0",
+  "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按实例指定一条龙配置名）",
+  "version": "0.2.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.12.8",
+  "minHostVersion": "0.14.0",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js"
 }

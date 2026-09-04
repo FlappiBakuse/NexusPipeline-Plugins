@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "gameName": "星塔旅人",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": ["星塔旅人", "专项插件", "模拟器", "MaaFramework"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaStellaSora",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-09-04",
+      "items": [
+        "首个版本：面向 MaaStellaSora MXU 运行包（mxu.exe + interface.json）的专项脚本实例配置接管。",
+        "无人值守运行 mxu.exe --autostart --quit-after-run，按 MXU 日志判定任务完成与失败，失败时自动调整为仅重试失败任务并在收尾还原用户任务勾选。"
+      ]
+    }
+  ]
+}

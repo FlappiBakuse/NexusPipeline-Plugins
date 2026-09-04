@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-04T04:49:07Z",
+  "generatedAt": "2026-09-04T17:48:18Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -171,11 +171,55 @@
       ]
     },
     {
+      "name": "baah",
+      "artifactName": "BAAH",
+      "displayName": "BAAH",
+      "gameName": "蔚蓝档案",
+      "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "蔚蓝档案",
+        "Blue Archive",
+        "专项插件",
+        "模拟器",
+        "BAAH"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BAAH",
+      "updatedAt": "2026-09-04",
+      "hasReadme": false,
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [
+        "emulator"
+      ],
+      "minHostVersion": "0.14.0",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.0.zip",
+      "sha256": "37b635f9b5c717a761a59c1e4ecb1010441cc2ae831dd98462999bac7ee294fc",
+      "sizeBytes": 6446,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-09-04",
+          "items": [
+            "首个版本：面向 BAAH Windows 发行包（BAAH.exe + BAAH_CONFIGS）的专项脚本实例配置接管。",
+            "脚本实例新增「BAAH 配置文件名」用户输入，按配置文件无头运行；多用户各自隔离自己的配置文件。配置目录内只有一个配置文件时自动绑定，无需填写；存在多个配置文件时在复用编辑启动时选择一次。",
+            "按任务日志判定运行结果，失败时自动调整为仅重试失败任务，并在收尾还原用户原始任务开关。"
+          ]
+        }
+      ]
+    },
+    {
       "name": "bettergi",
       "artifactName": "BetterGI",
       "displayName": "BetterGI",
       "gameName": "原神",
-      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数）",
+      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按实例指定一条龙配置名）",
       "authors": [
         {
           "name": "FlappiBakuse",
@@ -188,40 +232,35 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
-      "updatedAt": "2026-09-01",
+      "updatedAt": "2026-09-05",
       "hasReadme": false,
-      "version": "0.2.0",
+      "version": "0.2.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.0.zip",
-      "sha256": "d9e872101d57d3369571e0252340222e201008522fbc59970ea4f67d32635558",
-      "sizeBytes": 4426,
+      "minHostVersion": "0.14.0",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.1.zip",
+      "sha256": "a8db3f4a3c66af742df01b43ad2154f7d052e6f266a4e2267df08fd55b5a7c6b",
+      "sizeBytes": 4957,
       "changelog": [
+        {
+          "version": "0.2.1",
+          "date": "2026-09-05",
+          "items": [
+            "脚本实例新增「一条龙配置名」用户输入：启动命令按此名直接选择一条龙配置（--startOneDragon 配置名），配置接管范围精确到 User/OneDragon/配置名.json 单个文件；需要宿主 v0.14.0+。",
+            "配置目录内只有一个配置文件时自动绑定并跟随改名，无需填写配置名；存在多个配置文件时在复用编辑启动时选择一次，采用后写入实例配置名。",
+            "多用户共享同一 BetterGI 安装时，各脚本实例按各自配置名隔离任务配置，User/config.json 的全局选中项不再影响无人值守运行。",
+            "修复运行日志无法监控的问题：BetterGI 日志按天滚动（文件名带日期后缀），日志路径改为通配匹配当前滚动文件。",
+            "升级提示：0.2.0 实例升级后配置名为空，按自动绑定规则解析；无法自动绑定时请在脚本编辑中填写实际配置名。"
+          ]
+        },
         {
           "version": "0.2.0",
           "date": "2026-09-01",
           "items": [
             "配置接管范围改为一条龙配置目录（User/OneDragon），自动识别目录内首个配置文件，支持自定义配置文件命名。",
             "新增运行截图：领取每日奖励任务结束时自动截图，运行最终判定成功或失败后再次截图。",
-            "运行通知附带每日奖励检查结果，便于发现奖励未领取的情况。",
-            "修复任务失败后无法读取配置、选择性重试从未生效的问题。",
-            "配合宿主 v0.12.8 移除内置配置模板，首次编辑配置时改为选择全新或复用。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-08-29",
-          "items": [
-            "统一插件 manifest、源码目录和发行包的物理命名。"
+            "运行通知附带每日奖励检查结果，便于发现奖励未领取的情况。"
           ]
         }
       ]
@@ -277,6 +316,48 @@
           "date": "2026-08-30",
           "items": [
             "补充官方插件作者元数据，不改变插件运行行为。"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "maastellasora",
+      "artifactName": "MaaStellaSora",
+      "displayName": "MaaStellaSora",
+      "gameName": "星塔旅人",
+      "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "星塔旅人",
+        "专项插件",
+        "模拟器",
+        "MaaFramework"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaStellaSora",
+      "updatedAt": "2026-09-04",
+      "hasReadme": false,
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [
+        "emulator"
+      ],
+      "minHostVersion": "0.12.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.0.zip",
+      "sha256": "396421c70f5f9a473b4613f51578e9a7c5289e9dc45ca214faefb8ce58dd04e9",
+      "sizeBytes": 4536,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-09-04",
+          "items": [
+            "首个版本：面向 MaaStellaSora MXU 运行包（mxu.exe + interface.json）的专项脚本实例配置接管。",
+            "无人值守运行 mxu.exe --autostart --quit-after-run，按 MXU 日志判定任务完成与失败，失败时自动调整为仅重试失败任务并在收尾还原用户任务勾选。"
           ]
         }
       ]

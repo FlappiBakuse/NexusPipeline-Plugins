@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "gameName": "蔚蓝档案",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": ["蔚蓝档案", "Blue Archive", "专项插件", "模拟器", "BAAH"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BAAH",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-09-04",
+      "items": [
+        "首个版本：面向 BAAH Windows 发行包（BAAH.exe + BAAH_CONFIGS）的专项脚本实例配置接管。",
+        "脚本实例新增「BAAH 配置文件名」用户输入，按配置文件无头运行；多用户各自隔离自己的配置文件。配置目录内只有一个配置文件时自动绑定，无需填写；存在多个配置文件时在复用编辑启动时选择一次。",
+        "按任务日志判定运行结果，失败时自动调整为仅重试失败任务，并在收尾还原用户原始任务开关。"
+      ]
+    }
+  ]
+}

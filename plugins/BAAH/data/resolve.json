@@ -1,0 +1,20 @@
+{
+  "inputs": [
+    {
+      "name": "config",
+      "label": "BAAH 配置文件名",
+      "description": "BAAH_CONFIGS 目录下的配置文件名（含 .json 后缀）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时必须指定",
+      "required": false,
+      "pattern": "^.+\\.json$"
+    }
+  ],
+  "require": [
+    { "var": "main", "file": "BAAH.exe" }
+  ],
+  "paths": {
+    "mainExe": "{main}",
+    "args": "{input:config}",
+    "configPath": "BAAH_CONFIGS/{input:config}",
+    "logPath": ""
+  }
+}

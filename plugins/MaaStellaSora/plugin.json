@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "name": "maastellasora",
+  "artifactName": "MaaStellaSora",
+  "displayName": "MaaStellaSora",
+  "gameName": "星塔旅人",
+  "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
+  "version": "0.1.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.12.8",
+  "capabilities": [
+    "emulator"
+  ],
+  "resolve": "data/resolve.json",
+  "judgeScript": "data/judge.js"
+}

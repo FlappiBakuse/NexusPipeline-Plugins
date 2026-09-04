@@ -298,10 +298,11 @@ replaceConfigs 描述下一次尝试使用的配置，config-restore.json 描述
 协议字段：
 
 - files[].file：相对于 config 根目录的文件路径；
-- toggles[].type：当前支持 array 与 map；
+- toggles[].type：当前支持 array、map 与 boolArray（boolArray 需要宿主 v0.14.0+）；
 - array：按 path 找到数组，使用 keyField 匹配元素，并恢复 enabledField；
 - map：按 path 找到对象，使用 initial 的键值恢复布尔值；
-- initial：首次触发时捕获的键到布尔值映射。
+- boolArray：按 path 找到布尔数组（任务名数组与开关数组分离的平行数组形态，如 BAAH 的 `TASK_PIPELINE`/`TASK_ONOFF`），initial 为布尔数组并按下标逐位还原；目标数组短于 initial 时视为应用失败；
+- initial：首次触发时捕获的初始启停（array/map 为键值映射，boolArray 为数组）。
 
 没有还原描述的插队文件会保留旧用户快照，不参与本轮覆盖。描述解析或应用失败时，宿主也会保留旧快照。新增任务或未出现在 initial 中的键保持当前值，因此应优先使用稳定任务 ID。
 
@@ -327,7 +328,26 @@ replaceConfigs 描述下一次尝试使用的配置，config-restore.json 描述
 }
 ~~~
 
-BetterGI 的 TaskEnabledList 是 map 型参考；MaaEnd 的 instances[id=...].tasks 是 array 型参考。
+BetterGI 的 TaskEnabledList 是 map 型参考；MaaEnd 的 instances[id=...].tasks 是 array 型参考；BAAH 的 TASK_ONOFF 平行数组是 boolArray 型参考。
+
+### boolArray 示例
+
+~~~json
+{
+  "files": [
+    {
+      "file": "task.json",
+      "toggles": [
+        {
+          "type": "boolArray",
+          "path": "TASK_ORDER_GROUP.ALL_PIPELINES[0].TASK_ONOFF",
+          "initial": [true, true, false]
+        }
+      ]
+    }
+  ]
+}
+~~~
 
 ## 三个常用模式
 

@@ -1,11 +1,19 @@
 {
+  "inputs": [
+    {
+      "name": "config",
+      "label": "一条龙配置名",
+      "description": "User\\OneDragon 下的配置名（与配置文件名一致）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时必须指定",
+      "required": false
+    }
+  ],
   "require": [
     { "var": "main", "file": "BetterGI.exe" }
   ],
   "paths": {
     "mainExe": "{main}",
-    "args": "--startOneDragon",
-    "configPath": "User/OneDragon",
-    "logPath": "log/better-genshin-impact.log"
+    "args": "--startOneDragon {input:config}",
+    "configPath": "User/OneDragon/{input:config}.json",
+    "logPath": "log/better-genshin-impact*.log"
   }
 }

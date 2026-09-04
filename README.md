@@ -8,8 +8,10 @@ NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、
 
 | 机器 ID | artifactName | 游戏 | 类型 | 能力 |
 |---|---|---|---|---|
+| `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator` |
 | `bettergi` | `BetterGI` | 原神 | `data-specialized` | — |
 | `maaend` | `MaaEnd` | 明日方舟：终末地 | `data-specialized` | `emulator` |
+| `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | — |
 | `game-checkin` | `GameCheckIn` | 米游社 / HoYoLAB 多游戏 | `managed-code` | `user-global-management`, `user-run-events`, `user-list-badges` |
