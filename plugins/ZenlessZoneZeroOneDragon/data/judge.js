@@ -68,7 +68,7 @@ if (failPos >= 0) {
       console.log(JSON.stringify({ status: "success", reason: "全部应用执行成功" }));
     } else {
       console.log(JSON.stringify({
-        status: "success",
+        status: "partial",
         reason: "一条龙运行完成，但部分应用执行失败",
         notifyText: "本次运行有应用执行失败：" + failed.join("、")
       }));

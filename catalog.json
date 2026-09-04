@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-01T15:05:01Z",
+  "generatedAt": "2026-09-04T04:49:07Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -352,17 +352,25 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-01",
+      "updatedAt": "2026-09-04",
       "hasReadme": false,
-      "version": "0.2.0",
+      "version": "0.2.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.0.zip",
-      "sha256": "adcb940a7a756d4404f201f851928a2df283c312fd10257b0f08b18cfb826bfd",
-      "sizeBytes": 3049,
+      "minHostVersion": "0.13.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.1.zip",
+      "sha256": "91a6e31337f84be67fde816739980f64646bc253be282b70b2abdc0d8b772f4f",
+      "sizeBytes": 3144,
       "changelog": [
+        {
+          "version": "0.2.1",
+          "date": "2026-09-04",
+          "items": [
+            "一条龙整体完成但存在应用级失败时显式返回 partial，按部分完成展示并不触发重试。",
+            "适配 NexusPipeline v0.13.5 的三态判断脚本契约。"
+          ]
+        },
         {
           "version": "0.2.0",
           "date": "2026-09-01",
@@ -376,13 +384,6 @@
           "date": "2026-08-30",
           "items": [
             "补充官方插件作者元数据，不改变插件运行行为。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-08-29",
-          "items": [
-            "统一插件 manifest、源码目录和发行包的物理命名。"
           ]
         }
       ]

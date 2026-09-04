@@ -11,6 +11,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-09-04",
+      "items": [
+        "一条龙整体完成但存在应用级失败时显式返回 partial，按部分完成展示并不触发重试。",
+        "适配 NexusPipeline v0.13.5 的三态判断脚本契约。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-09-01",
       "items": [
@@ -23,13 +31,6 @@
       "date": "2026-08-30",
       "items": [
         "补充官方插件作者元数据，不改变插件运行行为。"
-      ]
-    },
-    {
-      "version": "0.1.1",
-      "date": "2026-08-29",
-      "items": [
-        "统一插件 manifest、源码目录和发行包的物理命名。"
       ]
     }
   ]

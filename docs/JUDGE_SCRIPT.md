@@ -1,6 +1,6 @@
 # 专项判断脚本指南
 
-专项判断脚本用于在脚本进程运行期间判断任务是否完成，以及在失败时请求下一次尝试使用替换配置。它会被宿主周期调用，并接收当前尝试的累计日志与文件清单。
+专项判断脚本用于在脚本进程运行期间判断任务是否完成、部分完成，或在失败时请求下一次尝试使用替换配置。它会被宿主周期调用，并接收当前尝试的累计日志与文件清单。
 
 专项脚本实例保存 `PluginType` 与 `RootPath` 等稳定声明。宿主按当前插件 manifest 读取判断脚本资产，在每次运行或编辑开始时形成一次内容快照：
 
@@ -45,7 +45,20 @@ if (log.indexOf("一轮任务完成") >= 0) {
 }
 ~~~
 
-status 只能使用 success 或 failed，reason 必须为非空字符串。可选的 notifyText 会作为额外通知文本，notifyScreenshotId 用于选择脚本通知附带的截图，replaceConfigs 用于声明需要在下一次失败重试前应用的配置文件。
+### 部分完成
+
+当本轮整体流程已经结束，但判断脚本确认只有部分子任务完成时，主动返回 `partial`：
+
+~~~json
+{
+  "status": "partial",
+  "reason": "主流程已结束，但部分任务未完成"
+}
+~~~
+
+`partial` 是终局结果，不会触发重试，也不计入 `MaxSuccessfulRunsPerDay`。它适用于所有配置了判断脚本的 ScriptInstance，只能由判断脚本显式返回。宿主不会根据尝试次数、退出码或日志中的 `ERROR`、错误、异常、失败等文字自行推导 `partial`。
+
+status 只能使用 success、partial 或 failed，reason 必须为非空字符串。可选的 notifyText 会作为额外通知文本，notifyScreenshotId 用于选择脚本通知附带的截图，replaceConfigs 仅用于声明在下一次 failed 重试前应用的配置文件。普通成功/失败关键字模式没有 partial 表达能力。
 
 判断脚本模式启用后，脚本判断优先于成功/失败关键字模式。专项插件提供的脚本实例会启用该模式；通用脚本仍可以独立使用自己的判断脚本。
 
@@ -110,7 +123,7 @@ Root 为 config 或 script；Path 是相对于对应根目录的路径；Abs 是
 
 一次「脚本实例 × 用户」运行按 Attempt 分别维护内存截图池；每个 Attempt 最多保存 8 张，新截图超过容量时移除该 Attempt 最早的一张。截图来源为游戏窗口客户区或模拟器画面，保持原始像素宽高并编码为高质量 JPEG。运行收尾时，当前保留截图写入本轮运行的 history 目录。
 
-关键字模式会在首次接受成功/失败关键字判定时自动截图；判断脚本模式会在首次接受 `status: "success"` 或 `"failed"` 时自动截图。判断脚本也可以主动截图，所有主动和自动截图共用同一个池。
+关键字模式会在首次接受成功/失败关键字判定时自动截图；判断脚本模式会在首次接受 `status: "success"`、`"partial"` 或 `"failed"` 时自动截图。判断脚本也可以主动截图，所有主动和自动截图共用同一个池。
 
 ## JavaScript API
 
@@ -197,7 +210,7 @@ const restoreExists = nexus.listFiles().some(path =>
 宿主从输出尾部向前查找第一个满足以下条件的 JSON 行：
 
 - JSON 顶层是对象；
-- status 为 success 或 failed；
+- status 为 success、partial 或 failed；
 - reason 非空。
 
 其他输出会被忽略。没有合法结果时，本轮保持等待；语法错误、解释器异常和 30 秒超时会记录判断脚本错误，并沿用继续运行语义。
@@ -232,7 +245,7 @@ Python judge 由系统解释器作为外部进程运行。它不具备 Jint 的�
 
 ## replaceConfigs
 
-失败结果可以携带替换文件：
+只有 failed 结果可以携带用于下一次重试的替换文件；partial 与 success 即使携带 `replaceConfigs` 也不会应用：
 
 ~~~json
 {
@@ -342,7 +355,7 @@ BetterGI 的 TaskEnabledList 是 map 型参考；MaaEnd 的 instances[id=...].ta
 ## 编写准则
 
 1. 证据不足时保持等待，避免猜测成功。
-2. 只有观察到能代表完整任务生命周期结束的标志后，才输出成功或失败。
+2. 只有观察到能代表任务生命周期结束的标志后，才输出 success、partial 或 failed；整体结束但局部未完成时使用 partial。
 3. 配置解析失败时保守处理，避免误改用户配置。
 4. 使用稳定 ID 匹配任务，少依赖易变的展示名称。
 5. 选择性重试与最终恢复一起设计。
