@@ -14,6 +14,7 @@
     "mainExe": "{main}",
     "args": "--startOneDragon {input:config}",
     "configPath": "User/OneDragon/{input:config}.json",
+    "extraConfigPaths": ["User/config.json"],
     "logPath": "log/better-genshin-impact*.log"
   }
 }

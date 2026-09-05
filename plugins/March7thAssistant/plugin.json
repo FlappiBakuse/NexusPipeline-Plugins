@@ -5,9 +5,10 @@
   "displayName": "March7thAssistant",
   "gameName": "崩坏：星穹铁道",
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.12.8",
+  "minHostVersion": "0.14.1",
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js"
+  "judgeScript": "data/judge.js",
+  "configValidator": "data/config-validator.js"
 }

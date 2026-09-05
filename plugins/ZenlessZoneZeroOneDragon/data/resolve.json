@@ -1,11 +1,20 @@
 {
+  "inputs": [
+    {
+      "name": "instance",
+      "label": "实例序号",
+      "description": "OneDragon 实例目录序号（config 下的两位数字目录，如 01、02）。目录内只有一个实例目录时无需填写，自动绑定并跟随增删；存在多个实例时必须指定",
+      "required": false,
+      "pattern": "^\\d{2}$"
+    }
+  ],
   "require": [
     { "var": "main", "file": "OneDragon-Launcher.exe" }
   ],
   "paths": {
     "mainExe": "{main}",
-    "args": "-o -c",
-    "configPath": "config",
+    "args": "-o -c -i {input:instance}",
+    "configPath": "config/{input:instance}",
     "logPath": ".log/log.txt"
   }
 }

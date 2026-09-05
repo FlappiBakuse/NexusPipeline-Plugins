@@ -15,6 +15,7 @@
     "mainExe": "{main}",
     "args": "{input:config}",
     "configPath": "BAAH_CONFIGS/{input:config}",
-    "logPath": ""
+    "extraConfigPaths": ["DATA/CONFIGS/software_config.json"],
+    "logPath": "DATA/LOGS/log_*.txt"
   }
 }

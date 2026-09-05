@@ -5,12 +5,14 @@
   "displayName": "BAAH",
   "gameName": "蔚蓝档案",
   "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.14.0",
+  "minHostVersion": "0.14.1",
   "capabilities": [
-    "emulator"
+    "emulator",
+    "self-managed-pc-launch"
   ],
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js"
+  "judgeScript": "data/judge.js",
+  "configValidator": "data/config-validator.js"
 }

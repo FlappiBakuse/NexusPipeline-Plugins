@@ -11,6 +11,15 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BAAH",
   "changelog": [
     {
+      "version": "0.1.1",
+      "date": "2026-09-05",
+      "items": [
+        "新增配置校验：保存脚本实例或配置时校验游戏路径与项目设置的一致性（模拟器模式比较 ADB 地址，PC 模式比较游戏路径），并提醒开启 BAAH 日志保存（SAVE_LOG_TO_FILE）；当前版本以角落通知提醒，不自动修改配置。",
+        "运行日志路径指向 BAAH 日志文件（DATA/LOGS），开启日志保存后历史详情可查看完整日志。",
+        "声明 PC 启动自管理：PC 客户端必须经 BAAH 自带启动器启动（反作弊要求），编辑脚本实例时「启动游戏」开关关闭并禁用、启动参数与等待秒数禁用；游戏路径保留填写，用于任务失败时强制关闭游戏。"
+      ]
+    },
+    {
       "version": "0.1.0",
       "date": "2026-09-04",
       "items": [

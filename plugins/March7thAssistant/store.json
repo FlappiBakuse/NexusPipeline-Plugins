@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/March7thAssistant",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-09-05",
+      "items": [
+        "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与 M7A 配置（config.yaml 的 game_path）的一致性，以角落通知提醒；当前版本不自动修改配置。需要宿主 v0.14.1+。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-09-01",
       "items": [
@@ -23,13 +30,6 @@
       "date": "2026-08-30",
       "items": [
         "补充官方插件作者元数据，不改变插件运行行为。"
-      ]
-    },
-    {
-      "version": "0.1.1",
-      "date": "2026-08-29",
-      "items": [
-        "统一插件 manifest、源码目录和发行包的物理命名。"
       ]
     }
   ]

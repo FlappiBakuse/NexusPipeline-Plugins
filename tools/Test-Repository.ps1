@@ -98,6 +98,20 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
             throw "数据化插件 paths 缺少 $pathName：$($manifest.name)"
         }
     }
+    if ($resolve.paths.PSObject.Properties.Name -contains "extraConfigPaths") {
+        if ($null -eq $resolve.paths.extraConfigPaths -or $resolve.paths.extraConfigPaths -isnot [System.Array]) {
+            throw "数据化插件 paths.extraConfigPaths 必须是字符串数组：$($manifest.name)"
+        }
+        foreach ($extraPath in @($resolve.paths.extraConfigPaths)) {
+            $extraText = [string]$extraPath
+            if ([string]::IsNullOrWhiteSpace($extraText) -or [IO.Path]::IsPathRooted($extraText) -or $extraText -match ':') {
+                throw "数据化插件 paths.extraConfigPaths 条目必须是安全的脚本根目录相对路径：$($manifest.name)"
+            }
+            if ($extraText -split '[\\/]' -contains '..') {
+                throw "数据化插件 paths.extraConfigPaths 条目不允许相对路径上跳：$($manifest.name)"
+            }
+        }
+    }
 }
 
 function Assert-ManifestsAndDataContracts {
