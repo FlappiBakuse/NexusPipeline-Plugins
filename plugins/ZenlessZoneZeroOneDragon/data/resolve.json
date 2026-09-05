@@ -3,13 +3,16 @@
     {
       "name": "instance",
       "label": "实例序号",
-      "description": "OneDragon 实例目录序号（config 下的两位数字目录，如 01、02）。目录内只有一个实例目录时无需填写，自动绑定并跟随增删；存在多个实例时必须指定",
+      "description": "OneDragon 实例目录序号（config 下的两位数字目录，如 01、02）。目录内只有一个实例目录时无需填写，自动绑定并跟随增删；存在多个实例时在首次编辑配置中选择一次，选择保存在用户绑定上，不填写到脚本实例",
       "required": false,
       "pattern": "^\\d{2}$"
     }
   ],
   "require": [
-    { "var": "main", "file": "OneDragon-Launcher.exe" }
+    {
+      "var": "main",
+      "file": "OneDragon-Launcher.exe"
+    }
   ],
   "paths": {
     "mainExe": "{main}",

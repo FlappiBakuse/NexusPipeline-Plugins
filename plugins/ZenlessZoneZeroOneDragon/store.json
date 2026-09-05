@@ -7,9 +7,21 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["绝区零", "专项插件", "配置接管"],
+  "tags": [
+    "绝区零",
+    "专项插件",
+    "配置接管"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
   "changelog": [
+    {
+      "version": "0.2.3",
+      "date": "2026-09-05",
+      "items": [
+        "接管实例的选择改为用户级：首次编辑配置遇到多个实例目录时列出选择一次，仅选中的实例目录写入该用户快照；选择保存在用户绑定上，脚本实例不再承载「实例序号」。需要宿主 v0.14.2+。",
+        "声明 no-fresh-config 能力：脚本没有生成全新配置文件的能力（实例由 OneDragon 界面创建），首次编辑配置时禁用「全新配置文件」入口。"
+      ]
+    },
     {
       "version": "0.2.2",
       "date": "2026-09-05",
@@ -25,14 +37,6 @@
       "items": [
         "一条龙整体完成但存在应用级失败时显式返回 partial，按部分完成展示并不触发重试。",
         "适配 NexusPipeline v0.13.5 的三态判断脚本契约。"
-      ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-01",
-      "items": [
-        "新增运行截图：每日签到完成后自动截图，运行最终判定成功或失败后再次截图。",
-        "一条龙整体失败时判定为运行失败，避免把中断运行误报为成功。"
       ]
     }
   ]

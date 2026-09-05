@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-05T05:01:05Z",
+  "generatedAt": "2026-09-05T10:09:09Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -229,7 +229,7 @@
       "artifactName": "BetterGI",
       "displayName": "BetterGI",
       "gameName": "原神",
-      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按实例指定一条龙配置名）",
+      "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
       "authors": [
         {
           "name": "FlappiBakuse",
@@ -244,15 +244,24 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
       "updatedAt": "2026-09-05",
       "hasReadme": false,
-      "version": "0.2.2",
+      "version": "0.2.3",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.2.zip",
-      "sha256": "7ec5d815f33a0875afb9a94c434b5071db455324ca6c92a4cf2ca34f2efa6319",
-      "sizeBytes": 6380,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.3.zip",
+      "sha256": "9a9825576f8bb202c99c330d5313eb7375568005de1054e3a92e9c60a63f696a",
+      "sizeBytes": 6502,
       "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-09-05",
+          "items": [
+            "接管配置的选择改为用户级：首次编辑配置遇到多个一条龙配置时列出选择一次，仅选中的配置文件写入该用户快照，其他配置保持原样；选择保存在用户绑定上，脚本实例不再承载「一条龙配置名」。需要宿主 v0.14.2+。",
+            "多用户共享同一 BetterGI 安装时，各用户可接管不同的一条龙配置并互不干扰。",
+            "升级说明：0.2.2 实例的配置名设置自动迁移为解析回退，首次编辑配置时可在选择器中重新确认。"
+          ]
+        },
         {
           "version": "0.2.2",
           "date": "2026-09-05",
@@ -269,15 +278,6 @@
             "多用户共享同一 BetterGI 安装时，各脚本实例按各自配置名隔离任务配置，User/config.json 的全局选中项不再影响无人值守运行。",
             "修复运行日志无法监控的问题：BetterGI 日志按天滚动（文件名带日期后缀），日志路径改为通配匹配当前滚动文件。",
             "升级提示：0.2.0 实例升级后配置名为空，按自动绑定规则解析；无法自动绑定时请在脚本编辑中填写实际配置名。"
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-01",
-          "items": [
-            "配置接管范围改为一条龙配置目录（User/OneDragon），自动识别目录内首个配置文件，支持自定义配置文件命名。",
-            "新增运行截图：领取每日奖励任务结束时自动截图，运行最终判定成功或失败后再次截图。",
-            "运行通知附带每日奖励检查结果，便于发现奖励未领取的情况。"
           ]
         }
       ]
@@ -452,15 +452,25 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
       "updatedAt": "2026-09-05",
       "hasReadme": false,
-      "version": "0.2.2",
+      "version": "0.2.3",
       "kind": "data-specialized",
       "apiVersion": "",
-      "capabilities": [],
+      "capabilities": [
+        "no-fresh-config"
+      ],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.2.zip",
-      "sha256": "2fe60238f9e386b609a8eb32ca9bfce37f08c7b326726902fa8abfac61169784",
-      "sizeBytes": 5058,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.3.zip",
+      "sha256": "8b5d56b1613e0b9f40289843228453061a82b1c821afeb39db49bd351a8acb15",
+      "sizeBytes": 5252,
       "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-09-05",
+          "items": [
+            "接管实例的选择改为用户级：首次编辑配置遇到多个实例目录时列出选择一次，仅选中的实例目录写入该用户快照；选择保存在用户绑定上，脚本实例不再承载「实例序号」。需要宿主 v0.14.2+。",
+            "声明 no-fresh-config 能力：脚本没有生成全新配置文件的能力（实例由 OneDragon 界面创建），首次编辑配置时禁用「全新配置文件」入口。"
+          ]
+        },
         {
           "version": "0.2.2",
           "date": "2026-09-05",
@@ -476,14 +486,6 @@
           "items": [
             "一条龙整体完成但存在应用级失败时显式返回 partial，按部分完成展示并不触发重试。",
             "适配 NexusPipeline v0.13.5 的三态判断脚本契约。"
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-01",
-          "items": [
-            "新增运行截图：每日签到完成后自动截图，运行最终判定成功或失败后再次截图。",
-            "一条龙整体失败时判定为运行失败，避免把中断运行误报为成功。"
           ]
         }
       ]
