@@ -13,7 +13,8 @@ plugins/Example/
 └── data/
     ├── resolve.json
     ├── judge.js
-    └── config-validator.js
+    ├── config-validator.js
+    └── config-editor.js
 ```
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
@@ -38,7 +39,8 @@ plugins/Example/
   "capabilities": [],
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
-  "configValidator": "data/config-validator.js"
+  "configValidator": "data/config-validator.js",
+  "configEditor": "data/config-editor.js"
 }
 ```
 
@@ -59,6 +61,7 @@ plugins/Example/
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
 | `configValidator` | 配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
+| `configEditor` | 配置编辑准备阶段的可选工作副本调整脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
@@ -81,6 +84,21 @@ plugins/Example/
 | `nexus.notify(title, body, kind)` | 排队本次结果中的角落通知 |
 
 `nexus.input.extras` 按声明顺序列出附加配置路径（`path`）与其用户快照文件清单（`files`）；校验脚本以 `@extra<序号>/相对路径` **只读**访问对应快照，用于与 `input.script` 的当前设置（如游戏路径）做一致性比较。校验脚本使用内置 Jint 执行，受执行时长、单文件读写大小、文件列表和反馈数量限制。脚本没有删除、网络、进程、PowerShell、Node.js、Python、CLR 或环境变量 API；路径必须保持在当前 store 与附加配置快照内。建议把校验设计为幂等的比较与提醒，并在输入文件缺失、内容不完整或格式错误时保守跳过。
+
+### 配置编辑脚本
+
+`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。
+
+`resolve.json` 可声明：
+
+```json
+"configEdit": {
+  "isolateSiblingCandidates": true,
+  "freshInput": { "name": "config", "value": "NexusPipeline" }
+}
+```
+
+`freshInput` 用于 fresh 编辑确定新配置目标；输入绑定在保存成功后写入用户绑定。编辑保存、取消或宿主恢复都会还原隔离区中的所有原始候选，隔离区不作为长期快照。
 
 `name` 参与脚本实例、catalog 和运行时状态关联；`artifactName` 参与文件系统路径和发行包名称。改动 `name` 会使现有脚本实例无法继续关联，需要按新插件身份重新配置。改动 `artifactName` 需要同步源码目录、包目录和 ZIP 名称。
 
@@ -105,7 +123,7 @@ plugins/Example/
 
 `paths` 中的 `mainExe`、`args`、`configPath`、`logPath` 都应提供明确值。`mainExe` 解析后必须指向真实存在的文件，其他路径由宿主在运行和配置编辑阶段继续解析。`logPath` 允许为空字符串：为空表示目标软件没有专用日志文件，判定日志改由进程标准输出提供（宿主 v0.14.0+）。
 
-`paths.extraConfigPaths`（可选，宿主 v0.14.1+）是附加配置文件/文件夹路径数组（相对脚本根目录，支持 `{input:名称}`）。附加路径与主配置路径一样按用户快照隔离交换（运行前快照覆盖现场、运行后与编辑提交差异入库，首次自动采用现场内容），但**判定脚本始终不可见**——`input.files`、`replaceConfigs` 与 config-restore 只作用于主 `configPath`。适用对象是软件级配置（如 BAAH 的 `DATA/CONFIGS/software_config.json`、BetterGI 的 `User/config.json`）；快照缺失宽容，现场也不存在时保持为空。
+`paths.extraConfigPaths`（可选，宿主 v0.14.1+）是附加配置文件/文件夹路径数组（相对脚本根目录，支持 `{input:名称}`）。附加路径与主配置路径一样按用户快照隔离交换（运行前快照覆盖现场、运行后与编辑提交差异入库，首次编辑先生成工作副本，保存时建立快照），判定脚本使用用户快照视图。适用对象是软件级配置（如 BAAH 的 `DATA/CONFIGS/software_config.json`、BetterGI 的 `User/config.json`）；快照缺失宽容，现场也不存在时保持为空。
 
 ### require
 

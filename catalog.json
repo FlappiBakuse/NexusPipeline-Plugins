@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-05T13:33:51Z",
+  "generatedAt": "2026-09-06T04:57:29Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -242,17 +242,25 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
-      "updatedAt": "2026-09-05",
+      "updatedAt": "2026-09-06",
       "hasReadme": false,
-      "version": "0.2.4",
+      "version": "0.2.5",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.14.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.4.zip",
-      "sha256": "95319c6e58a0d57dc0e8729c429f2cbb567ca5d7dd0937bde25579c90cce26ee",
-      "sizeBytes": 6229,
+      "minHostVersion": "0.14.4",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.5.zip",
+      "sha256": "87d73703d6f45a690f7273023096409961295eb3975a6eae508abcf49201e652",
+      "sizeBytes": 6955,
       "changelog": [
+        {
+          "version": "0.2.5",
+          "date": "2026-09-06",
+          "items": [
+            "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
+            "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
+          ]
+        },
         {
           "version": "0.2.4",
           "date": "2026-09-05",
@@ -268,13 +276,6 @@
             "接管配置的选择改为用户级：首次编辑配置遇到多个一条龙配置时列出选择一次，仅选中的配置文件写入该用户快照，其他配置保持原样；选择保存在用户绑定上，脚本实例不再承载「一条龙配置名」。需要宿主 v0.14.2+。",
             "多用户共享同一 BetterGI 安装时，各用户可接管不同的一条龙配置并互不干扰。",
             "升级说明：0.2.2 实例的配置名设置自动迁移为解析回退，首次编辑配置时可在选择器中重新确认。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-09-05",
-          "items": [
-            "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与 BetterGI 全局设置（genshinStartConfig.installPath）的一致性，以角落通知提醒；当前版本不自动修改配置。需要宿主 v0.14.1+。"
           ]
         }
       ]
@@ -447,19 +448,28 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-05",
+      "updatedAt": "2026-09-06",
       "hasReadme": false,
-      "version": "0.2.4",
+      "version": "0.2.5",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.14.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.4.zip",
-      "sha256": "c0884e47b8f70b10cae6043a093b6d6aaf78a59d46ab48f48469111aa76a0b44",
-      "sizeBytes": 5246,
+      "minHostVersion": "0.14.4",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.5.zip",
+      "sha256": "542737cdf0308d1c5eebd7d8decba19ac8d0a7ec9c037e8c45e85b13da3cf441",
+      "sizeBytes": 6901,
       "changelog": [
+        {
+          "version": "0.2.5",
+          "date": "2026-09-06",
+          "items": [
+            "适配 NexusPipeline v0.14.4：多实例 reuse 编辑隔离 config 下全部实例目录，保存、取消和恢复后还原原始现场。",
+            "新增 one_dragon.yml 编辑准备脚本，仅保留选中实例并同步 active、active_in_od，附加配置纳入编辑事务。",
+            "兼容 OneDragon 实际生成的同级 YAML 列表与数字型 idx，修复单实例和多实例复用编辑失败。"
+          ]
+        },
         {
           "version": "0.2.4",
           "date": "2026-09-05",
@@ -474,15 +484,6 @@
           "items": [
             "接管实例的选择改为用户级：首次编辑配置遇到多个实例目录时列出选择一次，仅选中的实例目录写入该用户快照；选择保存在用户绑定上，脚本实例不再承载「实例序号」。需要宿主 v0.14.2+。",
             "声明 no-fresh-config 能力：脚本没有生成全新配置文件的能力（实例由 OneDragon 界面创建），首次编辑配置时禁用「全新配置文件」入口。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-09-05",
-          "items": [
-            "配置接管范围收窄为单个实例目录（config/{实例序号}）：不再接管全部 config 目录，新增「实例序号」输入（两位数字），目录内只有一个实例目录时自动绑定；存在多个实例时需在脚本编辑中指定。启动参数追加 -i，确保一条龙只运行被接管的实例。需要宿主 v0.14.1+。",
-            "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与接管实例 OneDragon 配置（game_account.yml 的 game_path）的一致性，以角落通知提醒；当前版本不自动修改配置。",
-            "升级提示：0.2.1 实例升级后「实例序号」为空，按自动绑定规则解析（单实例自动绑定）；无法自动绑定时请在脚本编辑中填写实际实例序号。"
           ]
         }
       ]

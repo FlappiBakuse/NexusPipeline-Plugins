@@ -40,7 +40,8 @@ NexusPipeline-Plugins/
 │   ├── store.json                        # 商店展示元数据与更新记录
 │   ├── data/                            # data-specialized 插件资源
 │   │   ├── resolve.json                 # 脚本根目录推导规则
-│   │   └── judge.js 或 judge.py         # 运行中完成/失败判定
+│   │   ├── judge.js 或 judge.py         # 运行中完成/失败判定
+│   │   └── config-editor.js             # 可选配置编辑准备脚本
 │   ├── web/                             # 可选 Frontend API 1.2 模块、样式和静态资源
 │   └── src/                             # managed-code 插件项目（.csproj 与 C# 源码）
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
@@ -71,6 +72,7 @@ NexusPipeline-Plugins/
 - 专项脚本实例在 `scripts.json` 中保存 `PluginType + RootPath` 等稳定声明；宿主在 API 展示、准入、配置编辑和运行时解析当前插件 profile。主程序、参数、配置路径、日志路径和判断脚本属于插件运行时资产，每次新运行或编辑都会自动使用当前版本。
 - 已触发的调度 occurrence 会冻结当时的有效运行计划；尚未触发的 occurrence 在触发时重新解析当前插件。插件变更 `configPath` 或文件/目录形态时，宿主会把旧用户快照移入一次性重绑定隔离区，在新位置成功物化后恢复为唯一权威快照；新位置缺失时保留旧快照并阻断本次运行，插件发布说明应明确标注这类影响。
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
+- 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
 - managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章和用户运行事件均通过 Plugin API v1.4 的通用端口处理。`game-checkin` v0.1.7 使用全局用户与用户运行事件能力，`custom-wallpaper` v0.1.5 通过 Frontend API 1.2 管理服务端同步壁纸，`live-screenshot` v0.1.1 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。

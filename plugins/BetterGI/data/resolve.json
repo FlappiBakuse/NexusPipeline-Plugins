@@ -21,5 +21,12 @@
       "User/config.json"
     ],
     "logPath": "log/better-genshin-impact*.log"
+  },
+  "configEdit": {
+    "isolateSiblingCandidates": true,
+    "freshInput": {
+      "name": "config",
+      "value": "NexusPipeline"
+    }
   }
 }

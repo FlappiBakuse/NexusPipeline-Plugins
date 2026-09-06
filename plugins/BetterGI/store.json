@@ -15,6 +15,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
   "changelog": [
     {
+      "version": "0.2.5",
+      "date": "2026-09-06",
+      "items": [
+        "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
+        "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
+      ]
+    },
+    {
       "version": "0.2.4",
       "date": "2026-09-05",
       "items": [
@@ -29,13 +37,6 @@
         "接管配置的选择改为用户级：首次编辑配置遇到多个一条龙配置时列出选择一次，仅选中的配置文件写入该用户快照，其他配置保持原样；选择保存在用户绑定上，脚本实例不再承载「一条龙配置名」。需要宿主 v0.14.2+。",
         "多用户共享同一 BetterGI 安装时，各用户可接管不同的一条龙配置并互不干扰。",
         "升级说明：0.2.2 实例的配置名设置自动迁移为解析回退，首次编辑配置时可在选择器中重新确认。"
-      ]
-    },
-    {
-      "version": "0.2.2",
-      "date": "2026-09-05",
-      "items": [
-        "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与 BetterGI 全局设置（genshinStartConfig.installPath）的一致性，以角落通知提醒；当前版本不自动修改配置。需要宿主 v0.14.1+。"
       ]
     }
   ]

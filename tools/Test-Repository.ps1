@@ -77,6 +77,9 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
     if ($manifest.PSObject.Properties.Name -contains "configValidator") {
         Assert-SafePluginRelativeFile $pluginDirectory.FullName ([string]$manifest.configValidator) "configValidator" ".js"
     }
+    if ($manifest.PSObject.Properties.Name -contains "configEditor") {
+        Assert-SafePluginRelativeFile $pluginDirectory.FullName ([string]$manifest.configEditor) "configEditor" ".js"
+    }
 
     $resolve = Read-Json ([IO.Path]::GetFullPath((Join-Path $pluginDirectory.FullName $resolveRelative)))
     if ($null -eq $resolve.require -or $null -eq $resolve.paths) {
@@ -109,6 +112,36 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
             }
             if ($extraText -split '[\\/]' -contains '..') {
                 throw "数据化插件 paths.extraConfigPaths 条目不允许相对路径上跳：$($manifest.name)"
+            }
+        }
+    }
+    if ($resolve.PSObject.Properties.Name -contains "configEdit") {
+        if ($null -eq $resolve.configEdit -or ($resolve.configEdit -isnot [pscustomobject])) {
+            throw "数据化插件 resolve.json configEdit 必须是对象：$($manifest.name)"
+        }
+        if (($resolve.configEdit.PSObject.Properties.Name -contains "isolateSiblingCandidates") -and (-not ($resolve.configEdit.isolateSiblingCandidates -is [bool]))) {
+            throw "数据化插件 configEdit.isolateSiblingCandidates 必须是布尔值：$($manifest.name)"
+        }
+        if ($resolve.configEdit.PSObject.Properties.Name -contains "freshInput") {
+            $freshInput = $resolve.configEdit.freshInput
+            if (($null -eq $freshInput) -or ($freshInput.PSObject.Properties.Name -notcontains "name") -or ($freshInput.PSObject.Properties.Name -notcontains "value")) {
+                throw "数据化插件 configEdit.freshInput 缺少 name/value：$($manifest.name)"
+            }
+            $freshName = ([string]$freshInput.name).Trim()
+            $freshValue = ([string]$freshInput.value).Trim()
+            $inputDeclarations = @($resolve.inputs)
+            $declaration = @($inputDeclarations | Where-Object { [string]$_.name -ieq $freshName })
+            if ($declaration.Count -ne 1 -or [string]::IsNullOrWhiteSpace($freshValue)) {
+                throw "数据化插件 configEdit.freshInput 必须引用一个已声明输入并提供 value：$($manifest.name)"
+            }
+            $pattern = if ($declaration[0].PSObject.Properties.Name -contains "pattern") {
+                [string]$declaration[0].pattern
+            }
+            else {
+                ""
+            }
+            if (-not [string]::IsNullOrWhiteSpace($pattern) -and $freshValue -notmatch $pattern) {
+                throw "数据化插件 configEdit.freshInput.value 不符合输入 pattern：$($manifest.name)"
             }
         }
     }
@@ -166,6 +199,9 @@ function Assert-ManifestsAndDataContracts {
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
         if ($manifest.PSObject.Properties.Name -contains "configValidator" -and $kind -ne "data-specialized") {
             throw "configValidator 仅支持 data-specialized 插件：$($manifest.name)"
+        }
+        if ($manifest.PSObject.Properties.Name -contains "configEditor" -and $kind -ne "data-specialized") {
+            throw "configEditor 仅支持 data-specialized 插件：$($manifest.name)"
         }
         if ($kind -eq "data-specialized") {
             Assert-DataSpecializedContract $directory $manifest
@@ -285,6 +321,7 @@ try {
     Write-Output "[Test-Repository] 插件文档运行语义通过"
 
     Invoke-JavaScriptSyntaxChecks
+    Invoke-Checked "配置编辑脚本行为" "node" @((Join-Path $PSScriptRoot "Test-ConfigEditors.mjs"))
     Invoke-Checked "catalog 可重建性" "pwsh" @("-NoProfile", "-File", (Join-Path $PSScriptRoot "Generate-Catalog.ps1"), "-Verify")
     Invoke-Checked "发行包完整性" "pwsh" @("-NoProfile", "-File", (Join-Path $PSScriptRoot "Validate-Packages.ps1"))
 

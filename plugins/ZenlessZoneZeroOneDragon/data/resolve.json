@@ -18,6 +18,12 @@
     "mainExe": "{main}",
     "args": "-o -c -i {input:instance}",
     "configPath": "config/{input:instance}",
-    "logPath": ".log/log.txt"
+    "logPath": ".log/log.txt",
+    "extraConfigPaths": [
+      "config/one_dragon.yml"
+    ]
+  },
+  "configEdit": {
+    "isolateSiblingCandidates": true
   }
 }
