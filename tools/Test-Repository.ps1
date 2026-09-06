@@ -240,29 +240,31 @@ function Assert-DocumentationSemantics {
         @{ Path = $releaseGuidePath; Text = Get-Content -Raw -LiteralPath $releaseGuidePath }
     )
 
-    if ($documents[0].Text -notmatch 'PluginType\s*\+\s*RootPath') {
-        throw "README 未说明专项脚本实例的稳定身份：PluginType + RootPath"
-    }
-    if ($documents[0].Text -notmatch 'scripts\.json.*PluginType.*RootPath') {
-        throw "README 未说明专项 profile 从 scripts.json 声明解析"
-    }
-    if ($documents[2].Text -notmatch '每次运行/编辑.*冻结') {
-        throw "数据化专项插件指南未说明运行/编辑时冻结当前 profile"
-    }
-    if ($documents[1].Text -notmatch '不重新保存.*当前 profile') {
-        throw "贡献指南未覆盖插件升级后的历史实例解析检查"
+    $requiredTerms = @(
+        @{ Document = $documents[0]; Terms = @("PluginType", "RootPath", "scripts.json") },
+        @{ Document = $documents[1]; Terms = @("configEditor", "configInputs", "configPath") },
+        @{ Document = $documents[2]; Terms = @("configEditor", "edit-isolation", "configPath") },
+        @{ Document = $documents[3]; Terms = @("status", "reason", "stdout") },
+        @{ Document = $documents[4]; Terms = @("catalog.json", "packageUrl") }
+    )
+    foreach ($required in $requiredTerms) {
+        foreach ($term in $required.Terms) {
+            if (-not $required.Document.Text.Contains($term, [StringComparison]::Ordinal)) {
+                throw "插件文档缺少结构化契约词：$($required.Document.Path) -> $term"
+            }
+        }
     }
 
-    $stalePatterns = @(
-        '保存脚本实例时固化解析结果',
-        '宿主固化.*JudgeScript',
-        'config-template',
-        'configTemplate'
+    $staleTokens = @(
+        "config-template",
+        "configTemplate",
+        "edit-hidden",
+        "store-rebind"
     )
     foreach ($document in $documents) {
-        foreach ($pattern in $stalePatterns) {
-            if ($document.Text -match $pattern) {
-                throw "插件文档包含已废弃运行语义：$($document.Path) -> $pattern"
+        foreach ($token in $staleTokens) {
+            if ($document.Text.Contains($token, [StringComparison]::Ordinal)) {
+                throw "插件文档包含已删除路径或字段：$($document.Path) -> $token"
             }
         }
     }

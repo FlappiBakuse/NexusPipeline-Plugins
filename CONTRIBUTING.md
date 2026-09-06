@@ -67,7 +67,7 @@ managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build 
 - 若声明 `configEditor`，覆盖 fresh/reuse、多文件或目录候选隔离、附加工作副本写入、错误回滚和进程启动门禁；
 - judge 尚未完成、成功、失败、超时和异常输出；
 - `replaceConfigs` 与 `config-restore.json` 的恢复结果。
-- 插件版本升级后，历史专项实例在不重新保存的情况下能解析到当前 profile；若变更 `configPath` 或文件/目录形态，必须在变更说明中标注配置迁移影响。
+- 插件版本升级后，历史专项实例在无需重新保存的情况下能解析到当前 profile；若变更 `configPath` 或文件/目录形态，必须验证新位置存在时按当前配置建立新快照、新位置缺失时阻断运行并保留旧快照，并在变更说明中标注配置影响。
 
 ## 配置校验脚本审查
 
@@ -81,7 +81,7 @@ managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build 
 
 校验脚本必须是插件目录内的 `.js` 文件，不得使用 Node.js、Python、网络、进程、PowerShell、CLR 或环境变量能力。宿主限制单次执行时长、单文件读写大小、文件列表和反馈数量；脚本应保持幂等、可重复执行，并对缺失或格式异常的文件做安全处理。配置保存结果保持成功，脚本错误通过结果反馈给用户；脚本不提供删除文件或多文件事务 API。
 
-配置编辑准备脚本使用同一受限 JavaScript 宿主，manifest 字段为 `configEditor`。脚本读取 `nexus.input.mode`、`configInputName`、`configInputValue` 和 `extras`；`@extra<序号>/` 对应编辑期间的附加工作副本，可写入并随保存或取消收尾。主配置根保持受限只读，脚本异常会阻断目标软件启动并触发现场回滚。
+配置编辑准备脚本使用同一受限 JavaScript 宿主，manifest 字段为 `configEditor`。候选配置选择由宿主写入用户绑定的 `configInputs`，脚本读取 `nexus.input.mode`、`configInputName`、`configInputValue` 和 `extras`；`@extra<序号>/` 对应编辑期间的附加工作副本，可写入并随保存或取消收尾。主配置根保持受限只读，脚本异常会阻断目标软件启动并触发现场回滚。
 
 ## 判断脚本审查
 

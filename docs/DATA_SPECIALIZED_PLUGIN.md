@@ -87,7 +87,7 @@ plugins/Example/
 
 ### 配置编辑脚本
 
-`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。
+`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。
 
 `resolve.json` 可声明：
 
@@ -218,7 +218,7 @@ plugins/Example/
 
 专项脚本实例启用自动配置更新，并使用当前插件提供的判断脚本。单次运行或编辑开始后，宿主会固定本次有效路径、判断脚本内容和 profile 指纹；插件更新会自动作用于后续新运行与新编辑，无需用户重新保存脚本实例。已经触发的调度 occurrence 延续触发时冻结的运行计划。
 
-修改 `resolve.json` 或判断脚本会影响后续运行；修改 `configPath` 或文件/目录形态会触发宿主的一次性配置快照重绑定策略：旧快照先隔离保留，新位置成功物化后恢复为唯一权威快照，新位置缺失时本次运行会被阻断。插件发布说明必须明确列出用户配置影响和恢复建议。
+修改 `resolve.json` 或判断脚本会影响后续运行；修改 `configPath` 或文件/目录形态时，新位置缺失会阻断本次运行并保留旧快照，新位置存在时宿主按当前配置重新建立唯一权威快照。插件发布说明必须明确列出用户配置影响和恢复建议。
 
 当专项插件缺失、禁用或类型不匹配时，宿主会在脚本修改、用户绑定、配置编辑和队列写入等入口执行服务端门禁；删除脚本、解除绑定和移除队列任务等清理操作保持可用。
 
