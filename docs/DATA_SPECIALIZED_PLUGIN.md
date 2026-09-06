@@ -55,7 +55,7 @@ plugins/Example/
 | `version` | 插件自身版本 | 与宿主版本独立；使用三段 SemVer |
 | `minHostVersion` | 最低宿主版本 | 使用三段 SemVer |
 | `kind` | 插件类型 | 数据化专项插件使用 `data-specialized` |
-| `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项，宿主 v0.14.1+） |
+| `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项；宿主仅在运行时收紧 PC 启动计划，保留用户保存的启动参数，宿主 v0.14.1+） |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
 | `configValidator` | 配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |

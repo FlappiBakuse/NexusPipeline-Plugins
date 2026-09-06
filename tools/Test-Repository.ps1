@@ -115,6 +115,10 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
 }
 
 function Assert-ManifestsAndDataContracts {
+    $capabilityMinimumHostVersions = @{
+        "self-managed-pc-launch" = [version]"0.14.1"
+        "no-fresh-config" = [version]"0.14.2"
+    }
     $directories = @(Get-ChildItem -LiteralPath $pluginsRoot -Directory | Sort-Object Name)
     if ($directories.Count -eq 0) {
         throw "plugins 目录为空"
@@ -136,6 +140,28 @@ function Assert-ManifestsAndDataContracts {
         }
         if ([string]$manifest.version -notmatch '^\d+\.\d+\.\d+$') {
             throw "插件版本无效：$($manifest.name)"
+        }
+        $minHostVersionText = if ($manifest.PSObject.Properties.Name -contains "minHostVersion" -and -not [string]::IsNullOrWhiteSpace([string]$manifest.minHostVersion)) {
+            [string]$manifest.minHostVersion
+        }
+        else {
+            "0.0.0"
+        }
+        if ($minHostVersionText -notmatch '^\d+\.\d+\.\d+$') {
+            throw "插件最低宿主版本无效：$($manifest.name) -> $minHostVersionText"
+        }
+        $minHostVersion = [version]$minHostVersionText
+        $capabilities = if ($manifest.PSObject.Properties.Name -contains "capabilities" -and $null -ne $manifest.capabilities) {
+            @($manifest.capabilities)
+        }
+        else {
+            @()
+        }
+        foreach ($capability in $capabilities) {
+            $capabilityName = [string]$capability
+            if ($capabilityMinimumHostVersions.ContainsKey($capabilityName) -and $minHostVersion -lt $capabilityMinimumHostVersions[$capabilityName]) {
+                throw "插件能力要求的最低宿主版本未满足：$($manifest.name) -> $capabilityName 需要 $($capabilityMinimumHostVersions[$capabilityName])，当前为 $minHostVersionText"
+            }
         }
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
         if ($manifest.PSObject.Properties.Name -contains "configValidator" -and $kind -ne "data-specialized") {
