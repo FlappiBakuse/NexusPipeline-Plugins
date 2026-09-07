@@ -1,7 +1,23 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "31eec7db17d4f344455e69b9fb0d5c1067a83d28",
+  "sourceCommit": "de687d96b189eebde54fb63c45e3d21d52c2b7ca",
   "released": {
+    "BAAH": {
+      "name": "baah",
+      "artifactName": "BAAH",
+      "version": "0.1.1",
+      "sha256": "27742e40c5f5f3c41a32a27715bd253598dcd496cc6c5d160311870c36bdbacd",
+      "sizeBytes": 8754,
+      "sourceTree": "33cafc4c10b3154f5720eb0ebd433c3dd97e1f43"
+    },
+    "BetterGI": {
+      "name": "bettergi",
+      "artifactName": "BetterGI",
+      "version": "0.2.5",
+      "sha256": "87d73703d6f45a690f7273023096409961295eb3975a6eae508abcf49201e652",
+      "sizeBytes": 6955,
+      "sourceTree": "a4d34c22dccd75d092331c81e7833d9fc71922a0"
+    },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
@@ -25,22 +41,6 @@
       "sha256": "eaf950ba332be15792bdf9a7dfbd01624c89099496b7ceff1fcd84ab2aac3eab",
       "sizeBytes": 28257,
       "sourceTree": "ff78f717436ab0f0e4cd8f50b822043f099be98e"
-    },
-    "BAAH": {
-      "name": "baah",
-      "artifactName": "BAAH",
-      "version": "0.1.1",
-      "sha256": "27742e40c5f5f3c41a32a27715bd253598dcd496cc6c5d160311870c36bdbacd",
-      "sizeBytes": 8754,
-      "sourceTree": "33cafc4c10b3154f5720eb0ebd433c3dd97e1f43"
-    },
-    "BetterGI": {
-      "name": "bettergi",
-      "artifactName": "BetterGI",
-      "version": "0.2.5",
-      "sha256": "87d73703d6f45a690f7273023096409961295eb3975a6eae508abcf49201e652",
-      "sizeBytes": 6955,
-      "sourceTree": "a4d34c22dccd75d092331c81e7833d9fc71922a0"
     },
     "MaaEnd": {
       "name": "maaend",
