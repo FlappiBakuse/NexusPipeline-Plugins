@@ -17,7 +17,7 @@ from repository_core import (
     release,
     test_managed,
     validate_generated,
-    validate_json_tree,
+    validate_sources,
     validate_source_and_catalog,
     write_json,
 )
@@ -68,9 +68,12 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.root.resolve()
     try:
-        if args.command in {"validate", "validate-source"}:
+        if args.command == "validate":
             count, json_count = validate_source_and_catalog(root)
             print(f"[repository] 源码与 catalog 校验通过：{count} 个插件，{json_count} 个 JSON 文件", flush=True)
+        elif args.command == "validate-source":
+            count, json_count = validate_sources(root)
+            print(f"[repository] 源码契约校验通过：{count} 个插件，{json_count} 个 JSON 文件", flush=True)
         elif args.command == "check-syntax":
             print(f"[repository] 脚本语法校验通过：{check_syntax(root)} 个文件", flush=True)
         elif args.command == "plan":

@@ -7,7 +7,7 @@
 ## 最小目录
 
 ```text
-plugins/Example/
+plugins/specialized/Example/
 ├── plugin.json
 ├── store.json
 └── data/
@@ -50,7 +50,7 @@ plugins/Example/
 |---|---|---|
 | `schemaVersion` | manifest 格式版本 | 当前仓库与宿主均使用 `2` |
 | `name` | 稳定机器标识，保存到脚本实例 `PluginType` | 必须使用小写 kebab-case：`^[a-z0-9]+(?:-[a-z0-9]+)*$` |
-| `artifactName` | 源码、安装和发行文件系统身份 | ASCII 字母/数字，首字符为字母，至少包含一个大写字母；必须与源码目录完全一致 |
+| `artifactName` | 分类源码末级目录、安装和发行文件系统身份 | ASCII 字母/数字，首字符为字母，至少包含一个大写字母；必须与 `plugins/specialized/` 下的源码末级目录完全一致 |
 | `displayName` | UI 展示名称 | 建议提供 |
 | `gameName` | UI 中的游戏名称 | 建议提供 |
 | `description` | 插件说明 | 建议提供 |

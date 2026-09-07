@@ -29,7 +29,7 @@ function runEditor(relativePath, inputValue, filePath, source) {
 }
 
 const betterGiOutput = runEditor(
-  "plugins/BetterGI/data/config-editor.js",
+  "plugins/specialized/BetterGI/data/config-editor.js",
   "NexusPipeline",
   "config.json",
   "{\"before\":true}\n",
@@ -51,7 +51,7 @@ const zzzMultiSource = [
   "",
 ].join("\r\n");
 const zzzMultiOutput = runEditor(
-  "plugins/ZenlessZoneZeroOneDragon/data/config-editor.js",
+  "plugins/specialized/ZenlessZoneZeroOneDragon/data/config-editor.js",
   "01",
   "one_dragon.yml",
   zzzMultiSource,
@@ -62,7 +62,7 @@ assert.match(zzzMultiOutput, /active: true/u);
 assert.match(zzzMultiOutput, /active_in_od: true/u);
 
 const zzzSingleOutput = runEditor(
-  "plugins/ZenlessZoneZeroOneDragon/data/config-editor.js",
+  "plugins/specialized/ZenlessZoneZeroOneDragon/data/config-editor.js",
   "01",
   "one_dragon.yml",
   "instance_list:\n- idx: 1\n  name: single\n  active: false\n  active_in_od: false\n",

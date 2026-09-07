@@ -11,7 +11,7 @@ NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件�
 前端公开资源必须位于插件根目录的 `web/` 下：
 
 ```text
-plugins/Example/
+plugins/general/Example/
 ├── plugin.json
 ├── store.json
 ├── data/                         # data-specialized 可选

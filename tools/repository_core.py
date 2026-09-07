@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
+import filecmp
 import hashlib
 import json
 import os
@@ -98,6 +99,13 @@ class SourcePlugin:
             {"name": str(item["name"]), "url": str(item.get("url", ""))}
             for item in self.store.get("authors", [])
         ]
+
+
+@dataclass(frozen=True)
+class PackageMetadata:
+    path: Path
+    sha256: str
+    size_bytes: int
 
 
 def _display(path: Path | str) -> str:
@@ -280,12 +288,12 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
 
 
 def _category_for(root: Path) -> str:
-    if root.parent.name in {"general", "specialized"}:
-        return root.parent.name
-    return "general" if (root / "src").is_dir() else "specialized"
+    _require(root.parent.name in {"general", "specialized"}, f"正式插件必须位于 plugins/general/ 或 plugins/specialized/：{_display(root)}")
+    return root.parent.name
 
 
 def validate_source_plugin(root: Path) -> SourcePlugin:
+    category = _category_for(root)
     manifest_path = root / "plugin.json"
     store_path = root / "store.json"
     _require(manifest_path.is_file(), f"插件目录缺少 plugin.json：{_display(root)}")
@@ -328,20 +336,29 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     if "configValidator" in manifest or "configEditor" in manifest:
         _require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)
-    return SourcePlugin(_category_for(root), root, manifest, store)
+    homepage = store.get("homepage", "")
+    canonical_prefix = f"https://github.com/{REPOSITORY}/tree/main/plugins/"
+    if isinstance(homepage, str) and homepage.startswith(canonical_prefix):
+        expected_homepage = f"{canonical_prefix}{category}/{artifact}"
+        _require(homepage == expected_homepage, f"插件 {artifact} 的 homepage 必须指向当前分类源码目录：{expected_homepage}")
+    return SourcePlugin(category, root, manifest, store)
 
 
 def _plugin_directories(root: Path) -> list[Path]:
     plugins_root = root / "plugins"
     _require(plugins_root.is_dir(), f"缺少插件源码目录：{_display(plugins_root)}")
+    categories = ("general", "specialized")
+    for manifest_path in sorted(plugins_root.rglob("plugin.json")):
+        relative = manifest_path.relative_to(plugins_root).parts
+        _require(
+            len(relative) == 3 and relative[0] in categories and relative[2] == "plugin.json",
+            f"正式插件必须位于 plugins/general/ 或 plugins/specialized/：{_display(manifest_path.parent)}",
+        )
     result: list[Path] = []
-    for child in sorted(plugins_root.iterdir()):
-        if not child.is_dir():
-            continue
-        if child.name in {"general", "specialized"}:
-            result.extend(sorted(path for path in child.iterdir() if path.is_dir()))
-        elif (child / "plugin.json").is_file():
-            result.append(child)
+    for category in categories:
+        category_root = plugins_root / category
+        _require(category_root.is_dir(), f"缺少插件分类目录：{_display(category_root)}")
+        result.extend(sorted(path for path in category_root.iterdir() if path.is_dir()))
     _require(bool(result), "plugins 目录为空")
     return result
 
@@ -465,6 +482,77 @@ def _plugin_identity_at(root: Path, commit: str, plugin_root: str) -> tuple[str,
     if isinstance(name, str) and isinstance(artifact, str):
         return name, artifact
     return None
+
+
+def _plugin_signature_at(root: Path, commit: str, plugin_root: str) -> tuple[str, str, str, str, str] | None:
+    try:
+        manifest = git_json_at(root, commit, f"{plugin_root}/plugin.json")
+        tree = git_tree(root, commit, plugin_root)
+    except RepositoryError:
+        return None
+    if not isinstance(manifest, dict):
+        return None
+    name = manifest.get("name")
+    artifact = manifest.get("artifactName")
+    kind = manifest.get("kind")
+    version = manifest.get("version")
+    if not all(isinstance(value, str) for value in (name, artifact, kind, version)):
+        return None
+    return name, artifact, kind.strip().lower(), version, tree
+
+
+def _relocation_pairs(
+    root: Path,
+    base_commit: str,
+    head_commit: str,
+    records: list[tuple[str, list[str]]],
+    current_by_root: dict[str, SourcePlugin],
+) -> dict[str, tuple[str, str, bool]]:
+    """Identify flat-to-categorized moves and whether each move is content-preserving."""
+    old_roots: set[str] = set()
+    new_roots: set[str] = set()
+    for _status, paths in records:
+        if len(paths) >= 2:
+            old_root = plugin_root_from_path(paths[0])
+            new_root = plugin_root_from_path(paths[1])
+            if old_root is not None:
+                old_roots.add(old_root)
+            if new_root is not None:
+                new_roots.add(new_root)
+        elif paths:
+            plugin_root = plugin_root_from_path(paths[0])
+            if plugin_root is not None:
+                old_roots.add(plugin_root)
+                new_roots.add(plugin_root)
+
+    old_signatures = {
+        plugin_root: signature
+        for plugin_root in old_roots
+        if (signature := _plugin_signature_at(root, base_commit, plugin_root)) is not None
+    }
+    new_signatures: dict[str, tuple[str, str, str, str, str]] = {}
+    for plugin_root in new_roots:
+        plugin = current_by_root.get(plugin_root)
+        if plugin is None:
+            continue
+        try:
+            tree = git_tree(root, head_commit, plugin_root)
+        except RepositoryError:
+            continue
+        new_signatures[plugin_root] = (plugin.name, plugin.artifact_name, plugin.kind, plugin.version, tree)
+
+    candidates: dict[str, list[tuple[str, str, bool]]] = {}
+    for old_root, old_signature in old_signatures.items():
+        for new_root, new_signature in new_signatures.items():
+            if old_root == new_root or old_signature[:3] != new_signature[:3]:
+                continue
+            artifact = new_signature[1]
+            candidates.setdefault(artifact, []).append((old_root, new_root, old_signature[3:] == new_signature[3:]))
+    relocations: dict[str, tuple[str, str, bool]] = {}
+    for artifact, pairs in candidates.items():
+        _require(len(pairs) == 1, f"插件 {artifact} 的源码迁移路径不唯一：{pairs}")
+        relocations[artifact] = pairs[0]
+    return relocations
 
 
 def _version_from_package(path: Path, artifact: str) -> tuple[int, int, int] | None:
@@ -601,29 +689,43 @@ def build_plan(root: Path, baseline: str = "auto", head: str | None = None) -> d
         previous_state = _state_at_commit(root, base_commit)
     records = changed_paths(root, base_commit, head_commit)
     reasons_by_root = _changed_root_reasons(records)
+    move_pairs = _relocation_pairs(root, base_commit, head_commit, records, current_by_root)
+    moved_artifacts = set(move_pairs)
+    relocations = {
+        artifact: (old_root, new_root)
+        for artifact, (old_root, new_root, pure) in move_pairs.items()
+        if pure
+    }
+    relocated_artifacts = set(relocations)
     changed_artifacts: set[str] = set()
     deleted_artifacts: set[str] = set()
     reasons: dict[str, list[str]] = {}
     for plugin_root, paths in reasons_by_root.items():
         if plugin_root in current_by_root:
             artifact = current_by_root[plugin_root].artifact_name
+            if artifact in relocated_artifacts:
+                continue
             changed_artifacts.add(artifact)
             reasons[artifact] = sorted(set(paths))
         else:
             identity = _plugin_identity_at(root, base_commit, plugin_root)
-            if identity is not None:
+            if identity is not None and identity[1] not in moved_artifacts:
                 deleted_artifacts.add(identity[1])
                 reasons.setdefault(identity[1], []).extend(paths)
     previous_released = previous_state.get("released", {})
     _require(isinstance(previous_released, dict), f"{STATE_FILE}.released 必须是对象")
     previous_artifacts = set(str(key) for key in previous_released)
     for artifact, plugin in current_by_artifact.items():
-        if artifact not in previous_artifacts:
+        if artifact not in previous_artifacts and artifact not in relocated_artifacts:
             changed_artifacts.add(artifact)
             reasons.setdefault(artifact, []).append("new-plugin")
     for artifact in previous_artifacts - set(current_by_artifact):
-        deleted_artifacts.add(artifact)
-        reasons.setdefault(artifact, []).append("deleted-plugin")
+        if artifact not in relocated_artifacts:
+            deleted_artifacts.add(artifact)
+            reasons.setdefault(artifact, []).append("deleted-plugin")
+
+    for artifact, (old_root, new_root) in relocations.items():
+        reasons[artifact] = ["repository-layout-relocation", old_root, new_root]
 
     requires_package: set[str] = set()
     for artifact in sorted(changed_artifacts):
@@ -652,6 +754,7 @@ def build_plan(root: Path, baseline: str = "auto", head: str | None = None) -> d
         "head": head_commit,
         "mode": "incremental",
         "changed": sorted(changed_artifacts),
+        "relocated": sorted(relocated_artifacts),
         "deleted": sorted(deleted_artifacts),
         "managed": managed,
         "requiresPackage": sorted(requires_package),
@@ -668,6 +771,19 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def package_metadata(path: Path) -> PackageMetadata:
+    return PackageMetadata(path=path, sha256=sha256(path), size_bytes=path.stat().st_size)
+
+
+def _same_package_bytes(first: Path, second: Path) -> bool:
+    try:
+        if first.stat().st_size != second.stat().st_size:
+            return False
+    except OSError:
+        return False
+    return filecmp.cmp(first, second, shallow=False)
 
 
 def _package_files(source: Path, destination: Path) -> None:
@@ -740,15 +856,12 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
             _copy_tree(plugin.root / "web", payload / "web")
         temporary_zip = temporary_root / "package.zip"
         _package_files(payload, temporary_zip)
-        if destination.exists():
-            existing_hash = sha256(destination)
-            generated_hash = sha256(temporary_zip)
-            _require(existing_hash == generated_hash, f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(destination)}")
         shutil.copyfile(temporary_zip, destination)
     return destination
 
 
-def catalog_entry(plugin: SourcePlugin, package: Path) -> dict[str, Any]:
+def catalog_entry(plugin: SourcePlugin, package: Path, metadata: PackageMetadata | None = None) -> dict[str, Any]:
+    metadata = metadata or package_metadata(package)
     return {
         "name": plugin.name,
         "artifactName": plugin.artifact_name,
@@ -766,8 +879,8 @@ def catalog_entry(plugin: SourcePlugin, package: Path) -> dict[str, Any]:
         "capabilities": sorted({str(value) for value in plugin.manifest.get("capabilities", [])}, key=str.casefold),
         "minHostVersion": str(plugin.manifest.get("minHostVersion", "0.0.0")),
         "packageUrl": f"{PACKAGE_URL_PREFIX}/{plugin.artifact_name}/{package.name}",
-        "sha256": sha256(package),
-        "sizeBytes": package.stat().st_size,
+        "sha256": metadata.sha256,
+        "sizeBytes": metadata.size_bytes,
         "changelog": copy.deepcopy(plugin.store["changelog"]),
     }
 
@@ -800,15 +913,21 @@ def _validate_catalog_shape(root: Path, catalog: dict[str, Any], plugins: list[S
         _require(isinstance(entry.get("sizeBytes"), int) and entry["sizeBytes"] >= 0, f"catalog sizeBytes 无效：{artifact}")
 
 
-def validate_source_and_catalog(root: Path) -> tuple[int, int]:
+def validate_sources(root: Path) -> tuple[int, int]:
     plugins = discover_source_plugins(root)
     json_count = validate_json_tree(root)
     host_lock = read_json(root / "host.lock.json")
     _require(isinstance(host_lock, dict) and host_lock.get("repository") == "FlappiBakuse/NexusPipeline", "host.lock.json repository 不正确")
     _require(isinstance(host_lock.get("ref"), str) and re.fullmatch(r"[0-9a-f]{40}", host_lock["ref"]), "host.lock.json ref 必须是完整 commit SHA")
+    return len(plugins), json_count
+
+
+def validate_source_and_catalog(root: Path) -> tuple[int, int]:
+    count, json_count = validate_sources(root)
+    plugins = discover_source_plugins(root)
     catalog = read_json(root / "catalog.json")
     _validate_catalog_shape(root, catalog, plugins, True)
-    return len(plugins), json_count
+    return count, json_count
 
 
 def _safe_zip_name(name: str) -> bool:
@@ -984,20 +1103,25 @@ def release(root: Path, plan_path: Path, output: Path) -> dict[str, Any]:
     old_entries = _catalog_entry_by_artifact(old_catalog)
     state = load_state(root)
     require = set(plan.get("requiresPackage", []))
+    relocated = set(plan.get("relocated", []))
     deleted = set(plan.get("deleted", []))
     _require(require <= set(by_artifact), "release plan 包含未知插件：" + ", ".join(sorted(require - set(by_artifact))))
+    _require(relocated.isdisjoint(require | deleted), "release plan 的 relocation 与 package/delete 计划重叠")
     _prepare_output(root, output)
     generated_packages = output / "packages"
     generated_packages.mkdir()
     generated_entries: dict[str, dict[str, Any]] = {}
+    generated_metadata: dict[str, PackageMetadata] = {}
     for artifact in sorted(require):
         plugin = by_artifact[artifact]
         package = generated_packages / artifact / f"{artifact}-{plugin.version}.zip"
         build_plugin_package(plugin, package, root)
         existing = root / "packages" / artifact / package.name
         if existing.is_file():
-            _require(sha256(existing) == sha256(package), f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(existing)}")
-        generated_entries[artifact] = catalog_entry(plugin, package)
+            _require(_same_package_bytes(existing, package), f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(existing)}")
+        metadata = package_metadata(package)
+        generated_metadata[artifact] = metadata
+        generated_entries[artifact] = catalog_entry(plugin, package, metadata)
         print(f"[repository] 增量包：{artifact} v{plugin.version}，SHA 仅计算 1 次", flush=True)
 
     final_entries: list[dict[str, Any]] = []
@@ -1030,10 +1154,21 @@ def release(root: Path, plan_path: Path, output: Path) -> dict[str, Any]:
         if artifact in generated_entries:
             plugin_root = _display(plugin.root.relative_to(root))
             released[artifact] = _state_entry(plugin, generated_entries[artifact], git_tree(root, head, plugin_root))
+        elif artifact in relocated:
+            plugin_root = _display(plugin.root.relative_to(root))
+            released[artifact] = _state_entry(plugin, _catalog_entry_by_artifact(catalog)[artifact], git_tree(root, head, plugin_root))
         elif artifact not in released:
             entry = _catalog_entry_by_artifact(catalog)[artifact]
             released[artifact] = _state_entry(plugin, entry, git_tree(root, head, _display(plugin.root.relative_to(root))))
     new_state = {"schemaVersion": STATE_SCHEMA_VERSION, "sourceCommit": head, "released": {key: released[key] for key in sorted(released)}}
+    plan["packageMetadata"] = {
+        artifact: {
+            "path": _display(metadata.path.relative_to(output)),
+            "sha256": metadata.sha256,
+            "sizeBytes": metadata.size_bytes,
+        }
+        for artifact, metadata in sorted(generated_metadata.items())
+    }
     write_json(output / STATE_FILE, new_state)
     write_json(output / "release-plan.json", plan)
     validate_generated(root, output)
@@ -1052,7 +1187,12 @@ def validate_generated(root: Path, generated_root: Path) -> None:
     old_catalog = read_json(root / "catalog.json")
     old_entries = _catalog_entry_by_artifact(old_catalog)
     requires = set(plan.get("requiresPackage", []))
+    relocated = set(plan.get("relocated", []))
     deleted = set(plan.get("deleted", []))
+    package_metadata_by_artifact = plan.get("packageMetadata", {})
+    _require(isinstance(package_metadata_by_artifact, dict), "release plan packageMetadata 必须是对象")
+    _require(set(package_metadata_by_artifact) == requires, "release plan packageMetadata 与 requiresPackage 不一致")
+    _require(relocated.isdisjoint(requires | deleted), "release plan 的 relocation 与 package/delete 计划重叠")
     generated_packages_root = generated_root / "packages"
     if generated_packages_root.is_dir():
         for directory in generated_packages_root.iterdir():
@@ -1062,8 +1202,12 @@ def validate_generated(root: Path, generated_root: Path) -> None:
     for artifact in requires:
         package = generated_packages_root / artifact / f"{artifact}-{by_artifact[artifact].version}.zip"
         _require(package.is_file(), f"生成物缺少变更插件包：{_display(package)}")
-        _require(sha256(package) == generated_entries[artifact]["sha256"], f"生成物 SHA256 不一致：{_display(package)}")
-        _require(package.stat().st_size == generated_entries[artifact]["sizeBytes"], f"生成物 sizeBytes 不一致：{_display(package)}")
+        metadata = package_metadata_by_artifact[artifact]
+        _require(isinstance(metadata, dict), f"生成物 packageMetadata 无效：{artifact}")
+        _require(metadata.get("path") == _display(package.relative_to(generated_root)), f"生成物 packageMetadata 路径不一致：{artifact}")
+        _require(metadata.get("sha256") == generated_entries[artifact]["sha256"], f"生成物 SHA256 metadata 不一致：{_display(package)}")
+        _require(metadata.get("sizeBytes") == generated_entries[artifact]["sizeBytes"], f"生成物 sizeBytes metadata 不一致：{_display(package)}")
+        _require(package.stat().st_size == metadata.get("sizeBytes"), f"生成物 sizeBytes 不一致：{_display(package)}")
         _validate_zip(package, by_artifact[artifact])
     for artifact, entry in old_entries.items():
         if artifact not in requires and artifact not in deleted:

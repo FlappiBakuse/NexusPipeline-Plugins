@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "gameName": "通用外观",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": ["外观", "壁纸", "主题"],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
+  "changelog": [
+    {
+      "version": "0.1.9",
+      "date": "2026-09-07",
+      "items": [
+        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+      ]
+    },
+    {
+      "version": "0.1.8",
+      "date": "2026-08-31",
+      "items": [
+        "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
+      ]
+    },
+    {
+      "version": "0.1.7",
+      "date": "2026-08-31",
+      "items": [
+        "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
+      ]
+    }
+  ]
+}

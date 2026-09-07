@@ -32,23 +32,13 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Read host lock
-        id: host-lock
-        working-directory: NexusPipeline-Plugins
-        shell: pwsh
-        run: |
-          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
-          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
-          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
-          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
-
-      - name: Checkout locked host repository
+      - name: Checkout host repository workspace
         uses: actions/checkout@v4
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: ${{ steps.host-lock.outputs.ref }}
+          ref: main
           path: NexusPipeline
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -73,6 +63,17 @@ jobs:
               Remove-Item -LiteralPath .generated -Recurse -Force
             }
 
+            $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
+            if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
+            if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
+            git -C ..\NexusPipeline fetch origin $lock.ref --depth=1
+            if ($LASTEXITCODE -ne 0) { throw "无法获取 host.lock.json 指定的宿主提交：$($lock.ref)" }
+            git -C ..\NexusPipeline checkout --detach $lock.ref
+            if ($LASTEXITCODE -ne 0) { throw "无法切换到 host.lock.json 指定的宿主提交：$($lock.ref)" }
+
+            python tools/repository.py check-syntax
+            node tools/Test-ConfigEditors.mjs
+            python -m unittest discover -s tools/tests -v
             python tools/repository.py validate-source
             python tools/repository.py plan --baseline auto --output .generated/release-plan.json
             python tools/repository.py test --plan .generated/release-plan.json

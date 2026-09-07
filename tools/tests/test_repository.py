@@ -12,12 +12,18 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import repository_core as core  # noqa: E402
+
 from repository_core import (  # noqa: E402
+    SourcePlugin,
     RepositoryError,
     _package_files,
     bootstrap_state,
     build_plan,
     catalog_entry,
+    discover_source_plugins,
+    git_head,
+    git_tree,
     is_semver,
     parse_date,
     parse_semver,
@@ -26,6 +32,7 @@ from repository_core import (  # noqa: E402
     release,
     read_json,
     validate_source_plugin,
+    validate_generated,
     write_json,
 )
 
@@ -85,7 +92,7 @@ class RepositoryCoreTests(unittest.TestCase):
     def test_source_change_requires_semver_bump(self) -> None:
         root = self._create_git_fixture()
         try:
-            data = root / "plugins" / "Alpha" / "data" / "judge.js"
+            data = root / "plugins" / "specialized" / "Alpha" / "data" / "judge.js"
             data.write_text("changed\n", encoding="utf-8")
             self._git(root, "add", ".")
             self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source change")
@@ -97,15 +104,15 @@ class RepositoryCoreTests(unittest.TestCase):
     def test_release_candidate_contains_only_changed_package(self) -> None:
         root = self._create_git_fixture()
         try:
-            manifest_path = root / "plugins" / "Alpha" / "plugin.json"
-            store_path = root / "plugins" / "Alpha" / "store.json"
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
             manifest = read_json(manifest_path)
             store = read_json(store_path)
             manifest["version"] = "0.2.0"
             store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
             write_json(manifest_path, manifest)
             write_json(store_path, store)
-            self._git(root, "add", "plugins/Alpha/plugin.json", "plugins/Alpha/store.json")
+            self._git(root, "add", "plugins/specialized/Alpha/plugin.json", "plugins/specialized/Alpha/store.json")
             self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "version bump")
             plan = build_plan(root)
             plan_path = root / "release-plan.json"
@@ -116,6 +123,176 @@ class RepositoryCoreTests(unittest.TestCase):
             self.assertEqual([path.name for path in (candidate / "packages").iterdir()], ["Alpha"])
             self.assertTrue((candidate / "packages" / "Alpha" / "Alpha-0.2.0.zip").is_file())
             self.assertEqual(read_json(candidate / "catalog.json")["plugins"][0]["version"], "0.2.0")
+        finally:
+            self._remove_tree(root)
+
+    def test_flat_source_plugin_is_rejected_after_migration(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            shutil.move(root / "plugins" / "specialized" / "Alpha", root / "plugins" / "Alpha")
+            with self.assertRaisesRegex(RepositoryError, "必须位于 plugins/general/ 或 plugins/specialized/"):
+                discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_general_requires_managed_code(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            shutil.move(root / "plugins" / "specialized" / "Alpha", root / "plugins" / "general" / "Alpha")
+            with self.assertRaisesRegex(RepositoryError, "必须位于 plugins/general/"):
+                discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_specialized_requires_data_specialized(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            manifest = read_json(manifest_path)
+            manifest["kind"] = "managed-code"
+            write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(RepositoryError, "必须位于 plugins/specialized/"):
+                discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_pure_flat_to_typed_relocation_requires_no_semver_bump(self) -> None:
+        root = self._create_git_fixture(legacy_flat=True)
+        try:
+            plan = build_plan(root)
+            self.assertEqual(plan["changed"], [])
+            self.assertEqual(plan["deleted"], [])
+            self.assertEqual(plan["requiresPackage"], [])
+            self.assertEqual(plan["relocated"], ["Alpha"])
+        finally:
+            self._remove_tree(root)
+
+    def test_pure_relocation_preserves_catalog_entry_package_bytes_and_advances_state(self) -> None:
+        root = self._create_git_fixture(legacy_flat=True)
+        try:
+            before_catalog = read_json(root / "catalog.json")
+            before_package = (root / "packages" / "Alpha" / "Alpha-0.1.0.zip").read_bytes()
+            before_state = read_json(root / ".release-state.json")
+            plan = build_plan(root)
+            plan_path = root / ".generated" / "relocation-plan.json"
+            write_json(plan_path, plan)
+            candidate = root / ".generated" / "relocation-candidate"
+            release(root, plan_path, candidate)
+            validate_generated(root, candidate)
+            self.assertEqual(read_json(candidate / "catalog.json"), before_catalog)
+            self.assertEqual((root / "packages" / "Alpha" / "Alpha-0.1.0.zip").read_bytes(), before_package)
+            self.assertEqual(list((candidate / "packages").rglob("*.zip")), [])
+            state = read_json(candidate / ".release-state.json")
+            self.assertEqual(state["sourceCommit"], plan["head"])
+            self.assertEqual(state["released"]["Alpha"]["sourceTree"], before_state["released"]["Alpha"]["sourceTree"])
+        finally:
+            self._remove_tree(root)
+
+    def test_relocation_plus_payload_change_requires_semver_bump(self) -> None:
+        root = self._create_git_fixture(legacy_flat=True)
+        try:
+            judge = root / "plugins" / "specialized" / "Alpha" / "data" / "judge.js"
+            judge.write_text("changed after relocation\n", encoding="utf-8")
+            self._git(root, "add", ".")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "payload change")
+            with self.assertRaisesRegex(RepositoryError, "必须提升 SemVer"):
+                build_plan(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_relocation_with_version_bump_is_one_package_change_without_delete(self) -> None:
+        root = self._create_git_fixture(legacy_flat=True)
+        try:
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = read_json(manifest_path)
+            store = read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["relocated"]}]
+            write_json(manifest_path, manifest)
+            write_json(store_path, store)
+            self._git(root, "add", ".")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "version bump after relocation")
+            plan = build_plan(root)
+            self.assertEqual(plan["requiresPackage"], ["Alpha"])
+            self.assertEqual(plan["deleted"], [])
+            self.assertEqual(plan["relocated"], [])
+        finally:
+            self._remove_tree(root)
+
+    def test_changed_package_sha_is_computed_once_in_normal_release(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = read_json(manifest_path)
+            store = read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            write_json(manifest_path, manifest)
+            write_json(store_path, store)
+            self._git(root, "add", ".")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "version bump")
+            plan = build_plan(root)
+            plan_path = root / ".generated" / "release-plan.json"
+            write_json(plan_path, plan)
+            candidate = root / ".generated" / "candidate"
+            original_sha256 = core.sha256
+            calls = []
+
+            def counted_sha256(path: Path) -> str:
+                calls.append(path)
+                return original_sha256(path)
+
+            core.sha256 = counted_sha256
+            try:
+                release(root, plan_path, candidate)
+                validate_generated(root, candidate)
+            finally:
+                core.sha256 = original_sha256
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0].name, "Alpha-0.2.0.zip")
+        finally:
+            self._remove_tree(root)
+
+    def test_docs_only_release_performs_zero_package_sha(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            (root / "README.md").write_text("docs only\n", encoding="utf-8")
+            self._git(root, "add", "README.md")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "docs")
+            plan = build_plan(root)
+            plan_path = root / ".generated" / "release-plan.json"
+            write_json(plan_path, plan)
+            original_sha256 = core.sha256
+            calls = []
+            core.sha256 = lambda path: calls.append(path) or original_sha256(path)
+            try:
+                release(root, plan_path, root / ".generated" / "candidate")
+            finally:
+                core.sha256 = original_sha256
+            self.assertEqual(calls, [])
+        finally:
+            self._remove_tree(root)
+
+    def test_tool_only_release_performs_zero_package_sha(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            (root / "tools").mkdir()
+            (root / "tools" / "repository.py").write_text("# tool change\n", encoding="utf-8")
+            self._git(root, "add", "tools/repository.py")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "tool")
+            plan = build_plan(root)
+            plan_path = root / ".generated" / "release-plan.json"
+            write_json(plan_path, plan)
+            original_sha256 = core.sha256
+            calls = []
+            core.sha256 = lambda path: calls.append(path) or original_sha256(path)
+            try:
+                release(root, plan_path, root / ".generated" / "candidate")
+            finally:
+                core.sha256 = original_sha256
+            self.assertEqual(calls, [])
         finally:
             self._remove_tree(root)
 
@@ -132,9 +309,12 @@ class RepositoryCoreTests(unittest.TestCase):
 
         shutil.rmtree(root, onerror=onerror)
 
-    def _create_git_fixture(self) -> Path:
+    def _create_git_fixture(self, legacy_flat: bool = False) -> Path:
         root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-", dir=str(Path.cwd())))
-        (root / "plugins" / "Alpha" / "data").mkdir(parents=True)
+        (root / "plugins" / "general").mkdir(parents=True)
+        (root / "plugins" / "specialized").mkdir(parents=True)
+        plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path("specialized") / "Alpha")
+        (plugin_root / "data").mkdir(parents=True)
         manifest = {
             "schemaVersion": 2,
             "name": "alpha",
@@ -160,27 +340,50 @@ class RepositoryCoreTests(unittest.TestCase):
             "require": [{"var": "main", "file": "Alpha.exe"}],
             "paths": {"mainExe": "{main}", "args": "", "configPath": "config.json", "logPath": "logs/*.txt"},
         }
-        write_json(root / "plugins" / "Alpha" / "plugin.json", manifest)
-        write_json(root / "plugins" / "Alpha" / "store.json", store)
-        write_json(root / "plugins" / "Alpha" / "data" / "resolve.json", resolve)
-        (root / "plugins" / "Alpha" / "data" / "judge.js").write_text("return null;\n", encoding="utf-8")
+        write_json(plugin_root / "plugin.json", manifest)
+        write_json(plugin_root / "store.json", store)
+        write_json(plugin_root / "data" / "resolve.json", resolve)
+        (plugin_root / "data" / "judge.js").write_text("return null;\n", encoding="utf-8")
         (root / "README.md").write_text("baseline\n", encoding="utf-8")
-        plugin = validate_source_plugin(root / "plugins" / "Alpha")
+        plugin = SourcePlugin("specialized", plugin_root, manifest, store) if legacy_flat else validate_source_plugin(plugin_root)
         payload = root / "payload"
         (payload / "data").mkdir(parents=True)
-        shutil.copy2(root / "plugins" / "Alpha" / "plugin.json", payload / "plugin.json")
-        shutil.copy2(root / "plugins" / "Alpha" / "store.json", payload / "store.json")
-        shutil.copytree(root / "plugins" / "Alpha" / "data", payload / "data", dirs_exist_ok=True)
+        shutil.copy2(plugin_root / "plugin.json", payload / "plugin.json")
+        shutil.copy2(plugin_root / "store.json", payload / "store.json")
+        shutil.copytree(plugin_root / "data", payload / "data", dirs_exist_ok=True)
         package = root / "packages" / "Alpha" / "Alpha-0.1.0.zip"
         _package_files(payload, package)
         write_json(root / "catalog.json", {"schemaVersion": 2, "repository": "FlappiBakuse/NexusPipeline-Plugins", "generatedAt": "2026-01-01T00:00:00Z", "plugins": [catalog_entry(plugin, package)]})
         self._git(root, "init")
         self._git(root, "add", ".")
         self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "baseline")
-        state = bootstrap_state(root)
+        baseline_commit = git_head(root)
+        if legacy_flat:
+            state = {
+                "schemaVersion": 1,
+                "sourceCommit": baseline_commit,
+                "released": {
+                    "Alpha": {
+                        "name": "alpha",
+                        "artifactName": "Alpha",
+                        "version": "0.1.0",
+                        "sha256": read_json(root / "catalog.json")["plugins"][0]["sha256"],
+                        "sizeBytes": read_json(root / "catalog.json")["plugins"][0]["sizeBytes"],
+                        "sourceTree": git_tree(root, baseline_commit, "plugins/Alpha"),
+                    }
+                },
+            }
+        else:
+            state = bootstrap_state(root)
         write_json(root / ".release-state.json", state)
         self._git(root, "add", ".release-state.json")
         self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "release state")
+        if legacy_flat:
+            typed_root = root / "plugins" / "specialized" / "Alpha"
+            typed_root.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(root / "plugins" / "Alpha", typed_root)
+            self._git(root, "add", ".")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "categorize plugin")
         return root
 
 

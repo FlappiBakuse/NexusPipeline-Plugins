@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NexusPipeline.Plugin.LiveScreenshot</RootNamespace>
+    <AssemblyName>NexusPipeline.Plugin.LiveScreenshot</AssemblyName>
+    <Version>0.1.2</Version>
+    <OutputType>Library</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\NexusPipeline\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

@@ -20,7 +20,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 | `custom-wallpaper` | `CustomWallpaper` |
 | `live-screenshot` | `LiveScreenshot` |
 
-`plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录、宿主安装目录、`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与源码目录完全一致。
+`plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录按类型位于 `plugins/general/<ArtifactName>/` 或 `plugins/specialized/<ArtifactName>/`，宿主安装目录保持 `plugins/<ArtifactName>/`，`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与分类源码目录的末级目录完全一致。
 
 ## 发行包布局
 
@@ -69,6 +69,7 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 
 ```text
 python tools/repository.py validate
+python tools/repository.py validate-source
 python tools/repository.py check-syntax
 python -m unittest discover -s tools/tests -v
 python tools/repository.py plan --baseline auto --output .generated/release-plan.json
@@ -79,6 +80,8 @@ python tools/repository.py validate-generated --generated-root .generated
 
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
+`validate-source` 用于在 PR 候选 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁；`validate` 还会校验当前 catalog 与已存在发行包。
+
 普通发行的处理边界如下：
 
 1. 只读取受影响插件的源码并构建其新版本；
@@ -88,7 +91,11 @@ python tools/repository.py validate-generated --generated-root .generated
 5. retention 只扫描受影响 artifact 目录；
 6. 同一 `(artifactName, version)` 的 ZIP 内容不同会立即失败。
 
-工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 保持现有兄弟路径。
+源码从旧的平铺目录迁移到分类目录时，规划器会比较迁移前后的插件身份、版本和 Git tree。内容完全相同的纯 relocation 不要求 SemVer bump，不生成 ZIP，不计算 SHA，也不修改 catalog entry，只推进发行状态；迁移同时包含 payload 变化时按正常版本发行规则处理，必须提升插件版本。
+
+新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
+
+工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。
 
 ## 发行状态
 
@@ -129,7 +136,7 @@ python tools/repository.py validate-generated --generated-root .generated
       "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
       "authors": [],
       "tags": ["外观", "壁纸", "主题"],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
       "updatedAt": "2026-08-29",
       "hasReadme": true,
       "version": "0.1.5",

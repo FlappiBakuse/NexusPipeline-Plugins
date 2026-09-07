@@ -15,7 +15,7 @@
 ## 开发流程
 
 1. 从现有插件中选择运行目录结构相近的参考实现。
-2. 创建 `plugins/<ArtifactName>/`，按插件类型补齐 manifest、`store.json`、data 资源或 .NET 项目。
+2. `managed-code` 插件创建 `plugins/general/<ArtifactName>/`，`data-specialized` 插件创建 `plugins/specialized/<ArtifactName>/`，按插件类型补齐 manifest、`store.json`、data 资源或 .NET 项目。
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
@@ -57,7 +57,7 @@ python tools/repository.py validate-generated --generated-root .generated
 python tools/repository.py audit --full
 ```
 
-managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。
+managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 

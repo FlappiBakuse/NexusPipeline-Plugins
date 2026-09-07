@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "gameName": "原神",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": [
+    "原神",
+    "专项插件",
+    "配置接管"
+  ],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
+  "changelog": [
+    {
+      "version": "0.2.6",
+      "date": "2026-09-07",
+      "items": [
+        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+      ]
+    },
+    {
+      "version": "0.2.5",
+      "date": "2026-09-06",
+      "items": [
+        "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
+        "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
+      ]
+    },
+    {
+      "version": "0.2.4",
+      "date": "2026-09-05",
+      "items": [
+        "提升最低宿主版本至 v0.14.2，确保用户绑定级配置选择在配置编辑、用户管理和运行流程中保持一致。",
+        "适配 NexusPipeline v0.14.3 的配置输入契约与配置恢复稳定性修复。"
+      ]
+    }
+  ]
+}

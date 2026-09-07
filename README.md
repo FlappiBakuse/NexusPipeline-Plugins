@@ -22,28 +22,33 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 ## 发布规则
 
-插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。每个插件使用正式大小写的 artifact 名称建立源码与发行目录，并最多保留最近三个 SemVer 包。相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
+插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个 SemVer 包。相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
 
 ```text
 packages/<ArtifactName>/<ArtifactName>-<version>.zip
 ```
 
-例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.4.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于源码目录、宿主安装目录、发行目录和 ZIP 文件名。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
+例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.4.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于分类源码目录的末级目录、宿主安装目录、发行目录和 ZIP 文件名。源码路径、安装路径与发行路径分别为 `plugins/{general|specialized}/<ArtifactName>/`、`plugins/<ArtifactName>/` 和 `packages/<ArtifactName>/`。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
 
 ## 仓库结构
 
 ```text
 NexusPipeline-Plugins/
 ├── catalog.json                         # 插件商店索引与包完整性信息
-├── plugins/<ArtifactName>/              # 严格大小写的插件源码目录
-│   ├── plugin.json                      # 元数据与入口声明
-│   ├── store.json                        # 商店展示元数据与更新记录
-│   ├── data/                            # data-specialized 插件资源
-│   │   ├── resolve.json                 # 脚本根目录推导规则
-│   │   ├── judge.js 或 judge.py         # 运行中完成/失败判定
-│   │   └── config-editor.js             # 可选配置编辑准备脚本
-│   ├── web/                             # 可选 Frontend API 1.2 模块、样式和静态资源
-│   └── src/                             # managed-code 插件项目（.csproj 与 C# 源码）
+├── plugins/
+│   ├── general/<ArtifactName>/          # managed-code 通用插件源码
+│   │   ├── plugin.json                  # 元数据与入口声明
+│   │   ├── store.json                    # 商店展示元数据与更新记录
+│   │   ├── web/                          # 可选 Frontend API 1.2 模块、样式和静态资源
+│   │   └── src/                          # managed-code 插件项目（.csproj 与 C# 源码）
+│   └── specialized/<ArtifactName>/      # data-specialized 专项插件源码
+│       ├── plugin.json                  # 元数据与入口声明
+│       ├── store.json                    # 商店展示元数据与更新记录
+│       ├── data/                         # data-specialized 插件资源
+│       │   ├── resolve.json              # 脚本根目录推导规则
+│       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
+│       │   └── config-editor.js          # 可选配置编辑准备脚本
+│       └── web/                          # 可选 Frontend API 1.2 模块、样式和静态资源
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
 ├── .release-state.json                  # 最近一次成功发行状态
@@ -64,7 +69,7 @@ NexusPipeline-Plugins/
 
 新增插件时，可以选择一个结构接近的现有插件作为起点：
 
-1. `data-specialized` 插件在 `plugins/<ArtifactName>/` 创建 `plugin.json`、`store.json`、`data/resolve.json` 和判断脚本；`managed-code` 插件创建 `src/` 项目并引用宿主 Plugin API。
+1. `data-specialized` 插件在 `plugins/specialized/<ArtifactName>/` 创建 `plugin.json`、`store.json`、`data/resolve.json` 和判断脚本；`managed-code` 插件在 `plugins/general/<ArtifactName>/` 创建 `src/` 项目并引用宿主 Plugin API。
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。

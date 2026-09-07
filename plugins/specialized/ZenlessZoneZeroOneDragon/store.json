@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "gameName": "绝区零",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": [
+    "绝区零",
+    "专项插件",
+    "配置接管"
+  ],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
+  "changelog": [
+    {
+      "version": "0.2.6",
+      "date": "2026-09-07",
+      "items": [
+        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+      ]
+    },
+    {
+      "version": "0.2.5",
+      "date": "2026-09-06",
+      "items": [
+        "适配 NexusPipeline v0.14.4：多实例 reuse 编辑隔离 config 下全部实例目录，保存、取消和恢复后还原原始现场。",
+        "新增 one_dragon.yml 编辑准备脚本，仅保留选中实例并同步 active、active_in_od，附加配置纳入编辑事务。",
+        "兼容 OneDragon 实际生成的同级 YAML 列表与数字型 idx，修复单实例和多实例复用编辑失败。"
+      ]
+    },
+    {
+      "version": "0.2.4",
+      "date": "2026-09-05",
+      "items": [
+        "提升最低宿主版本至 v0.14.2，确保 no-fresh-config 能力在配置编辑中按宿主契约生效。",
+        "适配 NexusPipeline v0.14.3 的用户绑定配置输入与配置恢复契约。"
+      ]
+    }
+  ]
+}
