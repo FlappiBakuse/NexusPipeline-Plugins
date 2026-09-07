@@ -20,37 +20,41 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.2`、`web/` 入口/样式和同源 DOM 行为；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 更新插件版本和 `store.json`；运行 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再运行 `tools/Generate-Catalog.ps1` 更新索引，最后运行仓库级一键校验。
+7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` 使用 API v1.2。
 
 ## 发行包规则
 
-- 插件包直接提交到 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
+- 插件包由 main 发布工作流写入 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
 - 每个 artifact 目录最多保留最近三个数值 SemVer 包；旧包仅用于仓库存档，插件平台不提供降级安装。
-- ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。
+- ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。相同 `(artifactName, version)` 的发行包不可覆盖。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
 
 ## 本地检查
 
 提交前至少执行以下检查：
 
-```powershell
-# 检查 JSON 语法（PowerShell 7）
-Get-ChildItem -LiteralPath . -Recurse -Filter *.json |
-  ForEach-Object { Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json | Out-Null }
+```text
+# 校验源码契约、manifest、store 和 catalog 元数据
+python tools/repository.py validate
 
-# 生成一个插件的发行包
-pwsh -NoProfile -File tools\Pack-Plugin.ps1 -ArtifactName <ArtifactName>
+# 校验 JavaScript / Python 语法
+python tools/repository.py check-syntax
 
-# 从各插件自身的 manifest/store/package 生成 catalog
-pwsh -NoProfile -File tools\Generate-Catalog.ps1
+# 校验仓库工具
+python -m unittest discover -s tools/tests -v
 
-# 校验全部 catalog 条目、包内容、摘要和目录保留数
-pwsh -NoProfile -File tools\Validate-Packages.ps1
+# 根据最近一次成功发行状态生成计划
+python tools/repository.py plan --baseline auto --output .generated/release-plan.json
 
-# 推荐的仓库级一键校验：JSON、manifest、数据化契约、脚本语法、catalog、发行包、构建和测试
-pwsh -NoProfile -File tools\Test-Repository.ps1
+# 构建受影响的 managed-code 项目，并生成增量候选物
+python tools/repository.py test --plan .generated/release-plan.json
+python tools/repository.py release --plan .generated/release-plan.json --output .generated
+python tools/repository.py validate-generated --generated-root .generated
+
+# 全仓 ZIP / SHA256 / catalog 审计
+python tools/repository.py audit --full
 ```
 
 managed-code 插件还应在 `plugins/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。
@@ -104,13 +108,13 @@ Pull Request 应包含：
 - 公开、可复现的 resolve 与 judge 说明；
 - 插件版本变化及兼容宿主版本；
 - 本地验证结果和已知兼容限制；
-- 发布版本需要的 ZIP、catalog 元数据和摘要校验。
+- 插件源码、manifest、store 和本地验证结果；发行包、catalog 与摘要由 main 发布工作流生成。
 
 禁止提交：
 
 - 用户配置、账号信息、Cookie、Token、密钥和个人路径；
 - 运行日志、缓存、临时目录和开发机生成的无关文件；
-- 与发行包内容不一致的 SHA256 或 `sizeBytes`；
+- 手工修改的 `.release-state.json`、`catalog.json`、`packages/` 或与发行包内容不一致的 SHA256 / `sizeBytes`；
 - 未经许可重新分发的第三方二进制或资源。
 
 ## 维护约定

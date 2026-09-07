@@ -61,34 +61,57 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 
-## 标准流程
+## 增量发行流程
 
-在仓库根目录执行：
+发行工具入口为 `python tools/repository.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
 
-```powershell
-# 生成指定插件的包；managed-code 插件会先以 Release 配置构建
-pwsh -NoProfile -File tools\Pack-Plugin.ps1 -ArtifactName CustomWallpaper
+本地可以执行：
 
-# 从各插件的 manifest、store.json 和当前 ZIP 生成 catalog
-pwsh -NoProfile -File tools\Generate-Catalog.ps1
-
-# 推荐的仓库级一键校验：JSON、manifest、数据化契约、脚本语法、catalog、发行包、构建和测试
-pwsh -NoProfile -File tools\Test-Repository.ps1
+```text
+python tools/repository.py validate
+python tools/repository.py check-syntax
+python -m unittest discover -s tools/tests -v
+python tools/repository.py plan --baseline auto --output .generated/release-plan.json
+python tools/repository.py test --plan .generated/release-plan.json
+python tools/repository.py release --plan .generated/release-plan.json --output .generated
+python tools/repository.py validate-generated --generated-root .generated
 ```
 
-`Test-Repository.ps1` 会检查 catalog 可重建性、发行包完整性、所有 managed-code 项目构建和测试；`Generate-Catalog.ps1` 与 `Validate-Packages.ps1` 仍可单独运行以定位索引或发行包问题。
+`release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
-`Pack-Plugin.ps1` 会：
+普通发行的处理边界如下：
 
-1. 校验 manifest schema、机器 ID、artifactName 和版本；
-2. 构建 managed-code 插件，或复制 data-specialized 插件资源；
-3. 将 `store.json` 和可选 `README.md` 放入包根目录，生成根目录带 `plugin.json` 的 ZIP；
-4. 拒绝覆盖同一 SemVer 下内容不同的既有 ZIP；
-5. 按数值 SemVer 在对应 artifact 目录保留最近三个 ZIP。
+1. 只读取受影响插件的源码并构建其新版本；
+2. 只为新版本 ZIP 计算 SHA256；
+3. 未变更 catalog entry 原样保留，未变更 ZIP 不读取；
+4. catalog 只替换受影响 entry、移除已删除插件并稳定排序；
+5. retention 只扫描受影响 artifact 目录；
+6. 同一 `(artifactName, version)` 的 ZIP 内容不同会立即失败。
 
-`Generate-Catalog.ps1` 扫描 `plugins/<ArtifactName>/plugin.json`、`store.json` 和 `packages/<ArtifactName>/<ArtifactName>-<version>.zip`，生成 catalog 的展示字段、包地址、SHA256、大小和时间。`catalog.json` 是可重建的索引，新增插件与版本由各插件目录提供事实输入。
+工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 保持现有兄弟路径。
 
-脚本在临时目录完成构建和压缩，结束后清理暂存内容。包写入 `packages/<ArtifactName>/` 后，必须再次运行全量校验。
+## 发行状态
+
+`.release-state.json` 使用当前 schema：
+
+```json
+{
+  "schemaVersion": 1,
+  "sourceCommit": "<last-successful-source-commit>",
+  "released": {
+    "BetterGI": {
+      "name": "bettergi",
+      "artifactName": "BetterGI",
+      "version": "0.2.5",
+      "sha256": "<64 位小写十六进制>",
+      "sizeBytes": 6955,
+      "sourceTree": "<git tree sha>"
+    }
+  }
+}
+```
+
+初次建立状态时，工具从现有 catalog 导入 `version`、`sha256` 和 `sizeBytes`，读取 Git tree fingerprint；不会为了 bootstrap 重新读取所有 ZIP。状态只在成功候选物应用后推进。
 
 ## catalog.json schemaVersion 2
 
@@ -142,27 +165,18 @@ pwsh -NoProfile -File tools\Test-Repository.ps1
 
 宿主与仓库当前均要求 catalog schemaVersion 2 和官方 raw 包地址。
 
-## 本地核对
+## 校验层级
 
-```powershell
-# JSON 语法
-Get-Content -Raw -LiteralPath catalog.json | ConvertFrom-Json | Out-Null
-Get-ChildItem -LiteralPath plugins -Recurse -Filter *.json |
-  ForEach-Object { Get-Content -Raw -LiteralPath $_.FullName | ConvertFrom-Json | Out-Null }
-
-# 查看指定包内容
-tar -tf packages\CustomWallpaper\CustomWallpaper-0.1.1.zip
-
-# 全量包校验
-pwsh -NoProfile -File tools\Validate-Packages.ps1
+```text
+python tools/repository.py validate
 ```
 
-校验结果必须确认 ZIP 根有 `plugin.json`，manifest 与 catalog 的名称/版本一致，包路径安全，摘要和大小一致，并且每个 artifact 目录最多有三个版本。
+校验源码、manifest、store、data-specialized 引用、catalog 集合和包路径元数据。它不会为未变更插件重新计算 ZIP SHA256。
 
-## 仓库维护核对
+```text
+python tools/repository.py audit --full
+```
 
-- 新版本先更新对应插件的 manifest/store，再生成 `packages/<ArtifactName>/` 中的新 ZIP 和 catalog；
-- 不创建新的插件 tag 或 GitHub Release；
-- 历史插件 Release/Tag 的清理属于仓库迁移维护动作，应在所有包迁移、下载复核和远端备份确认后执行；
-- 修改 ZIP 内容、压缩顺序或包元数据后必须重新生成 SHA256 和 `sizeBytes`；
-- 宿主插件页应能显示当前版本、兼容性、更新状态和 catalog 中的更新记录。
+Full Audit 由手动触发或每周计划任务运行。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
+
+Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。合并后的 main 发布工作流使用 concurrency coalescing，从最新 main 和最近成功发行状态重新规划；Bot commit 的生成路径不触发下一轮发布。

@@ -1,0 +1,88 @@
+name: Validate plugins
+
+on:
+  pull_request:
+    paths:
+      - "plugins/**"
+      - "tools/**"
+      - "docs/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "host.lock.json"
+      - "global.json"
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Read host lock
+        id: host-lock
+        working-directory: NexusPipeline-Plugins
+        shell: pwsh
+        run: |
+          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
+          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
+          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
+          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout locked host repository
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ steps.host-lock.outputs.ref }}
+          path: NexusPipeline
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+
+      - name: Reject contributor generated files
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py check-pr --base "${{ github.event.pull_request.base.sha }}"
+
+      - name: Validate source contracts
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py validate-source
+
+      - name: Validate script syntax
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py check-syntax
+
+      - name: Test configuration editors
+        working-directory: NexusPipeline-Plugins
+        run: node tools/Test-ConfigEditors.mjs
+
+      - name: Test repository tools
+        working-directory: NexusPipeline-Plugins
+        run: python -m unittest discover -s tools/tests -v
+
+      - name: Plan and build PR candidate
+        working-directory: NexusPipeline-Plugins
+        shell: pwsh
+        run: |
+          python tools/repository.py plan --baseline "${{ github.event.pull_request.base.sha }}" --output .generated/pr-plan.json
+          python tools/repository.py test --plan .generated/pr-plan.json
+          python tools/repository.py release --plan .generated/pr-plan.json --output .generated/pr-candidate
+          python tools/repository.py validate-generated --generated-root .generated/pr-candidate

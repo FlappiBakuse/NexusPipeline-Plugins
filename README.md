@@ -1,6 +1,6 @@
 # NexusPipeline-Plugins
 
-NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、发行包和插件商店索引。
+NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
 宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.2、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
 
@@ -18,11 +18,11 @@ NexusPipeline 官方插件仓库，提供数据化专项插件的源码目录、
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 | `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
 
-宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。
+宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
 
 ## 发布规则
 
-插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。每个插件使用正式大小写的 artifact 名称建立源码与发行目录，并最多保留最近三个 SemVer 包：
+插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。每个插件使用正式大小写的 artifact 名称建立源码与发行目录，并最多保留最近三个 SemVer 包。相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
 
 ```text
 packages/<ArtifactName>/<ArtifactName>-<version>.zip
@@ -46,8 +46,12 @@ NexusPipeline-Plugins/
 │   └── src/                             # managed-code 插件项目（.csproj 与 C# 源码）
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
+├── .release-state.json                  # 最近一次成功发行状态
+├── host.lock.json                       # managed-code 宿主提交锁
 ├── tools/
-│   └── Test-Repository.ps1              # 一键执行仓库级校验
+│   ├── repository.py                    # 发行计划、增量打包与审计入口
+│   ├── repository_core.py               # 可测试的仓库规则实现
+│   └── tests/                           # 仓库工具单元测试
 └── docs/
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南
@@ -64,7 +68,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，使用 `tools/Pack-Plugin.ps1 -ArtifactName <ArtifactName>` 生成包，再用 `tools/Generate-Catalog.ps1` 更新索引，最后执行 `pwsh -NoProfile -File tools/Test-Repository.ps1` 完成仓库级校验；该命令覆盖 JSON、manifest、数据化契约、脚本语法、catalog、发行包和 managed-code 构建/测试。
+5. 更新插件自身版本和 `store.json`，运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和对应测试。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
 
 ## 重要运行语义
 

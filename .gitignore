@@ -1,2 +1,5 @@
 **/bin/
 **/obj/
+/.generated/
+**/__pycache__/
+*.pyc

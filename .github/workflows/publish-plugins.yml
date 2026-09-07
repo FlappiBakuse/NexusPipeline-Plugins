@@ -1,0 +1,108 @@
+name: Publish plugins
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "plugins/**"
+      - "tools/**"
+      - "host.lock.json"
+      - "global.json"
+      - ".github/workflows/**"
+
+concurrency:
+  group: nexus-plugin-publish-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout latest plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Read host lock
+        id: host-lock
+        working-directory: NexusPipeline-Plugins
+        shell: pwsh
+        run: |
+          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
+          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
+          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
+          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout locked host repository
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ steps.host-lock.outputs.ref }}
+          path: NexusPipeline
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+
+      - name: Plan, build and publish the latest main
+        working-directory: NexusPipeline-Plugins
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            Write-Output "[publish] coalescing attempt $attempt/3"
+            git fetch origin main
+            git reset --hard origin/main
+            if (Test-Path -LiteralPath .generated) {
+              Remove-Item -LiteralPath .generated -Recurse -Force
+            }
+
+            python tools/repository.py validate-source
+            python tools/repository.py plan --baseline auto --output .generated/release-plan.json
+            python tools/repository.py test --plan .generated/release-plan.json
+            python tools/repository.py release --plan .generated/release-plan.json --output .generated
+            python tools/repository.py validate-generated --generated-root .generated
+
+            $head = (git rev-parse HEAD).Trim()
+            $remote = (git ls-remote origin refs/heads/main).Split()[0]
+            if ($remote -ne $head) {
+              Write-Output "[publish] main 在构建期间前进到 $remote，重新从最新 release state 规划。"
+              continue
+            }
+
+            python tools/repository.py apply --generated-root .generated
+            git diff --check
+            git add -- catalog.json .release-state.json packages
+            git diff --cached --quiet
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "[publish] 没有生成物变化，无需 Bot commit。"
+              exit 0
+            }
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(plugins): 增量更新发行包与 catalog"
+            git push origin HEAD:main
+            if ($LASTEXITCODE -eq 0) {
+              Write-Output "[publish] 增量发行物已写回 main。"
+              exit 0
+            }
+            Write-Output "[publish] push 竞争失败，下一轮重新读取 main。"
+          }
+          throw "连续 3 次无法在最新 main 上完成原子发行"
