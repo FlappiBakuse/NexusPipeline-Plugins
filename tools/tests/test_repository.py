@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import repository_core as core  # noqa: E402
 
+core.configure_console()
+
 from repository_core import (  # noqa: E402
     SourcePlugin,
     RepositoryError,

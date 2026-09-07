@@ -16,6 +16,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import zipfile
 from dataclasses import dataclass
@@ -63,6 +64,14 @@ CAPABILITY_MIN_HOST = {
 
 class RepositoryError(ValueError):
     """仓库契约或发行状态无效。"""
+
+
+def configure_console() -> None:
+    """让 Windows 原生控制台能够安全输出仓库工具的 UTF-8 日志。"""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
 
 
 @dataclass(frozen=True)

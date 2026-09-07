@@ -13,6 +13,7 @@ from repository_core import (
     build_plan,
     check_pr,
     check_syntax,
+    configure_console,
     read_json,
     release,
     test_managed,
@@ -61,10 +62,7 @@ def _load_plan(path: Path) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    for stream in (sys.stdout, sys.stderr):
-        reconfigure = getattr(stream, "reconfigure", None)
-        if reconfigure is not None:
-            reconfigure(encoding="utf-8", errors="replace")
+    configure_console()
     args = _parser().parse_args(argv)
     root = args.root.resolve()
     try:

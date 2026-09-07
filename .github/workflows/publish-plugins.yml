@@ -55,10 +55,18 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          function Assert-NativeSuccess([string]$step) {
+            if ($LASTEXITCODE -ne 0) {
+              throw "$step 失败，退出码：$LASTEXITCODE"
+            }
+          }
+
           for ($attempt = 1; $attempt -le 3; $attempt++) {
             Write-Output "[publish] coalescing attempt $attempt/3"
             git fetch origin main
+            Assert-NativeSuccess "git fetch origin main"
             git reset --hard origin/main
+            Assert-NativeSuccess "git reset --hard origin/main"
             if (Test-Path -LiteralPath .generated) {
               Remove-Item -LiteralPath .generated -Recurse -Force
             }
@@ -72,38 +80,60 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "无法切换到 host.lock.json 指定的宿主提交：$($lock.ref)" }
 
             python tools/repository.py check-syntax
+            Assert-NativeSuccess "repository syntax check"
             node tools/Test-ConfigEditors.mjs
+            Assert-NativeSuccess "Config Editor check"
             python -m unittest discover -s tools/tests -v
+            Assert-NativeSuccess "repository unit tests"
             python tools/repository.py validate-source
+            Assert-NativeSuccess "source validation"
             python tools/repository.py plan --baseline auto --output .generated/release-plan.json
+            Assert-NativeSuccess "release planning"
             python tools/repository.py test --plan .generated/release-plan.json
+            Assert-NativeSuccess "managed-code tests"
             python tools/repository.py release --plan .generated/release-plan.json --output .generated
+            Assert-NativeSuccess "release candidate generation"
             python tools/repository.py validate-generated --generated-root .generated
+            Assert-NativeSuccess "generated release validation"
 
-            $head = (git rev-parse HEAD).Trim()
-            $remote = (git ls-remote origin refs/heads/main).Split()[0]
+            $headOutput = git rev-parse HEAD
+            Assert-NativeSuccess "git rev-parse HEAD"
+            $head = $headOutput.Trim()
+            $remoteOutput = git ls-remote origin refs/heads/main
+            Assert-NativeSuccess "git ls-remote origin main"
+            $remote = (($remoteOutput | Select-Object -First 1) -split '\s+')[0]
+            if ([string]::IsNullOrWhiteSpace($remote)) { throw "无法读取 origin/main 的远端提交指针" }
             if ($remote -ne $head) {
               Write-Output "[publish] main 在构建期间前进到 $remote，重新从最新 release state 规划。"
               continue
             }
 
             python tools/repository.py apply --generated-root .generated
+            Assert-NativeSuccess "apply generated release"
             git diff --check
+            Assert-NativeSuccess "git diff --check"
             git add -- catalog.json .release-state.json packages
+            Assert-NativeSuccess "stage generated release"
             git diff --cached --quiet
-            if ($LASTEXITCODE -eq 0) {
+            $cachedStatus = $LASTEXITCODE
+            if ($cachedStatus -eq 0) {
               Write-Output "[publish] 没有生成物变化，无需 Bot commit。"
               exit 0
             }
+            if ($cachedStatus -ne 1) { throw "git diff --cached --quiet 失败，退出码：$cachedStatus" }
 
             git config user.name "github-actions[bot]"
+            Assert-NativeSuccess "configure git user.name"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            Assert-NativeSuccess "configure git user.email"
             git commit -m "chore(plugins): 增量更新发行包与 catalog"
+            Assert-NativeSuccess "commit generated release"
             git push origin HEAD:main
-            if ($LASTEXITCODE -eq 0) {
+            $pushStatus = $LASTEXITCODE
+            if ($pushStatus -eq 0) {
               Write-Output "[publish] 增量发行物已写回 main。"
               exit 0
             }
-            Write-Output "[publish] push 竞争失败，下一轮重新读取 main。"
+            Write-Output "[publish] push 竞争失败（退出码：$pushStatus），下一轮重新读取 main。"
           }
           throw "连续 3 次无法在最新 main 上完成原子发行"
