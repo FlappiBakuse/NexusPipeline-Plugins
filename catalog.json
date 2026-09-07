@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-06T04:57:29Z",
+  "generatedAt": "2026-09-07T12:50:49Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -20,20 +20,27 @@
         "壁纸",
         "主题"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/CustomWallpaper",
-      "updatedAt": "2026-08-31",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
+      "updatedAt": "2026-09-07",
       "hasReadme": true,
-      "version": "0.1.8",
+      "version": "0.1.9",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.12.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.8.zip",
-      "sha256": "a1444901c56ac3771b69819c15ff1b4e56ef964955de316fcb10e6acb9fe4863",
-      "sizeBytes": 33103,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.9.zip",
+      "sha256": "4654da66e7f37c13c2edd3a0fd28a69cee2b2120fd4537b35313d196d0ffb6d3",
+      "sizeBytes": 89759,
       "changelog": [
+        {
+          "version": "0.1.9",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.1.8",
           "date": "2026-08-31",
@@ -46,13 +53,6 @@
           "date": "2026-08-31",
           "items": [
             "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
-          ]
-        },
-        {
-          "version": "0.1.6",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
           ]
         }
       ]
@@ -75,10 +75,10 @@
         "HoYoLAB",
         "用户管理"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/GameCheckIn",
-      "updatedAt": "2026-09-01",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
+      "updatedAt": "2026-09-07",
       "hasReadme": true,
-      "version": "0.1.7",
+      "version": "0.1.8",
       "kind": "managed-code",
       "apiVersion": "1.2",
       "capabilities": [
@@ -87,10 +87,17 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.7.zip",
-      "sha256": "a9453522be0399a759434a1ac28bb963e396f349851b872a2151d405d6e0c50c",
-      "sizeBytes": 52177,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.8.zip",
+      "sha256": "8744b75c748715a6541c740f945f238335775cae2328053c675e79c1be24d96a",
+      "sizeBytes": 124840,
       "changelog": [
+        {
+          "version": "0.1.8",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.1.7",
           "date": "2026-09-01",
@@ -103,13 +110,6 @@
           "date": "2026-08-31",
           "items": [
             "移除旧插件身份与旧签到配置迁移逻辑，当前版本仅使用现行宿主插件协议。"
-          ]
-        },
-        {
-          "version": "0.1.5",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
           ]
         }
       ]
@@ -131,10 +131,10 @@
         "模拟器",
         "运行卡片"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/LiveScreenshot",
-      "updatedAt": "2026-08-30",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
+      "updatedAt": "2026-09-07",
       "hasReadme": true,
-      "version": "0.1.2",
+      "version": "0.1.3",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
@@ -142,10 +142,17 @@
         "frontend-module"
       ],
       "minHostVersion": "0.11.7",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.2.zip",
-      "sha256": "eaf950ba332be15792bdf9a7dfbd01624c89099496b7ceff1fcd84ab2aac3eab",
-      "sizeBytes": 28257,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.3.zip",
+      "sha256": "cd30057af39a712b9197cec90bb3799b8632274dec7b1a78c0a3e2c069216fbd",
+      "sizeBytes": 70953,
       "changelog": [
+        {
+          "version": "0.1.3",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.1.2",
           "date": "2026-08-30",
@@ -158,14 +165,6 @@
           "date": "2026-08-29",
           "items": [
             "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-08-29",
-          "items": [
-            "在调度中心运行卡片中提供 PC 游戏窗口和模拟器画面的 360p 实时预览。",
-            "每 5 秒更新一次，并随运行任务生命周期自动清理。"
           ]
         }
       ]
@@ -189,10 +188,10 @@
         "模拟器",
         "BAAH"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BAAH",
-      "updatedAt": "2026-09-05",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
@@ -200,10 +199,17 @@
         "self-managed-pc-launch"
       ],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.1.zip",
-      "sha256": "27742e40c5f5f3c41a32a27715bd253598dcd496cc6c5d160311870c36bdbacd",
-      "sizeBytes": 8754,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.2.zip",
+      "sha256": "08a29d2a32a8636e07808e1f0c53b9d0abe94eb889a6e77328c4d65cd8d089f4",
+      "sizeBytes": 19092,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-09-05",
@@ -241,18 +247,25 @@
         "专项插件",
         "配置接管"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/BetterGI",
-      "updatedAt": "2026-09-06",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.2.5",
+      "version": "0.2.6",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.5.zip",
-      "sha256": "87d73703d6f45a690f7273023096409961295eb3975a6eae508abcf49201e652",
-      "sizeBytes": 6955,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.6.zip",
+      "sha256": "a583a5c7a1ea0ea3986f289212a00a91ce27f4f85f3d9ed2a50fb87230a9450b",
+      "sizeBytes": 12960,
       "changelog": [
+        {
+          "version": "0.2.6",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.5",
           "date": "2026-09-06",
@@ -267,15 +280,6 @@
           "items": [
             "提升最低宿主版本至 v0.14.2，确保用户绑定级配置选择在配置编辑、用户管理和运行流程中保持一致。",
             "适配 NexusPipeline v0.14.3 的配置输入契约与配置恢复稳定性修复。"
-          ]
-        },
-        {
-          "version": "0.2.3",
-          "date": "2026-09-05",
-          "items": [
-            "接管配置的选择改为用户级：首次编辑配置遇到多个一条龙配置时列出选择一次，仅选中的配置文件写入该用户快照，其他配置保持原样；选择保存在用户绑定上，脚本实例不再承载「一条龙配置名」。需要宿主 v0.14.2+。",
-            "多用户共享同一 BetterGI 安装时，各用户可接管不同的一条龙配置并互不干扰。",
-            "升级说明：0.2.2 实例的配置名设置自动迁移为解析回退，首次编辑配置时可在选择器中重新确认。"
           ]
         }
       ]
@@ -297,20 +301,27 @@
         "专项插件",
         "模拟器"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaEnd",
-      "updatedAt": "2026-09-01",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.2.0",
+      "version": "0.2.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.0.zip",
-      "sha256": "b0898aab3175dbc2856657111e0ea82f5083cc16034a13a57da4a71785a892da",
-      "sizeBytes": 5537,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.1.zip",
+      "sha256": "dc0a7d1a961f73b084e6a9c91e838411ae919dd1e4ec1fa03b2d90e04bd48a16",
+      "sizeBytes": 10876,
       "changelog": [
+        {
+          "version": "0.2.1",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.0",
           "date": "2026-09-01",
@@ -324,13 +335,6 @@
           "date": "2026-08-31",
           "items": [
             "修正发行包 manifest，改用 capabilities 声明模拟器能力，恢复商店与手动安装识别。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
           ]
         }
       ]
@@ -353,20 +357,27 @@
         "模拟器",
         "MaaFramework"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/MaaStellaSora",
-      "updatedAt": "2026-09-04",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.0.zip",
-      "sha256": "396421c70f5f9a473b4613f51578e9a7c5289e9dc45ca214faefb8ce58dd04e9",
-      "sizeBytes": 4536,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.1.zip",
+      "sha256": "725ea6da3a86e293386e0d849a74c60896123b44e42621f276e08f829609cd2e",
+      "sizeBytes": 9199,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-09-04",
@@ -394,18 +405,25 @@
         "专项插件",
         "配置接管"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/March7thAssistant",
-      "updatedAt": "2026-09-05",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.1.zip",
-      "sha256": "ea7c0d3c5c20905863fb7b2ee74aee7dba4cbe388b44c17931d067bf25f99cea",
-      "sizeBytes": 4423,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.2.zip",
+      "sha256": "07e94e4f038023750ecc521785d777f225a6dab181c25f46b0ef05d2f7d03e8e",
+      "sizeBytes": 7654,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-09-05",
@@ -419,13 +437,6 @@
           "items": [
             "新增运行截图：每日实训奖励领取完成后自动截图，运行最终判定成功或失败后再次截图。",
             "运行结束判定兼容未开启「运行后动作」的配置，正常收尾即可判定。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
           ]
         }
       ]
@@ -447,20 +458,27 @@
         "专项插件",
         "配置接管"
       ],
-      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-06",
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
+      "updatedAt": "2026-09-07",
       "hasReadme": false,
-      "version": "0.2.5",
+      "version": "0.2.6",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.5.zip",
-      "sha256": "542737cdf0308d1c5eebd7d8decba19ac8d0a7ec9c037e8c45e85b13da3cf441",
-      "sizeBytes": 6901,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.6.zip",
+      "sha256": "a62c2173b11c17c421b24cc1f928757ce38a4484bfec94075a54fa6f37ba26c0",
+      "sizeBytes": 13965,
       "changelog": [
+        {
+          "version": "0.2.6",
+          "date": "2026-09-07",
+          "items": [
+            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.5",
           "date": "2026-09-06",
@@ -476,14 +494,6 @@
           "items": [
             "提升最低宿主版本至 v0.14.2，确保 no-fresh-config 能力在配置编辑中按宿主契约生效。",
             "适配 NexusPipeline v0.14.3 的用户绑定配置输入与配置恢复契约。"
-          ]
-        },
-        {
-          "version": "0.2.3",
-          "date": "2026-09-05",
-          "items": [
-            "接管实例的选择改为用户级：首次编辑配置遇到多个实例目录时列出选择一次，仅选中的实例目录写入该用户快照；选择保存在用户绑定上，脚本实例不再承载「实例序号」。需要宿主 v0.14.2+。",
-            "声明 no-fresh-config 能力：脚本没有生成全新配置文件的能力（实例由 OneDragon 界面创建），首次编辑配置时禁用「全新配置文件」入口。"
           ]
         }
       ]
