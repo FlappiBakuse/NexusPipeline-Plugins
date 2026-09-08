@@ -289,6 +289,10 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     if frontend is None:
         return
     _require(isinstance(frontend, dict), f"插件 {manifest['artifactName']} 的 frontend 必须是对象")
+    capabilities = manifest.get("capabilities", [])
+    _require("frontend-module" in capabilities, f"插件 {manifest['artifactName']} 声明 frontend 时必须声明 frontend-module capability")
+    api_version = frontend.get("apiVersion")
+    _require(api_version == "1.2", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.2")
     _safe_relative(plugin, frontend.get("entry"), f"插件 {manifest['artifactName']} 的 frontend.entry", ".js")
     styles = frontend.get("styles", [])
     _require(isinstance(styles, list), f"插件 {manifest['artifactName']} 的 frontend.styles 必须是数组")
@@ -1063,6 +1067,10 @@ def test_managed(root: Path, plan: dict[str, Any] | None = None, full: bool = Fa
         return 0
     total = 0
     try:
+        frontend_script = root / "tools" / "Test-FrontendPlugins.mjs"
+        if frontend_script.is_file():
+            _run(("node", str(frontend_script)), "前端插件 conformance", root)
+            total += 1
         for plugin, project in _managed_projects(root, artifacts):
             _run(("dotnet", "build", str(project), "--configuration", "Release", "--nologo", "-m:1"), f"managed-code 构建：{plugin.artifact_name}", root)
             total += 1

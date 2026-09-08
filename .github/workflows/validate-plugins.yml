@@ -74,6 +74,10 @@ jobs:
         working-directory: NexusPipeline-Plugins
         run: node tools/Test-ConfigEditors.mjs
 
+      - name: Test frontend plugins
+        working-directory: NexusPipeline-Plugins
+        run: node tools/Test-FrontendPlugins.mjs
+
       - name: Test repository tools
         working-directory: NexusPipeline-Plugins
         run: python -m unittest discover -s tools/tests -v

@@ -42,6 +42,9 @@ python tools/repository.py validate
 # 校验 JavaScript / Python 语法
 python tools/repository.py check-syntax
 
+# 校验 Frontend API 入口、slot 注册和 cleanup 生命周期
+node tools/Test-FrontendPlugins.mjs
+
 # 校验仓库工具
 python -m unittest discover -s tools/tests -v
 
