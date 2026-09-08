@@ -664,7 +664,9 @@ def _changed_root_reasons(records: list[tuple[str, list[str]]]) -> dict[str, lis
     for _status, paths in records:
         for path in paths:
             plugin_root = plugin_root_from_path(path)
-            if plugin_root is not None:
+            normalized = path.replace("\\", "/")
+            plugin_tests_prefix = f"{plugin_root}/tests/" if plugin_root is not None else ""
+            if plugin_root is not None and not normalized.startswith(plugin_tests_prefix):
                 reasons.setdefault(plugin_root, []).append(path)
     return reasons
 

@@ -91,6 +91,20 @@ class RepositoryCoreTests(unittest.TestCase):
         finally:
             self._remove_tree(root)
 
+    def test_plugin_conformance_tests_do_not_require_package(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            test_path = root / "plugins" / "specialized" / "Alpha" / "tests" / "Alpha.Tests.csproj"
+            test_path.parent.mkdir()
+            test_path.write_text("<Project />\n", encoding="utf-8")
+            self._git(root, "add", "plugins/specialized/Alpha/tests/Alpha.Tests.csproj")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "plugin tests")
+            plan = build_plan(root)
+            self.assertEqual(plan["requiresPackage"], [])
+            self.assertIn("plugins/specialized/Alpha/tests/Alpha.Tests.csproj", plan["globalChanges"])
+        finally:
+            self._remove_tree(root)
+
     def test_source_change_requires_semver_bump(self) -> None:
         root = self._create_git_fixture()
         try:
