@@ -8,12 +8,12 @@ namespace NexusPipeline.Plugin.GameCheckIn;
 internal sealed class CheckInService
 {
     private const int MaxCookieBytes = 16 * 1024;
-    private readonly IPluginHostContextV1_2 _context;
+    private readonly IPluginHostContextV1_4 _context;
     private readonly HoyoLabClient _osClient;
     private readonly MiyousheClient _cnClient;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _userFlights = new(StringComparer.OrdinalIgnoreCase);
 
-    public CheckInService(IPluginHostContextV1_2 context)
+    public CheckInService(IPluginHostContextV1_4 context)
     {
         _context = context;
         _osClient = new HoyoLabClient(context.Http);
@@ -119,12 +119,13 @@ internal sealed class CheckInService
             if (game is null || HasTerminalToday(settings, platform, code, today, fingerprint)) continue;
             if (!IsValidCookie(cookie))
             {
-                results.Add(new CheckInResult(platform, code, "invalid_cookie", "Cookie 未配置或格式无效", false));
+                results.Add(new CheckInResult(platform, code, "invalid_cookie", _context.I18n.T("result.invalid_cookie", "Cookie 未配置或格式无效"), false));
                 continue;
             }
             try
             {
-                results.Add(await sign(game, cookie!).ConfigureAwait(false));
+                CheckInResult result = await sign(game, cookie!).ConfigureAwait(false);
+                results.Add(LocalizeResult(result));
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -133,9 +134,16 @@ internal sealed class CheckInService
             catch (Exception ex)
             {
                 _context.Logger.Warn($"{platform}:{code} 签到请求异常：{ex.Message}");
-                results.Add(new CheckInResult(platform, code, "transport_error", "请求失败", false));
+                results.Add(new CheckInResult(platform, code, "transport_error", _context.I18n.T("result.request_failed", "请求失败"), false));
             }
         }
+    }
+
+    private CheckInResult LocalizeResult(CheckInResult result)
+    {
+        string fallback = result.Success ? "签到成功" : result.Message;
+        string message = _context.I18n.T("result." + result.Code, fallback);
+        return result with { Message = message };
     }
 
     private async Task SendSummaryAsync(
@@ -144,13 +152,15 @@ internal sealed class CheckInService
         CancellationToken cancellationToken)
     {
         bool allSucceeded = results.All(result => result.Success);
-        string title = allSucceeded ? "游戏自动签到成功" : "游戏自动签到有失败";
-        string body = $"用户：{eventData.UserName}\n"
+        string title = allSucceeded ? _context.I18n.T("notification.success", "游戏自动签到成功") : _context.I18n.T("notification.failed", "游戏自动签到有失败");
+        string body = _context.I18n.T("notification.user", "用户：{user}", new Dictionary<string, object?> { ["user"] = eventData.UserName }) + "\n"
             + string.Join("\n", results.Select(result =>
             {
                 GameDefinition? game = GameDefinitions.Find(result.GameCode);
-                string platform = result.Platform == "cn" ? "米游社" : "HoYoLAB";
-                return $"{platform} · {game?.DisplayName ?? result.GameCode}：{(result.Success ? "成功" : "失败")}（{result.Message}）";
+                string platform = result.Platform == "cn" ? _context.I18n.T("platform.cn", "米游社") : _context.I18n.T("platform.os", "HoYoLAB");
+                string gameName = _context.I18n.T("game." + result.GameCode, game?.DisplayName ?? result.GameCode);
+                string resultLabel = result.Success ? _context.I18n.T("result.success", "成功") : _context.I18n.T("result.failed", "失败");
+                return $"{platform} · {gameName}：{resultLabel}（{result.Message}）";
             }));
         try
         {

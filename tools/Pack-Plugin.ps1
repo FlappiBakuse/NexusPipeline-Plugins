@@ -143,6 +143,12 @@ try {
         Copy-Item -LiteralPath $webRoot -Destination (Join-Path $payloadRoot "web") -Recurse
     }
 
+    if (($manifest.PSObject.Properties.Name -contains "localization") -and $null -ne $manifest.localization) {
+        $i18nRoot = Join-Path $pluginDir "i18n"
+        Assert-Path $i18nRoot "manifest 声明了 localization，但缺少 i18n 目录：$i18nRoot"
+        Copy-Item -LiteralPath $i18nRoot -Destination (Join-Path $payloadRoot "i18n") -Recurse
+    }
+
     New-Item -ItemType Directory -Path $artifactDir -Force | Out-Null
     Write-DeterministicZip $payloadRoot $temporaryZip
     $hash = (Get-FileHash -LiteralPath $temporaryZip -Algorithm SHA256).Hash.ToLowerInvariant()

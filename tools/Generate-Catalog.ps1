@@ -150,7 +150,9 @@ function New-Catalog([string]$generatedAt) {
     $entries = [System.Collections.Generic.List[object]]::new()
     $names = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
     $artifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
-    $pluginDirectories = @(Get-ChildItem -LiteralPath $pluginsRoot -Directory | Sort-Object Name)
+    $pluginDirectories = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter plugin.json | ForEach-Object {
+        $_.Directory
+    } | Sort-Object FullName -Unique)
     if ($pluginDirectories.Count -eq 0) {
         throw "plugins 目录为空"
     }

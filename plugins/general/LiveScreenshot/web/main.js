@@ -1,16 +1,17 @@
-function previewTime(value) {
+function previewTime(value, host) {
   const date = new Date(value || "");
   return Number.isNaN(date.getTime())
     ? ""
-    : date.toLocaleTimeString("zh-CN", { hour12: false });
+    : host.i18n.formatTime(date, { hour12: false });
 }
 
 function renderPreview(container, context, host) {
   const runId = String(context?.primaryId || "").trim();
+  const tr = (key, args = {}, fallback = "") => host.i18n.t(key, args, fallback);
   container.innerHTML = `<section class="live-screenshot-card" data-live-screenshot-card>
-    <div class="live-screenshot-heading"><strong>实时画面</strong><span class="badge muted" data-live-screenshot-source>等待</span></div>
-    <div class="live-screenshot-stage" data-live-screenshot-stage><span class="muted" data-live-screenshot-state>等待任务画面</span></div>
-    <div class="live-screenshot-footer"><span class="muted" data-live-screenshot-time></span><span class="muted">每 5 秒更新</span></div>
+    <div class="live-screenshot-heading"><strong>${tr("title", {}, "实时画面")}</strong><span class="badge muted" data-live-screenshot-source>${tr("waiting", {}, "等待")}</span></div>
+    <div class="live-screenshot-stage" data-live-screenshot-stage><span class="muted" data-live-screenshot-state>${tr("waiting_run", {}, "等待任务画面")}</span></div>
+    <div class="live-screenshot-footer"><span class="muted" data-live-screenshot-time></span><span class="muted">${tr("refresh", {}, "每 5 秒更新")}</span></div>
   </section>`;
   const card = container.firstElementChild;
   const stage = card.querySelector("[data-live-screenshot-stage]");
@@ -34,20 +35,21 @@ function renderPreview(container, context, host) {
     text.className = `muted live-screenshot-${tone}`;
     text.textContent = message;
     stage.append(text);
-    source.textContent = "等待";
+    source.textContent = tr("waiting", {}, "等待");
     source.className = "badge muted";
     capturedAt.textContent = "";
   };
   const setImage = result => {
     const image = document.createElement("img");
     image.src = result.url;
-    image.alt = "当前游戏画面";
+    image.alt = tr("current_game", {}, "当前游戏画面");
     image.className = "live-screenshot-image";
     stage.replaceChildren(image);
     releaseObjectUrl();
     objectUrl = result.url;
-    capturedAt.textContent = result.capturedAt ? `最近更新 ${previewTime(result.capturedAt)}` : "";
-    source.textContent = result.source === "emulator" ? "模拟器" : "PC 游戏";
+    const time = result.capturedAt ? previewTime(result.capturedAt, host) : "";
+    capturedAt.textContent = time ? tr("recent_update", { time }, `最近更新 ${time}`) : "";
+    source.textContent = result.source === "emulator" ? tr("emulator", {}, "模拟器") : tr("pc_game", {}, "PC 游戏");
     source.className = "badge ok";
   };
   const capture = async () => {
@@ -59,16 +61,16 @@ function renderPreview(container, context, host) {
       if (result.state === "ready" && result.url) {
         setImage(result);
       } else if (result.state === "waiting_for_game") {
-        setState("正在等待游戏窗口…");
+        setState(tr("waiting_game", {}, "正在等待游戏窗口…"));
       } else if (result.state === "window_not_ready") {
-        setState("正在等待游戏窗口…");
+        setState(tr("waiting_game", {}, "正在等待游戏窗口…"));
       } else if (result.state === "emulator_not_ready") {
-        setState("正在等待模拟器画面…");
+        setState(tr("waiting_emulator", {}, "正在等待模拟器画面…"));
       } else {
-        setState("等待任务画面");
+        setState(tr("waiting_run", {}, "等待任务画面"));
       }
     } catch (error) {
-      if (!disposed && error?.name !== "AbortError") setState("暂时无法获取游戏窗口画面", "error");
+      if (!disposed && error?.name !== "AbortError") setState(tr("unavailable", {}, "暂时无法获取游戏窗口画面"), "error");
     } finally {
       request = null;
     }

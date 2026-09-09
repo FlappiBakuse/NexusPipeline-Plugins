@@ -152,7 +152,9 @@ function Assert-ManifestsAndDataContracts {
         "self-managed-pc-launch" = [version]"0.14.1"
         "no-fresh-config" = [version]"0.14.2"
     }
-    $directories = @(Get-ChildItem -LiteralPath $pluginsRoot -Directory | Sort-Object Name)
+    $directories = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter plugin.json | ForEach-Object {
+        $_.Directory
+    } | Sort-Object FullName -Unique)
     if ($directories.Count -eq 0) {
         throw "plugins 目录为空"
     }

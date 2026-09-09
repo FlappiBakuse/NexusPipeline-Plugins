@@ -1,0 +1,13 @@
+{
+  "title": "实时画面",
+  "waiting": "等待",
+  "waiting_run": "等待任务画面",
+  "waiting_game": "正在等待游戏窗口…",
+  "waiting_emulator": "正在等待模拟器画面…",
+  "unavailable": "暂时无法获取游戏窗口画面",
+  "refresh": "每 5 秒更新",
+  "current_game": "当前游戏画面",
+  "recent_update": "最近更新 {time}",
+  "emulator": "模拟器",
+  "pc_game": "PC 游戏"
+}

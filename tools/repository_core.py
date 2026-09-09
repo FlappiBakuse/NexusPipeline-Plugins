@@ -60,6 +60,11 @@ CAPABILITY_MIN_HOST = {
     "self-managed-pc-launch": (0, 14, 1),
     "no-fresh-config": (0, 14, 2),
 }
+SUPPORTED_LOCALES = {"zh-CN", "en-US"}
+MAX_LOCALIZATION_FILE_BYTES = 512 * 1024
+MAX_LOCALIZATION_KEYS = 4096
+MAX_LOCALIZATION_KEY_LENGTH = 128
+MAX_LOCALIZATION_VALUE_LENGTH = 8192
 
 
 class RepositoryError(ValueError):
@@ -214,7 +219,68 @@ def _safe_relative(root: Path, value: Any, label: str, suffix: str | None = None
     return candidate
 
 
-def _validate_store(store: dict[str, Any], plugin_name: str, version: str) -> None:
+def _canonical_locale(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip().casefold().replace("_", "-")
+    if normalized in {"zh", "zh-cn"}:
+        return "zh-CN"
+    if normalized in {"en", "en-us"}:
+        return "en-US"
+    return None
+
+
+def _validate_localized_metadata(
+    locales: Any,
+    plugin_name: str,
+    version: str,
+    display_name: str,
+    description: str,
+    base_changelog: list[dict[str, Any]],
+) -> None:
+    if locales is None:
+        return
+    _require(isinstance(locales, dict), f"插件 {plugin_name} 的 locales 必须是对象")
+    expected_versions = [str(entry["version"]) for entry in base_changelog]
+    seen_locales: set[str] = set()
+    for raw_locale, value in locales.items():
+        locale = _canonical_locale(raw_locale)
+        _require(locale is not None, f"插件 {plugin_name} 的 locale 不受支持：{raw_locale}")
+        _require(locale not in seen_locales, f"插件 {plugin_name} 的 locale 重复：{locale}")
+        seen_locales.add(locale)
+        _require(isinstance(value, dict), f"插件 {plugin_name} 的 locales.{raw_locale} 必须是对象")
+        _text(value.get("displayName"), f"插件 {plugin_name} 的 locales.{locale}.displayName", 128)
+        _text(value.get("gameName"), f"插件 {plugin_name} 的 locales.{locale}.gameName", 128)
+        _text(value.get("description"), f"插件 {plugin_name} 的 locales.{locale}.description", 2048)
+        tags = value.get("tags")
+        _require(isinstance(tags, list) and len(tags) <= 16, f"插件 {plugin_name} 的 locales.{locale}.tags 数量无效")
+        seen_tags: set[str] = set()
+        for tag in tags:
+            normalized_tag = _text(tag, f"插件 {plugin_name} 的 locales.{locale}.tags 文本", 32)
+            _require(normalized_tag.casefold() not in seen_tags, f"插件 {plugin_name} 的 locales.{locale}.tags 重复：{normalized_tag}")
+            seen_tags.add(normalized_tag.casefold())
+        changelog = value.get("changelog")
+        _require(isinstance(changelog, list) and len(changelog) == len(expected_versions), f"插件 {plugin_name} 的 locales.{locale}.changelog 版本数量不一致")
+        localized_versions: list[str] = []
+        for entry in changelog:
+            _require(isinstance(entry, dict), f"插件 {plugin_name} 的 locales.{locale}.changelog 条目无效")
+            entry_version = entry.get("version")
+            parse_semver(entry_version, f"插件 {plugin_name} 的 locales.{locale}.changelog 版本")
+            localized_versions.append(str(entry_version))
+            items = entry.get("items")
+            _require(isinstance(items, list) and 1 <= len(items) <= 32, f"插件 {plugin_name} 的 locales.{locale}.changelog items 数量无效")
+            for item in items:
+                _text(item, f"插件 {plugin_name} 的 locales.{locale}.changelog 文本", 512)
+        _require(localized_versions == expected_versions, f"插件 {plugin_name} 的 locales.{locale}.changelog 版本必须与基础记录一致")
+
+
+def _validate_store(
+    store: dict[str, Any],
+    plugin_name: str,
+    version: str,
+    display_name: str,
+    description: str,
+) -> None:
     _require(store.get("schemaVersion") == 1, f"插件 {plugin_name} 的 store.json schemaVersion 必须为 1")
     _text(store.get("gameName"), f"插件 {plugin_name} 的 gameName", 128)
     authors = store.get("authors")
@@ -253,6 +319,14 @@ def _validate_store(store: dict[str, Any], plugin_name: str, version: str) -> No
         _require(isinstance(items, list) and 1 <= len(items) <= 32, f"插件 {plugin_name} 的 changelog items 数量无效")
         for item in items:
             _text(item, f"插件 {plugin_name} 的 changelog 文本", 512)
+    _validate_localized_metadata(
+        store.get("locales"),
+        plugin_name,
+        version,
+        display_name,
+        description,
+        changelog,
+    )
 
 
 def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
@@ -292,12 +366,43 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     capabilities = manifest.get("capabilities", [])
     _require("frontend-module" in capabilities, f"插件 {manifest['artifactName']} 声明 frontend 时必须声明 frontend-module capability")
     api_version = frontend.get("apiVersion")
-    _require(api_version == "1.2", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.2")
+    _require(api_version in {"1.2", "1.3"}, f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.2 或 1.3")
     _safe_relative(plugin, frontend.get("entry"), f"插件 {manifest['artifactName']} 的 frontend.entry", ".js")
     styles = frontend.get("styles", [])
     _require(isinstance(styles, list), f"插件 {manifest['artifactName']} 的 frontend.styles 必须是数组")
     for style in styles:
         _safe_relative(plugin, style, f"插件 {manifest['artifactName']} 的 frontend.styles", ".css")
+
+
+def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> None:
+    localization = manifest.get("localization")
+    if localization is None:
+        return
+    _require(isinstance(localization, dict), f"插件 {manifest['artifactName']} 的 localization 必须是对象")
+    default_locale = _canonical_locale(localization.get("defaultLocale", "zh-CN"))
+    _require(default_locale is not None, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 不受支持")
+    entries = localization.get("locales", localization.get("resources"))
+    _require(isinstance(entries, dict) and entries, f"插件 {manifest['artifactName']} 的 localization.locales 必须是非空对象")
+    seen: set[str] = set()
+    key_sets: list[set[str]] = []
+    for raw_locale, relative_path in entries.items():
+        locale = _canonical_locale(raw_locale)
+        _require(locale is not None and locale not in seen, f"插件 {manifest['artifactName']} 的 localization locale 无效或重复：{raw_locale}")
+        seen.add(locale)
+        normalized = str(relative_path).replace("\\", "/") if isinstance(relative_path, str) else ""
+        _require(normalized.startswith("i18n/") and normalized.lower().endswith(".json"), f"插件 {manifest['artifactName']} 的 localization 资源路径无效：{relative_path}")
+        resource = _safe_relative(plugin, relative_path, f"插件 {manifest['artifactName']} 的 localization.{locale}", ".json")
+        _require(resource.stat().st_size <= MAX_LOCALIZATION_FILE_BYTES, f"插件 {manifest['artifactName']} 的 localization 资源文件过大：{relative_path}")
+        value = read_json(resource)
+        _require(isinstance(value, dict) and len(value) <= MAX_LOCALIZATION_KEYS, f"插件 {manifest['artifactName']} 的 localization 资源必须是有限对象")
+        keys: set[str] = set()
+        for key, item in value.items():
+            _require(isinstance(key, str) and 0 < len(key) <= MAX_LOCALIZATION_KEY_LENGTH and not any(char.isspace() for char in key), f"插件 {manifest['artifactName']} 的 localization key 无效：{key}")
+            _require(isinstance(item, str) and len(item) <= MAX_LOCALIZATION_VALUE_LENGTH and not any(ord(char) < 32 for char in item), f"插件 {manifest['artifactName']} 的 localization value 无效：{key}")
+            keys.add(key)
+        key_sets.append(keys)
+    _require(default_locale in seen, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 缺少资源")
+    _require(all(keys == key_sets[0] for keys in key_sets[1:]), f"插件 {manifest['artifactName']} 的 localization 资源 key 集合必须一致")
 
 
 def _category_for(root: Path) -> str:
@@ -329,7 +434,13 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     if root.parent.name in {"general", "specialized"}:
         expected = "managed-code" if root.parent.name == "general" else "data-specialized"
         _require(kind == expected, f"插件 {artifact} 必须位于 plugins/{root.parent.name}/")
-    _validate_store(store, name, version)
+    _validate_store(
+        store,
+        name,
+        version,
+        str(manifest.get("displayName", "")),
+        str(manifest.get("description", "")),
+    )
     min_host = manifest.get("minHostVersion", "0.0.0")
     host_version = parse_semver(min_host, f"插件 {artifact} 的 minHostVersion")
     capabilities = manifest.get("capabilities", [])
@@ -349,6 +460,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     if "configValidator" in manifest or "configEditor" in manifest:
         _require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)
+    _validate_localization_contract(root, manifest)
     homepage = store.get("homepage", "")
     canonical_prefix = f"https://github.com/{REPOSITORY}/tree/main/plugins/"
     if isinstance(homepage, str) and homepage.startswith(canonical_prefix):
@@ -869,6 +981,8 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
             _require(copied > 0, f"managed-code 插件没有可打包构建输出：{plugin.artifact_name}")
         if plugin.manifest.get("frontend") is not None:
             _copy_tree(plugin.root / "web", payload / "web")
+        if plugin.manifest.get("localization") is not None:
+            _copy_tree(plugin.root / "i18n", payload / "i18n")
         temporary_zip = temporary_root / "package.zip"
         _package_files(payload, temporary_zip)
         shutil.copyfile(temporary_zip, destination)
@@ -877,7 +991,7 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
 
 def catalog_entry(plugin: SourcePlugin, package: Path, metadata: PackageMetadata | None = None) -> dict[str, Any]:
     metadata = metadata or package_metadata(package)
-    return {
+    entry = {
         "name": plugin.name,
         "artifactName": plugin.artifact_name,
         "displayName": str(plugin.manifest.get("displayName", "")),
@@ -898,6 +1012,9 @@ def catalog_entry(plugin: SourcePlugin, package: Path, metadata: PackageMetadata
         "sizeBytes": metadata.size_bytes,
         "changelog": copy.deepcopy(plugin.store["changelog"]),
     }
+    if plugin.store.get("locales"):
+        entry["locales"] = copy.deepcopy(plugin.store["locales"])
+    return entry
 
 
 def _catalog_order(entries: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -22,8 +22,40 @@ function assetName(asset) {
   return escapeHtml(asset.originalName || asset.id);
 }
 
+function localizeMarkup(markup, host) {
+  const translations = {
+    "自定义壁纸": "card.title",
+    "同步壁纸、轮换方式和显示效果": "card.description",
+    "服务端同步到当前 NexusPipeline 实例的全部浏览器。": "settings.sync",
+    "启用自定义壁纸": "settings.enabled",
+    "启用后使用自定义壁纸作为页面背景。": "settings.enabled_help",
+    "透明度运用于非主页面": "settings.secondary",
+    "关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。": "settings.secondary_help",
+    "轮换方式": "settings.rotation",
+    "轮换间隔（分钟）": "settings.interval",
+    "模糊（像素）": "settings.blur",
+    "变暗": "settings.dim",
+    "卡片与侧边栏透明度": "settings.transparency",
+    "添加壁纸": "settings.add",
+    "JPEG、PNG、WebP，单张最大 8192 KB": "settings.file_help",
+    "最多 32 张，实例总容量 256 MiB。": "settings.max_help",
+    "读取中": "status.loading",
+    "已停用": "status.disabled",
+    "已启用": "status.enabled",
+    "尚未添加壁纸。": "empty",
+    "拖拽排序": "drag",
+    "删除": "remove",
+    "按时间随机轮换": "rotation.timer",
+    "每次启动 Web 随机轮换": "rotation.startup",
+    "不轮换": "rotation.off",
+  };
+  return Object.entries(translations).reduce(
+    (result, [fallback, key]) => result.replaceAll(fallback, host.i18n.t(key, {}, fallback)),
+    markup);
+}
+
 function renderCard(container, _context, host) {
-  container.innerHTML = `<section class="settings-card section-surface wallpaper-settings-card" data-settings-panel="custom-wallpaper" data-testid="custom-wallpaper-card">
+  container.innerHTML = localizeMarkup(`<section class="settings-card section-surface wallpaper-settings-card" data-settings-panel="custom-wallpaper" data-testid="custom-wallpaper-card">
     <button class="settings-card-toggle" type="button" data-action="toggle-settings-panel" data-panel="custom-wallpaper" aria-expanded="false" aria-controls="settings-panel-custom-wallpaper"><span class="settings-card-copy"><strong class="settings-card-title">自定义壁纸</strong><span class="muted">同步壁纸、轮换方式和显示效果</span></span><span class="settings-card-arrow" aria-hidden="true">›</span></button>
     <div id="settings-panel-custom-wallpaper" class="settings-card-body" hidden>
       <div class="wallpaper-settings-body">
@@ -50,7 +82,7 @@ function renderCard(container, _context, host) {
         <div class="wallpaper-card-footer"><span class="muted" data-wallpaper-help>最多 32 张，实例总容量 256 MiB。</span></div>
       </div>
     </div>
-  </section>`;
+  </section>`, host);
   const card = container.firstElementChild;
   const panelToggle = card.querySelector(".settings-card-toggle");
   const panelBody = card.querySelector(".settings-card-body");
@@ -102,18 +134,32 @@ function renderCard(container, _context, host) {
   };
 
   const setStatus = (message, tone = "muted") => {
-    status.textContent = message;
+    const labels = {
+      "读取失败": "status.read_failed",
+      "保存中": "status.saving",
+      "保存失败": "status.save_failed",
+      "上传失败": "status.upload_failed",
+      "删除失败": "status.delete_failed",
+      "已启用": "status.enabled",
+      "已停用": "status.disabled",
+      "未启用": "status.disabled",
+    };
+    status.textContent = labels[message] ? host.i18n.t(labels[message], {}, message) : message;
     status.className = `badge ${tone}`;
   };
   const syncEnabled = () => {
     const on = enabledToggle.getAttribute("aria-pressed") === "true";
     enabledToggle.dataset.state = on ? "on" : "off";
-    enabledToggle.querySelector("[data-switch-state]").textContent = on ? "已启用" : "已停用";
+    enabledToggle.querySelector("[data-switch-state]").textContent = on
+      ? host.i18n.t("status.enabled", {}, "已启用")
+      : host.i18n.t("status.disabled", {}, "已停用");
   };
   const syncSecondaryTransparency = () => {
     const on = secondaryTransparencyToggle.getAttribute("aria-pressed") === "true";
     secondaryTransparencyToggle.dataset.state = on ? "on" : "off";
-    secondaryTransparencyToggle.querySelector("[data-switch-state]").textContent = on ? "已启用" : "已停用";
+    secondaryTransparencyToggle.querySelector("[data-switch-state]").textContent = on
+      ? host.i18n.t("status.enabled", {}, "已启用")
+      : host.i18n.t("status.disabled", {}, "已停用");
   };
   const syncLabels = () => {
     card.querySelector("[data-wallpaper-blur-value]").textContent = `${blur.value}px`;
@@ -135,12 +181,12 @@ function renderCard(container, _context, host) {
     const byId = new Map(assets.map(asset => [asset.id, asset]));
     const order = [...new Set([...(Array.isArray(snapshot.order) ? snapshot.order : []), ...assets.map(asset => asset.id)])]
       .filter(id => byId.has(id));
-    list.innerHTML = order.map(id => {
+    list.innerHTML = localizeMarkup(order.map(id => {
       const asset = byId.get(id);
       if (!asset) return "";
       const escapedId = escapeHtml(asset.id);
       return `<div class="wallpaper-item" data-wallpaper-id="${escapedId}"><button class="wallpaper-drag-handle" type="button" draggable="true" data-wallpaper-drag-handle="${escapedId}" aria-label="拖拽排序：${assetName(asset)}" title="拖拽排序">⠿</button><img src="${escapeHtml(asset.url)}" alt="${assetName(asset)}"><div class="wallpaper-item-copy"><strong>${assetName(asset)}</strong><span class="muted">${formatBytes(asset.sizeBytes)}</span></div><div class="wallpaper-item-actions"><button class="ghost danger" type="button" data-wallpaper-remove="${escapedId}">删除</button></div></div>`;
-    }).join("");
+    }).join(""), host);
   };
   const load = async () => {
     try {
@@ -267,21 +313,21 @@ function renderCard(container, _context, host) {
     for (const file of files) {
       if (!ALLOWED_TYPES.has(String(file.type || "").toLowerCase())) {
         failedCount++;
-        const message = "壁纸仅支持 JPEG、PNG 或 WebP";
+        const message = host.i18n.t("error.types", {}, "壁纸仅支持 JPEG、PNG 或 WebP");
         help.textContent = message;
         host.ui.toast(message, "error");
         continue;
       }
       if (file.size > MAX_ASSET_BYTES) {
         failedCount++;
-        const message = "壁纸文件不能超过 8192 KB";
+        const message = host.i18n.t("error.size", {}, "壁纸文件不能超过 8192 KB");
         help.textContent = message;
         host.ui.toast(message, "error");
         continue;
       }
       if ((snapshot?.assets?.length || 0) >= MAX_ASSETS) {
         failedCount++;
-        const message = "壁纸数量不能超过 32 张";
+        const message = host.i18n.t("error.count", {}, "壁纸数量不能超过 32 张");
         help.textContent = message;
         host.ui.toast(message, "error");
         continue;
@@ -290,16 +336,16 @@ function renderCard(container, _context, host) {
         const bitmap = await createImageBitmap(file);
         const portrait = bitmap.height > bitmap.width;
         bitmap.close?.();
-        if (portrait) host.ui.toast("该图片可能在电脑上显示效果不佳", "warn");
+        if (portrait) host.ui.toast(host.i18n.t("warning.portrait", {}, "该图片可能在电脑上显示效果不佳"), "warn");
       } catch {
         // 图片尺寸解析失败交由服务端图片头校验处理。
       }
       let uploaded;
       try {
-        setStatus(`上传中：${file.name}`, "blue");
+        setStatus(host.i18n.t("status.uploading", { name: file.name }, `上传中：${file.name}`), "blue");
         const result = await host.appearance.wallpaperStore.upload(file, { name: file.name });
         uploaded = result?.asset;
-        if (!uploaded?.id) throw new Error("上传接口未返回壁纸资源");
+        if (!uploaded?.id) throw new Error(host.i18n.t("error.upload_response", {}, "上传接口未返回壁纸资源"));
         uploadedCount++;
         await load();
       } catch (error) {
@@ -314,15 +360,20 @@ function renderCard(container, _context, host) {
         await host.appearance.wallpaperStore.savePalette(uploaded.id, palette);
       } catch (error) {
         paletteWarningCount++;
-        help.textContent = `壁纸已上传，配色稍后生成：${error.message}`;
+        help.textContent = host.i18n.t("warning.palette", { error: error.message }, `壁纸已上传，配色稍后生成：${error.message}`);
       }
       await load();
     }
     event.target.value = "";
     if (uploadedCount > 0) {
-      const suffix = failedCount > 0 ? `，${failedCount} 张失败` : "";
-      const paletteSuffix = paletteWarningCount > 0 ? "（配色待生成）" : "";
-      setStatus(`已上传 ${uploadedCount} 张${suffix}${paletteSuffix}`, failedCount > 0 || paletteWarningCount > 0 ? "warn" : "ok");
+      const uploaded = host.i18n.t("status.uploaded", { count: uploadedCount }, `已上传 ${uploadedCount} 张`);
+      const suffix = failedCount > 0
+        ? host.i18n.t("status.upload_failed_suffix", { count: failedCount }, `，${failedCount} 张失败`)
+        : "";
+      const paletteSuffix = paletteWarningCount > 0
+        ? host.i18n.t("status.palette_pending", {}, "（配色待生成）")
+        : "";
+      setStatus(`${uploaded}${suffix}${paletteSuffix}`, failedCount > 0 || paletteWarningCount > 0 ? "warn" : "ok");
       if (failedCount === 0 && paletteWarningCount === 0) help.textContent = defaultHelp;
     } else if (files.length > 0) {
       setStatus("上传失败", "bad");

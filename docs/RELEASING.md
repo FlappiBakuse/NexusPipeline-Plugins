@@ -141,7 +141,7 @@ python tools/repository.py validate-generated --generated-root .generated
       "hasReadme": true,
       "version": "0.1.5",
       "kind": "managed-code",
-      "apiVersion": "1.4",
+      "apiVersion": "1.5",
       "capabilities": ["frontend-module"],
       "minHostVersion": "0.11.9",
       "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.5.zip",
@@ -159,7 +159,7 @@ python tools/repository.py validate-generated --generated-root .generated
 }
 ```
 
-完整条目还包含 `displayName`、`gameName`、`description`、`authors`、`tags`、`homepage`、`updatedAt`、`hasReadme`、`kind`、`apiVersion`、`capabilities` 和 `minHostVersion`。
+完整条目还包含 `displayName`、`gameName`、`description`、`authors`、`tags`、`homepage`、`updatedAt`、`hasReadme`、`kind`、`apiVersion`、`capabilities` 和 `minHostVersion`；存在本地化元数据时还包含 `locales`，其中每种语言的展示字段和 changelog 版本必须与基础记录对应。
 
 约束如下：
 

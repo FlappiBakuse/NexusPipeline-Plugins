@@ -11,10 +11,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
   "changelog": [
     {
-      "version": "0.1.3",
-      "date": "2026-09-07",
+      "version": "0.1.4",
+      "date": "2026-09-09",
       "items": [
-        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+        "新增宿主语言资源，支持中英文界面显示。"
       ]
     },
     {
@@ -31,5 +31,27 @@
         "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
       ]
     }
-  ]
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "Live Screenshot",
+      "gameName": "PC games and Android emulators",
+      "description": "Show a low-frequency preview of the current PC game or emulator screen in running task cards.",
+      "tags": ["Live preview", "Emulator", "Run card"],
+      "changelog": [
+        {
+          "version": "0.1.4",
+          "items": ["Added host language resources for Chinese and English interfaces."]
+        },
+        {
+          "version": "0.1.2",
+          "items": ["Added official plugin author metadata without changing runtime behavior."]
+        },
+        {
+          "version": "0.1.1",
+          "items": ["Declared the execution-preview-client capability and adopted the host preview authorization boundary."]
+        }
+      ]
+    }
+  }
 }

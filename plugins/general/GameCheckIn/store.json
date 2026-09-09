@@ -11,10 +11,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
-      "version": "0.1.8",
-      "date": "2026-09-07",
+      "version": "0.1.9",
+      "date": "2026-09-09",
       "items": [
-        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+        "新增宿主语言资源，支持中英文界面显示。"
       ]
     },
     {
@@ -31,5 +31,27 @@
         "移除旧插件身份与旧签到配置迁移逻辑，当前版本仅使用现行宿主插件协议。"
       ]
     }
-  ]
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "Game Check-in",
+      "gameName": "Genshin Impact / Honkai: Star Rail / Zenless Zone Zero",
+      "description": "When a user script starts, check in selected games on HoYoLAB or its communities and show aggregated status in the user list.",
+      "tags": ["Check-in", "HoYoLAB", "User management"],
+      "changelog": [
+        {
+          "version": "0.1.9",
+          "items": ["Added host language resources for Chinese and English interfaces."]
+        },
+        {
+          "version": "0.1.7",
+          "items": ["Fixed a trailing comma in the store metadata JSON to prevent duplicate parse warnings in the host."]
+        },
+        {
+          "version": "0.1.6",
+          "items": ["Removed legacy plugin identity and check-in configuration migration logic."]
+        }
+      ]
+    }
+  }
 }

@@ -1,10 +1,10 @@
-# Frontend API 1.2 插件指南
+# Frontend API 1.3 插件指南
 
 NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且兼容后加载同源 JavaScript/CSS，增加页面、导航、路由、主题、壁纸和运行画面预览能力。
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示或插件 Web API 的插件使用宿主 Plugin API v1.4。前端 API 1.2 增加调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面访问和服务端同步外观访问。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示、插件 Web API 或插件本地化的插件使用宿主 Plugin API v1.5。Frontend API 1.3 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、服务端同步外观和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -16,6 +16,7 @@ plugins/general/Example/
 ├── store.json
 ├── data/                         # data-specialized 可选
 ├── ExamplePlugin.dll             # managed-code 可选
+├── i18n/                          # 可选 zh-CN/en-US 资源
 └── web/
     ├── main.js                   # frontend.entry
     ├── style.css                 # frontend.styles
@@ -35,14 +36,21 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "version": "0.1.0",
   "kind": "managed-code",
   "minHostVersion": "0.11.6",
-  "apiVersion": "1.4",
+  "apiVersion": "1.5",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
   "frontend": {
-    "apiVersion": "1.2",
+    "apiVersion": "1.3",
     "entry": "web/main.js",
     "styles": ["web/style.css"]
+  },
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
   }
 }
 ```
@@ -85,6 +93,7 @@ export function activate(host) {
 | `host.lifecycle.*` | 订阅页面进入、离开、更新和释放事件 |
 | `host.appearance` | 注册主题、设置 CSS token、切换主题和管理壁纸 |
 | `host.executionPreview.capture(runId, signal)` | 读取宿主绑定的当前 PC 游戏客户区或模拟器画面；返回 360p JPEG 或等待状态 |
+| `host.i18n` | 读取当前插件的 locale、defaultLocale 和词典，使用 `t(key, args, fallback)` 以及日期/时间/数字格式化 |
 
 `renderer(container, context, host)` 可以直接使用 DOM API；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。
 
@@ -107,14 +116,15 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API v1.4 配合方式
+## Plugin API v1.5 配合方式
 
-managed-code 插件在初始化时检查 `context is IPluginHostContextV1_3`，再按需使用：
+managed-code 插件在初始化时检查 `context is IPluginHostContextV1_4`，再按需使用：
 
 - `context.Ui.Register`：注册 Form、Badge、Card 贡献。字段类型包括 text、textarea、secret、switch、select、multi-select、status、number、color、range、url；secret 读取只返回 configured 标记，保存使用 keep/set/clear 动作对象；
 - `context.ScopedData`：使用 `global`、`user/<id>`、`script/<id>`、`queue/<id>`、`user-script/<userId>/<scriptId>` 等 scope 保存 JSON；
 - `context.WebApi.Register`：注册本插件自己的 GET/POST/PUT/PATCH/DELETE 路由；
 - `context.History.Register`：在运行历史落盘前生成徽章和字段快照。
+- `context.I18n`：读取插件 manifest 声明的 `i18n/` 资源，使用 `T(key, fallback, args)` 和本地化日期、时间、数字格式化。
 
 宿主 UI 投影端点为：
 
@@ -145,7 +155,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 安全与资源边界
 
-- 资源只从 `/plugin-assets/<plugin>/web/...` 读取，支持 GET/HEAD；宿主拒绝路径越界、目录浏览和非白名单扩展名；
+- 资源只从 `/plugin-assets/<plugin>/web/...` 读取，词典由宿主在前端描述中按插件身份提供；宿主拒绝路径越界、目录浏览和非白名单扩展名；
 - `plugin.json`、配置、密钥、DLL、PDB、日志和用户数据不属于前端公开资源；
 - 插件前端不应把 Token、Cookie、密码或用户配置写入 localStorage、IndexedDB、URL、日志或 DOM；
 - 主题 token 名称和值会经过宿主前端校验；服务端壁纸资产使用 `user-assets/appearance/wallpapers/`，外观配置使用 `config/appearance.json`，轮换运行状态使用 `.nxp/state/appearance-runtime.json`；浏览器仅保留当前显示 Blob 的短期缓存；
@@ -153,9 +163,9 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 发布前检查
 
-- `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；
+- `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与宿主当前 Plugin API v1.4 兼容；需要通用扩展端口的插件继续检查 `IPluginHostContextV1_3`；`game-checkin` 使用 Plugin API v1.2；
+- managed-code 插件 API 版本与宿主当前 Plugin API v1.5 兼容；需要通用扩展端口的插件继续检查 `IPluginHostContextV1_4`；`game-checkin` 使用 Plugin API v1.5；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API、UI slot、主题/壁纸和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；

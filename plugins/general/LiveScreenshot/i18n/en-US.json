@@ -1,0 +1,13 @@
+{
+  "title": "Live view",
+  "waiting": "Waiting",
+  "waiting_run": "Waiting for task view",
+  "waiting_game": "Waiting for the game window…",
+  "waiting_emulator": "Waiting for the emulator view…",
+  "unavailable": "The game window view is temporarily unavailable",
+  "refresh": "Updates every 5 seconds",
+  "current_game": "Current game view",
+  "recent_update": "Updated {time}",
+  "emulator": "Emulator",
+  "pc_game": "PC game"
+}
