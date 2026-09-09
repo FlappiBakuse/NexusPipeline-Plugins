@@ -20,6 +20,10 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
 
+## 插件本地化资源
+
+需要前端或宿主插件上下文文案时，可在 `plugin.json` 的 `localization` 中声明 `i18n/*.json` 资源。locale 使用规范化 BCP 47 形式，`defaultLocale` 必须有对应文件；所有语言资源必须拥有相同的 key 集合和占位符集合，值必须是非空字符串，禁止使用 `legacy.*` key。仓库校验会检查路径边界、文件大小、key/value 数量和占位符一致性。
+
 ## 发布规则
 
 插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个 SemVer 包。相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。

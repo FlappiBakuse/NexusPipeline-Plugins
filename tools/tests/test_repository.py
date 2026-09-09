@@ -50,6 +50,41 @@ class RepositoryCoreTests(unittest.TestCase):
         with self.assertRaises(RepositoryError):
             parse_date("2026-02-30", "测试日期")
 
+    def test_locales_use_canonical_bcp47_casing(self) -> None:
+        self.assertEqual(core._canonical_locale("zh_hant_tw"), "zh-Hant-TW")
+        self.assertEqual(core._canonical_locale("EN-us"), "en-US")
+        self.assertIsNone(core._canonical_locale("zh--CN"))
+        self.assertIsNone(core._canonical_locale("中文"))
+
+    def test_localization_contract_requires_matching_keys_and_placeholders(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-localization-test-", dir=str(Path.cwd())))
+        try:
+            plugin = root / "Plugin"
+            (plugin / "i18n").mkdir(parents=True)
+            manifest = {
+                "artifactName": "Plugin",
+                "localization": {
+                    "defaultLocale": "zh-CN",
+                    "locales": {
+                        "zh-CN": "i18n/zh-CN.json",
+                        "en-US": "i18n/en-US.json",
+                    },
+                },
+            }
+            write_json(plugin / "i18n" / "zh-CN.json", {"greeting": "你好，{name}", "plain": "文本"})
+            write_json(plugin / "i18n" / "en-US.json", {"greeting": "Hello, {name}", "plain": "Text"})
+            core._validate_localization_contract(plugin, manifest)
+
+            write_json(plugin / "i18n" / "en-US.json", {"greeting": "Hello", "plain": "Text"})
+            with self.assertRaisesRegex(RepositoryError, "占位符集合"):
+                core._validate_localization_contract(plugin, manifest)
+
+            write_json(plugin / "i18n" / "en-US.json", {"greeting": "Hello, {name}", "legacy.old": "Text"})
+            with self.assertRaisesRegex(RepositoryError, "key 无效"):
+                core._validate_localization_contract(plugin, manifest)
+        finally:
+            self._remove_tree(root)
+
     def test_plugin_root_mapping_handles_current_and_typed_layouts(self) -> None:
         self.assertEqual(plugin_root_from_path("plugins/LiveScreenshot/src/Main.cs"), "plugins/LiveScreenshot")
         self.assertEqual(plugin_root_from_path("plugins\\specialized\\BAAH\\store.json"), "plugins/specialized/BAAH")

@@ -19,7 +19,7 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.3`、`web/` 入口/样式和同源 DOM 行为；若使用本地化，校验 `localization` 资源的 locale、key 集合和回退文本；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.3`、`web/` 入口/样式和同源 DOM 行为；若使用本地化，使用规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` 使用 API v1.5。

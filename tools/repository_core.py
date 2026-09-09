@@ -61,6 +61,8 @@ CAPABILITY_MIN_HOST = {
     "no-fresh-config": (0, 14, 2),
 }
 SUPPORTED_LOCALES = {"zh-CN", "en-US"}
+BCP47_LOCALE_PATTERN = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
+PLACEHOLDER_PATTERN = re.compile(r"\{([A-Za-z][A-Za-z0-9_.-]*)\}")
 MAX_LOCALIZATION_FILE_BYTES = 512 * 1024
 MAX_LOCALIZATION_KEYS = 4096
 MAX_LOCALIZATION_KEY_LENGTH = 128
@@ -222,12 +224,19 @@ def _safe_relative(root: Path, value: Any, label: str, suffix: str | None = None
 def _canonical_locale(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
-    normalized = value.strip().casefold().replace("_", "-")
-    if normalized in {"zh", "zh-cn"}:
-        return "zh-CN"
-    if normalized in {"en", "en-us"}:
-        return "en-US"
-    return None
+    normalized = value.strip().replace("_", "-")
+    if not BCP47_LOCALE_PATTERN.fullmatch(normalized):
+        return None
+    parts = normalized.split("-")
+    canonical = [parts[0].lower()]
+    for part in parts[1:]:
+        if len(part) == 4 and part.isalpha():
+            canonical.append(part.title())
+        elif len(part) == 2 and part.isalpha():
+            canonical.append(part.upper())
+        else:
+            canonical.append(part.lower())
+    return "-".join(canonical)
 
 
 def _validate_localized_metadata(
@@ -385,6 +394,7 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
     _require(isinstance(entries, dict) and entries, f"插件 {manifest['artifactName']} 的 localization.locales 必须是非空对象")
     seen: set[str] = set()
     key_sets: list[set[str]] = []
+    placeholders_by_key: dict[str, set[str]] | None = None
     for raw_locale, relative_path in entries.items():
         locale = _canonical_locale(raw_locale)
         _require(locale is not None and locale not in seen, f"插件 {manifest['artifactName']} 的 localization locale 无效或重复：{raw_locale}")
@@ -397,9 +407,32 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
         _require(isinstance(value, dict) and len(value) <= MAX_LOCALIZATION_KEYS, f"插件 {manifest['artifactName']} 的 localization 资源必须是有限对象")
         keys: set[str] = set()
         for key, item in value.items():
-            _require(isinstance(key, str) and 0 < len(key) <= MAX_LOCALIZATION_KEY_LENGTH and not any(char.isspace() for char in key), f"插件 {manifest['artifactName']} 的 localization key 无效：{key}")
-            _require(isinstance(item, str) and len(item) <= MAX_LOCALIZATION_VALUE_LENGTH and not any(ord(char) < 32 for char in item), f"插件 {manifest['artifactName']} 的 localization value 无效：{key}")
+            _require(
+                isinstance(key, str)
+                and 0 < len(key) <= MAX_LOCALIZATION_KEY_LENGTH
+                and not any(char.isspace() for char in key)
+                and not key.startswith("legacy."),
+                f"插件 {manifest['artifactName']} 的 localization key 无效：{key}",
+            )
+            _require(
+                isinstance(item, str)
+                and bool(item.strip())
+                and len(item) <= MAX_LOCALIZATION_VALUE_LENGTH
+                and not any(ord(char) < 32 for char in item),
+                f"插件 {manifest['artifactName']} 的 localization value 无效：{key}",
+            )
             keys.add(key)
+        placeholders = {
+            key: set(PLACEHOLDER_PATTERN.findall(str(value)))
+            for key, value in value.items()
+        }
+        if placeholders_by_key is None:
+            placeholders_by_key = placeholders
+        else:
+            _require(
+                placeholders == placeholders_by_key,
+                f"插件 {manifest['artifactName']} 的 localization 占位符集合必须一致：{raw_locale}",
+            )
         key_sets.append(keys)
     _require(default_locale in seen, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 缺少资源")
     _require(all(keys == key_sets[0] for keys in key_sets[1:]), f"插件 {manifest['artifactName']} 的 localization 资源 key 集合必须一致")
