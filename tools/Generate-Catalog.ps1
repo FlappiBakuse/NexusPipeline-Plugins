@@ -285,6 +285,9 @@ function New-Catalog([string]$generatedAt) {
             sizeBytes = [int64]$file.Length
         }
         $entry.changelog = $changelog
+        if ($store.PSObject.Properties.Name -contains "locales" -and $null -ne $store.locales) {
+            $entry.locales = $store.locales
+        }
         $entries.Add([pscustomobject]$entry)
     }
     # The catalog is a user-facing index. Keep general-purpose plugins first,
