@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-07T12:50:49Z",
+  "generatedAt": "2026-09-09T09:36:22Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,24 +21,24 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-07",
+      "updatedAt": "2026-09-09",
       "hasReadme": true,
-      "version": "0.1.9",
+      "version": "0.1.10",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.12.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.9.zip",
-      "sha256": "4654da66e7f37c13c2edd3a0fd28a69cee2b2120fd4537b35313d196d0ffb6d3",
-      "sizeBytes": 89759,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.10.zip",
+      "sha256": "1d41affc24535308f35fdf7b65a13e3ac87a44cffa6b84cedb0a7f77e01d87d6",
+      "sizeBytes": 107364,
       "changelog": [
         {
-          "version": "0.1.9",
-          "date": "2026-09-07",
+          "version": "0.1.10",
+          "date": "2026-09-09",
           "items": [
-            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+            "新增宿主语言资源，支持中英文界面显示。"
           ]
         },
         {
@@ -55,7 +55,39 @@
             "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
           ]
         }
-      ]
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "Custom Wallpaper",
+          "gameName": "General appearance",
+          "description": "Manage multiple custom wallpapers in NexusPipeline, including rotation, display effects, and adaptive colors.",
+          "tags": [
+            "Appearance",
+            "Wallpaper",
+            "Theme"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.10",
+              "items": [
+                "Added host language resources for Chinese and English interfaces."
+              ]
+            },
+            {
+              "version": "0.1.8",
+              "items": [
+                "Improved the layout of toggle-card descriptions on the settings page."
+              ]
+            },
+            {
+              "version": "0.1.7",
+              "items": [
+                "Added an option to apply opacity to non-primary page settings."
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "name": "game-checkin",
@@ -76,26 +108,26 @@
         "用户管理"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-07",
+      "updatedAt": "2026-09-09",
       "hasReadme": true,
-      "version": "0.1.8",
+      "version": "0.1.9",
       "kind": "managed-code",
-      "apiVersion": "1.2",
+      "apiVersion": "1.5",
       "capabilities": [
         "user-global-management",
         "user-list-badges",
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.8.zip",
-      "sha256": "8744b75c748715a6541c740f945f238335775cae2328053c675e79c1be24d96a",
-      "sizeBytes": 124840,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.9.zip",
+      "sha256": "64664556e255d8527c18ae8bd1256519b403b436ae13c48b2744fa6dc8865d2d",
+      "sizeBytes": 144335,
       "changelog": [
         {
-          "version": "0.1.8",
-          "date": "2026-09-07",
+          "version": "0.1.9",
+          "date": "2026-09-09",
           "items": [
-            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+            "新增宿主语言资源，支持中英文界面显示。"
           ]
         },
         {
@@ -112,7 +144,39 @@
             "移除旧插件身份与旧签到配置迁移逻辑，当前版本仅使用现行宿主插件协议。"
           ]
         }
-      ]
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "Game Check-in",
+          "gameName": "Genshin Impact / Honkai: Star Rail / Zenless Zone Zero",
+          "description": "When a user script starts, check in selected games on HoYoLAB or its communities and show aggregated status in the user list.",
+          "tags": [
+            "Check-in",
+            "HoYoLAB",
+            "User management"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.9",
+              "items": [
+                "Added host language resources for Chinese and English interfaces."
+              ]
+            },
+            {
+              "version": "0.1.7",
+              "items": [
+                "Fixed a trailing comma in the store metadata JSON to prevent duplicate parse warnings in the host."
+              ]
+            },
+            {
+              "version": "0.1.6",
+              "items": [
+                "Removed legacy plugin identity and check-in configuration migration logic."
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "name": "live-screenshot",
@@ -132,9 +196,9 @@
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
-      "updatedAt": "2026-09-07",
+      "updatedAt": "2026-09-09",
       "hasReadme": true,
-      "version": "0.1.3",
+      "version": "0.1.4",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
@@ -142,15 +206,15 @@
         "frontend-module"
       ],
       "minHostVersion": "0.11.7",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.3.zip",
-      "sha256": "cd30057af39a712b9197cec90bb3799b8632274dec7b1a78c0a3e2c069216fbd",
-      "sizeBytes": 70953,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.4.zip",
+      "sha256": "e870a22f2dba68ca1a73a261aed5ce0d9a48f2fff7becc0665d75ed1dc33b6f4",
+      "sizeBytes": 82159,
       "changelog": [
         {
-          "version": "0.1.3",
-          "date": "2026-09-07",
+          "version": "0.1.4",
+          "date": "2026-09-09",
           "items": [
-            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+            "新增宿主语言资源，支持中英文界面显示。"
           ]
         },
         {
@@ -167,7 +231,39 @@
             "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
           ]
         }
-      ]
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "Live Screenshot",
+          "gameName": "PC games and Android emulators",
+          "description": "Show a low-frequency preview of the current PC game or emulator screen in running task cards.",
+          "tags": [
+            "Live preview",
+            "Emulator",
+            "Run card"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.4",
+              "items": [
+                "Added host language resources for Chinese and English interfaces."
+              ]
+            },
+            {
+              "version": "0.1.2",
+              "items": [
+                "Added official plugin author metadata without changing runtime behavior."
+              ]
+            },
+            {
+              "version": "0.1.1",
+              "items": [
+                "Declared the execution-preview-client capability and adopted the host preview authorization boundary."
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "name": "baah",
