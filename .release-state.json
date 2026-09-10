@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "d19c234702def4cedacd0c8254f5a8fa141ac41f",
+  "sourceCommit": "9da5c6cdac7b881a4461e68096ce50169d88d0a4",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -13,10 +13,10 @@
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.2.7",
-      "sha256": "14f481f3b8f4a92e12ad42a652755244483750636d4d38f04e946e4ae5cfb171",
-      "sizeBytes": 14419,
-      "sourceTree": "4a0df559ea8d20d6a311e20695171028e88ec945"
+      "version": "0.2.8",
+      "sha256": "c0523a4dd7066b8e2958ecbab83db23176aa90bcf749356886e7f78c4cd4eb5b",
+      "sizeBytes": 15022,
+      "sourceTree": "697f6461c65b5b4c372d01f0ebe2b7f91ce2af54"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
@@ -45,10 +45,10 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.2.2",
-      "sha256": "04d8f29f416fb39e7d9bfce427699a5aaf35f40eac245e17b834680d199db72e",
-      "sizeBytes": 11266,
-      "sourceTree": "0add3d360e5480692578e6865c699507dd0272a6"
+      "version": "0.2.3",
+      "sha256": "104340721cc6795029517ce231043bec1b63daeaed489a7f0e657edec183066a",
+      "sizeBytes": 11834,
+      "sourceTree": "59c7d706741ea0f8b1f5dd39b7dd96860295a3ee"
     },
     "MaaStellaSora": {
       "name": "maastellasora",
@@ -61,18 +61,18 @@
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.2.3",
-      "sha256": "78b7bd8a32f85f17a70cd93c80f596444db91bccab084d47dcd92c7970fe2b37",
-      "sizeBytes": 7954,
-      "sourceTree": "e8cdf74a3c64ead774f64e29aea7306e06278a11"
+      "version": "0.2.4",
+      "sha256": "46d6b3c1b73f89311087b38fc5231a712a911aca126b4d97a2d73433496a3f22",
+      "sizeBytes": 8472,
+      "sourceTree": "9e1875f0e31523722c696cfe545c44531865f28e"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.2.7",
-      "sha256": "5daa3bfc40854ab911e142548d7a96b237e99015b09ac2098fd00e195e99d6f7",
-      "sizeBytes": 15478,
-      "sourceTree": "54efdd30d5c078281f2600868acbc4d5dc212469"
+      "version": "0.2.8",
+      "sha256": "c9603dda641730a791bbd6c42469e3d19d4a0d8440403f19654604194cb32c11",
+      "sizeBytes": 16245,
+      "sourceTree": "a9a39febdb4618ddefefd41a1b78870020c52343"
     }
   }
 }

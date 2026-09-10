@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-10T03:55:34Z",
+  "generatedAt": "2026-09-10T07:50:41Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -366,15 +366,22 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
       "updatedAt": "2026-09-10",
       "hasReadme": false,
-      "version": "0.2.7",
+      "version": "0.2.8",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.7.zip",
-      "sha256": "14f481f3b8f4a92e12ad42a652755244483750636d4d38f04e946e4ae5cfb171",
-      "sizeBytes": 14419,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.8.zip",
+      "sha256": "c0523a4dd7066b8e2958ecbab83db23176aa90bcf749356886e7f78c4cd4eb5b",
+      "sizeBytes": 15022,
       "changelog": [
+        {
+          "version": "0.2.8",
+          "date": "2026-09-10",
+          "items": [
+            "修正英文商店历史元数据，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.7",
           "date": "2026-09-10",
@@ -403,6 +410,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.8",
+              "items": [
+                "Corrected the English store history metadata; runtime behavior is unchanged."
+              ]
+            },
+            {
               "version": "0.2.7",
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
@@ -411,7 +424,8 @@
             {
               "version": "0.2.5",
               "items": [
-                "Raised the minimum host version to v0.14.2 so bound configuration selection remains consistent across editing, user management, and runs."
+                "Adapted to NexusPipeline v0.14.4: isolated all BetterGI configuration files when editing a fresh or reused configuration, then restored the original configuration after saving, cancelling, or recovering.",
+                "Added an edit-preparation script that synchronizes selectedOneDragonFlowConfigName in User/config.json and supports transactional working copies for additional configuration files."
               ]
             }
           ]
@@ -438,17 +452,24 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
       "updatedAt": "2026-09-10",
       "hasReadme": false,
-      "version": "0.2.2",
+      "version": "0.2.3",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.2.zip",
-      "sha256": "04d8f29f416fb39e7d9bfce427699a5aaf35f40eac245e17b834680d199db72e",
-      "sizeBytes": 11266,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.3.zip",
+      "sha256": "104340721cc6795029517ce231043bec1b63daeaed489a7f0e657edec183066a",
+      "sizeBytes": 11834,
       "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-09-10",
+          "items": [
+            "修正英文商店历史元数据，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.2",
           "date": "2026-09-10",
@@ -477,6 +498,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.3",
+              "items": [
+                "Corrected the English store history metadata; runtime behavior is unchanged."
+              ]
+            },
+            {
               "version": "0.2.2",
               "items": [
                 "Added English store metadata for the official plugin catalog."
@@ -485,7 +512,8 @@
             {
               "version": "0.2.0",
               "items": [
-                "Improved configuration discovery and run-result handling for current MaaEnd packages."
+                "Added screenshots after the daily reward task completes and after the final run result is determined.",
+                "After NexusPipeline v0.12.8 removed the built-in configuration templates, the first configuration edit now lets the user choose between creating a fresh configuration and reusing an existing one."
               ]
             }
           ]
@@ -601,15 +629,22 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
       "updatedAt": "2026-09-10",
       "hasReadme": false,
-      "version": "0.2.3",
+      "version": "0.2.4",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.3.zip",
-      "sha256": "78b7bd8a32f85f17a70cd93c80f596444db91bccab084d47dcd92c7970fe2b37",
-      "sizeBytes": 7954,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.4.zip",
+      "sha256": "46d6b3c1b73f89311087b38fc5231a712a911aca126b4d97a2d73433496a3f22",
+      "sizeBytes": 8472,
       "changelog": [
+        {
+          "version": "0.2.4",
+          "date": "2026-09-10",
+          "items": [
+            "修正英文商店历史元数据，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.3",
           "date": "2026-09-10",
@@ -637,6 +672,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.4",
+              "items": [
+                "Corrected the English store history metadata; runtime behavior is unchanged."
+              ]
+            },
+            {
               "version": "0.2.3",
               "items": [
                 "Added English store metadata for the official plugin catalog."
@@ -645,7 +686,7 @@
             {
               "version": "0.2.1",
               "items": [
-                "Added run screenshots after daily-training rewards and after the final run result."
+                "Added configuration validation that compares the project game path with M7A's config.yaml game_path setting when saving a script instance or configuration. A toast notification reports mismatches; the current version does not modify the configuration. Requires host v0.14.1 or later."
               ]
             }
           ]
@@ -672,17 +713,24 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
       "updatedAt": "2026-09-10",
       "hasReadme": false,
-      "version": "0.2.7",
+      "version": "0.2.8",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.7.zip",
-      "sha256": "5daa3bfc40854ab911e142548d7a96b237e99015b09ac2098fd00e195e99d6f7",
-      "sizeBytes": 15478,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.8.zip",
+      "sha256": "c9603dda641730a791bbd6c42469e3d19d4a0d8440403f19654604194cb32c11",
+      "sizeBytes": 16245,
       "changelog": [
+        {
+          "version": "0.2.8",
+          "date": "2026-09-10",
+          "items": [
+            "修正英文商店历史元数据，运行行为保持不变。"
+          ]
+        },
         {
           "version": "0.2.7",
           "date": "2026-09-10",
@@ -712,6 +760,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.8",
+              "items": [
+                "Corrected the English store history metadata; runtime behavior is unchanged."
+              ]
+            },
+            {
               "version": "0.2.7",
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
@@ -720,7 +774,9 @@
             {
               "version": "0.2.5",
               "items": [
-                "Raised the minimum host version to v0.14.2 so the no-fresh-config capability follows the host contract during configuration editing."
+                "Adapted to NexusPipeline v0.14.4: during reuse editing, isolated every instance directory under config, then restored the original state after saving, cancelling, or recovering.",
+                "Added an edit-preparation script for one_dragon.yml that keeps only the selected instance, synchronizes active and active_in_od, and includes additional configuration files in the edit transaction.",
+                "Added compatibility for the same-level YAML list and numeric idx values generated by OneDragon, fixing single-instance and multi-instance reuse editing."
               ]
             }
           ]
