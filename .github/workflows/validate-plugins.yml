@@ -48,6 +48,14 @@ jobs:
           path: NexusPipeline
           fetch-depth: 1
 
+      - name: Checkout current host locale registry
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline-LocaleRegistry
+          fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -65,6 +73,10 @@ jobs:
       - name: Validate source contracts
         working-directory: NexusPipeline-Plugins
         run: python tools/repository.py validate-source
+
+      - name: Validate host locale registry synchronization
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py validate-host-locales --host-root ..\NexusPipeline-LocaleRegistry
 
       - name: Validate script syntax
         working-directory: NexusPipeline-Plugins

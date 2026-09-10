@@ -70,6 +70,7 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 ```text
 python tools/repository.py validate
 python tools/repository.py validate-source
+python tools/repository.py validate-host-locales --host-root ..\NexusPipeline
 python tools/repository.py check-syntax
 python -m unittest discover -s tools/tests -v
 python tools/repository.py plan --baseline auto --output .generated/release-plan.json
@@ -81,6 +82,8 @@ python tools/repository.py validate-generated --generated-root .generated
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
 `validate-source` 用于在 PR 候选 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁；`validate` 还会校验当前 catalog 与已存在发行包。
+
+`validate-host-locales` 将 `host.lock.json` 的 `supportedLocales` 与当前宿主 checkout 的 Web/embedded locale registry 及对应资源文件逐项比对。插件构建可以继续使用锁定的宿主提交；该校验使用独立的当前宿主 checkout，避免两种契约相互覆盖。
 
 普通发行的处理边界如下：
 

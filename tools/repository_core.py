@@ -241,6 +241,40 @@ def _canonical_locale(value: Any) -> str | None:
     return "-".join(canonical)
 
 
+def _normalize_locale_list(raw_locales: Any, label: str) -> list[str]:
+    _require(isinstance(raw_locales, list) and raw_locales, f"{label} 必须是非空数组")
+    locales: list[str] = []
+    for raw_locale in raw_locales:
+        locale = _canonical_locale(raw_locale)
+        _require(locale is not None, f"{label} 包含无效 locale：{raw_locale}")
+        _require(str(raw_locale).strip().replace("_", "-") == locale, f"{label} 必须使用规范化 BCP 47 大小写：{raw_locale}")
+        locales.append(locale)
+    _require(len(set(locales)) == len(locales), f"{label} 不得重复")
+    return locales
+
+
+def _read_locale_registry(path: Path, label: str) -> tuple[str, list[str]]:
+    data = read_json(path)
+    _require(isinstance(data, dict), f"{label} 必须是对象：{_display(path)}")
+    default = _canonical_locale(data.get("default"))
+    _require(default is not None, f"{label}.default 无效：{data.get('default')}")
+    supported = data.get("supported")
+    _require(isinstance(supported, list) and supported, f"{label}.supported 必须是非空数组")
+    raw_locales = []
+    for item in supported:
+        raw_locales.append(item if isinstance(item, str) else item.get("id") if isinstance(item, dict) else None)
+    locales = _normalize_locale_list(raw_locales, f"{label}.supported")
+    _require(default in locales, f"{label}.default 不在 supported 中：{default}")
+    return default, locales
+
+
+def _read_locked_host_locales(root: Path) -> list[str]:
+    lock_path = root / "host.lock.json"
+    data = read_json(lock_path)
+    _require(isinstance(data, dict), f"host.lock.json 必须是对象：{_display(lock_path)}")
+    return _normalize_locale_list(data.get("supportedLocales"), "host.lock.json 的 supportedLocales")
+
+
 def _load_supported_locales() -> set[str]:
     lock_path = Path(__file__).resolve().parents[1] / "host.lock.json"
     if not lock_path.is_file():
@@ -249,17 +283,34 @@ def _load_supported_locales() -> set[str]:
     raw_locales = data.get("supportedLocales") if isinstance(data, dict) else None
     if raw_locales is None:
         return set(DEFAULT_SUPPORTED_LOCALES)
-    _require(isinstance(raw_locales, list) and raw_locales, "host.lock.json 的 supportedLocales 必须是非空数组")
-    locales: list[str] = []
-    for raw_locale in raw_locales:
-        locale = _canonical_locale(raw_locale)
-        _require(locale is not None, f"host.lock.json 的 supportedLocales 包含无效 locale：{raw_locale}")
-        locales.append(locale)
-    _require(len(set(locales)) == len(locales), "host.lock.json 的 supportedLocales 不得重复")
-    return set(locales)
+    return set(_normalize_locale_list(raw_locales, "host.lock.json 的 supportedLocales"))
 
 
 SUPPORTED_LOCALES = _load_supported_locales()
+
+
+def validate_host_locale_registry(root: Path, host_root: Path) -> int:
+    """验证插件锁定语言集合与宿主当前正式注册表及资源文件一致。"""
+    locked_locales = _read_locked_host_locales(root)
+    web_default, web_locales = _read_locale_registry(
+        host_root / "wwwroot" / "i18n" / "locales.json",
+        "宿主 Web locale registry",
+    )
+    embedded_default, embedded_locales = _read_locale_registry(
+        host_root / "src" / "Localization" / "Resources" / "locales.json",
+        "宿主 embedded locale registry",
+    )
+    _require(web_default == embedded_default, "宿主 Web 与 embedded 的默认 locale 不一致")
+    _require(web_locales == embedded_locales, "宿主 Web 与 embedded 的 supported locale 顺序不一致")
+    _require(web_locales == locked_locales, "host.lock.json 的 supportedLocales 与宿主当前 locale registry 不一致")
+    for locale in locked_locales:
+        web_resource = host_root / "wwwroot" / "i18n" / f"{locale}.json"
+        embedded_resource = host_root / "src" / "Localization" / "Resources" / f"{locale}.json"
+        _require(web_resource.is_file(), f"宿主缺少 Web locale 资源：{_display(web_resource)}")
+        _require(embedded_resource.is_file(), f"宿主缺少 embedded locale 资源：{_display(embedded_resource)}")
+        _require(isinstance(read_json(web_resource), dict), f"宿主 Web locale 资源必须是对象：{_display(web_resource)}")
+        _require(isinstance(read_json(embedded_resource), dict), f"宿主 embedded locale 资源必须是对象：{_display(embedded_resource)}")
+    return len(locked_locales)
 
 
 def _validate_localized_metadata(

@@ -18,6 +18,7 @@ from repository_core import (
     release,
     test_managed,
     validate_generated,
+    validate_host_locale_registry,
     validate_sources,
     validate_source_and_catalog,
     write_json,
@@ -39,6 +40,7 @@ def _parser() -> argparse.ArgumentParser:
             "audit",
             "check-pr",
             "validate-generated",
+            "validate-host-locales",
             "apply",
             "bootstrap-state",
         ),
@@ -50,6 +52,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--plan", type=Path, help="release/test 使用的唯一 release-plan.json")
     parser.add_argument("--output", type=Path, help="plan/release/bootstrap-state 输出路径")
     parser.add_argument("--generated-root", type=Path, help="生成候选物目录")
+    parser.add_argument("--host-root", type=Path, help="validate-host-locales 使用的当前宿主 checkout")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
     return parser
 
@@ -108,6 +111,11 @@ def main(argv: list[str] | None = None) -> int:
                 raise RepositoryError("validate-generated 必须指定 --generated-root")
             validate_generated(root, generated.resolve())
             print(f"[repository] 生成候选物校验通过：{generated}", flush=True)
+        elif args.command == "validate-host-locales":
+            if args.host_root is None:
+                raise RepositoryError("validate-host-locales 必须指定 --host-root")
+            count = validate_host_locale_registry(root, args.host_root.resolve())
+            print(f"[repository] 宿主 locale registry 同步校验通过：{count} 个 locale", flush=True)
         elif args.command == "apply":
             generated = args.generated_root or args.output
             if generated is None:

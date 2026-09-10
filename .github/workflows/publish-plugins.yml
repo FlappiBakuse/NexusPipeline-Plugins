@@ -40,6 +40,14 @@ jobs:
           path: NexusPipeline
           fetch-depth: 0
 
+      - name: Checkout current host locale registry
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline-LocaleRegistry
+          fetch-depth: 1
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -79,6 +87,8 @@ jobs:
             git -C ..\NexusPipeline checkout --detach $lock.ref
             if ($LASTEXITCODE -ne 0) { throw "无法切换到 host.lock.json 指定的宿主提交：$($lock.ref)" }
 
+            python tools/repository.py validate-host-locales --host-root ..\NexusPipeline-LocaleRegistry
+            Assert-NativeSuccess "host locale registry validation"
             python tools/repository.py check-syntax
             Assert-NativeSuccess "repository syntax check"
             node tools/Test-ConfigEditors.mjs
