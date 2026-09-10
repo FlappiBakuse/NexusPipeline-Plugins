@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
   "changelog": [
     {
+      "version": "0.2.8",
+      "date": "2026-09-10",
+      "items": [
+        "修正英文商店历史元数据，运行行为保持不变。"
+      ]
+    },
+    {
       "version": "0.2.7",
       "date": "2026-09-10",
       "items": [
@@ -38,12 +45,19 @@
       "tags": ["Genshin Impact", "Specialized plugin", "Configuration"],
       "changelog": [
         {
+          "version": "0.2.8",
+          "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
+        },
+        {
           "version": "0.2.7",
           "items": ["Added English store metadata and localized configuration-input labels and descriptions."]
         },
         {
           "version": "0.2.5",
-          "items": ["Raised the minimum host version to v0.14.2 so bound configuration selection remains consistent across editing, user management, and runs."]
+          "items": [
+            "Adapted to NexusPipeline v0.14.4: isolated all BetterGI configuration files when editing a fresh or reused configuration, then restored the original configuration after saving, cancelling, or recovering.",
+            "Added an edit-preparation script that synchronizes selectedOneDragonFlowConfigName in User/config.json and supports transactional working copies for additional configuration files."
+          ]
         }
       ]
     }

@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-09-10",
+      "items": [
+        "修正英文商店历史元数据，运行行为保持不变。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-09-10",
       "items": [
@@ -34,12 +41,19 @@
       "tags": ["Arknights: Endfield", "Specialized plugin", "MaaEnd"],
       "changelog": [
         {
+          "version": "0.2.3",
+          "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
+        },
+        {
           "version": "0.2.2",
           "items": ["Added English store metadata for the official plugin catalog."]
         },
         {
           "version": "0.2.0",
-          "items": ["Improved configuration discovery and run-result handling for current MaaEnd packages."]
+          "items": [
+            "Added screenshots after the daily reward task completes and after the final run result is determined.",
+            "After NexusPipeline v0.12.8 removed the built-in configuration templates, the first configuration edit now lets the user choose between creating a fresh configuration and reusing an existing one."
+          ]
         }
       ]
     }

@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
   "changelog": [
     {
+      "version": "0.2.4",
+      "date": "2026-09-10",
+      "items": [
+        "修正英文商店历史元数据，运行行为保持不变。"
+      ]
+    },
+    {
       "version": "0.2.3",
       "date": "2026-09-10",
       "items": [
@@ -33,12 +40,16 @@
       "tags": ["Honkai: Star Rail", "Specialized plugin", "March 7th Assistant"],
       "changelog": [
         {
+          "version": "0.2.4",
+          "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
+        },
+        {
           "version": "0.2.3",
           "items": ["Added English store metadata for the official plugin catalog."]
         },
         {
           "version": "0.2.1",
-          "items": ["Added run screenshots after daily-training rewards and after the final run result."]
+          "items": ["Added configuration validation that compares the project game path with M7A's config.yaml game_path setting when saving a script instance or configuration. A toast notification reports mismatches; the current version does not modify the configuration. Requires host v0.14.1 or later."]
         }
       ]
     }
