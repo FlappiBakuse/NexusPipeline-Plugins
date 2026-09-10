@@ -138,6 +138,20 @@ try {
     }
 
     if (($manifest.PSObject.Properties.Name -contains "frontend") -and $null -ne $manifest.frontend) {
+        $frontendDir = Join-Path $pluginDir "frontend"
+        if (Test-Path -LiteralPath $frontendDir) {
+            $workspacePackage = Join-Path $repoRoot "package-lock.json"
+            if (-not (Test-Path -LiteralPath $workspacePackage)) {
+                throw "插件仓库缺少前端 workspace package-lock.json：$workspacePackage"
+            }
+            Write-Output "正在检查插件前端：$ArtifactName"
+            & npm ci --prefix $repoRoot --no-audit --no-fund
+            if ($LASTEXITCODE -ne 0) { throw "插件前端依赖安装失败：$ArtifactName" }
+            & npm run typecheck --prefix $frontendDir
+            if ($LASTEXITCODE -ne 0) { throw "插件前端类型检查失败：$ArtifactName" }
+            & npm run build --prefix $frontendDir
+            if ($LASTEXITCODE -ne 0) { throw "插件前端构建失败：$ArtifactName" }
+        }
         $webRoot = Join-Path $pluginDir "web"
         Assert-Path $webRoot "manifest 声明了 frontend，但缺少 web 目录：$webRoot"
         Copy-Item -LiteralPath $webRoot -Destination (Join-Path $payloadRoot "web") -Recurse

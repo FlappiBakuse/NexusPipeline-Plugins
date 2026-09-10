@@ -2,7 +2,7 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.3、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.4、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
 
 ## 当前插件
 
@@ -43,7 +43,8 @@ NexusPipeline-Plugins/
 │   ├── general/<ArtifactName>/          # managed-code 通用插件源码
 │   │   ├── plugin.json                  # 元数据与入口声明
 │   │   ├── store.json                    # 商店展示元数据与更新记录
-│   │   ├── web/                          # 可选 Frontend API 1.3 模块、样式和静态资源
+│   │   ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
+│   │   ├── web/                          # 构建后的 Frontend API 1.4 模块、样式和静态资源
 │   │   ├── i18n/                         # 可选 zh-CN/en-US 插件词典
 │   │   └── src/                          # managed-code 插件项目（.csproj 与 C# 源码）
 │   └── specialized/<ArtifactName>/      # data-specialized 专项插件源码
@@ -53,7 +54,8 @@ NexusPipeline-Plugins/
 │       │   ├── resolve.json              # 脚本根目录推导规则
 │       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
 │       │   └── config-editor.js          # 可选配置编辑准备脚本
-│       ├── web/                          # 可选 Frontend API 1.3 模块、样式和静态资源
+│       ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
+│       ├── web/                          # 构建后的 Frontend API 1.4 模块、样式和静态资源
 │       └── i18n/                         # 可选 zh-CN/en-US 插件词典
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
@@ -89,7 +91,7 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API v1.5 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力，`custom-wallpaper` v0.1.10 通过 Frontend API 1.3 管理服务端同步壁纸，`live-screenshot` v0.1.4 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API v1.5 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力，`custom-wallpaper` v0.1.11 通过 Frontend API 1.4 管理服务端同步壁纸，`live-screenshot` v0.1.5 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 
 ## 数据与安全

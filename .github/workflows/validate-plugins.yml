@@ -59,12 +59,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.424"
+
+      - name: Install frontend workspace
+        working-directory: NexusPipeline-Plugins
+        run: npm ci --no-audit --no-fund
 
       - name: Reject contributor generated files
         working-directory: NexusPipeline-Plugins

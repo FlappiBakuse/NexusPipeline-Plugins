@@ -1,10 +1,10 @@
-# Frontend API 1.3 插件指南
+# Frontend API 1.4 插件指南
 
-NexusPipeline 的前端插件运行时建立在原生 ES module 之上。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且兼容后加载同源 JavaScript/CSS，增加页面、导航、路由、主题、壁纸和运行画面预览能力。
+NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且 Frontend API 精确匹配后加载同源资源，增加页面、导航、路由、主题、壁纸和运行画面预览能力。插件源码推荐使用 Vue 3、TypeScript 和 Vite；运行宿主只需要 `web/` 静态资源。
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示、插件 Web API 或插件本地化的插件使用宿主 Plugin API v1.5。Frontend API 1.3 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、服务端同步外观和插件自有词典访问。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、历史展示、插件 Web API 或插件本地化的插件使用宿主 Plugin API v1.5。Frontend API 1.4 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、服务端同步外观和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -41,7 +41,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
   "frontend": {
-    "apiVersion": "1.3",
+    "apiVersion": "1.4",
     "entry": "web/main.js",
     "styles": ["web/style.css"]
   },
@@ -55,6 +55,8 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
 }
 ```
 
+前端源码位于插件自己的 `frontend/` 目录。根目录 `package.json` 通过 npm workspace 管理前端包；`npm run typecheck:frontend` 检查类型，`npm run build:frontend` 将每个插件构建到对应的 `web/` 目录。提交时保留可复现构建所需的 `package-lock.json`，宿主运行时不需要 Node/npm。
+
 `frontend.entry` 必须是 `.js` 或 `.mjs`；`frontend.styles` 中的文件必须是 `.css`。所有声明文件需要随 ZIP 一起发布并通过宿主安装包校验。路径不能包含绝对路径、反斜杠、空段、`.` 或 `..`。
 
 ## 入口生命周期
@@ -63,20 +65,16 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
 
 ```js
 export function activate(host) {
-  const action = host.actions.register("refresh", async () => {
-    await host.api.post("refresh", {});
+  const slot = host.slots.register("settings.cards", ({ element }) => {
+    // 在 element 内挂载插件组件，并返回组件清理函数
+    element.textContent = "Plugin settings";
+    return () => element.replaceChildren();
   });
-  const leave = host.lifecycle.onPageLeave(() => {
-    // 停止当前页面的轮询或观察器
-  });
-  return () => {
-    action.dispose();
-    leave.dispose();
-  };
+  return () => slot.dispose();
 }
 ```
 
-插件应保存并释放 action、route、nav、slot、lifecycle 等注册返回的 disposable。每个处理器都应自行管理 AbortController、定时器、事件监听和 MutationObserver。
+插件应保存并释放 route、nav、slot、lifecycle 等注册返回的 disposable。每个处理器都应自行管理 AbortController、定时器、事件监听和 MutationObserver。
 
 ## 前端 host 能力
 
@@ -84,18 +82,16 @@ export function activate(host) {
 |---|---|
 | `host.plugin` | 当前插件的只读 name、displayName、version 和资源描述 |
 | `host.api.get/post/put/patch/delete` | 调用本插件注册的 `/api/plugin-api/<name>/...` 路由 |
-| `host.actions.register(id, handler)` | 注册带 `plugin:<name>:` 命名空间的全局 action |
 | `host.routes.register(route, handler)` | 注册 `#/plugin/<name>/<route>` 页面 |
 | `host.nav.register(item)` | 增加 `shell.nav` 导航项，item 包含 id、title、route、icon、order |
-| `host.slots.register(slot, renderer)` | 为稳定 UI slot 注册自定义 renderer |
+| `host.slots.register(slot, renderer)` | 为稳定 UI slot 注册自定义 renderer；renderer 接收 `{ element, context }`，在独立 surface 中挂载内容 |
 | `host.ui.query/save/action` | 读取或提交宿主声明式 UI 贡献 |
-| `host.controls.select/number/range/time/file/color` | 生成宿主统一的自定义交互控件；控件保留稳定的隐藏值载体与 `data-*` 标记 |
 | `host.lifecycle.*` | 订阅页面进入、离开、更新和释放事件 |
 | `host.appearance` | 注册主题、设置 CSS token、切换主题和管理壁纸 |
 | `host.executionPreview.capture(runId, signal)` | 读取宿主绑定的当前 PC 游戏客户区或模拟器画面；返回 360p JPEG 或等待状态 |
 | `host.i18n` | 读取当前插件的 locale、defaultLocale 和词典，使用 `t(key, args, fallback)` 以及日期/时间/数字格式化 |
 
-`renderer(container, context, host)` 可以直接使用 DOM API；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。
+`renderer({ element, context })` 可以使用 DOM API 或在 `element` 上挂载 Vue Custom Element；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。宿主公共控件通过 `nxp-button`、`nxp-icon-button`、`nxp-badge`、`nxp-card`、`nxp-field`、`nxp-text-input`、`nxp-text-area`、`nxp-select`、`nxp-number-input`、`nxp-switch`、`nxp-range`、`nxp-path-picker`、`nxp-file-picker`、`nxp-color-picker`、`nxp-time-picker`、`nxp-menu`、`nxp-tooltip`、`nxp-pager`、`nxp-modal`、`nxp-toast`、`nxp-spinner` 和 `nxp-empty-state` 等 Native Custom Elements 提供。
 
 ## 稳定 UI slot
 
@@ -151,7 +147,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 3. 入口和样式文件通过 manifest 与安装包检查；
 4. 入口和样式文件位于插件目录的公开 `web/` 路径，并通过资源扩展名和文件存在性校验。
 
-前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。可见选择、数字、时间、文件和颜色交互应优先使用 `host.controls`；文件选择器和取色器的浏览器载体保持隐藏，range 使用可访问的语义 input 并由宿主 CSS 绘制视觉层。开发者应把前端代码与发行包一并纳入人工审查。
+前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。Frontend API 只接受精确版本 `1.4`；`1.3`、`1.5` 和其他版本不会加载。可见交互控件应使用 `nxp-*` Native Custom Elements 或插件自有 Vue 组件，开发者应把前端源码、构建结果与发行包一并纳入人工审查。
 
 ## 安全与资源边界
 

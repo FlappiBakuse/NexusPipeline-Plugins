@@ -69,6 +69,7 @@ MAX_LOCALIZATION_FILE_BYTES = 512 * 1024
 MAX_LOCALIZATION_KEYS = 4096
 MAX_LOCALIZATION_KEY_LENGTH = 128
 MAX_LOCALIZATION_VALUE_LENGTH = 8192
+_frontend_dependencies_ready = False
 
 
 class RepositoryError(ValueError):
@@ -492,7 +493,7 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     capabilities = manifest.get("capabilities", [])
     _require("frontend-module" in capabilities, f"插件 {manifest['artifactName']} 声明 frontend 时必须声明 frontend-module capability")
     api_version = frontend.get("apiVersion")
-    _require(api_version in {"1.2", "1.3"}, f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.2 或 1.3")
+    _require(api_version == "1.4", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.4")
     _safe_relative(plugin, frontend.get("entry"), f"插件 {manifest['artifactName']} 的 frontend.entry", ".js")
     styles = frontend.get("styles", [])
     _require(isinstance(styles, list), f"插件 {manifest['artifactName']} 的 frontend.styles 必须是数组")
@@ -689,6 +690,19 @@ def _run(command: Sequence[str], label: str, cwd: Path) -> None:
         raise RepositoryError(f"{label}启动失败：{exc}") from exc
     if completed.returncode != 0:
         raise RepositoryError(f"{label}失败（exit={completed.returncode}）")
+
+
+def _build_frontend(plugin: SourcePlugin, root: Path) -> None:
+    """构建插件 Vue 前端，把源码编译为 manifest 约定的 web/ 发行入口。"""
+    global _frontend_dependencies_ready
+    frontend = plugin.root / "frontend"
+    if not frontend.is_dir():
+        return
+    if not _frontend_dependencies_ready:
+        _run(("npm", "ci", "--no-audit", "--no-fund"), "安装插件前端依赖", root)
+        _frontend_dependencies_ready = True
+    _run(("npm", "run", "typecheck", "--prefix", str(frontend)), f"插件前端类型检查：{plugin.artifact_name}", root)
+    _run(("npm", "run", "build", "--prefix", str(frontend)), f"插件前端构建：{plugin.artifact_name} v{plugin.version}", root)
 
 
 def _git(root: Path, args: Sequence[str], label: str) -> str:
@@ -1147,6 +1161,7 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
                     copied += 1
             _require(copied > 0, f"managed-code 插件没有可打包构建输出：{plugin.artifact_name}")
         if plugin.manifest.get("frontend") is not None:
+            _build_frontend(plugin, root)
             _copy_tree(plugin.root / "web", payload / "web")
         if plugin.manifest.get("localization") is not None:
             _copy_tree(plugin.root / "i18n", payload / "i18n")

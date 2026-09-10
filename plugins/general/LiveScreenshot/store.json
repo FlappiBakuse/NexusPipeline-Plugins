@@ -11,10 +11,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
   "changelog": [
     {
-      "version": "0.1.4",
-      "date": "2026-09-09",
+      "version": "0.1.5",
+      "date": "2026-09-10",
       "items": [
-        "新增宿主语言资源，支持中英文界面显示。"
+        "迁移到 Frontend API 1.4 与 Vue 组件化实时预览界面。"
       ]
     },
     {
@@ -40,8 +40,8 @@
       "tags": ["Live preview", "Emulator", "Run card"],
       "changelog": [
         {
-          "version": "0.1.4",
-          "items": ["Added host language resources for Chinese and English interfaces."]
+          "version": "0.1.5",
+          "items": ["Migrated the live preview interface to Frontend API 1.4 and Vue components."]
         },
         {
           "version": "0.1.2",

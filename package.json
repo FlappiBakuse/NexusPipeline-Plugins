@@ -1,0 +1,13 @@
+{
+  "name": "nexus-pipeline-official-plugins",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "plugins/general/CustomWallpaper/frontend",
+    "plugins/general/LiveScreenshot/frontend"
+  ],
+  "scripts": {
+    "build:frontend": "npm run build --workspaces --if-present",
+    "typecheck:frontend": "npm run typecheck --workspaces --if-present"
+  }
+}

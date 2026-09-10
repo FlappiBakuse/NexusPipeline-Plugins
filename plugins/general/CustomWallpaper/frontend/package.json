@@ -1,0 +1,18 @@
+{
+  "name": "@nexus-plugin/custom-wallpaper-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "vue": "3.5.42"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "6.0.8",
+    "typescript": "5.9.3",
+    "vite": "8.3.0",
+    "vue-tsc": "3.3.11"
+  }
+}

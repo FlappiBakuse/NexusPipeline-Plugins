@@ -88,6 +88,9 @@ async function runPlugin(manifestPath) {
   if (!Array.isArray(manifest.capabilities) || !manifest.capabilities.includes("frontend-module")) {
     fail(`插件 ${manifest.artifactName || plugin} 声明 frontend 但缺少 frontend-module capability`);
   }
+  if (frontend.apiVersion !== "1.4") {
+    fail(`插件 ${manifest.artifactName || plugin} 的 frontend.apiVersion 必须为 1.4`);
+  }
   const entry = safeRelative(plugin, frontend.entry, `${manifest.artifactName}.frontend.entry`, ".js");
   if (!await isFile(entry)) fail(`插件 ${manifest.artifactName} 的 frontend.entry 文件不存在：${entry}`);
   const styles = frontend.styles ?? [];

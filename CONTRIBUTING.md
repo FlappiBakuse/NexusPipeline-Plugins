@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.5`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.3`，文案资源放在 manifest 声明的 `i18n/` 目录。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.5`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.4`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
 
 ## 开发流程
 
@@ -19,7 +19,7 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.3`、`web/` 入口/样式和同源 DOM 行为；若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.4`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件或旧 `host.controls` / `host.actions`。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`game-checkin` 使用 API v1.5。
