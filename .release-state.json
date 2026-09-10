@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "b82bd439de690b2441102c3d69379b2d984121e3",
+  "sourceCommit": "d19c234702def4cedacd0c8254f5a8fa141ac41f",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.1.2",
-      "sha256": "08a29d2a32a8636e07808e1f0c53b9d0abe94eb889a6e77328c4d65cd8d089f4",
-      "sizeBytes": 19092,
-      "sourceTree": "25d6a02ebc65a60dadd243d9e36e372a23f31586"
+      "version": "0.1.3",
+      "sha256": "6ed400459531188167b3c15502a50314ec045c1f23affa3f6cc7ac5919f91992",
+      "sizeBytes": 20268,
+      "sourceTree": "4a0dbc09854e6ede9edd7f9484195b3d6a14f0c9"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.2.6",
-      "sha256": "a583a5c7a1ea0ea3986f289212a00a91ce27f4f85f3d9ed2a50fb87230a9450b",
-      "sizeBytes": 12960,
-      "sourceTree": "c54d4a2562918b502f7c103baae9acae28eeeed8"
+      "version": "0.2.7",
+      "sha256": "14f481f3b8f4a92e12ad42a652755244483750636d4d38f04e946e4ae5cfb171",
+      "sizeBytes": 14419,
+      "sourceTree": "4a0df559ea8d20d6a311e20695171028e88ec945"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
@@ -45,34 +45,34 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.2.1",
-      "sha256": "dc0a7d1a961f73b084e6a9c91e838411ae919dd1e4ec1fa03b2d90e04bd48a16",
-      "sizeBytes": 10876,
-      "sourceTree": "68b5fbc212077f352be0487fdf588c5d10269d3c"
+      "version": "0.2.2",
+      "sha256": "04d8f29f416fb39e7d9bfce427699a5aaf35f40eac245e17b834680d199db72e",
+      "sizeBytes": 11266,
+      "sourceTree": "0add3d360e5480692578e6865c699507dd0272a6"
     },
     "MaaStellaSora": {
       "name": "maastellasora",
       "artifactName": "MaaStellaSora",
-      "version": "0.1.1",
-      "sha256": "725ea6da3a86e293386e0d849a74c60896123b44e42621f276e08f829609cd2e",
-      "sizeBytes": 9199,
-      "sourceTree": "935ba436b3e65b1bf02e6cebcca57f003f95fa85"
+      "version": "0.1.2",
+      "sha256": "975ec521af5d8981e4a609fe29070fd8142c8ff62284da630673e962aaab7b66",
+      "sizeBytes": 10295,
+      "sourceTree": "f8641b277ff5b47d7cbda97cdcca438efaece0df"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.2.2",
-      "sha256": "07e94e4f038023750ecc521785d777f225a6dab181c25f46b0ef05d2f7d03e8e",
-      "sizeBytes": 7654,
-      "sourceTree": "acd9b1b391a6fcf0c44e0aa1d1dde0575398d672"
+      "version": "0.2.3",
+      "sha256": "78b7bd8a32f85f17a70cd93c80f596444db91bccab084d47dcd92c7970fe2b37",
+      "sizeBytes": 7954,
+      "sourceTree": "e8cdf74a3c64ead774f64e29aea7306e06278a11"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.2.6",
-      "sha256": "a62c2173b11c17c421b24cc1f928757ce38a4484bfec94075a54fa6f37ba26c0",
-      "sizeBytes": 13965,
-      "sourceTree": "312b25ceb1011d0407e155ff850e0def324beea3"
+      "version": "0.2.7",
+      "sha256": "5daa3bfc40854ab911e142548d7a96b237e99015b09ac2098fd00e195e99d6f7",
+      "sizeBytes": 15478,
+      "sourceTree": "54efdd30d5c078281f2600868acbc4d5dc212469"
     }
   }
 }
