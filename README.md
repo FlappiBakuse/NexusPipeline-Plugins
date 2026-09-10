@@ -79,7 +79,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和对应测试。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
+5. 更新插件自身版本和 `store.json`，运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和对应测试。仓库根目录 `host.lock.json` 的 `supportedLocales` 记录当前宿主允许的 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
 
 ## 重要运行语义
 

@@ -60,8 +60,10 @@ CAPABILITY_MIN_HOST = {
     "self-managed-pc-launch": (0, 14, 1),
     "no-fresh-config": (0, 14, 2),
 }
-SUPPORTED_LOCALES = {"zh-CN", "en-US"}
+DEFAULT_SUPPORTED_LOCALES = frozenset({"zh-CN", "en-US"})
+SUPPORTED_LOCALES = set(DEFAULT_SUPPORTED_LOCALES)
 BCP47_LOCALE_PATTERN = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
+LOCALIZATION_KEY_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]*$")
 PLACEHOLDER_PATTERN = re.compile(r"\{([A-Za-z][A-Za-z0-9_.-]*)\}")
 MAX_LOCALIZATION_FILE_BYTES = 512 * 1024
 MAX_LOCALIZATION_KEYS = 4096
@@ -239,6 +241,27 @@ def _canonical_locale(value: Any) -> str | None:
     return "-".join(canonical)
 
 
+def _load_supported_locales() -> set[str]:
+    lock_path = Path(__file__).resolve().parents[1] / "host.lock.json"
+    if not lock_path.is_file():
+        return set(DEFAULT_SUPPORTED_LOCALES)
+    data = read_json(lock_path)
+    raw_locales = data.get("supportedLocales") if isinstance(data, dict) else None
+    if raw_locales is None:
+        return set(DEFAULT_SUPPORTED_LOCALES)
+    _require(isinstance(raw_locales, list) and raw_locales, "host.lock.json 的 supportedLocales 必须是非空数组")
+    locales: list[str] = []
+    for raw_locale in raw_locales:
+        locale = _canonical_locale(raw_locale)
+        _require(locale is not None, f"host.lock.json 的 supportedLocales 包含无效 locale：{raw_locale}")
+        locales.append(locale)
+    _require(len(set(locales)) == len(locales), "host.lock.json 的 supportedLocales 不得重复")
+    return set(locales)
+
+
+SUPPORTED_LOCALES = _load_supported_locales()
+
+
 def _validate_localized_metadata(
     locales: Any,
     plugin_name: str,
@@ -272,13 +295,18 @@ def _validate_localized_metadata(
         changelog = value.get("changelog")
         _require(isinstance(changelog, list) and len(changelog) == len(expected_versions), f"插件 {plugin_name} 的 locales.{locale}.changelog 版本数量不一致")
         localized_versions: list[str] = []
-        for entry in changelog:
+        for index, entry in enumerate(changelog):
             _require(isinstance(entry, dict), f"插件 {plugin_name} 的 locales.{locale}.changelog 条目无效")
             entry_version = entry.get("version")
             parse_semver(entry_version, f"插件 {plugin_name} 的 locales.{locale}.changelog 版本")
             localized_versions.append(str(entry_version))
             items = entry.get("items")
             _require(isinstance(items, list) and 1 <= len(items) <= 32, f"插件 {plugin_name} 的 locales.{locale}.changelog items 数量无效")
+            base_items = base_changelog[index].get("items")
+            _require(
+                isinstance(base_items, list) and len(items) == len(base_items),
+                f"插件 {plugin_name} 的 locales.{locale}.changelog items 数量必须与基础记录一致",
+            )
             for item in items:
                 _text(item, f"插件 {plugin_name} 的 locales.{locale}.changelog 文本", 512)
         _require(localized_versions == expected_versions, f"插件 {plugin_name} 的 locales.{locale}.changelog 版本必须与基础记录一致")
@@ -384,6 +412,7 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
                     isinstance(key, str)
                     and (not key or (
                         len(key) <= 128
+                        and LOCALIZATION_KEY_PATTERN.fullmatch(key) is not None
                         and not any(char.isspace() for char in key)
                         and not key.startswith("legacy.")
                         and all(char.isascii() and (char.isalnum() or char in "-_.") for char in key)
@@ -448,6 +477,7 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
             _require(
                 isinstance(key, str)
                 and 0 < len(key) <= MAX_LOCALIZATION_KEY_LENGTH
+                and LOCALIZATION_KEY_PATTERN.fullmatch(key) is not None
                 and not any(char.isspace() for char in key)
                 and not key.startswith("legacy."),
                 f"插件 {manifest['artifactName']} 的 localization key 无效：{key}",

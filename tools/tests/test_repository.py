@@ -82,8 +82,30 @@ class RepositoryCoreTests(unittest.TestCase):
             write_json(plugin / "i18n" / "en-US.json", {"greeting": "Hello, {name}", "legacy.old": "Text"})
             with self.assertRaisesRegex(RepositoryError, "key 无效"):
                 core._validate_localization_contract(plugin, manifest)
+
+            write_json(plugin / "i18n" / "en-US.json", {"greeting": "Hello, {name}", "中文": "Text"})
+            with self.assertRaisesRegex(RepositoryError, "key 无效"):
+                core._validate_localization_contract(plugin, manifest)
         finally:
             self._remove_tree(root)
+
+    def test_localized_changelog_item_counts_match_base_entries(self) -> None:
+        base_changelog = [{"version": "0.1.0", "items": ["first", "second"]}]
+        locales = {
+            "en-US": {
+                "displayName": "Alpha",
+                "gameName": "Test",
+                "description": "Description",
+                "tags": ["test"],
+                "changelog": [{"version": "0.1.0", "items": ["first"]}],
+            },
+        }
+        with self.assertRaisesRegex(RepositoryError, "items 数量必须与基础记录一致"):
+            core._validate_localized_metadata(locales, "alpha", "0.1.0", "Alpha", "Description", base_changelog)
+
+    def test_supported_locales_follow_host_lock(self) -> None:
+        lock = read_json(Path(__file__).resolve().parents[2] / "host.lock.json")
+        self.assertEqual(core.SUPPORTED_LOCALES, set(lock["supportedLocales"]))
 
     def test_plugin_root_mapping_handles_current_and_typed_layouts(self) -> None:
         self.assertEqual(plugin_root_from_path("plugins/LiveScreenshot/src/Main.cs"), "plugins/LiveScreenshot")
