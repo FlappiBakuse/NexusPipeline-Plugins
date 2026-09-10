@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
   "changelog": [
     {
+      "version": "0.1.2",
+      "date": "2026-09-10",
+      "items": [
+        "新增中英文商店元数据，完善多语言展示。"
+      ]
+    },
+    {
       "version": "0.1.1",
       "date": "2026-09-07",
       "items": [
@@ -25,5 +32,30 @@
         "无人值守运行 mxu.exe --autostart --quit-after-run，按 MXU 日志判定任务完成与失败，失败时自动调整为仅重试失败任务并在收尾还原用户任务勾选。"
       ]
     }
-  ]
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "MaaStellaSora",
+      "gameName": "Stella Sora",
+      "description": "Manage MaaStellaSora script instances, MXU paths, logs, and failed-task retries.",
+      "tags": ["Stella Sora", "Specialized plugin", "MaaStellaSora"],
+      "changelog": [
+        {
+          "version": "0.1.2",
+          "items": ["Added English store metadata for the official plugin catalog."]
+        },
+        {
+          "version": "0.1.1",
+          "items": ["Synced the official plugin source layout and homepage; runtime behavior is unchanged."]
+        },
+        {
+          "version": "0.1.0",
+          "items": [
+            "Initial support for MaaStellaSora MXU packages and specialized script-instance configuration.",
+            "Ran mxu.exe in unattended mode, interpreted MXU logs, retried failed tasks, and restored the original task selection."
+          ]
+        }
+      ]
+    }
+  }
 }

@@ -11,10 +11,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
   "changelog": [
     {
-      "version": "0.2.2",
-      "date": "2026-09-07",
+      "version": "0.2.3",
+      "date": "2026-09-10",
       "items": [
-        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+        "新增中英文商店元数据，完善多语言展示。"
       ]
     },
     {
@@ -22,15 +22,25 @@
       "date": "2026-09-05",
       "items": [
         "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与 M7A 配置（config.yaml 的 game_path）的一致性，以角落通知提醒；当前版本不自动修改配置。需要宿主 v0.14.1+。"
-      ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-01",
-      "items": [
-        "新增运行截图：每日实训奖励领取完成后自动截图，运行最终判定成功或失败后再次截图。",
-        "运行结束判定兼容未开启「运行后动作」的配置，正常收尾即可判定。"
+          ]
+        }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "March 7th Assistant",
+      "gameName": "Honkai: Star Rail",
+      "description": "Manage March 7th Assistant script instances, configuration paths, logs, and run screenshots.",
+      "tags": ["Honkai: Star Rail", "Specialized plugin", "March 7th Assistant"],
+      "changelog": [
+        {
+          "version": "0.2.3",
+          "items": ["Added English store metadata for the official plugin catalog."]
+        },
+        {
+          "version": "0.2.1",
+          "items": ["Added run screenshots after daily-training rewards and after the final run result."]
+        }
       ]
     }
-  ]
+  }
 }

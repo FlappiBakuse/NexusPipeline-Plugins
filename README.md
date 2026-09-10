@@ -22,7 +22,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 ## 插件本地化资源
 
-需要前端或宿主插件上下文文案时，可在 `plugin.json` 的 `localization` 中声明 `i18n/*.json` 资源。locale 使用规范化 BCP 47 形式，`defaultLocale` 必须有对应文件；所有语言资源必须拥有相同的 key 集合和占位符集合，值必须是非空字符串，禁止使用 `legacy.*` key。仓库校验会检查路径边界、文件大小、key/value 数量和占位符一致性。
+需要前端或宿主插件上下文文案时，可在 `plugin.json` 的 `localization` 中声明 `i18n/*.json` 资源。locale 使用规范化 BCP 47 形式，`defaultLocale` 必须有对应文件；所有语言资源必须拥有相同的 key 集合和占位符集合，值必须是非空字符串，禁止使用 `legacy.*` key。数据化专项插件的 `resolve.json.inputs` 可用 `labelKey` 与 `descriptionKey` 引用同一份插件词典，`label` 与 `description` 作为回退文本。仓库校验会检查路径边界、文件大小、key/value 数量和占位符一致性。
 
 ## 发布规则
 

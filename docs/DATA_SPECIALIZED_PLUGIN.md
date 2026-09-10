@@ -65,6 +65,22 @@ plugins/specialized/Example/
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
+### 插件本地化
+
+数据化专项插件可以在 `plugin.json` 中声明 `localization`，资源文件放在插件目录内的 `i18n/`：
+
+```json
+"localization": {
+  "defaultLocale": "zh-CN",
+  "locales": {
+    "zh-CN": "i18n/zh-CN.json",
+    "en-US": "i18n/en-US.json"
+  }
+}
+```
+
+`zh-CN` 与 `en-US` 资源必须使用相同的 key 集合和占位符集合。key 使用 ASCII 字母、数字、`.`、`_`、`-`，资源值不能为空；输入字段可通过 `labelKey` 与 `descriptionKey` 引用这些资源，`label` 与 `description` 作为回退文本保留。宿主按请求语言返回解析后的 `label` 与 `description`，持久化输入名、默认值和校验规则保持不变。
+
 `configValidator` 是可选能力，不影响没有声明该字段的插件。宿主在两个时机执行校验脚本：
 
 - `config-edit`：配置编辑提交成功后，以当前脚本实例用户的配置 store 为主工作根目录运行一次。
@@ -147,7 +163,9 @@ plugins/specialized/Example/
     {
       "name": "config",
       "label": "配置文件名",
+      "labelKey": "input.config.label",
       "description": "配置目录下的配置文件名（含 .json 后缀）",
+      "descriptionKey": "input.config.description",
       "default": "config.json",
       "required": true,
       "pattern": "^.+\\.json$"
@@ -169,6 +187,7 @@ plugins/specialized/Example/
 |---|---|
 | `name` | 变量名；字母开头的字母/数字/下划线，插件内不得重复 |
 | `label` / `description` | 选择器与文档展示的名称与说明（宿主 v0.14.2 起不在实例表单渲染） |
+| `labelKey` / `descriptionKey` | 可选的插件本地化资源 key；必须同时存在于所有声明的 locale 资源中，解析失败时使用对应文本回退 |
 | `default` | 用户未选择且绑定未设置时的默认值 |
 | `required` | 被模板引用、无 default 可回退且用户未提供时，推导失败并在保存时提示 |
 | `pattern` | 可选的整串正则校验 |

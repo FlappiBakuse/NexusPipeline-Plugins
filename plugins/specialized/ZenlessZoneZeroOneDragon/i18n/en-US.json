@@ -1,0 +1,4 @@
+{
+  "input.instance.label": "Instance number",
+  "input.instance.description": "The two-digit OneDragon instance directory under config, such as 01 or 02. Leave it empty when one instance exists; choose it during the first edit when multiple instances exist."
+}

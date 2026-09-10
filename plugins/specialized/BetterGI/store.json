@@ -15,10 +15,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
   "changelog": [
     {
-      "version": "0.2.6",
-      "date": "2026-09-07",
+      "version": "0.2.7",
+      "date": "2026-09-10",
       "items": [
-        "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
+        "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
       ]
     },
     {
@@ -27,15 +27,25 @@
       "items": [
         "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
         "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
-      ]
-    },
-    {
-      "version": "0.2.4",
-      "date": "2026-09-05",
-      "items": [
-        "提升最低宿主版本至 v0.14.2，确保用户绑定级配置选择在配置编辑、用户管理和运行流程中保持一致。",
-        "适配 NexusPipeline v0.14.3 的配置输入契约与配置恢复稳定性修复。"
+          ]
+        }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "BetterGI",
+      "gameName": "Genshin Impact",
+      "description": "Manage BetterGI script instances and resolve the program, configuration, log, and startup paths.",
+      "tags": ["Genshin Impact", "Specialized plugin", "Configuration"],
+      "changelog": [
+        {
+          "version": "0.2.7",
+          "items": ["Added English store metadata and localized configuration-input labels and descriptions."]
+        },
+        {
+          "version": "0.2.5",
+          "items": ["Raised the minimum host version to v0.14.2 so bound configuration selection remains consistent across editing, user management, and runs."]
+        }
       ]
     }
-  ]
+  }
 }

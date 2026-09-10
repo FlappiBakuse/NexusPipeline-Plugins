@@ -255,6 +255,7 @@ def _validate_localized_metadata(
     for raw_locale, value in locales.items():
         locale = _canonical_locale(raw_locale)
         _require(locale is not None, f"插件 {plugin_name} 的 locale 不受支持：{raw_locale}")
+        _require(locale in SUPPORTED_LOCALES, f"插件 {plugin_name} 的 locale 尚未被当前宿主支持：{locale}")
         _require(locale not in seen_locales, f"插件 {plugin_name} 的 locale 重复：{locale}")
         seen_locales.add(locale)
         _require(isinstance(value, dict), f"插件 {plugin_name} 的 locales.{raw_locale} 必须是对象")
@@ -358,6 +359,42 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
         _require(isinstance(item.get("file"), str) and bool(item["file"].strip()), f"数据化插件 {name} 的 require 文件无效")
     for key in ("mainExe", "args", "configPath", "logPath"):
         _require(key in paths, f"数据化插件 {name} 的 paths 缺少 {key}")
+    inputs = resolve.get("inputs")
+    if inputs is not None:
+        _require(isinstance(inputs, list) and len(inputs) <= 64, f"数据化插件 {name} 的 inputs 数量无效")
+        input_names: set[str] = set()
+        localization_keys = _localization_key_sets(plugin, manifest)
+        for item in inputs:
+            _require(isinstance(item, dict), f"数据化插件 {name} 的 inputs 条目无效")
+            input_name = item.get("name")
+            _require(
+                isinstance(input_name, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", input_name),
+                f"数据化插件 {name} 的输入变量名无效：{input_name}",
+            )
+            _require(input_name.casefold() not in input_names, f"数据化插件 {name} 的输入变量重复：{input_name}")
+            input_names.add(input_name.casefold())
+            for field in ("label", "description"):
+                if field in item:
+                    _text(item[field], f"数据化插件 {name} 的 inputs.{field}", 8192, required=False)
+            for key_field in ("labelKey", "descriptionKey"):
+                key = item.get(key_field, "")
+                if key is None:
+                    key = ""
+                _require(
+                    isinstance(key, str)
+                    and (not key or (
+                        len(key) <= 128
+                        and not any(char.isspace() for char in key)
+                        and not key.startswith("legacy.")
+                        and all(char.isascii() and (char.isalnum() or char in "-_.") for char in key)
+                    )),
+                    f"数据化插件 {name} 的 {key_field} 无效：{key}",
+                )
+                if key:
+                    _require(
+                        localization_keys and all(key in keys for keys in localization_keys),
+                        f"数据化插件 {name} 的 {key_field} 未在全部插件词典中声明：{key}",
+                    )
     extra = paths.get("extraConfigPaths")
     if extra is not None:
         _require(isinstance(extra, list), f"数据化插件 {name} 的 extraConfigPaths 必须是数组")
@@ -390,6 +427,7 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
     _require(isinstance(localization, dict), f"插件 {manifest['artifactName']} 的 localization 必须是对象")
     default_locale = _canonical_locale(localization.get("defaultLocale", "zh-CN"))
     _require(default_locale is not None, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 不受支持")
+    _require(default_locale in SUPPORTED_LOCALES, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 尚未被当前宿主支持：{default_locale}")
     entries = localization.get("locales", localization.get("resources"))
     _require(isinstance(entries, dict) and entries, f"插件 {manifest['artifactName']} 的 localization.locales 必须是非空对象")
     seen: set[str] = set()
@@ -397,7 +435,7 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
     placeholders_by_key: dict[str, set[str]] | None = None
     for raw_locale, relative_path in entries.items():
         locale = _canonical_locale(raw_locale)
-        _require(locale is not None and locale not in seen, f"插件 {manifest['artifactName']} 的 localization locale 无效或重复：{raw_locale}")
+        _require(locale is not None and locale in SUPPORTED_LOCALES and locale not in seen, f"插件 {manifest['artifactName']} 的 localization locale 无效、未被当前宿主支持或重复：{raw_locale}")
         seen.add(locale)
         normalized = str(relative_path).replace("\\", "/") if isinstance(relative_path, str) else ""
         _require(normalized.startswith("i18n/") and normalized.lower().endswith(".json"), f"插件 {manifest['artifactName']} 的 localization 资源路径无效：{relative_path}")
@@ -436,6 +474,21 @@ def _validate_localization_contract(plugin: Path, manifest: dict[str, Any]) -> N
         key_sets.append(keys)
     _require(default_locale in seen, f"插件 {manifest['artifactName']} 的 localization.defaultLocale 缺少资源")
     _require(all(keys == key_sets[0] for keys in key_sets[1:]), f"插件 {manifest['artifactName']} 的 localization 资源 key 集合必须一致")
+
+
+def _localization_key_sets(plugin: Path, manifest: dict[str, Any]) -> list[set[str]]:
+    localization = manifest.get("localization")
+    if not isinstance(localization, dict):
+        return []
+    entries = localization.get("locales", localization.get("resources"))
+    if not isinstance(entries, dict):
+        return []
+    result: list[set[str]] = []
+    for relative_path in entries.values():
+        resource = _safe_relative(plugin, relative_path, f"插件 {manifest['artifactName']} 的 localization 资源", ".json")
+        value = read_json(resource)
+        result.append(set(value) if isinstance(value, dict) else set())
+    return result
 
 
 def _category_for(root: Path) -> str:
@@ -483,6 +536,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
         minimum = CAPABILITY_MIN_HOST.get(capability)
         if minimum:
             _require(host_version >= minimum, f"插件能力要求的最低宿主版本未满足：{name} -> {capability}")
+    _validate_localization_contract(root, manifest)
     if kind == "data-specialized":
         _validate_data_contract(root, manifest)
     else:
@@ -493,7 +547,6 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     if "configValidator" in manifest or "configEditor" in manifest:
         _require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)
-    _validate_localization_contract(root, manifest)
     homepage = store.get("homepage", "")
     canonical_prefix = f"https://github.com/{REPOSITORY}/tree/main/plugins/"
     if isinstance(homepage, str) and homepage.startswith(canonical_prefix):
