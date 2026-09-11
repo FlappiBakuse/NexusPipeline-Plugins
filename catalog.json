@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-11T02:38:49Z",
+  "generatedAt": "2026-09-11T11:47:08Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,26 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-11",
       "hasReadme": true,
-      "version": "0.1.11",
+      "version": "0.1.12",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.15.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.11.zip",
-      "sha256": "a68e6ab5df328d4ae043050122332b701e134491c5e13c15f7fda3aa8cc126b8",
-      "sizeBytes": 231585,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.12.zip",
+      "sha256": "2aeb95c19b0bf9bef26774cbcc301dbfaa6ead0ec5ce7c8917de648bf922a33e",
+      "sizeBytes": 186054,
       "changelog": [
+        {
+          "version": "0.1.12",
+          "date": "2026-09-11",
+          "items": [
+            "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
+          ]
+        },
         {
           "version": "0.1.11",
           "date": "2026-09-10",
@@ -46,13 +53,6 @@
           "date": "2026-08-31",
           "items": [
             "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
-          ]
-        },
-        {
-          "version": "0.1.7",
-          "date": "2026-08-31",
-          "items": [
-            "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
           ]
         }
       ],
@@ -68,6 +68,12 @@
           ],
           "changelog": [
             {
+              "version": "0.1.12",
+              "items": [
+                "Fixed the Vue frontend package so the settings card mounts in the browser."
+              ]
+            },
+            {
               "version": "0.1.11",
               "items": [
                 "Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."
@@ -77,12 +83,6 @@
               "version": "0.1.8",
               "items": [
                 "Improved the layout of toggle-card descriptions on the settings page."
-              ]
-            },
-            {
-              "version": "0.1.7",
-              "items": [
-                "Added an option to apply opacity to non-primary page settings."
               ]
             }
           ]
@@ -196,9 +196,9 @@
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-11",
       "hasReadme": true,
-      "version": "0.1.5",
+      "version": "0.1.6",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
@@ -206,10 +206,17 @@
         "frontend-module"
       ],
       "minHostVersion": "0.15.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.5.zip",
-      "sha256": "a1a05e815dce24cdd0acf334676522fcef2956cb7b500bb656d6121813ca77d6",
-      "sizeBytes": 209991,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.6.zip",
+      "sha256": "ee7b41d7c432946405c0e98ca89cb2b44a07776ca997023bcef8d3696d8ca8e5",
+      "sizeBytes": 164725,
       "changelog": [
+        {
+          "version": "0.1.6",
+          "date": "2026-09-11",
+          "items": [
+            "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
+          ]
+        },
         {
           "version": "0.1.5",
           "date": "2026-09-10",
@@ -222,13 +229,6 @@
           "date": "2026-08-30",
           "items": [
             "补充官方插件作者元数据，不改变插件运行行为。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-08-29",
-          "items": [
-            "声明 execution-preview-client 能力，接入宿主统一的执行预览授权边界。"
           ]
         }
       ],
@@ -244,6 +244,12 @@
           ],
           "changelog": [
             {
+              "version": "0.1.6",
+              "items": [
+                "Fixed the Vue frontend package so the live preview mounts in the browser."
+              ]
+            },
+            {
               "version": "0.1.5",
               "items": [
                 "Migrated the live preview interface to Frontend API 1.4 and Vue components."
@@ -253,12 +259,6 @@
               "version": "0.1.2",
               "items": [
                 "Added official plugin author metadata without changing runtime behavior."
-              ]
-            },
-            {
-              "version": "0.1.1",
-              "items": [
-                "Declared the execution-preview-client capability and adopted the host preview authorization boundary."
               ]
             }
           ]
