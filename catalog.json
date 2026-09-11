@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-11T04:19:07Z",
+  "generatedAt": "2026-09-11T02:38:49Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -31,8 +31,8 @@
       ],
       "minHostVersion": "0.15.5",
       "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.11.zip",
-      "sha256": "97a193adf281f13765298d3c2c50e104d2b8bb9d32c0b9bcc5edcb72f973e10d",
-      "sizeBytes": 78783,
+      "sha256": "a68e6ab5df328d4ae043050122332b701e134491c5e13c15f7fda3aa8cc126b8",
+      "sizeBytes": 231585,
       "changelog": [
         {
           "version": "0.1.11",
@@ -207,8 +207,8 @@
       ],
       "minHostVersion": "0.15.5",
       "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.5.zip",
-      "sha256": "2d4116fa6352a16092ababd17f38f08ecf0dbc30acf6a5be09d2cd1f1cecb7fb",
-      "sizeBytes": 72184,
+      "sha256": "a1a05e815dce24cdd0acf334676522fcef2956cb7b500bb656d6121813ca77d6",
+      "sizeBytes": 209991,
       "changelog": [
         {
           "version": "0.1.5",
