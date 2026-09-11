@@ -9,5 +9,8 @@
   "scripts": {
     "build:frontend": "npm run build --workspaces --if-present",
     "typecheck:frontend": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1"
   }
 }

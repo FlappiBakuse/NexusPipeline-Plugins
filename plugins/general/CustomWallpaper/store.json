@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.1.12",
+      "date": "2026-09-11",
+      "items": [
+        "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
+      ]
+    },
+    {
       "version": "0.1.11",
       "date": "2026-09-10",
       "items": [
@@ -23,13 +30,6 @@
       "items": [
         "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
       ]
-    },
-    {
-      "version": "0.1.7",
-      "date": "2026-08-31",
-      "items": [
-        "新增透明度是否运用于非主页面设置，可单独控制二级弹出与浮层卡片的透明效果。"
-      ]
     }
   ],
   "locales": {
@@ -40,16 +40,16 @@
       "tags": ["Appearance", "Wallpaper", "Theme"],
       "changelog": [
         {
+          "version": "0.1.12",
+          "items": ["Fixed the Vue frontend package so the settings card mounts in the browser."]
+        },
+        {
           "version": "0.1.11",
           "items": ["Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."]
         },
         {
           "version": "0.1.8",
           "items": ["Improved the layout of toggle-card descriptions on the settings page."]
-        },
-        {
-          "version": "0.1.7",
-          "items": ["Added an option to apply opacity to non-primary page settings."]
         }
       ]
     }

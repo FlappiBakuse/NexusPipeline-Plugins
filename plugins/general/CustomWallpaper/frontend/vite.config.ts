@@ -8,6 +8,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   root,
   plugins: [vue({ template: { compilerOptions: { isCustomElement: tag => tag.startsWith("nxp-") } } })],
+  define: { "process.env.NODE_ENV": JSON.stringify("production") },
   build: {
     outDir: path.join(root, "..", "web"),
     emptyOutDir: true,
