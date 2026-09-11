@@ -70,7 +70,18 @@ if (-not (Test-ArtifactName $ArtifactName)) {
     throw "artifactName 不符合大小写命名规范：$ArtifactName"
 }
 
-$pluginDir = Join-Path $pluginRoot $ArtifactName
+$pluginCandidates = @(
+    Get-ChildItem -LiteralPath $pluginRoot -Directory -ErrorAction Stop | ForEach-Object {
+        $candidate = Join-Path $_.FullName $ArtifactName
+        if (Test-Path -LiteralPath $candidate -PathType Container) {
+            Get-Item -LiteralPath $candidate
+        }
+    }
+)
+if ($pluginCandidates.Count -ne 1) {
+    throw "无法唯一定位插件源码目录：$ArtifactName（应位于 plugins/general/ 或 plugins/specialized/）"
+}
+$pluginDir = $pluginCandidates[0].FullName
 $manifestPath = Join-Path $pluginDir "plugin.json"
 Assert-Path $pluginDir "缺少插件目录：$pluginDir"
 Assert-Path $manifestPath "缺少插件 manifest：$manifestPath"

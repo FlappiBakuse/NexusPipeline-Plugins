@@ -274,7 +274,7 @@ function Assert-DocumentationSemantics {
 
 function Invoke-JavaScriptSyntaxChecks {
     $files = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File | Where-Object {
-        $_.Extension -in @(".js", ".mjs") -and $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]'
+        $_.Extension -in @(".js", ".mjs") -and $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]|[\\/]node_modules[\\/]'
     } | Sort-Object FullName)
     if ($files.Count -eq 0) {
         throw "未找到插件 JavaScript 文件"
@@ -284,7 +284,7 @@ function Invoke-JavaScriptSyntaxChecks {
     }
 
     $pythonFiles = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter *.py | Where-Object {
-        $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]'
+        $_.FullName -notmatch '[\\/]bin[\\/]|[\\/]obj[\\/]|[\\/]node_modules[\\/]'
     } | Sort-Object FullName)
     foreach ($file in $pythonFiles) {
         Invoke-Checked "Python 语法：$($file.FullName)" "python" @("-m", "py_compile", $file.FullName)
@@ -309,7 +309,7 @@ try {
     Write-Output "[Test-Repository] 开始 NexusPipeline-Plugins 全量验证：$repoRoot"
 
     $jsonFiles = @(Get-ChildItem -LiteralPath $repoRoot -Recurse -File -Filter *.json | Where-Object {
-        $_.FullName -notmatch '[\\/]\.git[\\/]|[\\/]bin[\\/]|[\\/]obj[\\/]'
+        $_.Name -ne "package-lock.json" -and $_.FullName -notmatch '[\\/]\.git[\\/]|[\\/]bin[\\/]|[\\/]obj[\\/]|[\\/]node_modules[\\/]'
     } | Sort-Object FullName)
     foreach ($file in $jsonFiles) {
         Read-Json $file.FullName | Out-Null
