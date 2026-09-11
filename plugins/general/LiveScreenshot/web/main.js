@@ -3591,27 +3591,36 @@ var Us = {
 		function u() {
 			return String(t.context?.primaryId || "").trim();
 		}
-		async function d() {
+		function d(e) {
+			e.startsWith("blob:") && URL.revokeObjectURL(e);
+		}
+		function f(e) {
+			a.value && a.value !== e && d(a.value), a.value = e;
+		}
+		async function p() {
 			if (!(c || s || !u())) {
 				s = new AbortController();
 				try {
 					let e = await t.host.executionPreview.capture(u(), s.signal);
-					if (c) return;
-					n.value = e.state === "ready" && e.url ? "ready" : e.state, a.value = e.url || "", r.value = e.source === "emulator" ? l("emulator", {}, "模拟器") : e.source ? l("pc_game", {}, "PC 游戏") : "", i.value = e.capturedAt ? l("recent_update", { time: t.host.i18n.formatTime(e.capturedAt, { hour12: !1 }) }, `最近更新 ${e.capturedAt}`) : "";
+					if (c) {
+						e.url && d(e.url);
+						return;
+					}
+					n.value = e.state === "ready" && e.url ? "ready" : e.state, f(e.url || ""), r.value = e.source === "emulator" ? l("emulator", {}, "模拟器") : e.source ? l("pc_game", {}, "PC 游戏") : "", i.value = e.capturedAt ? l("recent_update", { time: t.host.i18n.formatTime(e.capturedAt, { hour12: !1 }) }, `最近更新 ${e.capturedAt}`) : "";
 				} catch (e) {
-					!c && e?.name !== "AbortError" && (n.value = "unavailable", a.value = "");
+					!c && e?.name !== "AbortError" && (n.value = "unavailable", f(""));
 				} finally {
 					s = null;
 				}
 			}
 		}
-		function f() {
+		function m() {
 			return n.value === "waiting_for_game" || n.value === "window_not_ready" ? l("waiting_game", {}, "正在等待游戏窗口…") : n.value === "emulator_not_ready" ? l("waiting_emulator", {}, "正在等待模拟器画面…") : n.value === "unavailable" ? l("unavailable", {}, "暂时无法获取游戏窗口画面") : l("waiting_run", {}, "等待任务画面");
 		}
 		return Jr(() => {
-			d(), o = setInterval(() => void d(), 5e3);
+			p(), o = setInterval(() => void p(), 5e3);
 		}), Zr(() => {
-			c = !0, o && clearInterval(o), s?.abort();
+			c = !0, o && clearInterval(o), s?.abort(), f("");
 		}), (e, t) => (qa(), Qa("section", Us, [
 			io("div", Ws, [io("strong", null, ke(l("title", {}, "实时画面")), 1), io("span", { class: he(["badge", n.value === "ready" ? "ok" : "muted"]) }, ke(r.value || l("waiting", {}, "等待")), 3)]),
 			io("div", Gs, [a.value ? (qa(), Qa("img", {
@@ -3619,7 +3628,7 @@ var Us = {
 				class: "live-screenshot-image",
 				src: a.value,
 				alt: l("current_game", {}, "当前游戏画面")
-			}, null, 8, Ks)) : (qa(), Qa("span", qs, ke(f()), 1))]),
+			}, null, 8, Ks)) : (qa(), Qa("span", qs, ke(m()), 1))]),
 			io("div", Js, [io("span", Ys, ke(i.value), 1), io("span", Xs, ke(l("refresh", {}, "每 5 秒更新")), 1)])
 		]));
 	}

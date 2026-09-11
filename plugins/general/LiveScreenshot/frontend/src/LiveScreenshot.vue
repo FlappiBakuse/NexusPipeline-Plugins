@@ -13,18 +13,28 @@ let disposed = false;
 
 function tr(key: string, args: Record<string, unknown> = {}, fallback = "") { return props.host.i18n.t(key, args, fallback); }
 function runId() { return String(props.context?.primaryId || "").trim(); }
+function revoke(url: string) {
+  if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+function replaceImageUrl(next: string) {
+  if (imageUrl.value && imageUrl.value !== next) revoke(imageUrl.value);
+  imageUrl.value = next;
+}
 async function capture() {
   if (disposed || request || !runId()) return;
   request = new AbortController();
   try {
     const result = await props.host.executionPreview.capture(runId(), request.signal);
-    if (disposed) return;
+    if (disposed) {
+      if (result.url) revoke(result.url);
+      return;
+    }
     state.value = result.state === "ready" && result.url ? "ready" : result.state;
-    imageUrl.value = result.url || "";
+    replaceImageUrl(result.url || "");
     source.value = result.source === "emulator" ? tr("emulator", {}, "模拟器") : result.source ? tr("pc_game", {}, "PC 游戏") : "";
     capturedAt.value = result.capturedAt ? tr("recent_update", { time: props.host.i18n.formatTime(result.capturedAt, { hour12: false }) }, `最近更新 ${result.capturedAt}`) : "";
   } catch (error) {
-    if (!disposed && (error as Error)?.name !== "AbortError") { state.value = "unavailable"; imageUrl.value = ""; }
+    if (!disposed && (error as Error)?.name !== "AbortError") { state.value = "unavailable"; replaceImageUrl(""); }
   } finally { request = null; }
 }
 function message() {
@@ -34,7 +44,7 @@ function message() {
   return tr("waiting_run", {}, "等待任务画面");
 }
 onMounted(() => { void capture(); timer = setInterval(() => void capture(), 5000); });
-onBeforeUnmount(() => { disposed = true; if (timer) clearInterval(timer); request?.abort(); });
+onBeforeUnmount(() => { disposed = true; if (timer) clearInterval(timer); request?.abort(); replaceImageUrl(""); });
 </script>
 
 <template>

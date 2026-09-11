@@ -6,6 +6,7 @@ import tempfile
 import unittest
 import zipfile
 import os
+from unittest.mock import patch
 from pathlib import Path
 
 import sys
@@ -40,6 +41,12 @@ from repository_core import (  # noqa: E402
 
 
 class RepositoryCoreTests(unittest.TestCase):
+    def test_npm_executable_uses_windows_cmd_shim(self) -> None:
+        with patch.object(core.os, "name", "nt"):
+            self.assertEqual(core._npm_executable(), "npm.cmd")
+        with patch.object(core.os, "name", "posix"):
+            self.assertEqual(core._npm_executable(), "npm")
+
     def test_semver_and_date_are_strict(self) -> None:
         self.assertEqual(parse_semver("0.14.6"), (0, 14, 6))
         self.assertTrue(is_semver("10.0.1"))

@@ -4,6 +4,11 @@
 .wallpaper-status-row { min-width: 0; }
 .wallpaper-status-row > .muted { min-width: 0; }
 .wallpaper-enabled-row, .wallpaper-secondary-transparency-row { margin: 0; border: 1px solid var(--content-card-border); border-radius: var(--radius-md); background: var(--content-card-soft); }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-4); }
+.switch-copy { display: grid; min-width: 0; gap: 4px; }
+.switch-copy strong { font-size: 13px; }
+.switch-copy .muted { line-height: 1.55; }
+.plugin-field-description { display: block; min-height: 2.9em; margin: 5px 0 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .wallpaper-controls, .wallpaper-effects { align-items: end; }
 .wallpaper-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .wallpaper-effects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -28,10 +33,4 @@
 .wallpaper-item-actions button { min-height: 32px; padding-inline: 10px; }
 .wallpaper-empty { margin: 0; padding: var(--space-4); border: 1px dashed var(--content-control-border); border-radius: var(--radius-md); text-align: center; }
 @media (max-width: 900px) { .wallpaper-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 600px) { .wallpaper-controls, .wallpaper-effects { grid-template-columns: minmax(0, 1fr); } .wallpaper-item { grid-template-columns: 32px 64px minmax(0, 1fr); } .wallpaper-item img { width: 64px; } .wallpaper-item-actions { grid-column: 3 / -1; justify-content: flex-end; } .wallpaper-card-footer { align-items: stretch; flex-direction: column; } }
-.wallpaper-card { display: block; }
-.wallpaper-list { display: grid; gap: 8px; margin-top: 14px; }
-.wallpaper-item { display: grid; grid-template-columns: 32px 64px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--content-card-border, rgba(160,180,210,.2)); border-radius: 10px; }
-.wallpaper-item img { width: 64px; height: 42px; object-fit: cover; border-radius: 6px; }
-.wallpaper-item-copy { display: grid; gap: 3px; min-width: 0; }
-.wallpaper-drag-handle { color: var(--muted); font-size: 20px; cursor: grab; }
+@media (max-width: 600px) { .wallpaper-controls, .wallpaper-effects { grid-template-columns: minmax(0, 1fr); } .wallpaper-item { grid-template-columns: 32px 64px minmax(0, 1fr); } .wallpaper-item img { width: 64px; } .wallpaper-item > nxp-button { grid-column: 3 / -1; justify-self: end; } .wallpaper-card-footer { align-items: stretch; flex-direction: column; } .switch-row { align-items: flex-start; } }

@@ -72,6 +72,11 @@ MAX_LOCALIZATION_VALUE_LENGTH = 8192
 _frontend_dependencies_ready = False
 
 
+def _npm_executable() -> str:
+    """在 Windows 上显式调用 npm.cmd，避免 Python subprocess 找不到 npm shim。"""
+    return "npm.cmd" if os.name == "nt" else "npm"
+
+
 class RepositoryError(ValueError):
     """仓库契约或发行状态无效。"""
 
@@ -699,10 +704,10 @@ def _build_frontend(plugin: SourcePlugin, root: Path) -> None:
     if not frontend.is_dir():
         return
     if not _frontend_dependencies_ready:
-        _run(("npm", "ci", "--no-audit", "--no-fund"), "安装插件前端依赖", root)
+        _run((_npm_executable(), "ci", "--no-audit", "--no-fund"), "安装插件前端依赖", root)
         _frontend_dependencies_ready = True
-    _run(("npm", "run", "typecheck", "--prefix", str(frontend)), f"插件前端类型检查：{plugin.artifact_name}", root)
-    _run(("npm", "run", "build", "--prefix", str(frontend)), f"插件前端构建：{plugin.artifact_name} v{plugin.version}", root)
+    _run((_npm_executable(), "run", "typecheck", "--prefix", str(frontend)), f"插件前端类型检查：{plugin.artifact_name}", root)
+    _run((_npm_executable(), "run", "build", "--prefix", str(frontend)), f"插件前端构建：{plugin.artifact_name} v{plugin.version}", root)
 
 
 def _git(root: Path, args: Sequence[str], label: str) -> str:
