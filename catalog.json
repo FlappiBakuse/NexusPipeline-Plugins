@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-10T07:50:41Z",
+  "generatedAt": "2026-09-11T02:38:49Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,24 +21,24 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-10",
       "hasReadme": true,
-      "version": "0.1.10",
+      "version": "0.1.11",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.12.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.10.zip",
-      "sha256": "1d41affc24535308f35fdf7b65a13e3ac87a44cffa6b84cedb0a7f77e01d87d6",
-      "sizeBytes": 107364,
+      "minHostVersion": "0.15.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.11.zip",
+      "sha256": "a68e6ab5df328d4ae043050122332b701e134491c5e13c15f7fda3aa8cc126b8",
+      "sizeBytes": 231585,
       "changelog": [
         {
-          "version": "0.1.10",
-          "date": "2026-09-09",
+          "version": "0.1.11",
+          "date": "2026-09-10",
           "items": [
-            "新增宿主语言资源，支持中英文界面显示。"
+            "迁移到 Frontend API 1.4 与 Vue 组件化设置界面。"
           ]
         },
         {
@@ -68,9 +68,9 @@
           ],
           "changelog": [
             {
-              "version": "0.1.10",
+              "version": "0.1.11",
               "items": [
-                "Added host language resources for Chinese and English interfaces."
+                "Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."
               ]
             },
             {
@@ -196,25 +196,25 @@
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-10",
       "hasReadme": true,
-      "version": "0.1.4",
+      "version": "0.1.5",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "execution-preview-client",
         "frontend-module"
       ],
-      "minHostVersion": "0.11.7",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.4.zip",
-      "sha256": "e870a22f2dba68ca1a73a261aed5ce0d9a48f2fff7becc0665d75ed1dc33b6f4",
-      "sizeBytes": 82159,
+      "minHostVersion": "0.15.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.5.zip",
+      "sha256": "a1a05e815dce24cdd0acf334676522fcef2956cb7b500bb656d6121813ca77d6",
+      "sizeBytes": 209991,
       "changelog": [
         {
-          "version": "0.1.4",
-          "date": "2026-09-09",
+          "version": "0.1.5",
+          "date": "2026-09-10",
           "items": [
-            "新增宿主语言资源，支持中英文界面显示。"
+            "迁移到 Frontend API 1.4 与 Vue 组件化实时预览界面。"
           ]
         },
         {
@@ -244,9 +244,9 @@
           ],
           "changelog": [
             {
-              "version": "0.1.4",
+              "version": "0.1.5",
               "items": [
-                "Added host language resources for Chinese and English interfaces."
+                "Migrated the live preview interface to Frontend API 1.4 and Vue components."
               ]
             },
             {
