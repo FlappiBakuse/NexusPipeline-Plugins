@@ -210,6 +210,19 @@ async function runPlugin(manifestPath) {
         if (manifest.artifactName === "CustomWallpaper" && !element.querySelector('[data-settings-panel="custom-wallpaper"]')) {
           fail("CustomWallpaper renderer 未挂载设置面板");
         }
+        if (manifest.artifactName === "CustomWallpaper") {
+          const requiredControls = [
+            "nxp-file-picker",
+            "nxp-switch-setting",
+            "nxp-select",
+            "nxp-number-input",
+            "nxp-range",
+          ];
+          const missingControls = requiredControls.filter(control => !element.querySelector(control));
+          if (missingControls.length) {
+            fail(`CustomWallpaper renderer 缺少设置控件：${missingControls.join(", ")}`);
+          }
+        }
         if (manifest.artifactName === "LiveScreenshot" && !element.querySelector("[data-live-screenshot-card]")) {
           fail("LiveScreenshot renderer 未挂载实时截图面板");
         }

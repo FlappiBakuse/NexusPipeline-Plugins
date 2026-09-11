@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { WallpaperAsset, WallpaperHost, WallpaperSnapshot } from "./types";
+import CollapseTransition from "./NxpCollapseTransition.vue";
 
 const props = defineProps<{ host: WallpaperHost; context?: Record<string, unknown> }>();
 const snapshot = ref<WallpaperSnapshot | null>(null);
 const expanded = ref(false);
+const settingsPanelId = "custom-wallpaper";
+const settingsPanelToggleEvent = "nxp-settings-panel-toggle";
+const settingsPanelStateEvent = "nxp-settings-panel-state";
 const status = ref("");
 const tone = ref("muted");
 const help = ref("");
@@ -29,6 +33,19 @@ const enabled = computed(() => snapshot.value?.provider?.enabled === true);
 const secondaryTransparency = computed(() => snapshot.value?.effects?.applyTransparencyToSecondarySurfaces !== false);
 
 function tr(key: string, args: Record<string, unknown> = {}, fallback = "") { return props.host.i18n.t(key, args, fallback); }
+function publishPanelToggle(panelId: string | null) {
+  window.dispatchEvent(new CustomEvent(settingsPanelToggleEvent, { detail: { panelId } }));
+}
+function toggleExpanded() {
+  const next = !expanded.value;
+  expanded.value = next;
+  publishPanelToggle(next ? settingsPanelId : null);
+}
+function syncPanelState(event: Event) {
+  const panelId = (event as CustomEvent<{ panelId?: unknown }>).detail?.panelId;
+  if (panelId !== null && typeof panelId !== "string") return;
+  expanded.value = panelId === settingsPanelId;
+}
 function setStatus(message: string, nextTone = "muted") { status.value = message; tone.value = nextTone; }
 function formatBytes(bytes: number | undefined) {
   const value = Number(bytes) || 0;
@@ -145,37 +162,183 @@ async function drop(targetId: string) {
 }
 
 onMounted(async () => {
+  window.addEventListener(settingsPanelStateEvent, syncPanelState);
   await load();
   subscription = props.host.appearance.wallpaperStore.subscribe(next => { if (next.revision !== snapshot.value?.revision) snapshot.value = next; });
 });
 onBeforeUnmount(() => {
+  window.removeEventListener(settingsPanelStateEvent, syncPanelState);
   if (saveTimer) clearTimeout(saveTimer);
   subscription?.dispose();
 });
 </script>
 
 <template>
-  <section class="settings-card section-surface wallpaper-card" :class="{ 'is-expanded': expanded }" data-settings-panel="custom-wallpaper">
-    <button class="settings-card-toggle" type="button" :aria-expanded="expanded" aria-controls="settings-panel-custom-wallpaper" @click="expanded = !expanded"><span class="settings-card-copy"><strong class="settings-card-title">{{ tr("card.title", {}, "自定义壁纸") }}</strong><span class="muted">{{ tr("card.description", {}, "同步壁纸、轮换方式和显示效果") }}</span></span><span class="settings-card-arrow" aria-hidden="true">{{ expanded ? "⌄" : "›" }}</span></button>
-    <div id="settings-panel-custom-wallpaper" v-show="expanded" class="settings-card-body">
-      <div class="wallpaper-settings-body">
-        <div class="wallpaper-status-row"><span class="muted">{{ tr("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。") }}</span><span class="badge" :class="tone">{{ status }}</span></div>
-        <div class="switch-row settings-option switch-card wallpaper-enabled-row"><div class="switch-copy"><strong>{{ tr("settings.enabled", {}, "启用自定义壁纸") }}</strong><span id="wallpaper-enabled-description" class="muted">{{ tr("settings.enabled_help", {}, "启用后使用自定义壁纸作为页面背景。") }}</span></div><nxp-switch :model-value="enabled" label="" :aria-label="tr('settings.enabled', {}, '启用自定义壁纸')" @change="toggle('enabled')" /></div>
-        <div class="switch-row settings-option switch-card wallpaper-secondary-transparency-row"><div class="switch-copy"><strong>{{ tr("settings.secondary", {}, "透明度运用于非主页面") }}</strong><span id="wallpaper-secondary-transparency-description" class="muted">{{ tr("settings.secondary_help", {}, "关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。") }}</span></div><nxp-switch :model-value="secondaryTransparency" label="" :aria-label="tr('settings.secondary', {}, '透明度运用于非主页面')" @change="toggle('secondary')" /></div>
-        <div class="form-grid wallpaper-controls">
-          <label class="field wallpaper-mode-field"><span class="field-label">{{ tr("settings.rotation", {}, "轮换方式") }}</span><span class="plugin-field-description">{{ tr("settings.rotation_help", {}, "按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。") }}</span><nxp-select :model-value="snapshot?.rotation?.mode || 'off'" :options="modes" :aria-label="tr('settings.rotation', {}, '轮换方式')" @change="updateSetting('mode', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue || 'off')" /></label>
-          <label class="field"><span class="field-label">{{ tr("settings.interval", {}, "轮换间隔（分钟）") }}</span><span class="plugin-field-description">{{ tr("settings.interval_help", {}, "轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。") }}</span><nxp-number-input :model-value="snapshot?.rotation?.intervalMinutes || 30" min="1" max="1440" step="1" :aria-label="tr('settings.interval', {}, '轮换间隔（分钟）')" @change="updateSetting('interval', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)" /></label>
+  <section
+    class="settings-card section-surface wallpaper-card wallpaper-settings-card"
+    :class="{ 'is-expanded': expanded }"
+    data-settings-panel="custom-wallpaper"
+    data-testid="custom-wallpaper-card"
+  >
+    <button
+      class="settings-card-toggle"
+      type="button"
+      :aria-expanded="expanded"
+      aria-controls="settings-panel-custom-wallpaper"
+      @click.stop="toggleExpanded"
+    >
+      <span class="settings-card-copy">
+        <strong class="settings-card-title">{{ tr("card.title", {}, "自定义壁纸") }}</strong>
+        <span class="muted">{{ tr("card.description", {}, "同步壁纸、轮换方式和显示效果") }}</span>
+      </span>
+      <span class="settings-card-arrow" aria-hidden="true">
+        <nxp-icon
+          :name="expanded ? 'chevronDown' : 'chevronRight'"
+          class-name="settings-card-arrow-icon"
+        />
+      </span>
+    </button>
+    <CollapseTransition>
+      <div
+        id="settings-panel-custom-wallpaper"
+        v-show="expanded"
+        class="settings-card-body"
+      >
+        <div class="wallpaper-settings-body">
+          <div class="wallpaper-status-row">
+            <span class="muted">{{ tr("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。") }}</span>
+            <span class="badge" :class="tone">{{ status }}</span>
+          </div>
+          <div class="settings-list wallpaper-switch-list">
+            <nxp-switch-setting
+              :label="tr('settings.enabled', {}, '启用自定义壁纸')"
+              :description="tr('settings.enabled_help', {}, '启用后使用自定义壁纸作为页面背景。')"
+              :model-value="enabled"
+              :aria-label="tr('settings.enabled', {}, '启用自定义壁纸')"
+              @change="toggle('enabled')"
+            />
+            <nxp-switch-setting
+              :label="tr('settings.secondary', {}, '透明度运用于非主页面')"
+              :description="tr('settings.secondary_help', {}, '关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。')"
+              :model-value="secondaryTransparency"
+              :aria-label="tr('settings.secondary', {}, '透明度运用于非主页面')"
+              @change="toggle('secondary')"
+            />
+          </div>
+          <div class="form-grid wallpaper-controls">
+            <label
+              class="field wallpaper-mode-field"
+              :data-help="tr('settings.rotation_help', {}, '按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。')"
+            >
+              <span class="field-label">{{ tr("settings.rotation", {}, "轮换方式") }}</span>
+              <nxp-select
+                :model-value="snapshot?.rotation?.mode || 'off'"
+                :options="modes"
+                :aria-label="tr('settings.rotation', {}, '轮换方式')"
+                @change="updateSetting('mode', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue || 'off')"
+              />
+            </label>
+            <label
+              class="field"
+              :data-help="tr('settings.interval_help', {}, '轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。')"
+            >
+              <span class="field-label">{{ tr("settings.interval", {}, "轮换间隔（分钟）") }}</span>
+              <nxp-number-input
+                :model-value="snapshot?.rotation?.intervalMinutes || 30"
+                min="1"
+                max="1440"
+                step="1"
+                :aria-label="tr('settings.interval', {}, '轮换间隔（分钟）')"
+                @change="updateSetting('interval', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+              />
+            </label>
+          </div>
+          <div class="form-grid wallpaper-effects">
+            <label class="field" :data-help="tr('settings.blur_help', {}, '模糊范围为 0 至 40 像素。')">
+              <span class="field-label">{{ tr("settings.blur", {}, "模糊（像素）") }}</span>
+              <span class="wallpaper-range-row">
+                <nxp-range
+                  :model-value="snapshot?.effects?.blurPx || 0"
+                  min="0"
+                  max="40"
+                  step="1"
+                  :aria-label="tr('settings.blur', {}, '模糊（像素）')"
+                  @change="updateSetting('blur', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+                />
+                <output>{{ snapshot?.effects?.blurPx || 0 }}px</output>
+              </span>
+            </label>
+            <label class="field" :data-help="tr('settings.dim_help', {}, '变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。')">
+              <span class="field-label">{{ tr("settings.dim", {}, "变暗") }}</span>
+              <span class="wallpaper-range-row">
+                <nxp-range
+                  :model-value="snapshot?.effects?.dimPercent ?? 20"
+                  min="0"
+                  max="80"
+                  step="1"
+                  :aria-label="tr('settings.dim', {}, '变暗')"
+                  @change="updateSetting('dim', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+                />
+                <output>{{ snapshot?.effects?.dimPercent ?? 20 }}%</output>
+              </span>
+            </label>
+            <label class="field" :data-help="tr('settings.transparency_help', {}, '控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。')">
+              <span class="field-label">{{ tr("settings.transparency", {}, "卡片与侧边栏透明度") }}</span>
+              <span class="wallpaper-range-row">
+                <nxp-range
+                  :model-value="snapshot?.effects?.surfaceTransparencyPercent || 0"
+                  min="0"
+                  max="50"
+                  step="1"
+                  :aria-label="tr('settings.transparency', {}, '卡片与侧边栏透明度')"
+                  @change="updateSetting('transparency', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+                />
+                <output>{{ snapshot?.effects?.surfaceTransparencyPercent || 0 }}%</output>
+              </span>
+            </label>
+          </div>
+          <div class="wallpaper-upload-row">
+            <nxp-file-picker
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              :label="tr('settings.add', {}, '添加壁纸')"
+              @change="upload(($event as CustomEvent).detail?.[0] || ($event.target as any)?.files || [])"
+            />
+            <span class="muted">{{ tr("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB") }}</span>
+          </div>
+          <div class="wallpaper-list">
+            <p v-if="!assets.length" class="muted wallpaper-empty">{{ tr("empty", {}, "尚未添加壁纸。") }}</p>
+            <div
+              v-for="asset in assets"
+              :key="asset.id"
+              class="wallpaper-item"
+              :class="{ 'is-dragging': draggedId === asset.id }"
+              @dragover.prevent
+              @drop="drop(asset.id)"
+            >
+              <button
+                class="wallpaper-drag-handle"
+                type="button"
+                draggable="true"
+                :aria-label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`"
+                :title="tr('drag', {}, '拖拽排序')"
+                @dragstart.stop="draggedId = asset.id"
+                @dragend="draggedId = ''"
+              >⠿</button>
+              <img :src="asset.url" :alt="asset.originalName || asset.id" />
+              <div class="wallpaper-item-copy">
+                <strong>{{ asset.originalName || asset.id }}</strong>
+                <span class="muted">{{ formatBytes(asset.sizeBytes) }}</span>
+              </div>
+              <nxp-button tone="danger" variant="ghost" size="sm" @click="remove(asset.id)">{{ tr("remove", {}, "删除") }}</nxp-button>
+            </div>
+          </div>
+          <div class="wallpaper-card-footer">
+            <span class="muted">{{ tr("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。") }}</span>
+          </div>
+          <p v-if="help" class="req">{{ help }}</p>
         </div>
-        <div class="form-grid wallpaper-effects">
-          <label class="field"><span class="field-label">{{ tr("settings.blur", {}, "模糊（像素）") }}</span><span class="plugin-field-description">{{ tr("settings.blur_help", {}, "模糊范围为 0 至 40 像素。") }}</span><span class="wallpaper-range-row"><nxp-range :model-value="snapshot?.effects?.blurPx || 0" min="0" max="40" step="1" :aria-label="tr('settings.blur', {}, '模糊（像素）')" @change="updateSetting('blur', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)" /><output>{{ snapshot?.effects?.blurPx || 0 }}px</output></span></label>
-          <label class="field"><span class="field-label">{{ tr("settings.dim", {}, "变暗") }}</span><span class="plugin-field-description">{{ tr("settings.dim_help", {}, "变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。") }}</span><span class="wallpaper-range-row"><nxp-range :model-value="snapshot?.effects?.dimPercent ?? 20" min="0" max="80" step="1" :aria-label="tr('settings.dim', {}, '变暗')" @change="updateSetting('dim', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)" /><output>{{ snapshot?.effects?.dimPercent ?? 20 }}%</output></span></label>
-          <label class="field"><span class="field-label">{{ tr("settings.transparency", {}, "卡片与侧边栏透明度") }}</span><span class="plugin-field-description">{{ tr("settings.transparency_help", {}, "控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。") }}</span><span class="wallpaper-range-row"><nxp-range :model-value="snapshot?.effects?.surfaceTransparencyPercent || 0" min="0" max="50" step="1" :aria-label="tr('settings.transparency', {}, '卡片与侧边栏透明度')" @change="updateSetting('transparency', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)" /><output>{{ snapshot?.effects?.surfaceTransparencyPercent || 0 }}%</output></span></label>
-        </div>
-        <div class="wallpaper-upload-row"><nxp-file-picker accept="image/jpeg,image/png,image/webp" multiple :label="tr('settings.add', {}, '添加壁纸')" @change="upload(($event as CustomEvent).detail?.[0] || ($event.target as any)?.files || [])" /><span class="muted">{{ tr("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB") }}</span></div>
-        <div class="wallpaper-list"><p v-if="!assets.length" class="muted wallpaper-empty">{{ tr("empty", {}, "尚未添加壁纸。") }}</p><div v-for="asset in assets" :key="asset.id" class="wallpaper-item" :class="{ 'is-dragging': draggedId === asset.id }" @dragover.prevent @drop="drop(asset.id)"><button class="wallpaper-drag-handle" type="button" draggable="true" :aria-label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`" :title="tr('drag', {}, '拖拽排序')" @dragstart.stop="draggedId = asset.id" @dragend="draggedId = ''">⠿</button><img :src="asset.url" :alt="asset.originalName || asset.id"><div class="wallpaper-item-copy"><strong>{{ asset.originalName || asset.id }}</strong><span class="muted">{{ formatBytes(asset.sizeBytes) }}</span></div><nxp-button tone="danger" variant="ghost" size="sm" @click="remove(asset.id)">{{ tr("remove", {}, "删除") }}</nxp-button></div></div>
-        <div class="wallpaper-card-footer"><span class="muted">{{ tr("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。") }}</span></div>
-        <p v-if="help" class="req">{{ help }}</p>
       </div>
-    </div>
+    </CollapseTransition>
   </section>
 </template>

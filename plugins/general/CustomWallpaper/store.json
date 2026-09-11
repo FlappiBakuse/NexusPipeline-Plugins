@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.1.13",
+      "date": "2026-09-11",
+      "items": [
+        "完善设置卡片展开、切换按钮与分隔线交互，修复自定义壁纸设置界面布局。"
+      ]
+    },
+    {
       "version": "0.1.12",
       "date": "2026-09-11",
       "items": [
@@ -23,13 +30,6 @@
       "items": [
         "迁移到 Frontend API 1.4 与 Vue 组件化设置界面。"
       ]
-    },
-    {
-      "version": "0.1.8",
-      "date": "2026-08-31",
-      "items": [
-        "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
-      ]
     }
   ],
   "locales": {
@@ -40,16 +40,16 @@
       "tags": ["Appearance", "Wallpaper", "Theme"],
       "changelog": [
         {
+          "version": "0.1.13",
+          "items": ["Refined the settings-card expansion, toggle, and separator behavior for the custom wallpaper settings UI."]
+        },
+        {
           "version": "0.1.12",
           "items": ["Fixed the Vue frontend package so the settings card mounts in the browser."]
         },
         {
           "version": "0.1.11",
           "items": ["Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."]
-        },
-        {
-          "version": "0.1.8",
-          "items": ["Improved the layout of toggle-card descriptions on the settings page."]
         }
       ]
     }
