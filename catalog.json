@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-11T11:47:08Z",
+  "generatedAt": "2026-09-11T15:23:04Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -23,17 +23,24 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
       "updatedAt": "2026-09-11",
       "hasReadme": true,
-      "version": "0.1.12",
+      "version": "0.1.13",
       "kind": "managed-code",
       "apiVersion": "1.4",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.15.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.12.zip",
-      "sha256": "2aeb95c19b0bf9bef26774cbcc301dbfaa6ead0ec5ce7c8917de648bf922a33e",
-      "sizeBytes": 186054,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.13.zip",
+      "sha256": "b6c892ec2116e191ef6e6137bbc483470bba2d198b6b240008684a1984119a16",
+      "sizeBytes": 197300,
       "changelog": [
+        {
+          "version": "0.1.13",
+          "date": "2026-09-11",
+          "items": [
+            "完善设置卡片展开、切换按钮与分隔线交互，修复自定义壁纸设置界面布局。"
+          ]
+        },
         {
           "version": "0.1.12",
           "date": "2026-09-11",
@@ -46,13 +53,6 @@
           "date": "2026-09-10",
           "items": [
             "迁移到 Frontend API 1.4 与 Vue 组件化设置界面。"
-          ]
-        },
-        {
-          "version": "0.1.8",
-          "date": "2026-08-31",
-          "items": [
-            "统一设置页切换轨道按钮卡片的说明布局，宽度足够时直接显示完整说明。"
           ]
         }
       ],
@@ -68,6 +68,12 @@
           ],
           "changelog": [
             {
+              "version": "0.1.13",
+              "items": [
+                "Refined the settings-card expansion, toggle, and separator behavior for the custom wallpaper settings UI."
+              ]
+            },
+            {
               "version": "0.1.12",
               "items": [
                 "Fixed the Vue frontend package so the settings card mounts in the browser."
@@ -77,12 +83,6 @@
               "version": "0.1.11",
               "items": [
                 "Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."
-              ]
-            },
-            {
-              "version": "0.1.8",
-              "items": [
-                "Improved the layout of toggle-card descriptions on the settings page."
               ]
             }
           ]
