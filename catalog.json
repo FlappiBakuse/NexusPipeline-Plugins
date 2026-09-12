@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-11T15:23:04Z",
+  "generatedAt": "2026-09-12T03:27:10Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,27 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-11",
+      "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.1.13",
+      "version": "0.2.0",
       "kind": "managed-code",
-      "apiVersion": "1.4",
+      "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.15.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.13.zip",
-      "sha256": "b6c892ec2116e191ef6e6137bbc483470bba2d198b6b240008684a1984119a16",
-      "sizeBytes": 197300,
+      "minHostVersion": "0.15.9",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.0.zip",
+      "sha256": "45dfaa7f4289a093339934a12479c2d8eb4bd3e293243b6c6c92fc2e1d3400f8",
+      "sizeBytes": 251183,
       "changelog": [
+        {
+          "version": "0.2.0",
+          "date": "2026-09-12",
+          "items": [
+            "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
+            "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
+          ]
+        },
         {
           "version": "0.1.13",
           "date": "2026-09-11",
@@ -46,13 +54,6 @@
           "date": "2026-09-11",
           "items": [
             "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
-          ]
-        },
-        {
-          "version": "0.1.11",
-          "date": "2026-09-10",
-          "items": [
-            "迁移到 Frontend API 1.4 与 Vue 组件化设置界面。"
           ]
         }
       ],
@@ -68,6 +69,13 @@
           ],
           "changelog": [
             {
+              "version": "0.2.0",
+              "items": [
+                "Wallpaper settings, quotas, file validation, deduplication, rotation, and palettes are now implemented by the plugin; the host only provides generic asset storage and the plugin Web API.",
+                "The plugin frontend targets Frontend API 1.5, uses only public nxp-* elements with its own style namespace, and imports existing host wallpaper data automatically."
+              ]
+            },
+            {
               "version": "0.1.13",
               "items": [
                 "Refined the settings-card expansion, toggle, and separator behavior for the custom wallpaper settings UI."
@@ -77,12 +85,6 @@
               "version": "0.1.12",
               "items": [
                 "Fixed the Vue frontend package so the settings card mounts in the browser."
-              ]
-            },
-            {
-              "version": "0.1.11",
-              "items": [
-                "Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."
               ]
             }
           ]
@@ -196,20 +198,27 @@
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
-      "updatedAt": "2026-09-11",
+      "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.1.6",
+      "version": "0.2.0",
       "kind": "managed-code",
-      "apiVersion": "1.4",
+      "apiVersion": "1.5",
       "capabilities": [
         "execution-preview-client",
         "frontend-module"
       ],
-      "minHostVersion": "0.15.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.1.6.zip",
-      "sha256": "ee7b41d7c432946405c0e98ca89cb2b44a07776ca997023bcef8d3696d8ca8e5",
-      "sizeBytes": 164725,
+      "minHostVersion": "0.15.9",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.2.0.zip",
+      "sha256": "015e4270d0cb75ce0be0961ceefed02d118913c9c9900954d5bd4be16a73aafc",
+      "sizeBytes": 170192,
       "changelog": [
+        {
+          "version": "0.2.0",
+          "date": "2026-09-12",
+          "items": [
+            "插件前端升级到 Frontend API 1.5，改用公开 nxp-* 组件与宿主稳定 design token。"
+          ]
+        },
         {
           "version": "0.1.6",
           "date": "2026-09-11",
@@ -222,13 +231,6 @@
           "date": "2026-09-10",
           "items": [
             "迁移到 Frontend API 1.4 与 Vue 组件化实时预览界面。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-08-30",
-          "items": [
-            "补充官方插件作者元数据，不改变插件运行行为。"
           ]
         }
       ],
@@ -244,6 +246,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.0",
+              "items": [
+                "The plugin frontend targets Frontend API 1.5 and now uses public nxp-* elements with host design tokens."
+              ]
+            },
+            {
               "version": "0.1.6",
               "items": [
                 "Fixed the Vue frontend package so the live preview mounts in the browser."
@@ -253,12 +261,6 @@
               "version": "0.1.5",
               "items": [
                 "Migrated the live preview interface to Frontend API 1.4 and Vue components."
-              ]
-            },
-            {
-              "version": "0.1.2",
-              "items": [
-                "Added official plugin author metadata without changing runtime behavior."
               ]
             }
           ]
