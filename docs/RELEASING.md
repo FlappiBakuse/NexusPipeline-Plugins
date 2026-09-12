@@ -143,17 +143,17 @@ python tools/repository.py validate-generated --generated-root .generated
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
       "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": ["frontend-module"],
       "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.1.zip",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.2.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.2.1",
+          "version": "0.2.2",
           "date": "2026-09-12",
           "items": [
             "壁纸运行时改为插件级生命周期：不进入设置页面也会应用壁纸与配色，离开设置页面后壁纸、配色与轮换计时保持运行，只有插件停用才清理全局外观。",

@@ -116,6 +116,8 @@ export function activate(host) {
 
 `renderer({ element, context })` 可以使用 DOM API 或在 `element` 上挂载 Vue Custom Element；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。宿主公共控件通过公开 `nxp-*` Native Custom Elements 提供，注册表为宿主 `frontend/src/ui/register.ts` 的 `NEXUS_PUBLIC_ELEMENTS`，`Test-FrontendPlugins.mjs` 按该集合校验插件产物；元素位置之外的 `nxp-*` 名称（例如自定义事件名）不属于元素使用。
 
+公开元素在 light DOM 下渲染，元素标签自身不产生额外布局盒（结构卡片与 `nxp-switch-list` 内的开关都是如此），因此插件卡片与宿主卡片共享同一套栅格与展开置顶规则。把多个 `nxp-switch-setting` 放进 `nxp-switch-list` 即可得到与设置页一致的开关列表外观。文本类元素（`nxp-button`、`nxp-badge`）用 `label` 属性传文案：属性写法不产生插槽子节点，父级重渲染不会影响元素自身的 DOM 与交互。
+
 结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页的折叠协调协议对插件开放：插件展开自己的卡片时向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
 
 ## 稳定 UI slot
