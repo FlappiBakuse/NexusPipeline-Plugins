@@ -2,7 +2,7 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.4、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
 
 ## 当前插件
 
@@ -32,7 +32,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 packages/<ArtifactName>/<ArtifactName>-<version>.zip
 ```
 
-例如 `game-checkin` 的正式包名为 `GameCheckIn/GameCheckIn-0.1.4.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于分类源码目录的末级目录、宿主安装目录、发行目录和 ZIP 文件名。源码路径、安装路径与发行路径分别为 `plugins/{general|specialized}/<ArtifactName>/`、`plugins/<ArtifactName>/` 和 `packages/<ArtifactName>/`。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
+例如 `game-checkin` 的正式包名形如 `GameCheckIn/GameCheckIn-<version>.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于分类源码目录的末级目录、宿主安装目录、发行目录和 ZIP 文件名。源码路径、安装路径与发行路径分别为 `plugins/{general|specialized}/<ArtifactName>/`、`plugins/<ArtifactName>/` 和 `packages/<ArtifactName>/`。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
 
 ## 仓库结构
 
@@ -44,7 +44,7 @@ NexusPipeline-Plugins/
 │   │   ├── plugin.json                  # 元数据与入口声明
 │   │   ├── store.json                    # 商店展示元数据与更新记录
 │   │   ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
-│   │   ├── web/                          # 构建后的 Frontend API 1.4 模块、样式和静态资源
+│   │   ├── web/                          # 构建后的 Frontend API 1.5 模块、样式和静态资源
 │   │   ├── i18n/                         # 可选 zh-CN/en-US 插件词典
 │   │   └── src/                          # managed-code 插件项目（.csproj 与 C# 源码）
 │   └── specialized/<ArtifactName>/      # data-specialized 专项插件源码
@@ -55,7 +55,7 @@ NexusPipeline-Plugins/
 │       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
 │       │   └── config-editor.js          # 可选配置编辑准备脚本
 │       ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
-│       ├── web/                          # 构建后的 Frontend API 1.4 模块、样式和静态资源
+│       ├── web/                          # 构建后的 Frontend API 1.5 模块、样式和静态资源
 │       └── i18n/                         # 可选 zh-CN/en-US 插件词典
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
@@ -91,8 +91,10 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API v1.5 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力，`custom-wallpaper` v0.1.12 通过 Frontend API 1.4 管理服务端同步壁纸，`live-screenshot` v0.1.6 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` v0.2.0 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` v0.2.0 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
+- Plugin API 1.6 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
+- 宿主升级后会把旧外观数据（`config/appearance.json`、`user-assets/appearance/wallpapers/` 与旧轮换游标）一次性搬迁到原提供方插件的 `legacy-appearance-import` 作用域数据，资产写入该插件的 `wallpapers` 资产 scope。插件应在初始化时读取并消费该载荷，导入完成后删除该作用域记录；宿主保留旧文件。
 
 ## 数据与安全
 

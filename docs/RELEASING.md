@@ -12,8 +12,10 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 | 机器标识 | artifactName |
 |---|---|
+| `baah` | `BAAH` |
 | `bettergi` | `BetterGI` |
 | `maaend` | `MaaEnd` |
+| `maastellasora` | `MaaStellaSora` |
 | `march7th` | `March7thAssistant` |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` |
 | `game-checkin` | `GameCheckIn` |
@@ -26,17 +28,16 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 ```text
 packages/
-├── BetterGI/BetterGI-0.1.1.zip
-├── CustomWallpaper/
-│   ├── CustomWallpaper-0.1.2.zip
-│   ├── CustomWallpaper-0.1.3.zip
-│   └── CustomWallpaper-0.1.5.zip
-├── GameCheckIn/GameCheckIn-0.1.7.zip
-├── LiveScreenshot/LiveScreenshot-0.1.0.zip
-├── MaaEnd/MaaEnd-0.1.1.zip
-├── March7thAssistant/March7thAssistant-0.1.1.zip
-└── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.1.1.zip
+├── BetterGI/BetterGI-<version>.zip
+├── CustomWallpaper/CustomWallpaper-<version>.zip
+├── GameCheckIn/GameCheckIn-<version>.zip
+├── LiveScreenshot/LiveScreenshot-<version>.zip
+├── MaaEnd/MaaEnd-<version>.zip
+├── March7thAssistant/March7thAssistant-<version>.zip
+└── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-<version>.zip
 ```
+
+每个 artifact 目录保留该插件最近三个数值 SemVer 包；`catalog.json` 只描述当前版本，归档包不提供安装入口。
 
 发行 ZIP 的根目录直接对应运行时插件目录内容：
 
@@ -129,7 +130,7 @@ python tools/repository.py validate-generated --generated-root .generated
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-08-29T00:00:00Z",
+  "generatedAt": "2026-09-12T00:00:00Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -137,24 +138,27 @@ python tools/repository.py validate-generated --generated-root .generated
       "displayName": "自定义壁纸",
       "gameName": "通用外观",
       "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
-      "authors": [],
+      "authors": [{ "name": "FlappiBakuse", "url": "https://github.com/FlappiBakuse" }],
       "tags": ["外观", "壁纸", "主题"],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-08-29",
+      "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.1.5",
+      "version": "0.2.0",
       "kind": "managed-code",
-      "apiVersion": "1.5",
+      "apiVersion": "1.6",
       "capabilities": ["frontend-module"],
-      "minHostVersion": "0.11.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.1.5.zip",
+      "minHostVersion": "0.15.9",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.0.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.1.5",
-          "date": "2026-08-29",
-          "items": ["设置页迁移至宿主统一自定义控件层，壁纸卡片与内嵌卡片保持统一显示效果。"]
+          "version": "0.2.0",
+          "date": "2026-09-12",
+          "items": [
+            "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
+            "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
+          ]
         }
       ]
     }
@@ -190,3 +194,16 @@ python tools/repository.py audit --full
 Full Audit 由手动触发或每周计划任务运行。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
 
 Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。合并后的 main 发布工作流使用 concurrency coalescing，从最新 main 和最近成功发行状态重新规划；Bot commit 的生成路径不触发下一轮发布。
+
+## 校验工作流
+
+`.github/workflows/validate-plugins.yml` 按变更路径拆成四个 Gate，`workflow_dispatch` 全部执行：
+
+| Gate | 运行环境 | 内容 |
+|---|---|---|
+| `plugin-source` | ubuntu | `check-pr --base`、`validate-source`、`validate-host-locales`、`check-syntax`、`tools/tests` 单元测试 |
+| `plugin-frontend` | ubuntu | `npm ci`、`Test-ConfigEditors.mjs`、`Test-FrontendPlugins.mjs` |
+| `plugin-managed` | windows | `test-managed --full` |
+| `plugin-package` | windows | `plan`、`test`、`release`、`validate-generated` |
+
+`plugin-frontend` 不检出宿主仓库：`Test-FrontendPlugins.mjs` 使用 mock host 运行插件入口，元素白名单在无宿主检出时使用脚本内维护的清单。`plugin-managed` 与 `plugin-package` 按 `host.lock.json` 的 `ref` 检出对应宿主提交。每周 `audit --full` 与生产 `publish-plugins.yml` 保持全量校验。

@@ -3,8 +3,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 
-const repositoryRoot = path.resolve(process.argv[2] || path.join(import.meta.dirname, ".."));
+const options = parseArguments(process.argv.slice(2));
+const repositoryRoot = path.resolve(options.repositoryRoot || path.join(import.meta.dirname, ".."));
 const pluginRoot = path.join(repositoryRoot, "plugins");
+const FRONTEND_API_VERSION = "1.5";
 const allowedSlots = new Set([
   "dashboard.cards",
   "dashboard.after-running",
@@ -25,6 +27,85 @@ const allowedSlots = new Set([
   "settings.cards",
   "shell.nav",
 ]);
+
+/** 宿主 Frontend API 1.5 公开的 Native Custom Elements；宿主检出可用时以 NEXUS_PUBLIC_ELEMENTS 为准。 */
+/** 宿主 Frontend API 1.5 公开的 Native Custom Elements；宿主检出可用时以 NEXUS_PUBLIC_ELEMENTS 为准。 */
+const fallbackPublicElements = [
+  "nxp-badge",
+  "nxp-button",
+  "nxp-card",
+  "nxp-collapsible-card",
+  "nxp-color-picker",
+  "nxp-empty-state",
+  "nxp-field",
+  "nxp-file-picker",
+  "nxp-icon",
+  "nxp-icon-button",
+  "nxp-loading-state",
+  "nxp-menu",
+  "nxp-modal",
+  "nxp-number-input",
+  "nxp-pager",
+  "nxp-path-picker",
+  "nxp-range",
+  "nxp-section-card",
+  "nxp-select",
+  "nxp-spinner",
+  "nxp-switch",
+  "nxp-switch-setting",
+  "nxp-text-area",
+  "nxp-text-input",
+  "nxp-time-picker",
+  "nxp-toast",
+  "nxp-tooltip",
+];
+
+/** 宿主私有结构 class；官方插件只能使用自己的命名空间 class 与公开元素。 */
+const hostPrivateClasses = new Set([
+  "badge",
+  "content-card",
+  "eyebrow",
+  "field",
+  "field-label",
+  "form-grid",
+  "ghost",
+  "muted",
+  "page-head",
+  "page-head-actions",
+  "page-head-copy",
+  "page-kicker",
+  "plugin-surface",
+  "primary",
+  "req",
+  "secondary-surface",
+  "section-surface",
+  "settings-card",
+  "settings-card-arrow",
+  "settings-card-body",
+  "settings-card-copy",
+  "settings-card-title",
+  "settings-card-toggle",
+  "settings-list",
+  "switch-copy",
+  "switch-row",
+  "tertiary",
+]);
+
+const scannableExtensions = new Set([".css", ".html", ".js", ".ts", ".vue"]);
+
+function parseArguments(args) {
+  const result = { repositoryRoot: "", hostRoot: "" };
+  for (let index = 0; index < args.length; index += 1) {
+    const value = args[index];
+    if (value === "--host-root") {
+      result.hostRoot = args[index + 1] || "";
+      index += 1;
+      continue;
+    }
+    if (!result.repositoryRoot) result.repositoryRoot = value;
+  }
+  return result;
+}
 
 function fail(message) {
   throw new Error(message);
@@ -64,37 +145,113 @@ async function findManifests(directory) {
   return result;
 }
 
-function createMockHost(pluginName, registrations) {
-  const metrics = {
-    wallpaperGet: 0,
-    wallpaperSubscribe: 0,
-    wallpaperDispose: 0,
-    screenshotCapture: 0,
-  };
-  const wallpaperSnapshot = {
+async function collectSourceFiles(directory) {
+  const result = [];
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch {
+    return result;
+  }
+  for (const entry of entries) {
+    if (entry.name === "node_modules" || entry.name === ".git") continue;
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) result.push(...await collectSourceFiles(fullPath));
+    else if (entry.isFile() && scannableExtensions.has(path.extname(entry.name).toLowerCase())) result.push(fullPath);
+  }
+  return result;
+}
+
+/** 宿主公开元素集合：宿主检出可用时从注册表读取，保证与 NEXUS_PUBLIC_ELEMENTS 同源。 */
+async function resolvePublicElements(hostRoot) {
+  const candidates = [
+    hostRoot ? path.join(hostRoot, "frontend", "src", "ui", "register.ts") : "",
+    path.join(repositoryRoot, "..", "NexusPipeline", "frontend", "src", "ui", "register.ts"),
+  ].filter(Boolean);
+  for (const candidate of candidates) {
+    if (!await isFile(candidate)) continue;
+    const text = await readFile(candidate, "utf8");
+    const block = /NEXUS_PUBLIC_ELEMENTS\s*=\s*\{([\s\S]*?)\}/.exec(text);
+    if (!block) continue;
+    const names = [...block[1].matchAll(/"([a-z0-9-]+)"\s*:/g)].map(match => match[1]);
+    if (names.length) return new Set(names);
+  }
+  return new Set(fallbackPublicElements);
+}
+
+function cssClassTokens(text) {
+  return new Set([...text.matchAll(/\.(-?[A-Za-z_][\w-]*)/g)].map(match => match[1]));
+}
+
+function markupClassTokens(text) {
+  const tokens = new Set();
+  const patterns = [
+    /class\s*[:=]\s*"([^"]*)"/g,
+    /class\s*[:=]\s*'([^']*)'/g,
+    /className\s*[:=]\s*"([^"]*)"/g,
+    /classList\.(?:add|remove|toggle)\(\s*"([^"]*)"/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      for (const token of match[1].split(/\s+/)) {
+        if (token) tokens.add(token);
+      }
+    }
+  }
+  return tokens;
+}
+
+/** 只把元素位置的 `nxp-*` 视作宿主元素；同前缀的自定义事件名不属于元素使用。 */
+function usedElementNames(text) {
+  const names = new Set();
+  const patterns = [
+    /<(nxp-[a-z0-9-]+)/g,
+    /createElement[A-Za-z]*\(\s*["'](nxp-[a-z0-9-]+)["']/g,
+    /querySelector(?:All)?\(\s*["'](nxp-[a-z0-9-]+)["']/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) names.add(match[1]);
+  }
+  return names;
+}
+
+/** 扫描插件自有源码与发行产物：宿主私有 class、公开元素白名单、Nexus UI SFC 复制。 */
+async function assertPluginFrontendBoundaries(pluginDirectory, artifactName, publicElements) {
+  const scanned = [
+    ...await collectSourceFiles(path.join(pluginDirectory, "frontend", "src")),
+    ...await collectSourceFiles(path.join(pluginDirectory, "web")),
+  ];
+  for (const file of scanned) {
+    const relative = path.relative(repositoryRoot, file).replaceAll("\\", "/");
+    const name = path.basename(file);
+    if (file.includes(`${path.sep}frontend${path.sep}`) && /^Nxp[A-Z].*\.vue$/.test(name)) {
+      fail(`${artifactName} 复制了宿主 Nexus UI 组件：${relative}`);
+    }
+    const text = await readFile(file, "utf8");
+    const tokens = path.extname(file).toLowerCase() === ".css" ? cssClassTokens(text) : markupClassTokens(text);
+    const violations = [...tokens].filter(token => hostPrivateClasses.has(token));
+    if (violations.length) {
+      fail(`${artifactName} 使用了宿主私有 class：${relative} -> ${violations.join(", ")}`);
+    }
+    const unknownElements = [...usedElementNames(text)].filter(name => !publicElements.has(name));
+    if (unknownElements.length) {
+      fail(`${artifactName} 使用了非公开宿主元素：${relative} -> ${unknownElements.join(", ")}`);
+    }
+  }
+}
+
+function createMockHost(pluginName, registrations, metrics) {
+  const stateSnapshot = {
     revision: 1,
+    enabled: false,
     effectiveEnabled: false,
-    provider: { enabled: false },
-    rotation: { mode: "off", intervalMinutes: 30, epochUnixMs: Date.now() },
-    effects: { blurPx: 0, dimPercent: 0, surfaceTransparencyPercent: 0, applyTransparencyToSecondarySurfaces: true },
     assets: [],
     order: [],
-  };
-  const wallpaperStore = {
-    async get() {
-      metrics.wallpaperGet += 1;
-      return structuredClone(wallpaperSnapshot);
-    },
-    async save(settings) {
-      return { ...structuredClone(wallpaperSnapshot), ...settings, effectiveEnabled: settings.provider?.enabled === true };
-    },
-    async upload() { return {}; },
-    async remove() {},
-    async savePalette() {},
-    subscribe() {
-      metrics.wallpaperSubscribe += 1;
-      return { dispose() { metrics.wallpaperDispose += 1; } };
-    },
+    selectedId: "",
+    currentId: "",
+    rotation: { mode: "off", intervalMinutes: 30, epochUnixMs: Date.now(), nextSwitchAt: null },
+    effects: { blurPx: 0, dimPercent: 20, surfaceTransparencyPercent: 0, applyTransparencyToSecondarySurfaces: true },
+    limits: { maxAssetBytes: 8 * 1024 * 1024, maxAssets: 32, maxTotalBytes: 256 * 1024 * 1024 },
   };
   const host = {
     plugin: Object.freeze({ name: pluginName }),
@@ -104,8 +261,27 @@ function createMockHost(pluginName, registrations) {
     },
     ui: { toast() {} },
     appearance: {
-      wallpaperStore,
-      async derivePalette() { return {}; },
+      registerTheme() { return { dispose() {} }; },
+      applyTheme() { return "system"; },
+      setTokens() { metrics.appearanceSetTokens += 1; },
+      clearTokens() { metrics.appearanceClearTokens += 1; },
+      setBackground() { metrics.appearanceSetBackground += 1; },
+      clearBackground() { metrics.appearanceClearBackground += 1; },
+    },
+    api: {
+      async get(route) { metrics.apiGet += 1; return { ...structuredClone(stateSnapshot), route }; },
+      async put() { metrics.apiPut += 1; return structuredClone(stateSnapshot); },
+      async post() { metrics.apiPost += 1; return structuredClone(stateSnapshot); },
+      async blob() { metrics.apiBlob += 1; return new Blob(); },
+      async upload() {
+        metrics.apiUpload += 1;
+        return {
+          ok: true,
+          duplicate: false,
+          asset: { id: "a".repeat(64), originalName: "upload.png", mimeType: "image/png", sizeBytes: 12 },
+          state: structuredClone(stateSnapshot),
+        };
+      },
     },
     executionPreview: {
       async capture() {
@@ -125,12 +301,12 @@ function createMockHost(pluginName, registrations) {
       },
     },
   };
-  return { host, metrics };
+  return host;
 }
 
 function installDom() {
   const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
-  const names = ["window", "document", "navigator", "location", "Element", "HTMLElement", "SVGElement", "Node", "Text", "Comment", "Event", "CustomEvent", "MutationObserver", "getComputedStyle"];
+  const names = ["window", "document", "navigator", "location", "Element", "HTMLElement", "SVGElement", "Node", "Text", "Comment", "Event", "CustomEvent", "MutationObserver", "getComputedStyle", "Blob"];
   const previous = new Map();
   for (const name of names) {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, name);
@@ -142,14 +318,83 @@ function installDom() {
       value: dom.window[name] ?? dom.window,
     });
   }
-  return () => {
-    for (const name of names) {
-      const descriptor = previous.get(name);
-      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
-      else delete globalThis[name];
-    }
-    dom.window.close();
+  return {
+    restore() {
+      for (const name of names) {
+        const descriptor = previous.get(name);
+        if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+        else delete globalThis[name];
+      }
+      dom.window.close();
+    },
+    dom,
   };
+}
+
+/**
+ * 记录插件渲染期间的定时器与 window 事件监听，用于验证卸载后不残留。
+ * 只统计调用栈来自插件发行目录的注册，避免把 jsdom 与 Vue 运行时自身的监听误判为插件泄漏。
+ */
+function installLifecycleProbe(window, pluginRoot) {
+  const attribute = pluginRoot.replaceAll("\\", "/").toLowerCase();
+  const fromPlugin = () => {
+    const stack = new Error().stack;
+    return typeof stack === "string" && stack.replaceAll("\\", "/").toLowerCase().includes(attribute);
+  };
+  const probe = { intervals: new Set(), timeouts: new Set(), listeners: new Map() };
+  const nativeSetInterval = globalThis.setInterval;
+  const nativeClearInterval = globalThis.clearInterval;
+  const nativeSetTimeout = globalThis.setTimeout;
+  const nativeClearTimeout = globalThis.clearTimeout;
+  const nativeAdd = window.addEventListener.bind(window);
+  const nativeRemove = window.removeEventListener.bind(window);
+  globalThis.setInterval = (handler, delay, ...rest) => {
+    const attributeCall = fromPlugin();
+    const handle = nativeSetInterval(handler, delay, ...rest);
+    if (attributeCall) probe.intervals.add(handle);
+    return handle;
+  };
+  globalThis.clearInterval = handle => {
+    probe.intervals.delete(handle);
+    return nativeClearInterval(handle);
+  };
+  globalThis.setTimeout = (handler, delay, ...rest) => {
+    const attributeCall = fromPlugin();
+    const handle = nativeSetTimeout((...args) => {
+      probe.timeouts.delete(handle);
+      handler(...args);
+    }, delay, ...rest);
+    if (attributeCall) probe.timeouts.add(handle);
+    return handle;
+  };
+  globalThis.clearTimeout = handle => {
+    probe.timeouts.delete(handle);
+    return nativeClearTimeout(handle);
+  };
+  window.addEventListener = (type, listener, options) => {
+    if (fromPlugin()) {
+      const list = probe.listeners.get(type) || [];
+      list.push(listener);
+      probe.listeners.set(type, list);
+    }
+    return nativeAdd(type, listener, options);
+  };
+  window.removeEventListener = (type, listener, options) => {
+    const list = probe.listeners.get(type) || [];
+    const index = list.indexOf(listener);
+    if (index >= 0) list.splice(index, 1);
+    if (!list.length) probe.listeners.delete(type);
+    return nativeRemove(type, listener, options);
+  };
+  probe.restore = () => {
+    globalThis.setInterval = nativeSetInterval;
+    globalThis.clearInterval = nativeClearInterval;
+    globalThis.setTimeout = nativeSetTimeout;
+    globalThis.clearTimeout = nativeClearTimeout;
+    window.addEventListener = nativeAdd;
+    window.removeEventListener = nativeRemove;
+  };
+  return probe;
 }
 
 async function flushDom() {
@@ -157,7 +402,7 @@ async function flushDom() {
   await new Promise(resolve => setTimeout(resolve, 0));
 }
 
-async function runPlugin(manifestPath) {
+async function runPlugin(manifestPath, publicElements) {
   const plugin = path.dirname(manifestPath);
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
   const frontend = manifest.frontend;
@@ -165,8 +410,8 @@ async function runPlugin(manifestPath) {
   if (!Array.isArray(manifest.capabilities) || !manifest.capabilities.includes("frontend-module")) {
     fail(`插件 ${manifest.artifactName || plugin} 声明 frontend 但缺少 frontend-module capability`);
   }
-  if (frontend.apiVersion !== "1.4") {
-    fail(`插件 ${manifest.artifactName || plugin} 的 frontend.apiVersion 必须为 1.4`);
+  if (frontend.apiVersion !== FRONTEND_API_VERSION) {
+    fail(`插件 ${manifest.artifactName || plugin} 的 frontend.apiVersion 必须为 ${FRONTEND_API_VERSION}`);
   }
   const entry = safeRelative(plugin, frontend.entry, `${manifest.artifactName}.frontend.entry`, ".js");
   if (!await isFile(entry)) fail(`插件 ${manifest.artifactName} 的 frontend.entry 文件不存在：${entry}`);
@@ -176,14 +421,28 @@ async function runPlugin(manifestPath) {
     const stylePath = safeRelative(plugin, style, `${manifest.artifactName}.frontend.styles`, ".css");
     if (!await isFile(stylePath)) fail(`插件 ${manifest.artifactName} 的 frontend.styles 文件不存在：${stylePath}`);
   }
+  await assertPluginFrontendBoundaries(plugin, manifest.artifactName, publicElements);
 
   const restoreDom = installDom();
+  const metrics = {
+    apiGet: 0,
+    apiPut: 0,
+    apiPost: 0,
+    apiBlob: 0,
+    apiUpload: 0,
+    appearanceSetBackground: 0,
+    appearanceClearBackground: 0,
+    appearanceSetTokens: 0,
+    appearanceClearTokens: 0,
+    screenshotCapture: 0,
+  };
+  const probe = installLifecycleProbe(globalThis.window, path.dirname(entry));
   try {
     const module = await import(`${pathToFileURL(entry).href}?contract=${encodeURIComponent(manifest.artifactName)}`);
     if (typeof module.activate !== "function") fail(`插件 ${manifest.artifactName} 缺少 activate(host)`);
     const registrations = [];
-    const mock = createMockHost(manifest.artifactName, registrations);
-    const result = await module.activate(mock.host);
+    const host = createMockHost(manifest.artifactName, registrations, metrics);
+    const result = await module.activate(host);
     if (!registrations.length) fail(`插件 ${manifest.artifactName} 未注册任何 UI slot`);
     for (const registration of registrations) {
       if (!allowedSlots.has(registration.slot)) fail(`插件 ${manifest.artifactName} 注册了未知 UI slot：${registration.slot}`);
@@ -207,10 +466,13 @@ async function runPlugin(manifestPath) {
         if (typeof rendererCleanup !== "function") fail(`插件 ${manifest.artifactName} 的 ${registration.slot} renderer 未返回 cleanup`);
         rendererCleanups.push(rendererCleanup);
         await flushDom();
-        if (manifest.artifactName === "CustomWallpaper" && !element.querySelector('[data-settings-panel="custom-wallpaper"]')) {
-          fail("CustomWallpaper renderer 未挂载设置面板");
-        }
         if (manifest.artifactName === "CustomWallpaper") {
+          if (!element.querySelector('[data-settings-panel="custom-wallpaper"]')) {
+            fail("CustomWallpaper renderer 未挂载设置面板");
+          }
+          if (!element.querySelector("nxp-collapsible-card")) {
+            fail("CustomWallpaper renderer 未使用宿主公开折叠卡片组件");
+          }
           const requiredControls = [
             "nxp-file-picker",
             "nxp-switch-setting",
@@ -227,21 +489,25 @@ async function runPlugin(manifestPath) {
           fail("LiveScreenshot renderer 未挂载实时截图面板");
         }
       }
-      if (manifest.artifactName === "CustomWallpaper" && (mock.metrics.wallpaperGet < 1 || mock.metrics.wallpaperSubscribe < 1)) {
-        fail("CustomWallpaper renderer 未读取 wallpaperStore 或建立订阅");
+      if (manifest.artifactName === "CustomWallpaper" && metrics.apiGet + metrics.apiPost < 1) {
+        fail("CustomWallpaper renderer 未通过插件 Web API 读取状态");
       }
-      if (manifest.artifactName === "LiveScreenshot" && mock.metrics.screenshotCapture < 1) {
+      if (manifest.artifactName === "LiveScreenshot" && metrics.screenshotCapture < 1) {
         fail("LiveScreenshot renderer 未调用 executionPreview.capture");
       }
     } finally {
       for (const rendererCleanup of rendererCleanups.reverse()) await rendererCleanup();
     }
+    await flushDom();
     await cleanup();
     if (registrations.some(registration => !registration.disposed)) {
       fail(`插件 ${manifest.artifactName} 的 cleanup 未释放全部 UI slot`);
     }
-    if (manifest.artifactName === "CustomWallpaper" && mock.metrics.wallpaperDispose < 1) {
-      fail("CustomWallpaper renderer 卸载时未释放 wallpaperStore 订阅");
+    if (probe.intervals.size > 0) {
+      fail(`插件 ${manifest.artifactName} 卸载后仍有 ${probe.intervals.size} 个定时器未释放`);
+    }
+    if (probe.listeners.size > 0) {
+      fail(`插件 ${manifest.artifactName} 卸载后仍有未移除的 window 事件监听：${[...probe.listeners.keys()].join(", ")}`);
     }
     return {
       artifactName: manifest.artifactName,
@@ -250,21 +516,23 @@ async function runPlugin(manifestPath) {
       rendered: registrations.length,
     };
   } finally {
-    restoreDom();
+    probe.restore();
+    restoreDom.restore();
   }
 }
 
 try {
+  const publicElements = await resolvePublicElements(options.hostRoot);
   const manifests = (await findManifests(pluginRoot)).sort();
   let checked = 0;
   for (const manifestPath of manifests) {
-    const result = await runPlugin(manifestPath);
+    const result = await runPlugin(manifestPath, publicElements);
     if (!result) continue;
     checked += 1;
     console.log(`[frontend] ${result.artifactName}: activate -> render(${result.rendered}) -> cleanup`);
   }
   if (!checked) fail("未找到声明 frontend 的插件");
-  console.log(`[frontend] conformance 通过：${checked} 个插件`);
+  console.log(`[frontend] conformance 通过：${checked} 个插件，公开元素 ${publicElements.size} 个`);
 } catch (error) {
   console.error(`[frontend] conformance 失败：${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;

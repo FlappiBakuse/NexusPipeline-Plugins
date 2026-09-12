@@ -498,7 +498,7 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     capabilities = manifest.get("capabilities", [])
     _require("frontend-module" in capabilities, f"插件 {manifest['artifactName']} 声明 frontend 时必须声明 frontend-module capability")
     api_version = frontend.get("apiVersion")
-    _require(api_version == "1.4", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.4")
+    _require(api_version == "1.5", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.5")
     _safe_relative(plugin, frontend.get("entry"), f"插件 {manifest['artifactName']} 的 frontend.entry", ".js")
     styles = frontend.get("styles", [])
     _require(isinstance(styles, list), f"插件 {manifest['artifactName']} 的 frontend.styles 必须是数组")

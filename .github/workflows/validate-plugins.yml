@@ -10,13 +10,287 @@ on:
       - "CONTRIBUTING.md"
       - "host.lock.json"
       - "global.json"
+      - "Directory.Build.props"
+      - "Directory.Build.targets"
+      - "package.json"
+      - "package-lock.json"
+      - "catalog.json"
+      - ".release-state.json"
+      - "packages/**"
       - ".github/workflows/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  validate:
+  # 变更路径分域：changes 输出四个 Gate 的执行开关，未知路径回退到 plugin-source。
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.classify.outputs.source }}
+      frontend: ${{ steps.classify.outputs.frontend }}
+      managed: ${{ steps.classify.outputs.managed }}
+      package: ${{ steps.classify.outputs.package }}
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Classify changed paths
+        id: classify
+        working-directory: NexusPipeline-Plugins
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python - <<'PY'
+          import os
+          import subprocess
+
+          SOURCE = "source"
+          FRONTEND = "frontend"
+          MANAGED = "managed"
+          PACKAGE = "package"
+          GATES = (SOURCE, FRONTEND, MANAGED, PACKAGE)
+          FRONTEND_SCRIPTS = {"tools/Test-FrontendPlugins.mjs", "tools/Test-ConfigEditors.mjs"}
+          BUILD_CONFIG = {"global.json", "Directory.Build.props", "Directory.Build.targets"}
+
+
+          def changed_paths():
+              """pull_request 返回相对基线的变更路径；workflow_dispatch 返回 None。"""
+              if os.environ.get("EVENT_NAME", "") != "pull_request":
+                  return None
+              base = os.environ.get("BASE_SHA", "").strip()
+              if not base:
+                  raise SystemExit("pull_request 事件缺少 base SHA")
+              completed = subprocess.run(
+                  ["git", "diff", "--name-only", f"{base}...HEAD", "--"],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+                  encoding="utf-8",
+                  errors="replace",
+              )
+              return [line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip()]
+
+
+          def plugin_relative(path):
+              """返回插件根之后的路径段；plugins/ 之外返回 None。"""
+              parts = path.split("/")
+              if len(parts) < 2 or parts[0] != "plugins":
+                  return None
+              if len(parts) >= 3 and parts[1] in {"general", "specialized"}:
+                  return parts[3:]
+              return parts[2:]
+
+
+          def classify(path):
+              hits = set()
+              if path.startswith("plugins/"):
+                  hits.add(PACKAGE)
+                  rest = plugin_relative(path)
+                  if rest:
+                      head = rest[0]
+                      if len(rest) == 1 and head in {"plugin.json", "store.json"}:
+                          hits.add(SOURCE)
+                      elif head in {"data", "i18n"}:
+                          hits.add(SOURCE)
+                      if len(rest) == 1 and head == "plugin.json":
+                          hits.add(FRONTEND)
+                      elif head == "data" and rest[-1].endswith(".js"):
+                          hits.add(FRONTEND)
+                      elif head in {"frontend", "web"}:
+                          hits.add(FRONTEND)
+                      elif head in {"src", "tests"}:
+                          hits.add(MANAGED)
+                  if path.endswith(".csproj"):
+                      hits.add(MANAGED)
+              elif path.startswith("tools/"):
+                  hits.update({SOURCE, PACKAGE})
+                  if path in FRONTEND_SCRIPTS:
+                      hits.add(FRONTEND)
+                  if path.startswith("tools/PluginTestKit/"):
+                      hits.add(MANAGED)
+              elif path == "host.lock.json":
+                  hits.update({SOURCE, MANAGED, PACKAGE})
+              elif path in {"package.json", "package-lock.json"}:
+                  hits.update({FRONTEND, PACKAGE})
+              elif path in BUILD_CONFIG:
+                  hits.update({MANAGED, PACKAGE})
+              else:
+                  hits.add(SOURCE)
+              return hits
+
+
+          def main():
+              paths = changed_paths()
+              if paths is None:
+                  enabled = set(GATES)
+                  print("[changes] workflow_dispatch：四个 Gate 全部执行")
+              else:
+                  enabled = set()
+                  for path in sorted(set(paths)):
+                      hits = classify(path)
+                      enabled |= hits
+                      print(f"[changes] {path} -> {', '.join(sorted(hits))}")
+                  if not paths:
+                      enabled.add(SOURCE)
+                      print("[changes] 未检测到变更路径，回退执行 plugin-source")
+              lines = [f"{gate}={str(gate in enabled).lower()}" for gate in GATES]
+              for line in lines:
+                  print(f"[changes] {line}")
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
+                  stream.write("\n".join(lines) + "\n")
+
+
+          main()
+          PY
+
+  # 源码契约 Gate：manifest / data / locales / 语法 / 仓库 Python 单元测试 / PR 生成物拦截。
+  plugin-source:
+    needs: changes
+    if: needs.changes.outputs.source == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Checkout current host locale registry
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline-LocaleRegistry
+          fetch-depth: 1
+
+      - name: Reject contributor generated files
+        if: github.event_name == 'pull_request'
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py check-pr --base "${{ github.event.pull_request.base.sha }}"
+
+      - name: Validate source contracts
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py validate-source
+
+      - name: Validate host locale registry synchronization
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py validate-host-locales --host-root ../NexusPipeline-LocaleRegistry
+
+      - name: Validate script syntax
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py check-syntax
+
+      - name: Test repository tools
+        working-directory: NexusPipeline-Plugins
+        run: python -m unittest discover -s tools/tests -v
+
+  # 前端 Gate：前端工作区安装、配置编辑脚本行为、Frontend API conformance。
+  plugin-frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install frontend workspace
+        working-directory: NexusPipeline-Plugins
+        run: npm ci --no-audit --no-fund
+
+      - name: Test configuration editors
+        working-directory: NexusPipeline-Plugins
+        run: node tools/Test-ConfigEditors.mjs
+
+      - name: Test frontend plugins
+        working-directory: NexusPipeline-Plugins
+        run: node tools/Test-FrontendPlugins.mjs
+
+  # managed-code Gate：锁定宿主 checkout、managed-code 构建与测试。
+  plugin-managed:
+    needs: changes
+    if: needs.changes.outputs.managed == 'true'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout plugin repository
+        uses: actions/checkout@v4
+        with:
+          path: NexusPipeline-Plugins
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Read host lock
+        id: host-lock
+        working-directory: NexusPipeline-Plugins
+        shell: pwsh
+        run: |
+          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
+          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
+          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
+          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
+
+      - name: Checkout locked host repository
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ steps.host-lock.outputs.ref }}
+          path: NexusPipeline
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+
+      - name: Install frontend workspace
+        working-directory: NexusPipeline-Plugins
+        run: npm ci --no-audit --no-fund
+
+      - name: Test managed-code plugins
+        working-directory: NexusPipeline-Plugins
+        run: python tools/repository.py test-managed --full
+
+  # 打包 Gate：受影响的插件测试、发行候选物生成与生成物校验。
+  plugin-package:
+    needs: changes
+    if: needs.changes.outputs.package == 'true'
     runs-on: windows-latest
     steps:
       - name: Checkout plugin repository
@@ -48,14 +322,6 @@ jobs:
           path: NexusPipeline
           fetch-depth: 1
 
-      - name: Checkout current host locale registry
-        uses: actions/checkout@v4
-        with:
-          repository: FlappiBakuse/NexusPipeline
-          ref: main
-          path: NexusPipeline-LocaleRegistry
-          fetch-depth: 1
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -70,39 +336,27 @@ jobs:
         working-directory: NexusPipeline-Plugins
         run: npm ci --no-audit --no-fund
 
-      - name: Reject contributor generated files
-        working-directory: NexusPipeline-Plugins
-        run: python tools/repository.py check-pr --base "${{ github.event.pull_request.base.sha }}"
-
-      - name: Validate source contracts
-        working-directory: NexusPipeline-Plugins
-        run: python tools/repository.py validate-source
-
-      - name: Validate host locale registry synchronization
-        working-directory: NexusPipeline-Plugins
-        run: python tools/repository.py validate-host-locales --host-root ..\NexusPipeline-LocaleRegistry
-
-      - name: Validate script syntax
-        working-directory: NexusPipeline-Plugins
-        run: python tools/repository.py check-syntax
-
-      - name: Test configuration editors
-        working-directory: NexusPipeline-Plugins
-        run: node tools/Test-ConfigEditors.mjs
-
-      - name: Test frontend plugins
-        working-directory: NexusPipeline-Plugins
-        run: node tools/Test-FrontendPlugins.mjs
-
-      - name: Test repository tools
-        working-directory: NexusPipeline-Plugins
-        run: python -m unittest discover -s tools/tests -v
-
       - name: Plan and build PR candidate
         working-directory: NexusPipeline-Plugins
         shell: pwsh
+        env:
+          BASELINE: ${{ github.event.pull_request.base.sha || 'auto' }}
         run: |
-          python tools/repository.py plan --baseline "${{ github.event.pull_request.base.sha }}" --output .generated/pr-plan.json
+          $ErrorActionPreference = "Stop"
+          function Assert-NativeSuccess([string]$step) {
+            if ($LASTEXITCODE -ne 0) {
+              throw "$step 失败，退出码：$LASTEXITCODE"
+            }
+          }
+
+          $baseline = $env:BASELINE
+          if ([string]::IsNullOrWhiteSpace($baseline)) { $baseline = "auto" }
+
+          python tools/repository.py plan --baseline $baseline --output .generated/pr-plan.json
+          Assert-NativeSuccess "release planning"
           python tools/repository.py test --plan .generated/pr-plan.json
+          Assert-NativeSuccess "affected plugin tests"
           python tools/repository.py release --plan .generated/pr-plan.json --output .generated/pr-candidate
+          Assert-NativeSuccess "release candidate generation"
           python tools/repository.py validate-generated --generated-root .generated/pr-candidate
+          Assert-NativeSuccess "generated candidate validation"
