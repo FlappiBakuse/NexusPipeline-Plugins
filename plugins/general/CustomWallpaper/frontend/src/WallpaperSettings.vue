@@ -1,32 +1,25 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { WallpaperAsset, WallpaperHost, WallpaperState } from "./wallpaperApi";
-import {
-  advanceRotation,
-  assetBlob,
-  deleteAsset,
-  ensurePalette,
-  loadState,
-  saveSettings,
-  uploadAsset,
-} from "./wallpaperApi";
+import { assetBlob, deleteAsset, ensurePalette, saveSettings, uploadAsset } from "./wallpaperApi";
+import type { WallpaperRuntime, WallpaperRuntimeSnapshot } from "./wallpaperRuntime";
 
-const props = defineProps<{ host: WallpaperHost; context?: Record<string, unknown> }>();
+const props = defineProps<{ host: WallpaperHost; runtime: WallpaperRuntime; context?: Record<string, unknown> }>();
 
 const settingsPanelId = "custom-wallpaper";
 const settingsPanelToggleEvent = "nxp-settings-panel-toggle";
 const settingsPanelStateEvent = "nxp-settings-panel-state";
 
-const state = ref<WallpaperState | null>(null);
+const initial = props.runtime.snapshot();
+const state = ref<WallpaperState | null>(initial.state);
+const runtimeError = ref(initial.error);
 const expanded = ref(false);
-const status = ref("");
-const tone = ref<"muted" | "blue" | "ok" | "warn" | "bad">("muted");
+const busy = ref("");
 const help = ref("");
 const draggedId = ref("");
 const thumbnails = ref<Record<string, string>>({});
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
-let rotationTimer: ReturnType<typeof setTimeout> | null = null;
-let pollTimer: ReturnType<typeof setInterval> | null = null;
+let unsubscribe: (() => void) | null = null;
 let disposed = false;
 
 const modes = computed(() => [
@@ -42,14 +35,22 @@ const assets = computed(() => {
 });
 const enabled = computed(() => state.value?.enabled === true);
 const secondaryTransparency = computed(() => state.value?.effects?.applyTransparencyToSecondarySurfaces !== false);
+const status = computed(() => {
+  if (busy.value) return busy.value;
+  if (runtimeError.value) return tr("status.read_failed", {}, "读取失败");
+  return state.value?.effectiveEnabled === true
+    ? tr("status.enabled", {}, "已启用")
+    : tr("status.disabled", {}, "未启用");
+});
+const tone = computed<"muted" | "blue" | "ok" | "warn" | "bad">(() => {
+  if (busy.value) return "blue";
+  if (runtimeError.value) return "bad";
+  return state.value?.effectiveEnabled === true ? "ok" : "muted";
+});
+const displayError = computed(() => help.value || runtimeError.value);
 
 function tr(key: string, args: Record<string, unknown> = {}, fallback = ""): string {
   return props.host.i18n.t(key, args, fallback);
-}
-
-function setStatus(message: string, nextTone: "muted" | "blue" | "ok" | "warn" | "bad" = "muted") {
-  status.value = message;
-  tone.value = nextTone;
 }
 
 function errorMessage(error: unknown, fallbackKey: string, fallbackText: string): string {
@@ -90,6 +91,12 @@ function syncPanelState(event: Event) {
   expanded.value = panelId === settingsPanelId;
 }
 
+function syncSnapshot(snapshot: WallpaperRuntimeSnapshot) {
+  if (disposed) return;
+  state.value = snapshot.state;
+  runtimeError.value = snapshot.error;
+}
+
 async function releaseThumbnails(keep: string[] = []) {
   const keepSet = new Set(keep);
   Object.entries(thumbnails.value).forEach(([id, url]) => {
@@ -113,82 +120,22 @@ async function loadThumbnails(items: WallpaperAsset[]) {
   }
 }
 
-/** 把插件状态投影到宿主通用外观表面：背景图、显示效果与配色 token。 */
-async function apply(next: WallpaperState | null) {
-  if (!next?.effectiveEnabled || !next.currentId) {
-    props.host.appearance.clearBackground();
-    props.host.appearance.clearTokens();
-    return;
-  }
-  const asset = (next.assets || []).find(item => item.id === next.currentId);
-  if (!asset) {
-    props.host.appearance.clearBackground();
-    props.host.appearance.clearTokens();
-    return;
-  }
-  try {
-    const blob = await assetBlob(props.host, asset.id);
-    if (disposed) return;
-    const url = URL.createObjectURL(blob);
-    props.host.appearance.setBackground({
-      url,
-      blurPx: next.effects?.blurPx,
-      dimPercent: next.effects?.dimPercent,
-      surfaceTransparencyPercent: next.effects?.surfaceTransparencyPercent,
-      secondarySurfaceTransparency: next.effects?.applyTransparencyToSecondarySurfaces !== false,
-    });
-    const palette = await ensurePalette(props.host, asset, blob);
-    if (disposed) return;
-    if (palette) props.host.appearance.setTokens(palette);
-    scheduleRotation(next);
-  } catch (error) {
-    help.value = error instanceof Error ? error.message : String(error);
-  }
-}
-
-function scheduleRotation(next: WallpaperState) {
-  if (rotationTimer) clearTimeout(rotationTimer);
-  rotationTimer = null;
-  const nextSwitchAt = next.rotation?.nextSwitchAt;
-  if (next.rotation?.mode !== "timer" || !nextSwitchAt) return;
-  const delay = Math.max(1000, new Date(nextSwitchAt).getTime() - Date.now());
-  rotationTimer = setTimeout(() => {
-    void refresh("timer");
-  }, delay);
-}
-
-async function refresh(reason = ""): Promise<void> {
-  try {
-    const next = reason === "startup"
-      ? await advanceRotation(props.host, "startup")
-      : await loadState(props.host);
-    if (disposed) return;
-    state.value = next;
-    setStatus(next.effectiveEnabled ? tr("status.enabled", {}, "已启用") : tr("status.disabled", {}, "未启用"), next.effectiveEnabled ? "ok" : "muted");
-    await apply(next);
-    await loadThumbnails(next.assets || []);
-  } catch (error) {
-    setStatus(tr("status.read_failed", {}, "读取失败"), "bad");
-    help.value = error instanceof Error ? error.message : String(error);
-  }
-}
-
-function requestSave(patch: unknown, optimistic: (current: WallpaperState) => WallpaperState) {  if (state.value) state.value = optimistic(state.value);
+function requestSave(patch: unknown, optimistic: (current: WallpaperState) => WallpaperState) {
+  if (state.value) state.value = optimistic(state.value);
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveTimer = null;
     void (async () => {
+      busy.value = tr("status.saving", {}, "保存中");
       try {
-        setStatus(tr("status.saving", {}, "保存中"), "blue");
         const next = await saveSettings(props.host, patch);
         if (disposed) return;
-        state.value = next;
-        setStatus(next.effectiveEnabled ? tr("status.enabled", {}, "已启用") : tr("status.disabled", {}, "未启用"), next.effectiveEnabled ? "ok" : "muted");
-        await apply(next);
+        await props.runtime.apply(next);
       } catch (error) {
-        setStatus(tr("status.save_failed", {}, "保存失败"), "bad");
         help.value = errorMessage(error, "status.save_failed", "保存失败");
-        await refresh();
+        await props.runtime.refresh();
+      } finally {
+        busy.value = "";
       }
     })();
   }, 0);
@@ -282,9 +229,9 @@ async function upload(files: File[] = []) {
       // 尺寸解析失败时交给服务端图片头校验处理。
     }
     try {
-      setStatus(tr("status.uploading", { name: file.name }, `上传中：${file.name}`), "blue");
+      busy.value = tr("status.uploading", { name: file.name }, `上传中：${file.name}`);
       const result = await uploadAsset(props.host, file);
-      if (result.state) state.value = result.state;
+      if (disposed) return;
       if (result.asset) {
         try {
           await ensurePalette(props.host, result.asset, file);
@@ -292,10 +239,12 @@ async function upload(files: File[] = []) {
           props.host.ui.toast(tr("warning.palette", { error: error instanceof Error ? error.message : String(error) }, "壁纸已上传，配色稍后生成"), "warn");
         }
       }
-      await refresh();
+      await props.runtime.refresh();
+      await loadThumbnails(state.value?.assets || []);
     } catch (error) {
-      setStatus(tr("status.upload_failed", {}, "上传失败"), "bad");
       help.value = errorMessage(error, "status.upload_failed", "上传失败");
+    } finally {
+      busy.value = "";
     }
   }
 }
@@ -309,11 +258,8 @@ async function remove(id: string) {
       URL.revokeObjectURL(url);
       delete thumbnails.value[id];
     }
-    state.value = next;
-    setStatus(next.effectiveEnabled ? tr("status.enabled", {}, "已启用") : tr("status.disabled", {}, "未启用"), next.effectiveEnabled ? "ok" : "muted");
-    await apply(next);
+    await props.runtime.apply(next);
   } catch (error) {
-    setStatus(tr("status.delete_failed", {}, "删除失败"), "bad");
     help.value = errorMessage(error, "status.delete_failed", "删除失败");
   }
 }
@@ -329,36 +275,20 @@ function drop(targetId: string) {
 
 onMounted(async () => {
   window.addEventListener(settingsPanelStateEvent, syncPanelState);
-  await refresh("startup");
-  pollTimer = setInterval(() => {
-    void (async () => {
-      try {
-        const next = await loadState(props.host);
-        if (disposed || next.revision === state.value?.revision) return;
-        state.value = next;
-        setStatus(next.effectiveEnabled ? tr("status.enabled", {}, "已启用") : tr("status.disabled", {}, "未启用"), next.effectiveEnabled ? "ok" : "muted");
-        await apply(next);
-        await loadThumbnails(next.assets || []);
-      } catch {
-        // 服务暂不可用时保留当前页面状态。
-      }
-    })();
-  }, 30_000);
+  unsubscribe = props.runtime.subscribe(syncSnapshot);
+  syncSnapshot(props.runtime.snapshot());
+  await loadThumbnails(state.value?.assets || []);
 });
 
 onBeforeUnmount(() => {
   disposed = true;
   window.removeEventListener(settingsPanelStateEvent, syncPanelState);
+  unsubscribe?.();
+  unsubscribe = null;
   if (saveTimer) clearTimeout(saveTimer);
-  if (rotationTimer) clearTimeout(rotationTimer);
-  if (pollTimer) clearInterval(pollTimer);
   saveTimer = null;
-  rotationTimer = null;
-  pollTimer = null;
   Object.values(thumbnails.value).forEach(url => URL.revokeObjectURL(url));
   thumbnails.value = {};
-  props.host.appearance.clearBackground();
-  props.host.appearance.clearTokens();
 });
 </script>
 
@@ -505,7 +435,7 @@ onBeforeUnmount(() => {
       <div class="cw-card-footer">
         <span class="cw-muted">{{ tr("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。") }}</span>
       </div>
-      <p v-if="help" class="cw-error">{{ help }}</p>
+      <p v-if="displayError" class="cw-error">{{ displayError }}</p>
     </div>
   </nxp-collapsible-card>
 </template>

@@ -279,15 +279,18 @@ internal sealed class WallpaperService
         }
     }
 
-    public async Task<JsonObject> AdvanceRotationAsync(string reason, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// 服务启动轮换：只在轮换方式为 startup 且存在候选壁纸时随机选择一次，写入运行时结果。
+    /// 调用方只能是插件启动生命周期，浏览器页面与设置面板不参与启动轮换。
+    /// </summary>
+    public async Task<JsonObject> AdvanceStartupRotationAsync(CancellationToken cancellationToken = default)
     {
         await _sync.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
             if (config.Order.Count > 0
-                && (string.Equals(reason, "startup", StringComparison.OrdinalIgnoreCase)
-                    || config.Rotation.Mode.Equals("startup", StringComparison.OrdinalIgnoreCase)))
+                && config.Rotation.Mode.Equals("startup", StringComparison.OrdinalIgnoreCase))
             {
                 WallpaperRotationRuntime runtime = await LoadRuntimeAsync(cancellationToken).ConfigureAwait(false);
                 runtime.LastRandomId = PickRandomId(config.Order, runtime.LastRandomId);

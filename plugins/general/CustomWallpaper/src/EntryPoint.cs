@@ -24,7 +24,14 @@ public sealed class EntryPoint : INexusPlugin
         await _service.InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public ValueTask StartAsync(CancellationToken cancellationToken) => ValueTask.CompletedTask;
+    /// <summary>插件启动时执行一次启动轮换；轮换方式为 startup 时随机选择本次服务使用的壁纸。</summary>
+    public async ValueTask StartAsync(CancellationToken cancellationToken)
+    {
+        if (_service is not null)
+        {
+            await _service.AdvanceStartupRotationAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
 
     public ValueTask StopAsync(CancellationToken cancellationToken)
     {

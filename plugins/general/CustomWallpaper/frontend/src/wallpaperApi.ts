@@ -81,10 +81,6 @@ export function savePalette(host: WallpaperHost, id: string, palette: Record<str
   return host.api.put("assets/palette", { id, palette }, signal);
 }
 
-export function advanceRotation(host: WallpaperHost, reason: string, signal?: AbortSignal): Promise<WallpaperState> {
-  return host.api.post("rotation/advance", { reason }, signal);
-}
-
 export async function uploadAsset(
   host: WallpaperHost,
   file: File,
