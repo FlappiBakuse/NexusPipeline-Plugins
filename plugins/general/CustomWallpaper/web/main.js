@@ -2853,35 +2853,35 @@ var mo = [
 	"title",
 	"description",
 	"expanded"
-], ho = { class: "cw-body" }, go = { class: "cw-status-row" }, _o = { class: "cw-muted" }, vo = ["tone"], yo = { class: "cw-switch-list" }, bo = [
+], ho = { class: "cw-body" }, go = { class: "cw-status-row" }, _o = { class: "cw-muted" }, vo = ["tone", "label"], yo = [
 	"label",
 	"description",
 	"model-value",
 	"aria-label"
-], xo = [
+], bo = [
 	"label",
 	"description",
 	"model-value",
 	"aria-label"
-], So = { class: "cw-grid cw-controls" }, Co = ["data-help"], wo = { class: "cw-field-label" }, To = [
+], xo = { class: "cw-grid cw-controls" }, So = ["data-help"], Co = { class: "cw-field-label" }, wo = [
 	"model-value",
 	"options",
 	"aria-label"
-], Eo = ["data-help"], Do = { class: "cw-field-label" }, Oo = ["model-value", "aria-label"], ko = { class: "cw-grid cw-effects" }, Ao = ["data-help"], jo = { class: "cw-field-label" }, Mo = { class: "cw-range-row" }, No = ["model-value", "aria-label"], Po = ["data-help"], Fo = { class: "cw-field-label" }, Io = { class: "cw-range-row" }, Lo = ["model-value", "aria-label"], Ro = ["data-help"], zo = { class: "cw-field-label" }, Bo = { class: "cw-range-row" }, Vo = ["model-value", "aria-label"], Ho = { class: "cw-upload-row" }, Uo = ["label"], Wo = { class: "cw-muted" }, Go = { class: "cw-list" }, Ko = {
+], To = ["data-help"], Eo = { class: "cw-field-label" }, Do = ["model-value", "aria-label"], Oo = { class: "cw-grid cw-effects" }, ko = ["data-help"], Ao = { class: "cw-field-label" }, jo = { class: "cw-range-row" }, Mo = ["model-value", "aria-label"], No = ["data-help"], Po = { class: "cw-field-label" }, Fo = { class: "cw-range-row" }, Io = ["model-value", "aria-label"], Lo = ["data-help"], Ro = { class: "cw-field-label" }, zo = { class: "cw-range-row" }, Bo = ["model-value", "aria-label"], Vo = { class: "cw-upload-row" }, Ho = ["label"], Uo = { class: "cw-muted" }, Wo = { class: "cw-list" }, Go = {
 	key: 0,
 	class: "cw-muted cw-empty"
-}, qo = ["onDrop"], Jo = [
+}, Ko = ["onDrop"], qo = [
 	"aria-label",
 	"title",
 	"onDragstart"
-], Yo = ["src", "alt"], Xo = {
+], Jo = ["src", "alt"], Yo = {
 	key: 1,
 	class: "cw-thumb-placeholder",
 	"aria-hidden": "true"
-}, Zo = { class: "cw-item-copy" }, Qo = { class: "cw-muted" }, $o = ["onClick"], es = { class: "cw-card-footer" }, ts = { class: "cw-muted" }, ns = {
+}, Xo = { class: "cw-item-copy" }, Zo = { class: "cw-muted" }, Qo = ["label", "onClick"], $o = { class: "cw-card-footer" }, es = { class: "cw-muted" }, ts = {
 	key: 0,
 	class: "cw-error"
-}, rs = "custom-wallpaper", is = "nxp-settings-panel-toggle", as = "nxp-settings-panel-state", os = /* @__PURE__ */ Fn({
+}, ns = "custom-wallpaper", rs = "nxp-settings-panel-toggle", is = "nxp-settings-panel-state", as = /* @__PURE__ */ Fn({
 	__name: "WallpaperSettings",
 	props: {
 		host: {},
@@ -2928,14 +2928,14 @@ var mo = [
 			return t < 1048576 ? `${Math.max(1, Math.round(t / 1024))} KiB` : `${(t / 1024 / 1024).toFixed(1)} MiB`;
 		}
 		function C(e) {
-			window.dispatchEvent(new CustomEvent(is, { detail: { panelId: e } }));
+			window.dispatchEvent(new CustomEvent(rs, { detail: { panelId: e } }));
 		}
 		function w(e) {
-			a.value = e, C(e ? rs : null);
+			a.value = e, C(e ? ns : null);
 		}
 		function ee(e) {
 			let t = e.detail?.panelId;
-			(t === null || typeof t == "string") && (a.value = t === rs);
+			(t === null || typeof t == "string") && (a.value = t === ns);
 		}
 		function te(e) {
 			f || (r.value = e.state, i.value = e.error);
@@ -3091,9 +3091,9 @@ var mo = [
 			}));
 		}
 		return Xn(async () => {
-			window.addEventListener(as, ee), d = t.runtime.subscribe(te), te(t.runtime.snapshot()), await T(r.value?.assets || []);
+			window.addEventListener(is, ee), d = t.runtime.subscribe(te), te(t.runtime.snapshot()), await T(r.value?.assets || []);
 		}), $n(() => {
-			f = !0, window.removeEventListener(as, ee), d?.(), d = null, u && clearTimeout(u), u = null, Object.values(l.value).forEach((e) => URL.revokeObjectURL(e)), l.value = {};
+			f = !0, window.removeEventListener(is, ee), d?.(), d = null, u && clearTimeout(u), u = null, Object.values(l.value).forEach((e) => URL.revokeObjectURL(e)), l.value = {};
 		}), (e, t) => (Si(), Di("nxp-collapsible-card", {
 			title: b("card.title", {}, "自定义壁纸"),
 			description: b("card.description", {}, "同步壁纸、轮换方式和显示效果"),
@@ -3103,81 +3103,84 @@ var mo = [
 			"data-testid": "custom-wallpaper-card",
 			onToggle: t[10] ||= (e) => w(e.detail?.[0] === !0)
 		}, [Y("div", ho, [
-			Y("div", go, [Y("span", _o, j(b("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。")), 1), Y("nxp-badge", { tone: v.value }, j(_.value), 9, vo)]),
-			Y("div", yo, [Y("nxp-switch-setting", {
+			Y("div", go, [Y("span", _o, j(b("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。")), 1), Y("nxp-badge", {
+				tone: v.value,
+				label: _.value
+			}, null, 8, vo)]),
+			Y("nxp-switch-list", null, [Y("nxp-switch-setting", {
 				label: b("settings.enabled", {}, "启用自定义壁纸"),
 				description: b("settings.enabled_help", {}, "启用后使用自定义壁纸作为页面背景。"),
 				"model-value": h.value,
 				"aria-label": b("settings.enabled", {}, "启用自定义壁纸"),
 				onChange: t[0] ||= (e) => ie("enabled")
-			}, null, 40, bo), Y("nxp-switch-setting", {
+			}, null, 40, yo), Y("nxp-switch-setting", {
 				label: b("settings.secondary", {}, "透明度运用于非主页面"),
 				description: b("settings.secondary_help", {}, "关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。"),
 				"model-value": g.value,
 				"aria-label": b("settings.secondary", {}, "透明度运用于非主页面"),
 				onChange: t[1] ||= (e) => ie("secondary")
-			}, null, 40, xo)]),
-			Y("div", So, [Y("label", {
+			}, null, 40, bo)]),
+			Y("div", xo, [Y("label", {
 				class: "cw-field",
 				"data-help": b("settings.rotation_help", {}, "按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。")
-			}, [Y("span", wo, j(b("settings.rotation", {}, "轮换方式")), 1), Y("nxp-select", {
+			}, [Y("span", Co, j(b("settings.rotation", {}, "轮换方式")), 1), Y("nxp-select", {
 				"model-value": r.value?.rotation?.mode || "off",
 				options: p.value,
 				"aria-label": b("settings.rotation", {}, "轮换方式"),
 				onChange: t[2] ||= (e) => D("mode", e.detail?.[0] || e.target?.modelValue || "off")
-			}, null, 40, To)], 8, Co), Y("label", {
+			}, null, 40, wo)], 8, So), Y("label", {
 				class: "cw-field",
 				"data-help": b("settings.interval_help", {}, "轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。")
-			}, [Y("span", Do, j(b("settings.interval", {}, "轮换间隔（分钟）")), 1), Y("nxp-number-input", {
+			}, [Y("span", Eo, j(b("settings.interval", {}, "轮换间隔（分钟）")), 1), Y("nxp-number-input", {
 				"model-value": r.value?.rotation?.intervalMinutes || 30,
 				min: "1",
 				max: "1440",
 				step: "1",
 				"aria-label": b("settings.interval", {}, "轮换间隔（分钟）"),
 				onChange: t[3] ||= (e) => D("interval", e.detail?.[0] || e.target?.modelValue)
-			}, null, 40, Oo)], 8, Eo)]),
-			Y("div", ko, [
+			}, null, 40, Do)], 8, To)]),
+			Y("div", Oo, [
 				Y("label", {
 					class: "cw-field",
 					"data-help": b("settings.blur_help", {}, "模糊范围为 0 至 40 像素。")
-				}, [Y("span", jo, j(b("settings.blur", {}, "模糊（像素）")), 1), Y("span", Mo, [Y("nxp-range", {
+				}, [Y("span", Ao, j(b("settings.blur", {}, "模糊（像素）")), 1), Y("span", jo, [Y("nxp-range", {
 					"model-value": r.value?.effects?.blurPx || 0,
 					min: "0",
 					max: "40",
 					step: "1",
 					"aria-label": b("settings.blur", {}, "模糊（像素）"),
 					onChange: t[4] ||= (e) => D("blur", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, No), Y("output", null, j(r.value?.effects?.blurPx || 0) + "px", 1)])], 8, Ao),
+				}, null, 40, Mo), Y("output", null, j(r.value?.effects?.blurPx || 0) + "px", 1)])], 8, ko),
 				Y("label", {
 					class: "cw-field",
 					"data-help": b("settings.dim_help", {}, "变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。")
-				}, [Y("span", Fo, j(b("settings.dim", {}, "变暗")), 1), Y("span", Io, [Y("nxp-range", {
+				}, [Y("span", Po, j(b("settings.dim", {}, "变暗")), 1), Y("span", Fo, [Y("nxp-range", {
 					"model-value": r.value?.effects?.dimPercent ?? 20,
 					min: "0",
 					max: "80",
 					step: "1",
 					"aria-label": b("settings.dim", {}, "变暗"),
 					onChange: t[5] ||= (e) => D("dim", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, Lo), Y("output", null, j(r.value?.effects?.dimPercent ?? 20) + "%", 1)])], 8, Po),
+				}, null, 40, Io), Y("output", null, j(r.value?.effects?.dimPercent ?? 20) + "%", 1)])], 8, No),
 				Y("label", {
 					class: "cw-field",
 					"data-help": b("settings.transparency_help", {}, "控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。")
-				}, [Y("span", zo, j(b("settings.transparency", {}, "卡片与侧边栏透明度")), 1), Y("span", Bo, [Y("nxp-range", {
+				}, [Y("span", Ro, j(b("settings.transparency", {}, "卡片与侧边栏透明度")), 1), Y("span", zo, [Y("nxp-range", {
 					"model-value": r.value?.effects?.surfaceTransparencyPercent || 0,
 					min: "0",
 					max: "50",
 					step: "1",
 					"aria-label": b("settings.transparency", {}, "卡片与侧边栏透明度"),
 					onChange: t[6] ||= (e) => D("transparency", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, Vo), Y("output", null, j(r.value?.effects?.surfaceTransparencyPercent || 0) + "%", 1)])], 8, Ro)
+				}, null, 40, Bo), Y("output", null, j(r.value?.effects?.surfaceTransparencyPercent || 0) + "%", 1)])], 8, Lo)
 			]),
-			Y("div", Ho, [Y("nxp-file-picker", {
+			Y("div", Vo, [Y("nxp-file-picker", {
 				accept: "image/jpeg,image/png,image/webp",
 				multiple: "",
 				label: b("settings.add", {}, "添加壁纸"),
 				onChange: t[7] ||= (e) => O(e.detail?.[0] || e.target?.files || [])
-			}, null, 40, Uo), Y("span", Wo, j(b("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB")), 1)]),
-			Y("div", Go, [m.value.length ? Ri("", !0) : (Si(), Di("p", Ko, j(b("empty", {}, "尚未添加壁纸。")), 1)), (Si(!0), Di(q, null, or(m.value, (e) => (Si(), Di("div", {
+			}, null, 40, Ho), Y("span", Uo, j(b("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB")), 1)]),
+			Y("div", Wo, [m.value.length ? Ri("", !0) : (Si(), Di("p", Go, j(b("empty", {}, "尚未添加壁纸。")), 1)), (Si(!0), Di(q, null, or(m.value, (e) => (Si(), Di("div", {
 				key: e.id,
 				class: A(["cw-item", { "is-dragging": c.value === e.id }]),
 				onDragover: t[9] ||= Ya(() => {}, ["prevent"]),
@@ -3191,37 +3194,38 @@ var mo = [
 					title: b("drag", {}, "拖拽排序"),
 					onDragstart: Ya((t) => c.value = e.id, ["stop"]),
 					onDragend: t[8] ||= (e) => c.value = ""
-				}, "⠿", 40, Jo),
+				}, "⠿", 40, qo),
 				l.value[e.id] ? (Si(), Di("img", {
 					key: 0,
 					src: l.value[e.id],
 					alt: e.originalName || e.id
-				}, null, 8, Yo)) : (Si(), Di("span", Xo)),
-				Y("div", Zo, [Y("strong", null, j(e.originalName || e.id), 1), Y("span", Qo, j(S(e.sizeBytes)), 1)]),
+				}, null, 8, Jo)) : (Si(), Di("span", Yo)),
+				Y("div", Xo, [Y("strong", null, j(e.originalName || e.id), 1), Y("span", Zo, j(S(e.sizeBytes)), 1)]),
 				Y("nxp-button", {
 					tone: "danger",
 					variant: "ghost",
 					size: "sm",
+					label: b("remove", {}, "删除"),
 					onClick: (t) => ae(e.id)
-				}, j(b("remove", {}, "删除")), 9, $o)
-			], 42, qo))), 128))]),
-			Y("div", es, [Y("span", ts, j(b("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。")), 1)]),
-			y.value ? (Si(), Di("p", ns, j(y.value), 1)) : Ri("", !0)
+				}, null, 8, Qo)
+			], 42, Ko))), 128))]),
+			Y("div", $o, [Y("span", es, j(b("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。")), 1)]),
+			y.value ? (Si(), Di("p", ts, j(y.value), 1)) : Ri("", !0)
 		])], 40, mo));
 	}
 });
 //#endregion
 //#region src/wallpaperRuntime.ts
-function ss(e) {
+function os(e) {
 	return !e?.effectiveEnabled || !e.currentId ? null : (e.assets || []).find((t) => t.id === e.currentId) || null;
 }
-function cs(e, t) {
+function ss(e, t) {
 	return e?.effects?.blurPx !== t?.effects?.blurPx || e?.effects?.dimPercent !== t?.effects?.dimPercent || e?.effects?.surfaceTransparencyPercent !== t?.effects?.surfaceTransparencyPercent || e?.effects?.applyTransparencyToSecondarySurfaces !== t?.effects?.applyTransparencyToSecondarySurfaces;
 }
-function ls(e, t) {
-	return e?.revision !== t?.revision || e?.currentId !== t?.currentId || e?.effectiveEnabled !== t?.effectiveEnabled || cs(e, t);
+function cs(e, t) {
+	return e?.revision !== t?.revision || e?.currentId !== t?.currentId || e?.effectiveEnabled !== t?.effectiveEnabled || ss(e, t);
 }
-function us(e, t = {}) {
+function ls(e, t = {}) {
 	let n = Math.max(1e3, Number(t.pollIntervalMs) || 3e4), r = /* @__PURE__ */ new Set(), i = null, a = "", o = null, s = null, c = null, l = 0, u = !1;
 	function d() {
 		return {
@@ -3254,7 +3258,7 @@ function us(e, t = {}) {
 		if (u || (f(t), !n)) return;
 		let r = ++l;
 		p();
-		let i = ss(t);
+		let i = os(t);
 		if (!i) {
 			e.appearance.clearBackground(), e.appearance.clearTokens();
 			return;
@@ -3281,7 +3285,7 @@ function us(e, t = {}) {
 		if (!u) try {
 			let n = await so(e);
 			if (u) return;
-			await h(n, t || ls(i, n));
+			await h(n, t || cs(i, n));
 		} catch (e) {
 			if (u) return;
 			f(i, e instanceof Error ? e.message : String(e));
@@ -3313,11 +3317,11 @@ function us(e, t = {}) {
 }
 //#endregion
 //#region src/main.ts
-function ds(e) {
-	let t = us(e);
+function us(e) {
+	let t = ls(e);
 	t.start();
 	let n = e.slots.register("settings.cards", (n) => {
-		let r = $a(os, {
+		let r = $a(as, {
 			host: e,
 			runtime: t,
 			context: n.context
@@ -3329,4 +3333,4 @@ function ds(e) {
 	} };
 }
 //#endregion
-export { ds as activate };
+export { us as activate };

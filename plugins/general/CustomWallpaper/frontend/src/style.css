@@ -9,7 +9,6 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 .cw-status-row, .cw-card-footer, .cw-upload-row { display: flex; align-items: center; justify-content: space-between; gap: var(--nx-space-3); }
 .cw-status-row { min-width: 0; }
 .cw-status-row > .cw-muted { min-width: 0; }
-.cw-switch-list { display: grid; gap: var(--nx-space-2); }
 .cw-grid { display: grid; gap: var(--nx-space-4); }
 .cw-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cw-effects { grid-template-columns: repeat(3, minmax(0, 1fr)); }

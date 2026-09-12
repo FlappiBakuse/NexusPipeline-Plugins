@@ -305,9 +305,9 @@ onBeforeUnmount(() => {
     <div class="cw-body">
       <div class="cw-status-row">
         <span class="cw-muted">{{ tr("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。") }}</span>
-        <nxp-badge :tone="tone">{{ status }}</nxp-badge>
+        <nxp-badge :tone="tone" :label="status" />
       </div>
-      <div class="cw-switch-list">
+      <nxp-switch-list>
         <nxp-switch-setting
           :label="tr('settings.enabled', {}, '启用自定义壁纸')"
           :description="tr('settings.enabled_help', {}, '启用后使用自定义壁纸作为页面背景。')"
@@ -322,7 +322,7 @@ onBeforeUnmount(() => {
           :aria-label="tr('settings.secondary', {}, '透明度运用于非主页面')"
           @change="toggle('secondary')"
         />
-      </div>
+      </nxp-switch-list>
       <div class="cw-grid cw-controls">
         <label
           class="cw-field"
@@ -429,7 +429,13 @@ onBeforeUnmount(() => {
             <strong>{{ asset.originalName || asset.id }}</strong>
             <span class="cw-muted">{{ formatBytes(asset.sizeBytes) }}</span>
           </div>
-          <nxp-button tone="danger" variant="ghost" size="sm" @click="remove(asset.id)">{{ tr("remove", {}, "删除") }}</nxp-button>
+          <nxp-button
+            tone="danger"
+            variant="ghost"
+            size="sm"
+            :label="tr('remove', {}, '删除')"
+            @click="remove(asset.id)"
+          />
         </div>
       </div>
       <div class="cw-card-footer">
