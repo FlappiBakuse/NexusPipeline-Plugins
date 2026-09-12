@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢为 NexusPipeline 编写插件。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。
+感谢为 NexusPipeline 编写插件。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。自动化开发约束见 [AGENTS.md](AGENTS.md)。
 
 ## 目录与命名
 
@@ -21,6 +21,13 @@
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件或旧 `host.controls` / `host.actions`。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
+
+## 测试与提交治理
+
+- 提交按功能边界拆分，每个提交保持可独立验证、审查和回退；提交操作需要维护者明确授权。
+- 持久化 UI 测试只覆盖功能结果、ARIA、焦点、状态、提交、路由、API 效果和生命周期。
+- 截图匹配器、视觉回归套件、截图基线和像素/布局断言不进入仓库。浏览器或手工验证脚本放在操作系统临时目录，验证结束后删除且不得加入 Git。
+- 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；宿主私有 Vue 组件、私有 class 和未声明 host 能力不属于插件契约。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 API v1.6 与 Frontend API 1.5，`game-checkin` 与 `live-screenshot` 使用 API v1.5。
 
