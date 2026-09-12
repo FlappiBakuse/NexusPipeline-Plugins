@@ -91,7 +91,7 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` v0.2.0 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` v0.2.0 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` v0.2.1 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` v0.2.0 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 - Plugin API 1.6 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
 - 宿主升级后会把旧外观数据（`config/appearance.json`、`user-assets/appearance/wallpapers/` 与旧轮换游标）一次性搬迁到原提供方插件的 `legacy-appearance-import` 作用域数据，资产写入该插件的 `wallpapers` 资产 scope。插件应在初始化时读取并消费该载荷，导入完成后删除该作用域记录；宿主保留旧文件。

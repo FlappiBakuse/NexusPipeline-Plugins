@@ -143,21 +143,21 @@ python tools/repository.py validate-generated --generated-root .generated
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
       "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.2.0",
+      "version": "0.2.1",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": ["frontend-module"],
       "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.0.zip",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.1.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.2.0",
+          "version": "0.2.1",
           "date": "2026-09-12",
           "items": [
-            "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
-            "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
+            "壁纸运行时改为插件级生命周期：不进入设置页面也会应用壁纸与配色，离开设置页面后壁纸、配色与轮换计时保持运行，只有插件停用才清理全局外观。",
+            "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。"
           ]
         }
       ]

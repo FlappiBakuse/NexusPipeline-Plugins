@@ -76,6 +76,27 @@ export function activate(host) {
 
 插件应保存并释放 route、nav、slot、lifecycle 等注册返回的 disposable。每个处理器都应自行管理 AbortController、定时器、事件监听和 MutationObserver。
 
+### 页面无关的插件运行时
+
+需要持续生效的能力（背景表面、主题 token、轮换、轮询、全局快捷键等）属于插件前端模块的生命周期，而不是某个设置卡片或页面。`activate(host)` 中建立运行时并立即启动，slot renderer 只渲染设置界面：
+
+```js
+export function activate(host) {
+  const runtime = createRuntime(host);   // 读取状态、应用 host.appearance、建立计时器
+  void runtime.start();
+  const slot = host.slots.register("settings.cards", ({ element }) => {
+    // 设置卡片只提交修改并读取运行时快照；卸载时不清理全局外观
+    return () => releaseCardResources();
+  });
+  return () => {
+    slot.dispose();
+    runtime.dispose();                   // 只有插件停用才清理全局外观与计时器
+  };
+}
+```
+
+宿主页面在任意路由都会加载插件前端模块，因此不需要用户打开设置页面即可生效；slot renderer 返回的清理函数只应释放该 slot 自己创建的资源（缩略图地址、拖拽状态、UI 计时器与监听器）。设置卡片卸载时不要调用 `host.appearance.clearBackground()` 或 `clearTokens()`，否则用户离开设置页面就会丢失背景与配色。单次启动行为（例如"启动时随机选择一次"）应由插件后端在插件启动生命周期中执行，页面访问不参与该语义。
+
 ## 前端 host 能力
 
 | 能力 | 用途 |
@@ -139,7 +160,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 插件 Web API 的最终路径为 `/api/plugin-api/<plugin>/<route>`。每次调用最多执行 30 秒，请求体上限 16 MiB，JSON 响应上限 2 MiB，二进制响应上限 16 MiB；插件异常使用 `code: "plugin_error"` 返回。二进制响应只允许 `image/png`、`image/jpeg`、`image/webp`、`image/gif`、`image/avif` 和 `application/octet-stream`，并附带 `X-Content-Type-Options: nosniff` 与 `Cache-Control: no-store`。UI 处理器和历史处理器也有独立超时，超限内容会被宿主丢弃。
 
-`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）。外观变化由宿主广播 `nexus:appearance-changed`。
+`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
 
 壁纸配置、配额、文件校验、去重、轮换与配色属于插件业务：插件用 `context.Assets` 保存资产，用插件 Web API 提供状态与二进制读取，再通过 `host.appearance` 应用背景与 token。宿主不再提供服务端壁纸存储。
 
