@@ -1,4 +1,8 @@
 {
   "input.config.label": "OneDragon configuration name",
-  "input.config.description": "The configuration name under User\\OneDragon, matching the file name. Leave it empty when the directory contains one file; choose it during the first edit when multiple files exist."
+  "input.config.description": "The configuration name under User\\OneDragon, matching the file name. Leave it empty when the directory contains one file; choose it during the first edit when multiple files exist.",
+  "judge.success": "All tasks completed successfully",
+  "judge.config": "Unable to read or parse the BetterGI configuration; retries were stopped",
+  "judge.unknown": "Unrecognized failed tasks: {tasks}; retries were stopped to avoid changing the configuration",
+  "judge.failed": "Failed tasks: {tasks}; retry configuration was limited to the failed tasks"
 }

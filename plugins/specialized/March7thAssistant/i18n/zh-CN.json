@@ -1,0 +1,5 @@
+{
+  "judge.success": "全部任务执行成功",
+  "judge.incomplete": "任务未完成：{tasks}",
+  "judge.error": "运行发生错误，任务未完成"
+}

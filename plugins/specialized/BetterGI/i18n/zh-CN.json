@@ -1,4 +1,8 @@
 {
   "input.config.label": "一条龙配置名",
-  "input.config.description": "User\\OneDragon 下的配置名（与配置文件名一致）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时在首次编辑配置中选择一次，选择保存在用户绑定上，不填写到脚本实例"
+  "input.config.description": "一条龙配置名（与配置文件名一致）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时在首次编辑配置中选择一次，选择保存在用户绑定上，不填写到脚本实例",
+  "judge.success": "全部任务执行成功",
+  "judge.config": "无法读取或解析 BetterGI 配置文件，已终止重试",
+  "judge.unknown": "无法识别失败任务：{tasks}，为避免误改配置已终止重试",
+  "judge.failed": "任务执行失败：{tasks}，已调整为仅重试失败任务"
 }

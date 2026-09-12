@@ -1,4 +1,9 @@
 {
   "input.config.label": "BAAH 配置文件名",
-  "input.config.description": "BAAH_CONFIGS 目录下的配置文件名（含 .json 后缀）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时必须指定"
+  "input.config.description": "BAAH_CONFIGS 目录下的配置文件名（含 .json 后缀）。目录内只有一个配置文件时无需填写，自动绑定并跟随改名；存在多个配置文件时必须指定",
+  "judge.success": "BAAH 任务运行结束",
+  "judge.startup_failure": "BAAH 未进入任务执行即异常结束（错误提示见运行日志）",
+  "judge.recovered_error": "BAAH 任务运行结束（过程中出现过错误提示，已由脚本自行处理）",
+  "judge.failed": "任务失败：{tasks}，已调整为仅重试失败任务",
+  "judge.unknown": "任务失败：{tasks}（无法对应到配置任务，未调整重试；下一轮整体重跑）"
 }

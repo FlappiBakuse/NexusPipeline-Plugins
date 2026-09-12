@@ -1,5 +1,11 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const english = String(input.locale || "").toLowerCase() === "en-us";
+const text = {
+  success: english ? "All tasks completed successfully" : "全部任务执行成功",
+  incomplete: english ? "Tasks incomplete: {tasks}" : "任务未完成：{tasks}",
+  error: english ? "The run encountered an error before completion" : "运行发生错误，任务未完成",
+};
 // v0.2.0：运行结束标志兼容两种收尾——「游戏终止：StarRail」仅在 after_finish 配置为退出类取值时打印；
 // 「停止运行」盒线由 stop() 收尾必打印（与 after_finish 无关）。异常结束无这两行且必有 ERROR「发生错误」。
 const DONE_MARKERS = ["游戏终止：StarRail", "停止运行"];
@@ -54,12 +60,12 @@ if (doneOffset >= 0) {
     if (log.indexOf(pattern) >= 0) failedLines.push(pattern);
   }
   if (failedLines.length === 0) {
-    console.log(JSON.stringify({ status: "success", reason: "全部任务执行成功" }));
+    console.log(JSON.stringify({ status: "success", reason: text.success }));
   } else {
-    console.log(JSON.stringify({ status: "failed", reason: "任务未完成：" + failedLines.join("、") }));
+    console.log(JSON.stringify({ status: "failed", reason: text.incomplete.replace("{tasks}", failedLines.join(english ? ", " : "、")) }));
   }
 } else if (/ \| ERROR \| 发生错误/.test(log)) {
   // 运行结束标志出现前发生错误：输出失败结果前截图
   takeShot(shotState, "final", log.indexOf("发生错误"));
-  console.log(JSON.stringify({ status: "failed", reason: "运行发生错误，任务未完成" }));
+  console.log(JSON.stringify({ status: "failed", reason: text.error }));
 }

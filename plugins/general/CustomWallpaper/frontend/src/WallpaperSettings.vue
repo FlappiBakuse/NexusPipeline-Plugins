@@ -273,6 +273,19 @@ function drop(targetId: string) {
   requestSave({ order }, current => ({ ...current, order }));
 }
 
+function onDragStart(event: DragEvent, id: string) {
+  draggedId.value = id;
+  const dataTransfer = event.dataTransfer;
+  if (!dataTransfer) return;
+  dataTransfer.effectAllowed = "move";
+  dataTransfer.setData("text/plain", id);
+  const handle = event.currentTarget as HTMLElement | null;
+  const card = handle?.closest<HTMLElement>(".cw-item");
+  if (!card) return;
+  const rect = card.getBoundingClientRect();
+  dataTransfer.setDragImage(card, Math.max(1, rect.width / 2), Math.max(1, rect.height / 2));
+}
+
 onMounted(async () => {
   window.addEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe = props.runtime.subscribe(syncSnapshot);
@@ -420,7 +433,7 @@ onBeforeUnmount(() => {
             draggable="true"
             :aria-label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`"
             :title="tr('drag', {}, '拖拽排序')"
-            @dragstart.stop="draggedId = asset.id"
+            @dragstart.stop="onDragStart($event, asset.id)"
             @dragend="draggedId = ''"
           >⠿</button>
           <img v-if="thumbnails[asset.id]" :src="thumbnails[asset.id]" :alt="asset.originalName || asset.id" />

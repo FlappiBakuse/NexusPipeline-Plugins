@@ -102,6 +102,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 | files | config 与 script 范围内的文件元数据数组 |
 | log | 当前尝试累计日志；超过 4 MiB 时只保留尾部 |
 | logTruncated | 日志是否发生截断 |
+| locale | 宿主当前规范化 BCP 47 语言标识，供判断脚本本地化动态结果 |
 | timeScale | 宿主测试加速因子；生产运行通常为 1 |
 | screenshots | 当前 Attempt 截图池的元数据；最多 8 张，包含 Id、Ordinal、CapturedAt、AttemptNumber、Width、Height、Source、Trigger，不包含图片字节 |
 

@@ -2,15 +2,22 @@
   "schemaVersion": 2,
   "name": "maaend",
   "artifactName": "MaaEnd",
-  "displayName": "MaaEnd",
+  "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "kind": "data-specialized",
   "minHostVersion": "0.12.8",
   "capabilities": [
     "emulator"
   ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  },
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js"
 }

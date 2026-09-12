@@ -1,5 +1,14 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const english = String(input.locale || "").toLowerCase() === "en-us";
+const joinTasks = values => values.join(english ? ", " : "、");
+const text = {
+  success: english ? "BAAH task run completed" : "BAAH 任务运行结束",
+  startupFailure: english ? "BAAH ended unexpectedly before any task started (see error messages in the run log)" : "BAAH 未进入任务执行即异常结束（错误提示见运行日志）",
+  recoveredError: english ? "BAAH task run completed (an error occurred during the run and was handled by the script)" : "BAAH 任务运行结束（过程中出现过错误提示，已由脚本自行处理）",
+  failed: english ? "Failed tasks: {tasks}; retry configuration was limited to the failed tasks" : "任务失败：{tasks}，已调整为仅重试失败任务",
+  unknown: english ? "Failed tasks: {tasks} (could not map them to configured tasks; retry configuration was left unchanged and the next run will retry the whole pipeline)" : "任务失败：{tasks}（无法对应到配置任务，未调整重试；下一轮整体重跑）",
+};
 
 // BAAH 无 per-task 状态文件、退出码恒 0，判定完全依赖任务日志。日志行格式：
 // "{版本} - {分:秒} - {LEVEL} : {消息}"，语言随 BAAH 软配置（中文为默认），判定兼容中英双语。
@@ -195,15 +204,15 @@ if (!hasFinish) {
   if (dangling.length === 0) {
     // 5. 无悬空任务：全部已开始任务都已收尾。
     if (!hasError) {
-      console.log(JSON.stringify({ status: "success", reason: "BAAH 任务运行结束" }));
+      console.log(JSON.stringify({ status: "success", reason: text.success }));
     } else {
       // 有错误提示但无悬空任务：错误发生在任务活动之后（收尾/清理噪音）→ 成功；
       // 全程未启动任何任务（连接模拟器/游戏等启动期失败）→ failed。
       const firstStart = events.findIndex(event => event.type === "start");
       if (firstStart < 0) {
-        console.log(JSON.stringify({ status: "failed", reason: "BAAH 未进入任务执行即异常结束（错误提示见运行日志）" }));
+        console.log(JSON.stringify({ status: "failed", reason: text.startupFailure }));
       } else {
-        console.log(JSON.stringify({ status: "success", reason: "BAAH 任务运行结束（过程中出现过错误提示，已由脚本自行处理）" }));
+        console.log(JSON.stringify({ status: "success", reason: text.recoveredError }));
       }
     }
   } else {
@@ -247,14 +256,14 @@ if (!hasFinish) {
       nexus.writeFile(cfgRelPath, JSON.stringify(cfg, null, 2));
       console.log(JSON.stringify({
         status: "failed",
-        reason: "任务失败：" + failedKeys.join("、") + "，已调整为仅重试失败任务",
+        reason: text.failed.replace("{tasks}", joinTasks(failedKeys)),
         replaceConfigs: [cfgRelPath]
       }));
     } else {
       const shown = (unknownNames.length > 0 ? unknownNames : dangling.map(item => item.name)).join("、");
       console.log(JSON.stringify({
         status: "failed",
-        reason: "任务失败：" + shown + "（无法对应到配置任务，未调整重试；下一轮整体重跑）"
+        reason: text.unknown.replace("{tasks}", shown ? joinTasks(shown.split("、")) : "")
       }));
     }
   }

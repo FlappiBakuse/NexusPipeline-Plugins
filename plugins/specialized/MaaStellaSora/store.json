@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
   "changelog": [
     {
+      "version": "0.1.3",
+      "date": "2026-09-12",
+      "items": [
+        "机器标识由 maastellasora 更新为 maas，并要求宿主执行对应配置迁移。"
+      ]
+    },
+    {
       "version": "0.1.2",
       "date": "2026-09-10",
       "items": [
@@ -23,14 +30,6 @@
       "items": [
         "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
       ]
-    },
-    {
-      "version": "0.1.0",
-      "date": "2026-09-04",
-      "items": [
-        "首个版本：面向 MaaStellaSora MXU 运行包（mxu.exe + interface.json）的专项脚本实例配置接管。",
-        "无人值守运行 mxu.exe --autostart --quit-after-run，按 MXU 日志判定任务完成与失败，失败时自动调整为仅重试失败任务并在收尾还原用户任务勾选。"
-      ]
     }
   ],
   "locales": {
@@ -41,19 +40,16 @@
       "tags": ["Stella Sora", "Specialized plugin", "MaaStellaSora"],
       "changelog": [
         {
+          "version": "0.1.3",
+          "items": ["Renamed the machine identifier from maastellasora to maas and requires the host migration for existing settings."]
+        },
+        {
           "version": "0.1.2",
           "items": ["Added English store metadata for the official plugin catalog."]
         },
         {
           "version": "0.1.1",
           "items": ["Synced the official plugin source layout and homepage; runtime behavior is unchanged."]
-        },
-        {
-          "version": "0.1.0",
-          "items": [
-            "Initial support for MaaStellaSora MXU packages and specialized script-instance configuration.",
-            "Ran mxu.exe in unattended mode, interpreted MXU logs, retried failed tasks, and restored the original task selection."
-          ]
         }
       ]
     }

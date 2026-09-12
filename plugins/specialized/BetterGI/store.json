@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
   "changelog": [
     {
+      "version": "0.2.9",
+      "date": "2026-09-12",
+      "items": [
+        "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+      ]
+    },
+    {
       "version": "0.2.8",
       "date": "2026-09-10",
       "items": [
@@ -27,15 +34,7 @@
       "items": [
         "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
       ]
-    },
-    {
-      "version": "0.2.5",
-      "date": "2026-09-06",
-      "items": [
-        "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
-        "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
-          ]
-        }
+    }
   ],
   "locales": {
     "en-US": {
@@ -45,19 +44,16 @@
       "tags": ["Genshin Impact", "Specialized plugin", "Configuration"],
       "changelog": [
         {
+          "version": "0.2.9",
+          "items": ["Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."]
+        },
+        {
           "version": "0.2.8",
           "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
         },
         {
           "version": "0.2.7",
           "items": ["Added English store metadata and localized configuration-input labels and descriptions."]
-        },
-        {
-          "version": "0.2.5",
-          "items": [
-            "Adapted to NexusPipeline v0.14.4: isolated all BetterGI configuration files when editing a fresh or reused configuration, then restored the original configuration after saving, cancelling, or recovering.",
-            "Added an edit-preparation script that synchronizes selectedOneDragonFlowConfigName in User/config.json and supports transactional working copies for additional configuration files."
-          ]
         }
       ]
     }

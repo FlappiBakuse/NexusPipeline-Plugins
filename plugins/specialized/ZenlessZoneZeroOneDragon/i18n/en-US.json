@@ -1,4 +1,9 @@
 {
   "input.instance.label": "Instance number",
-  "input.instance.description": "The two-digit OneDragon instance directory under config, such as 01 or 02. Leave it empty when one instance exists; choose it during the first edit when multiple instances exist."
+  "input.instance.description": "The two-digit OneDragon instance directory under config, such as 01 or 02. Leave it empty when one instance exists; choose it during the first edit when multiple instances exist.",
+  "judge.failed": "OneDragon failed: {detail}; task incomplete",
+  "judge.failed_without_detail": "OneDragon failed; task incomplete",
+  "judge.success": "All applications completed successfully",
+  "judge.partial": "OneDragon finished, but some applications failed",
+  "judge.notify": "Some applications failed in this run: {tasks}"
 }

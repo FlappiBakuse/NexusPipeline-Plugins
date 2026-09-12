@@ -1,5 +1,12 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const english = String(input.locale || "").toLowerCase() === "en-us";
+const joinTasks = values => values.join(english ? ", " : "、");
+const text = {
+  success: english ? "All tasks completed successfully" : "全部任务执行成功",
+  unknown: english ? "Unrecognized failed tasks: {tasks}; retry configuration was left unchanged" : "无法识别的失败任务：{tasks}，为避免误改配置未调整重试",
+  failed: english ? "Failed tasks: {tasks}; retry configuration was limited to the failed tasks" : "任务失败：{tasks}，已调整为仅重试失败任务",
+};
 const DAILY_TASK_MARKER = "任务完成: 📅日常奖励领取";
 
 // v0.2.0 运行期截图：judge 每次调用相互独立，用 script 目录状态文件记录已截图标志的
@@ -170,7 +177,7 @@ if (!cfg || !cfg.settings || !Array.isArray(cfg.instances)) {
           }
         }
         if (failed.length === 0) {
-          console.log(JSON.stringify({ status: "success", reason: "全部任务执行成功" }));
+          console.log(JSON.stringify({ status: "success", reason: text.success }));
         } else {
           // 显示名 → 任务项（同一 taskName 多条时需 customName 区分）
           const failedTasks = [];
@@ -180,7 +187,7 @@ if (!cfg || !cfg.settings || !Array.isArray(cfg.instances)) {
             if (t) failedTasks.push(t); else unknown.push(name);
           }
           if (unknown.length > 0) {
-            console.log(JSON.stringify({ status: "failed", reason: "无法识别的失败任务：" + unknown.join("、") + "，为避免误改配置未调整重试" }));
+            console.log(JSON.stringify({ status: "failed", reason: text.unknown.replace("{tasks}", joinTasks(unknown)) }));
           } else {
             // 选择性重试：全部 enabled=false，仅失败任务 enabled=true（其余字段原样保留）
             const failedIds = failedTasks.map(t => t.id);
@@ -190,7 +197,7 @@ if (!cfg || !cfg.settings || !Array.isArray(cfg.instances)) {
             nexus.writeFile("mxu-MaaEnd.json", JSON.stringify(cfg, null, 2));
             console.log(JSON.stringify({
               status: "failed",
-              reason: "任务失败：" + failed.join("、") + "，已调整为仅重试失败任务",
+              reason: text.failed.replace("{tasks}", joinTasks(failed)),
               replaceConfigs: ["mxu-MaaEnd.json"]
             }));
           }

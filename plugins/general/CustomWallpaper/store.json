@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-09-12",
+      "items": [
+        "拖拽把手现在会带动整张壁纸卡片移动，排序操作的拖拽预览与实际卡片保持一致。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-09-12",
       "items": [
@@ -30,14 +37,6 @@
         "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。",
         "设置卡片按宿主统一的展开置顶规则显示，两个开关使用公开开关列表组件，徽章与删除按钮使用公开元素文案属性，与设置页外观保持一致。"
       ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-12",
-      "items": [
-        "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
-        "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
-      ]
     }
   ],
   "locales": {
@@ -52,6 +51,12 @@
       ],
       "changelog": [
         {
+          "version": "0.2.3",
+          "items": [
+            "Dragging the handle now moves the entire wallpaper card, keeping the drag preview aligned with the card being reordered."
+          ]
+        },
+        {
           "version": "0.2.2",
           "items": [
             "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
@@ -64,13 +69,6 @@
             "The wallpaper runtime now belongs to the plugin lifecycle: wallpapers and palettes apply without opening the settings page, and leaving the settings page keeps the wallpaper, palette, and rotation timer alive until the plugin is disabled.",
             "Startup rotation runs once from the plugin startup lifecycle, so opening or leaving the settings page never changes the current wallpaper, and time-based rotation keeps running on any page.",
             "The settings card follows the host card expansion rule, the switches use the public switch list, and the badge and delete button pass their text through the public element label property so they match the settings page."
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "items": [
-            "Wallpaper settings, quotas, file validation, deduplication, rotation, and palettes are now implemented by the plugin; the host only provides generic asset storage and the plugin Web API.",
-            "The plugin frontend targets Frontend API 1.5, uses only public nxp-* elements with its own style namespace, and imports existing host wallpaper data automatically."
           ]
         }
       ]

@@ -1,4 +1,9 @@
 {
   "input.config.label": "BAAH configuration file",
-  "input.config.description": "Configuration file under BAAH_CONFIGS, including the .json suffix. Leave it empty when the directory contains one file; choose a value when it contains multiple files."
+  "input.config.description": "Configuration file under BAAH_CONFIGS, including the .json suffix. Leave it empty when the directory contains one file; choose a value when the directory contains multiple files.",
+  "judge.success": "BAAH task run completed",
+  "judge.startup_failure": "BAAH ended unexpectedly before any task started (see error messages in the run log)",
+  "judge.recovered_error": "BAAH task run completed (an error occurred during the run and was handled by the script)",
+  "judge.failed": "Failed tasks: {tasks}; retry configuration was limited to the failed tasks",
+  "judge.unknown": "Failed tasks: {tasks} (could not map them to configured tasks; retry configuration was left unchanged and the next run will retry the whole pipeline)"
 }

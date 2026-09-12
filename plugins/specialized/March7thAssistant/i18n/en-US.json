@@ -1,0 +1,5 @@
+{
+  "judge.success": "All tasks completed successfully",
+  "judge.incomplete": "Tasks incomplete: {tasks}",
+  "judge.error": "The run encountered an error before completion"
+}

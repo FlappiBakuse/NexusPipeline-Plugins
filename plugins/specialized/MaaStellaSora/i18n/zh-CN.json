@@ -1,0 +1,5 @@
+{
+  "judge.success": "全部任务执行成功",
+  "judge.unknown": "无法识别的失败任务：{tasks}，为避免误改配置未调整重试",
+  "judge.failed": "任务失败：{tasks}，已调整为仅重试失败任务"
+}

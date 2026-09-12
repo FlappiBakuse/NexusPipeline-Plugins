@@ -1,4 +1,9 @@
 {
   "input.instance.label": "实例序号",
-  "input.instance.description": "OneDragon 实例目录序号（config 下的两位数字目录，如 01、02）。目录内只有一个实例目录时无需填写，自动绑定并跟随增删；存在多个实例时在首次编辑配置中选择一次，选择保存在用户绑定上，不填写到脚本实例"
+  "input.instance.description": "OneDragon 实例目录序号（config 下的两位数字目录，如 01、02）。目录内只有一个实例目录时无需填写，自动绑定并跟随增删；存在多个实例时在首次编辑配置中选择一次，选择保存在用户绑定上，不填写到脚本实例",
+  "judge.failed": "一条龙执行失败：{detail}，任务未完成",
+  "judge.failed_without_detail": "一条龙执行失败，任务未完成",
+  "judge.success": "全部应用执行成功",
+  "judge.partial": "一条龙运行完成，但部分应用执行失败",
+  "judge.notify": "本次运行有应用执行失败：{tasks}"
 }

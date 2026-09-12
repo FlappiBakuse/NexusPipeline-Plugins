@@ -3090,6 +3090,16 @@ var mo = [
 				order: t
 			}));
 		}
+		function oe(e, t) {
+			c.value = t;
+			let n = e.dataTransfer;
+			if (!n) return;
+			n.effectAllowed = "move", n.setData("text/plain", t);
+			let r = e.currentTarget?.closest(".cw-item");
+			if (!r) return;
+			let i = r.getBoundingClientRect();
+			n.setDragImage(r, Math.max(1, i.width / 2), Math.max(1, i.height / 2));
+		}
 		return Xn(async () => {
 			window.addEventListener(is, ee), d = t.runtime.subscribe(te), te(t.runtime.snapshot()), await T(r.value?.assets || []);
 		}), $n(() => {
@@ -3192,7 +3202,7 @@ var mo = [
 					draggable: "true",
 					"aria-label": `${b("drag", {}, "拖拽排序")}：${e.originalName || e.id}`,
 					title: b("drag", {}, "拖拽排序"),
-					onDragstart: Ya((t) => c.value = e.id, ["stop"]),
+					onDragstart: Ya((t) => oe(t, e.id), ["stop"]),
 					onDragend: t[8] ||= (e) => c.value = ""
 				}, "⠿", 40, qo),
 				l.value[e.id] ? (Si(), Di("img", {

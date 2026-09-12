@@ -11,6 +11,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
   "changelog": [
     {
+      "version": "0.1.4",
+      "date": "2026-09-12",
+      "items": [
+        "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+      ]
+    },
+    {
       "version": "0.1.3",
       "date": "2026-09-10",
       "items": [
@@ -34,6 +41,10 @@
       "description": "Manage BAAH script instances, configuration files, logs, and retry-failed-task behavior.",
       "tags": ["Blue Archive", "Specialized plugin", "Emulator", "BAAH"],
       "changelog": [
+        {
+          "version": "0.1.4",
+          "items": ["Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."]
+        },
         {
           "version": "0.1.3",
           "items": ["Added English store metadata and localized configuration-input labels and descriptions."]

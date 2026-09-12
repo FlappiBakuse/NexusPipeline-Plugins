@@ -1,5 +1,13 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const english = String(input.locale || "").toLowerCase() === "en-us";
+const joinTasks = values => values.join(english ? ", " : "、");
+const text = {
+  success: english ? "All tasks completed successfully" : "全部任务执行成功",
+  config: english ? "Unable to read or parse the BetterGI configuration; retries were stopped" : "无法读取或解析 BetterGI 配置文件，已终止重试",
+  unknown: english ? "Unrecognized failed tasks: {tasks}; retries were stopped to avoid changing the configuration" : "无法识别失败任务：{tasks}，为避免误改配置已终止重试",
+  failed: english ? "Failed tasks: {tasks}; retry configuration was limited to the failed tasks" : "任务执行失败：{tasks}，已调整为仅重试失败任务",
+};
 const DONE_MARKER = "一条龙和配置组任务结束";
 // 任务行格式随版本不同：旧版为 → "任务名" 结束（带引号），上游新版为 → 任务名 结束
 const DAILY_TASK_END_MARKER = "→ \"前往冒险家协会领取奖励\" 结束";
@@ -61,8 +69,8 @@ function dailyCheckText() {
   if (end < 0) return "";
   const result = log.slice(pos + KEY.length, end).trim();
   if (!result) return "";
-  if (result === "今日奖励已领取") return "每日奖励已领取";
-  return "每日奖励" + result + "，请查看运行截图";
+  if (result === "今日奖励已领取") return english ? "Daily reward already claimed" : "每日奖励已领取";
+  return english ? "Daily reward " + result + "; see the run screenshots" : "每日奖励" + result + "，请查看运行截图";
 }
 
 if (log.indexOf(DONE_MARKER) < 0) {
@@ -91,15 +99,15 @@ if (log.indexOf(DONE_MARKER) < 0) {
   if (failed.length === 0) {
     const daily = dailyCheckText();
     console.log(JSON.stringify(daily
-      ? { status: "success", reason: "全部任务执行成功", notifyText: daily }
-      : { status: "success", reason: "全部任务执行成功" }));
+      ? { status: "success", reason: text.success, notifyText: daily }
+      : { status: "success", reason: text.success }));
   } else {
     const entry = configEntry();
     const cfgText = entry ? nexus.readFile(entry.abs) : "";
     let cfg = null;
     try { cfg = cfgText ? JSON.parse(cfgText) : null; } catch (e) { cfg = null; }
     if (!cfg) {
-      console.log(JSON.stringify({ status: "failed", reason: "无法读取或解析 BetterGI 配置文件，已终止重试" }));
+      console.log(JSON.stringify({ status: "failed", reason: text.config }));
     } else {
       // 首次触发时提取初始任务启停映射（TaskEnabledList 全量）写 config-restore.json
       //（宿主收尾按描述还原启停后再同步快照）；跨尝试只写一次（script 目录运行期间不清空）。
@@ -129,13 +137,13 @@ if (log.indexOf(DONE_MARKER) < 0) {
         if (guid) failedGuids.push(guid); else unknown.push(name);
       }
       if (unknown.length > 0) {
-        console.log(JSON.stringify({ status: "failed", reason: "无法识别失败任务：" + unknown.join("、") + "，为避免误改配置已终止重试" }));
+        console.log(JSON.stringify({ status: "failed", reason: text.unknown.replace("{tasks}", joinTasks(unknown)) }));
       } else {
         const enabled = cfg.TaskEnabledList || {};
         for (const guid of Object.keys(enabled)) enabled[guid] = failedGuids.indexOf(guid) >= 0;
         cfg.NextTaskId = "";
         nexus.writeFile(entry.name, JSON.stringify(cfg, null, 2));
-        console.log(JSON.stringify({ status: "failed", reason: "任务执行失败：" + failed.join("、") + "，已调整为仅重试失败任务", replaceConfigs: [entry.name] }));
+        console.log(JSON.stringify({ status: "failed", reason: text.failed.replace("{tasks}", joinTasks(failed)), replaceConfigs: [entry.name] }));
       }
     }
   }

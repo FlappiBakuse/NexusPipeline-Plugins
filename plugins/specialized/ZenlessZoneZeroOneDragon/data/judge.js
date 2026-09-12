@@ -1,5 +1,14 @@
 const input = JSON.parse(__NEXUS_INPUT__);
 const log = input.log || "";
+const english = String(input.locale || "").toLowerCase() === "en-us";
+const joinTasks = values => values.join(english ? ", " : "、");
+const text = {
+  failed: english ? "OneDragon failed: {detail}; task incomplete" : "一条龙执行失败：{detail}，任务未完成",
+  failedWithoutDetail: english ? "OneDragon failed; task incomplete" : "一条龙执行失败，任务未完成",
+  success: english ? "All applications completed successfully" : "全部应用执行成功",
+  partial: english ? "OneDragon finished, but some applications failed" : "一条龙运行完成，但部分应用执行失败",
+  notify: english ? "Some applications failed in this run: {tasks}" : "本次运行有应用执行失败：{tasks}",
+};
 const ONE_DRAGON_FAIL_MARKER = "指令[ 一条龙 ] 执行失败";
 const ONE_DRAGON_DONE_MARKER = "指令[ 一条龙 ] 执行成功";
 const CLOSE_MARKER = "关闭游戏成功";
@@ -45,7 +54,7 @@ if (failPos >= 0) {
   const detail = statusPos >= 0 ? line.slice(statusPos + "返回状态 ".length).trim() : "";
   console.log(JSON.stringify({
     status: "failed",
-    reason: detail ? "一条龙执行失败：" + detail + "，任务未完成" : "一条龙执行失败，任务未完成"
+    reason: detail ? text.failed.replace("{detail}", detail) : text.failedWithoutDetail
   }));
 } else {
   const donePos = log.indexOf(CLOSE_MARKER);
@@ -65,12 +74,12 @@ if (failPos >= 0) {
       }
     }
     if (failed.length === 0) {
-      console.log(JSON.stringify({ status: "success", reason: "全部应用执行成功" }));
+      console.log(JSON.stringify({ status: "success", reason: text.success }));
     } else {
       console.log(JSON.stringify({
         status: "partial",
-        reason: "一条龙运行完成，但部分应用执行失败",
-        notifyText: "本次运行有应用执行失败：" + failed.join("、")
+        reason: text.partial,
+        notifyText: text.notify.replace("{tasks}", joinTasks(failed))
       }));
     }
   }
