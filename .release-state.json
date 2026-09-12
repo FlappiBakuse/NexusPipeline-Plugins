@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "e1ed621ff566e23be367f4c3eda5c28f30616338",
+  "sourceCommit": "7f027338a9854033cb7fa7c37d1dc1620431cb64",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -21,10 +21,10 @@
     "CustomWallpaper": {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.2.1",
-      "sha256": "798b5389065aef8a20514ccabf448076b28c4f04152afedae0be07beee5eed11",
-      "sizeBytes": 252507,
-      "sourceTree": "aeefaf33d47ab986286f0d70ea668536cabf9a22"
+      "version": "0.2.2",
+      "sha256": "819259a041573fc0fd8c3513f08fda540ad324cab0e9eedbaa1e53a918a0a533",
+      "sizeBytes": 253536,
+      "sourceTree": "38524f5cb36f5186acbe678b585ccfd1503ac70e"
     },
     "GameCheckIn": {
       "name": "game-checkin",
