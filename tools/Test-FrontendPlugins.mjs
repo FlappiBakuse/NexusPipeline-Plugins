@@ -52,6 +52,7 @@ const fallbackPublicElements = [
   "nxp-select",
   "nxp-spinner",
   "nxp-switch",
+  "nxp-switch-list",
   "nxp-switch-setting",
   "nxp-text-area",
   "nxp-text-input",
