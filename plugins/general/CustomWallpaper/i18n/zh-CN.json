@@ -1,7 +1,6 @@
 {
   "card.title": "自定义壁纸",
   "card.description": "同步壁纸、轮换方式和显示效果",
-  "status.loading": "读取中",
   "status.enabled": "已启用",
   "status.disabled": "未启用",
   "status.read_failed": "读取失败",
@@ -10,9 +9,6 @@
   "status.delete_failed": "删除失败",
   "status.uploading": "上传中：{name}",
   "status.upload_failed": "上传失败",
-  "status.uploaded": "已上传 {count} 张",
-  "status.upload_failed_suffix": "，{count} 张失败",
-  "status.palette_pending": "（配色待生成）",
   "settings.sync": "服务端同步到当前 NexusPipeline 实例的全部浏览器。",
   "settings.enabled": "启用自定义壁纸",
   "settings.enabled_help": "启用后使用自定义壁纸作为页面背景。",
@@ -40,7 +36,13 @@
   "error.types": "壁纸仅支持 JPEG、PNG 或 WebP",
   "error.size": "壁纸文件不能超过 8192 KB",
   "error.count": "壁纸数量不能超过 32 张",
+  "error.total": "壁纸总容量不能超过 256 MiB",
+  "error.image": "壁纸文件内容与声明类型不匹配",
+  "error.config": "壁纸设置无效",
+  "error.asset": "壁纸资源无效",
+  "error.not_found": "壁纸资源不存在",
+  "error.palette": "壁纸配色无效",
+  "error.generic": "操作失败：{code}",
   "warning.portrait": "该图片可能在电脑上显示效果不佳",
-  "warning.palette": "壁纸已上传，配色稍后生成：{error}",
-  "error.upload_response": "上传接口未返回壁纸资源"
+  "warning.palette": "壁纸已上传，配色稍后生成：{error}"
 }

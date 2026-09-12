@@ -1,7 +1,6 @@
 {
   "card.title": "Custom wallpaper",
   "card.description": "Sync wallpapers, rotation, and display effects",
-  "status.loading": "Loading",
   "status.enabled": "Enabled",
   "status.disabled": "Disabled",
   "status.read_failed": "Read failed",
@@ -10,9 +9,6 @@
   "status.delete_failed": "Delete failed",
   "status.uploading": "Uploading: {name}",
   "status.upload_failed": "Upload failed",
-  "status.uploaded": "Uploaded {count} image(s)",
-  "status.upload_failed_suffix": ", {count} failed",
-  "status.palette_pending": " (palette pending)",
   "settings.sync": "Synchronized by the server across browsers connected to this NexusPipeline instance.",
   "settings.enabled": "Enable custom wallpaper",
   "settings.enabled_help": "Use a custom wallpaper as the page background when enabled.",
@@ -40,7 +36,13 @@
   "error.types": "Wallpapers support JPEG, PNG, or WebP only",
   "error.size": "Wallpaper files cannot exceed 8192 KB",
   "error.count": "You cannot add more than 32 wallpapers",
+  "error.total": "Wallpapers cannot exceed 256 MiB in total",
+  "error.image": "The wallpaper content does not match its declared type",
+  "error.config": "Invalid wallpaper settings",
+  "error.asset": "Invalid wallpaper asset",
+  "error.not_found": "Wallpaper asset not found",
+  "error.palette": "Invalid wallpaper palette",
+  "error.generic": "Operation failed: {code}",
   "warning.portrait": "This image may display poorly on a computer",
-  "warning.palette": "Wallpaper uploaded; palette generation is pending: {error}",
-  "error.upload_response": "The upload response did not contain a wallpaper asset"
+  "warning.palette": "Wallpaper uploaded; palette generation is pending: {error}"
 }

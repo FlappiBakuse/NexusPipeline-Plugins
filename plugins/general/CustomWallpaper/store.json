@@ -7,9 +7,21 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["外观", "壁纸", "主题"],
+  "tags": [
+    "外观",
+    "壁纸",
+    "主题"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
+    {
+      "version": "0.2.0",
+      "date": "2026-09-12",
+      "items": [
+        "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
+        "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
+      ]
+    },
     {
       "version": "0.1.13",
       "date": "2026-09-11",
@@ -23,13 +35,6 @@
       "items": [
         "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
       ]
-    },
-    {
-      "version": "0.1.11",
-      "date": "2026-09-10",
-      "items": [
-        "迁移到 Frontend API 1.4 与 Vue 组件化设置界面。"
-      ]
     }
   ],
   "locales": {
@@ -37,19 +42,30 @@
       "displayName": "Custom Wallpaper",
       "gameName": "General appearance",
       "description": "Manage multiple custom wallpapers in NexusPipeline, including rotation, display effects, and adaptive colors.",
-      "tags": ["Appearance", "Wallpaper", "Theme"],
+      "tags": [
+        "Appearance",
+        "Wallpaper",
+        "Theme"
+      ],
       "changelog": [
         {
+          "version": "0.2.0",
+          "items": [
+            "Wallpaper settings, quotas, file validation, deduplication, rotation, and palettes are now implemented by the plugin; the host only provides generic asset storage and the plugin Web API.",
+            "The plugin frontend targets Frontend API 1.5, uses only public nxp-* elements with its own style namespace, and imports existing host wallpaper data automatically."
+          ]
+        },
+        {
           "version": "0.1.13",
-          "items": ["Refined the settings-card expansion, toggle, and separator behavior for the custom wallpaper settings UI."]
+          "items": [
+            "Refined the settings-card expansion, toggle, and separator behavior for the custom wallpaper settings UI."
+          ]
         },
         {
           "version": "0.1.12",
-          "items": ["Fixed the Vue frontend package so the settings card mounts in the browser."]
-        },
-        {
-          "version": "0.1.11",
-          "items": ["Migrated the settings card to Frontend API 1.4 and a Vue componentized interface."]
+          "items": [
+            "Fixed the Vue frontend package so the settings card mounts in the browser."
+          ]
         }
       ]
     }
