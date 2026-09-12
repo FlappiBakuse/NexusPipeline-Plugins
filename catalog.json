@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-12T06:03:58Z",
+  "generatedAt": "2026-09-12T16:39:50Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -23,17 +23,24 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
       "updatedAt": "2026-09-12",
       "hasReadme": true,
-      "version": "0.2.2",
+      "version": "0.2.3",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.2.zip",
-      "sha256": "819259a041573fc0fd8c3513f08fda540ad324cab0e9eedbaa1e53a918a0a533",
-      "sizeBytes": 253536,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.3.zip",
+      "sha256": "c648b75f83ffcfd32048bb124cbe05d603331489ca83899746efaf5c55e31cad",
+      "sizeBytes": 253423,
       "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-09-12",
+          "items": [
+            "拖拽把手现在会带动整张壁纸卡片移动，排序操作的拖拽预览与实际卡片保持一致。"
+          ]
+        },
         {
           "version": "0.2.2",
           "date": "2026-09-12",
@@ -50,14 +57,6 @@
             "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。",
             "设置卡片按宿主统一的展开置顶规则显示，两个开关使用公开开关列表组件，徽章与删除按钮使用公开元素文案属性，与设置页外观保持一致。"
           ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-12",
-          "items": [
-            "壁纸配置、配额、文件校验、去重、轮换和配色全部改由插件实现，宿主只提供通用资产存储与插件 Web API。",
-            "插件前端升级到 Frontend API 1.5，只使用公开 nxp-* 组件与插件自有样式命名空间，并自动导入宿主的旧壁纸数据。"
-          ]
         }
       ],
       "locales": {
@@ -72,6 +71,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.3",
+              "items": [
+                "Dragging the handle now moves the entire wallpaper card, keeping the drag preview aligned with the card being reordered."
+              ]
+            },
+            {
               "version": "0.2.2",
               "items": [
                 "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
@@ -84,13 +89,6 @@
                 "The wallpaper runtime now belongs to the plugin lifecycle: wallpapers and palettes apply without opening the settings page, and leaving the settings page keeps the wallpaper, palette, and rotation timer alive until the plugin is disabled.",
                 "Startup rotation runs once from the plugin startup lifecycle, so opening or leaving the settings page never changes the current wallpaper, and time-based rotation keeps running on any page.",
                 "The settings card follows the host card expansion rule, the switches use the public switch list, and the badge and delete button pass their text through the public element label property so they match the settings page."
-              ]
-            },
-            {
-              "version": "0.2.0",
-              "items": [
-                "Wallpaper settings, quotas, file validation, deduplication, rotation, and palettes are now implemented by the plugin; the host only provides generic asset storage and the plugin Web API.",
-                "The plugin frontend targets Frontend API 1.5, uses only public nxp-* elements with its own style namespace, and imports existing host wallpaper data automatically."
               ]
             }
           ]
@@ -276,7 +274,7 @@
     {
       "name": "baah",
       "artifactName": "BAAH",
-      "displayName": "BAAH",
+      "displayName": "蔚蓝档案爱丽丝助手",
       "gameName": "蔚蓝档案",
       "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
       "authors": [
@@ -293,9 +291,9 @@
         "BAAH"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.1.3",
+      "version": "0.1.4",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
@@ -303,10 +301,17 @@
         "self-managed-pc-launch"
       ],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.3.zip",
-      "sha256": "6ed400459531188167b3c15502a50314ec045c1f23affa3f6cc7ac5919f91992",
-      "sizeBytes": 20268,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.4.zip",
+      "sha256": "f369673689c26e93af33e768e8f103d39e6414c8304c161f37947964c9d9e923",
+      "sizeBytes": 22563,
       "changelog": [
+        {
+          "version": "0.1.4",
+          "date": "2026-09-12",
+          "items": [
+            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+          ]
+        },
         {
           "version": "0.1.3",
           "date": "2026-09-10",
@@ -337,6 +342,12 @@
           ],
           "changelog": [
             {
+              "version": "0.1.4",
+              "items": [
+                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+              ]
+            },
+            {
               "version": "0.1.3",
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
@@ -357,7 +368,7 @@
     {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "displayName": "BetterGI",
+      "displayName": "更好的原神",
       "gameName": "原神",
       "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
       "authors": [
@@ -372,17 +383,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.2.8",
+      "version": "0.2.9",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.8.zip",
-      "sha256": "c0523a4dd7066b8e2958ecbab83db23176aa90bcf749356886e7f78c4cd4eb5b",
-      "sizeBytes": 15022,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.9.zip",
+      "sha256": "6f773fb8e7ad59db0753b4b45c9c5d230423fe5a2cb2a1f5d9f133bff57e29a2",
+      "sizeBytes": 15874,
       "changelog": [
+        {
+          "version": "0.2.9",
+          "date": "2026-09-12",
+          "items": [
+            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+          ]
+        },
         {
           "version": "0.2.8",
           "date": "2026-09-10",
@@ -395,14 +413,6 @@
           "date": "2026-09-10",
           "items": [
             "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
-          ]
-        },
-        {
-          "version": "0.2.5",
-          "date": "2026-09-06",
-          "items": [
-            "适配 NexusPipeline v0.14.4：首次 fresh/reuse 编辑会隔离全部一条龙配置，保存、取消和恢复后还原原始配置现场。",
-            "新增配置编辑准备脚本，同步 User/config.json 的 selectedOneDragonFlowConfigName，并支持附加配置工作副本事务。"
           ]
         }
       ],
@@ -418,6 +428,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.9",
+              "items": [
+                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+              ]
+            },
+            {
               "version": "0.2.8",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
@@ -428,13 +444,6 @@
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
               ]
-            },
-            {
-              "version": "0.2.5",
-              "items": [
-                "Adapted to NexusPipeline v0.14.4: isolated all BetterGI configuration files when editing a fresh or reused configuration, then restored the original configuration after saving, cancelling, or recovering.",
-                "Added an edit-preparation script that synchronizes selectedOneDragonFlowConfigName in User/config.json and supports transactional working copies for additional configuration files."
-              ]
             }
           ]
         }
@@ -443,7 +452,7 @@
     {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "displayName": "MaaEnd",
+      "displayName": "终末地小助手",
       "gameName": "明日方舟：终末地",
       "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
       "authors": [
@@ -458,19 +467,26 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.2.3",
+      "version": "0.2.4",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.3.zip",
-      "sha256": "104340721cc6795029517ce231043bec1b63daeaed489a7f0e657edec183066a",
-      "sizeBytes": 11834,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.4.zip",
+      "sha256": "ba96060337365ac6aec4c5165bacfb74948adf9e965477b01abc82bb73286c2e",
+      "sizeBytes": 12793,
       "changelog": [
+        {
+          "version": "0.2.4",
+          "date": "2026-09-12",
+          "items": [
+            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+          ]
+        },
         {
           "version": "0.2.3",
           "date": "2026-09-10",
@@ -483,14 +499,6 @@
           "date": "2026-09-10",
           "items": [
             "新增中英文商店元数据，完善多语言展示。"
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-01",
-          "items": [
-            "新增运行截图：日常奖励领取任务完成后自动截图，运行最终判定成功或失败后再次截图。",
-            "配合宿主 v0.12.8 移除内置配置模板，首次编辑配置时改为选择全新或复用。"
           ]
         }
       ],
@@ -506,6 +514,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.4",
+              "items": [
+                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+              ]
+            },
+            {
               "version": "0.2.3",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
@@ -516,22 +530,15 @@
               "items": [
                 "Added English store metadata for the official plugin catalog."
               ]
-            },
-            {
-              "version": "0.2.0",
-              "items": [
-                "Added screenshots after the daily reward task completes and after the final run result is determined.",
-                "After NexusPipeline v0.12.8 removed the built-in configuration templates, the first configuration edit now lets the user choose between creating a fresh configuration and reusing an existing one."
-              ]
             }
           ]
         }
       }
     },
     {
-      "name": "maastellasora",
+      "name": "maas",
       "artifactName": "MaaStellaSora",
-      "displayName": "MaaStellaSora",
+      "displayName": "星塔助手",
       "gameName": "星塔旅人",
       "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
       "authors": [
@@ -547,19 +554,26 @@
         "MaaFramework"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.1.2",
+      "version": "0.1.3",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.2.zip",
-      "sha256": "975ec521af5d8981e4a609fe29070fd8142c8ff62284da630673e962aaab7b66",
-      "sizeBytes": 10295,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.3.zip",
+      "sha256": "e241d509e832db3cbab44fb6162fe7b549108b803aa49a63c24a89b35ec8917c",
+      "sizeBytes": 11250,
       "changelog": [
+        {
+          "version": "0.1.3",
+          "date": "2026-09-12",
+          "items": [
+            "机器标识由 maastellasora 更新为 maas，并要求宿主执行对应配置迁移。"
+          ]
+        },
         {
           "version": "0.1.2",
           "date": "2026-09-10",
@@ -572,14 +586,6 @@
           "date": "2026-09-07",
           "items": [
             "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-09-04",
-          "items": [
-            "首个版本：面向 MaaStellaSora MXU 运行包（mxu.exe + interface.json）的专项脚本实例配置接管。",
-            "无人值守运行 mxu.exe --autostart --quit-after-run，按 MXU 日志判定任务完成与失败，失败时自动调整为仅重试失败任务并在收尾还原用户任务勾选。"
           ]
         }
       ],
@@ -595,6 +601,12 @@
           ],
           "changelog": [
             {
+              "version": "0.1.3",
+              "items": [
+                "Renamed the machine identifier from maastellasora to maas and requires the host migration for existing settings."
+              ]
+            },
+            {
               "version": "0.1.2",
               "items": [
                 "Added English store metadata for the official plugin catalog."
@@ -605,13 +617,6 @@
               "items": [
                 "Synced the official plugin source layout and homepage; runtime behavior is unchanged."
               ]
-            },
-            {
-              "version": "0.1.0",
-              "items": [
-                "Initial support for MaaStellaSora MXU packages and specialized script-instance configuration.",
-                "Ran mxu.exe in unattended mode, interpreted MXU logs, retried failed tasks, and restored the original task selection."
-              ]
             }
           ]
         }
@@ -620,7 +625,7 @@
     {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "displayName": "March7thAssistant",
+      "displayName": "三月七小助手",
       "gameName": "崩坏：星穹铁道",
       "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
       "authors": [
@@ -635,17 +640,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.2.4",
+      "version": "0.2.5",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
       "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.4.zip",
-      "sha256": "46d6b3c1b73f89311087b38fc5231a712a911aca126b4d97a2d73433496a3f22",
-      "sizeBytes": 8472,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.5.zip",
+      "sha256": "fb534b45d6ca16567186713238cbf5ce5357cd436c42136269c346a6949b11c1",
+      "sizeBytes": 9190,
       "changelog": [
+        {
+          "version": "0.2.5",
+          "date": "2026-09-12",
+          "items": [
+            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+          ]
+        },
         {
           "version": "0.2.4",
           "date": "2026-09-10",
@@ -659,26 +671,25 @@
           "items": [
             "新增中英文商店元数据，完善多语言展示。"
           ]
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-09-05",
-          "items": [
-            "新增配置校验：保存脚本实例或配置时校验项目设置的游戏路径与 M7A 配置（config.yaml 的 game_path）的一致性，以角落通知提醒；当前版本不自动修改配置。需要宿主 v0.14.1+。"
-          ]
         }
       ],
       "locales": {
         "en-US": {
-          "displayName": "March 7th Assistant",
+          "displayName": "March7thAssistant",
           "gameName": "Honkai: Star Rail",
-          "description": "Manage March 7th Assistant script instances, configuration paths, logs, and run screenshots.",
+          "description": "Manage March7thAssistant script instances, configuration paths, logs, and run screenshots.",
           "tags": [
             "Honkai: Star Rail",
             "Specialized plugin",
-            "March 7th Assistant"
+            "March7thAssistant"
           ],
           "changelog": [
+            {
+              "version": "0.2.5",
+              "items": [
+                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+              ]
+            },
             {
               "version": "0.2.4",
               "items": [
@@ -690,12 +701,6 @@
               "items": [
                 "Added English store metadata for the official plugin catalog."
               ]
-            },
-            {
-              "version": "0.2.1",
-              "items": [
-                "Added configuration validation that compares the project game path with M7A's config.yaml game_path setting when saving a script instance or configuration. A toast notification reports mismatches; the current version does not modify the configuration. Requires host v0.14.1 or later."
-              ]
             }
           ]
         }
@@ -704,7 +709,7 @@
     {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "displayName": "ZenlessZoneZeroOneDragon",
+      "displayName": "绝区零一条龙",
       "gameName": "绝区零",
       "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
       "authors": [
@@ -719,19 +724,26 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-10",
+      "updatedAt": "2026-09-12",
       "hasReadme": false,
-      "version": "0.2.8",
+      "version": "0.2.9",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
       "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.8.zip",
-      "sha256": "c9603dda641730a791bbd6c42469e3d19d4a0d8440403f19654604194cb32c11",
-      "sizeBytes": 16245,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.9.zip",
+      "sha256": "94b9ecb5872ad80772b616085cc3288c4c16604c96ba81ff0b67def6da9a6d0c",
+      "sizeBytes": 16724,
       "changelog": [
+        {
+          "version": "0.2.9",
+          "date": "2026-09-12",
+          "items": [
+            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+          ]
+        },
         {
           "version": "0.2.8",
           "date": "2026-09-10",
@@ -745,28 +757,25 @@
           "items": [
             "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
           ]
-        },
-        {
-          "version": "0.2.5",
-          "date": "2026-09-06",
-          "items": [
-            "适配 NexusPipeline v0.14.4：多实例 reuse 编辑隔离 config 下全部实例目录，保存、取消和恢复后还原原始现场。",
-            "新增 one_dragon.yml 编辑准备脚本，仅保留选中实例并同步 active、active_in_od，附加配置纳入编辑事务。",
-            "兼容 OneDragon 实际生成的同级 YAML 列表与数字型 idx，修复单实例和多实例复用编辑失败。"
-          ]
         }
       ],
       "locales": {
         "en-US": {
-          "displayName": "Zenless Zone Zero OneDragon",
+          "displayName": "ZenlessZoneZeroOneDragon",
           "gameName": "Zenless Zone Zero",
-          "description": "Manage Zenless Zone Zero OneDragon script instances, configuration paths, logs, and bound user settings.",
+          "description": "Manage ZenlessZoneZeroOneDragon script instances, configuration paths, logs, and bound user settings.",
           "tags": [
             "Zenless Zone Zero",
             "Specialized plugin",
             "OneDragon"
           ],
           "changelog": [
+            {
+              "version": "0.2.9",
+              "items": [
+                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+              ]
+            },
             {
               "version": "0.2.8",
               "items": [
@@ -777,14 +786,6 @@
               "version": "0.2.7",
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
-              ]
-            },
-            {
-              "version": "0.2.5",
-              "items": [
-                "Adapted to NexusPipeline v0.14.4: during reuse editing, isolated every instance directory under config, then restored the original state after saving, cancelling, or recovering.",
-                "Added an edit-preparation script for one_dragon.yml that keeps only the selected instance, synchronizes active and active_in_od, and includes additional configuration files in the edit transaction.",
-                "Added compatibility for the same-level YAML list and numeric idx values generated by OneDragon, fixing single-instance and multi-instance reuse editing."
               ]
             }
           ]

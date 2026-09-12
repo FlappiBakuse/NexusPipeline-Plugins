@@ -1,30 +1,30 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "7f027338a9854033cb7fa7c37d1dc1620431cb64",
+  "sourceCommit": "dff8d2ab36aeddfe818ca52dc939f803c720dace",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.1.3",
-      "sha256": "6ed400459531188167b3c15502a50314ec045c1f23affa3f6cc7ac5919f91992",
-      "sizeBytes": 20268,
-      "sourceTree": "4a0dbc09854e6ede9edd7f9484195b3d6a14f0c9"
+      "version": "0.1.4",
+      "sha256": "f369673689c26e93af33e768e8f103d39e6414c8304c161f37947964c9d9e923",
+      "sizeBytes": 22563,
+      "sourceTree": "c66f54cd1d6a9ef60bd2a282f62e62c55d44673c"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.2.8",
-      "sha256": "c0523a4dd7066b8e2958ecbab83db23176aa90bcf749356886e7f78c4cd4eb5b",
-      "sizeBytes": 15022,
-      "sourceTree": "697f6461c65b5b4c372d01f0ebe2b7f91ce2af54"
+      "version": "0.2.9",
+      "sha256": "6f773fb8e7ad59db0753b4b45c9c5d230423fe5a2cb2a1f5d9f133bff57e29a2",
+      "sizeBytes": 15874,
+      "sourceTree": "1f79300b144d1df04c85e140dc77980527167fc8"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.2.2",
-      "sha256": "819259a041573fc0fd8c3513f08fda540ad324cab0e9eedbaa1e53a918a0a533",
-      "sizeBytes": 253536,
-      "sourceTree": "38524f5cb36f5186acbe678b585ccfd1503ac70e"
+      "version": "0.2.3",
+      "sha256": "c648b75f83ffcfd32048bb124cbe05d603331489ca83899746efaf5c55e31cad",
+      "sizeBytes": 253423,
+      "sourceTree": "032cc7d0e9276375c1035c2f3cdef618185c5044"
     },
     "GameCheckIn": {
       "name": "game-checkin",
@@ -45,34 +45,34 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.2.3",
-      "sha256": "104340721cc6795029517ce231043bec1b63daeaed489a7f0e657edec183066a",
-      "sizeBytes": 11834,
-      "sourceTree": "59c7d706741ea0f8b1f5dd39b7dd96860295a3ee"
+      "version": "0.2.4",
+      "sha256": "ba96060337365ac6aec4c5165bacfb74948adf9e965477b01abc82bb73286c2e",
+      "sizeBytes": 12793,
+      "sourceTree": "c1da1a8879816af3a4916d0de726cf96474cf028"
     },
     "MaaStellaSora": {
-      "name": "maastellasora",
+      "name": "maas",
       "artifactName": "MaaStellaSora",
-      "version": "0.1.2",
-      "sha256": "975ec521af5d8981e4a609fe29070fd8142c8ff62284da630673e962aaab7b66",
-      "sizeBytes": 10295,
-      "sourceTree": "f8641b277ff5b47d7cbda97cdcca438efaece0df"
+      "version": "0.1.3",
+      "sha256": "e241d509e832db3cbab44fb6162fe7b549108b803aa49a63c24a89b35ec8917c",
+      "sizeBytes": 11250,
+      "sourceTree": "652eaf15a6503bb6f3b218635a1afc2bffc68837"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.2.4",
-      "sha256": "46d6b3c1b73f89311087b38fc5231a712a911aca126b4d97a2d73433496a3f22",
-      "sizeBytes": 8472,
-      "sourceTree": "9e1875f0e31523722c696cfe545c44531865f28e"
+      "version": "0.2.5",
+      "sha256": "fb534b45d6ca16567186713238cbf5ce5357cd436c42136269c346a6949b11c1",
+      "sizeBytes": 9190,
+      "sourceTree": "2880863f0aa1273e5b6a5f3493118b6905a8be3f"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.2.8",
-      "sha256": "c9603dda641730a791bbd6c42469e3d19d4a0d8440403f19654604194cb32c11",
-      "sizeBytes": 16245,
-      "sourceTree": "a9a39febdb4618ddefefd41a1b78870020c52343"
+      "version": "0.2.9",
+      "sha256": "94b9ecb5872ad80772b616085cc3288c4c16604c96ba81ff0b67def6da9a6d0c",
+      "sizeBytes": 16724,
+      "sourceTree": "44cbdeb7c72e858b8bafbfe7b4ef7a01363d7e13"
     }
   }
 }
