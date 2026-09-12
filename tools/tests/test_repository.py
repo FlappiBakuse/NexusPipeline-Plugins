@@ -118,7 +118,7 @@ class RepositoryCoreTests(unittest.TestCase):
         root = Path(tempfile.mkdtemp(prefix=".nxp-host-locale-test-", dir=str(Path.cwd())))
         try:
             host = root / "host"
-            (host / "wwwroot" / "i18n").mkdir(parents=True)
+            (host / "frontend" / "public" / "i18n").mkdir(parents=True)
             (host / "src" / "Localization" / "Resources").mkdir(parents=True)
             registry = {
                 "default": "zh-CN",
@@ -128,17 +128,17 @@ class RepositoryCoreTests(unittest.TestCase):
                 ],
             }
             write_json(root / "host.lock.json", {"supportedLocales": ["zh-CN", "en-US"]})
-            write_json(host / "wwwroot" / "i18n" / "locales.json", registry)
+            write_json(host / "frontend" / "public" / "i18n" / "locales.json", registry)
             write_json(host / "src" / "Localization" / "Resources" / "locales.json", registry)
             for locale in ("zh-CN", "en-US"):
-                write_json(host / "wwwroot" / "i18n" / f"{locale}.json", {})
+                write_json(host / "frontend" / "public" / "i18n" / f"{locale}.json", {})
                 write_json(host / "src" / "Localization" / "Resources" / f"{locale}.json", {})
 
             self.assertEqual(core.validate_host_locale_registry(root, host), 2)
 
             changed = dict(registry)
             changed["supported"] = [*registry["supported"], {"id": "ja-JP", "nativeName": "日本語"}]
-            write_json(host / "wwwroot" / "i18n" / "locales.json", changed)
+            write_json(host / "frontend" / "public" / "i18n" / "locales.json", changed)
             with self.assertRaisesRegex(RepositoryError, "supported locale"):
                 core.validate_host_locale_registry(root, host)
         finally:
