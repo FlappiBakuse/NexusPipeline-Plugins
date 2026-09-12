@@ -2697,10 +2697,10 @@ function Ja(e) {
 var Ya = {
 	class: "live-screenshot-card",
 	"data-live-screenshot-card": ""
-}, Xa = { class: "live-screenshot-heading" }, Za = { class: "live-screenshot-stage" }, Qa = ["src", "alt"], $a = {
+}, Xa = { class: "live-screenshot-heading" }, Za = ["tone"], Qa = { class: "live-screenshot-stage" }, $a = ["src", "alt"], eo = {
 	key: 1,
-	class: "muted"
-}, eo = { class: "live-screenshot-footer" }, to = { class: "muted" }, no = { class: "muted" }, ro = /* @__PURE__ */ Nn({
+	class: "ls-muted"
+}, to = { class: "live-screenshot-footer" }, no = { class: "ls-muted" }, ro = { class: "ls-muted" }, io = /* @__PURE__ */ Nn({
 	__name: "LiveScreenshot",
 	props: {
 		host: {},
@@ -2745,22 +2745,22 @@ var Ya = {
 		}), Zn(() => {
 			c = !0, o && clearInterval(o), s?.abort(), f("");
 		}), (e, t) => (bi(), Ti("section", Ya, [
-			Ai("div", Xa, [Ai("strong", null, A(l("title", {}, "实时画面")), 1), Ai("span", { class: k(["badge", n.value === "ready" ? "ok" : "muted"]) }, A(r.value || l("waiting", {}, "等待")), 3)]),
-			Ai("div", Za, [a.value ? (bi(), Ti("img", {
+			Ai("div", Xa, [Ai("strong", null, A(l("title", {}, "实时画面")), 1), Ai("nxp-badge", { tone: n.value === "ready" ? "ok" : "muted" }, A(r.value || l("waiting", {}, "等待")), 9, Za)]),
+			Ai("div", Qa, [a.value ? (bi(), Ti("img", {
 				key: 0,
 				class: "live-screenshot-image",
 				src: a.value,
 				alt: l("current_game", {}, "当前游戏画面")
-			}, null, 8, Qa)) : (bi(), Ti("span", $a, A(m()), 1))]),
-			Ai("div", eo, [Ai("span", to, A(i.value), 1), Ai("span", no, A(l("refresh", {}, "每 5 秒更新")), 1)])
+			}, null, 8, $a)) : (bi(), Ti("span", eo, A(m()), 1))]),
+			Ai("div", to, [Ai("span", no, A(i.value), 1), Ai("span", ro, A(l("refresh", {}, "每 5 秒更新")), 1)])
 		]));
 	}
 });
 //#endregion
 //#region src/main.ts
-function io(e) {
+function ao(e) {
 	return e.slots.register("dispatch.running.sidecar", (t) => {
-		let n = Ka(ro, {
+		let n = Ka(io, {
 			host: e,
 			context: t.context
 		});
@@ -2768,4 +2768,4 @@ function io(e) {
 	});
 }
 //#endregion
-export { io as activate };
+export { ao as activate };

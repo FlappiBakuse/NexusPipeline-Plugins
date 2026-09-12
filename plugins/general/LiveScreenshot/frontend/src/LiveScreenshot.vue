@@ -48,5 +48,5 @@ onBeforeUnmount(() => { disposed = true; if (timer) clearInterval(timer); reques
 </script>
 
 <template>
-  <section class="live-screenshot-card" data-live-screenshot-card><div class="live-screenshot-heading"><strong>{{ tr("title", {}, "实时画面") }}</strong><span class="badge" :class="state === 'ready' ? 'ok' : 'muted'">{{ source || tr("waiting", {}, "等待") }}</span></div><div class="live-screenshot-stage"> <img v-if="imageUrl" class="live-screenshot-image" :src="imageUrl" :alt="tr('current_game', {}, '当前游戏画面')"><span v-else class="muted">{{ message() }}</span></div><div class="live-screenshot-footer"><span class="muted">{{ capturedAt }}</span><span class="muted">{{ tr("refresh", {}, "每 5 秒更新") }}</span></div></section>
+  <section class="live-screenshot-card" data-live-screenshot-card><div class="live-screenshot-heading"><strong>{{ tr("title", {}, "实时画面") }}</strong><nxp-badge :tone="state === 'ready' ? 'ok' : 'muted'">{{ source || tr("waiting", {}, "等待") }}</nxp-badge></div><div class="live-screenshot-stage"> <img v-if="imageUrl" class="live-screenshot-image" :src="imageUrl" :alt="tr('current_game', {}, '当前游戏画面')"><span v-else class="ls-muted">{{ message() }}</span></div><div class="live-screenshot-footer"><span class="ls-muted">{{ capturedAt }}</span><span class="ls-muted">{{ tr("refresh", {}, "每 5 秒更新") }}</span></div></section>
 </template>

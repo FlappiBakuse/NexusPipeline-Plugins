@@ -7,9 +7,20 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["实时预览", "模拟器", "运行卡片"],
+  "tags": [
+    "实时预览",
+    "模拟器",
+    "运行卡片"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
   "changelog": [
+    {
+      "version": "0.2.0",
+      "date": "2026-09-12",
+      "items": [
+        "插件前端升级到 Frontend API 1.5，改用公开 nxp-* 组件与宿主稳定 design token。"
+      ]
+    },
     {
       "version": "0.1.6",
       "date": "2026-09-11",
@@ -23,13 +34,6 @@
       "items": [
         "迁移到 Frontend API 1.4 与 Vue 组件化实时预览界面。"
       ]
-    },
-    {
-      "version": "0.1.2",
-      "date": "2026-08-30",
-      "items": [
-        "补充官方插件作者元数据，不改变插件运行行为。"
-      ]
     }
   ],
   "locales": {
@@ -37,19 +41,29 @@
       "displayName": "Live Screenshot",
       "gameName": "PC games and Android emulators",
       "description": "Show a low-frequency preview of the current PC game or emulator screen in running task cards.",
-      "tags": ["Live preview", "Emulator", "Run card"],
+      "tags": [
+        "Live preview",
+        "Emulator",
+        "Run card"
+      ],
       "changelog": [
         {
+          "version": "0.2.0",
+          "items": [
+            "The plugin frontend targets Frontend API 1.5 and now uses public nxp-* elements with host design tokens."
+          ]
+        },
+        {
           "version": "0.1.6",
-          "items": ["Fixed the Vue frontend package so the live preview mounts in the browser."]
+          "items": [
+            "Fixed the Vue frontend package so the live preview mounts in the browser."
+          ]
         },
         {
           "version": "0.1.5",
-          "items": ["Migrated the live preview interface to Frontend API 1.4 and Vue components."]
-        },
-        {
-          "version": "0.1.2",
-          "items": ["Added official plugin author metadata without changing runtime behavior."]
+          "items": [
+            "Migrated the live preview interface to Frontend API 1.4 and Vue components."
+          ]
         }
       ]
     }
