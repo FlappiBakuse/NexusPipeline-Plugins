@@ -56,6 +56,40 @@ function Assert-SafePluginRelativeFile([string]$pluginDirectory, [string]$relati
     }
 }
 
+function Parse-NexusVersion([string]$value) {
+    $match = [regex]::Match($value, '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(beta|rc)\.(0|[1-9]\d*))?$')
+    if (-not $match.Success) {
+        return $null
+    }
+    $stageRank = switch ($match.Groups[4].Value) {
+        'beta' { 0; break }
+        'rc' { 1; break }
+        default { 2 }
+    }
+    return [pscustomobject]@{
+        Major = [int]$match.Groups[1].Value
+        Minor = [int]$match.Groups[2].Value
+        Patch = [int]$match.Groups[3].Value
+        StageRank = $stageRank
+        StageNumber = if ($match.Groups[5].Success) { [int]$match.Groups[5].Value } else { 0 }
+    }
+}
+
+function Compare-NexusVersion([string]$left, [string]$right) {
+    $leftVersion = Parse-NexusVersion $left
+    $rightVersion = Parse-NexusVersion $right
+    if ($null -eq $leftVersion -or $null -eq $rightVersion) {
+        throw "版本无效，无法比较：$left / $right"
+    }
+    foreach ($property in @('Major', 'Minor', 'Patch', 'StageRank', 'StageNumber')) {
+        $comparison = [int]$leftVersion.$property - $rightVersion.$property
+        if ($comparison -ne 0) {
+            return $comparison
+        }
+    }
+    return 0
+}
+
 function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
     $resolveRelative = [string]$manifest.resolve
     $judgeRelative = [string]$manifest.judgeScript
@@ -149,8 +183,8 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
 
 function Assert-ManifestsAndDataContracts {
     $capabilityMinimumHostVersions = @{
-        "self-managed-pc-launch" = [version]"0.14.1"
-        "no-fresh-config" = [version]"0.14.2"
+        "self-managed-pc-launch" = "0.14.1"
+        "no-fresh-config" = "0.14.2"
     }
     $directories = @(Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter plugin.json | ForEach-Object {
         $_.Directory
@@ -173,7 +207,7 @@ function Assert-ManifestsAndDataContracts {
         if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifest.PSObject.Properties.Name -contains "replaces") {
             throw "插件 manifest 不支持历史兼容字段：$($manifest.name)"
         }
-        if ([string]$manifest.version -notmatch '^\d+\.\d+\.\d+$') {
+        if ($null -eq (Parse-NexusVersion ([string]$manifest.version))) {
             throw "插件版本无效：$($manifest.name)"
         }
         $minHostVersionText = if ($manifest.PSObject.Properties.Name -contains "minHostVersion" -and -not [string]::IsNullOrWhiteSpace([string]$manifest.minHostVersion)) {
@@ -182,10 +216,9 @@ function Assert-ManifestsAndDataContracts {
         else {
             "0.0.0"
         }
-        if ($minHostVersionText -notmatch '^\d+\.\d+\.\d+$') {
+        if ($null -eq (Parse-NexusVersion $minHostVersionText)) {
             throw "插件最低宿主版本无效：$($manifest.name) -> $minHostVersionText"
         }
-        $minHostVersion = [version]$minHostVersionText
         $capabilities = if ($manifest.PSObject.Properties.Name -contains "capabilities" -and $null -ne $manifest.capabilities) {
             @($manifest.capabilities)
         }
@@ -194,7 +227,7 @@ function Assert-ManifestsAndDataContracts {
         }
         foreach ($capability in $capabilities) {
             $capabilityName = [string]$capability
-            if ($capabilityMinimumHostVersions.ContainsKey($capabilityName) -and $minHostVersion -lt $capabilityMinimumHostVersions[$capabilityName]) {
+            if ($capabilityMinimumHostVersions.ContainsKey($capabilityName) -and (Compare-NexusVersion $minHostVersionText $capabilityMinimumHostVersions[$capabilityName]) -lt 0) {
                 throw "插件能力要求的最低宿主版本未满足：$($manifest.name) -> $capabilityName 需要 $($capabilityMinimumHostVersions[$capabilityName])，当前为 $minHostVersionText"
             }
         }

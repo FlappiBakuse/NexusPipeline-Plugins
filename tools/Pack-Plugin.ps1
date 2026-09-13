@@ -31,6 +31,24 @@ function Test-ArtifactName([string]$value) {
     return $value -cmatch '^[A-Za-z][A-Za-z0-9]*$' -and $value.Length -le 64 -and $value -cmatch '[A-Z]'
 }
 
+function Parse-NexusVersion([string]$value) {
+    $match = [regex]::Match($value, '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(beta|rc)\.(0|[1-9]\d*))?$')
+    if (-not $match.Success) {
+        return $null
+    }
+    [pscustomobject]@{
+        Major = [int]$match.Groups[1].Value
+        Minor = [int]$match.Groups[2].Value
+        Patch = [int]$match.Groups[3].Value
+        StageRank = switch ($match.Groups[4].Value) {
+            'beta' { 0; break }
+            'rc' { 1; break }
+            default { 2 }
+        }
+        StageNumber = if ($match.Groups[5].Success) { [int]$match.Groups[5].Value } else { 0 }
+    }
+}
+
 function Write-DeterministicZip([string]$sourceRoot, [string]$destination) {
     $root = (Resolve-Path -LiteralPath $sourceRoot).Path.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
     $stream = [IO.File]::Open($destination, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
@@ -99,8 +117,8 @@ if ($manifest.PSObject.Properties.Name -contains "supportsEmulator" -or $manifes
     throw "plugin.json 不支持历史兼容字段：$ArtifactName"
 }
 $version = [string]$manifest.version
-if ($version -notmatch '^\d+\.\d+\.\d+$' -or @($version.Split('.') | Where-Object { $_.Length -gt 1 -and $_.StartsWith('0') }).Count -gt 0) {
-    throw "插件版本不是三段 SemVer：$version"
+if ($version -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(beta|rc)\.(0|[1-9]\d*))?$') {
+    throw "插件版本不是受支持的 Nexus 版本：$version"
 }
 $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
 if ($kind -notin @("data-specialized", "managed-code")) {
@@ -190,14 +208,17 @@ try {
         Write-Output "已生成：$finalPath"
     }
 
-    $pattern = "^" + [regex]::Escape($ArtifactName) + "-(\d+)\.(\d+)\.(\d+)\.zip$"
+    $pattern = "^" + [regex]::Escape($ArtifactName) + "-(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(beta|rc)\.(0|[1-9]\d*))?\.zip$"
     $versioned = @(
         Get-ChildItem -LiteralPath $artifactDir -Filter *.zip -File | ForEach-Object {
             if ($_.Name -cmatch $pattern) {
-                [pscustomobject]@{ File = $_; Major = [int]$Matches[1]; Minor = [int]$Matches[2]; Patch = [int]$Matches[3] }
+                $parsed = Parse-NexusVersion ([IO.Path]::GetFileNameWithoutExtension($_.Name).Substring($ArtifactName.Length + 1))
+                if ($null -ne $parsed) {
+                    [pscustomobject]@{ File = $_; Major = $parsed.Major; Minor = $parsed.Minor; Patch = $parsed.Patch; StageRank = $parsed.StageRank; StageNumber = $parsed.StageNumber }
+                }
             }
         }
-    ) | Sort-Object Major, Minor, Patch -Descending
+    ) | Sort-Object Major, Minor, Patch, StageRank, StageNumber -Descending
     $versioned | Select-Object -Skip 3 | ForEach-Object {
         Remove-Item -LiteralPath $_.File.FullName -Force
     }

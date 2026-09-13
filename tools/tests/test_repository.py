@@ -48,9 +48,16 @@ class RepositoryCoreTests(unittest.TestCase):
             self.assertEqual(core._npm_executable(), "npm")
 
     def test_semver_and_date_are_strict(self) -> None:
-        self.assertEqual(parse_semver("0.14.6"), (0, 14, 6))
+        self.assertEqual(parse_semver("0.14.6").text, "0.14.6")
+        self.assertEqual(parse_semver("0.14.6-beta.2").text, "0.14.6-beta.2")
+        self.assertEqual(parse_semver("0.14.6-rc.1").text, "0.14.6-rc.1")
         self.assertTrue(is_semver("10.0.1"))
+        self.assertTrue(is_semver("10.0.1-beta.1"))
         self.assertFalse(is_semver("01.0.0"))
+        self.assertFalse(is_semver("10.0.1-alpha.1"))
+        self.assertFalse(is_semver("10.0.1-beta.01"))
+        self.assertGreater(parse_semver("1.2.3"), parse_semver("1.2.3-rc.1"))
+        self.assertGreater(parse_semver("1.2.3-rc.1"), parse_semver("1.2.3-beta.2"))
         with self.assertRaises(RepositoryError):
             parse_semver("0.14", "测试版本")
         self.assertEqual(parse_date("2026-09-06"), "2026-09-06")

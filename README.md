@@ -18,7 +18,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 | `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
 
-宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
+宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
 
 ## 插件本地化资源
 
@@ -26,7 +26,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 ## 发布规则
 
-插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个 SemVer 包。相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
+插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个受限版本包。版本使用 `major.minor.patch`、`-beta.N` 或 `-rc.N`，相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
 
 ```text
 packages/<ArtifactName>/<ArtifactName>-<version>.zip

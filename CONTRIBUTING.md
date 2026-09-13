@@ -8,7 +8,7 @@
 - 源码目录使用正式大小写的 `artifactName`；`plugin.json` 中的 `name` 是机器标识，`artifactName` 必须与源码目录名保持完全一致。
 - `artifactName` 使用 ASCII 字母和数字，首字符为字母，至少包含一个大写字母；正式包目录和 ZIP 文件名必须保持完全一致。
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
-- 插件版本使用独立的 SemVer 风格版本字符串，例如 `0.1.0`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
+- 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
 - `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.6`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
 
@@ -34,7 +34,7 @@
 ## 发行包规则
 
 - 插件包由 main 发布工作流写入 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
-- 每个 artifact 目录最多保留最近三个数值 SemVer 包；旧包仅用于仓库存档，插件平台不提供降级安装。
+- 每个 artifact 目录最多保留最近三个受限版本包；版本排序遵循 `beta < rc < stable`，旧包仅用于仓库存档，插件平台不提供降级安装。
 - ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。相同 `(artifactName, version)` 的发行包不可覆盖。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
 

@@ -108,7 +108,7 @@ foreach ($directory in @(Get-ChildItem -LiteralPath $packagesRoot -Directory)) {
     if (-not (Assert-ValidArtifactName $directory.Name)) { throw "发行包目录名不符合大小写规范：$($directory.Name)" }
     $zips = @(Get-ChildItem -LiteralPath $directory.FullName -Filter *.zip -File)
     if ($zips.Count -gt 3) { throw "插件发行包超过最近 3 个版本：$($directory.Name)" }
-    $pattern = "^" + [regex]::Escape($directory.Name) + '-\d+\.\d+\.\d+\.zip$'
+    $pattern = "^" + [regex]::Escape($directory.Name) + '-(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-(beta|rc)\.(0|[1-9]\d*))?\.zip$'
     foreach ($zip in $zips) {
         if ($zip.Name -cnotmatch $pattern) { throw "发行包文件名不符合 artifactName/版本规范：$($zip.FullName)" }
     }

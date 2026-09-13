@@ -30,11 +30,42 @@ function Test-ArtifactName([string]$value) {
     return $value -cmatch '^[A-Za-z][A-Za-z0-9]*$' -and $value.Length -le 64 -and $value -cmatch '[A-Z]'
 }
 
-function Test-Semver([string]$value) {
-    if ($value -notmatch '^\d+\.\d+\.\d+$') {
-        return $false
+function Parse-NexusVersion([string]$value) {
+    $match = [regex]::Match($value, '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-(beta|rc)\.(0|[1-9]\d*))?$')
+    if (-not $match.Success) {
+        return $null
     }
-    return @($value.Split('.') | Where-Object { $_.Length -gt 1 -and $_.StartsWith('0') }).Count -eq 0
+    $stageRank = switch ($match.Groups[4].Value) {
+        'beta' { 0; break }
+        'rc' { 1; break }
+        default { 2 }
+    }
+    return [pscustomobject]@{
+        Major = [int]$match.Groups[1].Value
+        Minor = [int]$match.Groups[2].Value
+        Patch = [int]$match.Groups[3].Value
+        StageRank = $stageRank
+        StageNumber = if ($match.Groups[5].Success) { [int]$match.Groups[5].Value } else { 0 }
+    }
+}
+
+function Compare-NexusVersion([string]$left, [string]$right) {
+    $leftVersion = Parse-NexusVersion $left
+    $rightVersion = Parse-NexusVersion $right
+    if ($null -eq $leftVersion -or $null -eq $rightVersion) {
+        throw "版本无效，无法比较：$left / $right"
+    }
+    foreach ($property in @('Major', 'Minor', 'Patch', 'StageRank', 'StageNumber')) {
+        $comparison = [int]$leftVersion.$property - $rightVersion.$property
+        if ($comparison -ne 0) {
+            return $comparison
+        }
+    }
+    return 0
+}
+
+function Test-Semver([string]$value) {
+    return $null -ne (Parse-NexusVersion $value)
 }
 
 function Read-StoreChangelog($store, [string]$version, [string]$artifactName) {
@@ -54,7 +85,7 @@ function Read-StoreChangelog($store, [string]$version, [string]$artifactName) {
         if ($invalidVersion) {
             throw "插件 $artifactName 的 changelog 版本无效或未对应当前版本"
         }
-        if ($index -gt 0 -and [version]$result[$index - 1].version -le [version]$entryVersion) {
+        if ($index -gt 0 -and (Compare-NexusVersion ([string]$result[$index - 1].version) $entryVersion) -le 0) {
             throw "插件 $artifactName 的 changelog 必须按从新到旧排列"
         }
         $date = [string]$entry.date
@@ -253,6 +284,7 @@ function New-Catalog([string]$generatedAt) {
                 ([string]$packageManifest.artifactName -cne $artifactName) -or
                 ([string]$packageManifest.version -cne $version) -or
                 (([string]$packageManifest.kind).Trim().ToLowerInvariant() -cne $kind) -or
+                (([string]$packageManifest.minHostVersion) -cne $minHostVersion) -or
                 (($sourceCapabilities -join ([char]0x1f)) -cne ($packageCapabilities -join ([char]0x1f)))
             )
             if ($manifestMismatch) {

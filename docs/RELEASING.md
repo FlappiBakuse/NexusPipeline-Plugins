@@ -6,7 +6,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 插件发行包直接随 `main` 分支维护。本仓库不再为插件创建 Git tag 或 GitHub Release，宿主从固定官方 raw 地址下载 catalog 和 ZIP。
 
-每个插件最多保留最近三个数值 SemVer 包。旧包保留在仓库中作为发行存档，插件平台只展示和安装 catalog 当前版本，不提供旧版本选择或降级入口。
+每个插件最多保留最近三个受限版本包。版本格式为 `major.minor.patch`、`major.minor.patch-beta.N` 或 `major.minor.patch-rc.N`，排序遵循 `beta < rc < stable`。旧包保留在仓库中作为发行存档，插件平台只展示和安装 catalog 当前版本，不提供旧版本选择或降级入口。
 
 机器标识与发行 artifact 分离：
 
@@ -37,7 +37,7 @@ packages/
 └── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-<version>.zip
 ```
 
-每个 artifact 目录保留该插件最近三个数值 SemVer 包；`catalog.json` 只描述当前版本，归档包不提供安装入口。
+每个 artifact 目录保留该插件最近三个受限版本包；`catalog.json` 只描述当前版本，归档包不提供安装入口。
 
 发行 ZIP 的根目录直接对应运行时插件目录内容：
 
@@ -95,7 +95,7 @@ python tools/repository.py validate-generated --generated-root .generated
 5. retention 只扫描受影响 artifact 目录；
 6. 同一 `(artifactName, version)` 的 ZIP 内容不同会立即失败。
 
-源码从旧的平铺目录迁移到分类目录时，规划器会比较迁移前后的插件身份、版本和 Git tree。内容完全相同的纯 relocation 不要求 SemVer bump，不生成 ZIP，不计算 SHA，也不修改 catalog entry，只推进发行状态；迁移同时包含 payload 变化时按正常版本发行规则处理，必须提升插件版本。
+源码从旧的平铺目录迁移到分类目录时，规划器会比较迁移前后的插件身份、版本和 Git tree。内容完全相同的纯 relocation 不要求受限版本递增，不生成 ZIP，不计算 SHA，也不修改 catalog entry，只推进发行状态；迁移同时包含 payload 变化时按正常版本发行规则处理，必须提升插件版本。
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
 
@@ -174,7 +174,7 @@ python tools/repository.py validate-generated --generated-root .generated
 - `artifactName` 为 ASCII 字母/数字，首字符为字母，至少包含一个大写字母，最多 64 字符；
 - 同一 catalog 内机器标识和 artifactName 均不区分大小写重复；
 - raw packageUrl 必须严格位于官方仓库 `main/packages/` 下，并与 artifactName 和 version 完全匹配；
-- `changelog` 包含 1 至 3 条记录，第一条是当前版本，后续记录按 SemVer 从新到旧排列；日期使用 `YYYY-MM-DD`，条目文本不含 HTML；
+- `changelog` 包含 1 至 3 条记录，第一条是当前版本，后续记录按受限版本从新到旧排列；日期使用 `YYYY-MM-DD`，条目文本不含 HTML；
 - SHA256 使用最终 ZIP 的 64 位小写十六进制摘要，`sizeBytes` 使用最终 ZIP 的实际字节数。
 
 宿主与仓库当前均要求 catalog schemaVersion 2 和官方 raw 包地址。

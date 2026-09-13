@@ -31,13 +31,17 @@ STATE_FILE = ".release-state.json"
 STATE_SCHEMA_VERSION = 1
 MAX_RETAINED_PACKAGES = 3
 SUPPORTED_KINDS = {"managed-code", "data-specialized"}
-SEMVER_PATTERN = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+SEMVER_PATTERN = re.compile(
+    r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
+    r"(?:-(beta|rc)\.(0|[1-9]\d*))?$"
+)
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 ARTIFACT_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]{0,63}$")
 PLUGIN_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 PACKAGE_PATTERN = re.compile(
     r"^(?P<artifact>[A-Za-z][A-Za-z0-9]{0,63})-"
-    r"(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*))\.zip$"
+    r"(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+    r"(?:-(?:beta|rc)\.(?:0|[1-9]\d*))?)\.zip$"
 )
 TEXT_SUFFIXES = {
     ".css",
@@ -57,8 +61,8 @@ TEXT_SUFFIXES = {
     ".yml",
 }
 CAPABILITY_MIN_HOST = {
-    "self-managed-pc-launch": (0, 14, 1),
-    "no-fresh-config": (0, 14, 2),
+    "self-managed-pc-launch": "0.14.1",
+    "no-fresh-config": "0.14.2",
 }
 JUDGE_LOCALE_MIN_HOST_VERSION = "0.15.11"
 DEFAULT_SUPPORTED_LOCALES = frozenset({"zh-CN", "en-US"})
@@ -133,6 +137,26 @@ class PackageMetadata:
     size_bytes: int
 
 
+@dataclass(frozen=True, order=True)
+class ParsedVersion:
+    """NexusPipeline 的严格版本键：核心版本优先，beta < rc < stable。"""
+
+    major: int
+    minor: int
+    patch: int
+    stage_rank: int
+    stage_number: int
+
+    @property
+    def text(self) -> str:
+        core = f"{self.major}.{self.minor}.{self.patch}"
+        if self.stage_rank == 0:
+            return f"{core}-beta.{self.stage_number}"
+        if self.stage_rank == 1:
+            return f"{core}-rc.{self.stage_number}"
+        return core
+
+
 def _display(path: Path | str) -> str:
     return str(path).replace("\\", "/")
 
@@ -160,12 +184,20 @@ def write_json(path: Path, value: Any) -> None:
     os.replace(temporary, path)
 
 
-def parse_semver(value: Any, label: str = "版本") -> tuple[int, int, int]:
+def parse_semver(value: Any, label: str = "版本") -> ParsedVersion:
     text = value if isinstance(value, str) else ""
     match = SEMVER_PATTERN.fullmatch(text)
     if match is None:
-        raise RepositoryError(f"{label}不是三段 SemVer：{text}")
-    return tuple(int(part) for part in match.groups())
+        raise RepositoryError(f"{label}不是受支持的 Nexus 版本：{text}")
+    stage = match.group(4)
+    stage_rank = {"beta": 0, "rc": 1}.get(stage, 2)
+    return ParsedVersion(
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3)),
+        stage_rank,
+        int(match.group(5) or 0),
+    )
 
 
 def is_semver(value: Any) -> bool:
@@ -397,7 +429,7 @@ def _validate_store(
     _require(isinstance(homepage, str) and is_https_url(homepage), f"插件 {plugin_name} 的 homepage 必须是 HTTPS 地址")
     changelog = store.get("changelog")
     _require(isinstance(changelog, list) and 1 <= len(changelog) <= 3, f"插件 {plugin_name} 的 changelog 必须包含 1 至 3 个版本")
-    previous: tuple[int, int, int] | None = None
+    previous: ParsedVersion | None = None
     seen_versions: set[str] = set()
     for index, entry in enumerate(changelog):
         _require(isinstance(entry, dict), f"插件 {plugin_name} 的 changelog 条目无效")
@@ -638,7 +670,10 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
         _require(isinstance(capability, str) and bool(capability.strip()), f"插件 {artifact} 的 capability 无效")
         minimum = CAPABILITY_MIN_HOST.get(capability)
         if minimum:
-            _require(host_version >= minimum, f"插件能力要求的最低宿主版本未满足：{name} -> {capability}")
+            _require(
+                host_version >= parse_semver(minimum, "插件能力最低宿主版本"),
+                f"插件能力要求的最低宿主版本未满足：{name} -> {capability}",
+            )
     _validate_localization_contract(root, manifest)
     if kind == "data-specialized":
         _validate_data_contract(root, manifest)
@@ -882,7 +917,7 @@ def _relocation_pairs(
     return relocations
 
 
-def _version_from_package(path: Path, artifact: str) -> tuple[int, int, int] | None:
+def _version_from_package(path: Path, artifact: str) -> ParsedVersion | None:
     match = PACKAGE_PATTERN.fullmatch(path.name)
     if match is None or match.group("artifact") != artifact:
         return None
@@ -989,7 +1024,7 @@ def _retention_removals(root: Path, artifact: str, current_version: str) -> list
     directory = root / "packages" / artifact
     if not directory.is_dir():
         return []
-    versions: list[tuple[tuple[int, int, int], Path]] = []
+    versions: list[tuple[ParsedVersion, Path]] = []
     for package in sorted(directory.glob("*.zip")):
         version = _version_from_package(package, artifact)
         if version is not None:
@@ -1239,7 +1274,12 @@ def _validate_catalog_shape(root: Path, catalog: dict[str, Any], plugins: list[S
         seen.add(artifact)
         plugin = by_artifact[artifact]
         _require(entry.get("name") == plugin.name, f"catalog name 与源码不一致：{artifact}")
-        _require(entry.get("version") == plugin.version and entry.get("kind") == plugin.kind, f"catalog 版本或类型与源码不一致：{artifact}")
+        _require(
+            entry.get("version") == plugin.version
+            and entry.get("kind") == plugin.kind
+            and entry.get("minHostVersion", "0.0.0") == plugin.manifest.get("minHostVersion", "0.0.0"),
+            f"catalog 版本、类型或最低宿主版本与源码不一致：{artifact}",
+        )
         package = root / "packages" / artifact / f"{artifact}-{entry['version']}.zip"
         if require_packages:
             _require(package.is_file(), f"缺少 catalog 指定包：{_display(package)}")
@@ -1293,7 +1333,14 @@ def _validate_zip(package: Path, expected: SourcePlugin | None = None) -> None:
             if expected is not None:
                 store = _zip_json(archive, "store.json", package)
                 _require(store.get("schemaVersion") == 1 and isinstance(store.get("authors"), list), f"ZIP store.json 无效：{_display(package)}")
-                _require(manifest.get("name") == expected.name and manifest.get("artifactName") == expected.artifact_name and manifest.get("version") == expected.version and str(manifest.get("kind", "")).lower() == expected.kind, f"ZIP manifest 与源码不一致：{_display(package)}")
+                _require(
+                    manifest.get("name") == expected.name
+                    and manifest.get("artifactName") == expected.artifact_name
+                    and manifest.get("version") == expected.version
+                    and str(manifest.get("kind", "")).lower() == expected.kind
+                    and manifest.get("minHostVersion", "0.0.0") == expected.manifest.get("minHostVersion", "0.0.0"),
+                    f"ZIP manifest 与源码不一致：{_display(package)}",
+                )
                 if expected.kind == "data-specialized":
                     _require(any(name == "data" or name.startswith("data/") for name in names), f"专项插件 ZIP 缺少 data 目录：{_display(package)}")
                 else:
