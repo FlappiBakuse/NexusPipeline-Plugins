@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { WallpaperAsset, WallpaperHost, WallpaperState } from "./wallpaperApi";
 import { assetBlob, deleteAsset, ensurePalette, saveSettings, uploadAsset } from "./wallpaperApi";
 import type { WallpaperRuntime, WallpaperRuntimeSnapshot } from "./wallpaperRuntime";
+import { mountVerticalSortable } from "./verticalSortable";
 
 const props = defineProps<{ host: WallpaperHost; runtime: WallpaperRuntime; context?: Record<string, unknown> }>();
 
@@ -17,9 +18,11 @@ const expanded = ref(false);
 const busy = ref("");
 const help = ref("");
 const draggedId = ref("");
+const listElement = ref<HTMLElement | null>(null);
 const thumbnails = ref<Record<string, string>>({});
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
+let sortableCleanup: (() => void) | null = null;
 let disposed = false;
 
 const modes = computed(() => [
@@ -264,32 +267,25 @@ async function remove(id: string) {
   }
 }
 
-function drop(targetId: string) {
-  if (!draggedId.value || draggedId.value === targetId || !state.value) return;
-  const order = assets.value.map(asset => asset.id).filter(id => id !== draggedId.value);
-  const index = order.indexOf(targetId);
-  order.splice(index < 0 ? order.length : index, 0, draggedId.value);
-  draggedId.value = "";
-  requestSave({ order }, current => ({ ...current, order }));
-}
-
-function onDragStart(event: DragEvent, id: string) {
-  draggedId.value = id;
-  const dataTransfer = event.dataTransfer;
-  if (!dataTransfer) return;
-  dataTransfer.effectAllowed = "move";
-  dataTransfer.setData("text/plain", id);
-  const handle = event.currentTarget as HTMLElement | null;
-  const card = handle?.closest<HTMLElement>(".cw-item");
-  if (!card) return;
-  const rect = card.getBoundingClientRect();
-  dataTransfer.setDragImage(card, Math.max(1, rect.width / 2), Math.max(1, rect.height / 2));
+function reorderWallpapers(ids: string[]) {
+  if (!state.value) return;
+  const currentIds = assets.value.map(asset => asset.id);
+  if (ids.length !== currentIds.length || ids.every((id, index) => id === currentIds[index])) return;
+  requestSave({ order: ids }, current => ({ ...current, order: ids }));
 }
 
 onMounted(async () => {
   window.addEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe = props.runtime.subscribe(syncSnapshot);
   syncSnapshot(props.runtime.snapshot());
+  if (listElement.value) {
+    sortableCleanup = mountVerticalSortable(listElement.value, {
+      handleSelector: ".cw-drag-handle",
+      onDragStart: id => { draggedId.value = id; },
+      onDragEnd: () => { draggedId.value = ""; },
+      onDrop: reorderWallpapers,
+    });
+  }
   await loadThumbnails(state.value?.assets || []);
 });
 
@@ -298,6 +294,8 @@ onBeforeUnmount(() => {
   window.removeEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe?.();
   unsubscribe = null;
+  sortableCleanup?.();
+  sortableCleanup = null;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
   Object.values(thumbnails.value).forEach(url => URL.revokeObjectURL(url));
@@ -417,24 +415,20 @@ onBeforeUnmount(() => {
         />
         <span class="cw-muted">{{ tr("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB") }}</span>
       </div>
-      <div class="cw-list">
+      <div ref="listElement" class="cw-list">
         <p v-if="!assets.length" class="cw-muted cw-empty">{{ tr("empty", {}, "尚未添加壁纸。") }}</p>
         <div
           v-for="asset in assets"
           :key="asset.id"
           class="cw-item"
+          :data-dnd-id="asset.id"
           :class="{ 'is-dragging': draggedId === asset.id }"
-          @dragover.prevent
-          @drop="drop(asset.id)"
         >
           <button
             class="cw-drag-handle"
             type="button"
-            draggable="true"
             :aria-label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`"
             :title="tr('drag', {}, '拖拽排序')"
-            @dragstart.stop="onDragStart($event, asset.id)"
-            @dragend="draggedId = ''"
           >⠿</button>
           <img v-if="thumbnails[asset.id]" :src="thumbnails[asset.id]" :alt="asset.originalName || asset.id" />
           <span v-else class="cw-thumb-placeholder" aria-hidden="true"></span>

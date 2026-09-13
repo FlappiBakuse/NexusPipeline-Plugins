@@ -19,6 +19,8 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 .cw-range-row output { flex: 0 0 4ch; color: var(--nx-color-muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
 .cw-upload-row { justify-content: flex-start; flex-wrap: wrap; padding-top: var(--nx-space-4); border-top: 1px solid var(--nx-color-border); }
 .cw-list { display: grid; gap: var(--nx-space-2); }
+.cw-list.cw-dnd-active .cw-item { transition: none; }
+.cw-item.cw-drop-before { box-shadow: 0 -2px 0 0 var(--nx-color-accent); }
 .cw-item {
   display: grid;
   grid-template-columns: 32px 72px minmax(0, 1fr) auto;
@@ -45,6 +47,7 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
   line-height: 1;
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 .cw-drag-handle:hover, .cw-drag-handle:focus-visible { border-color: var(--nx-color-border); color: var(--nx-color-text); }
 .cw-drag-handle:active { cursor: grabbing; }

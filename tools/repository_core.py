@@ -60,6 +60,7 @@ CAPABILITY_MIN_HOST = {
     "self-managed-pc-launch": (0, 14, 1),
     "no-fresh-config": (0, 14, 2),
 }
+JUDGE_LOCALE_MIN_HOST_VERSION = "0.15.11"
 DEFAULT_SUPPORTED_LOCALES = frozenset({"zh-CN", "en-US"})
 SUPPORTED_LOCALES = set(DEFAULT_SUPPORTED_LOCALES)
 BCP47_LOCALE_PATTERN = re.compile(r"^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$")
@@ -427,7 +428,8 @@ def _validate_store(
 def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     name = str(manifest["name"])
     _safe_relative(plugin, manifest.get("resolve"), f"数据化插件 {name} 的 resolve", ".json")
-    _safe_relative(plugin, manifest.get("judgeScript"), f"数据化插件 {name} 的 judgeScript")
+    judge_path = _safe_relative(plugin, manifest.get("judgeScript"), f"数据化插件 {name} 的 judgeScript")
+    _validate_judge_locale_contract(plugin, manifest, judge_path)
     for field in ("configValidator", "configEditor"):
         if field in manifest:
             _safe_relative(plugin, manifest.get(field), f"数据化插件 {name} 的 {field}", ".js")
@@ -488,6 +490,20 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
             _require(isinstance(item, str) and item.strip(), f"数据化插件 {name} 的附加配置路径无效")
             normalized = item.replace("\\", "/")
             _require(not os.path.isabs(item) and not PureWindowsPath(item).is_absolute() and ".." not in normalized.split("/"), f"数据化插件 {name} 的附加配置路径不安全")
+
+
+def _validate_judge_locale_contract(plugin: Path, manifest: dict[str, Any], judge_path: Path) -> None:
+    """Judge 使用宿主注入字段时，manifest 必须声明对应的最低宿主版本。"""
+    source = judge_path.read_text(encoding="utf-8")
+    if re.search(r"\binput\s*\.\s*locale\b", source) is None:
+        return
+    name = str(manifest.get("name", manifest.get("artifactName", plugin.name)))
+    minimum = parse_semver(JUDGE_LOCALE_MIN_HOST_VERSION, "judge locale 契约版本")
+    actual = parse_semver(manifest.get("minHostVersion", "0.0.0"), f"插件 {name} 的 minHostVersion")
+    _require(
+        actual >= minimum,
+        f"数据化插件 {name} 的 judgeScript 使用 input.locale 时 minHostVersion 必须至少为 {JUDGE_LOCALE_MIN_HOST_VERSION}",
+    )
 
 
 def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:

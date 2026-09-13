@@ -96,6 +96,21 @@ class RepositoryCoreTests(unittest.TestCase):
         finally:
             self._remove_tree(root)
 
+    def test_judge_locale_requires_current_host_contract(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-judge-locale-test-", dir=str(Path.cwd())))
+        try:
+            judge = root / "data" / "judge.js"
+            judge.parent.mkdir(parents=True)
+            judge.write_text("const locale = input.locale;\n", encoding="utf-8")
+            manifest = {"name": "alpha", "minHostVersion": "0.14.4"}
+            with self.assertRaisesRegex(RepositoryError, r"input\.locale.*0\.15\.11"):
+                core._validate_judge_locale_contract(root, manifest, judge)
+
+            manifest["minHostVersion"] = "0.15.11"
+            core._validate_judge_locale_contract(root, manifest, judge)
+        finally:
+            self._remove_tree(root)
+
     def test_localized_changelog_item_counts_match_base_entries(self) -> None:
         base_changelog = [{"version": "0.1.0", "items": ["first", "second"]}]
         locales = {
