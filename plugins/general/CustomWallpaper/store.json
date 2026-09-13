@@ -15,10 +15,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
-      "version": "0.2.3",
-      "date": "2026-09-12",
+      "version": "0.2.4",
+      "date": "2026-09-13",
       "items": [
-        "拖拽把手现在会带动整张壁纸卡片移动，排序操作的拖拽预览与实际卡片保持一致。"
+        "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
       ]
     },
     {
@@ -27,15 +27,6 @@
       "items": [
         "设置页卡片按宿主统一的展开置顶规则显示，收回后回到插件插槽原位置。",
         "两个开关改用公开开关列表组件，与设置页的开关外观一致；状态徽章与删除按钮改用公开元素的文案属性，文案不再丢失。"
-      ]
-    },
-    {
-      "version": "0.2.1",
-      "date": "2026-09-12",
-      "items": [
-        "壁纸运行时改为插件级生命周期：不进入设置页面也会应用壁纸与配色，离开设置页面后壁纸、配色与轮换计时保持运行，只有插件停用才清理全局外观。",
-        "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。",
-        "设置卡片按宿主统一的展开置顶规则显示，两个开关使用公开开关列表组件，徽章与删除按钮使用公开元素文案属性，与设置页外观保持一致。"
       ]
     }
   ],
@@ -51,9 +42,9 @@
       ],
       "changelog": [
         {
-          "version": "0.2.3",
+          "version": "0.2.4",
           "items": [
-            "Dragging the handle now moves the entire wallpaper card, keeping the drag preview aligned with the card being reordered."
+            "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
           ]
         },
         {
@@ -61,14 +52,6 @@
           "items": [
             "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
             "Both switches use the public switch list for the same look as the settings page, and the status badge and delete button pass their text through the public element label property so the text is always rendered."
-          ]
-        },
-        {
-          "version": "0.2.1",
-          "items": [
-            "The wallpaper runtime now belongs to the plugin lifecycle: wallpapers and palettes apply without opening the settings page, and leaving the settings page keeps the wallpaper, palette, and rotation timer alive until the plugin is disabled.",
-            "Startup rotation runs once from the plugin startup lifecycle, so opening or leaving the settings page never changes the current wallpaper, and time-based rotation keeps running on any page.",
-            "The settings card follows the host card expansion rule, the switches use the public switch list, and the badge and delete button pass their text through the public element label property so they match the settings page."
           ]
         }
       ]

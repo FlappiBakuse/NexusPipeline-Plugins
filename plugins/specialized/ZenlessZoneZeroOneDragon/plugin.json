@@ -5,7 +5,7 @@
   "displayName": "绝区零一条龙",
   "gameName": "绝区零",
   "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "kind": "data-specialized",
   "minHostVersion": "0.15.11",
   "resolve": "data/resolve.json",

@@ -15,10 +15,10 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
   "changelog": [
     {
-      "version": "0.2.9",
-      "date": "2026-09-12",
+      "version": "0.2.10",
+      "date": "2026-09-13",
       "items": [
-        "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+        "将最低宿主版本要求更新为 0.15.11。"
       ]
     },
     {
@@ -26,13 +26,6 @@
       "date": "2026-09-10",
       "items": [
         "修正英文商店历史元数据，运行行为保持不变。"
-      ]
-    },
-    {
-      "version": "0.2.7",
-      "date": "2026-09-10",
-      "items": [
-        "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
       ]
     }
   ],
@@ -44,16 +37,12 @@
       "tags": ["Genshin Impact", "Specialized plugin", "Configuration"],
       "changelog": [
         {
-          "version": "0.2.9",
-          "items": ["Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."]
+          "version": "0.2.10",
+          "items": ["Updated the minimum host version requirement to 0.15.11."]
         },
         {
           "version": "0.2.8",
           "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
-        },
-        {
-          "version": "0.2.7",
-          "items": ["Added English store metadata and localized configuration-input labels and descriptions."]
         }
       ]
     }

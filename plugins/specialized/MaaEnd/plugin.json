@@ -5,7 +5,7 @@
   "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "kind": "data-specialized",
   "minHostVersion": "0.15.11",
   "capabilities": [
