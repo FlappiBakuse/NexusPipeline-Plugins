@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-12T16:39:50Z",
+  "generatedAt": "2026-09-13T02:10:02Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,24 +21,24 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": true,
-      "version": "0.2.3",
+      "version": "0.2.4",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.3.zip",
-      "sha256": "c648b75f83ffcfd32048bb124cbe05d603331489ca83899746efaf5c55e31cad",
-      "sizeBytes": 253423,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.4.zip",
+      "sha256": "5573d9472ad2c2839a1909eed6eb90c646682d356d331b11f5975eb665e9a835",
+      "sizeBytes": 254651,
       "changelog": [
         {
-          "version": "0.2.3",
-          "date": "2026-09-12",
+          "version": "0.2.4",
+          "date": "2026-09-13",
           "items": [
-            "拖拽把手现在会带动整张壁纸卡片移动，排序操作的拖拽预览与实际卡片保持一致。"
+            "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
           ]
         },
         {
@@ -47,15 +47,6 @@
           "items": [
             "设置页卡片按宿主统一的展开置顶规则显示，收回后回到插件插槽原位置。",
             "两个开关改用公开开关列表组件，与设置页的开关外观一致；状态徽章与删除按钮改用公开元素的文案属性，文案不再丢失。"
-          ]
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-09-12",
-          "items": [
-            "壁纸运行时改为插件级生命周期：不进入设置页面也会应用壁纸与配色，离开设置页面后壁纸、配色与轮换计时保持运行，只有插件停用才清理全局外观。",
-            "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。",
-            "设置卡片按宿主统一的展开置顶规则显示，两个开关使用公开开关列表组件，徽章与删除按钮使用公开元素文案属性，与设置页外观保持一致。"
           ]
         }
       ],
@@ -71,9 +62,9 @@
           ],
           "changelog": [
             {
-              "version": "0.2.3",
+              "version": "0.2.4",
               "items": [
-                "Dragging the handle now moves the entire wallpaper card, keeping the drag preview aligned with the card being reordered."
+                "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
               ]
             },
             {
@@ -81,14 +72,6 @@
               "items": [
                 "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
                 "Both switches use the public switch list for the same look as the settings page, and the status badge and delete button pass their text through the public element label property so the text is always rendered."
-              ]
-            },
-            {
-              "version": "0.2.1",
-              "items": [
-                "The wallpaper runtime now belongs to the plugin lifecycle: wallpapers and palettes apply without opening the settings page, and leaving the settings page keeps the wallpaper, palette, and rotation timer alive until the plugin is disabled.",
-                "Startup rotation runs once from the plugin startup lifecycle, so opening or leaving the settings page never changes the current wallpaper, and time-based rotation keeps running on any page.",
-                "The settings card follows the host card expansion rule, the switches use the public switch list, and the badge and delete button pass their text through the public element label property so they match the settings page."
               ]
             }
           ]
@@ -291,25 +274,25 @@
         "BAAH"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": false,
-      "version": "0.1.4",
+      "version": "0.1.5",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator",
         "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.4.zip",
-      "sha256": "f369673689c26e93af33e768e8f103d39e6414c8304c161f37947964c9d9e923",
-      "sizeBytes": 22563,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.5.zip",
+      "sha256": "c6652c6eab878911122e74304b20f51a5709ae5a52facb3bc44fcc57c328c846",
+      "sizeBytes": 21319,
       "changelog": [
         {
-          "version": "0.1.4",
-          "date": "2026-09-12",
+          "version": "0.1.5",
+          "date": "2026-09-13",
           "items": [
-            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+            "将最低宿主版本要求更新为 0.15.11。"
           ]
         },
         {
@@ -317,15 +300,6 @@
           "date": "2026-09-10",
           "items": [
             "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-09-05",
-          "items": [
-            "新增配置校验：保存脚本实例或配置时校验游戏路径与项目设置的一致性（模拟器模式比较 ADB 地址，PC 模式比较游戏路径），并提醒开启 BAAH 日志保存（SAVE_LOG_TO_FILE）；当前版本以角落通知提醒，不自动修改配置。",
-            "运行日志路径指向 BAAH 日志文件（DATA/LOGS），开启日志保存后历史详情可查看完整日志。",
-            "声明 PC 启动自管理：PC 客户端必须经 BAAH 自带启动器启动（反作弊要求），编辑脚本实例时「启动游戏」开关关闭并禁用、启动参数与等待秒数禁用；游戏路径保留填写，用于任务失败时强制关闭游戏。"
           ]
         }
       ],
@@ -342,23 +316,15 @@
           ],
           "changelog": [
             {
-              "version": "0.1.4",
+              "version": "0.1.5",
               "items": [
-                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+                "Updated the minimum host version requirement to 0.15.11."
               ]
             },
             {
               "version": "0.1.3",
               "items": [
                 "Added English store metadata and localized configuration-input labels and descriptions."
-              ]
-            },
-            {
-              "version": "0.1.1",
-              "items": [
-                "Added configuration checks for the game path and BAAH log-file setting.",
-                "Pointed run logs to the BAAH log directory for complete history details.",
-                "Declared PC startup as BAAH-managed and disabled the conflicting launch controls."
               ]
             }
           ]
@@ -383,22 +349,22 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": false,
-      "version": "0.2.9",
+      "version": "0.2.10",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.9.zip",
-      "sha256": "6f773fb8e7ad59db0753b4b45c9c5d230423fe5a2cb2a1f5d9f133bff57e29a2",
-      "sizeBytes": 15874,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.10.zip",
+      "sha256": "5653accd40f87dbef7fdd73e34e3b77743e87a02aedcf7052e32cf39b0289b40",
+      "sizeBytes": 15436,
       "changelog": [
         {
-          "version": "0.2.9",
-          "date": "2026-09-12",
+          "version": "0.2.10",
+          "date": "2026-09-13",
           "items": [
-            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+            "将最低宿主版本要求更新为 0.15.11。"
           ]
         },
         {
@@ -406,13 +372,6 @@
           "date": "2026-09-10",
           "items": [
             "修正英文商店历史元数据，运行行为保持不变。"
-          ]
-        },
-        {
-          "version": "0.2.7",
-          "date": "2026-09-10",
-          "items": [
-            "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
           ]
         }
       ],
@@ -428,21 +387,15 @@
           ],
           "changelog": [
             {
-              "version": "0.2.9",
+              "version": "0.2.10",
               "items": [
-                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+                "Updated the minimum host version requirement to 0.15.11."
               ]
             },
             {
               "version": "0.2.8",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
-              ]
-            },
-            {
-              "version": "0.2.7",
-              "items": [
-                "Added English store metadata and localized configuration-input labels and descriptions."
               ]
             }
           ]
@@ -467,24 +420,24 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": false,
-      "version": "0.2.4",
+      "version": "0.2.5",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.12.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.4.zip",
-      "sha256": "ba96060337365ac6aec4c5165bacfb74948adf9e965477b01abc82bb73286c2e",
-      "sizeBytes": 12793,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.5.zip",
+      "sha256": "67f425c7e48d9c5cfabaab353e86a9112f44a60822226977bc7b24d48d8862d0",
+      "sizeBytes": 12405,
       "changelog": [
         {
-          "version": "0.2.4",
-          "date": "2026-09-12",
+          "version": "0.2.5",
+          "date": "2026-09-13",
           "items": [
-            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+            "将最低宿主版本要求更新为 0.15.11。"
           ]
         },
         {
@@ -492,13 +445,6 @@
           "date": "2026-09-10",
           "items": [
             "修正英文商店历史元数据，运行行为保持不变。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-09-10",
-          "items": [
-            "新增中英文商店元数据，完善多语言展示。"
           ]
         }
       ],
@@ -514,21 +460,15 @@
           ],
           "changelog": [
             {
-              "version": "0.2.4",
+              "version": "0.2.5",
               "items": [
-                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+                "Updated the minimum host version requirement to 0.15.11."
               ]
             },
             {
               "version": "0.2.3",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
-              ]
-            },
-            {
-              "version": "0.2.2",
-              "items": [
-                "Added English store metadata for the official plugin catalog."
               ]
             }
           ]
@@ -640,22 +580,22 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": false,
-      "version": "0.2.5",
+      "version": "0.2.6",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.14.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.5.zip",
-      "sha256": "fb534b45d6ca16567186713238cbf5ce5357cd436c42136269c346a6949b11c1",
-      "sizeBytes": 9190,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.6.zip",
+      "sha256": "e63627d297872d2f11b73bb4fb56a4ddf49fd4d0e2bc99d87711c8a442d358e4",
+      "sizeBytes": 8802,
       "changelog": [
         {
-          "version": "0.2.5",
-          "date": "2026-09-12",
+          "version": "0.2.6",
+          "date": "2026-09-13",
           "items": [
-            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+            "将最低宿主版本要求更新为 0.15.11。"
           ]
         },
         {
@@ -663,13 +603,6 @@
           "date": "2026-09-10",
           "items": [
             "修正英文商店历史元数据，运行行为保持不变。"
-          ]
-        },
-        {
-          "version": "0.2.3",
-          "date": "2026-09-10",
-          "items": [
-            "新增中英文商店元数据，完善多语言展示。"
           ]
         }
       ],
@@ -685,21 +618,15 @@
           ],
           "changelog": [
             {
-              "version": "0.2.5",
+              "version": "0.2.6",
               "items": [
-                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+                "Updated the minimum host version requirement to 0.15.11."
               ]
             },
             {
               "version": "0.2.4",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
-              ]
-            },
-            {
-              "version": "0.2.3",
-              "items": [
-                "Added English store metadata for the official plugin catalog."
               ]
             }
           ]
@@ -724,24 +651,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-13",
       "hasReadme": false,
-      "version": "0.2.9",
+      "version": "0.2.10",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.14.4",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.9.zip",
-      "sha256": "94b9ecb5872ad80772b616085cc3288c4c16604c96ba81ff0b67def6da9a6d0c",
-      "sizeBytes": 16724,
+      "minHostVersion": "0.15.11",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.10.zip",
+      "sha256": "299d84eb0ed2504f947c5842d3c284ffbcd6a8d2e79705e47cbd5d663bed4d94",
+      "sizeBytes": 16286,
       "changelog": [
         {
-          "version": "0.2.9",
-          "date": "2026-09-12",
+          "version": "0.2.10",
+          "date": "2026-09-13",
           "items": [
-            "规范化插件 Name、ArtifactName 与中英文 DisplayName，统一商店展示名称。"
+            "将最低宿主版本要求更新为 0.15.11。"
           ]
         },
         {
@@ -749,13 +676,6 @@
           "date": "2026-09-10",
           "items": [
             "修正英文商店历史元数据，运行行为保持不变。"
-          ]
-        },
-        {
-          "version": "0.2.7",
-          "date": "2026-09-10",
-          "items": [
-            "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
           ]
         }
       ],
@@ -771,21 +691,15 @@
           ],
           "changelog": [
             {
-              "version": "0.2.9",
+              "version": "0.2.10",
               "items": [
-                "Normalized the plugin Name, ArtifactName, and localized display names for consistent catalog presentation."
+                "Updated the minimum host version requirement to 0.15.11."
               ]
             },
             {
               "version": "0.2.8",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
-              ]
-            },
-            {
-              "version": "0.2.7",
-              "items": [
-                "Added English store metadata and localized configuration-input labels and descriptions."
               ]
             }
           ]
