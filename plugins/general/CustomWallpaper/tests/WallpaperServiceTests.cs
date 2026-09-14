@@ -199,7 +199,7 @@ public sealed class WallpaperServiceTests
     }
 
     [Fact]
-    public async Task Rotation_StartupAdvanceSelectsOncePerServiceStart()
+    public async Task Rotation_SessionAdvanceSelectsOnceAndStateReadsRemainStable()
     {
         var context = new FakePluginHostContext("custom-wallpaper");
         WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
@@ -211,23 +211,39 @@ public sealed class WallpaperServiceTests
             ["rotation"] = new JsonObject { ["mode"] = "startup" },
         });
 
-        JsonObject started = await service.AdvanceStartupRotationAsync();
+        JsonObject started = await service.AdvanceSessionRotationAsync();
         string chosen = started["currentId"]!.GetValue<string>();
         Assert.Contains(chosen, new[] { first, second });
 
-        // 同一进程内的任意次状态读取（对应浏览器进入或离开设置页）都不改变本次启动结果。
+        // 同一 Web 会话内的任意次状态读取（对应浏览器进入或离开设置页）都不改变本次结果。
         Assert.Equal(chosen, (await service.GetStateAsync())["currentId"]!.GetValue<string>());
         Assert.Equal(chosen, (await service.GetStateAsync())["currentId"]!.GetValue<string>());
 
-        // 下一次服务启动再随机选择一次，并且不会重复当前壁纸。
-        JsonObject restarted = await service.AdvanceStartupRotationAsync();
-        Assert.NotEqual(chosen, restarted["currentId"]!.GetValue<string>());
+        // 下一次 Web 会话再随机选择一次，并且不会重复当前壁纸。
+        JsonObject nextSession = await service.AdvanceSessionRotationAsync();
+        Assert.NotEqual(chosen, nextSession["currentId"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task Rotation_SessionAdvanceKeepsTheOnlyWallpaper()
+    {
+        var context = new FakePluginHostContext("custom-wallpaper");
+        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
+        string only = await UploadIdAsync(service, PngBytes(23));
+        await service.ApplySettingsAsync(new JsonObject
+        {
+            ["rotation"] = new JsonObject { ["mode"] = "startup" },
+        });
+
+        JsonObject advanced = await service.AdvanceSessionRotationAsync();
+
+        Assert.Equal(only, advanced["currentId"]!.GetValue<string>());
     }
 
     [Theory]
     [InlineData("off")]
     [InlineData("timer")]
-    public async Task Rotation_StartupAdvanceLeavesOtherModesUnchanged(string mode)    {
+    public async Task Rotation_SessionAdvanceLeavesOtherModesUnchanged(string mode)    {
         DateTimeOffset now = new(2026, 9, 12, 10, 0, 0, TimeSpan.Zero);
         var context = new FakePluginHostContext("custom-wallpaper");
         WallpaperService service = CreateService(context, () => now);
@@ -245,13 +261,13 @@ public sealed class WallpaperServiceTests
         });
 
         string before = (await service.GetStateAsync())["currentId"]!.GetValue<string>();
-        JsonObject advanced = await service.AdvanceStartupRotationAsync();
+        JsonObject advanced = await service.AdvanceSessionRotationAsync();
 
         Assert.Equal(before, advanced["currentId"]!.GetValue<string>());
     }
 
     [Fact]
-    public async Task Lifecycle_PluginStartPerformsTheStartupRotation()
+    public async Task Lifecycle_PluginStartDoesNotPerformSessionRotation()
     {
         var context = new FakePluginHostContext("CustomWallpaper");
         WallpaperService seed = CreateService(context, () => DateTimeOffset.UtcNow);
@@ -264,15 +280,37 @@ public sealed class WallpaperServiceTests
         });
         string beforeStart = (await seed.GetStateAsync())["currentId"]!.GetValue<string>();
 
-        // 插件启动生命周期负责启动轮换：服务重新启动时随机选择一次，页面访问不参与该语义。
+        // 插件启动生命周期不推进 startup 轮换；Web 前端会话负责显式推进。
         await using PluginLifecycleHarness harness = await PluginLifecycleHarness.StartAsync(new EntryPoint(), context);
         JsonObject started = await seed.GetStateAsync();
         string chosen = started["currentId"]!.GetValue<string>();
 
         Assert.True(harness.Started);
         Assert.Contains(chosen, new[] { first, second });
-        Assert.NotEqual(beforeStart, chosen);
+        Assert.Equal(beforeStart, chosen);
         Assert.Equal(chosen, (await seed.GetStateAsync())["currentId"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task Rotation_InvalidRuntimeIdFallsBackToSelectedWallpaper()
+    {
+        var context = new FakePluginHostContext("custom-wallpaper");
+        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
+        string first = await UploadIdAsync(service, PngBytes(63));
+        await UploadIdAsync(service, PngBytes(64));
+        await service.ApplySettingsAsync(new JsonObject
+        {
+            ["selectedId"] = first,
+            ["rotation"] = new JsonObject { ["mode"] = "startup" },
+        });
+        await context.ScopedData.WriteAsync(WallpaperService.RotationScope, new WallpaperRotationRuntime
+        {
+            LastRandomId = new string('x', 64),
+        });
+
+        JsonObject state = await service.GetStateAsync();
+
+        Assert.Equal(first, state["currentId"]!.GetValue<string>());
     }
 
     [Fact]

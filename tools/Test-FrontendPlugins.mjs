@@ -572,6 +572,13 @@ async function runPlugin(manifestPath, publicElements) {
     if (!cleanup) fail(`插件 ${manifest.artifactName} 的 activate(host) 未返回 cleanup/dispose`);
     await flushDom();
 
+    const sessionRotationRequests = wallpaperPlugin
+      ? metrics.apiPostRoutes.filter(route => route === "rotation/advance-session")
+      : [];
+    if (wallpaperPlugin && sessionRotationRequests.length !== 1) {
+      fail(`CustomWallpaper 激活时应恰好推进一次 Web 会话轮换，实际 ${sessionRotationRequests.length} 次`);
+    }
+
     let disposed = false;
     const disposePlugin = async () => {
       if (disposed) return;
@@ -643,10 +650,10 @@ async function runPlugin(manifestPath, publicElements) {
         if (!metrics.appearanceBackgroundUrl) {
           fail("CustomWallpaper 离开设置页面后背景丢失");
         }
-        // 用例 C：进入或离开设置页面不得触发任何随机轮换请求。
+        // 用例 C：进入或离开设置页面不得额外触发 Web 会话轮换。
         const rotationRequests = metrics.apiPostRoutes.filter(route => route.includes("rotation"));
-        if (rotationRequests.length > 0) {
-          fail(`CustomWallpaper 的随机轮换被页面访问触发：${rotationRequests.join(", ")}`);
+        if (rotationRequests.length !== sessionRotationRequests.length) {
+          fail(`CustomWallpaper 的设置页面额外触发了随机轮换：${rotationRequests.join(", ")}`);
         }
       }
 

@@ -15,7 +15,7 @@
   "settings.secondary": "Apply transparency to secondary pages",
   "settings.secondary_help": "When disabled, secondary overlays remain opaque while primary page cards keep the configured transparency.",
   "settings.rotation": "Rotation mode",
-  "settings.rotation_help": "Time-based rotation changes the wallpaper at the configured interval; startup rotation selects once after the service starts.",
+  "settings.rotation_help": "Time-based rotation changes the wallpaper at the configured interval; reloading the Web UI or opening a new Web UI session advances it once.",
   "settings.interval": "Rotation interval (minutes)",
   "settings.interval_help": "Used by time-based rotation, from 1 to 1440 minutes.",
   "settings.blur": "Blur (pixels)",

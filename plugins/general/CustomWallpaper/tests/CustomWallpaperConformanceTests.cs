@@ -17,7 +17,7 @@ public sealed class CustomWallpaperConformanceTests
 
         Assert.True(harness.Started);
         Assert.Equal("CustomWallpaper", harness.Context.PluginName);
-        // 随机轮换只由插件启动生命周期与按时间轮换推进，插件不再暴露页面可触发的轮换接口。
+        // Web 会话轮换通过明确的插件 API 推进，插件启动生命周期不触发随机轮换。
         Assert.Equal(
             new[]
             {
@@ -25,6 +25,7 @@ public sealed class CustomWallpaperConformanceTests
                 "GET state",
                 "POST assets",
                 "POST assets/delete",
+                "POST rotation/advance-session",
                 "PUT assets/palette",
                 "PUT settings",
             },

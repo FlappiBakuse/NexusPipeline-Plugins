@@ -337,7 +337,7 @@ onBeforeUnmount(() => {
       <div class="cw-grid cw-controls">
         <label
           class="cw-field"
-          :data-help="tr('settings.rotation_help', {}, '按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。')"
+          :data-help="tr('settings.rotation_help', {}, '按时间随机轮换会按设定间隔切换壁纸；重新加载 Web UI 或打开新的 Web UI 会话会推进一次。')"
         >
           <span class="cw-field-label">{{ tr("settings.rotation", {}, "轮换方式") }}</span>
           <nxp-select

@@ -69,6 +69,10 @@ export function loadState(host: WallpaperHost, signal?: AbortSignal): Promise<Wa
   return host.api.get("state", signal);
 }
 
+export function advanceSessionRotation(host: WallpaperHost, signal?: AbortSignal): Promise<WallpaperState> {
+  return host.api.post("rotation/advance-session", undefined, signal);
+}
+
 export function saveSettings(host: WallpaperHost, patch: unknown, signal?: AbortSignal): Promise<WallpaperState> {
   return host.api.put("settings", patch, signal);
 }

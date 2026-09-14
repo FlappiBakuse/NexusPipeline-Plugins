@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.2.5",
+      "date": "2026-09-14",
+      "items": [
+        "startup 轮换改为每次打开或重新加载 Web UI 会话时推进一次。"
+      ]
+    },
+    {
       "version": "0.2.4",
       "date": "2026-09-13",
       "items": [
@@ -41,6 +48,12 @@
         "Theme"
       ],
       "changelog": [
+        {
+          "version": "0.2.5",
+          "items": [
+            "Startup rotation now advances once whenever a Web UI session opens or reloads."
+          ]
+        },
         {
           "version": "0.2.4",
           "items": [

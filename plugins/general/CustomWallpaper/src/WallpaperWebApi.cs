@@ -19,6 +19,7 @@ internal sealed class WallpaperWebApi
     {
         ArgumentNullException.ThrowIfNull(registry);
         _registrations.Add(registry.Register(new PluginWebApiRoute("GET", "state", HandleState)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "rotation/advance-session", HandleAdvanceSessionRotation)));
         _registrations.Add(registry.Register(new PluginWebApiRoute("PUT", "settings", HandleSettings)));
         _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets", HandleUpload)));
         _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets/delete", HandleDelete)));
@@ -40,6 +41,21 @@ internal sealed class WallpaperWebApi
         try
         {
             return PluginWebApiResponse.Json(await _service.GetStateAsync(cancellationToken).ConfigureAwait(false));
+        }
+        catch (WallpaperException ex)
+        {
+            return Error(ex);
+        }
+    }
+
+    private async ValueTask<PluginWebApiResponse> HandleAdvanceSessionRotation(
+        PluginWebApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return PluginWebApiResponse.Json(
+                await _service.AdvanceSessionRotationAsync(cancellationToken).ConfigureAwait(false));
         }
         catch (WallpaperException ex)
         {

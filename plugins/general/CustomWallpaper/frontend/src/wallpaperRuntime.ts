@@ -1,4 +1,4 @@
-import { assetBlob, ensurePalette, loadState, type WallpaperAsset, type WallpaperHost, type WallpaperState } from "./wallpaperApi";
+import { advanceSessionRotation, assetBlob, ensurePalette, loadState, type WallpaperAsset, type WallpaperHost, type WallpaperState } from "./wallpaperApi";
 
 /** 运行时快照：当前壁纸状态与最近一次应用失败的原因。 */
 export interface WallpaperRuntimeSnapshot {
@@ -145,7 +145,13 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
     snapshot,
     async start(): Promise<void> {
       if (disposed) return;
-      await load(true);
+      try {
+        const next = await advanceSessionRotation(host);
+        if (disposed) return;
+        await applyState(next, true);
+      } catch {
+        await load(true);
+      }
       if (disposed || pollTimer) return;
       pollTimer = setInterval(() => {
         void refresh();

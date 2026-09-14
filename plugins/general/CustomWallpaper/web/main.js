@@ -2788,19 +2788,22 @@ function ro(e, t, n) {
 function io(e, t) {
 	return e.api.get("state", t);
 }
-function ao(e, t, n) {
-	return e.api.put("settings", t, n);
+function ao(e, t) {
+	return e.api.post("rotation/advance-session", void 0, t);
 }
 function oo(e, t, n) {
+	return e.api.put("settings", t, n);
+}
+function so(e, t, n) {
 	return e.api.post("assets/delete", { id: t }, n);
 }
-function so(e, t, n, r) {
+function co(e, t, n, r) {
 	return e.api.put("assets/palette", {
 		id: t,
 		palette: n
 	}, r);
 }
-async function co(e, t, n) {
+async function lo(e, t, n) {
 	let r = await e.api.upload("assets", t, {
 		contentType: t.type || "application/octet-stream",
 		query: { name: t.name },
@@ -2811,57 +2814,57 @@ async function co(e, t, n) {
 		state: r?.state
 	};
 }
-async function lo(e, t, n) {
+async function uo(e, t, n) {
 	if (t.paletteVersion === 3 && t.palette && Object.keys(t.palette).length > 0) return t.palette;
 	try {
 		let r = await no(n);
-		return await so(e, t.id, r), r;
+		return await co(e, t.id, r), r;
 	} catch {
 		return null;
 	}
 }
 //#endregion
 //#region src/verticalSortable.ts
-function uo(e) {
+function fo(e) {
 	return Array.from(e.children).filter((e) => e instanceof HTMLElement && e.matches("[data-dnd-id]"));
 }
-function fo(e) {
-	return uo(e).map((e) => e.dataset.dndId || "").filter(Boolean);
+function po(e) {
+	return fo(e).map((e) => e.dataset.dndId || "").filter(Boolean);
 }
-function po(e, t, n) {
+function mo(e, t, n) {
 	let r = t instanceof Element ? t.closest(n) : null;
 	if (!r || !e.contains(r)) return null;
 	let i = r.closest("[data-dnd-id]");
 	return i && i.parentElement === e ? i : null;
 }
-function mo(e) {
+function ho(e) {
 	return !!(e?.hasAttribute("disabled") || e?.getAttribute("aria-disabled") === "true");
 }
-function ho(e, t, n) {
-	return uo(e).filter((e) => e !== t).find((e) => {
+function go(e, t, n) {
+	return fo(e).filter((e) => e !== t).find((e) => {
 		let t = e.getBoundingClientRect();
 		return n < t.top + t.height / 2;
 	}) || null;
 }
-function go(e) {
-	uo(e).forEach((e) => e.classList.remove("cw-drop-before"));
+function _o(e) {
+	fo(e).forEach((e) => e.classList.remove("cw-drop-before"));
 }
-function _o(e, t) {
+function vo(e, t) {
 	let n = null, r = (r) => {
 		let i = n;
 		if (!i) return;
-		n = null, go(e), e.classList.remove("cw-dnd-active"), e.hasPointerCapture?.(i.pointerId) && e.releasePointerCapture(i.pointerId), r && i.moved && i.placeBefore !== i.item && (i.placeBefore ? e.insertBefore(i.item, i.placeBefore) : e.appendChild(i.item)), i.item.classList.remove("is-dragging"), i.item.style.transform = i.previousTransform, i.item.style.zIndex = i.previousZIndex, i.item.style.willChange = i.previousWillChange;
-		let a = fo(e);
+		n = null, _o(e), e.classList.remove("cw-dnd-active"), e.hasPointerCapture?.(i.pointerId) && e.releasePointerCapture(i.pointerId), r && i.moved && i.placeBefore !== i.item && (i.placeBefore ? e.insertBefore(i.item, i.placeBefore) : e.appendChild(i.item)), i.item.classList.remove("is-dragging"), i.item.style.transform = i.previousTransform, i.item.style.zIndex = i.previousZIndex, i.item.style.willChange = i.previousWillChange;
+		let a = po(e);
 		r && i.moved && a.join("\0") !== i.initialOrder.join("\0") && t.onDrop?.(a, i.item.dataset.dndId || ""), t.onDragEnd?.();
 	}, i = (r) => {
 		let i = r.target instanceof Element ? r.target.closest(t.handleSelector) : null;
-		if (n || r.button !== 0 || mo(i)) return;
-		let a = po(e, r.target, t.handleSelector), o = a?.dataset.dndId || "";
+		if (n || r.button !== 0 || ho(i)) return;
+		let a = mo(e, r.target, t.handleSelector), o = a?.dataset.dndId || "";
 		a && o && (n = {
 			item: a,
 			pointerId: r.pointerId,
 			startY: r.clientY,
-			initialOrder: fo(e),
+			initialOrder: po(e),
 			moved: !1,
 			placeBefore: null,
 			previousTransform: a.style.transform,
@@ -2874,8 +2877,8 @@ function _o(e, t) {
 		let i = t.clientY - r.startY;
 		if (!r.moved && Math.abs(i) < 4) return;
 		r.moved = !0, r.item.style.transform = `translateY(${i}px)`;
-		let a = ho(e, r.item, t.clientY);
-		a !== r.placeBefore && (go(e), a?.classList.add("cw-drop-before"), r.placeBefore = a), t.preventDefault();
+		let a = go(e, r.item, t.clientY);
+		a !== r.placeBefore && (_o(e), a?.classList.add("cw-drop-before"), r.placeBefore = a), t.preventDefault();
 	}, o = (e) => {
 		n && e.pointerId === n.pointerId && r(!0);
 	}, s = (e) => {
@@ -2883,13 +2886,13 @@ function _o(e, t) {
 	}, c = (n) => {
 		if (n.key !== "ArrowUp" && n.key !== "ArrowDown") return;
 		let r = n.target instanceof Element ? n.target.closest(t.handleSelector) : null;
-		if (!r || mo(r)) return;
-		let i = po(e, r, t.handleSelector);
+		if (!r || ho(r)) return;
+		let i = mo(e, r, t.handleSelector);
 		if (!i) return;
-		let a = uo(e), o = a.indexOf(i), s = o + (n.key === "ArrowUp" ? -1 : 1);
+		let a = fo(e), o = a.indexOf(i), s = o + (n.key === "ArrowUp" ? -1 : 1);
 		if (o < 0 || s < 0 || s >= a.length) return;
 		let c = a[s];
-		n.key === "ArrowUp" ? e.insertBefore(i, c) : e.insertBefore(i, c.nextSibling), n.preventDefault(), t.onDrop?.(fo(e), i.dataset.dndId || "");
+		n.key === "ArrowUp" ? e.insertBefore(i, c) : e.insertBefore(i, c.nextSibling), n.preventDefault(), t.onDrop?.(po(e), i.dataset.dndId || "");
 	};
 	return e.addEventListener("pointerdown", i), e.addEventListener("pointermove", a), e.addEventListener("pointerup", o), e.addEventListener("pointercancel", s), e.addEventListener("keydown", c), () => {
 		r(!1), e.removeEventListener("pointerdown", i), e.removeEventListener("pointermove", a), e.removeEventListener("pointerup", o), e.removeEventListener("pointercancel", s), e.removeEventListener("keydown", c);
@@ -2897,35 +2900,35 @@ function _o(e, t) {
 }
 //#endregion
 //#region src/WallpaperSettings.vue?vue&type=script&setup=true&lang.ts
-var vo = [
+var yo = [
 	"title",
 	"description",
 	"expanded"
-], yo = { class: "cw-body" }, bo = { class: "cw-status-row" }, xo = { class: "cw-muted" }, So = ["tone", "label"], Co = [
+], bo = { class: "cw-body" }, xo = { class: "cw-status-row" }, So = { class: "cw-muted" }, Co = ["tone", "label"], wo = [
 	"label",
 	"description",
 	"model-value",
 	"aria-label"
-], wo = [
+], To = [
 	"label",
 	"description",
 	"model-value",
 	"aria-label"
-], To = { class: "cw-grid cw-controls" }, Eo = ["data-help"], Do = { class: "cw-field-label" }, Oo = [
+], Eo = { class: "cw-grid cw-controls" }, Do = ["data-help"], Oo = { class: "cw-field-label" }, ko = [
 	"model-value",
 	"options",
 	"aria-label"
-], ko = ["data-help"], Ao = { class: "cw-field-label" }, jo = ["model-value", "aria-label"], Mo = { class: "cw-grid cw-effects" }, No = ["data-help"], Po = { class: "cw-field-label" }, Fo = { class: "cw-range-row" }, Io = ["model-value", "aria-label"], Lo = ["data-help"], Ro = { class: "cw-field-label" }, zo = { class: "cw-range-row" }, Bo = ["model-value", "aria-label"], Vo = ["data-help"], Ho = { class: "cw-field-label" }, Uo = { class: "cw-range-row" }, Wo = ["model-value", "aria-label"], Go = { class: "cw-upload-row" }, Ko = ["label"], qo = { class: "cw-muted" }, Jo = {
+], Ao = ["data-help"], jo = { class: "cw-field-label" }, Mo = ["model-value", "aria-label"], No = { class: "cw-grid cw-effects" }, Po = ["data-help"], Fo = { class: "cw-field-label" }, Io = { class: "cw-range-row" }, Lo = ["model-value", "aria-label"], Ro = ["data-help"], zo = { class: "cw-field-label" }, Bo = { class: "cw-range-row" }, Vo = ["model-value", "aria-label"], Ho = ["data-help"], Uo = { class: "cw-field-label" }, Wo = { class: "cw-range-row" }, Go = ["model-value", "aria-label"], Ko = { class: "cw-upload-row" }, qo = ["label"], Jo = { class: "cw-muted" }, Yo = {
 	key: 0,
 	class: "cw-muted cw-empty"
-}, Yo = ["data-dnd-id"], Xo = ["aria-label", "title"], Zo = ["src", "alt"], Qo = {
+}, Xo = ["data-dnd-id"], Zo = ["aria-label", "title"], Qo = ["src", "alt"], $o = {
 	key: 1,
 	class: "cw-thumb-placeholder",
 	"aria-hidden": "true"
-}, $o = { class: "cw-item-copy" }, es = { class: "cw-muted" }, ts = ["label", "onClick"], ns = { class: "cw-card-footer" }, rs = { class: "cw-muted" }, is = {
+}, es = { class: "cw-item-copy" }, ts = { class: "cw-muted" }, ns = ["label", "onClick"], rs = { class: "cw-card-footer" }, is = { class: "cw-muted" }, as = {
 	key: 0,
 	class: "cw-error"
-}, as = "custom-wallpaper", os = "nxp-settings-panel-toggle", ss = "nxp-settings-panel-state", cs = /* @__PURE__ */ Pn({
+}, os = "custom-wallpaper", ss = "nxp-settings-panel-toggle", cs = "nxp-settings-panel-state", ls = /* @__PURE__ */ Pn({
 	__name: "WallpaperSettings",
 	props: {
 		host: {},
@@ -2972,14 +2975,14 @@ var vo = [
 			return t < 1048576 ? `${Math.max(1, Math.round(t / 1024))} KiB` : `${(t / 1024 / 1024).toFixed(1)} MiB`;
 		}
 		function ee(e) {
-			window.dispatchEvent(new CustomEvent(os, { detail: { panelId: e } }));
+			window.dispatchEvent(new CustomEvent(ss, { detail: { panelId: e } }));
 		}
 		function te(e) {
-			a.value = e, ee(e ? as : null);
+			a.value = e, ee(e ? os : null);
 		}
 		function ne(e) {
 			let t = e.detail?.panelId;
-			(t === null || typeof t == "string") && (a.value = t === as);
+			(t === null || typeof t == "string") && (a.value = t === os);
 		}
 		function T(e) {
 			m || (r.value = e.state, i.value = e.error);
@@ -3006,7 +3009,7 @@ var vo = [
 				d = null, (async () => {
 					o.value = S("status.saving", {}, "保存中");
 					try {
-						let n = await ao(t.host, e);
+						let n = await oo(t.host, e);
 						if (m) return;
 						await t.runtime.apply(n);
 					} catch (e) {
@@ -3101,10 +3104,10 @@ var vo = [
 				} catch {}
 				try {
 					o.value = S("status.uploading", { name: n.name }, `上传中：${n.name}`);
-					let e = await co(t.host, n);
+					let e = await lo(t.host, n);
 					if (m) return;
 					if (e.asset) try {
-						await lo(t.host, e.asset, n);
+						await uo(t.host, e.asset, n);
 					} catch (e) {
 						t.host.ui.toast(S("warning.palette", { error: e instanceof Error ? e.message : String(e) }, "壁纸已上传，配色稍后生成"), "warn");
 					}
@@ -3118,7 +3121,7 @@ var vo = [
 		}
 		async function oe(e) {
 			try {
-				let n = await oo(t.host, e);
+				let n = await so(t.host, e);
 				if (m) return;
 				let r = u.value[e];
 				r && (URL.revokeObjectURL(r), delete u.value[e]), await t.runtime.apply(n);
@@ -3135,7 +3138,7 @@ var vo = [
 			}));
 		}
 		return Yn(async () => {
-			window.addEventListener(ss, ne), f = t.runtime.subscribe(T), T(t.runtime.snapshot()), l.value && (p = _o(l.value, {
+			window.addEventListener(cs, ne), f = t.runtime.subscribe(T), T(t.runtime.snapshot()), l.value && (p = vo(l.value, {
 				handleSelector: ".cw-drag-handle",
 				onDragStart: (e) => {
 					c.value = e;
@@ -3146,7 +3149,7 @@ var vo = [
 				onDrop: se
 			})), await E(r.value?.assets || []);
 		}), Qn(() => {
-			m = !0, window.removeEventListener(ss, ne), f?.(), f = null, p?.(), p = null, d && clearTimeout(d), d = null, Object.values(u.value).forEach((e) => URL.revokeObjectURL(e)), u.value = {};
+			m = !0, window.removeEventListener(cs, ne), f?.(), f = null, p?.(), p = null, d && clearTimeout(d), d = null, Object.values(u.value).forEach((e) => URL.revokeObjectURL(e)), u.value = {};
 		}), (e, t) => (xi(), Ei("nxp-collapsible-card", {
 			title: S("card.title", {}, "自定义壁纸"),
 			description: S("card.description", {}, "同步壁纸、轮换方式和显示效果"),
@@ -3155,89 +3158,89 @@ var vo = [
 			"data-settings-panel": "custom-wallpaper",
 			"data-testid": "custom-wallpaper-card",
 			onToggle: t[8] ||= (e) => te(e.detail?.[0] === !0)
-		}, [X("div", yo, [
-			X("div", bo, [X("span", xo, j(S("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。")), 1), X("nxp-badge", {
+		}, [X("div", bo, [
+			X("div", xo, [X("span", So, j(S("settings.sync", {}, "服务端同步到当前 NexusPipeline 实例的全部浏览器。")), 1), X("nxp-badge", {
 				tone: b.value,
 				label: y.value
-			}, null, 8, So)]),
+			}, null, 8, Co)]),
 			X("nxp-switch-list", null, [X("nxp-switch-setting", {
 				label: S("settings.enabled", {}, "启用自定义壁纸"),
 				description: S("settings.enabled_help", {}, "启用后使用自定义壁纸作为页面背景。"),
 				"model-value": _.value,
 				"aria-label": S("settings.enabled", {}, "启用自定义壁纸"),
 				onChange: t[0] ||= (e) => O("enabled")
-			}, null, 40, Co), X("nxp-switch-setting", {
+			}, null, 40, wo), X("nxp-switch-setting", {
 				label: S("settings.secondary", {}, "透明度运用于非主页面"),
 				description: S("settings.secondary_help", {}, "关闭后，二级浮层恢复为完全不透明；主页面一级卡片继续使用透明度设置。"),
 				"model-value": v.value,
 				"aria-label": S("settings.secondary", {}, "透明度运用于非主页面"),
 				onChange: t[1] ||= (e) => O("secondary")
-			}, null, 40, wo)]),
-			X("div", To, [X("label", {
+			}, null, 40, To)]),
+			X("div", Eo, [X("label", {
 				class: "cw-field",
-				"data-help": S("settings.rotation_help", {}, "按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换只在服务启动后选择一次。")
-			}, [X("span", Do, j(S("settings.rotation", {}, "轮换方式")), 1), X("nxp-select", {
+				"data-help": S("settings.rotation_help", {}, "按时间随机轮换会按设定间隔切换壁纸；重新加载 Web UI 或打开新的 Web UI 会话会推进一次。")
+			}, [X("span", Oo, j(S("settings.rotation", {}, "轮换方式")), 1), X("nxp-select", {
 				"model-value": r.value?.rotation?.mode || "off",
 				options: h.value,
 				"aria-label": S("settings.rotation", {}, "轮换方式"),
 				onChange: t[2] ||= (e) => ae("mode", e.detail?.[0] || e.target?.modelValue || "off")
-			}, null, 40, Oo)], 8, Eo), X("label", {
+			}, null, 40, ko)], 8, Do), X("label", {
 				class: "cw-field",
 				"data-help": S("settings.interval_help", {}, "轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。")
-			}, [X("span", Ao, j(S("settings.interval", {}, "轮换间隔（分钟）")), 1), X("nxp-number-input", {
+			}, [X("span", jo, j(S("settings.interval", {}, "轮换间隔（分钟）")), 1), X("nxp-number-input", {
 				"model-value": r.value?.rotation?.intervalMinutes || 30,
 				min: "1",
 				max: "1440",
 				step: "1",
 				"aria-label": S("settings.interval", {}, "轮换间隔（分钟）"),
 				onChange: t[3] ||= (e) => ae("interval", e.detail?.[0] || e.target?.modelValue)
-			}, null, 40, jo)], 8, ko)]),
-			X("div", Mo, [
+			}, null, 40, Mo)], 8, Ao)]),
+			X("div", No, [
 				X("label", {
 					class: "cw-field",
 					"data-help": S("settings.blur_help", {}, "模糊范围为 0 至 40 像素。")
-				}, [X("span", Po, j(S("settings.blur", {}, "模糊（像素）")), 1), X("span", Fo, [X("nxp-range", {
+				}, [X("span", Fo, j(S("settings.blur", {}, "模糊（像素）")), 1), X("span", Io, [X("nxp-range", {
 					"model-value": r.value?.effects?.blurPx || 0,
 					min: "0",
 					max: "40",
 					step: "1",
 					"aria-label": S("settings.blur", {}, "模糊（像素）"),
 					onChange: t[4] ||= (e) => ae("blur", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, Io), X("output", null, j(r.value?.effects?.blurPx || 0) + "px", 1)])], 8, No),
+				}, null, 40, Lo), X("output", null, j(r.value?.effects?.blurPx || 0) + "px", 1)])], 8, Po),
 				X("label", {
 					class: "cw-field",
 					"data-help": S("settings.dim_help", {}, "变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。")
-				}, [X("span", Ro, j(S("settings.dim", {}, "变暗")), 1), X("span", zo, [X("nxp-range", {
+				}, [X("span", zo, j(S("settings.dim", {}, "变暗")), 1), X("span", Bo, [X("nxp-range", {
 					"model-value": r.value?.effects?.dimPercent ?? 20,
 					min: "0",
 					max: "80",
 					step: "1",
 					"aria-label": S("settings.dim", {}, "变暗"),
 					onChange: t[5] ||= (e) => ae("dim", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, Bo), X("output", null, j(r.value?.effects?.dimPercent ?? 20) + "%", 1)])], 8, Lo),
+				}, null, 40, Vo), X("output", null, j(r.value?.effects?.dimPercent ?? 20) + "%", 1)])], 8, Ro),
 				X("label", {
 					class: "cw-field",
 					"data-help": S("settings.transparency_help", {}, "控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。")
-				}, [X("span", Ho, j(S("settings.transparency", {}, "卡片与侧边栏透明度")), 1), X("span", Uo, [X("nxp-range", {
+				}, [X("span", Uo, j(S("settings.transparency", {}, "卡片与侧边栏透明度")), 1), X("span", Wo, [X("nxp-range", {
 					"model-value": r.value?.effects?.surfaceTransparencyPercent || 0,
 					min: "0",
 					max: "50",
 					step: "1",
 					"aria-label": S("settings.transparency", {}, "卡片与侧边栏透明度"),
 					onChange: t[6] ||= (e) => ae("transparency", e.detail?.[0] || e.target?.modelValue)
-				}, null, 40, Wo), X("output", null, j(r.value?.effects?.surfaceTransparencyPercent || 0) + "%", 1)])], 8, Vo)
+				}, null, 40, Go), X("output", null, j(r.value?.effects?.surfaceTransparencyPercent || 0) + "%", 1)])], 8, Ho)
 			]),
-			X("div", Go, [X("nxp-file-picker", {
+			X("div", Ko, [X("nxp-file-picker", {
 				accept: "image/jpeg,image/png,image/webp",
 				multiple: "",
 				label: S("settings.add", {}, "添加壁纸"),
 				onChange: t[7] ||= (e) => k(e.detail?.[0] || e.target?.files || [])
-			}, null, 40, Ko), X("span", qo, j(S("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB")), 1)]),
+			}, null, 40, qo), X("span", Jo, j(S("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB")), 1)]),
 			X("div", {
 				ref_key: "listElement",
 				ref: l,
 				class: "cw-list"
-			}, [g.value.length ? Li("", !0) : (xi(), Ei("p", Jo, j(S("empty", {}, "尚未添加壁纸。")), 1)), (xi(!0), Ei(J, null, ar(g.value, (e) => (xi(), Ei("div", {
+			}, [g.value.length ? Li("", !0) : (xi(), Ei("p", Yo, j(S("empty", {}, "尚未添加壁纸。")), 1)), (xi(!0), Ei(J, null, ar(g.value, (e) => (xi(), Ei("div", {
 				key: e.id,
 				class: A(["cw-item", { "is-dragging": c.value === e.id }]),
 				"data-dnd-id": e.id
@@ -3247,38 +3250,38 @@ var vo = [
 					type: "button",
 					"aria-label": `${S("drag", {}, "拖拽排序")}：${e.originalName || e.id}`,
 					title: S("drag", {}, "拖拽排序")
-				}, "⠿", 8, Xo),
+				}, "⠿", 8, Zo),
 				u.value[e.id] ? (xi(), Ei("img", {
 					key: 0,
 					src: u.value[e.id],
 					alt: e.originalName || e.id
-				}, null, 8, Zo)) : (xi(), Ei("span", Qo)),
-				X("div", $o, [X("strong", null, j(e.originalName || e.id), 1), X("span", es, j(w(e.sizeBytes)), 1)]),
+				}, null, 8, Qo)) : (xi(), Ei("span", $o)),
+				X("div", es, [X("strong", null, j(e.originalName || e.id), 1), X("span", ts, j(w(e.sizeBytes)), 1)]),
 				X("nxp-button", {
 					tone: "danger",
 					variant: "ghost",
 					size: "sm",
 					label: S("remove", {}, "删除"),
 					onClick: (t) => oe(e.id)
-				}, null, 8, ts)
-			], 10, Yo))), 128))], 512),
-			X("div", ns, [X("span", rs, j(S("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。")), 1)]),
-			x.value ? (xi(), Ei("p", is, j(x.value), 1)) : Li("", !0)
-		])], 40, vo));
+				}, null, 8, ns)
+			], 10, Xo))), 128))], 512),
+			X("div", rs, [X("span", is, j(S("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。")), 1)]),
+			x.value ? (xi(), Ei("p", as, j(x.value), 1)) : Li("", !0)
+		])], 40, yo));
 	}
 });
 //#endregion
 //#region src/wallpaperRuntime.ts
-function ls(e) {
+function us(e) {
 	return !e?.effectiveEnabled || !e.currentId ? null : (e.assets || []).find((t) => t.id === e.currentId) || null;
 }
-function us(e, t) {
+function ds(e, t) {
 	return e?.effects?.blurPx !== t?.effects?.blurPx || e?.effects?.dimPercent !== t?.effects?.dimPercent || e?.effects?.surfaceTransparencyPercent !== t?.effects?.surfaceTransparencyPercent || e?.effects?.applyTransparencyToSecondarySurfaces !== t?.effects?.applyTransparencyToSecondarySurfaces;
 }
-function ds(e, t) {
-	return e?.revision !== t?.revision || e?.currentId !== t?.currentId || e?.effectiveEnabled !== t?.effectiveEnabled || us(e, t);
+function fs(e, t) {
+	return e?.revision !== t?.revision || e?.currentId !== t?.currentId || e?.effectiveEnabled !== t?.effectiveEnabled || ds(e, t);
 }
-function fs(e, t = {}) {
+function ps(e, t = {}) {
 	let n = Math.max(1e3, Number(t.pollIntervalMs) || 3e4), r = /* @__PURE__ */ new Set(), i = null, a = "", o = null, s = null, c = null, l = 0, u = !1;
 	function d() {
 		return {
@@ -3311,7 +3314,7 @@ function fs(e, t = {}) {
 		if (u || (f(t), !n)) return;
 		let r = ++l;
 		p();
-		let i = ls(t);
+		let i = us(t);
 		if (!i) {
 			e.appearance.clearBackground(), e.appearance.clearTokens();
 			return;
@@ -3326,7 +3329,7 @@ function fs(e, t = {}) {
 				surfaceTransparencyPercent: t?.effects?.surfaceTransparencyPercent,
 				secondarySurfaceTransparency: t?.effects?.applyTransparencyToSecondarySurfaces !== !1
 			});
-			let a = await lo(e, i, n);
+			let a = await uo(e, i, n);
 			if (u || r !== l) return;
 			a && e.appearance.setTokens(a), m(t);
 		} catch (e) {
@@ -3338,7 +3341,7 @@ function fs(e, t = {}) {
 		if (!u) try {
 			let n = await io(e);
 			if (u) return;
-			await h(n, t || ds(i, n));
+			await h(n, t || fs(i, n));
 		} catch (e) {
 			if (u) return;
 			f(i, e instanceof Error ? e.message : String(e));
@@ -3352,9 +3355,18 @@ function fs(e, t = {}) {
 	return {
 		snapshot: d,
 		async start() {
-			u || (await g(!0), !(u || s) && (s = setInterval(() => {
-				_();
-			}, n)));
+			if (!u) {
+				try {
+					let t = await ao(e);
+					if (u) return;
+					await h(t, !0);
+				} catch {
+					await g(!0);
+				}
+				u || s || (s = setInterval(() => {
+					_();
+				}, n));
+			}
 		},
 		refresh: _,
 		async apply(e) {
@@ -3370,11 +3382,11 @@ function fs(e, t = {}) {
 }
 //#endregion
 //#region src/main.ts
-function ps(e) {
-	let t = fs(e);
+function ms(e) {
+	let t = ps(e);
 	t.start();
 	let n = e.slots.register("settings.cards", (n) => {
-		let r = Ya(cs, {
+		let r = Ya(ls, {
 			host: e,
 			runtime: t,
 			context: n.context
@@ -3386,4 +3398,4 @@ function ps(e) {
 	} };
 }
 //#endregion
-export { ps as activate };
+export { ms as activate };

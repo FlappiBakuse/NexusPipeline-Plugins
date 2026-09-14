@@ -280,10 +280,10 @@ internal sealed class WallpaperService
     }
 
     /// <summary>
-    /// 服务启动轮换：只在轮换方式为 startup 且存在候选壁纸时随机选择一次，写入运行时结果。
-    /// 调用方只能是插件启动生命周期，浏览器页面与设置面板不参与启动轮换。
+    /// Web 会话轮换：只在轮换方式为 startup 且存在候选壁纸时随机选择一次，写入运行时结果。
+    /// 每个前端插件运行时会话最多调用一次；状态读取和设置页面不会触发轮换。
     /// </summary>
-    public async Task<JsonObject> AdvanceStartupRotationAsync(CancellationToken cancellationToken = default)
+    public async Task<JsonObject> AdvanceSessionRotationAsync(CancellationToken cancellationToken = default)
     {
         await _sync.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
