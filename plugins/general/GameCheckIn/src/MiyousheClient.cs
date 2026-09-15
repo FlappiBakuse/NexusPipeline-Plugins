@@ -65,7 +65,6 @@ internal sealed class MiyousheClient
                 CheckInResult? infoError = MapGeneralResponse(info, game.Code);
                 if (infoError is not null) return infoError;
                 if (HoyoLabClient.IsAlreadySigned(info)) continue;
-                already = false;
                 if (HoyoLabClient.IsFirstBind(info))
                 {
                     return new CheckInResult("cn", game.Code, "first_bind", "尚未绑定签到活动", false);
@@ -82,6 +81,11 @@ internal sealed class MiyousheClient
                     JsonSerializer.Serialize(new { act_id = game.Cn.ActId, region = role.Region, uid = role.Uid }),
                     cancellationToken).ConfigureAwait(false);
                 CheckInResult result = HoyoLabClient.MapSignResponse(sign, "cn", game.Code);
+                if (result.Code == "already")
+                {
+                    continue;
+                }
+                already = false;
                 if (!result.Success) return result;
                 signed = true;
             }
@@ -146,10 +150,6 @@ internal sealed class MiyousheClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"HTTP {(int)response.StatusCode}");
-        }
         await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
     }

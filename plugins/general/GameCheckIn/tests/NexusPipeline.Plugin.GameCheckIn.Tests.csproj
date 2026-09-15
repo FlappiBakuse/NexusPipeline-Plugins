@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\NexusPipeline.Plugin.GameCheckIn.csproj" />
+    <ProjectReference Include="..\..\..\..\tools\PluginTestKit\NexusPipeline.Plugin.TestKit.csproj" />
   </ItemGroup>
 </Project>

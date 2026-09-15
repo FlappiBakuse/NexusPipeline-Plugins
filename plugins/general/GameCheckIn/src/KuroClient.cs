@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -13,10 +14,12 @@ internal sealed class KuroClient
     private const string Source = "android";
 
     private readonly IPluginHttpClientFactory _http;
+    private readonly Func<DateTimeOffset> _now;
 
-    public KuroClient(IPluginHttpClientFactory http)
+    public KuroClient(IPluginHttpClientFactory http, Func<DateTimeOffset>? now = null)
     {
         _http = http;
+        _now = now ?? (() => DateTimeOffset.Now);
     }
 
     public async Task<CheckInResult> SignAsync(
@@ -48,6 +51,7 @@ internal sealed class KuroClient
 
             bool signed = false;
             bool already = true;
+            string requestMonth = _now().ToString("MM", CultureInfo.InvariantCulture);
             foreach (Role role in roleList)
             {
                 using JsonDocument response = await SendFormAsync(
@@ -61,7 +65,7 @@ internal sealed class KuroClient
                         ["serverId"] = role.ServerId,
                         ["roleId"] = role.RoleId,
                         ["userId"] = role.UserId,
-                        ["reqMonth"] = DateTimeOffset.Now.ToString("yyyy-MM"),
+                        ["reqMonth"] = requestMonth,
                     },
                     cancellationToken).ConfigureAwait(false);
                 CheckInResult result = MapResponse(response, game.Code) ??
@@ -120,7 +124,7 @@ internal sealed class KuroClient
         request.Headers.TryAddWithoutValidation("source", Source);
         request.Headers.TryAddWithoutValidation("lang", "zh-Hans");
         request.Headers.TryAddWithoutValidation("devcode", devCode);
-        request.Headers.TryAddWithoutValidation("distinct_id", distinctId);
+        request.Headers.TryAddWithoutValidation("distinct_id", CanonicalUuid(distinctId));
         request.Headers.TryAddWithoutValidation("countrycode", "CN");
         request.Headers.TryAddWithoutValidation("model", "NexusPipeline");
         request.Headers.TryAddWithoutValidation("version", "2.2.0");
@@ -135,10 +139,6 @@ internal sealed class KuroClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new HttpRequestException($"HTTP {(int)response.StatusCode}");
-        }
         await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
     }
@@ -214,6 +214,9 @@ internal sealed class KuroClient
 
     private static CheckInResult TransportError(string gameCode) =>
         new("kuro", gameCode, "transport_error", "请求失败或响应格式无效", false);
+
+    private static string CanonicalUuid(string value) =>
+        Guid.TryParse(value, out Guid parsed) ? parsed.ToString("D") : value;
 
     private sealed record Role(string RoleId, string ServerId, string UserId);
 }

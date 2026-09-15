@@ -58,7 +58,11 @@ public sealed class UserSettings
         }
         if (string.IsNullOrWhiteSpace(KuroDistinctId))
         {
-            KuroDistinctId = Guid.NewGuid().ToString("N");
+            KuroDistinctId = Guid.NewGuid().ToString("D");
+        }
+        else if (Guid.TryParse(KuroDistinctId, out Guid distinctId))
+        {
+            KuroDistinctId = distinctId.ToString("D");
         }
 
         var normalized = new Dictionary<string, GameState>(StringComparer.OrdinalIgnoreCase);
