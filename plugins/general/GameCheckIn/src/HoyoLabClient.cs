@@ -31,6 +31,7 @@ internal sealed class HoyoLabClient
                 cookie,
                 game.Os.SignGame,
                 game.Os.ActId,
+                game.Os.Referer,
                 body: null,
                 cancellationToken).ConfigureAwait(false);
             CheckInResult? early = ReadCommonResponse(info, "os", game.Code);
@@ -45,6 +46,7 @@ internal sealed class HoyoLabClient
                 cookie,
                 game.Os.SignGame,
                 game.Os.ActId,
+                game.Os.Referer,
                 JsonSerializer.Serialize(new { lang = "en-us", act_id = game.Os.ActId }),
                 cancellationToken).ConfigureAwait(false);
             return MapSignResponse(sign, "os", game.Code);
@@ -82,6 +84,7 @@ internal sealed class HoyoLabClient
         string cookie,
         string signGame,
         string actId,
+        string referer,
         string? body,
         CancellationToken cancellationToken)
     {
@@ -96,7 +99,7 @@ internal sealed class HoyoLabClient
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Headers.TryAddWithoutValidation("Origin", Origin);
-        request.Headers.TryAddWithoutValidation("Referer", Origin + "/");
+        request.Headers.TryAddWithoutValidation("Referer", referer);
         request.Headers.TryAddWithoutValidation("Cookie", cookie);
         request.Headers.TryAddWithoutValidation("x-rpc-signgame", signGame);
         request.Headers.UserAgent.ParseAdd(UserAgent);

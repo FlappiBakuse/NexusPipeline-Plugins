@@ -9,7 +9,6 @@ namespace NexusPipeline.Plugin.GameCheckIn;
 internal sealed class MiyousheClient
 {
     private const string Origin = "https://www.miyoushe.com";
-    private const string Referer = "https://www.miyoushe.com/ys/";
     private const string UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
     private const string AppVersion = "2.109.0";
     private const string Channel = "miyousheluodi";
@@ -38,6 +37,7 @@ internal sealed class MiyousheClient
                 cookie,
                 deviceId,
                 game.Cn.SignGame,
+                game.Cn.Referer,
                 null,
                 cancellationToken).ConfigureAwait(false);
             CheckInResult? roleError = MapGeneralResponse(roles, game.Code);
@@ -59,6 +59,7 @@ internal sealed class MiyousheClient
                     cookie,
                     deviceId,
                     game.Cn.SignGame,
+                    game.Cn.Referer,
                     null,
                     cancellationToken).ConfigureAwait(false);
                 CheckInResult? infoError = MapGeneralResponse(info, game.Code);
@@ -77,6 +78,7 @@ internal sealed class MiyousheClient
                     cookie,
                     deviceId,
                     game.Cn.SignGame,
+                    game.Cn.Referer,
                     JsonSerializer.Serialize(new { act_id = game.Cn.ActId, region = role.Region, uid = role.Uid }),
                     cancellationToken).ConfigureAwait(false);
                 CheckInResult result = HoyoLabClient.MapSignResponse(sign, "cn", game.Code);
@@ -118,6 +120,7 @@ internal sealed class MiyousheClient
         string cookie,
         string deviceId,
         string signGame,
+        string referer,
         string? body,
         CancellationToken cancellationToken)
     {
@@ -129,7 +132,7 @@ internal sealed class MiyousheClient
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Headers.TryAddWithoutValidation("Origin", Origin);
-        request.Headers.TryAddWithoutValidation("Referer", Referer);
+        request.Headers.TryAddWithoutValidation("Referer", referer);
         request.Headers.TryAddWithoutValidation("Cookie", cookie);
         request.Headers.TryAddWithoutValidation("DS", GenerateDs());
         request.Headers.TryAddWithoutValidation("x-rpc-device_id", deviceId);

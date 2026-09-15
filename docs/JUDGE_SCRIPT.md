@@ -105,6 +105,8 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 | locale | 宿主当前规范化 BCP 47 语言标识，供判断脚本本地化动态结果 |
 | timeScale | 宿主测试加速因子；生产运行通常为 1 |
 | screenshots | 当前 Attempt 截图池的元数据；最多 8 张，包含 Id、Ordinal、CapturedAt、AttemptNumber、Width、Height、Source、Trigger，不包含图片字节 |
+| probeApi | 当前调用有效的本机只读探针桥接 `{ endpoint, token }` |
+| screenshotApi | 当前调用具备截图采集能力时提供的本机截图桥接 `{ endpoint, token }` |
 
 files 中每项包含：
 
@@ -135,6 +137,9 @@ nexus.readFile(absPath)
 nexus.writeFile(relativePath, content)
 nexus.listFiles()
 nexus.captureScreenshot()
+nexus.listProcesses(options)
+nexus.listWindows(options)
+nexus.httpGet(url, options)
 console.log(value)
 ~~~
 
@@ -160,6 +165,16 @@ if api:
 ~~~
 
 该 endpoint 仅监听本机回环地址，token 为当前判断脚本调用临时生成，调用结束后失效。不要输出 token 或把 endpoint 传给其他进程。
+
+### 只读判定探针
+
+`nexus.listProcesses(options)` 返回 `{ processes, truncated }`，每项提供 `pid`、`ppid`、`name` 和可为空的 `startTimeUtc`。`options` 支持 `nameContains`、`pid`，结果最多 2048 项。
+
+`nexus.listWindows(options)` 返回 `{ windows, truncated }`，每项提供字符串 `hwnd`、`pid`、`name`、`title` 和 `foreground`。`options` 支持 `titleContains`、`pid`，结果最多 512 项，窗口范围为可见顶层窗口。
+
+`nexus.httpGet(url, options)` 访问绝对 `http`/`https` URL，执行 GET 并返回 `{ ok, status, body, truncated, error }`。`options.timeoutMs` 默认 10 秒且最多 15 秒，`options.maxBytes` 默认及硬上限为 2 MiB；错误值为 `invalid_url`、`timeout` 或 `network_error`。
+
+Python 脚本使用输入中的 `probeApi` 调用相同端点：`POST <endpoint>/processes`、`POST <endpoint>/windows` 和 `POST <endpoint>/http-probe`，并携带 `X-Nexus-Judge-Token: <token>`。前两个请求体是探针筛选选项，HTTP 请求体为 `{ "url": "https://example.com/health", "options": {} }`。桥接仅监听本机回环，token 随当前调用失效。脚本保持只读探针权限，接口提供进程/窗口快照和受限 HTTP GET。
 
 ### nexus.readFile(absPath)
 
