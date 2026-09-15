@@ -29,7 +29,6 @@ const allowedSlots = new Set([
 ]);
 
 /** 宿主 Frontend API 1.5 公开的 Native Custom Elements；宿主检出可用时以 NEXUS_PUBLIC_ELEMENTS 为准。 */
-/** 宿主 Frontend API 1.5 公开的 Native Custom Elements；宿主检出可用时以 NEXUS_PUBLIC_ELEMENTS 为准。 */
 const fallbackPublicElements = [
   "nxp-badge",
   "nxp-button",
@@ -50,6 +49,7 @@ const fallbackPublicElements = [
   "nxp-range",
   "nxp-section-card",
   "nxp-select",
+  "nxp-scroll-area",
   "nxp-spinner",
   "nxp-switch",
   "nxp-switch-list",

@@ -8,15 +8,17 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 | 机器 ID | artifactName | 游戏 | 类型 | 能力 |
 |---|---|---|---|---|
-| `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator` |
+| `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator`, `self-managed-pc-launch` |
 | `bettergi` | `BetterGI` | 原神 | `data-specialized` | — |
 | `maaend` | `MaaEnd` | 明日方舟：终末地 | `data-specialized` | `emulator` |
 | `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
-| `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | — |
+| `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
 | `game-checkin` | `GameCheckIn` | 米游社 / HoYoLAB 多游戏 | `managed-code` | `user-global-management`, `user-run-events`, `user-list-badges` |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 | `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
+
+`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。
 
 宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
 
@@ -64,9 +66,12 @@ NexusPipeline-Plugins/
 ├── tools/
 │   ├── repository.py                    # 发行计划、增量打包与审计入口
 │   ├── repository_core.py               # 可测试的仓库规则实现
+│   ├── Test-ConfigEditors.mjs           # 配置编辑器前端契约门禁
+│   ├── Test-FrontendPlugins.mjs         # Frontend API 入口与元素门禁
 │   └── tests/                           # 仓库工具单元测试
 └── docs/
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
+    ├── FRONTEND_PLUGIN.md              # 前端插件开发指南
     ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南
     └── RELEASING.md                     # 打包、catalog 与包校验流程
 ```
@@ -91,7 +96,7 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.1.9 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` v0.2.2 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` v0.2.0 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 - Plugin API 1.6 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
 - 宿主升级后会把旧外观数据（`config/appearance.json`、`user-assets/appearance/wallpapers/` 与旧轮换游标）一次性搬迁到原提供方插件的 `legacy-appearance-import` 作用域数据，资产写入该插件的 `wallpapers` 资产 scope。插件应在初始化时读取并消费该载荷，导入完成后删除该作用域记录；宿主保留旧文件。

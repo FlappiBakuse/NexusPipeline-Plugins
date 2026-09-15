@@ -100,7 +100,7 @@ with open(sys.argv[1], encoding="utf-8") as stream:
 | ConfigPath | 运行时生效配置的文件或目录 |
 | scriptDir | 本次运行专用的 script 工作目录 |
 | files | config 与 script 范围内的文件元数据数组 |
-| log | 当前尝试累计日志；超过 4 MiB 时只保留尾部 |
+| log | 当前尝试累计日志；超过 4M 字符时只保留尾部 |
 | logTruncated | 日志是否发生截断 |
 | locale | 宿主当前规范化 BCP 47 语言标识，供判断脚本本地化动态结果 |
 | timeScale | 宿主测试加速因子；生产运行通常为 1 |
@@ -299,7 +299,7 @@ replaceConfigs 描述下一次尝试使用的配置，config-restore.json 描述
 协议字段：
 
 - files[].file：相对于 config 根目录的文件路径；
-- toggles[].type：当前支持 array、map 与 boolArray（boolArray 需要宿主 v0.14.0+）；
+- toggles[].type：当前支持 array、map 与 boolArray（boolArray 需要宿主支持）；
 - array：按 path 找到数组，使用 keyField 匹配元素，并恢复 enabledField；
 - map：按 path 找到对象，使用 initial 的键值恢复布尔值；
 - boolArray：按 path 找到布尔数组（任务名数组与开关数组分离的平行数组形态，如 BAAH 的 `TASK_PIPELINE`/`TASK_ONOFF`），initial 为布尔数组并按下标逐位还原；目标数组短于 initial 时视为应用失败；

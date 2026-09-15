@@ -19,7 +19,7 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件或旧 `host.controls` / `host.actions`。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
 
 ## 测试与提交治理
@@ -46,6 +46,12 @@
 # 校验源码契约、manifest、store 和 catalog 元数据
 python tools/repository.py validate
 
+# 校验当前源码、分类目录和宿主锁
+python tools/repository.py validate-source
+
+# 校验宿主允许的 locale 与当前宿主资源
+python tools/repository.py validate-host-locales --host-root ..\NexusPipeline
+
 # 校验 JavaScript / Python 语法
 python tools/repository.py check-syntax
 
@@ -67,9 +73,9 @@ python tools/repository.py validate-generated --generated-root .generated
 python tools/repository.py audit --full
 ```
 
-managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。
+managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。仓库工具提供源码校验、宿主 locale 对账、构建、测试、增量打包和发行包校验入口。
 
-在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。仓库当前没有独立的构建程序，插件有效性还需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
+在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。插件工具负责仓库级源码、构建、测试和发行包校验；插件有效性仍需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 
 建议至少覆盖：
 

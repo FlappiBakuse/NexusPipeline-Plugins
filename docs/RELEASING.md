@@ -28,11 +28,13 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 ```text
 packages/
+├── BAAH/BAAH-<version>.zip
 ├── BetterGI/BetterGI-<version>.zip
 ├── CustomWallpaper/CustomWallpaper-<version>.zip
 ├── GameCheckIn/GameCheckIn-<version>.zip
 ├── LiveScreenshot/LiveScreenshot-<version>.zip
 ├── MaaEnd/MaaEnd-<version>.zip
+├── MaaStellaSora/MaaStellaSora-<version>.zip
 ├── March7thAssistant/March7thAssistant-<version>.zip
 └── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-<version>.zip
 ```
@@ -113,7 +115,7 @@ python tools/repository.py validate-generated --generated-root .generated
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.2.5",
+      "version": "<version>",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 6955,
       "sourceTree": "<git tree sha>"
@@ -141,9 +143,9 @@ python tools/repository.py validate-generated --generated-root .generated
       "authors": [{ "name": "FlappiBakuse", "url": "https://github.com/FlappiBakuse" }],
       "tags": ["外观", "壁纸", "主题"],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "<yyyy-mm-dd>",
       "hasReadme": true,
-      "version": "0.2.2",
+      "version": "<version>",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": ["frontend-module"],
@@ -153,8 +155,8 @@ python tools/repository.py validate-generated --generated-root .generated
       "sizeBytes": 30783,
       "changelog": [
         {
-          "version": "0.2.2",
-          "date": "2026-09-12",
+          "version": "<version>",
+          "date": "<yyyy-mm-dd>",
           "items": [
             "壁纸运行时改为插件级生命周期：不进入设置页面也会应用壁纸与配色，离开设置页面后壁纸、配色与轮换计时保持运行，只有插件停用才清理全局外观。",
             "启动轮换改为由插件启动生命周期执行一次，打开或离开设置页面不再改变当前壁纸；按时间轮换在任意页面继续生效。"
