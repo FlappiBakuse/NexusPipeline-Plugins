@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-14T09:52:21Z",
+  "generatedAt": "2026-09-15T14:09:05Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -95,8 +95,8 @@
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
       "displayName": "游戏自动签到",
-      "gameName": "原神 / 崩坏：星穹铁道 / 绝区零",
-      "description": "在用户脚本实际开始运行时，为已选择平台的米游社或 HoYoLAB 游戏执行当日签到，并提供用户列表聚合签到状态。",
+      "gameName": "米游社 / HoYoLAB / 森空岛 / SKPORT / 库街区游戏签到",
+      "description": "在用户脚本实际开始运行时，为已选择平台的米游社、HoYoLAB、森空岛、SKPORT 或库街区游戏执行当日游戏内签到，并提供用户列表聚合签到状态。",
       "authors": [
         {
           "name": "FlappiBakuse",
@@ -107,12 +107,15 @@
         "签到",
         "米游社",
         "HoYoLAB",
+        "森空岛",
+        "SKPORT",
+        "库街区",
         "用户管理"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-09",
+      "updatedAt": "2026-09-15",
       "hasReadme": true,
-      "version": "0.1.9",
+      "version": "0.2.0",
       "kind": "managed-code",
       "apiVersion": "1.5",
       "capabilities": [
@@ -121,10 +124,20 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.1.9.zip",
-      "sha256": "64664556e255d8527c18ae8bd1256519b403b436ae13c48b2744fa6dc8865d2d",
-      "sizeBytes": 144335,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.2.0.zip",
+      "sha256": "cec2455119645c872bd5d86362bbaccf435518400c30bf5e16f55c923cd4d7b0",
+      "sizeBytes": 214761,
       "changelog": [
+        {
+          "version": "0.2.0",
+          "date": "2026-09-15",
+          "items": [
+            "新增崩坏3的米游社与 HoYoLAB 游戏内签到。",
+            "新增森空岛明日方舟与终末地、SKPORT终末地国际服、库街区鸣潮与战双帕弥什游戏内签到。",
+            "新增五个平台独立凭据、状态、签到游戏选择和用户列表聚合徽章。",
+            "将用户配置规范化为 schema v3，并保留既有米游社与 HoYoLAB 状态记录。"
+          ]
+        },
         {
           "version": "0.1.9",
           "date": "2026-09-09",
@@ -138,26 +151,33 @@
           "items": [
             "修复商店展示元数据 JSON 的尾逗号，避免宿主重复记录解析警告。"
           ]
-        },
-        {
-          "version": "0.1.6",
-          "date": "2026-08-31",
-          "items": [
-            "移除旧插件身份与旧签到配置迁移逻辑，当前版本仅使用现行宿主插件协议。"
-          ]
         }
       ],
       "locales": {
         "en-US": {
           "displayName": "Game Check-in",
-          "gameName": "Genshin Impact / Honkai: Star Rail / Zenless Zone Zero",
-          "description": "When a user script starts, check in selected games on HoYoLAB or its communities and show aggregated status in the user list.",
+          "gameName": "Miyoushe / HoYoLAB / Skland / SKPORT / Kuro game check-in",
+          "description": "When a user script starts, check in selected games in-game across five supported platforms and show aggregated status in the user list.",
           "tags": [
             "Check-in",
+            "Miyoushe",
             "HoYoLAB",
+            "Skland",
+            "SKPORT",
+            "Kuro",
             "User management"
           ],
           "changelog": [
+            {
+              "version": "0.2.0",
+              "date": "2026-09-15",
+              "items": [
+                "Added in-game check-in for Honkai Impact 3rd on Miyoushe and HoYoLAB.",
+                "Added in-game check-in for Arknights and Endfield on Skland, Endfield global on SKPORT, and Wuthering Waves and Punishing: Gray Raven on Kuro.",
+                "Added independent credentials, state, game selection, and aggregated user-list badges for five platforms.",
+                "Normalized user settings to schema v3 while retaining existing Miyoushe and HoYoLAB state records."
+              ]
+            },
             {
               "version": "0.1.9",
               "items": [
@@ -168,12 +188,6 @@
               "version": "0.1.7",
               "items": [
                 "Fixed a trailing comma in the store metadata JSON to prevent duplicate parse warnings in the host."
-              ]
-            },
-            {
-              "version": "0.1.6",
-              "items": [
-                "Removed legacy plugin identity and check-in configuration migration logic."
               ]
             }
           ]
