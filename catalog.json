@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-15T14:09:05Z",
+  "generatedAt": "2026-09-15T15:14:14Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -115,7 +115,7 @@
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
       "updatedAt": "2026-09-15",
       "hasReadme": true,
-      "version": "0.2.0",
+      "version": "0.2.1",
       "kind": "managed-code",
       "apiVersion": "1.5",
       "capabilities": [
@@ -124,10 +124,18 @@
         "user-run-events"
       ],
       "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.2.0.zip",
-      "sha256": "cec2455119645c872bd5d86362bbaccf435518400c30bf5e16f55c923cd4d7b0",
-      "sizeBytes": 214761,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.2.1.zip",
+      "sha256": "37660bc4acb008fcb2d358ad257e0ba99502707b693a352cd980dd6e17651a9c",
+      "sizeBytes": 215555,
       "changelog": [
+        {
+          "version": "0.2.1",
+          "date": "2026-09-15",
+          "items": [
+            "修复部分社区以非 2xx 状态返回已签到业务结果时被误判为请求失败的问题。",
+            "修复库街区签到月份参数格式，并规范化持久化的设备 UUID。"
+          ]
+        },
         {
           "version": "0.2.0",
           "date": "2026-09-15",
@@ -143,13 +151,6 @@
           "date": "2026-09-09",
           "items": [
             "新增宿主语言资源，支持中英文界面显示。"
-          ]
-        },
-        {
-          "version": "0.1.7",
-          "date": "2026-09-01",
-          "items": [
-            "修复商店展示元数据 JSON 的尾逗号，避免宿主重复记录解析警告。"
           ]
         }
       ],
@@ -169,6 +170,14 @@
           ],
           "changelog": [
             {
+              "version": "0.2.1",
+              "date": "2026-09-15",
+              "items": [
+                "Fixed already-signed responses being reported as request failures when some communities use non-2xx HTTP status codes.",
+                "Fixed the Kuro sign-in month parameter format and normalized persisted device UUIDs."
+              ]
+            },
+            {
               "version": "0.2.0",
               "date": "2026-09-15",
               "items": [
@@ -182,12 +191,6 @@
               "version": "0.1.9",
               "items": [
                 "Added host language resources for Chinese and English interfaces."
-              ]
-            },
-            {
-              "version": "0.1.7",
-              "items": [
-                "Fixed a trailing comma in the store metadata JSON to prevent duplicate parse warnings in the host."
               ]
             }
           ]
