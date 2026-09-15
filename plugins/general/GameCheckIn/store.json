@@ -11,6 +11,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-09-15",
+      "items": [
+        "修复部分社区以非 2xx 状态返回已签到业务结果时被误判为请求失败的问题。",
+        "修复库街区签到月份参数格式，并规范化持久化的设备 UUID。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-09-15",
       "items": [
@@ -26,13 +34,6 @@
       "items": [
         "新增宿主语言资源，支持中英文界面显示。"
       ]
-    },
-    {
-      "version": "0.1.7",
-      "date": "2026-09-01",
-      "items": [
-        "修复商店展示元数据 JSON 的尾逗号，避免宿主重复记录解析警告。"
-      ]
     }
   ],
   "locales": {
@@ -42,6 +43,14 @@
       "description": "When a user script starts, check in selected games in-game across five supported platforms and show aggregated status in the user list.",
       "tags": ["Check-in", "Miyoushe", "HoYoLAB", "Skland", "SKPORT", "Kuro", "User management"],
       "changelog": [
+        {
+          "version": "0.2.1",
+          "date": "2026-09-15",
+          "items": [
+            "Fixed already-signed responses being reported as request failures when some communities use non-2xx HTTP status codes.",
+            "Fixed the Kuro sign-in month parameter format and normalized persisted device UUIDs."
+          ]
+        },
         {
           "version": "0.2.0",
           "date": "2026-09-15",
@@ -55,10 +64,6 @@
         {
           "version": "0.1.9",
           "items": ["Added host language resources for Chinese and English interfaces."]
-        },
-        {
-          "version": "0.1.7",
-          "items": ["Fixed a trailing comma in the store metadata JSON to prevent duplicate parse warnings in the host."]
         }
       ]
     }
