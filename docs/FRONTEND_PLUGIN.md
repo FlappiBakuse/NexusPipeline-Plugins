@@ -172,7 +172,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 壁纸配置、配额、文件校验、去重、轮换与配色属于插件业务：插件用 `context.Assets` 保存资产，用插件 Web API 提供状态与二进制读取，再通过 `host.appearance` 应用背景与 token。宿主不再提供服务端壁纸存储。
 
-运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式只读取宿主按进程识别的游戏客户区，模拟器模式使用宿主冻结的 Generic ADB 或 MuMuManager 驱动；插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
+运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式读取宿主按进程识别的游戏客户区，模拟器模式使用宿主冻结的 Generic ADB、MuMuManager、LDPlayer、Nox 或 BlueStacks 驱动；插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
 
 ## 运行条件
 
