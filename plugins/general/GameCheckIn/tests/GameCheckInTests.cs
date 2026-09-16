@@ -273,7 +273,7 @@ public sealed class GameCheckInTests
 
         CheckInResult result = await new KuroClient(
             factory,
-            () => new DateTimeOffset(2026, 9, 15, 12, 0, 0, TimeSpan.FromHours(8))).SignAsync(
+            () => AtLocalTime(2026, 9, 15, 12, 0)).SignAsync(
             KuroGameDefinitions.Find("ww")!,
             "kuro-token",
             "dev-code",
@@ -338,7 +338,7 @@ public sealed class GameCheckInTests
     public async Task TaskApi_SavesIndependentSecretsMaskedAndDeletesTheirScope()
     {
         var context = new FakePluginHostContext("game-check-in");
-        var service = new CheckInTaskService(context, () => new DateTimeOffset(2026, 9, 14, 10, 0, 0, TimeSpan.FromHours(8)));
+        var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 0));
         string[] secrets = { "private-cookie", "https://hooks.example.test/private-token", "sign-key", "smtp-user", "smtp-password" };
         JsonObject body = NewTaskInput("Daily", "11:30", DayOfWeek.Monday);
         body["secrets"] = new JsonObject
@@ -387,7 +387,7 @@ public sealed class GameCheckInTests
     public async Task ScheduledTask_ClaimsOneLocalOccurrenceAndCredentialChangeResetsDailyDeduplication()
     {
         var context = new FakePluginHostContext("game-check-in");
-        DateTimeOffset now = new(2026, 9, 14, 10, 30, 0, TimeSpan.FromHours(8));
+        DateTimeOffset now = AtLocalTime(2026, 9, 14, 10, 30);
         var service = new CheckInTaskService(context, () => now);
         context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -449,7 +449,7 @@ public sealed class GameCheckInTests
         using var firstRequestEntered = new ManualResetEventSlim(false);
         using var releaseFirstRequest = new ManualResetEventSlim(false);
         var host = new ScopedDataHostContext(context, store);
-        DateTimeOffset now = new(2026, 9, 14, 10, 30, 0, TimeSpan.FromHours(8));
+        DateTimeOffset now = AtLocalTime(2026, 9, 14, 10, 30);
         var service = new CheckInTaskService(host, () => now);
         int gatedRequest = 0;
         context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
@@ -500,7 +500,7 @@ public sealed class GameCheckInTests
     public async Task ScheduledTask_DoesNotBackfillMissedLocalTime()
     {
         var context = new FakePluginHostContext("game-check-in");
-        DateTimeOffset now = new(2026, 9, 14, 10, 30, 0, TimeSpan.FromHours(8));
+        DateTimeOffset now = AtLocalTime(2026, 9, 14, 10, 30);
         var service = new CheckInTaskService(context, () => now);
         await service.StartAsync(CancellationToken.None);
         JsonObject taskBody = NewTaskInput("Missed", "10:29", DayOfWeek.Monday);
@@ -571,7 +571,7 @@ public sealed class GameCheckInTests
     public async Task CheckInRun_ContinuesOtherPlatformsAndClassifiesAllFailureAndPartial()
     {
         var context = new FakePluginHostContext("game-check-in");
-        var service = new CheckInTaskService(context, () => new DateTimeOffset(2026, 9, 14, 10, 30, 0, TimeSpan.FromHours(8)));
+        var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 30));
         context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = new StringContent(
@@ -716,6 +716,9 @@ public sealed class GameCheckInTests
         },
         ["secrets"] = new JsonObject(),
     };
+
+    private static DateTimeOffset AtLocalTime(int year, int month, int day, int hour, int minute) =>
+        new(new DateTime(year, month, day, hour, minute, 0, DateTimeKind.Local));
 
     private static JsonObject NewKuroTaskInput(string name, string credential)
     {
