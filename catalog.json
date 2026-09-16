@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-15T15:14:14Z",
+  "generatedAt": "2026-09-16T11:58:06Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,26 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-14",
+      "updatedAt": "2026-09-16",
       "hasReadme": true,
-      "version": "0.2.5",
+      "version": "0.2.6",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.5.zip",
-      "sha256": "51bc127990a6db65bcba62cafa61a45f6cba83587065e959fe00a3aca6791243",
-      "sizeBytes": 255839,
+      "minHostVersion": "0.16.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.6.zip",
+      "sha256": "48c62eba0a71fc7eeeb5a21afc82f6ac32c672e6b6e6616a082bb05f2f84183e",
+      "sizeBytes": 262558,
       "changelog": [
+        {
+          "version": "0.2.6",
+          "date": "2026-09-16",
+          "items": [
+            "壁纸列表改为一张完整卡片并用分隔线区分条目，拖拽把手统一使用宿主公开样式 token，触控命中区保持 40px。"
+          ]
+        },
         {
           "version": "0.2.5",
           "date": "2026-09-14",
@@ -46,14 +53,6 @@
           "date": "2026-09-13",
           "items": [
             "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-09-12",
-          "items": [
-            "设置页卡片按宿主统一的展开置顶规则显示，收回后回到插件插槽原位置。",
-            "两个开关改用公开开关列表组件，与设置页的开关外观一致；状态徽章与删除按钮改用公开元素的文案属性，文案不再丢失。"
           ]
         }
       ],
@@ -69,6 +68,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.6",
+              "items": [
+                "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
+              ]
+            },
+            {
               "version": "0.2.5",
               "items": [
                 "Startup rotation now advances once whenever a Web UI session opens or reloads."
@@ -79,24 +84,54 @@
               "items": [
                 "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
               ]
-            },
-            {
-              "version": "0.2.2",
-              "items": [
-                "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
-                "Both switches use the public switch list for the same look as the settings page, and the status badge and delete button pass their text through the public element label property so the text is always rendered."
-              ]
             }
           ]
         }
       }
     },
     {
+      "name": "emulator-support",
+      "artifactName": "EmulatorSupport",
+      "displayName": "模拟器支持扩展",
+      "gameName": "安卓模拟器",
+      "description": "提供雷电、夜神和 BlueStacks 模拟器的识别、启动、截图与关闭支持。",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "模拟器",
+        "运行支持"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/EmulatorSupport",
+      "updatedAt": "2026-09-16",
+      "hasReadme": false,
+      "version": "0.1.0",
+      "kind": "managed-code",
+      "apiVersion": "1.7",
+      "capabilities": [],
+      "minHostVersion": "0.16.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/EmulatorSupport/EmulatorSupport-0.1.0.zip",
+      "sha256": "95948588cee447e5f02cfc57178e0437a2530a920d9a6e4155c5659b400417a6",
+      "sizeBytes": 163017,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-09-16",
+          "items": [
+            "提供雷电、夜神和 BlueStacks 模拟器识别、启动、截图与关闭支持。"
+          ]
+        }
+      ]
+    },
+    {
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
-      "displayName": "游戏自动签到",
-      "gameName": "米游社 / HoYoLAB / 森空岛 / SKPORT / 库街区游戏签到",
-      "description": "在用户脚本实际开始运行时，为已选择平台的米游社、HoYoLAB、森空岛、SKPORT 或库街区游戏执行当日游戏内签到，并提供用户列表聚合签到状态。",
+      "displayName": "游戏签到",
+      "gameName": "多平台游戏签到任务",
+      "description": "创建独立游戏签到任务，配置本机时区计划、手动执行、结果和任务级通知。",
       "authors": [
         {
           "name": "FlappiBakuse",
@@ -110,24 +145,31 @@
         "森空岛",
         "SKPORT",
         "库街区",
-        "用户管理"
+        "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-15",
+      "updatedAt": "2026-09-16",
       "hasReadme": true,
-      "version": "0.2.1",
+      "version": "0.3.0",
       "kind": "managed-code",
       "apiVersion": "1.5",
       "capabilities": [
-        "user-global-management",
-        "user-list-badges",
-        "user-run-events"
+        "frontend-module"
       ],
-      "minHostVersion": "0.11.3",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.2.1.zip",
-      "sha256": "37660bc4acb008fcb2d358ad257e0ba99502707b693a352cd980dd6e17651a9c",
-      "sizeBytes": 215555,
+      "minHostVersion": "0.16.5",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.0.zip",
+      "sha256": "77541e39109cf62c2c58e798d0dae03e658e65e9b946ddb4bcb8ce5837f47e63",
+      "sizeBytes": 407562,
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-16",
+          "items": [
+            "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
+            "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
+            "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-09-15",
@@ -145,20 +187,13 @@
             "新增五个平台独立凭据、状态、签到游戏选择和用户列表聚合徽章。",
             "将用户配置规范化为 schema v3，并保留既有米游社与 HoYoLAB 状态记录。"
           ]
-        },
-        {
-          "version": "0.1.9",
-          "date": "2026-09-09",
-          "items": [
-            "新增宿主语言资源，支持中英文界面显示。"
-          ]
         }
       ],
       "locales": {
         "en-US": {
           "displayName": "Game Check-in",
-          "gameName": "Miyoushe / HoYoLAB / Skland / SKPORT / Kuro game check-in",
-          "description": "When a user script starts, check in selected games in-game across five supported platforms and show aggregated status in the user list.",
+          "gameName": "Multi-platform game check-in tasks",
+          "description": "Create independent check-in tasks with local schedules, manual runs, results, and task-specific Webhook or SMTP notifications.",
           "tags": [
             "Check-in",
             "Miyoushe",
@@ -166,9 +201,18 @@
             "Skland",
             "SKPORT",
             "Kuro",
-            "User management"
+            "Schedules"
           ],
           "changelog": [
+            {
+              "version": "0.3.0",
+              "date": "2026-09-16",
+              "items": [
+                "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
+                "Each task now has independent credentials and Webhook or SMTP notifications.",
+                "Removed user-run hooks, global settings contributions, and user-list badges."
+              ]
+            },
             {
               "version": "0.2.1",
               "date": "2026-09-15",
@@ -185,12 +229,6 @@
                 "Added in-game check-in for Arknights and Endfield on Skland, Endfield global on SKPORT, and Wuthering Waves and Punishing: Gray Raven on Kuro.",
                 "Added independent credentials, state, game selection, and aggregated user-list badges for five platforms.",
                 "Normalized user settings to schema v3 while retaining existing Miyoushe and HoYoLAB state records."
-              ]
-            },
-            {
-              "version": "0.1.9",
-              "items": [
-                "Added host language resources for Chinese and English interfaces."
               ]
             }
           ]
