@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.2.6",
+      "date": "2026-09-16",
+      "items": [
+        "壁纸列表改为一张完整卡片并用分隔线区分条目，拖拽把手统一使用宿主公开样式 token，触控命中区保持 40px。"
+      ]
+    },
+    {
       "version": "0.2.5",
       "date": "2026-09-14",
       "items": [
@@ -26,14 +33,6 @@
       "date": "2026-09-13",
       "items": [
         "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
-      ]
-    },
-    {
-      "version": "0.2.2",
-      "date": "2026-09-12",
-      "items": [
-        "设置页卡片按宿主统一的展开置顶规则显示，收回后回到插件插槽原位置。",
-        "两个开关改用公开开关列表组件，与设置页的开关外观一致；状态徽章与删除按钮改用公开元素的文案属性，文案不再丢失。"
       ]
     }
   ],
@@ -49,6 +48,12 @@
       ],
       "changelog": [
         {
+          "version": "0.2.6",
+          "items": [
+            "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
+          ]
+        },
+        {
           "version": "0.2.5",
           "items": [
             "Startup rotation now advances once whenever a Web UI session opens or reloads."
@@ -58,13 +63,6 @@
           "version": "0.2.4",
           "items": [
             "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "items": [
-            "The settings card follows the host expansion rule and returns to its original slot position when collapsed.",
-            "Both switches use the public switch list for the same look as the settings page, and the status badge and delete button pass their text through the public element label property so the text is always rendered."
           ]
         }
       ]

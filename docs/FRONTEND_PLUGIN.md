@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件使用宿主 Plugin API v1.6。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.7，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -145,7 +145,7 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API v1.6 配合方式
+## Plugin API v1.6 / v1.7 配合方式
 
 managed-code 插件在初始化时检查 `context is IPluginHostContextV1_6`，再按需使用：
 
@@ -168,11 +168,11 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 插件 Web API 的最终路径为 `/api/plugin-api/<plugin>/<route>`。每次调用最多执行 30 秒，请求体上限 16 MiB，JSON 响应上限 2 MiB，二进制响应上限 16 MiB；插件异常使用 `code: "plugin_error"` 返回。二进制响应只允许 `image/png`、`image/jpeg`、`image/webp`、`image/gif`、`image/avif` 和 `application/octet-stream`，并附带 `X-Content-Type-Options: nosniff` 与 `Cache-Control: no-store`。UI 处理器和历史处理器也有独立超时，超限内容会被宿主丢弃。
 
-`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
+`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。宿主公开的拖拽把手 token 为 `--nx-drag-handle-size`（常规尺寸）、`--nx-drag-handle-touch-size`（触控命中区）和 `--nx-drag-handle-glyph-size`（`⠿` 字形）；插件自有排序控件可使用这些变量统一视觉与触控尺寸。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
 
 壁纸配置、配额、文件校验、去重、轮换与配色属于插件业务：插件用 `context.Assets` 保存资产，用插件 Web API 提供状态与二进制读取，再通过 `host.appearance` 应用背景与 token。宿主不再提供服务端壁纸存储。
 
-运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式读取宿主按进程识别的游戏客户区，模拟器模式使用宿主冻结的 Generic ADB、MuMuManager、LDPlayer、Nox 或 BlueStacks 驱动；插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
+运行画面预览接口为 `GET /api/execution-preview/<runId>?plugin=<pluginName>`。PC 模式读取宿主按进程识别的游戏客户区；模拟器模式使用宿主冻结的 Generic ADB、MuMuManager 驱动或已启用插件提供的 provider；雷电、夜神和 BlueStacks 的专属识别与关闭需要安装并启用 `EmulatorSupport`。插件不能提交进程、窗口或 ADB 目标。响应为 200 JPEG，或带 `X-Nexus-Preview-State` 的 204 等待状态。预览输出保持宽高比，高度最高 360 像素。
 
 ## 运行条件
 
@@ -197,7 +197,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与宿主当前 Plugin API v1.6 兼容；只需本地化端口的插件继续检查 `IPluginHostContextV1_4`，需要资产端口的插件检查 `IPluginHostContextV1_6`；`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5；
+- managed-code 插件 API 版本与宿主当前 Plugin API v1.7 兼容；只需本地化端口的插件继续检查 `IPluginHostContextV1_4`，需要资产端口的插件检查 `IPluginHostContextV1_6`，模拟器 provider 检查 `IPluginHostContextV1_7`；`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 与 `live-screenshot` 继续使用 Plugin API v1.5；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
