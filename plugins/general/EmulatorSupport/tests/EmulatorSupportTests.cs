@@ -92,41 +92,63 @@ public sealed class EmulatorSupportTests
     {
         if (!OperatingSystem.IsWindows()) return;
         string system = Environment.GetFolderPath(Environment.SpecialFolder.System);
-        string powershell = Path.Combine(system, "WindowsPowerShell", "v1.0", "powershell.exe");
-        if (!File.Exists(powershell)) return;
-        string processIdPath = Path.Combine(Path.GetTempPath(), $"nxp-emulator-{Guid.NewGuid():N}.pid");
+        string pingSource = Path.Combine(system, "PING.EXE");
+        if (!File.Exists(pingSource)) return;
+        string childProcessName = $"nxp{Guid.NewGuid():N}";
+        string childExecutable = Path.Combine(AppContext.BaseDirectory, $"{childProcessName}.exe");
+        string releaseSignalPath = Path.Combine(Path.GetTempPath(), $"{childProcessName}.ready");
+        File.Copy(pingSource, childExecutable);
         string script = CreateCommandFile(
             $"@echo off\r\n"
-            + $"start \"\" /b \"{powershell}\" -NoProfile -Command \"Set-Content -LiteralPath '{processIdPath}' -Value $PID; Start-Sleep -Seconds 15\"\r\n"
-            + "ping 127.0.0.1 -n 15 > nul\r\n");
+            + ":wait_for_release\r\n"
+            + $"if not exist \"{releaseSignalPath}\" goto wait_for_release\r\n"
+            + $"start \"\" /b \"{childExecutable}\" -t 127.0.0.1\r\n"
+            + "exit /b 0\r\n");
+        Task<(bool Ok, string Output)>? command = null;
+        int? descendantProcessId = null;
         try
         {
-            (bool ok, string output) = await EmulatorSupport.RunCommandAsync(
+            command = EmulatorSupport.RunCommandAsync(
                 script,
                 Array.Empty<string>(),
                 timeoutSeconds: 2,
                 CancellationToken.None);
+            File.WriteAllText(releaseSignalPath, string.Empty);
+            descendantProcessId = await WaitForProcessAsync(childProcessName, TimeSpan.FromSeconds(1));
+            (bool ok, string output) = await command;
 
             Assert.False(ok);
             Assert.Contains("超时", output);
-            Assert.True(File.Exists(processIdPath), "descendant test process should have started");
-            Assert.True(int.TryParse(File.ReadAllText(processIdPath).Trim(), out int processId));
-            Assert.True(await WaitUntilExitedAsync(processId, TimeSpan.FromSeconds(3)), "timed out process tree should be terminated");
+            Assert.True(descendantProcessId.HasValue, "descendant test process should have started before pipe-drain timeout");
+            Assert.True(await WaitUntilExitedAsync(descendantProcessId.Value, TimeSpan.FromSeconds(3)), "timed out process tree should be terminated");
         }
         finally
         {
-            if (File.Exists(processIdPath)
-                && int.TryParse(File.ReadAllText(processIdPath).Trim(), out int processId))
+            if (command is not null && !command.IsCompleted)
             {
-                try
-                {
-                    using Process child = Process.GetProcessById(processId);
-                    if (!child.HasExited) child.Kill(entireProcessTree: true);
-                }
-                catch (ArgumentException) { }
+                try { await command.WaitAsync(TimeSpan.FromSeconds(3)); } catch { }
             }
-            File.Delete(processIdPath);
-            File.Delete(script);
+            var cleanupProcessIds = new List<int>();
+            foreach (Process process in Process.GetProcessesByName(childProcessName))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        if (process.HasExited) continue;
+                        cleanupProcessIds.Add(process.Id);
+                        process.Kill(entireProcessTree: true);
+                    }
+                    catch (InvalidOperationException) { }
+                }
+            }
+            foreach (int processId in cleanupProcessIds)
+            {
+                await WaitUntilExitedAsync(processId, TimeSpan.FromSeconds(3));
+            }
+            TryDeleteFile(releaseSignalPath);
+            TryDeleteFile(childExecutable);
+            TryDeleteFile(script);
         }
     }
 
@@ -198,5 +220,33 @@ public sealed class EmulatorSupportTests
             await Task.Delay(50);
         }
         return false;
+    }
+
+    private static async Task<int?> WaitForProcessAsync(string processName, TimeSpan timeout)
+    {
+        DateTime deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            foreach (Process process in Process.GetProcessesByName(processName))
+            {
+                using (process)
+                {
+                    try
+                    {
+                        if (!process.HasExited) return process.Id;
+                    }
+                    catch (InvalidOperationException) { }
+                }
+            }
+            await Task.Delay(25);
+        }
+        return null;
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try { File.Delete(path); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 }
