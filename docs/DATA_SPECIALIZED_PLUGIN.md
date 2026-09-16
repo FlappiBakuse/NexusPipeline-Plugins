@@ -57,13 +57,15 @@ plugins/specialized/Example/
 | `version` | 插件自身版本 | 与宿主版本独立；使用 `major.minor.patch`、`-beta.N` 或 `-rc.N` |
 | `minHostVersion` | 最低宿主版本 | 使用与宿主一致的受限版本格式 |
 | `kind` | 插件类型 | 数据化专项插件使用 `data-specialized` |
-| `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项；宿主仅在运行时收紧 PC 启动计划，保留用户保存的启动参数）、`no-fresh-config`（插件不允许使用全新配置文件模式） |
+| `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式；此声明不注册模拟器驱动）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项；宿主仅在运行时收紧 PC 启动计划，保留用户保存的启动参数）、`no-fresh-config`（插件不允许使用全新配置文件模式） |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
 | `configValidator` | 配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
 | `configEditor` | 配置编辑准备阶段的可选工作副本调整脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
+
+宿主内置 Generic ADB 与 MuMuManager。雷电、夜神和 BlueStacks 的厂商专属识别及实例关闭由官方 managed-code `EmulatorSupport` 扩展提供；需要这些厂商行为时，用户须在插件商店安装并启用扩展。
 
 宿主同时比较 `minHostVersion` 与当前受限 Nexus 版本。最低版本要求未满足时，插件保留在本地管理列表中并显示不兼容状态，宿主跳过能力注册、配置解析和前端运行时激活；用户升级宿主后重新加载插件。
 

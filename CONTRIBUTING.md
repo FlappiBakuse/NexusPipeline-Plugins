@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；`managed-code` 插件使用独立 .NET 项目、`entryAssembly`、`entryType` 与 Plugin API `1.6`。前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；宿主当前 Plugin API 为 `1.7`，managed-code 插件根据所需端口声明兼容的 API minor。`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider；前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
 
 ## 开发流程
 
@@ -20,7 +20,7 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 提升插件版本并更新 `store.json`；运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和受影响插件测试。Pull Request 只提交源码与元数据，合并后的发布工作流负责生成发行包、catalog 与发行状态。
+7. 提升插件版本并更新 `store.json`；在 Pull Request 源码阶段运行 `python tools/repository.py validate-source`、`python tools/repository.py plan` 和受影响插件测试。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；生成候选发行物后运行 `validate-generated`，提交到主分支并由发布流水线更新 catalog/package 后再运行 `validate`。Pull Request 只提交源码与元数据，catalog、发行包和发行状态由发布工作流生成。
 
 ## 测试与提交治理
 
@@ -28,8 +28,9 @@
 - 持久化 UI 测试只覆盖功能结果、ARIA、焦点、状态、提交、路由、API 效果和生命周期。
 - 截图匹配器、视觉回归套件、截图基线和像素/布局断言不进入仓库。浏览器或手工验证脚本放在操作系统临时目录，验证结束后删除且不得加入 Git。
 - 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；宿主私有 Vue 组件、私有 class 和未声明 host 能力不属于插件契约。
+- 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 API v1.6 与 Frontend API 1.5，`game-checkin` 与 `live-screenshot` 使用 API v1.5。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 API v1.6 与 Frontend API 1.5，`game-checkin` 与 `live-screenshot` 继续使用 API v1.5，`EmulatorSupport` 使用 API v1.7。
 
 ## 发行包规则
 
@@ -43,10 +44,7 @@
 提交前至少执行以下检查：
 
 ```text
-# 校验源码契约、manifest、store 和 catalog 元数据
-python tools/repository.py validate
-
-# 校验当前源码、分类目录和宿主锁
+# 源码 PR 或候选版本尚未进入 catalog/packages 时
 python tools/repository.py validate-source
 
 # 校验宿主允许的 locale 与当前宿主资源
@@ -68,6 +66,9 @@ python tools/repository.py plan --baseline auto --output .generated/release-plan
 python tools/repository.py test --plan .generated/release-plan.json
 python tools/repository.py release --plan .generated/release-plan.json --output .generated
 python tools/repository.py validate-generated --generated-root .generated
+
+# catalog 与发行包已进入主分支后
+python tools/repository.py validate
 
 # 全仓 ZIP / SHA256 / catalog 审计
 python tools/repository.py audit --full

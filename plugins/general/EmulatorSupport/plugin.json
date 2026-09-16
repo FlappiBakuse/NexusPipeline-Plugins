@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 2,
+  "name": "emulator-support",
+  "artifactName": "EmulatorSupport",
+  "displayName": "模拟器支持扩展",
+  "description": "提供雷电、夜神和 BlueStacks 模拟器的识别、启动、截图与关闭支持。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.16.5",
+  "apiVersion": "1.7",
+  "entryAssembly": "NexusPipeline.Plugin.EmulatorSupport.dll",
+  "entryType": "NexusPipeline.Plugin.EmulatorSupport.EntryPoint"
+}

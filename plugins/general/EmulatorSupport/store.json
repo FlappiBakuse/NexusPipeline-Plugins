@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "gameName": "安卓模拟器",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": [
+    "模拟器",
+    "运行支持"
+  ],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/EmulatorSupport",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-09-16",
+      "items": [
+        "提供雷电、夜神和 BlueStacks 模拟器识别、启动、截图与关闭支持。"
+      ]
+    }
+  ]
+}

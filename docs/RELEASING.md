@@ -71,7 +71,6 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 本地可以执行：
 
 ```text
-python tools/repository.py validate
 python tools/repository.py validate-source
 python tools/repository.py validate-host-locales --host-root ..\NexusPipeline
 python tools/repository.py check-syntax
@@ -82,9 +81,11 @@ python tools/repository.py release --plan .generated/release-plan.json --output 
 python tools/repository.py validate-generated --generated-root .generated
 ```
 
+发布工作流把生成的 catalog 与 package 纳入主分支后，再运行 `python tools/repository.py validate` 核对主分支源码、catalog 和发行包集合。
+
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
-`validate-source` 用于在 PR 候选 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁；`validate` 还会校验当前 catalog 与已存在发行包。
+`validate-source` 用于在 PR 或新插件候选的 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁。`validate` 还会校验当前 catalog 集合与已存在发行包，因此只有 catalog/packages 已包含当前源码版本时才能通过；新插件或新版本进入候选时，源码阶段应先运行 `validate-source`，生成候选物后运行 `validate-generated`，正式发布流水线更新 catalog/packages 后再运行 `validate`。
 
 `validate-host-locales` 将 `host.lock.json` 的 `supportedLocales` 与当前宿主 checkout 的 Web/embedded locale registry 及对应资源文件逐项比对。插件构建可以继续使用锁定的宿主提交；该校验使用独立的当前宿主 checkout，避免两种契约相互覆盖。
 
@@ -101,7 +102,17 @@ python tools/repository.py validate-generated --generated-root .generated
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
 
-工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。
+工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。当插件需要新宿主契约（例如 Plugin API v1.7 的模拟器 provider）时，宿主实现必须先进入实际可检出的 NexusPipeline 提交，再把 `host.lock.json` 的 `ref` 更新到该真实提交；在宿主提交可用前不要构建或发行依赖该端口的插件。`catalog.json`、`packages/` 与 `.release-state.json` 由发行流水线生成，不手工填写包摘要或发行事实。
+
+## 模拟器支持真实设备验证
+
+雷电、夜神和 BlueStacks 的厂商探测及驱动属于 `EmulatorSupport` 插件。发行该插件前，须在真实设备上逐项验证实例身份与 ADB 端点关联、应用启动、前台查询、截图、应用停止和实例安全关闭；host System Smoke 的 managed-code fixture 只验证宿主 API/provider 跨边界调用。
+
+| 模拟器 | 设备验证范围 | 当前状态 |
+|---|---|---|
+| 雷电 | 实例枚举与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
+| 夜神 | VM/实例身份与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
+| BlueStacks | 实例身份与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
 
 ## 发行状态
 
