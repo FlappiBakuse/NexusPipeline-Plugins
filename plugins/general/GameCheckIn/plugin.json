@@ -2,19 +2,22 @@
   "schemaVersion": 2,
   "name": "game-checkin",
   "artifactName": "GameCheckIn",
-  "displayName": "游戏自动签到",
-  "description": "在用户脚本实际开始运行时，为已选择平台的米游社、HoYoLAB、森空岛、SKPORT 或库街区游戏执行当日游戏内签到，并提供用户列表聚合签到状态。",
-  "version": "0.2.1",
+  "displayName": "游戏签到",
+  "description": "创建独立游戏签到任务，配置本机时区计划、手动执行、结果和任务级通知。",
+  "version": "0.3.0",
   "kind": "managed-code",
-  "minHostVersion": "0.11.3",
+  "minHostVersion": "0.16.5",
   "apiVersion": "1.5",
   "entryAssembly": "NexusPipeline.Plugin.GameCheckIn.dll",
   "entryType": "NexusPipeline.Plugin.GameCheckIn.EntryPoint",
   "capabilities": [
-    "user-global-management",
-    "user-run-events",
-    "user-list-badges"
+    "frontend-module"
   ],
+  "frontend": {
+    "apiVersion": "1.5",
+    "entry": "web/main.js",
+    "styles": ["web/style.css"]
+  },
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {

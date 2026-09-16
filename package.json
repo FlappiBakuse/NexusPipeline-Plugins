@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "plugins/general/CustomWallpaper/frontend",
-    "plugins/general/LiveScreenshot/frontend"
+    "plugins/general/LiveScreenshot/frontend",
+    "plugins/general/GameCheckIn/frontend"
   ],
   "scripts": {
     "build:frontend": "npm run build --workspaces --if-present",

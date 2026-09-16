@@ -2,11 +2,11 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.7）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
 
 ## 当前插件
 
-| 机器 ID | artifactName | 游戏 | 类型 | 能力 |
+| 机器 ID | artifactName | 游戏 | 类型 | 能力 / 扩展点 |
 |---|---|---|---|---|
 | `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator`, `self-managed-pc-launch` |
 | `bettergi` | `BetterGI` | 原神 | `data-specialized` | — |
@@ -14,11 +14,12 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
-| `game-checkin` | `GameCheckIn` | 米游社 / HoYoLAB 多游戏 | `managed-code` | `user-global-management`, `user-run-events`, `user-list-badges` |
+| `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
+| `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API v1.7 provider |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 | `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
 
-`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。
+`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API v1.7 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
 
 宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
 
@@ -86,7 +87,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，运行 `python tools/repository.py validate`、`python tools/repository.py plan` 和对应测试。仓库根目录 `host.lock.json` 的 `supportedLocales` 记录当前宿主允许的 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
+5. 更新插件自身版本和 `store.json`，在源码阶段运行 `python tools/repository.py validate-source`、`plan` 和对应测试；候选包生成后运行 `validate-generated`，catalog/package 进入主分支后运行 `validate`。仓库根目录 `host.lock.json` 的 `supportedLocales` 记录当前宿主允许的 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
 
 ## 重要运行语义
 
@@ -96,7 +97,7 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` 使用全局用户、用户运行事件和本地化能力；`custom-wallpaper` 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.3 使用独立签到任务、任务级凭据和通知密钥、本机时区计划与插件自有前端，不再读取旧用户全局签到配置；`emulator-support` 使用 Plugin API v1.7 注册厂商模拟器 provider；`custom-wallpaper` 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
 - Plugin API 1.6 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
 - 宿主升级后会把旧外观数据（`config/appearance.json`、`user-assets/appearance/wallpapers/` 与旧轮换游标）一次性搬迁到原提供方插件的 `legacy-appearance-import` 作用域数据，资产写入该插件的 `wallpapers` 资产 scope。插件应在初始化时读取并消费该载荷，导入完成后删除该作用域记录；宿主保留旧文件。

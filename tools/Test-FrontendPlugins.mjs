@@ -282,7 +282,62 @@ function defaultTestState() {
   };
 }
 
+function gameCheckInTestState() {
+  return {
+    tasks: [],
+    platforms: [
+      { id: "cn", name: "米游社", games: [{ id: "gi", name: "原神" }] },
+      { id: "kuro", name: "库街区", games: [{ id: "ww", name: "鸣潮" }] },
+    ],
+    webhookTypes: ["generic", "feishu", "dingtalk", "wecom", "discord", "slack"],
+    timeZoneId: "Asia/Shanghai",
+    localTime: "2026-09-16T09:00:00+08:00",
+  };
+}
+
+function gameCheckInTask(input, id, previous = null) {
+  input = JSON.parse(JSON.stringify(input || {}));
+  const actions = input.secrets || {};
+  const configured = (key, old) => actions[key]?.action === "set"
+    ? true
+    : actions[key]?.action === "clear" ? false : old === true;
+  const run = previous?.runs?.[0] || null;
+  return {
+    id,
+    name: input.name,
+    enabled: input.enabled,
+    games: structuredClone(input.games || {}),
+    cnDeviceId: input.cnDeviceId || previous?.cnDeviceId || "cn-device-test",
+    kuroDevCode: input.kuroDevCode || previous?.kuroDevCode || "kuro-device-test",
+    kuroDistinctId: input.kuroDistinctId || previous?.kuroDistinctId || "kuro-distinct-test",
+    schedules: structuredClone(input.schedules || []),
+    notifications: structuredClone(input.notifications),
+    runs: structuredClone(previous?.runs || []),
+    credentials: {
+      cn: configured("cn", previous?.credentials?.cn),
+      os: configured("os", previous?.credentials?.os),
+      skland: configured("skland", previous?.credentials?.skland),
+      skport: configured("skport", previous?.credentials?.skport),
+      kuro: configured("kuro", previous?.credentials?.kuro),
+    },
+    webhookSecrets: {
+      urlConfigured: configured("webhookUrl", previous?.webhookSecrets?.urlConfigured),
+      signingSecretConfigured: configured("webhookSecret", previous?.webhookSecrets?.signingSecretConfigured),
+    },
+    smtpSecrets: {
+      userConfigured: configured("smtpUser", previous?.smtpSecrets?.userConfigured),
+      passwordConfigured: configured("smtpPassword", previous?.smtpSecrets?.passwordConfigured),
+    },
+    isRunning: false,
+    nextRunAt: input.enabled && input.schedules?.some(schedule => schedule.enabled)
+      ? "2026-09-16T09:00:00+08:00"
+      : null,
+    recentRun: run,
+  };
+}
+
 function createMockHost(pluginName, registrations, metrics, state = defaultTestState()) {
+  const gameCheckInPlugin = String(pluginName).replaceAll("-", "").toLowerCase() === "gamecheckin";
   const host = {
     plugin: Object.freeze({ name: pluginName }),
     i18n: {
@@ -305,12 +360,61 @@ function createMockHost(pluginName, registrations, metrics, state = defaultTestS
       },
     },
     api: {
-      async get(route) { metrics.apiGet += 1; return { ...structuredClone(state), route }; },
-      async put(route) { metrics.apiPut += 1; return structuredClone(state); },
-      async post(route) {
+      async get(route) {
+        metrics.apiGet += 1;
+        metrics.apiCalls.push({ method: "GET", route: String(route) });
+        return gameCheckInPlugin ? structuredClone(state) : { ...structuredClone(state), route };
+      },
+      async put(route, body) {
+        metrics.apiPut += 1;
+        const copiedBody = JSON.parse(JSON.stringify(body || {}));
+        metrics.apiCalls.push({ method: "PUT", route: String(route), body: copiedBody });
+        if (gameCheckInPlugin && route === "tasks") {
+          const index = state.tasks.findIndex(task => task.id === copiedBody?.id);
+          if (index < 0) throw Object.assign(new Error("task_not_found"), { code: "task_not_found" });
+          state.tasks[index] = gameCheckInTask(copiedBody, copiedBody.id, state.tasks[index]);
+          return structuredClone(state.tasks[index]);
+        }
+        return structuredClone(state);
+      },
+      async post(route, body) {
         metrics.apiPost += 1;
         metrics.apiPostRoutes.push(String(route));
+        const copiedBody = JSON.parse(JSON.stringify(body || {}));
+        metrics.apiCalls.push({ method: "POST", route: String(route), body: copiedBody });
+        if (gameCheckInPlugin && route === "tasks") {
+          const task = gameCheckInTask(copiedBody, "task-check-in-1");
+          state.tasks.push(task);
+          return structuredClone(task);
+        }
+        if (gameCheckInPlugin && route === "tasks/run") {
+          const task = state.tasks.find(item => item.id === copiedBody?.taskId);
+          if (!task) throw Object.assign(new Error("task_not_found"), { code: "task_not_found" });
+          const run = {
+            id: "run-check-in-1",
+            trigger: "manual",
+            startedAt: "2026-09-16T09:00:00+08:00",
+            completedAt: "2026-09-16T09:00:01+08:00",
+            status: "success",
+            results: [{ platform: "cn", gameCode: "gi", code: "success", message: "签到成功", success: true }],
+          };
+          task.runs.unshift(run);
+          task.recentRun = run;
+          return { runId: run.id, status: "running" };
+        }
         return structuredClone(state);
+      },
+      async delete(route, body) {
+        metrics.apiDelete += 1;
+        const copiedBody = JSON.parse(JSON.stringify(body || {}));
+        metrics.apiCalls.push({ method: "DELETE", route: String(route), body: copiedBody });
+        if (gameCheckInPlugin && route === "tasks") {
+          const index = state.tasks.findIndex(task => task.id === copiedBody?.taskId);
+          if (index < 0) throw Object.assign(new Error("task_not_found"), { code: "task_not_found" });
+          state.tasks.splice(index, 1);
+          return { deleted: true };
+        }
+        return { deleted: true };
       },
       async blob() { metrics.apiBlob += 1; return new Blob(); },
       async upload() {
@@ -340,13 +444,37 @@ function createMockHost(pluginName, registrations, metrics, state = defaultTestS
         };
       },
     },
+    routes: {
+      register(route, handler) {
+        if (typeof route !== "string" || !route.trim() || typeof handler !== "function") fail(`插件 ${pluginName} 的 page route 无效`);
+        const registration = { route, handler, disposed: false };
+        metrics.routeRegistrations.push(registration);
+        return { dispose() { registration.disposed = true; } };
+      },
+    },
+    nav: {
+      register(item) {
+        if (!item?.title || !item?.route) fail(`插件 ${pluginName} 的导航项缺少标题或 route`);
+        const registration = { ...item, disposed: false };
+        metrics.navRegistrations.push(registration);
+        return { dispose() { registration.disposed = true; } };
+      },
+    },
+    lifecycle: {
+      onDispose(handler) {
+        if (typeof handler !== "function") fail(`插件 ${pluginName} 的 onDispose handler 无效`);
+        const registration = { handler, disposed: false };
+        metrics.lifecycleHandlers.push(registration);
+        return { dispose() { registration.disposed = true; } };
+      },
+    },
   };
   return host;
 }
 
 function installDom() {
-  const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
-  const names = ["window", "document", "navigator", "location", "Element", "HTMLElement", "SVGElement", "Node", "Text", "Comment", "Event", "CustomEvent", "MutationObserver", "getComputedStyle", "Blob"];
+  const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/", pretendToBeVisual: true });
+  const names = ["window", "document", "navigator", "location", "Element", "HTMLElement", "SVGElement", "Node", "Text", "Comment", "Event", "CustomEvent", "MutationObserver", "getComputedStyle", "Blob", "requestAnimationFrame", "cancelAnimationFrame"];
   const previous = new Map();
   for (const name of names) {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, name);
@@ -463,9 +591,14 @@ function createMetrics() {
     apiGet: 0,
     apiPut: 0,
     apiPost: 0,
+    apiDelete: 0,
     apiBlob: 0,
     apiUpload: 0,
     apiPostRoutes: [],
+    apiCalls: [],
+    routeRegistrations: [],
+    navRegistrations: [],
+    lifecycleHandlers: [],
     appearanceSetBackground: 0,
     appearanceClearBackground: 0,
     appearanceSetTokens: 0,
@@ -480,6 +613,127 @@ function activationCleanup(result) {
   if (result && typeof result.dispose === "function") return () => result.dispose();
   if (result && typeof result.deactivate === "function") return () => result.deactivate();
   return null;
+}
+
+function clickPluginButton(container, label) {
+  const button = [...container.querySelectorAll("nxp-button")]
+    .find(item => item.getAttribute("label") === label);
+  if (!button) fail(`GameCheckIn 页面缺少“${label}”操作`);
+  button.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+}
+
+function changePublicControl(container, selector, value) {
+  const control = container.querySelector(selector);
+  if (!control) fail(`GameCheckIn 页面缺少公开控件：${selector}`);
+  control.dispatchEvent(new window.CustomEvent("change", { bubbles: true, detail: [value] }));
+}
+
+async function assertGameCheckInRoute(host, metrics, state) {
+  const route = metrics.routeRegistrations.find(item => item.route === "tasks");
+  const navigation = metrics.navRegistrations.find(item => item.id === "check-in-tasks");
+  if (!route || !navigation) fail("GameCheckIn 必须注册签到页面 route 和侧边栏导航项");
+  if (navigation.title !== "签到" || navigation.route !== "tasks") fail("GameCheckIn 侧边栏导航必须打开签到任务页面");
+
+  const view = document.createElement("main");
+  view.id = "view";
+  document.body.append(view);
+  await route.handler(1, ["plugin", "game-checkin", "tasks"], host);
+  await flushDom();
+  await flushDom();
+  if (!view.querySelector("[data-game-check-in-page]")) fail("GameCheckIn route 未挂载签到任务页面");
+  if (!view.querySelector("nxp-empty-state")) fail("空任务状态没有展示添加任务入口");
+  const expectedControls = ["nxp-text-input", "nxp-text-area", "nxp-select", "nxp-number-input", "nxp-switch"];
+
+  clickPluginButton(view, "添加签到任务");
+  await flushDom();
+  if (!expectedControls.every(name => view.querySelector(name))) fail("签到任务编辑器缺少公开 NXP 输入控件");
+  changePublicControl(view, "nxp-text-input#gci-task-name", "晨间签到");
+  changePublicControl(view, 'nxp-switch[aria-label="米游社 · 原神"]', true);
+  changePublicControl(view, 'nxp-switch[aria-label="启用 Webhook"]', true);
+  changePublicControl(view, 'nxp-switch[aria-label="启用 SMTP"]', true);
+  changePublicControl(view, "nxp-text-input#gci-secret-cn", "task-cookie-secret");
+  changePublicControl(view, "nxp-text-input#gci-webhook-url", "https://notify.example.test/webhook?token=private");
+  changePublicControl(view, "nxp-text-input#gci-webhook-secret", "task-sign-secret");
+  changePublicControl(view, "nxp-text-input#gci-smtp-user", "task-mail-user");
+  changePublicControl(view, "nxp-text-input#gci-smtp-password", "task-mail-password");
+  changePublicControl(view, 'nxp-text-input[aria-label="SMTP 服务器"]', "mail.example.test");
+  changePublicControl(view, 'nxp-text-input[aria-label="收件人"]', "task@example.test");
+  const previousCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    enumerable: true,
+    writable: true,
+    value: { randomUUID: undefined },
+  });
+  try {
+    clickPluginButton(view, "添加固定时间");
+    await flushDom();
+  } finally {
+    if (previousCrypto) Object.defineProperty(globalThis, "crypto", previousCrypto);
+    else delete globalThis.crypto;
+  }
+  if (!view.querySelector("nxp-time-picker")) fail("无法在不支持 randomUUID 的环境中添加固定时间");
+  changePublicControl(view, "nxp-time-picker", "06:30");
+  clickPluginButton(view, "保存任务");
+  await flushDom();
+  await flushDom();
+
+  const created = metrics.apiCalls.find(call => call.method === "POST" && call.route === "tasks");
+  if (!created?.body || created.body.name !== "晨间签到") {
+    fail(`新增签到任务没有提交名称和完整设置：${JSON.stringify(created)}；${view.textContent}`);
+  }
+  if (created.body.games?.cn?.[0] !== "gi") fail("新增任务没有提交所选平台游戏");
+  if (created.body.schedules?.[0]?.time !== "06:30") fail("新增任务没有提交固定时间设置");
+  if (!created.body.schedules?.[0]?.id?.startsWith("draft-")) fail("局域网 HTTP 环境未使用可用的临时固定时间标识");
+  if (created.body.secrets?.cn?.action !== "set" || created.body.secrets?.webhookUrl?.action !== "set"
+    || created.body.secrets?.smtpPassword?.action !== "set") fail("新增任务没有提交独立凭据与通知 Secret");
+  if (!created.body.notifications?.webhook?.enabled || !created.body.notifications?.smtp?.enabled
+    || created.body.notifications?.smtp?.to !== "task@example.test") fail("新增任务没有提交自己的 Webhook/SMTP 通知设置");
+  if (!view.textContent.includes("晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
+  if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("private")) fail("任务列表泄露了任务凭据或 Webhook URL Secret");
+
+  clickPluginButton(view, "立即签到");
+  await flushDom();
+  await flushDom();
+  if (!metrics.apiCalls.some(call => call.method === "POST" && call.route === "tasks/run" && call.body?.taskId === "task-check-in-1")) {
+    fail("立即签到没有调用任务手动运行 API");
+  }
+  if (!view.textContent.includes("成功")) fail("页面没有反馈本次签到结果");
+
+  clickPluginButton(view, "编辑");
+  await flushDom();
+  changePublicControl(view, "nxp-text-input#gci-task-name", "晨间签到（更新）");
+  changePublicControl(view, 'nxp-switch[aria-label="webhookUrl · 清除已保存值"]', true);
+  clickPluginButton(view, "保存任务");
+  await flushDom();
+  await flushDom();
+  const updated = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
+  if (!updated?.body || updated.body.name !== "晨间签到（更新）") fail("编辑任务没有提交修改后的设置");
+  if (updated.body.secrets?.webhookUrl?.action !== "clear") fail("显式清除 Secret 没有提交 clear 动作");
+  if (updated.body.secrets?.cn) fail("编辑时留空凭据应保留，不能重新发送或清除 Secret");
+  const saved = state.tasks.find(task => task.id === "task-check-in-1");
+  if (!saved?.credentials?.cn || saved.webhookSecrets?.urlConfigured) fail("留空凭据保留或显式清除语义不正确");
+
+  const previousConfirm = window.confirm;
+  window.confirm = () => true;
+  try {
+    clickPluginButton(view, "删除任务");
+    await flushDom();
+    await flushDom();
+  } finally {
+    window.confirm = previousConfirm;
+  }
+  const deleted = metrics.apiCalls.find(call => call.method === "DELETE" && call.route === "tasks");
+  if (deleted?.body?.taskId !== "task-check-in-1" || state.tasks.length !== 0) fail("删除任务没有调用对应的任务 API");
+  if (state.tasks.length !== 0 || !view.querySelector("nxp-empty-state")) fail("删除最后一个任务后没有反馈空状态");
+
+  for (const registration of metrics.lifecycleHandlers) registration.handler();
+  await flushDom();
+  if (view.querySelector("[data-game-check-in-page]")) fail("离开签到页面时没有卸载页面组件");
+  await route.handler(2, ["plugin", "game-checkin", "tasks"], host);
+  await flushDom();
+  if (!view.querySelector("[data-game-check-in-page]")) fail("再次进入签到 route 后没有重新挂载页面");
+  return { route: route.route, nav: navigation.id, apiCalls: metrics.apiCalls.filter(call => call.route !== "state").length };
 }
 
 /**
@@ -552,9 +806,10 @@ async function runPlugin(manifestPath, publicElements) {
   }
   await assertPluginFrontendBoundaries(plugin, manifest.artifactName, publicElements);
 
-  // 自定义壁纸面向的是插件级运行时：这里用启用状态与已就绪的资产验证"不依赖设置页面"的生命周期。
+  // 这些页面型插件使用 route/nav 生命周期；其他插件则接入公开 UI slot。
   const wallpaperPlugin = manifest.artifactName === "CustomWallpaper";
-  const state = wallpaperPlugin ? wallpaperTestState() : defaultTestState();
+  const gameCheckInPlugin = manifest.artifactName === "GameCheckIn";
+  const state = gameCheckInPlugin ? gameCheckInTestState() : wallpaperPlugin ? wallpaperTestState() : defaultTestState();
   const restoreDom = installDom();
   const metrics = createMetrics();
   const probe = installLifecycleProbe(globalThis.window, path.dirname(entry));
@@ -564,7 +819,7 @@ async function runPlugin(manifestPath, publicElements) {
     const registrations = [];
     const host = createMockHost(manifest.artifactName, registrations, metrics, state);
     const result = await module.activate(host);
-    if (!registrations.length) fail(`插件 ${manifest.artifactName} 未注册任何 UI slot`);
+    if (!registrations.length && !gameCheckInPlugin) fail(`插件 ${manifest.artifactName} 未注册任何 UI slot`);
     for (const registration of registrations) {
       if (!allowedSlots.has(registration.slot)) fail(`插件 ${manifest.artifactName} 注册了未知 UI slot：${registration.slot}`);
     }
@@ -587,6 +842,9 @@ async function runPlugin(manifestPath, publicElements) {
       await flushDom();
     };
     try {
+      const pageResult = gameCheckInPlugin
+        ? await assertGameCheckInRoute(host, metrics, state)
+        : null;
       // 用例 A：路由直接停在任意页面（没有渲染任何设置卡片）时，插件也必须已经应用背景与配色。
       if (wallpaperPlugin) {
         if (metrics.appearanceSetBackground < 1) fail("CustomWallpaper 未在插件激活后应用壁纸背景（缺少设置页面时失效）");
@@ -667,6 +925,13 @@ async function runPlugin(manifestPath, publicElements) {
       if (registrations.some(registration => !registration.disposed)) {
         fail(`插件 ${manifest.artifactName} 的 cleanup 未释放全部 UI slot`);
       }
+      if (gameCheckInPlugin && (
+        metrics.routeRegistrations.some(registration => !registration.disposed)
+        || metrics.navRegistrations.some(registration => !registration.disposed)
+        || metrics.lifecycleHandlers.some(registration => !registration.disposed)
+      )) {
+        fail("GameCheckIn cleanup 未释放 route、nav 或页面生命周期订阅");
+      }
       if (probe.intervals.size > 0) {
         fail(`插件 ${manifest.artifactName} 卸载后仍有 ${probe.intervals.size} 个定时器未释放`);
       }
@@ -681,6 +946,7 @@ async function runPlugin(manifestPath, publicElements) {
         entry: path.relative(repositoryRoot, entry).replaceAll("\\", "/"),
         slots: registrations.map(registration => registration.slot),
         rendered: registrations.length,
+        ...(pageResult ? { route: pageResult.route, nav: pageResult.nav, apiCalls: pageResult.apiCalls } : {}),
       };
     } finally {
       await disposePlugin();

@@ -1,15 +1,24 @@
 {
   "schemaVersion": 1,
-  "gameName": "米游社 / HoYoLAB / 森空岛 / SKPORT / 库街区游戏签到",
+  "gameName": "多平台游戏签到任务",
   "authors": [
     {
       "name": "FlappiBakuse",
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["签到", "米游社", "HoYoLAB", "森空岛", "SKPORT", "库街区", "用户管理"],
+  "tags": ["签到", "米游社", "HoYoLAB", "森空岛", "SKPORT", "库街区", "定时任务"],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
+    {
+      "version": "0.3.0",
+      "date": "2026-09-16",
+      "items": [
+        "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
+        "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
+        "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
+      ]
+    },
     {
       "version": "0.2.1",
       "date": "2026-09-15",
@@ -27,22 +36,24 @@
         "新增五个平台独立凭据、状态、签到游戏选择和用户列表聚合徽章。",
         "将用户配置规范化为 schema v3，并保留既有米游社与 HoYoLAB 状态记录。"
       ]
-    },
-    {
-      "version": "0.1.9",
-      "date": "2026-09-09",
-      "items": [
-        "新增宿主语言资源，支持中英文界面显示。"
-      ]
     }
   ],
   "locales": {
     "en-US": {
       "displayName": "Game Check-in",
-      "gameName": "Miyoushe / HoYoLAB / Skland / SKPORT / Kuro game check-in",
-      "description": "When a user script starts, check in selected games in-game across five supported platforms and show aggregated status in the user list.",
-      "tags": ["Check-in", "Miyoushe", "HoYoLAB", "Skland", "SKPORT", "Kuro", "User management"],
+      "gameName": "Multi-platform game check-in tasks",
+      "description": "Create independent check-in tasks with local schedules, manual runs, results, and task-specific Webhook or SMTP notifications.",
+      "tags": ["Check-in", "Miyoushe", "HoYoLAB", "Skland", "SKPORT", "Kuro", "Schedules"],
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-16",
+          "items": [
+            "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
+            "Each task now has independent credentials and Webhook or SMTP notifications.",
+            "Removed user-run hooks, global settings contributions, and user-list badges."
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-09-15",
@@ -60,10 +71,6 @@
             "Added independent credentials, state, game selection, and aggregated user-list badges for five platforms.",
             "Normalized user settings to schema v3 while retaining existing Miyoushe and HoYoLAB state records."
           ]
-        },
-        {
-          "version": "0.1.9",
-          "items": ["Added host language resources for Chinese and English interfaces."]
         }
       ]
     }

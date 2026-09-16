@@ -5,12 +5,13 @@
     <Nullable>enable</Nullable>
     <RootNamespace>NexusPipeline.Plugin.GameCheckIn</RootNamespace>
     <AssemblyName>NexusPipeline.Plugin.GameCheckIn</AssemblyName>
-    <Version>0.2.1</Version>
+    <Version>0.3.0</Version>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\NexusPipeline\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" />
+    <PackageReference Include="MailKit" Version="4.17.0" />
   </ItemGroup>
 
   <ItemGroup>
