@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "52179209ce7d01beed44d40704e1c8e664ec03c0",
+  "sourceCommit": "83012b8735b8ada9b841f83dbd527996bfc3996e",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -21,10 +21,10 @@
     "CustomWallpaper": {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.2.6",
-      "sha256": "48c62eba0a71fc7eeeb5a21afc82f6ac32c672e6b6e6616a082bb05f2f84183e",
-      "sizeBytes": 262558,
-      "sourceTree": "3464683ce4f5b6336f74f5ad358be0b683267b64"
+      "version": "0.2.7",
+      "sha256": "9731cd7fb09077aaf910905dcaec060e20a73b8416e75acfb22f0014039353c6",
+      "sizeBytes": 259555,
+      "sourceTree": "957d734c1389f3ffc37a3f58e64b5c461e96a4ca"
     },
     "EmulatorSupport": {
       "name": "emulator-support",
@@ -37,10 +37,10 @@
     "GameCheckIn": {
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
-      "version": "0.3.1",
-      "sha256": "457478f243e20abce638d78bc2143849590c6389c5469ca5329d1b0c7d8e7d22",
-      "sizeBytes": 388659,
-      "sourceTree": "72162bf673a375b5f2e6fa70edbb952486ad10b4"
+      "version": "0.3.2",
+      "sha256": "7c91c5d3bbdaf2776135dd1d412676c28464e3ba31e9d611a6066aa62d61e8f6",
+      "sizeBytes": 385923,
+      "sourceTree": "7bb4b8c6f72b8e19e4c88a83d79fb1d0d0066c2d"
     },
     "LiveScreenshot": {
       "name": "live-screenshot",

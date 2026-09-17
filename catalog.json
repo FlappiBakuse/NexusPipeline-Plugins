@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-17T03:19:14Z",
+  "generatedAt": "2026-09-17T17:17:32Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,26 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-16",
+      "updatedAt": "2026-09-17",
       "hasReadme": true,
-      "version": "0.2.6",
+      "version": "0.2.7",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.16.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.6.zip",
-      "sha256": "48c62eba0a71fc7eeeb5a21afc82f6ac32c672e6b6e6616a082bb05f2f84183e",
-      "sizeBytes": 262558,
+      "minHostVersion": "0.16.6",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.7.zip",
+      "sha256": "9731cd7fb09077aaf910905dcaec060e20a73b8416e75acfb22f0014039353c6",
+      "sizeBytes": 259555,
       "changelog": [
+        {
+          "version": "0.2.7",
+          "date": "2026-09-17",
+          "items": [
+            "将排序交互迁移到宿主公开 nxp-* 控件，保持自定义壁纸列表的拖拽排序与触控操作。"
+          ]
+        },
         {
           "version": "0.2.6",
           "date": "2026-09-16",
@@ -46,13 +53,6 @@
           "date": "2026-09-14",
           "items": [
             "startup 轮换改为每次打开或重新加载 Web UI 会话时推进一次。"
-          ]
-        },
-        {
-          "version": "0.2.4",
-          "date": "2026-09-13",
-          "items": [
-            "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
           ]
         }
       ],
@@ -68,6 +68,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.7",
+              "items": [
+                "Migrated sorting interactions to the host's public nxp-* controls while preserving drag sorting and touch operation for the custom wallpaper list."
+              ]
+            },
+            {
               "version": "0.2.6",
               "items": [
                 "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
@@ -77,12 +83,6 @@
               "version": "0.2.5",
               "items": [
                 "Startup rotation now advances once whenever a Web UI session opens or reloads."
-              ]
-            },
-            {
-              "version": "0.2.4",
-              "items": [
-                "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
               ]
             }
           ]
@@ -148,19 +148,26 @@
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-16",
+      "updatedAt": "2026-09-17",
       "hasReadme": true,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "managed-code",
       "apiVersion": "1.8",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.16.5",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.1.zip",
-      "sha256": "457478f243e20abce638d78bc2143849590c6389c5469ca5329d1b0c7d8e7d22",
-      "sizeBytes": 388659,
+      "minHostVersion": "0.16.6",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.2.zip",
+      "sha256": "7c91c5d3bbdaf2776135dd1d412676c28464e3ba31e9d611a6066aa62d61e8f6",
+      "sizeBytes": 385923,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-09-17",
+          "items": [
+            "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-09-16",
@@ -178,14 +185,6 @@
             "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
             "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
             "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
-          ]
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-09-15",
-          "items": [
-            "修复部分社区以非 2xx 状态返回已签到业务结果时被误判为请求失败的问题。",
-            "修复库街区签到月份参数格式，并规范化持久化的设备 UUID。"
           ]
         }
       ],
@@ -205,6 +204,12 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "items": [
+                "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
+              ]
+            },
+            {
               "version": "0.3.1",
               "date": "2026-09-16",
               "items": [
@@ -221,14 +226,6 @@
                 "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
                 "Each task now has independent credentials and Webhook or SMTP notifications.",
                 "Removed user-run hooks, global settings contributions, and user-list badges."
-              ]
-            },
-            {
-              "version": "0.2.1",
-              "date": "2026-09-15",
-              "items": [
-                "Fixed already-signed responses being reported as request failures when some communities use non-2xx HTTP status codes.",
-                "Fixed the Kuro sign-in month parameter format and normalized persisted device UUIDs."
               ]
             }
           ]
