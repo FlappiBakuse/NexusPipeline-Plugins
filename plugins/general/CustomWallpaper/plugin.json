@@ -6,7 +6,7 @@
   "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
   "version": "0.2.6",
   "kind": "managed-code",
-  "minHostVersion": "0.16.5",
+  "minHostVersion": "0.16.6",
   "apiVersion": "1.6",
   "entryAssembly": "NexusPipeline.Plugin.CustomWallpaper.dll",
   "entryType": "NexusPipeline.Plugin.CustomWallpaper.EntryPoint",

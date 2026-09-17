@@ -26,8 +26,6 @@ const secretInputs = ref<Record<string, string>>({});
 const clearedSecrets = ref<Record<string, boolean>>({});
 const settingsExpanded = ref(true);
 const expandedScheduleIds = ref<string[]>([]);
-const draggingScheduleId = ref("");
-const dropScheduleId = ref("");
 const localError = ref("");
 const localNameError = ref("");
 let scheduleSequence = 0;
@@ -162,43 +160,17 @@ function toggleDay(schedule: Schedule, day: number) {
     : [...schedule.days, day].sort((left, right) => left - right);
 }
 
-function beginScheduleDrag(event: DragEvent, scheduleId: string) {
-  draggingScheduleId.value = scheduleId;
-  dropScheduleId.value = "";
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", scheduleId);
-  }
-}
-
-function moveSchedule(sourceId: string, targetId: string) {
-  if (!draft.value || !sourceId || !targetId || sourceId === targetId) return;
-  const schedules = draft.value.schedules;
-  const sourceIndex = schedules.findIndex(schedule => schedule.id === sourceId);
-  if (sourceIndex < 0) return;
-  const [schedule] = schedules.splice(sourceIndex, 1);
-  const targetIndex = schedules.findIndex(item => item.id === targetId);
-  schedules.splice(targetIndex < 0 ? schedules.length : targetIndex, 0, schedule);
-}
-
-function dropSchedule(event: DragEvent, targetId: string) {
-  moveSchedule(event.dataTransfer?.getData("text/plain") || draggingScheduleId.value, targetId);
-  draggingScheduleId.value = "";
-  dropScheduleId.value = "";
-}
-
-function finishScheduleDrag() {
-  draggingScheduleId.value = "";
-  dropScheduleId.value = "";
-}
-
-function scheduleHandleKeydown(event: KeyboardEvent, scheduleId: string) {
-  if (!draft.value || (event.key !== "ArrowUp" && event.key !== "ArrowDown")) return;
-  event.preventDefault();
-  const index = draft.value.schedules.findIndex(schedule => schedule.id === scheduleId);
-  const target = index + (event.key === "ArrowUp" ? -1 : 1);
-  if (index < 0 || target < 0 || target >= draft.value.schedules.length) return;
-  [draft.value.schedules[index], draft.value.schedules[target]] = [draft.value.schedules[target], draft.value.schedules[index]];
+function reorderSchedules(ids: string[]) {
+  if (!draft.value) return;
+  const currentIds = draft.value.schedules.map(schedule => schedule.id);
+  if (
+    ids.length !== currentIds.length
+    || new Set(ids).size !== currentIds.length
+    || ids.some(id => !currentIds.includes(id))
+    || ids.every((id, index) => id === currentIds[index])
+  ) return;
+  const byId = new Map(draft.value.schedules.map(schedule => [schedule.id, schedule]));
+  draft.value.schedules = ids.map(id => byId.get(id)).filter((schedule): schedule is Schedule => Boolean(schedule));
 }
 
 function setSecret(platformId: string, value: string) {
@@ -395,55 +367,53 @@ function submit() {
           </div>
         </header>
 
-        <div v-if="draft.schedules.length" class="gci-schedule-list">
+        <nxp-sortable-list
+          v-if="draft.schedules.length"
+          class="gci-schedule-list"
+          tag="div"
+          :aria-label="t('field.schedule', {}, '定时计划')"
+          @reorder="reorderSchedules(eventValue<string[]>($event))"
+        >
           <article
             v-for="(schedule, index) in draft.schedules"
             :key="schedule.id"
             class="gci-schedule-card"
-            :class="{ 'is-open': isScheduleExpanded(schedule.id), 'is-dragging': draggingScheduleId === schedule.id, 'is-drop-target': dropScheduleId === schedule.id }"
+            :class="{ 'is-open': isScheduleExpanded(schedule.id) }"
             :data-schedule-id="schedule.id"
-            @dragover.prevent="dropScheduleId = schedule.id"
-            @dragleave.self="dropScheduleId = ''"
-            @drop.prevent="dropSchedule($event, schedule.id)"
+            :data-dnd-id="schedule.id"
           >
             <div class="gci-schedule-head">
-              <span
+              <nxp-drag-handle
                 class="gci-drag-handle"
-                role="button"
-                tabindex="0"
-                draggable="true"
-                :aria-label="t('common.reorder.schedule', { index: index + 1 }, `调整计划 ${index + 1} 的顺序`)"
+                :label="t('common.reorder.schedule', { index: index + 1 }, `调整计划 ${index + 1} 的顺序`)"
                 :title="t('common.drag_to_reorder', {}, '拖动以调整顺序')"
-                @dragstart.stop="beginScheduleDrag($event, schedule.id)"
-                @dragend="finishScheduleDrag"
-                @keydown="scheduleHandleKeydown($event, schedule.id)"
-              >⠿</span>
-              <button
+              />
+              <nxp-button
+                variant="ghost"
                 class="gci-schedule-summary"
-                type="button"
                 :aria-expanded="isScheduleExpanded(schedule.id)"
                 :aria-controls="`gci-schedule-${schedule.id}`"
                 @click="toggleSchedule(schedule.id)"
               >
                 <span class="gci-schedule-summary-main"><strong>{{ t('schedule.label', { index: index + 1 }, `定时 ${index + 1}`) }}</strong><span>{{ schedule.time }} · {{ t('schedule.days_count', { count: schedule.days.length }, `${schedule.days.length} 天`) }}</span></span>
                 <span class="gci-schedule-chevron" aria-hidden="true">{{ isScheduleExpanded(schedule.id) ? "⌄" : "›" }}</span>
-              </button>
+              </nxp-button>
             </div>
             <div v-if="isScheduleExpanded(schedule.id)" :id="`gci-schedule-${schedule.id}`" class="gci-schedule-details">
               <div class="gci-schedule-layout">
                 <div class="gci-schedule-days">
                   <span class="gci-field-label">{{ t("field.schedule_days", {}, "执行周期（可多选）") }}</span>
                   <div class="gci-day-buttons" role="group" :aria-label="t('field.schedule_days', {}, '执行星期')">
-                    <button
+                    <nxp-button
+                      variant="ghost"
                       v-for="(name, day) in dayNames"
                       :key="day"
                       class="gci-day-button"
-                      type="button"
                       :aria-pressed="schedule.days.includes(day)"
                       :aria-label="name"
                       :title="name"
                       @click="toggleDay(schedule, day)"
-                    >{{ dayShortNames[day] }}</button>
+                    >{{ dayShortNames[day] }}</nxp-button>
                   </div>
                 </div>
                 <label class="gci-field gci-schedule-time">
@@ -467,7 +437,7 @@ function submit() {
               </footer>
             </div>
           </article>
-        </div>
+        </nxp-sortable-list>
         <p v-else class="gci-empty-schedules">{{ t("empty.schedules", {}, "还没有定时计划") }}</p>
         <nxp-button
           :label="`+ ${t('action.add_schedule', {}, '添加定时')}`"

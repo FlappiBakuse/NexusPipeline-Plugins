@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import type { PlatformOption, Task, Translate } from "./types";
 
 const props = defineProps<{
@@ -15,11 +14,15 @@ const emit = defineEmits<{
   reorder: [taskIds: string[]];
 }>();
 
-const draggingId = ref("");
-const dropTargetId = ref("");
-
 function t(key: string, args: Record<string, unknown> = {}, fallback = "") {
   return props.translate(key, args, fallback);
+}
+
+function eventValue<T>(event: Event): T {
+  const detail = (event as CustomEvent<unknown>).detail;
+  if (Array.isArray(detail) && detail.length) return detail[0] as T;
+  if (detail !== undefined) return detail as T;
+  return (event.target as HTMLElement & { modelValue?: T })?.modelValue as T;
 }
 
 function initial(name: string) {
@@ -56,76 +59,40 @@ function gameName(platformId: string, gameId: string) {
   return platform?.games.find(game => game.id === gameId)?.name || gameId;
 }
 
-function beginDrag(event: DragEvent, taskId: string) {
-  draggingId.value = taskId;
-  dropTargetId.value = "";
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", taskId);
-  }
-}
-
-function moveTask(sourceId: string, targetId: string) {
-  if (!sourceId || !targetId || sourceId === targetId) return;
-  const ids = props.tasks.map(task => task.id);
-  const from = ids.indexOf(sourceId);
-  const target = ids.indexOf(targetId);
-  if (from < 0 || target < 0) return;
-  const [moved] = ids.splice(from, 1);
-  const targetIndex = ids.indexOf(targetId);
-  ids.splice(targetIndex, 0, moved);
-  emit("reorder", ids);
-}
-
-function dropOn(event: DragEvent, targetId: string) {
-  const sourceId = event.dataTransfer?.getData("text/plain") || draggingId.value;
-  moveTask(sourceId, targetId);
-  draggingId.value = "";
-  dropTargetId.value = "";
-}
-
-function finishDrag() {
-  draggingId.value = "";
-  dropTargetId.value = "";
-}
-
-function handleKeydown(event: KeyboardEvent, taskId: string) {
-  if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
-  event.preventDefault();
-  const ids = props.tasks.map(task => task.id);
-  const index = ids.indexOf(taskId);
-  const target = index + (event.key === "ArrowUp" ? -1 : 1);
-  if (target < 0 || target >= ids.length) return;
-  [ids[index], ids[target]] = [ids[target], ids[index]];
+function reorderTasks(ids: string[]) {
+  const currentIds = props.tasks.map(task => task.id);
+  if (
+    ids.length !== currentIds.length
+    || new Set(ids).size !== currentIds.length
+    || ids.some(id => !currentIds.includes(id))
+    || ids.every((id, index) => id === currentIds[index])
+  ) return;
   emit("reorder", ids);
 }
 </script>
 
 <template>
-  <div class="gci-task-list" role="list" :aria-label="t('page.title', {}, '签到任务')">
+  <nxp-sortable-list
+    class="gci-task-list"
+    tag="div"
+    role="list"
+    :aria-label="t('page.title', {}, '签到任务')"
+    @reorder="reorderTasks(eventValue<string[]>($event))"
+  >
     <article
       v-for="task in tasks"
       :key="task.id"
       class="gci-task-row"
-      :class="{ 'is-dragging': draggingId === task.id, 'is-drop-target': dropTargetId === task.id }"
       :data-task-id="task.id"
+      :data-dnd-id="task.id"
       role="listitem"
-      @dragover.prevent="dropTargetId = task.id"
-      @dragleave.self="dropTargetId = ''"
-      @drop.prevent="dropOn($event, task.id)"
     >
       <div class="gci-task-row-main">
-        <span
+        <nxp-drag-handle
           class="gci-drag-handle"
-          role="button"
-          tabindex="0"
-          draggable="true"
-          :aria-label="t('common.reorder.task', { name: task.name }, `调整 ${task.name} 的顺序` )"
+          :label="t('common.reorder.task', { name: task.name }, `调整 ${task.name} 的顺序`)"
           :title="t('common.drag_to_reorder', {}, '拖动以调整顺序')"
-          @dragstart.stop="beginDrag($event, task.id)"
-          @dragend="finishDrag"
-          @keydown="handleKeydown($event, task.id)"
-        >⠿</span>
+        />
         <span class="gci-task-avatar" aria-hidden="true">{{ initial(task.name) }}</span>
         <div class="gci-task-copy">
           <div class="gci-task-heading">
@@ -186,5 +153,5 @@ function handleKeydown(event: KeyboardEvent, taskId: string) {
         </div>
       </details>
     </article>
-  </div>
+  </nxp-sortable-list>
 </template>

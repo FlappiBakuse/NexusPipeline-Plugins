@@ -147,15 +147,15 @@
 }
 
 .gci-task-row:hover,
-.gci-task-row.is-drop-target {
+.gci-task-row.dnd-drop-before {
   background: var(--content-card-hover, var(--nx-color-surface));
 }
 
-.gci-task-row.is-dragging {
+.gci-task-row.dnd-dragging {
   opacity: .55;
 }
 
-.gci-task-row.is-drop-target {
+.gci-task-row.dnd-drop-before {
   box-shadow: inset 0 2px 0 var(--nx-color-accent);
 }
 
@@ -192,6 +192,7 @@
 }
 
 .gci-drag-handle:focus-visible,
+.gci-drag-handle .nxp-drag-handle:focus-visible,
 .gci-schedule-summary:focus-visible,
 .gci-day-button:focus-visible {
   outline: 2px solid var(--nx-color-accent);
@@ -437,11 +438,11 @@
   border-top: 0;
 }
 
-.gci-schedule-card.is-dragging {
+.gci-schedule-card.dnd-dragging {
   opacity: .55;
 }
 
-.gci-schedule-card.is-drop-target {
+.gci-schedule-card.dnd-drop-before {
   box-shadow: inset 0 2px 0 var(--nx-color-accent);
 }
 

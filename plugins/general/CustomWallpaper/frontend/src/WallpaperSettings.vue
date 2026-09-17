@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import type { WallpaperAsset, WallpaperHost, WallpaperState } from "./wallpaperApi";
 import { assetBlob, deleteAsset, ensurePalette, saveSettings, uploadAsset } from "./wallpaperApi";
 import type { WallpaperRuntime, WallpaperRuntimeSnapshot } from "./wallpaperRuntime";
-import { mountVerticalSortable } from "./verticalSortable";
 
 const props = defineProps<{ host: WallpaperHost; runtime: WallpaperRuntime; context?: Record<string, unknown> }>();
 
@@ -17,12 +16,9 @@ const runtimeError = ref(initial.error);
 const expanded = ref(false);
 const busy = ref("");
 const help = ref("");
-const draggedId = ref("");
-const listElement = ref<HTMLElement | null>(null);
 const thumbnails = ref<Record<string, string>>({});
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let unsubscribe: (() => void) | null = null;
-let sortableCleanup: (() => void) | null = null;
 let disposed = false;
 
 const modes = computed(() => [
@@ -54,6 +50,13 @@ const displayError = computed(() => help.value || runtimeError.value);
 
 function tr(key: string, args: Record<string, unknown> = {}, fallback = ""): string {
   return props.host.i18n.t(key, args, fallback);
+}
+
+function eventValue<T>(event: Event): T {
+  const detail = (event as CustomEvent<unknown>).detail;
+  if (Array.isArray(detail) && detail.length) return detail[0] as T;
+  if (detail !== undefined) return detail as T;
+  return (event.target as HTMLElement & { modelValue?: T })?.modelValue as T;
 }
 
 function errorMessage(error: unknown, fallbackKey: string, fallbackText: string): string {
@@ -270,7 +273,12 @@ async function remove(id: string) {
 function reorderWallpapers(ids: string[]) {
   if (!state.value) return;
   const currentIds = assets.value.map(asset => asset.id);
-  if (ids.length !== currentIds.length || ids.every((id, index) => id === currentIds[index])) return;
+  if (
+    ids.length !== currentIds.length
+    || new Set(ids).size !== currentIds.length
+    || ids.some(id => !currentIds.includes(id))
+    || ids.every((id, index) => id === currentIds[index])
+  ) return;
   requestSave({ order: ids }, current => ({ ...current, order: ids }));
 }
 
@@ -278,14 +286,6 @@ onMounted(async () => {
   window.addEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe = props.runtime.subscribe(syncSnapshot);
   syncSnapshot(props.runtime.snapshot());
-  if (listElement.value) {
-    sortableCleanup = mountVerticalSortable(listElement.value, {
-      handleSelector: ".cw-drag-handle",
-      onDragStart: id => { draggedId.value = id; },
-      onDragEnd: () => { draggedId.value = ""; },
-      onDrop: reorderWallpapers,
-    });
-  }
   await loadThumbnails(state.value?.assets || []);
 });
 
@@ -294,8 +294,6 @@ onBeforeUnmount(() => {
   window.removeEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe?.();
   unsubscribe = null;
-  sortableCleanup?.();
-  sortableCleanup = null;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
   Object.values(thumbnails.value).forEach(url => URL.revokeObjectURL(url));
@@ -335,76 +333,71 @@ onBeforeUnmount(() => {
         />
       </nxp-switch-list>
       <div class="cw-grid cw-controls">
-        <label
+        <nxp-field
           class="cw-field"
-          :data-help="tr('settings.rotation_help', {}, '按时间随机轮换会按设定间隔切换壁纸；重新加载 Web UI 或打开新的 Web UI 会话会推进一次。')"
-        >
-          <span class="cw-field-label">{{ tr("settings.rotation", {}, "轮换方式") }}</span>
+          :help="tr('settings.rotation_help', {}, '按时间随机轮换会按设定间隔切换壁纸；重新加载 Web UI 或打开新的 Web UI 会话会推进一次。')"
+         :label="tr('settings.rotation', {}, '轮换方式')">
           <nxp-select
             :model-value="state?.rotation?.mode || 'off'"
             :options="modes"
             :aria-label="tr('settings.rotation', {}, '轮换方式')"
-            @change="updateSetting('mode', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue || 'off')"
+            @change="updateSetting('mode', eventValue($event) || 'off')"
           />
-        </label>
-        <label
+        </nxp-field>
+        <nxp-field
           class="cw-field"
-          :data-help="tr('settings.interval_help', {}, '轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。')"
-        >
-          <span class="cw-field-label">{{ tr("settings.interval", {}, "轮换间隔（分钟）") }}</span>
+          :help="tr('settings.interval_help', {}, '轮换方式为按时间随机轮换时生效，范围为 1 至 1440 分钟。')"
+         :label="tr('settings.interval', {}, '轮换间隔（分钟）')">
           <nxp-number-input
             :model-value="state?.rotation?.intervalMinutes || 30"
-            min="1"
-            max="1440"
-            step="1"
+            :min="1"
+            :max="1440"
+            :step="1"
             :aria-label="tr('settings.interval', {}, '轮换间隔（分钟）')"
-            @change="updateSetting('interval', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+            @change="updateSetting('interval', eventValue($event))"
           />
-        </label>
+        </nxp-field>
       </div>
       <div class="cw-grid cw-effects">
-        <label class="cw-field" :data-help="tr('settings.blur_help', {}, '模糊范围为 0 至 40 像素。')">
-          <span class="cw-field-label">{{ tr("settings.blur", {}, "模糊（像素）") }}</span>
+        <nxp-field class="cw-field" :help="tr('settings.blur_help', {}, '模糊范围为 0 至 40 像素。')" :label="tr('settings.blur', {}, '模糊（像素）')">
           <span class="cw-range-row">
             <nxp-range
               :model-value="state?.effects?.blurPx || 0"
-              min="0"
-              max="40"
-              step="1"
+              :min="0"
+              :max="40"
+              :step="1"
               :aria-label="tr('settings.blur', {}, '模糊（像素）')"
-              @change="updateSetting('blur', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+              @change="updateSetting('blur', eventValue($event))"
             />
             <output>{{ state?.effects?.blurPx || 0 }}px</output>
           </span>
-        </label>
-        <label class="cw-field" :data-help="tr('settings.dim_help', {}, '变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。')">
-          <span class="cw-field-label">{{ tr("settings.dim", {}, "变暗") }}</span>
+        </nxp-field>
+        <nxp-field class="cw-field" :help="tr('settings.dim_help', {}, '变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。')" :label="tr('settings.dim', {}, '变暗')">
           <span class="cw-range-row">
             <nxp-range
               :model-value="state?.effects?.dimPercent ?? 20"
-              min="0"
-              max="80"
-              step="1"
+              :min="0"
+              :max="80"
+              :step="1"
               :aria-label="tr('settings.dim', {}, '变暗')"
-              @change="updateSetting('dim', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+              @change="updateSetting('dim', eventValue($event))"
             />
             <output>{{ state?.effects?.dimPercent ?? 20 }}%</output>
           </span>
-        </label>
-        <label class="cw-field" :data-help="tr('settings.transparency_help', {}, '控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。')">
-          <span class="cw-field-label">{{ tr("settings.transparency", {}, "卡片与侧边栏透明度") }}</span>
+        </nxp-field>
+        <nxp-field class="cw-field" :help="tr('settings.transparency_help', {}, '控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。')" :label="tr('settings.transparency', {}, '卡片与侧边栏透明度')">
           <span class="cw-range-row">
             <nxp-range
               :model-value="state?.effects?.surfaceTransparencyPercent || 0"
-              min="0"
-              max="50"
-              step="1"
+              :min="0"
+              :max="50"
+              :step="1"
               :aria-label="tr('settings.transparency', {}, '卡片与侧边栏透明度')"
-              @change="updateSetting('transparency', ($event as CustomEvent).detail?.[0] || ($event.target as any)?.modelValue)"
+              @change="updateSetting('transparency', eventValue($event))"
             />
             <output>{{ state?.effects?.surfaceTransparencyPercent || 0 }}%</output>
           </span>
-        </label>
+        </nxp-field>
       </div>
       <div class="cw-upload-row">
         <nxp-file-picker
@@ -415,21 +408,23 @@ onBeforeUnmount(() => {
         />
         <span class="cw-muted">{{ tr("settings.file_help", {}, "JPEG、PNG、WebP，单张最大 8192 KB") }}</span>
       </div>
-      <div ref="listElement" class="cw-list">
+      <nxp-sortable-list
+        class="cw-list"
+        :aria-label="tr('settings.order', {}, '壁纸顺序')"
+        @reorder="reorderWallpapers(eventValue<string[]>($event))"
+      >
         <p v-if="!assets.length" class="cw-muted cw-empty">{{ tr("empty", {}, "尚未添加壁纸。") }}</p>
         <div
           v-for="asset in assets"
           :key="asset.id"
           class="cw-item"
           :data-dnd-id="asset.id"
-          :class="{ 'is-dragging': draggedId === asset.id }"
         >
-          <button
+          <nxp-drag-handle
             class="cw-drag-handle"
-            type="button"
-            :aria-label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`"
+            :label="`${tr('drag', {}, '拖拽排序')}：${asset.originalName || asset.id}`"
             :title="tr('drag', {}, '拖拽排序')"
-          >⠿</button>
+          />
           <img v-if="thumbnails[asset.id]" :src="thumbnails[asset.id]" :alt="asset.originalName || asset.id" />
           <span v-else class="cw-thumb-placeholder" aria-hidden="true"></span>
           <div class="cw-item-copy">
@@ -444,7 +439,7 @@ onBeforeUnmount(() => {
             @click="remove(asset.id)"
           />
         </div>
-      </div>
+      </nxp-sortable-list>
       <div class="cw-card-footer">
         <span class="cw-muted">{{ tr("settings.max_help", {}, "最多 32 张，实例总容量 256 MiB。") }}</span>
       </div>
