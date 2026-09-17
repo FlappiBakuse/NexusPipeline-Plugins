@@ -7,9 +7,27 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["签到", "米游社", "HoYoLAB", "森空岛", "SKPORT", "库街区", "定时任务"],
+  "tags": [
+    "签到",
+    "米游社",
+    "HoYoLAB",
+    "森空岛",
+    "SKPORT",
+    "库街区",
+    "定时任务"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
+    {
+      "version": "0.3.1",
+      "date": "2026-09-16",
+      "items": [
+        "签到任务列表改为扁平列表，支持持久化排序和任务名称首字头像。",
+        "任务编辑器改用宿主公共弹窗，包含备注、五个平台游戏与凭据设置，以及可排序计划。",
+        "签到通知改用宿主全局渠道，可选覆盖 SMTP 收件人；空收件人继承全局设置。",
+        "直接使用全新的任务存储格式，不导入 0.3.0 独立任务数据，并删除插件自有通知传输。"
+      ]
+    },
     {
       "version": "0.3.0",
       "date": "2026-09-16",
@@ -26,25 +44,33 @@
         "修复部分社区以非 2xx 状态返回已签到业务结果时被误判为请求失败的问题。",
         "修复库街区签到月份参数格式，并规范化持久化的设备 UUID。"
       ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-15",
-      "items": [
-        "新增崩坏3的米游社与 HoYoLAB 游戏内签到。",
-        "新增森空岛明日方舟与终末地、SKPORT终末地国际服、库街区鸣潮与战双帕弥什游戏内签到。",
-        "新增五个平台独立凭据、状态、签到游戏选择和用户列表聚合徽章。",
-        "将用户配置规范化为 schema v3，并保留既有米游社与 HoYoLAB 状态记录。"
-      ]
     }
   ],
   "locales": {
     "en-US": {
       "displayName": "Game Check-in",
       "gameName": "Multi-platform game check-in tasks",
-      "description": "Create independent check-in tasks with local schedules, manual runs, results, and task-specific Webhook or SMTP notifications.",
-      "tags": ["Check-in", "Miyoushe", "HoYoLAB", "Skland", "SKPORT", "Kuro", "Schedules"],
+      "description": "Create multi-platform game check-in tasks using host global notifications and local schedules.",
+      "tags": [
+        "Check-in",
+        "Miyoushe",
+        "HoYoLAB",
+        "Skland",
+        "SKPORT",
+        "Kuro",
+        "Schedules"
+      ],
       "changelog": [
+        {
+          "version": "0.3.1",
+          "date": "2026-09-16",
+          "items": [
+            "Changed the task list to a flat, persistently reorderable list with name-initial avatars.",
+            "Moved task editing to the host modal with remarks, five-platform game and credential settings, and reorderable schedules.",
+            "Switched check-in notifications to host global channels with an optional SMTP recipient override that inherits the global recipient when blank.",
+            "Started with a new task store without importing 0.3.0 task data and removed plugin-owned notification transports."
+          ]
+        },
         {
           "version": "0.3.0",
           "date": "2026-09-16",
@@ -61,18 +87,9 @@
             "Fixed already-signed responses being reported as request failures when some communities use non-2xx HTTP status codes.",
             "Fixed the Kuro sign-in month parameter format and normalized persisted device UUIDs."
           ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-15",
-          "items": [
-            "Added in-game check-in for Honkai Impact 3rd on Miyoushe and HoYoLAB.",
-            "Added in-game check-in for Arknights and Endfield on Skland, Endfield global on SKPORT, and Wuthering Waves and Punishing: Gray Raven on Kuro.",
-            "Added independent credentials, state, game selection, and aggregated user-list badges for five platforms.",
-            "Normalized user settings to schema v3 while retaining existing Miyoushe and HoYoLAB state records."
-          ]
         }
       ]
     }
-  }
+  },
+  "description": "创建多平台游戏签到任务，配置本机时区计划、手动执行、运行结果与宿主全局通知。"
 }

@@ -5,7 +5,7 @@ namespace NexusPipeline.Plugin.GameCheckIn;
 internal sealed class CheckInTaskStore
 {
     [JsonPropertyName("schemaVersion")]
-    public int SchemaVersion { get; set; } = 1;
+    public int SchemaVersion { get; set; } = 2;
 
     [JsonPropertyName("tasks")]
     public List<CheckInTask> Tasks { get; set; } = new();
@@ -21,6 +21,9 @@ internal sealed class CheckInTask
 
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
+
+    [JsonPropertyName("remark")]
+    public string Remark { get; set; } = "";
 
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
@@ -40,8 +43,8 @@ internal sealed class CheckInTask
     [JsonPropertyName("schedules")]
     public List<CheckInSchedule> Schedules { get; set; } = new();
 
-    [JsonPropertyName("notifications")]
-    public CheckInNotificationSettings Notifications { get; set; } = new();
+    [JsonPropertyName("notification")]
+    public CheckInNotification Notification { get; set; } = new();
 
     [JsonPropertyName("runs")]
     public List<CheckInRun> Runs { get; set; } = new();
@@ -65,49 +68,13 @@ internal sealed class CheckInSchedule
     public string? LastFiredOccurrence { get; set; }
 }
 
-internal sealed class CheckInNotificationSettings
-{
-    [JsonPropertyName("webhook")]
-    public CheckInWebhookSettings Webhook { get; set; } = new();
-
-    [JsonPropertyName("smtp")]
-    public CheckInSmtpSettings Smtp { get; set; } = new();
-}
-
-internal sealed class CheckInWebhookSettings
+internal sealed class CheckInNotification
 {
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
 
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "generic";
-
-    [JsonPropertyName("template")]
-    public string Template { get; set; } = "{\"text\":{text}}";
-}
-
-internal sealed class CheckInSmtpSettings
-{
-    [JsonPropertyName("enabled")]
-    public bool Enabled { get; set; }
-
-    [JsonPropertyName("host")]
-    public string Host { get; set; } = "";
-
-    [JsonPropertyName("port")]
-    public int Port { get; set; } = 465;
-
-    [JsonPropertyName("secure")]
-    public string Secure { get; set; } = "auto";
-
-    [JsonPropertyName("from")]
-    public string From { get; set; } = "";
-
-    [JsonPropertyName("to")]
-    public string To { get; set; } = "";
-
-    [JsonPropertyName("subjectPrefix")]
-    public string SubjectPrefix { get; set; } = "[NexusPipeline]";
+    [JsonPropertyName("smtpTo")]
+    public string SmtpTo { get; set; } = "";
 }
 
 internal sealed class CheckInRun
@@ -145,26 +112,20 @@ internal sealed class CheckInTaskSaveRequest
     [JsonPropertyName("name")]
     public string Name { get; set; } = "";
 
+    [JsonPropertyName("remark")]
+    public string Remark { get; set; } = "";
+
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; } = true;
 
     [JsonPropertyName("games")]
     public Dictionary<string, List<string>> Games { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
-    [JsonPropertyName("cnDeviceId")]
-    public string CnDeviceId { get; set; } = "";
-
-    [JsonPropertyName("kuroDevCode")]
-    public string KuroDevCode { get; set; } = "";
-
-    [JsonPropertyName("kuroDistinctId")]
-    public string KuroDistinctId { get; set; } = "";
-
     [JsonPropertyName("schedules")]
     public List<CheckInScheduleInput> Schedules { get; set; } = new();
 
-    [JsonPropertyName("notifications")]
-    public CheckInNotificationInput Notifications { get; set; } = new();
+    [JsonPropertyName("notification")]
+    public CheckInNotificationInput Notification { get; set; } = new();
 
     [JsonPropertyName("secrets")]
     public Dictionary<string, CheckInSecretInput> Secrets { get; set; } = new(StringComparer.OrdinalIgnoreCase);
@@ -187,47 +148,17 @@ internal sealed class CheckInScheduleInput
 
 internal sealed class CheckInNotificationInput
 {
-    [JsonPropertyName("webhook")]
-    public CheckInWebhookInput Webhook { get; set; } = new();
-
-    [JsonPropertyName("smtp")]
-    public CheckInSmtpInput Smtp { get; set; } = new();
-}
-
-internal sealed class CheckInWebhookInput
-{
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
 
-    [JsonPropertyName("type")]
-    public string Type { get; set; } = "generic";
-
-    [JsonPropertyName("template")]
-    public string Template { get; set; } = "{\"text\":{text}}";
+    [JsonPropertyName("smtpTo")]
+    public string SmtpTo { get; set; } = "";
 }
 
-internal sealed class CheckInSmtpInput
+internal sealed class CheckInTaskOrderRequest
 {
-    [JsonPropertyName("enabled")]
-    public bool Enabled { get; set; }
-
-    [JsonPropertyName("host")]
-    public string Host { get; set; } = "";
-
-    [JsonPropertyName("port")]
-    public int Port { get; set; } = 465;
-
-    [JsonPropertyName("secure")]
-    public string Secure { get; set; } = "auto";
-
-    [JsonPropertyName("from")]
-    public string From { get; set; } = "";
-
-    [JsonPropertyName("to")]
-    public string To { get; set; } = "";
-
-    [JsonPropertyName("subjectPrefix")]
-    public string SubjectPrefix { get; set; } = "[NexusPipeline]";
+    [JsonPropertyName("taskIds")]
+    public List<Guid> TaskIds { get; set; } = new();
 }
 
 internal sealed class CheckInSecretInput
@@ -243,30 +174,14 @@ internal sealed class CheckInTaskView
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = "";
+    public string Remark { get; init; } = "";
     public bool Enabled { get; init; }
     public Dictionary<string, List<string>> Games { get; init; } = new(StringComparer.OrdinalIgnoreCase);
-    public string CnDeviceId { get; init; } = "";
-    public string KuroDevCode { get; init; } = "";
-    public string KuroDistinctId { get; init; } = "";
     public List<CheckInSchedule> Schedules { get; init; } = new();
-    public CheckInNotificationSettings Notifications { get; init; } = new();
+    public CheckInNotification Notification { get; init; } = new();
     public List<CheckInRun> Runs { get; init; } = new();
     public Dictionary<string, bool> Credentials { get; init; } = new(StringComparer.OrdinalIgnoreCase);
-    public CheckInWebhookSecretView WebhookSecrets { get; init; } = new();
-    public CheckInSmtpSecretView SmtpSecrets { get; init; } = new();
     public bool IsRunning { get; init; }
     public DateTimeOffset? NextRunAt { get; init; }
     public CheckInRun? RecentRun { get; init; }
-}
-
-internal sealed class CheckInWebhookSecretView
-{
-    public bool UrlConfigured { get; init; }
-    public bool SigningSecretConfigured { get; init; }
-}
-
-internal sealed class CheckInSmtpSecretView
-{
-    public bool UserConfigured { get; init; }
-    public bool PasswordConfigured { get; init; }
 }

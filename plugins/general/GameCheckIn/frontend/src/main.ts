@@ -29,7 +29,7 @@ export function activate(host: PluginHost) {
     id: "check-in-tasks",
     title: host.i18n.t("nav.title", {}, "签到"),
     route: "tasks",
-    icon: "✓",
+    icon: "check",
     order: -100,
   });
   const lifecycle = host.lifecycle.onDispose(() => {

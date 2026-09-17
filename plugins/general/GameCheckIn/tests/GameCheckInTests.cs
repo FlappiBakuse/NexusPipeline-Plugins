@@ -321,7 +321,7 @@ public sealed class GameCheckInTests
         await entryPoint.StartAsync(CancellationToken.None);
 
         Assert.Equal(
-            new[] { ("GET", "state"), ("DELETE", "tasks"), ("POST", "tasks"), ("PUT", "tasks"), ("POST", "tasks/run") },
+            new[] { ("GET", "state"), ("DELETE", "tasks"), ("POST", "tasks"), ("PUT", "tasks"), ("PUT", "tasks/order"), ("POST", "tasks/run") },
             context.WebApi.Routes.Select(route => (route.Method, route.Route)).OrderBy(route => route.Route).ThenBy(route => route.Method));
         Assert.Empty(context.UserGlobalManagement.Contributions);
         Assert.Empty(context.UserListBadges.Contributions);
@@ -335,50 +335,90 @@ public sealed class GameCheckInTests
     }
 
     [Fact]
-    public async Task TaskApi_SavesIndependentSecretsMaskedAndDeletesTheirScope()
+    public async Task TaskApi_SavesPlatformSecretsMaskedAndDeletesItsV2Scope()
     {
         var context = new FakePluginHostContext("game-check-in");
         var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 0));
-        string[] secrets = { "private-cookie", "https://hooks.example.test/private-token", "sign-key", "smtp-user", "smtp-password" };
+        string[] platforms = { "cn", "os", "skland", "skport", "kuro" };
+        string[] secretValues = { "cn-cookie", "os-cookie", "skland-token", "skport-token", "kuro-token" };
         JsonObject body = NewTaskInput("Daily", "11:30", DayOfWeek.Monday);
-        body["secrets"] = new JsonObject
+        body["games"] = new JsonObject
         {
-            ["cn"] = new JsonObject { ["action"] = "set", ["value"] = secrets[0] },
-            ["webhookUrl"] = new JsonObject { ["action"] = "set", ["value"] = secrets[1] },
-            ["webhookSecret"] = new JsonObject { ["action"] = "set", ["value"] = secrets[2] },
-            ["smtpUser"] = new JsonObject { ["action"] = "set", ["value"] = secrets[3] },
-            ["smtpPassword"] = new JsonObject { ["action"] = "set", ["value"] = secrets[4] },
+            ["cn"] = new JsonArray(JsonValue.Create("gi")),
+            ["os"] = new JsonArray(JsonValue.Create("gi")),
+            ["skland"] = new JsonArray(JsonValue.Create("ak")),
+            ["skport"] = new JsonArray(JsonValue.Create("endfield")),
+            ["kuro"] = new JsonArray(JsonValue.Create("ww")),
         };
+        var secretChanges = new JsonObject();
+        for (int index = 0; index < platforms.Length; index++)
+        {
+            secretChanges[platforms[index]] = new JsonObject { ["action"] = "set", ["value"] = secretValues[index] };
+        }
+        body["secrets"] = secretChanges;
 
         PluginWebApiResponse created = await InvokeAsync(context, "POST", "tasks", body);
 
         Assert.Equal(201, created.StatusCode);
         JsonObject view = created.JsonBody!.AsObject();
         Guid id = Guid.Parse(view["id"]!.GetValue<string>());
-        Assert.True(view["credentials"]!["cn"]!.GetValue<bool>());
-        Assert.True(view["webhookSecrets"]!["urlConfigured"]!.GetValue<bool>());
-        Assert.True(view["webhookSecrets"]!["signingSecretConfigured"]!.GetValue<bool>());
-        Assert.True(view["smtpSecrets"]!["userConfigured"]!.GetValue<bool>());
-        Assert.True(view["smtpSecrets"]!["passwordConfigured"]!.GetValue<bool>());
+        Assert.All(platforms, platform => Assert.True(view["credentials"]![platform]!.GetValue<bool>()));
+        Assert.Equal("", view["remark"]!.GetValue<string>());
+        Assert.False(view["notification"]!["enabled"]!.GetValue<bool>());
+        Assert.Equal("", view["notification"]!["smtpTo"]!.GetValue<string>());
+        Assert.Null(view["webhookSecrets"]);
+        Assert.Null(view["smtpSecrets"]);
         string serialized = view.ToJsonString();
-        Assert.DoesNotContain(secrets[0], serialized, StringComparison.Ordinal);
-        Assert.DoesNotContain(secrets[1], serialized, StringComparison.Ordinal);
-        Assert.DoesNotContain(secrets[2], serialized, StringComparison.Ordinal);
-        Assert.DoesNotContain(secrets[3], serialized, StringComparison.Ordinal);
-        Assert.DoesNotContain(secrets[4], serialized, StringComparison.Ordinal);
-        Assert.All(new[] { "credential-cn", "webhook-url", "webhook-signing-secret", "smtp-user", "smtp-password" }, key =>
-            Assert.Equal("tasks-v1/" + id.ToString("N") + "/" + key, CheckInTaskNotifications.SecretKey(id, key)));
-        Assert.Equal(secrets[0], await context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(id, "credential-cn")));
+        foreach (string secret in secretValues) Assert.DoesNotContain(secret, serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("cnDeviceId", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("kuroDevCode", serialized, StringComparison.Ordinal);
+        Assert.DoesNotContain("kuroDistinctId", serialized, StringComparison.Ordinal);
+        for (int index = 0; index < platforms.Length; index++)
+        {
+            string secretKey = CheckInTaskService.SecretKey(id, "credential-" + platforms[index]);
+            Assert.Equal($"tasks-v2/{id:N}/credential-{platforms[index]}", secretKey);
+            Assert.Equal(secretValues[index], await context.Secrets.GetAsync(secretKey));
+        }
         Assert.False(context.UserData.HasConfig("game-check-in"));
         Assert.Empty(context.Notifications.Notifications);
-        Assert.True(context.ScopedData.Contains("tasks-v1/task-store"));
+        Assert.True(context.ScopedData.Contains("tasks-v2/task-store"));
 
         PluginWebApiResponse deleted = await InvokeAsync(context, "DELETE", "tasks", new JsonObject { ["taskId"] = id.ToString() });
 
         Assert.Equal(204, deleted.StatusCode);
-        foreach (string key in new[] { "credential-cn", "webhook-url", "webhook-signing-secret", "smtp-user", "smtp-password" })
+        foreach (string platform in platforms)
         {
-            Assert.Null(await context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(id, key)));
+            Assert.Null(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-" + platform)));
+        }
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task TaskApi_ReordersTasksOnlyForACompleteUniquePermutation()
+    {
+        var context = new FakePluginHostContext("game-check-in");
+        var service = new CheckInTaskService(context);
+        Guid first = await CreateKuroTaskAsync(context, "First", "first-token");
+        Guid second = await CreateKuroTaskAsync(context, "Second", "second-token");
+        Guid third = await CreateKuroTaskAsync(context, "Third", "third-token");
+        Guid[] expected = { third, first, second };
+
+        PluginWebApiResponse reordered = await InvokeAsync(context, "PUT", "tasks/order", OrderBody(expected));
+
+        Assert.Equal(200, reordered.StatusCode);
+        Assert.Equal(expected, reordered.JsonBody!["taskIds"]!.AsArray().Select(item => Guid.Parse(item!.GetValue<string>())));
+        Assert.Equal(expected, (await GetStateAsync(context))["tasks"]!.AsArray()
+            .Select(item => Guid.Parse(item!["id"]!.GetValue<string>())));
+        foreach (Guid[] invalid in new[]
+        {
+            new[] { first, first, third },
+            new[] { first, second },
+            new[] { first, second, Guid.NewGuid() },
+        })
+        {
+            Assert.Equal(400, (await InvokeAsync(context, "PUT", "tasks/order", OrderBody(invalid))).StatusCode);
+            Assert.Equal(expected, (await GetStateAsync(context))["tasks"]!.AsArray()
+                .Select(item => Guid.Parse(item!["id"]!.GetValue<string>())));
         }
         await service.StopAsync(CancellationToken.None);
     }
@@ -530,14 +570,14 @@ public sealed class GameCheckInTests
         nullSchedules["schedules"] = null;
         JsonObject nullScheduleEntry = NewTaskInput("Null schedule item", "10:30", DayOfWeek.Monday);
         nullScheduleEntry["schedules"]![0] = null;
-        JsonObject nullNotifications = NewTaskInput("Null notifications", "10:30", DayOfWeek.Monday);
-        nullNotifications["notifications"] = null;
-        JsonObject nullWebhook = NewTaskInput("Null webhook", "10:30", DayOfWeek.Monday);
-        nullWebhook["notifications"]!["webhook"] = null;
+        JsonObject nullNotification = NewTaskInput("Null notification", "10:30", DayOfWeek.Monday);
+        nullNotification["notification"] = null;
+        JsonObject nullRecipient = NewTaskInput("Null recipient", "10:30", DayOfWeek.Monday);
+        nullRecipient["notification"]!["smtpTo"] = null;
         JsonObject nullSecrets = NewTaskInput("Null secrets", "10:30", DayOfWeek.Monday);
         nullSecrets["secrets"] = null;
 
-        foreach (JsonObject body in new[] { nullGames, nullPlatformGames, nullSchedules, nullScheduleEntry, nullNotifications, nullWebhook, nullSecrets })
+        foreach (JsonObject body in new[] { nullGames, nullPlatformGames, nullSchedules, nullScheduleEntry, nullNotification, nullRecipient, nullSecrets })
         {
             Assert.Equal(400, (await InvokeAsync(context, "POST", "tasks", body)).StatusCode);
         }
@@ -553,7 +593,7 @@ public sealed class GameCheckInTests
         JsonObject create = NewKuroTaskInput("Rollback", "rollback-token-old");
         PluginWebApiResponse created = await InvokeAsync(context, "POST", "tasks", create);
         Guid id = Guid.Parse(created.JsonBody!["id"]!.GetValue<string>());
-        string secretKey = CheckInTaskNotifications.SecretKey(id, "credential-kuro");
+        string secretKey = CheckInTaskService.SecretKey(id, "credential-kuro");
         Assert.Equal("rollback-token-old", await context.Secrets.GetAsync(secretKey));
 
         JsonObject update = NewKuroTaskInput("Rollback Updated", "rollback-token-new");
@@ -606,93 +646,52 @@ public sealed class GameCheckInTests
     }
 
     [Fact]
-    public void NotificationFormats_UseProviderBodiesAndIndependentSignatureAlgorithms()
-    {
-        Assert.Equal("{\"msgtype\":\"text\",\"text\":{\"content\":\"hello\"}}", CheckInTaskNotifications.BuildWebhookBody("dingtalk", "hello", ""));
-        Assert.Equal("{\"msgtype\":\"text\",\"text\":{\"content\":\"hello\"}}", CheckInTaskNotifications.BuildWebhookBody("wecom", "hello", ""));
-        Assert.Equal("{\"msg_type\":\"text\",\"content\":{\"text\":\"hello\"}}", CheckInTaskNotifications.BuildWebhookBody("feishu", "hello", ""));
-        Assert.Equal("{\"text\":\"hello\"}", CheckInTaskNotifications.BuildWebhookBody("slack", "hello", ""));
-        Assert.Equal("{\"content\":\"hello\"}", CheckInTaskNotifications.BuildWebhookBody("discord", "hello", ""));
-        Assert.Equal("th4ptdjmwLp4vFIHjuqZPcQSQ/uOY3Z2BkO9m50fafo=", CheckInTaskNotifications.SignDingTalk("1712345678901", "SECtest-secret"));
-        Assert.Equal("FlvAz19SaFj+YB5VHb5NOwV+BbcejqDGAAaYY7fsjoA=", CheckInTaskNotifications.SignFeishu("1712345678", "SECtest-secret"));
-    }
-
-    [Theory]
-    [InlineData("generic", "provider accepted", true)]
-    [InlineData("slack", "ok", true)]
-    [InlineData("slack", "no_team", false)]
-    [InlineData("feishu", "{\"code\":0}", true)]
-    [InlineData("feishu", "{\"code\":19021}", false)]
-    [InlineData("dingtalk", "{\"errcode\":0}", true)]
-    [InlineData("wecom", "{\"errcode\":40001}", false)]
-    public void NotificationFormats_ValidateProviderResponseSemantics(string type, string body, bool expected)
-    {
-        Assert.Equal(expected, CheckInTaskNotifications.IsWebhookResponseSuccessful(type, body));
-    }
-
-    [Fact]
-    public void SmtpSettings_UseHostSecureModeDefaultsAndRecipientSeparators()
-    {
-        Assert.Equal(MailKit.Security.SecureSocketOptions.SslOnConnect, CheckInTaskNotifications.ResolveSecure(465, "auto"));
-        Assert.Equal(MailKit.Security.SecureSocketOptions.StartTlsWhenAvailable, CheckInTaskNotifications.ResolveSecure(587, "auto"));
-        Assert.Equal(new[] { "one@example.test", "two@example.test", "three@example.test" },
-            CheckInTaskNotifications.SplitRecipients("one@example.test，two@example.test; three@example.test"));
-    }
-
-    [Fact]
-    public async Task TaskNotifications_UseTaskSecretsForWebhookAndSmtp()
+    public async Task CheckInNotification_UsesHostServiceAndOptionalRecipientOverride()
     {
         var context = new FakePluginHostContext("game-check-in");
-        Guid taskId = Guid.NewGuid();
-        await context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(taskId, "webhook-url"), "https://hooks.example.test/secret-path");
-        await context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(taskId, "webhook-signing-secret"), "webhook-signature-key");
-        await context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(taskId, "smtp-user"), "checkin@example.test");
-        await context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(taskId, "smtp-password"), "smtp-password-value");
-        string webhookBody = "";
-        context.Http.ResponseFactory = request =>
+        var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 30));
+        context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
         {
-            webhookBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult();
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("ok", Encoding.UTF8, "text/plain"),
-            };
-        };
-        var smtp = new RecordingSmtpTransportFactory();
-        var service = new CheckInTaskNotifications(context, smtp);
-        var settings = new CheckInNotificationSettings
-        {
-            Webhook = new CheckInWebhookSettings { Enabled = true, Type = "slack" },
-            Smtp = new CheckInSmtpSettings
-            {
-                Enabled = true,
-                Host = "mail.example.test",
-                Port = 587,
-                Secure = "auto",
-                From = "checkin@example.test",
-                To = "one@example.test;two@example.test",
-                SubjectPrefix = "[Check-in]",
-            },
+            Content = new StringContent(
+                request.RequestUri!.AbsolutePath.EndsWith("findRoleList", StringComparison.Ordinal)
+                    ? "{\"code\":200,\"data\":[{\"gameId\":\"3\",\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"user\"}]}"
+                    : "{\"code\":200}",
+                Encoding.UTF8,
+                "application/json"),
         };
 
-        await service.SendAsync(taskId, "Result", "All games succeeded", settings, CancellationToken.None);
-
-        Assert.Single(context.Http.Requests);
-        Assert.Equal("https://hooks.example.test/secret-path", context.Http.Requests[0].RequestUri!.ToString());
-        Assert.Contains("All games succeeded", webhookBody);
-        Assert.Equal("checkin@example.test", smtp.User);
-        Assert.Equal("smtp-password-value", smtp.Password);
-        Assert.Equal("mail.example.test", smtp.Host);
-        Assert.Equal(587, smtp.Port);
-        Assert.Equal(MailKit.Security.SecureSocketOptions.StartTlsWhenAvailable, smtp.Secure);
-        Assert.Equal(new[] { "one@example.test", "two@example.test" }, smtp.Recipients);
+        JsonObject create = NewKuroTaskInput("Notices", "notice-token-a");
+        Guid id = Guid.Parse((await InvokeAsync(context, "POST", "tasks", create)).JsonBody!["id"]!.GetValue<string>());
+        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
+        await WaitForStateAsync(context, id, 1);
         Assert.Empty(context.Notifications.Notifications);
+
+        JsonObject overrideInput = NewKuroTaskInput("Notices", "notice-token-b");
+        overrideInput["id"] = id.ToString();
+        overrideInput["notification"] = new JsonObject { ["enabled"] = true, ["smtpTo"] = "  task@example.test  " };
+        Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", overrideInput)).StatusCode);
+        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
+        await WaitForStateAsync(context, id, 2);
+        PluginNotification firstNotification = Assert.Single(context.Notifications.Notifications);
+        Assert.Equal("task@example.test", firstNotification.SmtpTo);
+
+        JsonObject inheritedInput = NewKuroTaskInput("Notices", "notice-token-c");
+        inheritedInput["id"] = id.ToString();
+        inheritedInput["notification"] = new JsonObject { ["enabled"] = true, ["smtpTo"] = "" };
+        Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", inheritedInput)).StatusCode);
+        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
+        await WaitForStateAsync(context, id, 3);
+        Assert.Equal(2, context.Notifications.Notifications.Count);
+        Assert.Null(context.Notifications.Notifications[1].SmtpTo);
+        await service.StopAsync(CancellationToken.None);
     }
 
     private static JsonObject NewTaskInput(string name, string time, DayOfWeek day) => new()
     {
         ["name"] = name,
+        ["remark"] = "",
         ["enabled"] = true,
-            ["games"] = new JsonObject { ["cn"] = new JsonArray(JsonValue.Create("gi")) },
+        ["games"] = new JsonObject { ["cn"] = new JsonArray(JsonValue.Create("gi")) },
         ["schedules"] = new JsonArray(new JsonObject
         {
             ["id"] = Guid.NewGuid().ToString("N"),
@@ -700,22 +699,16 @@ public sealed class GameCheckInTests
             ["enabled"] = true,
             ["time"] = time,
         }),
-        ["notifications"] = new JsonObject
-        {
-            ["webhook"] = new JsonObject { ["enabled"] = false, ["type"] = "generic", ["template"] = "{\"text\":{text}}" },
-            ["smtp"] = new JsonObject
-            {
-                ["enabled"] = false,
-                ["host"] = "",
-                ["port"] = 465,
-                ["secure"] = "auto",
-                ["from"] = "",
-                ["to"] = "",
-                ["subjectPrefix"] = "[NexusPipeline]",
-            },
-        },
+        ["notification"] = new JsonObject { ["enabled"] = false, ["smtpTo"] = "" },
         ["secrets"] = new JsonObject(),
     };
+
+    private static JsonObject OrderBody(IEnumerable<Guid> taskIds)
+    {
+        var ids = new JsonArray();
+        foreach (Guid id in taskIds) ids.Add(id.ToString());
+        return new JsonObject { ["taskIds"] = ids };
+    }
 
     private static DateTimeOffset AtLocalTime(int year, int month, int day, int hour, int minute) =>
         new(new DateTime(year, month, day, hour, minute, 0, DateTimeKind.Local));
@@ -764,6 +757,9 @@ public sealed class GameCheckInTests
         return root["tasks"]!.AsArray().Select(item => item!.AsObject())
             .Single(item => Guid.Parse(item["id"]!.GetValue<string>()) == id);
     }
+
+    private static async Task<JsonObject> GetStateAsync(FakePluginHostContext context) =>
+        (await InvokeAsync(context, "GET", "state")).JsonBody!.AsObject();
 
     private static async Task<JsonObject> WaitForStateAsync(FakePluginHostContext context, Guid id, int runCount)
     {
@@ -828,7 +824,7 @@ public sealed class GameCheckInTests
         }
     }
 
-    private sealed class ScopedDataHostContext : IPluginHostContextV1_4
+    private sealed class ScopedDataHostContext : IPluginHostContextV1_8
     {
         private readonly FakePluginHostContext _inner;
 
@@ -854,6 +850,9 @@ public sealed class GameCheckInTests
         public IPluginWebApiRegistry WebApi => _inner.WebApi;
         public IPluginHistoryContributionRegistry History => _inner.History;
         public IPluginLocalization I18n => _inner.I18n;
+        public IPluginAssetStore Assets => _inner.Assets;
+        public IPluginEmulatorSupportRegistry EmulatorSupport => _inner.EmulatorSupport;
+        IPluginEmulatorSupportRegistry IPluginHostContextV1_7.EmulatorSupport => EmulatorSupport;
     }
 
     private sealed class QueueHttpClientFactory : IPluginHttpClientFactory
@@ -886,57 +885,6 @@ public sealed class GameCheckInTests
                 body => Bodies.Add(body),
                 () => _responses.Count > 0 ? _responses.Dequeue() : "{\"retcode\":0}",
                 () => _statuses.Count > 0 ? _statuses.Dequeue() : HttpStatusCode.OK));
-    }
-
-    private sealed class RecordingSmtpTransportFactory : ICheckInSmtpTransportFactory
-    {
-        private readonly RecordingSmtpTransport _transport = new();
-        public string? Host => _transport.Host;
-        public int Port => _transport.Port;
-        public MailKit.Security.SecureSocketOptions Secure => _transport.Secure;
-        public string? User => _transport.User;
-        public string? Password => _transport.Password;
-        public string[] Recipients => _transport.Recipients;
-        public ICheckInSmtpTransport Create() => _transport;
-    }
-
-    private sealed class RecordingSmtpTransport : ICheckInSmtpTransport
-    {
-        public int TimeoutValue { get; private set; }
-        public int Timeout { set => TimeoutValue = value; }
-        public string? Host { get; private set; }
-        public int Port { get; private set; }
-        public MailKit.Security.SecureSocketOptions Secure { get; private set; }
-        public string? User { get; private set; }
-        public string? Password { get; private set; }
-        public string[] Recipients { get; private set; } = Array.Empty<string>();
-        public Task ConnectAsync(string host, int port, MailKit.Security.SecureSocketOptions options, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            Host = host;
-            Port = port;
-            Secure = options;
-            return Task.CompletedTask;
-        }
-        public Task AuthenticateAsync(string user, string password, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            User = user;
-            Password = password;
-            return Task.CompletedTask;
-        }
-        public Task SendAsync(MimeKit.MimeMessage message, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            Recipients = message.To.Mailboxes.Select(mailbox => mailbox.Address).ToArray();
-            return Task.CompletedTask;
-        }
-        public Task DisconnectAsync(bool quit, CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return Task.CompletedTask;
-        }
-        public void Dispose() { }
     }
 
     private sealed class CaptureHandler : HttpMessageHandler

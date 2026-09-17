@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.7，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.8，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -124,7 +124,7 @@ export function activate(host) {
 
 公开元素在 light DOM 下渲染，元素标签自身不产生额外布局盒（结构卡片与 `nxp-switch-list` 内的开关都是如此），因此插件卡片与宿主卡片共享同一套栅格与展开置顶规则。把多个 `nxp-switch-setting` 放进 `nxp-switch-list` 即可得到与设置页一致的开关列表外观。文本类元素（`nxp-button`、`nxp-badge`）用 `label` 属性传文案：属性写法不产生插槽子节点，父级重渲染不会影响元素自身的 DOM 与交互。
 
-结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页的折叠协调协议对插件开放：插件展开自己的卡片时向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
+结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`、`surface`；`surface` 可取 `default` 或 `secondary`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页的折叠协调协议对插件开放：插件展开自己的卡片时向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
 
 ## 稳定 UI slot
 
@@ -145,7 +145,9 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API v1.6 / v1.7 配合方式
+## Plugin API v1.6 / v1.7 / v1.8 配合方式
+
+Plugin API v1.8 在 `PluginNotification` 上增加可选 SMTP 收件人 `SmtpTo`。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。需要该能力的插件检查 `IPluginHostContextV1_8`。
 
 managed-code 插件在初始化时检查 `context is IPluginHostContextV1_6`，再按需使用：
 
@@ -197,7 +199,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与宿主当前 Plugin API v1.7 兼容；只需本地化端口的插件继续检查 `IPluginHostContextV1_4`，需要资产端口的插件检查 `IPluginHostContextV1_6`，模拟器 provider 检查 `IPluginHostContextV1_7`；`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 与 `live-screenshot` 继续使用 Plugin API v1.5；
+- managed-code 插件 API 版本与宿主当前 Plugin API v1.8 兼容；只需本地化端口的插件继续检查 `IPluginHostContextV1_4`，需要资产端口的插件检查 `IPluginHostContextV1_6`，模拟器 provider 检查 `IPluginHostContextV1_7`，通知收件人覆盖检查 `IPluginHostContextV1_8`；`custom-wallpaper` 使用 Plugin API v1.6、`EmulatorSupport` 使用 v1.7、`game-checkin` 使用 v1.8，前端均继续使用 Frontend API 1.5；`live-screenshot` 继续使用 Plugin API v1.5；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；

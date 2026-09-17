@@ -11,7 +11,7 @@ namespace NexusPipeline.Plugin.GameCheckIn;
 internal sealed class CheckInTaskService
 {
     internal const string PollerJobId = "scheduled-check-in-poll";
-    private const string StoreScope = "tasks-v1/task-store";
+    private const string StoreScope = "tasks-v2/task-store";
     private const int MaxTasks = 100;
     private const int MaxRunHistory = 20;
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
@@ -19,9 +19,8 @@ internal sealed class CheckInTaskService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly string[] PlatformOrder = { "cn", "os", "skland", "skport", "kuro" };
 
-    private readonly IPluginHostContextV1_4 _context;
+    private readonly IPluginHostContextV1_8 _context;
     private readonly Func<DateTimeOffset> _clock;
-    private readonly CheckInTaskNotifications _notifications;
     private readonly HoyoLabClient _osClient;
     private readonly MiyousheClient _cnClient;
     private readonly SklandClient _sklandClient;
@@ -37,13 +36,11 @@ internal sealed class CheckInTaskService
     private bool _stopped;
 
     public CheckInTaskService(
-        IPluginHostContextV1_4 context,
-        Func<DateTimeOffset>? clock = null,
-        CheckInTaskNotifications? notifications = null)
+        IPluginHostContextV1_8 context,
+        Func<DateTimeOffset>? clock = null)
     {
         _context = context;
         _clock = clock ?? (() => DateTimeOffset.Now);
-        _notifications = notifications ?? new CheckInTaskNotifications(context);
         _osClient = new HoyoLabClient(context.Http);
         _cnClient = new MiyousheClient(context.Http);
         _sklandClient = new SklandClient(context.Http, "skland");
@@ -125,6 +122,7 @@ internal sealed class CheckInTaskService
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("GET", "state", GetStateAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks", CreateTaskAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks", UpdateTaskAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks/order", ReorderTasksAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("DELETE", "tasks", DeleteTaskAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks/run", RunTaskAsync)));
     }
@@ -143,7 +141,6 @@ internal sealed class CheckInTaskService
             {
                 tasks,
                 platforms = BuildPlatformOptions(),
-                webhookTypes = new[] { "generic", "feishu", "dingtalk", "wecom", "discord", "slack" },
                 timeZoneId = TimeZoneInfo.Local.Id,
                 localTime = _clock().ToLocalTime(),
             };
@@ -164,6 +161,48 @@ internal sealed class CheckInTaskService
 
     private ValueTask<PluginWebApiResponse> UpdateTaskAsync(PluginWebApiRequest request, CancellationToken cancellationToken) =>
         SaveTaskAsync(request, cancellationToken, create: false);
+
+    private async ValueTask<PluginWebApiResponse> ReorderTasksAsync(
+        PluginWebApiRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TryDeserialize(request.JsonBody, out CheckInTaskOrderRequest? input)
+            || input!.TaskIds is null)
+        {
+            return Error(400, "task_order_invalid");
+        }
+
+        await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_stopped) return Error(503, "service_stopping");
+            CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
+            Guid[] currentIds = store.Tasks.Select(task => task.Id).ToArray();
+            if (input.TaskIds.Count != currentIds.Length
+                || input.TaskIds.Distinct().Count() != input.TaskIds.Count
+                || !input.TaskIds.ToHashSet().SetEquals(currentIds))
+            {
+                return Error(400, "task_order_invalid");
+            }
+
+            Dictionary<Guid, CheckInTask> tasks = store.Tasks.ToDictionary(task => task.Id);
+            store.Tasks = input.TaskIds.Select(id => tasks[id]).ToList();
+            await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
+            return Json(new { taskIds = input.TaskIds });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            return Error(500, "task_order_save_failed");
+        }
+        finally
+        {
+            _storeGate.Release();
+        }
+    }
 
     private async ValueTask<PluginWebApiResponse> SaveTaskAsync(
         PluginWebApiRequest request,
@@ -194,6 +233,10 @@ internal sealed class CheckInTaskService
                 if (existing is null) return Error(404, "task_not_found");
                 id = requestedId;
             }
+
+            if (store.Tasks.Any(task => task.Id != id
+                && string.Equals(task.Name, input!.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
+                return Error(409, "task_name_duplicate");
 
             CheckInTask task = BuildTask(input!, id, existing);
             Dictionary<string, string?>? secretSnapshot = null;
@@ -250,7 +293,7 @@ internal sealed class CheckInTaskService
                 await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
                 foreach (string secretName in SecretNames)
                 {
-                    await _context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(task.Id, secretName), null, cancellationToken)
+                    await _context.Secrets.SetAsync(SecretKey(task.Id, secretName), null, cancellationToken)
                         .ConfigureAwait(false);
                 }
             }
@@ -337,17 +380,9 @@ internal sealed class CheckInTaskService
             foreach (string platform in PlatformOrder)
             {
                 credentialValues[platform] = await _context.Secrets
-                    .GetAsync(CheckInTaskNotifications.SecretKey(taskId, "credential-" + platform), cancellationToken)
+                    .GetAsync(SecretKey(taskId, "credential-" + platform), cancellationToken)
                     .ConfigureAwait(false);
             }
-            credentialValues["webhook-url"] = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(taskId, "webhook-url"), cancellationToken).ConfigureAwait(false);
-            credentialValues["webhook-signing-secret"] = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(taskId, "webhook-signing-secret"), cancellationToken).ConfigureAwait(false);
-            credentialValues["smtp-user"] = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(taskId, "smtp-user"), cancellationToken).ConfigureAwait(false);
-            credentialValues["smtp-password"] = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(taskId, "smtp-password"), cancellationToken).ConfigureAwait(false);
 
             var run = new CheckInRun
             {
@@ -481,7 +516,7 @@ internal sealed class CheckInTaskService
                 ? "success"
                 : successfulCount == 0 ? "failed" : "partial";
             await FinishRunAsync(task.Id, handle.RunId, runStatus).ConfigureAwait(false);
-            if (results.Count > 0)
+            if (results.Count > 0 && task.Notification.Enabled)
             {
                 string title = _context.I18n.T(
                     runStatus == "success" ? "notification.success" : "notification.failed",
@@ -489,7 +524,14 @@ internal sealed class CheckInTaskService
                 string body = BuildSummary(task.Name, results);
                 try
                 {
-                    await _notifications.SendAsync(task.Id, title, body, task.Notifications, cancellationToken).ConfigureAwait(false);
+                    await _context.Notifications.SendAsync(
+                        new PluginNotification(title, body)
+                        {
+                            SmtpTo = string.IsNullOrWhiteSpace(task.Notification.SmtpTo)
+                                ? null
+                                : task.Notification.SmtpTo.Trim(),
+                        },
+                        cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
@@ -678,7 +720,7 @@ internal sealed class CheckInTaskService
     {
         CheckInTaskStore? store = await _context.ScopedData.ReadAsync<CheckInTaskStore>(StoreScope, cancellationToken).ConfigureAwait(false);
         if (store is null) return new CheckInTaskStore();
-        if (store.SchemaVersion != 1 || store.Tasks is null || store.SuccessfulCheckIns is null)
+        if (store.SchemaVersion != 2 || store.Tasks is null || store.SuccessfulCheckIns is null)
         {
             throw new InvalidOperationException("Unsupported task store format");
         }
@@ -694,14 +736,10 @@ internal sealed class CheckInTaskService
         foreach (string platform in PlatformOrder)
         {
             string? value = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(task.Id, "credential-" + platform), cancellationToken)
+                .GetAsync(SecretKey(task.Id, "credential-" + platform), cancellationToken)
                 .ConfigureAwait(false);
             credentials[platform] = !string.IsNullOrWhiteSpace(value);
         }
-        string? webhookUrl = await _context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(task.Id, "webhook-url"), cancellationToken).ConfigureAwait(false);
-        string? webhookSecret = await _context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(task.Id, "webhook-signing-secret"), cancellationToken).ConfigureAwait(false);
-        string? smtpUser = await _context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(task.Id, "smtp-user"), cancellationToken).ConfigureAwait(false);
-        string? smtpPassword = await _context.Secrets.GetAsync(CheckInTaskNotifications.SecretKey(task.Id, "smtp-password"), cancellationToken).ConfigureAwait(false);
         DateTimeOffset now = _clock().ToLocalTime();
         DateTimeOffset? nextAt = task.Enabled
             ? task.Schedules.Where(schedule => schedule.Enabled)
@@ -713,11 +751,9 @@ internal sealed class CheckInTaskService
         {
             Id = task.Id,
             Name = task.Name,
+            Remark = task.Remark,
             Enabled = task.Enabled,
             Games = Clone(task.Games),
-            CnDeviceId = task.CnDeviceId,
-            KuroDevCode = task.KuroDevCode,
-            KuroDistinctId = task.KuroDistinctId,
             Schedules = task.Schedules.Select(schedule => new CheckInSchedule
             {
                 Id = schedule.Id,
@@ -725,19 +761,9 @@ internal sealed class CheckInTaskService
                 Enabled = schedule.Enabled,
                 Time = schedule.Time,
             }).ToList(),
-            Notifications = Clone(task.Notifications),
+            Notification = Clone(task.Notification),
             Runs = task.Runs.Take(MaxRunHistory).Select(Clone).ToList(),
             Credentials = credentials,
-            WebhookSecrets = new CheckInWebhookSecretView
-            {
-                UrlConfigured = !string.IsNullOrWhiteSpace(webhookUrl),
-                SigningSecretConfigured = !string.IsNullOrWhiteSpace(webhookSecret),
-            },
-            SmtpSecrets = new CheckInSmtpSecretView
-            {
-                UserConfigured = !string.IsNullOrWhiteSpace(smtpUser),
-                PasswordConfigured = !string.IsNullOrWhiteSpace(smtpPassword),
-            },
             IsRunning = _activeRuns.ContainsKey(task.Id),
             NextRunAt = nextAt,
             RecentRun = task.Runs.FirstOrDefault() is { } recent ? Clone(recent) : null,
@@ -794,9 +820,15 @@ internal sealed class CheckInTaskService
 
     private CheckInTask BuildTask(CheckInTaskSaveRequest input, Guid id, CheckInTask? existing)
     {
-        string cnDeviceId = Guid.TryParse(input.CnDeviceId, out Guid cnGuid) ? cnGuid.ToString("D") : Guid.NewGuid().ToString("D");
-        string kuroDevCode = string.IsNullOrWhiteSpace(input.KuroDevCode) ? Guid.NewGuid().ToString("N") : input.KuroDevCode.Trim();
-        string kuroDistinctId = Guid.TryParse(input.KuroDistinctId, out Guid kuroGuid) ? kuroGuid.ToString("D") : Guid.NewGuid().ToString("D");
+        string cnDeviceId = Guid.TryParse(existing?.CnDeviceId, out Guid cnGuid)
+            ? cnGuid.ToString("D")
+            : Guid.NewGuid().ToString("D");
+        string kuroDevCode = string.IsNullOrWhiteSpace(existing?.KuroDevCode)
+            ? Guid.NewGuid().ToString("N")
+            : existing!.KuroDevCode;
+        string kuroDistinctId = Guid.TryParse(existing?.KuroDistinctId, out Guid kuroGuid)
+            ? kuroGuid.ToString("D")
+            : Guid.NewGuid().ToString("D");
         var oldSchedules = existing?.Schedules.ToDictionary(item => item.Id, StringComparer.Ordinal) ?? new Dictionary<string, CheckInSchedule>();
         List<CheckInSchedule> schedules = input.Schedules.Select(scheduleInput =>
         {
@@ -820,30 +852,17 @@ internal sealed class CheckInTaskService
         {
             Id = id,
             Name = input.Name.Trim(),
+            Remark = input.Remark.Trim(),
             Enabled = input.Enabled,
             Games = NormalizeGames(input.Games),
             CnDeviceId = cnDeviceId,
             KuroDevCode = kuroDevCode,
             KuroDistinctId = kuroDistinctId,
             Schedules = schedules,
-            Notifications = new CheckInNotificationSettings
+            Notification = new CheckInNotification
             {
-                Webhook = new CheckInWebhookSettings
-                {
-                    Enabled = input.Notifications.Webhook.Enabled,
-                    Type = input.Notifications.Webhook.Type.ToLowerInvariant(),
-                    Template = input.Notifications.Webhook.Template,
-                },
-                Smtp = new CheckInSmtpSettings
-                {
-                    Enabled = input.Notifications.Smtp.Enabled,
-                    Host = input.Notifications.Smtp.Host?.Trim() ?? "",
-                    Port = input.Notifications.Smtp.Port,
-                    Secure = input.Notifications.Smtp.Secure.ToLowerInvariant(),
-                    From = input.Notifications.Smtp.From?.Trim() ?? "",
-                    To = input.Notifications.Smtp.To?.Trim() ?? "",
-                    SubjectPrefix = input.Notifications.Smtp.SubjectPrefix?.Trim() ?? "",
-                },
+                Enabled = input.Notification.Enabled,
+                SmtpTo = input.Notification.SmtpTo?.Trim() ?? "",
             },
             Runs = existing?.Runs ?? new List<CheckInRun>(),
         };
@@ -859,7 +878,7 @@ internal sealed class CheckInTaskService
             string name = SecretName(field);
             if (input.Action.Equals("keep", StringComparison.OrdinalIgnoreCase)) continue;
             await _context.Secrets.SetAsync(
-                CheckInTaskNotifications.SecretKey(taskId, name),
+                SecretKey(taskId, name),
                 input.Action.Equals("clear", StringComparison.OrdinalIgnoreCase) ? null : input.Value,
                 cancellationToken).ConfigureAwait(false);
         }
@@ -876,7 +895,7 @@ internal sealed class CheckInTaskService
             if (input.Action.Equals("keep", StringComparison.OrdinalIgnoreCase)) continue;
             string name = SecretName(field);
             snapshot[name] = await _context.Secrets
-                .GetAsync(CheckInTaskNotifications.SecretKey(taskId, name), cancellationToken)
+                .GetAsync(SecretKey(taskId, name), cancellationToken)
                 .ConfigureAwait(false);
         }
         return snapshot;
@@ -888,7 +907,7 @@ internal sealed class CheckInTaskService
         {
             try
             {
-                await _context.Secrets.SetAsync(CheckInTaskNotifications.SecretKey(taskId, name), value, CancellationToken.None)
+                await _context.Secrets.SetAsync(SecretKey(taskId, name), value, CancellationToken.None)
                     .ConfigureAwait(false);
             }
             catch
@@ -905,18 +924,16 @@ internal sealed class CheckInTaskService
         "skland" => "credential-skland",
         "skport" => "credential-skport",
         "kuro" => "credential-kuro",
-        "webhookurl" => "webhook-url",
-        "webhooksecret" => "webhook-signing-secret",
-        "smtpuser" => "smtp-user",
-        "smtppassword" => "smtp-password",
         _ => throw new InvalidOperationException("Unknown task secret field"),
     };
 
     private static readonly string[] SecretNames =
     {
         "credential-cn", "credential-os", "credential-skland", "credential-skport", "credential-kuro",
-        "webhook-url", "webhook-signing-secret", "smtp-user", "smtp-password",
     };
+
+    internal static string SecretKey(Guid taskId, string name) =>
+        $"tasks-v2/{taskId:N}/{name}";
 
     private static string? Validate(CheckInTaskSaveRequest input)
     {
@@ -924,10 +941,11 @@ internal sealed class CheckInTaskService
             || input.Games is null
             || input.Schedules is null
             || input.Secrets is null
-            || input.Notifications is null
-            || input.Notifications.Webhook is null
-            || input.Notifications.Smtp is null) return "task_fields_invalid";
+            || input.Notification is null
+            || input.Notification.SmtpTo is null) return "task_fields_invalid";
         if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Trim().Length > 100) return "task_name_invalid";
+        if (input.Remark is null || Encoding.UTF8.GetByteCount(input.Remark) > 512) return "task_remark_invalid";
+        if (input.Notification.SmtpTo.Length > 4096) return "smtp_recipient_invalid";
         if (input.Schedules.Count > 30) return "schedule_limit";
         foreach ((string platform, List<string> games) in input.Games)
         {
@@ -950,38 +968,11 @@ internal sealed class CheckInTaskService
             if (schedule.Days.Count == 0 || schedule.Days.Any(day => (int)day is < 0 or > 6)) return "schedule_days_invalid";
             if (schedule.Id is not null && Guid.TryParse(schedule.Id, out Guid id) && !ids.Add(id.ToString("N"))) return "schedule_id_duplicate";
         }
-        if (string.IsNullOrWhiteSpace(input.Notifications.Webhook.Type)
-            || !CheckInTaskNotifications.SupportedWebhookTypes.Contains(input.Notifications.Webhook.Type.ToLowerInvariant())) return "webhook_type_invalid";
-        if (input.Notifications.Webhook.Template is null || input.Notifications.Webhook.Template.Length > 16384) return "webhook_template_invalid";
-        if (input.Notifications.Webhook.Enabled && input.Notifications.Webhook.Type.Equals("generic", StringComparison.OrdinalIgnoreCase))
-        {
-            string template = input.Notifications.Webhook.Template;
-            if (!template.Contains("{text}", StringComparison.Ordinal)) return "webhook_template_invalid";
-            try { _ = JsonNode.Parse(template.Replace("{text}", "\"text\"", StringComparison.Ordinal)); }
-            catch { return "webhook_template_invalid"; }
-        }
-        if (input.Notifications.Smtp.Port is < 1 or > 65535) return "smtp_port_invalid";
-        if (input.Notifications.Smtp.Secure is null
-            || input.Notifications.Smtp.Secure.ToLowerInvariant() is not ("auto" or "ssl" or "starttls" or "none")) return "smtp_secure_invalid";
-        if (input.Notifications.Smtp.Host?.Length > 255
-            || input.Notifications.Smtp.From?.Length > 320
-            || input.Notifications.Smtp.To?.Length > 4096
-            || input.Notifications.Smtp.SubjectPrefix?.Length > 120) return "smtp_settings_invalid";
-        try
-        {
-            string[] recipients = CheckInTaskNotifications.SplitRecipients(input.Notifications.Smtp.To ?? "");
-            if (recipients.Length > 50) return "smtp_recipients_invalid";
-            foreach (string recipient in recipients) _ = MimeKit.MailboxAddress.Parse(recipient);
-            if (!string.IsNullOrWhiteSpace(input.Notifications.Smtp.From)) _ = MimeKit.MailboxAddress.Parse(input.Notifications.Smtp.From);
-        }
-        catch { return "smtp_recipients_invalid"; }
         foreach ((string field, CheckInSecretInput value) in input.Secrets)
         {
-            if (field is null || value is null || field.ToLowerInvariant() is not ("cn" or "os" or "skland" or "skport" or "kuro" or "webhookurl" or "webhooksecret" or "smtpuser" or "smtppassword")) return "secret_field_invalid";
+            if (field is null || value is null || field.ToLowerInvariant() is not ("cn" or "os" or "skland" or "skport" or "kuro")) return "secret_field_invalid";
             if (value.Action is null || value.Action.ToLowerInvariant() is not ("keep" or "set" or "clear")) return "secret_action_invalid";
             if (value.Action.Equals("set", StringComparison.OrdinalIgnoreCase) && !IsValidCredential(value.Value)) return "secret_value_invalid";
-            if (value.Action.Equals("set", StringComparison.OrdinalIgnoreCase) && field.Equals("webhookUrl", StringComparison.OrdinalIgnoreCase)
-                && (!Uri.TryCreate(value.Value, UriKind.Absolute, out Uri? uri) || uri.Scheme is not ("http" or "https"))) return "webhook_url_invalid";
         }
         return null;
     }

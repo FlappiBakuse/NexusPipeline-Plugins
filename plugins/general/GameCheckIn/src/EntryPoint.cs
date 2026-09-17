@@ -8,11 +8,11 @@ public sealed class EntryPoint : INexusPlugin
 
     public ValueTask InitializeAsync(IPluginHostContext context, CancellationToken cancellationToken)
     {
-        if (context is not IPluginHostContextV1_4 v14)
+        if (context is not IPluginHostContextV1_8 v18)
         {
-            throw new InvalidOperationException("游戏自动签到需要 Plugin API v1.5，已拒绝初始化");
+            throw new InvalidOperationException("游戏自动签到需要 Plugin API v1.8，已拒绝初始化");
         }
-        _service = new CheckInTaskService(v14);
+        _service = new CheckInTaskService(v18);
         return ValueTask.CompletedTask;
     }
 

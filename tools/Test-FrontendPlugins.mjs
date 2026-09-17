@@ -287,9 +287,11 @@ function gameCheckInTestState() {
     tasks: [],
     platforms: [
       { id: "cn", name: "米游社", games: [{ id: "gi", name: "原神" }] },
+      { id: "os", name: "HoYoLAB", games: [{ id: "gi", name: "Genshin Impact" }] },
+      { id: "skland", name: "森空岛", games: [{ id: "ak", name: "明日方舟" }] },
+      { id: "skport", name: "SKPORT", games: [{ id: "endfield", name: "Arknights: Endfield" }] },
       { id: "kuro", name: "库街区", games: [{ id: "ww", name: "鸣潮" }] },
     ],
-    webhookTypes: ["generic", "feishu", "dingtalk", "wecom", "discord", "slack"],
     timeZoneId: "Asia/Shanghai",
     localTime: "2026-09-16T09:00:00+08:00",
   };
@@ -305,13 +307,11 @@ function gameCheckInTask(input, id, previous = null) {
   return {
     id,
     name: input.name,
+    remark: input.remark || "",
     enabled: input.enabled,
     games: structuredClone(input.games || {}),
-    cnDeviceId: input.cnDeviceId || previous?.cnDeviceId || "cn-device-test",
-    kuroDevCode: input.kuroDevCode || previous?.kuroDevCode || "kuro-device-test",
-    kuroDistinctId: input.kuroDistinctId || previous?.kuroDistinctId || "kuro-distinct-test",
     schedules: structuredClone(input.schedules || []),
-    notifications: structuredClone(input.notifications),
+    notification: structuredClone(input.notification || { enabled: false, smtpTo: "" }),
     runs: structuredClone(previous?.runs || []),
     credentials: {
       cn: configured("cn", previous?.credentials?.cn),
@@ -319,14 +319,6 @@ function gameCheckInTask(input, id, previous = null) {
       skland: configured("skland", previous?.credentials?.skland),
       skport: configured("skport", previous?.credentials?.skport),
       kuro: configured("kuro", previous?.credentials?.kuro),
-    },
-    webhookSecrets: {
-      urlConfigured: configured("webhookUrl", previous?.webhookSecrets?.urlConfigured),
-      signingSecretConfigured: configured("webhookSecret", previous?.webhookSecrets?.signingSecretConfigured),
-    },
-    smtpSecrets: {
-      userConfigured: configured("smtpUser", previous?.smtpSecrets?.userConfigured),
-      passwordConfigured: configured("smtpPassword", previous?.smtpSecrets?.passwordConfigured),
     },
     isRunning: false,
     nextRunAt: input.enabled && input.schedules?.some(schedule => schedule.enabled)
@@ -374,6 +366,16 @@ function createMockHost(pluginName, registrations, metrics, state = defaultTestS
           if (index < 0) throw Object.assign(new Error("task_not_found"), { code: "task_not_found" });
           state.tasks[index] = gameCheckInTask(copiedBody, copiedBody.id, state.tasks[index]);
           return structuredClone(state.tasks[index]);
+        }
+        if (gameCheckInPlugin && route === "tasks/order") {
+          const ordered = copiedBody?.taskIds || [];
+          if (ordered.length !== state.tasks.length || new Set(ordered).size !== ordered.length
+            || ordered.some(id => !state.tasks.some(task => task.id === id))) {
+            throw Object.assign(new Error("task_order_invalid"), { code: "task_order_invalid" });
+          }
+          const tasks = new Map(state.tasks.map(task => [task.id, task]));
+          state.tasks = ordered.map(id => tasks.get(id));
+          return { taskIds: ordered };
         }
         return structuredClone(state);
       },
@@ -642,22 +644,17 @@ async function assertGameCheckInRoute(host, metrics, state) {
   await flushDom();
   if (!view.querySelector("[data-game-check-in-page]")) fail("GameCheckIn route 未挂载签到任务页面");
   if (!view.querySelector("nxp-empty-state")) fail("空任务状态没有展示添加任务入口");
-  const expectedControls = ["nxp-text-input", "nxp-text-area", "nxp-select", "nxp-number-input", "nxp-switch"];
+  const expectedControls = ["nxp-text-input", "nxp-text-area", "nxp-select", "nxp-switch-setting", "nxp-collapsible-card"];
 
   clickPluginButton(view, "添加签到任务");
   await flushDom();
   if (!expectedControls.every(name => view.querySelector(name))) fail("签到任务编辑器缺少公开 NXP 输入控件");
   changePublicControl(view, "nxp-text-input#gci-task-name", "晨间签到");
-  changePublicControl(view, 'nxp-switch[aria-label="米游社 · 原神"]', true);
-  changePublicControl(view, 'nxp-switch[aria-label="启用 Webhook"]', true);
-  changePublicControl(view, 'nxp-switch[aria-label="启用 SMTP"]', true);
+  changePublicControl(view, "nxp-text-area#gci-task-remark", "周末也检查活动状态");
+  changePublicControl(view, "nxp-select#gci-games-cn", ["gi"]);
+  changePublicControl(view, "nxp-switch-setting#gci-notification-enabled", true);
   changePublicControl(view, "nxp-text-input#gci-secret-cn", "task-cookie-secret");
-  changePublicControl(view, "nxp-text-input#gci-webhook-url", "https://notify.example.test/webhook?token=private");
-  changePublicControl(view, "nxp-text-input#gci-webhook-secret", "task-sign-secret");
-  changePublicControl(view, "nxp-text-input#gci-smtp-user", "task-mail-user");
-  changePublicControl(view, "nxp-text-input#gci-smtp-password", "task-mail-password");
-  changePublicControl(view, 'nxp-text-input[aria-label="SMTP 服务器"]', "mail.example.test");
-  changePublicControl(view, 'nxp-text-input[aria-label="收件人"]', "task@example.test");
+  changePublicControl(view, "nxp-text-input#gci-smtp-to", "task@example.test");
   const previousCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
   Object.defineProperty(globalThis, "crypto", {
     configurable: true,
@@ -666,31 +663,32 @@ async function assertGameCheckInRoute(host, metrics, state) {
     value: { randomUUID: undefined },
   });
   try {
-    clickPluginButton(view, "添加固定时间");
+    clickPluginButton(view, "+ 添加定时");
     await flushDom();
   } finally {
     if (previousCrypto) Object.defineProperty(globalThis, "crypto", previousCrypto);
     else delete globalThis.crypto;
   }
-  if (!view.querySelector("nxp-time-picker")) fail("无法在不支持 randomUUID 的环境中添加固定时间");
+  if (!view.querySelector("nxp-time-picker")) fail("无法在不支持 randomUUID 的环境中添加计划");
   changePublicControl(view, "nxp-time-picker", "06:30");
-  clickPluginButton(view, "保存任务");
+  clickPluginButton(view, "保存");
   await flushDom();
   await flushDom();
 
   const created = metrics.apiCalls.find(call => call.method === "POST" && call.route === "tasks");
   if (!created?.body || created.body.name !== "晨间签到") {
-    fail(`新增签到任务没有提交名称和完整设置：${JSON.stringify(created)}；${view.textContent}`);
+    fail(`新增签到任务没有提交名称和核心设置：${JSON.stringify(created)}；${view.textContent}`);
   }
+  if (created.body.remark !== "周末也检查活动状态") fail("新增任务没有提交备注");
   if (created.body.games?.cn?.[0] !== "gi") fail("新增任务没有提交所选平台游戏");
   if (created.body.schedules?.[0]?.time !== "06:30") fail("新增任务没有提交固定时间设置");
-  if (!created.body.schedules?.[0]?.id?.startsWith("draft-")) fail("局域网 HTTP 环境未使用可用的临时固定时间标识");
-  if (created.body.secrets?.cn?.action !== "set" || created.body.secrets?.webhookUrl?.action !== "set"
-    || created.body.secrets?.smtpPassword?.action !== "set") fail("新增任务没有提交独立凭据与通知 Secret");
-  if (!created.body.notifications?.webhook?.enabled || !created.body.notifications?.smtp?.enabled
-    || created.body.notifications?.smtp?.to !== "task@example.test") fail("新增任务没有提交自己的 Webhook/SMTP 通知设置");
+  if (!created.body.schedules?.[0]?.id) fail("新增任务没有提交计划标识");
+  if (created.body.secrets?.cn?.action !== "set") fail("新增任务没有提交平台凭据");
+  if (!created.body.notification?.enabled || created.body.notification?.smtpTo !== "task@example.test") fail("新增任务没有提交宿主通知设置和 SMTP 收件人");
+  if ("cnDeviceId" in created.body || "kuroDevCode" in created.body || "kuroDistinctId" in created.body) fail("任务保存请求暴露了内部设备标识");
+  if ("notifications" in created.body || "webhookUrl" in (created.body.secrets || {}) || "smtpPassword" in (created.body.secrets || {})) fail("任务保存请求仍包含旧版独立通知字段");
   if (!view.textContent.includes("晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
-  if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("private")) fail("任务列表泄露了任务凭据或 Webhook URL Secret");
+  if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("cnDeviceId")) fail("任务列表泄露了任务凭据或内部设备标识");
 
   clickPluginButton(view, "立即签到");
   await flushDom();
@@ -700,29 +698,23 @@ async function assertGameCheckInRoute(host, metrics, state) {
   }
   if (!view.textContent.includes("成功")) fail("页面没有反馈本次签到结果");
 
-  clickPluginButton(view, "编辑");
+  clickPluginButton(view, "编辑签到");
   await flushDom();
   changePublicControl(view, "nxp-text-input#gci-task-name", "晨间签到（更新）");
-  changePublicControl(view, 'nxp-switch[aria-label="webhookUrl · 清除已保存值"]', true);
-  clickPluginButton(view, "保存任务");
+  clickPluginButton(view, "保存");
   await flushDom();
   await flushDom();
   const updated = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
   if (!updated?.body || updated.body.name !== "晨间签到（更新）") fail("编辑任务没有提交修改后的设置");
-  if (updated.body.secrets?.webhookUrl?.action !== "clear") fail("显式清除 Secret 没有提交 clear 动作");
-  if (updated.body.secrets?.cn) fail("编辑时留空凭据应保留，不能重新发送或清除 Secret");
+  if (updated.body.secrets?.cn?.action !== "keep") fail("编辑时留空凭据没有提交保留动作");
   const saved = state.tasks.find(task => task.id === "task-check-in-1");
-  if (!saved?.credentials?.cn || saved.webhookSecrets?.urlConfigured) fail("留空凭据保留或显式清除语义不正确");
+  if (!saved?.credentials?.cn || saved.notification?.smtpTo !== "task@example.test") fail("留空凭据保留或 SMTP 收件人保存语义不正确");
 
-  const previousConfirm = window.confirm;
-  window.confirm = () => true;
-  try {
-    clickPluginButton(view, "删除任务");
-    await flushDom();
-    await flushDom();
-  } finally {
-    window.confirm = previousConfirm;
-  }
+  clickPluginButton(view, "删除签到");
+  await flushDom();
+  clickPluginButton(view, "确定");
+  await flushDom();
+  await flushDom();
   const deleted = metrics.apiCalls.find(call => call.method === "DELETE" && call.route === "tasks");
   if (deleted?.body?.taskId !== "task-check-in-1" || state.tasks.length !== 0) fail("删除任务没有调用对应的任务 API");
   if (state.tasks.length !== 0 || !view.querySelector("nxp-empty-state")) fail("删除最后一个任务后没有反馈空状态");

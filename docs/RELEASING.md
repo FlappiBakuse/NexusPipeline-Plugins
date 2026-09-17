@@ -102,7 +102,7 @@ python tools/repository.py validate-generated --generated-root .generated
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
 
-工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。当插件需要新宿主契约（例如 Plugin API v1.7 的模拟器 provider）时，宿主实现必须先进入实际可检出的 NexusPipeline 提交，再把 `host.lock.json` 的 `ref` 更新到该真实提交；在宿主提交可用前不要构建或发行依赖该端口的插件。`catalog.json`、`packages/` 与 `.release-state.json` 由发行流水线生成，不手工填写包摘要或发行事实。
+工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。当插件需要新宿主契约（例如 Plugin API v1.7 的模拟器 provider 或 v1.8 的通知收件人覆盖）时，宿主实现必须先进入实际可检出的 NexusPipeline 提交，再把 `host.lock.json` 的 `ref` 更新到该真实提交；在宿主提交可用前不要构建或发行依赖该端口的插件。`catalog.json`、`packages/` 与 `.release-state.json` 由发行流水线生成，不手工填写包摘要或发行事实。
 
 ## 模拟器支持真实设备验证
 

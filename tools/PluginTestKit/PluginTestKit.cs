@@ -233,6 +233,19 @@ public sealed class RecordingPluginNotificationService : IPluginNotificationServ
     }
 }
 
+public sealed class RecordingPluginEmulatorSupportRegistry : IPluginEmulatorSupportRegistry
+{
+    private readonly List<IPluginEmulatorSupportProvider> _providers = new();
+
+    public IReadOnlyList<IPluginEmulatorSupportProvider> Providers => _providers.ToArray();
+
+    public IDisposable Register(IPluginEmulatorSupportProvider provider)
+    {
+        _providers.Add(provider);
+        return new CallbackDisposable(() => _providers.Remove(provider));
+    }
+}
+
 public sealed class RecordingPluginUiRegistry : IPluginUiContributionRegistry
 {
     private readonly List<PluginUiContribution> _contributions = new();
@@ -353,7 +366,7 @@ public sealed class RecordingPluginHttpClientFactory : IPluginHttpClientFactory
     }
 }
 
-public sealed class FakePluginHostContext : IPluginHostContextV1_6
+public sealed class FakePluginHostContext : IPluginHostContextV1_8
 {
     public FakePluginHostContext(string pluginName = "test-plugin")
     {
@@ -374,6 +387,7 @@ public sealed class FakePluginHostContext : IPluginHostContextV1_6
         History = new RecordingPluginHistoryRegistry();
         Assets = new InMemoryPluginAssetStore();
         I18n = new RecordingPluginLocalization();
+        EmulatorSupport = new RecordingPluginEmulatorSupportRegistry();
     }
     public string PluginName { get; }
     public RecordingPluginLogger Logger { get; }
@@ -408,6 +422,8 @@ public sealed class FakePluginHostContext : IPluginHostContextV1_6
     IPluginLocalization IPluginHostContextV1_4.I18n => I18n;
     public InMemoryPluginAssetStore Assets { get; }
     IPluginAssetStore IPluginHostContextV1_6.Assets => Assets;
+    public RecordingPluginEmulatorSupportRegistry EmulatorSupport { get; }
+    IPluginEmulatorSupportRegistry IPluginHostContextV1_7.EmulatorSupport => EmulatorSupport;
 }
 
 public sealed class PluginLifecycleHarness
