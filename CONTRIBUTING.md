@@ -30,7 +30,7 @@
 - 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/FRONTEND_PLUGIN.md) 的当前清单为准。
 - 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。
+详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。
 
 ## 发行包规则
 

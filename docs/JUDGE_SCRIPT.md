@@ -7,7 +7,7 @@
 - .js：宿主内置 Jint 引擎；
 - .py：宿主启动系统 python.exe 子进程。
 
-运行时语义以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和宿主对应版本的 JudgeScriptRunner、SessionJudge 实现为准。
+运行时语义以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和宿主对应版本的 JudgeScriptRunner、SessionJudge 实现为准。
 
 ## 三种结果
 

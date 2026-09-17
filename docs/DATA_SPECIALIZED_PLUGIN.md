@@ -2,7 +2,7 @@
 
 数据化专项插件由静态目录组成。宿主发现插件后，根据 `resolve.json` 从用户选择的脚本根目录推导当前运行 profile；`judge.js` 或 `judge.py` 保持为插件资产，由每次运行/编辑解析并在本次操作开始时冻结。
 
-宿主运行时契约的完整定义位于 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)。本指南记录插件仓库作者最常用的目录、字段和验证方法。
+宿主运行时契约的完整定义位于 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)。本指南记录插件仓库作者最常用的目录、字段和验证方法。
 
 ## 最小目录
 

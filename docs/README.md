@@ -11,6 +11,6 @@
 | 编写 judge 或 config 脚本 | [判断脚本指南](JUDGE_SCRIPT.md) | `judge.js`、`judge.py`、`config-validator.js`、`config-editor.js` |
 | 修改插件版本或包 | [发行指南](RELEASING.md) | `plugin.json`、`store.json`、`catalog.json`、`packages/` |
 | 参与仓库开发 | [贡献指南](../CONTRIBUTING.md) | `tools/`、`tools/tests/`；源码校验与增量计划 |
-| 查询宿主接口 | [宿主 Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) | `src/NexusPipeline.Plugin.Abstractions` 与宿主公开注册表 |
+| 查询宿主接口 | [宿主 Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) | `src/NexusPipeline.Plugin.Abstractions` 与宿主公开注册表 |
 
 机器路由保存在 [map.json](map.json)。Frontend API 的公共 `nxp-*` 元件清单和 `minHostVersion` 规则也记录在 [Frontend 插件指南](FRONTEND_PLUGIN.md)。
