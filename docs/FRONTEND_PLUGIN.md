@@ -103,6 +103,20 @@ export function activate(host) {
 
 宿主页面在任意路由都会加载插件前端模块，因此不需要用户打开设置页面即可生效；slot renderer 返回的清理函数只应释放该 slot 自己创建的资源（缩略图地址、拖拽状态、UI 计时器与监听器）。设置卡片卸载时不要调用 `host.appearance.clearBackground()` 或 `clearTokens()`，否则用户离开设置页面就会丢失背景与配色。单次启动行为（例如"启动时随机选择一次"）应由插件后端在插件启动生命周期中执行，页面访问不参与该语义。
 
+### 公共复合元件
+
+公共复合元件包括 `nxp-action-group`、`nxp-date-range-picker`、`nxp-drag-handle`、`nxp-entity-row`、`nxp-sortable-list`、`nxp-tabs`、`nxp-confirm-dialog`、`nxp-dialog-popover` 和 `nxp-page-header`。属性、事件和插槽以宿主 [公共 UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md) 为准。公开清单来自实际宿主检出的 `frontend/src/ui/register.ts`；插件构建产物由 `Test-FrontendPlugins.mjs` 校验，宿主 `node tests/run.mjs contract` 注册真实公共元素验证装配与清理。
+
+使用这些元件的插件在 manifest 中将 `minHostVersion` 设置为 `0.16.6`。宿主只保证当前注册表中声明的元素和公开属性/事件，插件应通过公开 `nxp-*` Native Custom Elements 接入，不依赖宿主私有 Vue 组件或内部 class。
+
+| 元件 | 主要用途 | 关键契约 |
+|---|---|---|
+| `nxp-action-group` | 对齐一组操作 | 默认插槽承载操作；由宿主处理间距与换行 |
+| `nxp-date-range-picker` | 选择日期范围 | `open`、`from`、`to`、`max-date` 属性；`apply` 的 `CustomEvent.detail[0]` 为 `{ from, to }`，另有 `open`/`close` 事件 |
+| `nxp-drag-handle` | 表达可排序把手 | `label`、`disabled` 属性；与同一 `nxp-sortable-list` 的 `data-dnd-id` 子项配合接收键盘/拖拽操作 |
+| `nxp-entity-row` | 统一实体行结构 | `leading`、默认和 `actions` 插槽；操作区使用公开按钮元件 |
+| `nxp-sortable-list` | 提供拖拽与键盘排序 | 子项设置 `data-dnd-id`；`reorder` 的 `detail[0]` 为完整新 key 数组，`detail[1]` 为移动项 key |
+
 ## 前端 host 能力
 
 | 能力 | 用途 |

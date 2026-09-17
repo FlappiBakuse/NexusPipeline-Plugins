@@ -2,7 +2,7 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.8）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.8）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
 
 ## 当前插件
 
@@ -71,6 +71,8 @@ NexusPipeline-Plugins/
 │   ├── Test-FrontendPlugins.mjs         # Frontend API 入口与元素门禁
 │   └── tests/                           # 仓库工具单元测试
 └── docs/
+    ├── README.md                       # 插件作者任务入口与文档地图
+    ├── map.json                        # 机器可读主题路由
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── FRONTEND_PLUGIN.md              # 前端插件开发指南
     ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南

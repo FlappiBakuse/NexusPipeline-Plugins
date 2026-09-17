@@ -28,39 +28,6 @@ const allowedSlots = new Set([
   "shell.nav",
 ]);
 
-/** 宿主 Frontend API 1.5 公开的 Native Custom Elements；宿主检出可用时以 NEXUS_PUBLIC_ELEMENTS 为准。 */
-const fallbackPublicElements = [
-  "nxp-badge",
-  "nxp-button",
-  "nxp-card",
-  "nxp-collapsible-card",
-  "nxp-color-picker",
-  "nxp-empty-state",
-  "nxp-field",
-  "nxp-file-picker",
-  "nxp-icon",
-  "nxp-icon-button",
-  "nxp-loading-state",
-  "nxp-menu",
-  "nxp-modal",
-  "nxp-number-input",
-  "nxp-pager",
-  "nxp-path-picker",
-  "nxp-range",
-  "nxp-section-card",
-  "nxp-select",
-  "nxp-scroll-area",
-  "nxp-spinner",
-  "nxp-switch",
-  "nxp-switch-list",
-  "nxp-switch-setting",
-  "nxp-text-area",
-  "nxp-text-input",
-  "nxp-time-picker",
-  "nxp-toast",
-  "nxp-tooltip",
-];
-
 /** 宿主私有结构 class；官方插件只能使用自己的命名空间 class 与公开元素。 */
 const hostPrivateClasses = new Set([
   "badge",
@@ -177,7 +144,7 @@ async function resolvePublicElements(hostRoot) {
     const names = [...block[1].matchAll(/"([a-z0-9-]+)"\s*:/g)].map(match => match[1]);
     if (names.length) return new Set(names);
   }
-  return new Set(fallbackPublicElements);
+  fail("缺少宿主公共元素注册表；请检出锁定或候选宿主并传入 --host-root。");
 }
 
 function cssClassTokens(text) {
@@ -344,10 +311,12 @@ function createMockHost(pluginName, registrations, metrics, state = defaultTestS
       clearTokens() { metrics.appearanceClearTokens += 1; metrics.appearanceTokens = null; },
       setBackground(surface) {
         metrics.appearanceSetBackground += 1;
+        if (metrics.appearanceBackgroundUrl) URL.revokeObjectURL(metrics.appearanceBackgroundUrl);
         metrics.appearanceBackgroundUrl = String(surface?.url || "");
       },
       clearBackground() {
         metrics.appearanceClearBackground += 1;
+        if (metrics.appearanceBackgroundUrl) URL.revokeObjectURL(metrics.appearanceBackgroundUrl);
         metrics.appearanceBackgroundUrl = "";
       },
     },
@@ -949,7 +918,9 @@ async function runPlugin(manifestPath, publicElements) {
   }
 }
 
-try {
+export { createMockHost, createMetrics, wallpaperTestState, gameCheckInTestState, defaultTestState, activationCleanup };
+
+if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.meta.filename)) try {
   const publicElements = await resolvePublicElements(options.hostRoot);
   const manifests = (await findManifests(pluginRoot)).sort();
   let checked = 0;

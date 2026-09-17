@@ -1,6 +1,6 @@
 # 贡献指南
 
-感谢为 NexusPipeline 编写插件。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。自动化开发约束见 [AGENTS.md](AGENTS.md)。
+感谢为 NexusPipeline 编写插件。提交前请先确认适配目标、许可证和可公开分发的数据范围，再开始编写插件。按任务选择 [文档门户](docs/README.md)，自动化开发约束见 [AGENTS.md](AGENTS.md)。
 
 ## 目录与命名
 
@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；宿主当前 Plugin API 为 `1.7`，managed-code 插件根据所需端口声明兼容的 API minor。`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider；前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
+- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；宿主当前 Plugin API 为 `1.8`，managed-code 插件根据所需端口声明兼容的 API minor。`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider；前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
 
 ## 开发流程
 
@@ -27,7 +27,7 @@
 - 提交按功能边界拆分，每个提交保持可独立验证、审查和回退；提交操作需要维护者明确授权。
 - 持久化 UI 测试只覆盖功能结果、ARIA、焦点、状态、提交、路由、API 效果和生命周期。
 - 截图匹配器、视觉回归套件、截图基线和像素/布局断言不进入仓库。浏览器或手工验证脚本放在操作系统临时目录，验证结束后删除且不得加入 Git。
-- 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；宿主私有 Vue 组件、私有 class 和未声明 host 能力不属于插件契约。
+- 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/FRONTEND_PLUGIN.md) 的当前清单为准。
 - 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
 详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/PLUGIN_API.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。

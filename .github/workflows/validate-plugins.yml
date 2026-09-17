@@ -1,24 +1,14 @@
 name: Validate plugins
 
 on:
-  pull_request:
-    paths:
-      - "plugins/**"
-      - "tools/**"
-      - "docs/**"
-      - "README.md"
-      - "CONTRIBUTING.md"
-      - "host.lock.json"
-      - "global.json"
-      - "Directory.Build.props"
-      - "Directory.Build.targets"
-      - "package.json"
-      - "package-lock.json"
-      - "catalog.json"
-      - ".release-state.json"
-      - "packages/**"
-      - ".github/workflows/**"
+  # classifier 必须先看到所有 PR，未知路径才能保守回退到源码门禁。
+  pull_request: {}
   workflow_dispatch:
+    inputs:
+      host_ref:
+        description: Candidate host full commit SHA; empty uses host.lock.json
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -51,108 +41,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          python - <<'PY'
-          import os
-          import subprocess
-
-          SOURCE = "source"
-          FRONTEND = "frontend"
-          MANAGED = "managed"
-          PACKAGE = "package"
-          GATES = (SOURCE, FRONTEND, MANAGED, PACKAGE)
-          FRONTEND_SCRIPTS = {"tools/Test-FrontendPlugins.mjs", "tools/Test-ConfigEditors.mjs"}
-          BUILD_CONFIG = {"global.json", "Directory.Build.props", "Directory.Build.targets"}
-
-
-          def changed_paths():
-              """pull_request 返回相对基线的变更路径；workflow_dispatch 返回 None。"""
-              if os.environ.get("EVENT_NAME", "") != "pull_request":
-                  return None
-              base = os.environ.get("BASE_SHA", "").strip()
-              if not base:
-                  raise SystemExit("pull_request 事件缺少 base SHA")
-              completed = subprocess.run(
-                  ["git", "diff", "--name-only", f"{base}...HEAD", "--"],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-                  encoding="utf-8",
-                  errors="replace",
-              )
-              return [line.strip().replace("\\", "/") for line in completed.stdout.splitlines() if line.strip()]
-
-
-          def plugin_relative(path):
-              """返回插件根之后的路径段；plugins/ 之外返回 None。"""
-              parts = path.split("/")
-              if len(parts) < 2 or parts[0] != "plugins":
-                  return None
-              if len(parts) >= 3 and parts[1] in {"general", "specialized"}:
-                  return parts[3:]
-              return parts[2:]
-
-
-          def classify(path):
-              hits = set()
-              if path.startswith("plugins/"):
-                  hits.add(PACKAGE)
-                  rest = plugin_relative(path)
-                  if rest:
-                      head = rest[0]
-                      if len(rest) == 1 and head in {"plugin.json", "store.json"}:
-                          hits.add(SOURCE)
-                      elif head in {"data", "i18n"}:
-                          hits.add(SOURCE)
-                      if len(rest) == 1 and head == "plugin.json":
-                          hits.add(FRONTEND)
-                      elif head == "data" and rest[-1].endswith(".js"):
-                          hits.add(FRONTEND)
-                      elif head in {"frontend", "web"}:
-                          hits.add(FRONTEND)
-                      elif head in {"src", "tests"}:
-                          hits.add(MANAGED)
-                  if path.endswith(".csproj"):
-                      hits.add(MANAGED)
-              elif path.startswith("tools/"):
-                  hits.update({SOURCE, PACKAGE})
-                  if path in FRONTEND_SCRIPTS:
-                      hits.add(FRONTEND)
-                  if path.startswith("tools/PluginTestKit/"):
-                      hits.add(MANAGED)
-              elif path == "host.lock.json":
-                  hits.update({SOURCE, MANAGED, PACKAGE})
-              elif path in {"package.json", "package-lock.json"}:
-                  hits.update({FRONTEND, PACKAGE})
-              elif path in BUILD_CONFIG:
-                  hits.update({MANAGED, PACKAGE})
-              else:
-                  hits.add(SOURCE)
-              return hits
-
-
-          def main():
-              paths = changed_paths()
-              if paths is None:
-                  enabled = set(GATES)
-                  print("[changes] workflow_dispatch：四个 Gate 全部执行")
-              else:
-                  enabled = set()
-                  for path in sorted(set(paths)):
-                      hits = classify(path)
-                      enabled |= hits
-                      print(f"[changes] {path} -> {', '.join(sorted(hits))}")
-                  if not paths:
-                      enabled.add(SOURCE)
-                      print("[changes] 未检测到变更路径，回退执行 plugin-source")
-              lines = [f"{gate}={str(gate in enabled).lower()}" for gate in GATES]
-              for line in lines:
-                  print(f"[changes] {line}")
-              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as stream:
-                  stream.write("\n".join(lines) + "\n")
-
-
-          main()
-          PY
+          python tools/change_classifier.py --event "$EVENT_NAME" --base "$BASE_SHA" --head "$GITHUB_SHA"
 
   # 源码契约 Gate：manifest / data / locales / 语法 / 仓库 Python 单元测试 / PR 生成物拦截。
   plugin-source:
@@ -176,11 +65,18 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Checkout current host locale registry
+      - name: Read host lock
+        id: host-lock
+        working-directory: NexusPipeline-Plugins
+        env:
+          NEXUS_CANDIDATE_HOST_REF: ${{ inputs.host_ref }}
+        run: python tools/read_host_lock.py
+
+      - name: Checkout locked host locale registry
         uses: actions/checkout@v4
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: main
+          ref: ${{ steps.host-lock.outputs.ref }}
           path: NexusPipeline-LocaleRegistry
           fetch-depth: 1
 
@@ -222,6 +118,25 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Read host lock
+        id: host-lock
+        working-directory: NexusPipeline-Plugins
+        env:
+          NEXUS_CANDIDATE_HOST_REF: ${{ inputs.host_ref }}
+        run: python tools/read_host_lock.py
+
+      - name: Checkout locked host repository
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ steps.host-lock.outputs.ref }}
+          path: NexusPipeline
+          fetch-depth: 1
+
+      - name: Install host frontend
+        working-directory: NexusPipeline/frontend
+        run: npm ci --no-audit --no-fund
+
       - name: Install frontend workspace
         working-directory: NexusPipeline-Plugins
         run: npm ci --no-audit --no-fund
@@ -233,6 +148,18 @@ jobs:
       - name: Test frontend plugins
         working-directory: NexusPipeline-Plugins
         run: node tools/Test-FrontendPlugins.mjs
+
+      - name: Typecheck frontend sources
+        working-directory: NexusPipeline-Plugins
+        run: npm run typecheck:frontend
+
+      - name: Build frontend modules
+        working-directory: NexusPipeline-Plugins
+        run: npm run build:frontend
+
+      - name: Test actual host elements with official modules
+        working-directory: NexusPipeline
+        run: node tests/run.mjs contract
 
   # managed-code Gate：锁定宿主 checkout、managed-code 构建与测试。
   plugin-managed:
@@ -254,12 +181,9 @@ jobs:
       - name: Read host lock
         id: host-lock
         working-directory: NexusPipeline-Plugins
-        shell: pwsh
-        run: |
-          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
-          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
-          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
-          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
+        env:
+          NEXUS_CANDIDATE_HOST_REF: ${{ inputs.host_ref }}
+        run: python tools/read_host_lock.py
 
       - name: Checkout locked host repository
         uses: actions/checkout@v4
@@ -307,12 +231,9 @@ jobs:
       - name: Read host lock
         id: host-lock
         working-directory: NexusPipeline-Plugins
-        shell: pwsh
-        run: |
-          $lock = Get-Content -Raw host.lock.json | ConvertFrom-Json
-          if ($lock.repository -ne "FlappiBakuse/NexusPipeline") { throw "host.lock.json repository 无效" }
-          if ($lock.ref -notmatch '^[0-9a-f]{40}$') { throw "host.lock.json ref 必须是完整 commit SHA" }
-          "ref=$($lock.ref)" >> $env:GITHUB_OUTPUT
+        env:
+          NEXUS_CANDIDATE_HOST_REF: ${{ inputs.host_ref }}
+        run: python tools/read_host_lock.py
 
       - name: Checkout locked host repository
         uses: actions/checkout@v4

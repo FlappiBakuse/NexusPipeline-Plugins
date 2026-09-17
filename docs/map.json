@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "topics": [
+    {
+      "id": "authoring.frontend",
+      "path": "FRONTEND_PLUGIN.md",
+      "summary": "Frontend API 1.5、公共 nxp-* 元件、slot 和生命周期",
+      "topics": ["frontend", "nxp", "slot", "前端插件"],
+      "aliases": ["公共控件", "前端构建"],
+      "codePaths": ["plugins/general/CustomWallpaper/frontend", "plugins/general/GameCheckIn/frontend", "tools/Test-FrontendPlugins.mjs"],
+      "testDomains": ["frontend-contract", "repository-tools"],
+      "authorityFor": ["plugin-frontend-authoring"],
+      "status": "current"
+    },
+    {
+      "id": "authoring.data-specialized",
+      "path": "DATA_SPECIALIZED_PLUGIN.md",
+      "summary": "数据化插件 manifest、resolve、配置和脚本边界",
+      "topics": ["data-specialized", "resolve", "配置", "数据化"],
+      "aliases": ["新增数据插件"],
+      "codePaths": ["plugins/specialized", "tools/repository.py"],
+      "testDomains": ["repository-tools", "data-contract"],
+      "authorityFor": ["plugin-data-authoring"],
+      "status": "current"
+    },
+    {
+      "id": "authoring.judge",
+      "path": "JUDGE_SCRIPT.md",
+      "summary": "完成判定、失败判定、超时和配置脚本审查",
+      "topics": ["judge", "config-validator", "config-editor", "判定"],
+      "aliases": ["判断脚本", "配置校验"],
+      "codePaths": ["plugins/specialized", "tools/repository_core.py"],
+      "testDomains": ["data-contract", "repository-tools"],
+      "authorityFor": ["plugin-script-authoring"],
+      "status": "current"
+    },
+    {
+      "id": "repository.contributing",
+      "path": "../CONTRIBUTING.md",
+      "summary": "双仓库协作、测试分层、敏感数据和提交边界",
+      "topics": ["contributing", "testing", "security", "贡献"],
+      "aliases": ["本地验证"],
+      "codePaths": ["tools/tests", "tools/repository.py"],
+      "testDomains": ["repository-tools"],
+      "authorityFor": ["plugin-repository-contributing"],
+      "status": "current"
+    },
+    {
+      "id": "repository.releasing",
+      "path": "RELEASING.md",
+      "summary": "增量计划、包校验、catalog 和发行状态",
+      "topics": ["release", "catalog", "package", "发行"],
+      "aliases": ["打包", "发布包"],
+      "codePaths": ["catalog.json", "packages", "tools/repository.py"],
+      "testDomains": ["repository-tools", "release-contract"],
+      "authorityFor": ["plugin-releasing"],
+      "status": "current"
+    }
+  ]
+}
