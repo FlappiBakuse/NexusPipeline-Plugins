@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.2.7",
+      "date": "2026-09-17",
+      "items": [
+        "将排序交互迁移到宿主公开 nxp-* 控件，保持自定义壁纸列表的拖拽排序与触控操作。"
+      ]
+    },
+    {
       "version": "0.2.6",
       "date": "2026-09-16",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-09-14",
       "items": [
         "startup 轮换改为每次打开或重新加载 Web UI 会话时推进一次。"
-      ]
-    },
-    {
-      "version": "0.2.4",
-      "date": "2026-09-13",
-      "items": [
-        "统一壁纸卡片与其他列表的纵向拖拽排序交互，拖拽把手保持卡片原位并支持触控操作。"
       ]
     }
   ],
@@ -48,6 +48,12 @@
       ],
       "changelog": [
         {
+          "version": "0.2.7",
+          "items": [
+            "Migrated sorting interactions to the host's public nxp-* controls while preserving drag sorting and touch operation for the custom wallpaper list."
+          ]
+        },
+        {
           "version": "0.2.6",
           "items": [
             "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
@@ -57,12 +63,6 @@
           "version": "0.2.5",
           "items": [
             "Startup rotation now advances once whenever a Web UI session opens or reloads."
-          ]
-        },
-        {
-          "version": "0.2.4",
-          "items": [
-            "Wallpaper cards now use the same vertical drag sorting interaction as other lists, keeping the handle anchored to the card and supporting touch input."
           ]
         }
       ]

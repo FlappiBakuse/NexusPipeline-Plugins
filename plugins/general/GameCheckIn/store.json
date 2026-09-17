@@ -19,6 +19,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.3.2",
+      "date": "2026-09-17",
+      "items": [
+        "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
+      ]
+    },
+    {
       "version": "0.3.1",
       "date": "2026-09-16",
       "items": [
@@ -35,14 +42,6 @@
         "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
         "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
         "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
-      ]
-    },
-    {
-      "version": "0.2.1",
-      "date": "2026-09-15",
-      "items": [
-        "修复部分社区以非 2xx 状态返回已签到业务结果时被误判为请求失败的问题。",
-        "修复库街区签到月份参数格式，并规范化持久化的设备 UUID。"
       ]
     }
   ],
@@ -62,6 +61,12 @@
       ],
       "changelog": [
         {
+          "version": "0.3.2",
+          "items": [
+            "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
+          ]
+        },
+        {
           "version": "0.3.1",
           "date": "2026-09-16",
           "items": [
@@ -78,14 +83,6 @@
             "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
             "Each task now has independent credentials and Webhook or SMTP notifications.",
             "Removed user-run hooks, global settings contributions, and user-list badges."
-          ]
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-09-15",
-          "items": [
-            "Fixed already-signed responses being reported as request failures when some communities use non-2xx HTTP status codes.",
-            "Fixed the Kuro sign-in month parameter format and normalized persisted device UUIDs."
           ]
         }
       ]
