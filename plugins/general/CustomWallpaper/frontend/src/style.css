@@ -34,38 +34,10 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 .cw-item.dnd-dragging { opacity: .55; }
 .cw-item > nxp-drag-handle.cw-drag-handle {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: var(--nx-drag-handle-size);
   min-width: var(--nx-drag-handle-size);
   min-height: var(--nx-control-height);
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--nx-radius-sm);
-  background: transparent;
-  color: var(--nx-color-muted);
-  font-size: var(--nx-drag-handle-glyph-size);
-  line-height: 1;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-  transition: border-color var(--nx-motion-duration-micro) var(--nx-motion-ease), color var(--nx-motion-duration-micro) var(--nx-motion-ease);
 }
-.cw-item > nxp-drag-handle.cw-drag-handle .nxp-drag-handle {
-  width: 100%;
-  min-width: 100%;
-  min-height: var(--nx-control-height);
-  border-color: transparent;
-}
-.cw-item > nxp-drag-handle.cw-drag-handle:hover .nxp-drag-handle,
-.cw-item > nxp-drag-handle.cw-drag-handle:focus-visible .nxp-drag-handle,
-.cw-item > nxp-drag-handle.cw-drag-handle .nxp-drag-handle:hover,
-.cw-item > nxp-drag-handle.cw-drag-handle .nxp-drag-handle:focus-visible {
-  border-color: var(--nx-color-border);
-  color: var(--nx-color-text);
-}
-.cw-item > nxp-drag-handle.cw-drag-handle .nxp-drag-handle:focus-visible { outline: none; box-shadow: var(--nx-focus-ring); }
-.cw-item > nxp-drag-handle.cw-drag-handle .nxp-drag-handle:active { cursor: grabbing; }
 .cw-item img, .cw-thumb-placeholder { width: 72px; height: 44px; border-radius: var(--nx-radius-sm); object-fit: cover; }
 .cw-thumb-placeholder { display: block; background: var(--nx-color-border); }
 .cw-item-copy { display: grid; min-width: 0; gap: 2px; }
@@ -79,7 +51,7 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 @media (max-width: 600px) {
   .cw-controls, .cw-effects { grid-template-columns: minmax(0, 1fr); }
   .cw-item { grid-template-columns: var(--nx-drag-handle-touch-size) 64px minmax(0, 1fr); }
-  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); }
+  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); --nx-drag-handle-size: var(--nx-drag-handle-touch-size); --nx-control-height: var(--nx-drag-handle-touch-size); }
   .cw-item img, .cw-thumb-placeholder { width: 64px; }
   .cw-item > nxp-button { grid-column: 3 / -1; justify-self: end; }
   .cw-card-footer { align-items: stretch; flex-direction: column; }
@@ -87,5 +59,5 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 
 @media (pointer: coarse) and (min-width: 601px) {
   .cw-item { grid-template-columns: var(--nx-drag-handle-touch-size) 72px minmax(0, 1fr) auto; }
-  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); }
+  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); --nx-drag-handle-size: var(--nx-drag-handle-touch-size); --nx-control-height: var(--nx-drag-handle-touch-size); }
 }

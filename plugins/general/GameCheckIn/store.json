@@ -19,29 +19,24 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.3.4",
+      "date": "2026-09-18",
+      "items": [
+        "统一签到任务定时列表与调度队列的公共按钮状态和响应式布局。"
+      ]
+    },
+    {
+      "version": "0.3.3",
+      "date": "2026-09-18",
+      "items": [
+        "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
+      ]
+    },
+    {
       "version": "0.3.2",
       "date": "2026-09-17",
       "items": [
         "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
-      ]
-    },
-    {
-      "version": "0.3.1",
-      "date": "2026-09-16",
-      "items": [
-        "签到任务列表改为扁平列表，支持持久化排序和任务名称首字头像。",
-        "任务编辑器改用宿主公共弹窗，包含备注、五个平台游戏与凭据设置，以及可排序计划。",
-        "签到通知改用宿主全局渠道，可选覆盖 SMTP 收件人；空收件人继承全局设置。",
-        "直接使用全新的任务存储格式，不导入 0.3.0 独立任务数据，并删除插件自有通知传输。"
-      ]
-    },
-    {
-      "version": "0.3.0",
-      "date": "2026-09-16",
-      "items": [
-        "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
-        "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
-        "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
       ]
     }
   ],
@@ -61,28 +56,21 @@
       ],
       "changelog": [
         {
+          "version": "0.3.4",
+          "items": [
+            "Unified check-in schedule controls with the queue editor's public button state and responsive layout."
+          ]
+        },
+        {
+          "version": "0.3.3",
+          "items": [
+            "Fixed frontend styles that depended on the host drag control's internal selectors."
+          ]
+        },
+        {
           "version": "0.3.2",
           "items": [
             "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
-          ]
-        },
-        {
-          "version": "0.3.1",
-          "date": "2026-09-16",
-          "items": [
-            "Changed the task list to a flat, persistently reorderable list with name-initial avatars.",
-            "Moved task editing to the host modal with remarks, five-platform game and credential settings, and reorderable schedules.",
-            "Switched check-in notifications to host global channels with an optional SMTP recipient override that inherits the global recipient when blank.",
-            "Started with a new task store without importing 0.3.0 task data and removed plugin-owned notification transports."
-          ]
-        },
-        {
-          "version": "0.3.0",
-          "date": "2026-09-16",
-          "items": [
-            "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
-            "Each task now has independent credentials and Webhook or SMTP notifications.",
-            "Removed user-run hooks, global settings contributions, and user-list badges."
           ]
         }
       ]

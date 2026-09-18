@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-17T17:17:32Z",
+  "generatedAt": "2026-09-18T09:47:36Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,26 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-09-17",
+      "updatedAt": "2026-09-18",
       "hasReadme": true,
-      "version": "0.2.7",
+      "version": "0.2.8",
       "kind": "managed-code",
       "apiVersion": "1.6",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.16.6",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.7.zip",
-      "sha256": "9731cd7fb09077aaf910905dcaec060e20a73b8416e75acfb22f0014039353c6",
-      "sizeBytes": 259555,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.8.zip",
+      "sha256": "1abd21f681d2d4819910eadc0147c6d6da91de0b0ee6883075c711e8c4f0ab82",
+      "sizeBytes": 95466,
       "changelog": [
+        {
+          "version": "0.2.8",
+          "date": "2026-09-18",
+          "items": [
+            "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
+          ]
+        },
         {
           "version": "0.2.7",
           "date": "2026-09-17",
@@ -46,13 +53,6 @@
           "date": "2026-09-16",
           "items": [
             "壁纸列表改为一张完整卡片并用分隔线区分条目，拖拽把手统一使用宿主公开样式 token，触控命中区保持 40px。"
-          ]
-        },
-        {
-          "version": "0.2.5",
-          "date": "2026-09-14",
-          "items": [
-            "startup 轮换改为每次打开或重新加载 Web UI 会话时推进一次。"
           ]
         }
       ],
@@ -68,6 +68,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.8",
+              "items": [
+                "Fixed frontend styles that depended on the host drag control's internal selectors."
+              ]
+            },
+            {
               "version": "0.2.7",
               "items": [
                 "Migrated sorting interactions to the host's public nxp-* controls while preserving drag sorting and touch operation for the custom wallpaper list."
@@ -77,12 +83,6 @@
               "version": "0.2.6",
               "items": [
                 "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
-              ]
-            },
-            {
-              "version": "0.2.5",
-              "items": [
-                "Startup rotation now advances once whenever a Web UI session opens or reloads."
               ]
             }
           ]
@@ -148,43 +148,38 @@
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-17",
+      "updatedAt": "2026-09-18",
       "hasReadme": true,
-      "version": "0.3.2",
+      "version": "0.3.4",
       "kind": "managed-code",
       "apiVersion": "1.8",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.16.6",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.2.zip",
-      "sha256": "7c91c5d3bbdaf2776135dd1d412676c28464e3ba31e9d611a6066aa62d61e8f6",
-      "sizeBytes": 385923,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.4.zip",
+      "sha256": "dea9de6a6bcf8b30b8dc666e9b2fa4556c2d73bd5b8c7497841ae1368e4643f6",
+      "sizeBytes": 381457,
       "changelog": [
+        {
+          "version": "0.3.4",
+          "date": "2026-09-18",
+          "items": [
+            "统一签到任务定时列表与调度队列的公共按钮状态和响应式布局。"
+          ]
+        },
+        {
+          "version": "0.3.3",
+          "date": "2026-09-18",
+          "items": [
+            "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
+          ]
+        },
         {
           "version": "0.3.2",
           "date": "2026-09-17",
           "items": [
             "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
-          ]
-        },
-        {
-          "version": "0.3.1",
-          "date": "2026-09-16",
-          "items": [
-            "签到任务列表改为扁平列表，支持持久化排序和任务名称首字头像。",
-            "任务编辑器改用宿主公共弹窗，包含备注、五个平台游戏与凭据设置，以及可排序计划。",
-            "签到通知改用宿主全局渠道，可选覆盖 SMTP 收件人；空收件人继承全局设置。",
-            "直接使用全新的任务存储格式，不导入 0.3.0 独立任务数据，并删除插件自有通知传输。"
-          ]
-        },
-        {
-          "version": "0.3.0",
-          "date": "2026-09-16",
-          "items": [
-            "新增独立签到任务、固定时间计划、手动执行和运行结果记录。",
-            "每个任务使用独立凭据，并可配置独立 Webhook 与 SMTP 通知。",
-            "移除绑定用户运行事件、全局设置贡献和用户列表徽章。"
           ]
         }
       ],
@@ -204,28 +199,21 @@
           ],
           "changelog": [
             {
+              "version": "0.3.4",
+              "items": [
+                "Unified check-in schedule controls with the queue editor's public button state and responsive layout."
+              ]
+            },
+            {
+              "version": "0.3.3",
+              "items": [
+                "Fixed frontend styles that depended on the host drag control's internal selectors."
+              ]
+            },
+            {
               "version": "0.3.2",
               "items": [
                 "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
-              ]
-            },
-            {
-              "version": "0.3.1",
-              "date": "2026-09-16",
-              "items": [
-                "Changed the task list to a flat, persistently reorderable list with name-initial avatars.",
-                "Moved task editing to the host modal with remarks, five-platform game and credential settings, and reorderable schedules.",
-                "Switched check-in notifications to host global channels with an optional SMTP recipient override that inherits the global recipient when blank.",
-                "Started with a new task store without importing 0.3.0 task data and removed plugin-owned notification transports."
-              ]
-            },
-            {
-              "version": "0.3.0",
-              "date": "2026-09-16",
-              "items": [
-                "Added independent check-in tasks, fixed-time schedules, manual runs, and run results.",
-                "Each task now has independent credentials and Webhook or SMTP notifications.",
-                "Removed user-run hooks, global settings contributions, and user-list badges."
               ]
             }
           ]

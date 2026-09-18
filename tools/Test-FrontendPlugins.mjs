@@ -639,6 +639,13 @@ async function assertGameCheckInRoute(host, metrics, state) {
     else delete globalThis.crypto;
   }
   if (!view.querySelector("nxp-time-picker")) fail("无法在不支持 randomUUID 的环境中添加计划");
+  const scheduleDays = [...view.querySelectorAll(".gci-day-button")];
+  if (scheduleDays.length !== 7 || scheduleDays.some(button => !button.closest("nxp-button"))) {
+    fail("签到计划的星期按钮必须统一使用宿主公开 nxp-button 元件");
+  }
+  if (!view.querySelector("nxp-schedule-card nxp-switch") || !view.querySelector("nxp-schedule-card nxp-button")) {
+    fail("签到计划的启用和删除操作必须统一使用宿主公开 nxp-* 元件");
+  }
   changePublicControl(view, "nxp-time-picker", "06:30");
   clickPluginButton(view, "保存");
   await flushDom();

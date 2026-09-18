@@ -369,74 +369,57 @@ function submit() {
 
         <nxp-sortable-list
           v-if="draft.schedules.length"
-          class="gci-schedule-list"
+          layout="schedule"
           tag="div"
           :aria-label="t('field.schedule', {}, '定时计划')"
           @reorder="reorderSchedules(eventValue<string[]>($event))"
         >
-          <article
+          <nxp-schedule-card
             v-for="(schedule, index) in draft.schedules"
             :key="schedule.id"
-            class="gci-schedule-card"
-            :class="{ 'is-open': isScheduleExpanded(schedule.id) }"
-            :data-schedule-id="schedule.id"
+            :item-id="schedule.id"
             :data-dnd-id="schedule.id"
+            :panel-id="`gci-schedule-${schedule.id}`"
+            :summary-label="t('schedule.label', { index: index + 1 }, `定时 ${index + 1}`)"
+            :summary-meta="`${schedule.time} · ${t('schedule.days_count', { count: schedule.days.length }, `${schedule.days.length} 天`)}`"
+            :days-label="t('field.schedule_days', {}, '执行周期（可多选）')"
+            :days-aria-label="t('field.schedule_days', {}, '执行星期')"
+            :time-label="t('field.schedule_time', {}, '执行时间')"
+            :expanded="isScheduleExpanded(schedule.id)"
+            :drag-label="t('common.reorder.schedule', { index: index + 1 }, `调整计划 ${index + 1} 的顺序`)"
+            :drag-title="t('common.drag_to_reorder', {}, '拖动以调整顺序')"
+            @toggle="toggleSchedule(schedule.id)"
           >
-            <div class="gci-schedule-head">
-              <nxp-drag-handle
-                class="gci-drag-handle"
-                :label="t('common.reorder.schedule', { index: index + 1 }, `调整计划 ${index + 1} 的顺序`)"
-                :title="t('common.drag_to_reorder', {}, '拖动以调整顺序')"
-              />
-              <nxp-button
-                variant="ghost"
-                class="gci-schedule-summary"
-                :aria-expanded="isScheduleExpanded(schedule.id)"
-                :aria-controls="`gci-schedule-${schedule.id}`"
-                @click="toggleSchedule(schedule.id)"
-              >
-                <span class="gci-schedule-summary-main"><strong>{{ t('schedule.label', { index: index + 1 }, `定时 ${index + 1}`) }}</strong><span>{{ schedule.time }} · {{ t('schedule.days_count', { count: schedule.days.length }, `${schedule.days.length} 天`) }}</span></span>
-                <span class="gci-schedule-chevron" aria-hidden="true">{{ isScheduleExpanded(schedule.id) ? "⌄" : "›" }}</span>
-              </nxp-button>
-            </div>
-            <div v-if="isScheduleExpanded(schedule.id)" :id="`gci-schedule-${schedule.id}`" class="gci-schedule-details">
-              <div class="gci-schedule-layout">
-                <div class="gci-schedule-days">
-                  <span class="gci-field-label">{{ t("field.schedule_days", {}, "执行周期（可多选）") }}</span>
-                  <div class="gci-day-buttons" role="group" :aria-label="t('field.schedule_days', {}, '执行星期')">
-                    <nxp-button
-                      variant="ghost"
-                      v-for="(name, day) in dayNames"
-                      :key="day"
-                      class="gci-day-button"
-                      :aria-pressed="schedule.days.includes(day)"
-                      :aria-label="name"
-                      :title="name"
-                      @click="toggleDay(schedule, day)"
-                    >{{ dayShortNames[day] }}</nxp-button>
-                  </div>
-                </div>
-                <label class="gci-field gci-schedule-time">
-                  <span>{{ t("field.schedule_time", {}, "执行时间") }}</span>
-                  <nxp-time-picker
-                    :id="`gci-time-${schedule.id}`"
-                    :model-value="schedule.time"
-                    :aria-label="t('field.schedule_time', {}, '时间')"
-                    @change="schedule.time = String(eventValue($event) || schedule.time)"
-                  />
-                </label>
-              </div>
-              <footer class="gci-schedule-actions">
-                <nxp-switch
-                  :model-value="schedule.enabled"
-                  semantic-role="switch"
-                  :aria-label="`${t('field.schedule_enabled', {}, '启用此计划')} ${index + 1}`"
-                  @change="schedule.enabled = eventValue<boolean>($event)"
-                />
-                <nxp-button :label="t('action.remove_schedule', {}, '删除计划')" variant="ghost" @click="removeSchedule(index)" />
-              </footer>
-            </div>
-          </article>
+            <nxp-button
+              v-for="(name, day) in dayNames"
+              :key="day"
+              slot="days"
+              class="gci-day-button"
+              :aria-pressed="schedule.days.includes(day)"
+              :aria-label="name"
+              :title="name"
+              @click="toggleDay(schedule, day)"
+            >{{ dayShortNames[day] }}</nxp-button>
+            <nxp-time-picker
+              slot="time"
+              :id="`gci-time-${schedule.id}`"
+              :model-value="schedule.time"
+              :aria-label="t('field.schedule_time', {}, '时间')"
+              @change="schedule.time = String(eventValue($event) || schedule.time)"
+            />
+            <nxp-switch
+              slot="actions"
+              :model-value="schedule.enabled"
+              semantic-role="switch"
+              :aria-label="`${t('field.schedule_enabled', {}, '启用此计划')} ${index + 1}`"
+              @change="schedule.enabled = eventValue<boolean>($event)"
+            />
+            <nxp-button
+              slot="actions"
+              :label="t('action.remove_schedule', {}, '删除计划')"
+              @click="removeSchedule(index)"
+            />
+          </nxp-schedule-card>
         </nxp-sortable-list>
         <p v-else class="gci-empty-schedules">{{ t("empty.schedules", {}, "还没有定时计划") }}</p>
         <nxp-button

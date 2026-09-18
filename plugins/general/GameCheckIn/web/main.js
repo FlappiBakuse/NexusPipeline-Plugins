@@ -1498,7 +1498,7 @@ function kr(e, t) {
 			},
 			mount(a, o, s) {
 				if (!c) {
-					let u = l._ceVNode || Mi(n, r);
+					let u = l._ceVNode || Z(n, r);
 					return u.appContext = i, s === !0 ? s = "svg" : s === !1 && (s = void 0), o && t ? t(u, a) : e(u, a, s), c = !0, l._container = a, a.__vue_app__ = l, ra(u.component);
 				}
 			},
@@ -1560,24 +1560,24 @@ function Ir(e) {
 	try {
 		if (n.shapeFlag & 4) {
 			let e = i || r, t = e;
-			v = Li(u.call(t, e, d, f, m, p, h)), y = c;
+			v = Ii(u.call(t, e, d, f, m, p, h)), y = c;
 		} else {
 			let e = t;
-			v = Li(e.length > 1 ? e(f, {
+			v = Ii(e.length > 1 ? e(f, {
 				attrs: c,
 				slots: s,
 				emit: l
 			}) : e(f, null)), y = t.props ? c : Lr(c);
 		}
 	} catch (t) {
-		Si.length = 0, $t(t, e, 1), v = Mi(bi);
+		Si.length = 0, $t(t, e, 1), v = Z(bi);
 	}
 	let b = v;
 	if (y && g !== !1) {
 		let e = Object.keys(y), { shapeFlag: t } = b;
-		e.length && t & 7 && (a && e.some(o) && (y = Rr(y, a)), b = Fi(b, y, !1, !0));
+		e.length && t & 7 && (a && e.some(o) && (y = Rr(y, a)), b = Pi(b, y, !1, !0));
 	}
-	return n.dirs && (b = Fi(b, null, !1, !0), b.dirs = b.dirs ? b.dirs.concat(n.dirs) : n.dirs), n.transition && Fn(jn(b.type) && Pn(b) || b, n.transition), v = b, yn(_), v;
+	return n.dirs && (b = Pi(b, null, !1, !0), b.dirs = b.dirs ? b.dirs.concat(n.dirs) : n.dirs), n.transition && Fn(jn(b.type) && Pn(b) || b, n.transition), v = b, yn(_), v;
 }
 var Lr = (e) => {
 	let t;
@@ -1734,7 +1734,7 @@ function Zr(e, r, i = !1) {
 function Qr(e) {
 	return e[0] !== "$" && !T(e);
 }
-var $r = (e) => e === "_" || e === "_ctx" || e === "$stable", ei = (e) => d(e) ? e.map(Li) : [Li(e)], ti = (e, t, n) => {
+var $r = (e) => e === "_" || e === "_ctx" || e === "$stable", ei = (e) => d(e) ? e.map(Ii) : [Ii(e)], ti = (e, t, n) => {
 	if (t._n) return t;
 	let r = bn((...e) => ei(t(...e)), n);
 	return r._c = !1, r;
@@ -1826,13 +1826,13 @@ function ci(e, i) {
 		let d, f, { props: m, shapeFlag: h, transition: g, dirs: _ } = e;
 		if (d = e.el = l(e.type, a, m && m.is, m), h & 8 ? p(d, e.children) : h & 16 && E(e.children, d, null, r, i, li(e, a), s, u), _ && xn(e, null, r, "created"), te(d, e, e.scopeId, s, r), m) {
 			for (let e in m) e !== "value" && !T(e) && c(d, e, null, m[e], a, r);
-			"value" in m && c(d, "value", null, m.value, a), (f = m.onVnodeBeforeMount) && Q(f, r, e);
+			"value" in m && c(d, "value", null, m.value, a), (f = m.onVnodeBeforeMount) && Bi(f, r, e);
 		}
 		_ && xn(e, null, r, "beforeMount");
 		let v = di(i, g);
 		v && g.beforeEnter(d), o(d, t, n), ((f = m && m.onVnodeMounted) || v || _) && G(() => {
 			try {
-				f && Q(f, r, e), v && g.enter(d), _ && xn(e, null, r, "mounted");
+				f && Bi(f, r, e), v && g.enter(d), _ && xn(e, null, r, "mounted");
 			} finally {}
 		}, i);
 	}, te = (e, t, n, r, i) => {
@@ -1846,14 +1846,14 @@ function ci(e, i) {
 		}
 	}, E = (e, t, n, r, i, a, o, s, c = 0) => {
 		for (let l = c; l < e.length; l++) {
-			let c = e[l] = s ? Ri(e[l]) : Li(e[l]);
+			let c = e[l] = s ? Li(e[l]) : Ii(e[l]);
 			v(null, c, t, n, r, i, a, o, s);
 		}
 	}, ne = (e, n, r, i, a, o, s) => {
 		let l = n.el = e.el, { patchFlag: u, dynamicChildren: d, dirs: f } = n;
 		u |= e.patchFlag & 16;
 		let m = e.props || t, h = n.props || t, g;
-		if (r && ui(r, !1), (g = h.onVnodeBeforeUpdate) && Q(g, r, n, e), f && xn(n, e, r, "beforeUpdate"), r && ui(r, !0), d && (!e.dynamicChildren || e.dynamicChildren.length !== d.length) && (u = 0, s = !1, d = null), (m.innerHTML && h.innerHTML == null || m.textContent && h.textContent == null) && p(l, ""), d ? D(e.dynamicChildren, d, l, r, i, li(n, a), o) : s || ue(e, n, l, null, r, i, li(n, a), o, !1), u > 0) {
+		if (r && ui(r, !1), (g = h.onVnodeBeforeUpdate) && Bi(g, r, n, e), f && xn(n, e, r, "beforeUpdate"), r && ui(r, !0), d && (!e.dynamicChildren || e.dynamicChildren.length !== d.length) && (u = 0, s = !1, d = null), (m.innerHTML && h.innerHTML == null || m.textContent && h.textContent == null) && p(l, ""), d ? D(e.dynamicChildren, d, l, r, i, li(n, a), o) : s || ue(e, n, l, null, r, i, li(n, a), o, !1), u > 0) {
 			if (u & 16) re(l, m, h, r, a);
 			else if (u & 2 && m.class !== h.class && c(l, "class", null, h.class, a), u & 4 && c(l, "style", m.style, h.style, a), u & 8) {
 				let e = n.dynamicProps;
@@ -1865,7 +1865,7 @@ function ci(e, i) {
 			u & 1 && e.children !== n.children && p(l, n.children);
 		} else !s && d == null && re(l, m, h, r, a);
 		((g = h.onVnodeUpdated) || f) && G(() => {
-			g && Q(g, r, n, e), f && xn(n, e, r, "updated");
+			g && Bi(g, r, n, e), f && xn(n, e, r, "updated");
 		}, i);
 	}, D = (e, t, n, r, i, a, o) => {
 		for (let s = 0; s < t.length; s++) {
@@ -1891,7 +1891,7 @@ function ci(e, i) {
 		let s = e.component = Ui(e, r, i);
 		if (Un(e) && (s.ctx.renderer = j), Zi(s, !1, o), s.asyncDep) {
 			if (i && i.registerDep(s, se, o), !e.el) {
-				let r = s.subTree = Mi(bi);
+				let r = s.subTree = Z(bi);
 				b(null, r, t, n), e.placeholder = r.el;
 			}
 		} else se(s, e, t, n, i, a, o);
@@ -1920,12 +1920,12 @@ function ci(e, i) {
 					}
 				}
 				let u = t, d;
-				ui(e, !1), t ? (t.el = c.el, le(e, t, o)) : t = c, n && ae(n), (d = t.props && t.props.onVnodeBeforeUpdate) && Q(d, s, t, c), ui(e, !0);
+				ui(e, !1), t ? (t.el = c.el, le(e, t, o)) : t = c, n && ae(n), (d = t.props && t.props.onVnodeBeforeUpdate) && Bi(d, s, t, c), ui(e, !0);
 				let f = Ir(e), p = e.subTree;
-				e.subTree = f, v(p, f, m(p.el), ve(p), e, i, a), t.el = f.el, u === null && Hr(e, f.el), r && G(r, i), (d = t.props && t.props.onVnodeUpdated) && G(() => Q(d, s, t, c), i);
+				e.subTree = f, v(p, f, m(p.el), ve(p), e, i, a), t.el = f.el, u === null && Hr(e, f.el), r && G(r, i), (d = t.props && t.props.onVnodeUpdated) && G(() => Bi(d, s, t, c), i);
 			} else {
 				let o, { el: s, props: c } = t, { bm: l, m: u, parent: d, root: f, type: p } = e, m = Hn(t);
-				if (ui(e, !1), l && ae(l), !m && (o = c && c.onVnodeBeforeMount) && Q(o, d, t), ui(e, !0), s && Se) {
+				if (ui(e, !1), l && ae(l), !m && (o = c && c.onVnodeBeforeMount) && Bi(o, d, t), ui(e, !0), s && Se) {
 					let t = () => {
 						e.subTree = Ir(e), Se(s, e.subTree, e, i, null);
 					};
@@ -1937,7 +1937,7 @@ function ci(e, i) {
 				}
 				if (u && G(u, i), !m && (o = c && c.onVnodeMounted)) {
 					let e = t;
-					G(() => Q(o, d, e), i);
+					G(() => Bi(o, d, e), i);
 				}
 				(t.shapeFlag & 256 || d && Hn(d.vnode) && d.vnode.shapeFlag & 256) && e.a && G(e.a, i), e.isMounted = !0, t = n = r = null;
 			}
@@ -1968,20 +1968,20 @@ function ci(e, i) {
 		e ||= n, t ||= n;
 		let u = e.length, d = t.length, f = Math.min(u, d), p = 0;
 		for (; p < f; p++) {
-			let n = t[p] = l ? Ri(t[p]) : Li(t[p]);
+			let n = t[p] = l ? Li(t[p]) : Ii(t[p]);
 			v(e[p], n, r, null, a, o, s, c, l);
 		}
 		u > d ? _e(e, a, o, !0, !1, f) : E(t, r, i, a, o, s, c, l, f);
 	}, fe = (e, t, r, i, a, o, s, c, l) => {
 		let u = 0, d = t.length, f = e.length - 1, p = d - 1;
 		for (; u <= f && u <= p;) {
-			let n = e[u], i = t[u] = l ? Ri(t[u]) : Li(t[u]);
+			let n = e[u], i = t[u] = l ? Li(t[u]) : Ii(t[u]);
 			if (ki(n, i)) v(n, i, r, null, a, o, s, c, l);
 			else break;
 			u++;
 		}
 		for (; u <= f && u <= p;) {
-			let n = e[f], i = t[p] = l ? Ri(t[p]) : Li(t[p]);
+			let n = e[f], i = t[p] = l ? Li(t[p]) : Ii(t[p]);
 			if (ki(n, i)) v(n, i, r, null, a, o, s, c, l);
 			else break;
 			f--, p--;
@@ -1989,13 +1989,13 @@ function ci(e, i) {
 		if (u > f) {
 			if (u <= p) {
 				let e = p + 1, n = e < d ? t[e].el : i;
-				for (; u <= p;) v(null, t[u] = l ? Ri(t[u]) : Li(t[u]), r, n, a, o, s, c, l), u++;
+				for (; u <= p;) v(null, t[u] = l ? Li(t[u]) : Ii(t[u]), r, n, a, o, s, c, l), u++;
 			}
 		} else if (u > p) for (; u <= f;) A(e[u], a, o, !0), u++;
 		else {
 			let m = u, h = u, g = /* @__PURE__ */ new Map();
 			for (u = h; u <= p; u++) {
-				let e = t[u] = l ? Ri(t[u]) : Li(t[u]);
+				let e = t[u] = l ? Li(t[u]) : Ii(t[u]);
 				e.key != null && g.set(e.key, u);
 			}
 			let _, y = 0, b = p - h + 1, x = !1, S = 0, C = Array(b);
@@ -2065,7 +2065,7 @@ function ci(e, i) {
 			return;
 		}
 		let h = u & 1 && f, g = !Hn(e), _;
-		if (g && (_ = o && o.onVnodeBeforeUnmount) && Q(_, t, e), u & 6) ge(e.component, n, r);
+		if (g && (_ = o && o.onVnodeBeforeUnmount) && Bi(_, t, e), u & 6) ge(e.component, n, r);
 		else {
 			if (u & 128) {
 				e.suspense.unmount(n, r);
@@ -2075,7 +2075,7 @@ function ci(e, i) {
 		}
 		let v = m != null && p == null;
 		(g && (_ = o && o.onVnodeUnmounted) || h || v) && G(() => {
-			_ && Q(_, t, e), h && xn(e, null, t, "unmounted"), v && (e.el = null);
+			_ && Bi(_, t, e), h && xn(e, null, t, "unmounted"), v && (e.el = null);
 		}, n);
 	}, me = (e) => {
 		let { type: t, el: n, anchor: r, transition: i } = e;
@@ -2144,7 +2144,7 @@ function fi(e, t, n = !1) {
 	let r = e.children, i = t.children;
 	if (d(r) && d(i)) for (let e = 0; e < r.length; e++) {
 		let t = r[e], a = i[e];
-		a.shapeFlag & 1 && !a.dynamicChildren && ((a.patchFlag <= 0 || a.patchFlag === 32) && (a = i[e] = Ri(i[e]), a.el = t.el), !n && a.patchFlag !== -2 && fi(t, a)), a.type === yi && (a.patchFlag === -1 && (a = i[e] = Ri(a)), a.el = t.el), a.type === bi && !a.el && (a.el = t.el);
+		a.shapeFlag & 1 && !a.dynamicChildren && ((a.patchFlag <= 0 || a.patchFlag === 32) && (a = i[e] = Li(i[e]), a.el = t.el), !n && a.patchFlag !== -2 && fi(t, a)), a.type === yi && (a.patchFlag === -1 && (a = i[e] = Li(a)), a.el = t.el), a.type === bi && !a.el && (a.el = t.el);
 	}
 }
 function pi(e) {
@@ -2197,7 +2197,7 @@ function Y(e, t, n, r, i, a) {
 	return Ei(X(e, t, n, r, i, a, !0));
 }
 function Di(e, t, n, r, i) {
-	return Ei(Mi(e, t, n, r, i, !0));
+	return Ei(Z(e, t, n, r, i, !0));
 }
 function Oi(e) {
 	return e ? e.__v_isVNode === !0 : !1;
@@ -2241,27 +2241,27 @@ function X(e, t = null, n = null, r = 0, i = null, a = e === K ? 0 : 1, o = !1, 
 		appContext: null,
 		ctx: _n
 	};
-	return s ? (zi(c, n), a & 128 && e.normalize(c)) : n && (c.shapeFlag |= g(n) ? 8 : 16), wi > 0 && !o && q && (c.patchFlag > 0 || a & 6) && c.patchFlag !== 32 && q.push(c), c;
+	return s ? (Ri(c, n), a & 128 && e.normalize(c)) : n && (c.shapeFlag |= g(n) ? 8 : 16), wi > 0 && !o && q && (c.patchFlag > 0 || a & 6) && c.patchFlag !== 32 && q.push(c), c;
 }
-var Mi = Ni;
-function Ni(e, t = null, n = null, r = 0, i = null, a = !1) {
+var Z = Mi;
+function Mi(e, t = null, n = null, r = 0, i = null, a = !1) {
 	if ((!e || e === or) && (e = bi), Oi(e)) {
-		let r = Fi(e, t, !0);
-		return n && zi(r, n), wi > 0 && !a && q && (r.shapeFlag & 6 ? q[q.indexOf(e)] = r : q.push(r)), r.patchFlag = -2, r;
+		let r = Pi(e, t, !0);
+		return n && Ri(r, n), wi > 0 && !a && q && (r.shapeFlag & 6 ? q[q.indexOf(e)] = r : q.push(r)), r.patchFlag = -2, r;
 	}
 	if (ia(e) && (e = e.__vccOpts), t) {
-		t = Pi(t);
+		t = Ni(t);
 		let { class: e, style: n } = t;
 		e && !g(e) && (t.class = A(e)), v(n) && (/* @__PURE__ */ It(n) && !d(n) && (n = s({}, n)), t.style = le(n));
 	}
 	let o = g(e) ? 1 : _i(e) ? 128 : jn(e) ? 64 : v(e) ? 4 : h(e) ? 2 : 0;
 	return X(e, t, n, r, i, o, a, !0);
 }
-function Pi(e) {
+function Ni(e) {
 	return e ? /* @__PURE__ */ It(e) || Gr(e) ? s({}, e) : e : null;
 }
-function Fi(e, t, n = !1, r = !1) {
-	let { props: i, ref: a, patchFlag: o, children: s, transition: c } = e, l = t ? Bi(i || {}, t) : i, u = {
+function Pi(e, t, n = !1, r = !1) {
+	let { props: i, ref: a, patchFlag: o, children: s, transition: c } = e, l = t ? zi(i || {}, t) : i, u = {
 		__v_isVNode: !0,
 		__v_skip: !0,
 		type: e.type,
@@ -2284,8 +2284,8 @@ function Fi(e, t, n = !1, r = !1) {
 		transition: c,
 		component: e.component,
 		suspense: e.suspense,
-		ssContent: e.ssContent && Fi(e.ssContent),
-		ssFallback: e.ssFallback && Fi(e.ssFallback),
+		ssContent: e.ssContent && Pi(e.ssContent),
+		ssFallback: e.ssFallback && Pi(e.ssFallback),
 		placeholder: e.placeholder,
 		el: e.el,
 		anchor: e.anchor,
@@ -2294,26 +2294,26 @@ function Fi(e, t, n = !1, r = !1) {
 	};
 	return c && r && Fn(u, c.clone(u)), u;
 }
-function Ii(e = " ", t = 0) {
-	return Mi(yi, null, e, t);
+function Fi(e = " ", t = 0) {
+	return Z(yi, null, e, t);
 }
-function Z(e = "", t = !1) {
-	return t ? (J(), Di(bi, null, e)) : Mi(bi, null, e);
+function Q(e = "", t = !1) {
+	return t ? (J(), Di(bi, null, e)) : Z(bi, null, e);
+}
+function Ii(e) {
+	return e == null || typeof e == "boolean" ? Z(bi) : d(e) ? Z(K, null, e.slice()) : Oi(e) ? Li(e) : Z(yi, null, String(e));
 }
 function Li(e) {
-	return e == null || typeof e == "boolean" ? Mi(bi) : d(e) ? Mi(K, null, e.slice()) : Oi(e) ? Ri(e) : Mi(yi, null, String(e));
+	return e.el === null && e.patchFlag !== -1 || e.memo ? e : Pi(e);
 }
-function Ri(e) {
-	return e.el === null && e.patchFlag !== -1 || e.memo ? e : Fi(e);
-}
-function zi(e, t) {
+function Ri(e, t) {
 	let n = 0, { shapeFlag: r } = e;
 	if (t == null) t = null;
 	else if (d(t)) n = 16;
 	else if (typeof t == "object") {
 		if (r & 65) {
 			let n = t.default;
-			n && (n._c && (n._d = !1), zi(e, n()), n._c && (n._d = !0));
+			n && (n._c && (n._d = !1), Ri(e, n()), n._c && (n._d = !0));
 			return;
 		}
 		{
@@ -2323,17 +2323,17 @@ function zi(e, t) {
 		}
 	} else if (h(t)) {
 		if (r & 65) {
-			zi(e, { default: t });
+			Ri(e, { default: t });
 			return;
 		}
 		t = {
 			default: t,
 			_ctx: _n
 		}, n = 32;
-	} else t = String(t), r & 64 ? (n = 16, t = [Ii(t)]) : n = 8;
+	} else t = String(t), r & 64 ? (n = 16, t = [Fi(t)]) : n = 8;
 	e.children = t, e.shapeFlag |= n;
 }
-function Bi(...e) {
+function zi(...e) {
 	let t = {};
 	for (let n = 0; n < e.length; n++) {
 		let r = e[n];
@@ -2346,7 +2346,7 @@ function Bi(...e) {
 	}
 	return t;
 }
-function Q(e, t, n, r = null) {
+function Bi(e, t, n, r = null) {
 	H(e, t, 7, [n, r]);
 }
 var Vi = Dr(), Hi = 0;
@@ -2770,38 +2770,44 @@ var Qa = [
 	"label",
 	"description",
 	"aria-label"
-], yo = ["label", "help"], bo = ["model-value", "aria-label"], xo = { class: "gci-schedules" }, So = { class: "gci-section-heading" }, Co = ["aria-label"], wo = ["data-schedule-id", "data-dnd-id"], To = { class: "gci-schedule-head" }, Eo = ["label", "title"], Do = [
-	"aria-expanded",
-	"aria-controls",
-	"onClick"
-], Oo = { class: "gci-schedule-summary-main" }, ko = {
-	class: "gci-schedule-chevron",
-	"aria-hidden": "true"
-}, Ao = ["id"], jo = { class: "gci-schedule-layout" }, Mo = { class: "gci-schedule-days" }, No = { class: "gci-field-label" }, Po = ["aria-label"], Fo = [
+], yo = ["label", "help"], bo = ["model-value", "aria-label"], xo = { class: "gci-schedules" }, So = { class: "gci-section-heading" }, Co = ["aria-label"], wo = [
+	"item-id",
+	"data-dnd-id",
+	"panel-id",
+	"summary-label",
+	"summary-meta",
+	"days-label",
+	"days-aria-label",
+	"time-label",
+	"expanded",
+	"drag-label",
+	"drag-title",
+	"onToggle"
+], To = [
 	"aria-pressed",
 	"aria-label",
 	"title",
 	"onClick"
-], Io = { class: "gci-field gci-schedule-time" }, Lo = [
+], Eo = [
 	"id",
 	"model-value",
 	"aria-label",
 	"onChange"
-], Ro = { class: "gci-schedule-actions" }, zo = [
+], Do = [
 	"model-value",
 	"aria-label",
 	"onChange"
-], Bo = ["label", "onClick"], Vo = {
+], Oo = ["label", "onClick"], ko = {
 	key: 1,
 	class: "gci-empty-schedules"
-}, Ho = ["label", "disabled"], Uo = {
+}, Ao = ["label", "disabled"], jo = {
 	key: 0,
 	class: "gci-error",
 	role: "alert"
-}, Wo = {
+}, Mo = {
 	slot: "footer",
 	class: "gci-modal-footer-actions"
-}, Go = ["label", "busy"], Ko = ["label", "disabled"], qo = /* @__PURE__ */ In({
+}, No = ["label", "busy"], Po = ["label", "disabled"], Fo = /* @__PURE__ */ In({
 	__name: "CheckInTaskEditor",
 	props: {
 		open: { type: Boolean },
@@ -3072,7 +3078,7 @@ var Qa = [
 					label: m("field.secret_clear", {}, "清除已保存凭据"),
 					"aria-label": `${t.name} · ${m("field.secret_clear", {}, "清除已保存凭据")}`,
 					onChange: (e) => D(t.id, h(e))
-				}, null, 40, go)) : Z("", !0)]))), 128))]),
+				}, null, 40, go)) : Q("", !0)]))), 128))]),
 				X("section", _o, [X("nxp-switch-setting", {
 					id: "gci-notification-enabled",
 					"model-value": i.value.notification.enabled,
@@ -3095,94 +3101,92 @@ var Qa = [
 				X("header", So, [X("div", null, [X("h3", null, j(m("field.schedule", {}, "定时计划")), 1), X("p", null, j(m("field.schedule_help", { zone: e.timeZoneId }, `按本机时区 ${e.timeZoneId} 执行；应用关闭期间错过的时间不会补跑。`)), 1)])]),
 				i.value.schedules.length ? (J(), Y("nxp-sortable-list", {
 					key: 0,
-					class: "gci-schedule-list",
+					layout: "schedule",
 					tag: "div",
 					"aria-label": m("field.schedule", {}, "定时计划"),
 					onReorder: n[7] ||= (e) => E(h(e))
-				}, [(J(!0), Y(K, null, sr(i.value.schedules, (e, t) => (J(), Y("article", {
+				}, [(J(!0), Y(K, null, sr(i.value.schedules, (e, t) => (J(), Y("nxp-schedule-card", {
 					key: e.id,
-					class: A(["gci-schedule-card", { "is-open": T(e.id) }]),
-					"data-schedule-id": e.id,
-					"data-dnd-id": e.id
-				}, [X("div", To, [X("nxp-drag-handle", {
-					class: "gci-drag-handle",
-					label: m("common.reorder.schedule", { index: t + 1 }, `调整计划 ${t + 1} 的顺序`),
-					title: m("common.drag_to_reorder", {}, "拖动以调整顺序")
-				}, null, 8, Eo), X("nxp-button", {
-					variant: "ghost",
-					class: "gci-schedule-summary",
-					"aria-expanded": T(e.id),
-					"aria-controls": `gci-schedule-${e.id}`,
-					onClick: (t) => ee(e.id)
-				}, [X("span", Oo, [X("strong", null, j(m("schedule.label", { index: t + 1 }, `定时 ${t + 1}`)), 1), X("span", null, j(e.time) + " · " + j(m("schedule.days_count", { count: e.days.length }, `${e.days.length} 天`)), 1)]), X("span", ko, j(T(e.id) ? "⌄" : "›"), 1)], 8, Do)]), T(e.id) ? (J(), Y("div", {
-					key: 0,
-					id: `gci-schedule-${e.id}`,
-					class: "gci-schedule-details"
-				}, [X("div", jo, [X("div", Mo, [X("span", No, j(m("field.schedule_days", {}, "执行周期（可多选）")), 1), X("div", {
-					class: "gci-day-buttons",
-					role: "group",
-					"aria-label": m("field.schedule_days", {}, "执行星期")
-				}, [(J(!0), Y(K, null, sr(f.value, (t, n) => (J(), Y("nxp-button", {
-					variant: "ghost",
-					key: n,
-					class: "gci-day-button",
-					"aria-pressed": e.days.includes(n),
-					"aria-label": t,
-					title: t,
-					onClick: (t) => te(e, n)
-				}, j(p.value[n]), 9, Fo))), 128))], 8, Po)]), X("label", Io, [X("span", null, j(m("field.schedule_time", {}, "执行时间")), 1), X("nxp-time-picker", {
-					id: `gci-time-${e.id}`,
-					"model-value": e.time,
-					"aria-label": m("field.schedule_time", {}, "时间"),
-					onChange: (t) => e.time = String(h(t) || e.time)
-				}, null, 40, Lo)])]), X("footer", Ro, [X("nxp-switch", {
-					"model-value": e.enabled,
-					"semantic-role": "switch",
-					"aria-label": `${m("field.schedule_enabled", {}, "启用此计划")} ${t + 1}`,
-					onChange: (t) => e.enabled = h(t)
-				}, null, 40, zo), X("nxp-button", {
-					label: m("action.remove_schedule", {}, "删除计划"),
-					variant: "ghost",
-					onClick: (e) => w(t)
-				}, null, 8, Bo)])], 8, Ao)) : Z("", !0)], 10, wo))), 128))], 40, Co)) : (J(), Y("p", Vo, j(m("empty.schedules", {}, "还没有定时计划")), 1)),
+					"item-id": e.id,
+					"data-dnd-id": e.id,
+					"panel-id": `gci-schedule-${e.id}`,
+					"summary-label": m("schedule.label", { index: t + 1 }, `定时 ${t + 1}`),
+					"summary-meta": `${e.time} · ${m("schedule.days_count", { count: e.days.length }, `${e.days.length} 天`)}`,
+					"days-label": m("field.schedule_days", {}, "执行周期（可多选）"),
+					"days-aria-label": m("field.schedule_days", {}, "执行星期"),
+					"time-label": m("field.schedule_time", {}, "执行时间"),
+					expanded: T(e.id),
+					"drag-label": m("common.reorder.schedule", { index: t + 1 }, `调整计划 ${t + 1} 的顺序`),
+					"drag-title": m("common.drag_to_reorder", {}, "拖动以调整顺序"),
+					onToggle: (t) => ee(e.id)
+				}, [
+					(J(!0), Y(K, null, sr(f.value, (t, n) => (J(), Y("nxp-button", {
+						key: n,
+						slot: "days",
+						class: "gci-day-button",
+						"aria-pressed": e.days.includes(n),
+						"aria-label": t,
+						title: t,
+						onClick: (t) => te(e, n)
+					}, j(p.value[n]), 9, To))), 128)),
+					X("nxp-time-picker", {
+						slot: "time",
+						id: `gci-time-${e.id}`,
+						"model-value": e.time,
+						"aria-label": m("field.schedule_time", {}, "时间"),
+						onChange: (t) => e.time = String(h(t) || e.time)
+					}, null, 40, Eo),
+					X("nxp-switch", {
+						slot: "actions",
+						"model-value": e.enabled,
+						"semantic-role": "switch",
+						"aria-label": `${m("field.schedule_enabled", {}, "启用此计划")} ${t + 1}`,
+						onChange: (t) => e.enabled = h(t)
+					}, null, 40, Do),
+					X("nxp-button", {
+						slot: "actions",
+						label: m("action.remove_schedule", {}, "删除计划"),
+						onClick: (e) => w(t)
+					}, null, 8, Oo)
+				], 40, wo))), 128))], 40, Co)) : (J(), Y("p", ko, j(m("empty.schedules", {}, "还没有定时计划")), 1)),
 				X("nxp-button", {
 					label: `+ ${m("action.add_schedule", {}, "添加定时")}`,
 					variant: "ghost",
 					disabled: i.value.schedules.length >= 30,
 					onClick: C
-				}, null, 8, Ho)
+				}, null, 8, Ao)
 			]),
-			l.value || e.error ? (J(), Y("p", Uo, j(l.value || e.error), 1)) : Z("", !0)
-		])) : Z("", !0), X("div", Wo, [X("nxp-button", {
+			l.value || e.error ? (J(), Y("p", jo, j(l.value || e.error), 1)) : Q("", !0)
+		])) : Q("", !0), X("div", Mo, [X("nxp-button", {
 			label: e.submitting ? m("status.saving", {}, "保存中…") : m("action.save", {}, "保存"),
 			tone: "primary",
 			busy: e.submitting,
 			onClick: re
-		}, null, 8, Go), X("nxp-button", {
+		}, null, 8, No), X("nxp-button", {
 			label: m("action.cancel", {}, "取消"),
 			variant: "ghost",
 			disabled: e.submitting,
 			onClick: n[8] ||= (e) => r("close")
-		}, null, 8, Ko)])], 40, Qa)) : Z("", !0);
+		}, null, 8, Po)])], 40, Qa)) : Q("", !0);
 	}
-}), Jo = ["aria-label"], Yo = ["data-task-id", "data-dnd-id"], Xo = { class: "gci-task-row-main" }, Zo = ["label", "title"], Qo = {
+}), Io = ["aria-label"], Lo = ["data-task-id", "data-dnd-id"], Ro = { class: "gci-task-row-main" }, zo = ["label", "title"], Bo = {
 	class: "gci-task-avatar",
 	"aria-hidden": "true"
-}, $o = { class: "gci-task-copy" }, es = { class: "gci-task-heading" }, ts = {
+}, Vo = { class: "gci-task-copy" }, Ho = { class: "gci-task-heading" }, Uo = {
 	key: 0,
 	class: "gci-task-remark"
-}, ns = { class: "gci-task-meta" }, rs = ["label", "tone"], is = ["label", "tone"], as = ["label", "tone"], os = ["label"], ss = ["label"], cs = { class: "gci-task-actions" }, ls = [
+}, Wo = { class: "gci-task-meta" }, Go = ["label", "tone"], Ko = ["label", "tone"], qo = ["label", "tone"], Jo = ["label"], Yo = ["label"], Xo = { class: "gci-task-actions" }, Zo = [
 	"label",
 	"disabled",
 	"onClick"
-], us = ["label", "onClick"], ds = [
+], Qo = ["label", "onClick"], $o = [
 	"label",
 	"disabled",
 	"onClick"
-], fs = {
+], es = {
 	key: 0,
 	class: "gci-run-history"
-}, ps = { class: "gci-run-list" }, ms = { class: "gci-run-entry-head" }, hs = ["label", "tone"], gs = { key: 0 }, _s = /* @__PURE__ */ In({
+}, ts = { class: "gci-run-list" }, ns = { class: "gci-run-entry-head" }, rs = ["label", "tone"], is = { key: 0 }, as = /* @__PURE__ */ In({
 	__name: "CheckInTaskList",
 	props: {
 		tasks: {},
@@ -3252,88 +3256,88 @@ var Qa = [
 			"data-task-id": e.id,
 			"data-dnd-id": e.id,
 			role: "listitem"
-		}, [X("div", Xo, [
+		}, [X("div", Ro, [
 			X("nxp-drag-handle", {
 				class: "gci-drag-handle",
 				label: i("common.reorder.task", { name: e.name }, `调整 ${e.name} 的顺序`),
 				title: i("common.drag_to_reorder", {}, "拖动以调整顺序")
-			}, null, 8, Zo),
-			X("span", Qo, j(o(e.name)), 1),
-			X("div", $o, [
-				X("div", es, [X("h2", null, j(e.name), 1)]),
-				e.remark ? (J(), Y("p", ts, j(e.remark), 1)) : Z("", !0),
-				X("div", ns, [
+			}, null, 8, zo),
+			X("span", Bo, j(o(e.name)), 1),
+			X("div", Vo, [
+				X("div", Ho, [X("h2", null, j(e.name), 1)]),
+				e.remark ? (J(), Y("p", Uo, j(e.remark), 1)) : Q("", !0),
+				X("div", Wo, [
 					X("nxp-badge", {
 						label: e.enabled ? i("status.enabled", {}, "已启用") : i("status.disabled", {}, "已停用"),
 						tone: e.enabled ? "ok" : "muted"
-					}, null, 8, rs),
+					}, null, 8, Go),
 					e.recentRun ? (J(), Y("nxp-badge", {
 						key: 0,
 						label: i(`status.${e.recentRun.status}`, {}, e.recentRun.status),
 						tone: l(e.recentRun.status)
-					}, null, 8, is)) : Z("", !0),
+					}, null, 8, Ko)) : Q("", !0),
 					X("nxp-badge", {
 						label: e.notification?.enabled ? i("status.notifications_on", {}, "通知已开启") : i("status.notifications_off", {}, "通知已关闭"),
 						tone: e.notification?.enabled ? "blue" : "muted"
-					}, null, 8, as),
+					}, null, 8, qo),
 					X("nxp-badge", {
 						label: i("task.games_count", { count: s(e) }, `${s(e)} 个游戏`),
 						tone: "muted"
-					}, null, 8, os),
+					}, null, 8, Jo),
 					X("nxp-badge", {
 						label: c(e.nextRunAt),
 						tone: "blue"
-					}, null, 8, ss)
+					}, null, 8, Yo)
 				])
 			]),
-			X("div", cs, [
+			X("div", Xo, [
 				X("nxp-button", {
 					label: i("action.run", {}, "立即签到"),
 					variant: "ghost",
 					disabled: e.isRunning,
 					onClick: (t) => r("run", e)
-				}, null, 8, ls),
+				}, null, 8, Zo),
 				X("nxp-button", {
 					label: i("action.edit", {}, "编辑签到"),
 					variant: "ghost",
 					onClick: (t) => r("edit", e)
-				}, null, 8, us),
+				}, null, 8, Qo),
 				X("nxp-button", {
 					label: i("action.delete", {}, "删除签到"),
 					tone: "danger",
 					variant: "ghost",
 					disabled: e.isRunning,
 					onClick: (t) => r("remove", e)
-				}, null, 8, ds)
+				}, null, 8, $o)
 			])
-		]), e.runs?.length ? (J(), Y("details", fs, [X("summary", null, j(i("action.show_results", {}, "运行记录")) + " · " + j(e.runs.length), 1), X("div", ps, [(J(!0), Y(K, null, sr(e.runs, (e) => (J(), Y("section", {
+		]), e.runs?.length ? (J(), Y("details", es, [X("summary", null, j(i("action.show_results", {}, "运行记录")) + " · " + j(e.runs.length), 1), X("div", ts, [(J(!0), Y(K, null, sr(e.runs, (e) => (J(), Y("section", {
 			key: e.id,
 			class: "gci-run-entry"
-		}, [X("header", ms, [X("span", null, j(u(e.completedAt || e.startedAt)), 1), X("nxp-badge", {
+		}, [X("header", ns, [X("span", null, j(u(e.completedAt || e.startedAt)), 1), X("nxp-badge", {
 			label: i(`status.${e.status}`, {}, e.status),
 			tone: l(e.status)
-		}, null, 8, hs)]), e.results?.length ? (J(), Y("ul", gs, [(J(!0), Y(K, null, sr(e.results, (e, t) => (J(), Y("li", { key: `${e.platform}-${e.gameCode}-${t}` }, [X("span", null, j(d(e.platform, e.gameCode)), 1), X("span", null, j(e.message), 1)]))), 128))])) : Z("", !0)]))), 128))])])) : Z("", !0)], 8, Yo))), 128))], 40, Jo));
+		}, null, 8, rs)]), e.results?.length ? (J(), Y("ul", is, [(J(!0), Y(K, null, sr(e.results, (e, t) => (J(), Y("li", { key: `${e.platform}-${e.gameCode}-${t}` }, [X("span", null, j(d(e.platform, e.gameCode)), 1), X("span", null, j(e.message), 1)]))), 128))])) : Q("", !0)]))), 128))])])) : Q("", !0)], 8, Lo))), 128))], 40, Io));
 	}
-}), vs = {
+}), os = {
 	class: "gci-page",
 	"data-game-check-in-page": ""
-}, ys = { class: "gci-page-header" }, bs = { class: "gci-page-header-copy" }, xs = { class: "gci-page-header-eyebrow" }, Ss = { class: "gci-page-header-description" }, Cs = { class: "gci-page-header-actions" }, ws = ["label"], Ts = {
+}, ss = { class: "gci-page-header" }, cs = { class: "gci-page-header-copy" }, ls = { class: "gci-page-header-eyebrow" }, us = { class: "gci-page-header-description" }, ds = { class: "gci-page-header-actions" }, fs = ["label"], ps = {
 	key: 0,
 	class: "gci-error",
 	role: "alert"
-}, Es = {
+}, ms = {
 	key: 1,
 	class: "gci-loading",
 	role: "status"
-}, Ds = ["title", "description"], Os = ["label"], ks = [
+}, hs = ["title", "description"], gs = ["label"], _s = [
 	"title",
 	"locked",
 	"closeable",
 	"close-label"
-], As = { class: "gci-confirm-message" }, js = {
+], vs = { class: "gci-confirm-message" }, ys = {
 	slot: "footer",
 	class: "gci-modal-footer-actions"
-}, Ms = ["label", "disabled"], Ns = ["label", "busy"], Ps = /* @__PURE__ */ In({
+}, bs = ["label", "disabled"], xs = ["label", "busy"], Ss = /* @__PURE__ */ In({
 	__name: "GameCheckInPage",
 	props: { host: {} },
 	setup(e) {
@@ -3430,19 +3434,19 @@ var Qa = [
 			S(!0), p = setInterval(() => void S(), 5e3);
 		}), er(() => {
 			m = !0, f.abort(), p && clearInterval(p);
-		}), (e, f) => (J(), Y("section", vs, [
-			X("header", ys, [X("div", bs, [
-				X("div", xs, j(y("page.title", {}, "签到")), 1),
+		}), (e, f) => (J(), Y("section", os, [
+			X("header", ss, [X("div", cs, [
+				X("div", ls, j(y("page.title", {}, "签到")), 1),
 				X("h2", null, j(y("page.title", {}, "签到")), 1),
-				X("p", Ss, j(y("page.description", {}, "管理多平台签到任务和运行计划。")), 1)
-			]), X("div", Cs, [X("nxp-button", {
+				X("p", us, j(y("page.description", {}, "管理多平台签到任务和运行计划。")), 1)
+			]), X("div", ds, [X("nxp-button", {
 				label: y("action.add_task", {}, "添加签到任务"),
 				tone: "primary",
 				type: "button",
 				onClick: f[0] ||= (e) => C()
-			}, null, 8, ws)])]),
-			s.value ? (J(), Y("p", Ts, j(s.value), 1)) : r.value ? (J(), Y("p", Es, j(y("status.loading", {}, "正在读取…")), 1)) : Z("", !0),
-			g.value.length ? (J(), Di(_s, {
+			}, null, 8, fs)])]),
+			s.value ? (J(), Y("p", ps, j(s.value), 1)) : r.value ? (J(), Y("p", ms, j(y("status.loading", {}, "正在读取…")), 1)) : Q("", !0),
+			g.value.length ? (J(), Di(as, {
 				key: 2,
 				tasks: g.value,
 				platforms: _.value,
@@ -3460,8 +3464,8 @@ var Qa = [
 				tone: "primary",
 				type: "button",
 				onClick: f[2] ||= (e) => C()
-			}, null, 8, Os)], 8, Ds)) : Z("", !0),
-			Mi(qo, {
+			}, null, 8, gs)], 8, hs)) : Q("", !0),
+			Z(Fo, {
 				open: a.value,
 				task: o.value,
 				tasks: n.value?.tasks || [],
@@ -3496,27 +3500,27 @@ var Qa = [
 				closeable: !d.value,
 				"close-label": y("action.close", {}, "关闭"),
 				onClose: f[6] ||= (e) => !d.value && (u.value = null)
-			}, [X("p", As, j(y("task.delete_confirm", {}, "删除此任务、计划和凭据？")) + " — " + j(u.value.name), 1), X("div", js, [X("nxp-button", {
+			}, [X("p", vs, j(y("task.delete_confirm", {}, "删除此任务、计划和凭据？")) + " — " + j(u.value.name), 1), X("div", ys, [X("nxp-button", {
 				label: y("action.cancel", {}, "取消"),
 				variant: "ghost",
 				disabled: d.value,
 				onClick: f[5] ||= (e) => u.value = null
-			}, null, 8, Ms), X("nxp-button", {
+			}, null, 8, bs), X("nxp-button", {
 				label: y("action.confirm", {}, "确定"),
 				tone: "danger",
 				busy: d.value,
 				onClick: E
-			}, null, 8, Ns)])], 40, ks)) : Z("", !0)
+			}, null, 8, xs)])], 40, _s)) : Q("", !0)
 		]));
 	}
 });
 //#endregion
 //#region src/main.ts
-function Fs(e) {
+function Cs(e) {
 	let t = null, n = e.routes.register("tasks", (n, r, i) => {
 		t?.unmount();
 		let a = document.querySelector("#view");
-		a && (t = Ya(Ps, { host: i || e }), t.mount(a));
+		a && (t = Ya(Ss, { host: i || e }), t.mount(a));
 	}), r = e.nav.register({
 		id: "check-in-tasks",
 		title: e.i18n.t("nav.title", {}, "签到"),
@@ -3531,4 +3535,4 @@ function Fs(e) {
 	} };
 }
 //#endregion
-export { Fs as activate };
+export { Cs as activate };
