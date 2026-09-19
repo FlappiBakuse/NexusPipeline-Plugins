@@ -1,0 +1,193 @@
+name: Plugin Release Qualification
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Same-repository PR number targeting main
+        required: true
+        type: string
+      expected_head_sha:
+        description: Exact PR head SHA H
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-release-qualification-${{ inputs.expected_head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: qualification-preflight
+    runs-on: ubuntu-latest
+    environment: qualification-control
+    outputs:
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      base_sha: ${{ steps.resolve.outputs.base_sha }}
+      workflow_sha: ${{ steps.resolve.outputs.workflow_sha }}
+      sdk_sha: ${{ steps.sdk.outputs.sdk_sha }}
+      contract_sha: ${{ steps.resolve.outputs.contract_sha }}
+      check_id: ${{ steps.resolve.outputs.check_id }}
+    steps:
+      - name: Checkout trusted controller C
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Checkout official Host SDK
+        uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline
+          fetch-depth: 1
+
+      - name: Validate fixed SDK and start App check
+        id: resolve
+        env:
+          QUALIFICATION_TOKEN: ${{ secrets.QUALIFICATION_APP_TOKEN }}
+          QUALIFICATION_APP_ID: ${{ vars.QUALIFICATION_APP_ID }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          C="$(git rev-parse HEAD)"
+          SDK="$(git -C NexusPipeline rev-parse HEAD)"
+          python tools/sdk_source.py --host-root NexusPipeline --expected-sha "$SDK" --compatibility host.lock.json >/dev/null
+          python tools/qualification_control.py preflight \
+            --pr-number "$PR_NUMBER" \
+            --expected-head-sha "$EXPECTED_HEAD_SHA" \
+            --workflow-sha "$C" \
+            --contract-sha "$SDK" \
+            --app-id "$QUALIFICATION_APP_ID" > preflight.json
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          with open("preflight.json", encoding="utf-8") as stream:
+              value = json.load(stream)
+          print(f"head_sha={value['headSha']}")
+          print(f"base_sha={value['baseSha']}")
+          print(f"workflow_sha={value['workflowSha']}")
+          print(f"contract_sha={value['contractSourceSha']}")
+          print(f"check_id={value['checkId']}")
+          PY
+
+      - name: Record SDK source SHA
+        id: sdk
+        run: echo "sdk_sha=$(git -C NexusPipeline rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  P1:
+    name: P1
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.head_sha }}
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.preflight.outputs.sdk_sha }}
+          path: NexusPipeline
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run P1 source gate
+        run: python tools/repository.py qualification --group source --base "${{ needs.preflight.outputs.base_sha }}" --host-root ../NexusPipeline --sdk-sha "${{ needs.preflight.outputs.sdk_sha }}"
+
+  P2:
+    name: P2
+    needs: preflight
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.head_sha }}
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.preflight.outputs.sdk_sha }}
+          path: NexusPipeline
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+      - name: Run P2 managed/frontend gate
+        run: python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline --sdk-sha "${{ needs.preflight.outputs.sdk_sha }}"
+
+  P3:
+    name: P3
+    needs: preflight
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.head_sha }}
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.preflight.outputs.sdk_sha }}
+          path: NexusPipeline
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+      - name: Run P3 candidate gate
+        run: python tools/repository.py qualification --group candidate --base "${{ needs.preflight.outputs.base_sha }}" --host-root ..\NexusPipeline --sdk-sha "${{ needs.preflight.outputs.sdk_sha }}" --output .generated\qualification-candidate
+
+  qualification-result:
+    name: qualification-result
+    if: ${{ always() && needs.preflight.result == 'success' }}
+    needs: [preflight, P1, P2, P3]
+    runs-on: ubuntu-latest
+    environment: qualification-control
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Finish external App check
+        env:
+          QUALIFICATION_TOKEN: ${{ secrets.QUALIFICATION_APP_TOKEN }}
+        run: >-
+          python tools/qualification_control.py finish
+          --pr-number "${{ inputs.pr_number }}"
+          --head-sha "${{ needs.preflight.outputs.head_sha }}"
+          --base-sha "${{ needs.preflight.outputs.base_sha }}"
+          --workflow-sha "${{ needs.preflight.outputs.workflow_sha }}"
+          --run-id "${{ github.run_id }}"
+          --check-id "${{ needs.preflight.outputs.check_id }}"
+          --app-id "${{ vars.QUALIFICATION_APP_ID }}"
+          --sdk-source-sha "${{ needs.preflight.outputs.sdk_sha }}"
+          --contract-source-sha "${{ needs.preflight.outputs.contract_sha }}"

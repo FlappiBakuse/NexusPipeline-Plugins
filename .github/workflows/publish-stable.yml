@@ -1,0 +1,60 @@
+name: Build stable plugin candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact source SHA with completed Plugin Release Qualification
+        required: true
+        type: string
+      generated_root:
+        description: Optional prebuilt candidate directory for local recovery runs
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-stable-candidate
+  cancel-in-progress: false
+
+jobs:
+  build-candidate:
+    name: stable-candidate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline
+          fetch-depth: 1
+      - name: Build isolated stable candidate
+        run: python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline --output .generated\stable-candidate
+      - name: Verify candidate source identity
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $head = (git rev-parse HEAD).Trim()
+          if ($head -ne "${{ inputs.source_sha }}") { throw "候选 checkout SHA 与 source_sha 不一致" }
+      - name: Upload candidate for separately authorized publisher
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugins-stable-candidate-${{ inputs.source_sha }}
+          path: .generated/stable-candidate
+          if-no-files-found: error
+          retention-days: 14

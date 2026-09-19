@@ -1,0 +1,51 @@
+name: Build develop preview candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Source ref to build (normally develop)
+        required: true
+        default: develop
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-develop-preview-build
+  cancel-in-progress: true
+
+jobs:
+  build-preview:
+    name: preview-build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.424"
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline
+          fetch-depth: 1
+      - name: Build and validate preview candidate
+        run: python tools/repository.py publish-develop --source-ref "${{ inputs.source_ref }}" --output .generated\preview
+      - name: Upload immutable local candidate for separately authorized promotion
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugins-develop-preview-${{ github.sha }}
+          path: .generated/preview
+          if-no-files-found: error
+          retention-days: 14

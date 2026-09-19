@@ -13,6 +13,7 @@ import filecmp
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -27,6 +28,7 @@ from urllib.parse import urlsplit
 
 REPOSITORY = "FlappiBakuse/NexusPipeline-Plugins"
 PACKAGE_URL_PREFIX = f"https://raw.githubusercontent.com/{REPOSITORY}/main/packages"
+PREVIEW_RELEASE_URL_PREFIX = f"https://github.com/{REPOSITORY}/releases/download/plugins-develop"
 STATE_FILE = ".release-state.json"
 STATE_SCHEMA_VERSION = 1
 MAX_RETAINED_PACKAGES = 3
@@ -42,6 +44,12 @@ PACKAGE_PATTERN = re.compile(
     r"^(?P<artifact>[A-Za-z][A-Za-z0-9]{0,63})-"
     r"(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
     r"(?:-(?:beta|rc)\.(?:0|[1-9]\d*))?)\.zip$"
+)
+PREVIEW_PACKAGE_PATTERN = re.compile(
+    r"^(?P<artifact>[A-Za-z][A-Za-z0-9]{0,63})-"
+    r"(?P<version>(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+    r"(?:-(?:beta|rc)\.(?:0|[1-9]\d*))?)-"
+    r"(?P<sha256>[0-9a-f]{64})\.zip$"
 )
 TEXT_SUFFIXES = {
     ".css",
@@ -64,6 +72,34 @@ CAPABILITY_MIN_HOST = {
     "self-managed-pc-launch": "0.14.1",
     "no-fresh-config": "0.14.2",
 }
+SPECIALIZED_CAPABILITIES = frozenset({"emulator", "self-managed-pc-launch", "no-fresh-config"})
+SPECIALIZED_FORBIDDEN_SUFFIXES = frozenset({
+    ".css",
+    ".htm",
+    ".html",
+    ".less",
+    ".scss",
+    ".sln",
+    ".csproj",
+    ".fsproj",
+    ".vbproj",
+    ".dll",
+    ".exe",
+    ".pdb",
+    ".ts",
+    ".tsx",
+    ".jsx",
+    ".vue",
+    ".svelte",
+    ".wasm",
+})
+SPECIALIZED_FORBIDDEN_NAMES = frozenset({
+    "package.json",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+})
+HOST_COMPATIBILITY_KEYS = frozenset({"hostApiVersion", "frontendApiVersion", "supportedLocales"})
+HOST_API_VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+$")
 JUDGE_LOCALE_MIN_HOST_VERSION = "0.15.11"
 DEFAULT_SUPPORTED_LOCALES = frozenset({"zh-CN", "en-US"})
 SUPPORTED_LOCALES = set(DEFAULT_SUPPORTED_LOCALES)
@@ -308,10 +344,31 @@ def _read_locale_registry(path: Path, label: str) -> tuple[str, list[str]]:
 
 
 def _read_locked_host_locales(root: Path) -> list[str]:
+    return list(read_host_compatibility(root)["supportedLocales"])
+
+
+def read_host_compatibility(root: Path) -> dict[str, Any]:
+    """读取并严格校验本仓库声明的 Host/Frontend 兼容元数据。
+
+    该文件只表达公开契约版本与 locale 集合，不再承担 SDK 源码或 Git 提交
+    锁定职责。SDK 的具体源码 SHA 由 qualification preflight 单独记录。
+    """
     lock_path = root / "host.lock.json"
     data = read_json(lock_path)
     _require(isinstance(data, dict), f"host.lock.json 必须是对象：{_display(lock_path)}")
-    return _normalize_locale_list(data.get("supportedLocales"), "host.lock.json 的 supportedLocales")
+    _require(set(data) == HOST_COMPATIBILITY_KEYS, "host.lock.json 只能包含 hostApiVersion、frontendApiVersion、supportedLocales")
+    for key in ("hostApiVersion", "frontendApiVersion"):
+        value = data.get(key)
+        _require(
+            isinstance(value, str) and HOST_API_VERSION_PATTERN.fullmatch(value) is not None,
+            f"host.lock.json 的 {key} 必须是 major.minor 字符串",
+        )
+    locales = _normalize_locale_list(data.get("supportedLocales"), "host.lock.json 的 supportedLocales")
+    return {
+        "hostApiVersion": data["hostApiVersion"],
+        "frontendApiVersion": data["frontendApiVersion"],
+        "supportedLocales": locales,
+    }
 
 
 def _load_supported_locales() -> set[str]:
@@ -336,7 +393,7 @@ def validate_host_locale_registry(root: Path, host_root: Path) -> int:
         "宿主 Web locale registry",
     )
     embedded_default, embedded_locales = _read_locale_registry(
-        host_root / "src" / "Localization" / "Resources" / "locales.json",
+        host_root / "src" / "Shared" / "Localization" / "Resources" / "locales.json",
         "宿主 embedded locale registry",
     )
     _require(web_default == embedded_default, "宿主 Web 与 embedded 的默认 locale 不一致")
@@ -344,7 +401,7 @@ def validate_host_locale_registry(root: Path, host_root: Path) -> int:
     _require(web_locales == locked_locales, "host.lock.json 的 supportedLocales 与宿主当前 locale registry 不一致")
     for locale in locked_locales:
         web_resource = host_root / "frontend" / "public" / "i18n" / f"{locale}.json"
-        embedded_resource = host_root / "src" / "Localization" / "Resources" / f"{locale}.json"
+        embedded_resource = host_root / "src" / "Shared" / "Localization" / "Resources" / f"{locale}.json"
         _require(web_resource.is_file(), f"宿主缺少 Web locale 资源：{_display(web_resource)}")
         _require(embedded_resource.is_file(), f"宿主缺少 embedded locale 资源：{_display(embedded_resource)}")
         _require(isinstance(read_json(web_resource), dict), f"宿主 Web locale 资源必须是对象：{_display(web_resource)}")
@@ -538,6 +595,108 @@ def _validate_judge_locale_contract(plugin: Path, manifest: dict[str, Any], judg
     )
 
 
+def _validate_specialized_manifest_contract(manifest: dict[str, Any], label: str) -> None:
+    """校验专项插件的声明面；源码与 ZIP 复用同一份白名单。"""
+    artifact = str(manifest.get("artifactName", label))
+    _require(str(manifest.get("kind", "")).strip().lower() == "data-specialized", f"专项插件 {artifact} 的 kind 必须为 data-specialized")
+    _require("frontend" not in manifest, f"专项插件 {artifact} 禁止声明 frontend 字段（包括 null）")
+    capabilities = manifest.get("capabilities", [])
+    _require(isinstance(capabilities, list), f"专项插件 {artifact} 的 capabilities 必须是数组")
+    seen: set[str] = set()
+    for capability in capabilities:
+        _require(isinstance(capability, str) and bool(capability.strip()), f"专项插件 {artifact} 的 capability 无效：{capability}")
+        normalized = capability.strip()
+        _require(normalized in SPECIALIZED_CAPABILITIES, f"专项插件 {artifact} 的 capability 不受支持：{normalized}")
+        _require(normalized not in seen, f"专项插件 {artifact} 的 capability 重复：{normalized}")
+        seen.add(normalized)
+
+
+def _resolve_specialized_script_reference(root: Path, source: Path, reference: str, label: str) -> Path | None:
+    """解析专项后端脚本中的相对 import/require，只允许 data 闭包。"""
+    if not reference.startswith("."):
+        return None
+    base = source.parent / Path(*reference.replace("\\", "/").split("/"))
+    candidates = [base]
+    if not base.suffix:
+        candidates.extend(base.with_suffix(suffix) for suffix in (".js", ".mjs", ".py", ".json"))
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        data_root = (root / "data").resolve()
+        if resolved != data_root and data_root not in resolved.parents:
+            raise RepositoryError(f"专项插件脚本引用越出 data 闭包：{label} -> {reference}")
+        if resolved.is_file():
+            return resolved
+    raise RepositoryError(f"专项插件脚本引用文件不存在：{label} -> {reference}")
+
+
+def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Path]:
+    closure: set[Path] = set()
+    queue: list[Path] = []
+    artifact = str(manifest.get("artifactName", root.name))
+    for field in ("judgeScript", "configValidator", "configEditor"):
+        if field not in manifest:
+            continue
+        script = _safe_relative(root, manifest.get(field), f"专项插件 {artifact} 的 {field}")
+        data_root = (root / "data").resolve()
+        resolved = script.resolve()
+        _require(resolved == data_root or data_root in resolved.parents, f"专项插件 {artifact} 的 {field} 必须位于 data/ 内")
+        _require(resolved.suffix.lower() in {".js", ".mjs", ".py"}, f"专项插件 {artifact} 的 {field} 必须是 JS/MJS/Python 后端脚本")
+        queue.append(resolved)
+
+    import_pattern = re.compile(
+        r"(?:import\s+(?:[^;]*?\s+from\s+)?|import\s*\(|require\s*\()\s*['\"]([^'\"]+)['\"]"
+    )
+    while queue:
+        source = queue.pop()
+        if source in closure:
+            continue
+        closure.add(source)
+        if source.suffix.lower() not in {".js", ".mjs"}:
+            continue
+        try:
+            text = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            raise RepositoryError(f"专项插件脚本无法读取：{_display(source)}；{exc}") from exc
+        for reference in import_pattern.findall(text):
+            target = _resolve_specialized_script_reference(root, source, reference, f"{artifact}/{source.name}")
+            if target is not None:
+                queue.append(target)
+    return closure
+
+
+def validate_specialized_contract(plugin_or_root: SourcePlugin | Path, manifest: dict[str, Any] | None = None) -> None:
+    """验证 data-specialized 源码/载荷不能携带任意浏览器或 managed 代码。"""
+    if isinstance(plugin_or_root, SourcePlugin):
+        root = plugin_or_root.root
+        manifest = plugin_or_root.manifest
+    else:
+        root = Path(plugin_or_root)
+    _require(isinstance(manifest, dict), f"专项插件 manifest 无效：{_display(root)}")
+    _validate_specialized_manifest_contract(manifest, root.name)
+    closure = _specialized_script_closure(root, manifest)
+    artifact = str(manifest.get("artifactName", root.name))
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root)
+        parts = [part.casefold() for part in relative.parts]
+        name = path.name.casefold()
+        suffix = path.suffix.casefold()
+        _require(
+            "frontend" not in parts and "web" not in parts,
+            f"专项插件 {artifact} 禁止浏览器目录：{_display(relative)}",
+        )
+        _require(name not in SPECIALIZED_FORBIDDEN_NAMES, f"专项插件 {artifact} 禁止浏览器工程文件：{_display(relative)}")
+        _require(
+            not name.startswith(("vite.config.", "webpack.config.", "rollup.config."))
+            and not (name.startswith("tsconfig") and suffix == ".json"),
+            f"专项插件 {artifact} 禁止前端构建配置：{_display(relative)}",
+        )
+        _require(suffix not in SPECIALIZED_FORBIDDEN_SUFFIXES, f"专项插件 {artifact} 禁止浏览器或 managed 载荷：{_display(relative)}")
+        if suffix in {".js", ".mjs", ".py"} and "data" in parts:
+            _require(path.resolve() in closure, f"专项插件 {artifact} 的后端脚本未被声明执行闭包引用：{_display(relative)}")
+
+
 def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     frontend = manifest.get("frontend")
     if frontend is None:
@@ -676,6 +835,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
             )
     _validate_localization_contract(root, manifest)
     if kind == "data-specialized":
+        validate_specialized_contract(root, manifest)
         _validate_data_contract(root, manifest)
     else:
         projects = sorted((root / "src").glob("*.csproj"))
@@ -820,16 +980,6 @@ def plugin_root_from_path(path: str) -> str | None:
     if parts[1] in {"general", "specialized"}:
         return "/".join(parts[:3])
     return "/".join(parts[:2])
-
-
-def release_requires_full(paths: Iterable[str]) -> bool:
-    """工具、工作流、宿主锁变化只触发检查，不重建历史插件包。"""
-    return False
-
-
-def _release_requires_full(paths: Iterable[str]) -> bool:
-    """保留测试与调用方使用的内部名称，语义与 release_requires_full 相同。"""
-    return release_requires_full(paths)
 
 
 def _plugin_identity_at(root: Path, commit: str, plugin_root: str) -> tuple[str, str] | None:
@@ -1195,6 +1345,8 @@ def _copy_tree(source: Path, destination: Path) -> None:
 
 
 def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) -> Path:
+    if plugin.kind == "data-specialized":
+        validate_specialized_contract(plugin)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".nxp-pack-", dir=str(root)) as temporary:
         temporary_root = Path(temporary)
@@ -1217,6 +1369,7 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
                     copied += 1
             _require(copied > 0, f"managed-code 插件没有可打包构建输出：{plugin.artifact_name}")
         if plugin.manifest.get("frontend") is not None:
+            _require(plugin.kind == "managed-code", f"专项插件 {plugin.artifact_name} 禁止构建 frontend")
             _build_frontend(plugin, root)
             _copy_tree(plugin.root / "web", payload / "web")
         if plugin.manifest.get("localization") is not None:
@@ -1255,6 +1408,20 @@ def catalog_entry(plugin: SourcePlugin, package: Path, metadata: PackageMetadata
     return entry
 
 
+def preview_catalog_entry(
+    plugin: SourcePlugin,
+    package: Path,
+    source_commit: str,
+    metadata: PackageMetadata | None = None,
+) -> dict[str, Any]:
+    """创建 develop preview 的平面资产引用；不触碰 stable catalog/state。"""
+    metadata = metadata or package_metadata(package)
+    entry = catalog_entry(plugin, package, metadata)
+    entry["packageUrl"] = f"{PREVIEW_RELEASE_URL_PREFIX}/{package.name}"
+    entry["sourceCommit"] = source_commit
+    return entry
+
+
 def _catalog_order(entries: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(entries, key=lambda item: (0 if item.get("kind") == "managed-code" else 1, str(item.get("name", "")).casefold()))
 
@@ -1288,12 +1455,92 @@ def _validate_catalog_shape(root: Path, catalog: dict[str, Any], plugins: list[S
         _require(isinstance(entry.get("sizeBytes"), int) and entry["sizeBytes"] >= 0, f"catalog sizeBytes 无效：{artifact}")
 
 
+def _validate_preview_catalog_shape(
+    root: Path,
+    catalog: dict[str, Any],
+    plugins: list[SourcePlugin],
+    source_commit: str,
+    generated_packages: Path,
+) -> None:
+    _require(catalog.get("schemaVersion") == 2, "preview catalog schemaVersion 必须为 2")
+    _require(catalog.get("repository") == REPOSITORY, "preview catalog repository 不正确")
+    _require(catalog.get("channel") == "develop", "preview catalog channel 必须为 develop")
+    _require(catalog.get("sourceCommit") == source_commit and re.fullmatch(r"[0-9a-f]{40}", source_commit) is not None, "preview catalog sourceCommit 无效")
+    entries = catalog.get("plugins")
+    _require(isinstance(entries, list), "preview catalog.plugins 必须是数组")
+    by_artifact = {plugin.artifact_name: plugin for plugin in plugins}
+    _require(set(entry.get("artifactName") for entry in entries) == set(by_artifact), "preview catalog 与源码插件集合不一致")
+    _require(entries == _catalog_order(entries), "preview catalog 必须按 managed-code 优先、机器 ID 稳定排序")
+    seen: set[str] = set()
+    for entry in entries:
+        artifact = entry.get("artifactName")
+        _require(artifact not in seen, f"preview catalog artifactName 重复：{artifact}")
+        seen.add(artifact)
+        plugin = by_artifact[artifact]
+        version = entry.get("version")
+        sha = entry.get("sha256")
+        _require(entry.get("name") == plugin.name and version == plugin.version and entry.get("kind") == plugin.kind, f"preview catalog 与源码不一致：{artifact}")
+        _require(isinstance(sha, str) and re.fullmatch(r"[0-9a-f]{64}", sha) is not None, f"preview catalog SHA256 无效：{artifact}")
+        package = generated_packages / f"{artifact}-{version}-{sha}.zip"
+        _require(package.is_file(), f"缺少 preview ZIP：{_display(package)}")
+        _require(entry.get("packageUrl") == f"{PREVIEW_RELEASE_URL_PREFIX}/{package.name}", f"preview packageUrl 不正确：{artifact}")
+        _require(entry.get("sourceCommit") == source_commit, f"preview entry sourceCommit 不正确：{artifact}")
+        _require(entry.get("sizeBytes") == package.stat().st_size, f"preview sizeBytes 不一致：{artifact}")
+        _validate_zip(package, mode="preview", expected_artifact=artifact, expected_version=version, expected_sha256=sha)
+
+
+def build_preview(root: Path, source_ref: str = "HEAD", output: Path | None = None) -> dict[str, Any]:
+    """生成独立 develop preview 候选，不写 stable catalog/state/packages。"""
+    root = root.resolve()
+    source_commit = git_commit(root, source_ref)
+    _require(git_head(root) == source_commit, "preview source-ref 必须与当前隔离 checkout HEAD 一致")
+    plugins = discover_source_plugins(root)
+    read_host_compatibility(root)
+    generated_root = (output or root / ".generated" / "preview").resolve()
+    _prepare_output(root, generated_root)
+    packages_root = generated_root / "packages"
+    packages_root.mkdir(parents=True, exist_ok=True)
+    entries: list[dict[str, Any]] = []
+    package_metadata_by_artifact: dict[str, dict[str, Any]] = {}
+    try:
+        for plugin in plugins:
+            temporary = generated_root / f".{plugin.artifact_name}-{plugin.version}.zip"
+            build_plugin_package(plugin, temporary, root)
+            metadata = package_metadata(temporary)
+            final_name = f"{plugin.artifact_name}-{plugin.version}-{metadata.sha256}.zip"
+            final_package = packages_root / final_name
+            shutil.move(str(temporary), str(final_package))
+            final_metadata = PackageMetadata(final_package, metadata.sha256, metadata.size_bytes)
+            entries.append(preview_catalog_entry(plugin, final_package, source_commit, final_metadata))
+            package_metadata_by_artifact[plugin.artifact_name] = {
+                "path": _display(final_package.relative_to(generated_root)),
+                "sha256": metadata.sha256,
+                "sizeBytes": metadata.size_bytes,
+            }
+            print(f"[repository] preview 包：{plugin.artifact_name} v{plugin.version}，SHA256 已固定在文件名", flush=True)
+        catalog = {
+            "schemaVersion": 2,
+            "repository": REPOSITORY,
+            "channel": "develop",
+            "sourceCommit": source_commit,
+            "generatedAt": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+            "plugins": _catalog_order(entries),
+        }
+        _validate_preview_catalog_shape(root, catalog, plugins, source_commit, packages_root)
+        write_json(generated_root / "catalog.json", catalog)
+        write_json(
+            generated_root / "preview-plan.json",
+            {"schemaVersion": 1, "channel": "develop", "sourceCommit": source_commit, "packageMetadata": package_metadata_by_artifact},
+        )
+        return {"catalog": catalog, "output": str(generated_root), "sourceCommit": source_commit}
+    finally:
+        cleanup_managed_build_artifacts(root)
+
+
 def validate_sources(root: Path) -> tuple[int, int]:
     plugins = discover_source_plugins(root)
     json_count = validate_json_tree(root)
-    host_lock = read_json(root / "host.lock.json")
-    _require(isinstance(host_lock, dict) and host_lock.get("repository") == "FlappiBakuse/NexusPipeline", "host.lock.json repository 不正确")
-    _require(isinstance(host_lock.get("ref"), str) and re.fullmatch(r"[0-9a-f]{40}", host_lock["ref"]), "host.lock.json ref 必须是完整 commit SHA")
+    read_host_compatibility(root)
     return len(plugins), json_count
 
 
@@ -1319,7 +1566,79 @@ def _zip_json(archive: zipfile.ZipFile, name: str, package: Path) -> dict[str, A
     return value
 
 
-def _validate_zip(package: Path, expected: SourcePlugin | None = None) -> None:
+def _validate_specialized_zip_payload(
+    archive: zipfile.ZipFile,
+    names: set[str],
+    manifest: dict[str, Any],
+    package: Path,
+) -> None:
+    artifact = str(manifest.get("artifactName", package.stem))
+    _validate_specialized_manifest_contract(manifest, f"ZIP {_display(package)}")
+    data_names = {name for name in names if name.startswith("data/") and not name.endswith("/")}
+    _require(data_names, f"专项插件 ZIP 缺少 data 载荷：{_display(package)}")
+    for name in names:
+        normalized = name.replace("\\", "/")
+        parts = [part.casefold() for part in normalized.split("/")]
+        file_name = parts[-1]
+        suffix = Path(file_name).suffix.casefold()
+        _require("frontend" not in parts and "web" not in parts, f"专项插件 ZIP 禁止浏览器目录：{name}")
+        _require(file_name not in SPECIALIZED_FORBIDDEN_NAMES, f"专项插件 ZIP 禁止浏览器工程文件：{name}")
+        _require(
+            not file_name.startswith(("vite.config.", "webpack.config.", "rollup.config."))
+            and not (file_name.startswith("tsconfig") and suffix == ".json"),
+            f"专项插件 ZIP 禁止前端构建配置：{name}",
+        )
+        _require(suffix not in SPECIALIZED_FORBIDDEN_SUFFIXES, f"专项插件 ZIP 禁止浏览器或 managed 载荷：{name}")
+
+    import_pattern = re.compile(
+        r"(?:import\s+(?:[^;]*?\s+from\s+)?|import\s*\(|require\s*\()\s*['\"]([^'\"]+)['\"]"
+    )
+    closure: set[str] = set()
+    queue: list[str] = []
+    for field in ("judgeScript", "configValidator", "configEditor"):
+        value = manifest.get(field)
+        if value is None:
+            continue
+        _require(isinstance(value, str) and value.startswith("data/"), f"专项插件 ZIP 的 {field} 必须位于 data/：{value}")
+        normalized = value.replace("\\", "/")
+        _require(normalized in names, f"专项插件 ZIP 缺少 {field}：{value}")
+        _require(Path(normalized).suffix.casefold() in {".js", ".mjs", ".py"}, f"专项插件 ZIP 的 {field} 不是后端脚本：{value}")
+        queue.append(normalized)
+    while queue:
+        current = queue.pop()
+        if current in closure:
+            continue
+        closure.add(current)
+        if Path(current).suffix.casefold() not in {".js", ".mjs"}:
+            continue
+        try:
+            source = archive.read(current).decode("utf-8")
+        except (KeyError, UnicodeError) as exc:
+            raise RepositoryError(f"专项插件 ZIP 脚本无法读取：{current} -> {_display(package)}") from exc
+        for reference in import_pattern.findall(source):
+            if not reference.startswith("."):
+                continue
+            candidate = posixpath.normpath(posixpath.join(posixpath.dirname(current), reference))
+            candidates = [candidate]
+            if not Path(candidate).suffix:
+                candidates.extend(candidate + suffix for suffix in (".js", ".mjs", ".py", ".json"))
+            target = next((item for item in candidates if item in names), None)
+            _require(target is not None and target.startswith("data/"), f"专项插件 ZIP 脚本引用不存在或越出 data：{current} -> {reference}")
+            queue.append(target)
+    for name in data_names:
+        if Path(name).suffix.casefold() in {".js", ".mjs", ".py"}:
+            _require(name in closure, f"专项插件 {artifact} 的 ZIP 后端脚本未被声明执行闭包引用：{name}")
+
+
+def _validate_zip(
+    package: Path,
+    expected: SourcePlugin | None = None,
+    *,
+    mode: str = "stable",
+    expected_artifact: str | None = None,
+    expected_version: str | None = None,
+    expected_sha256: str | None = None,
+) -> None:
     try:
         with zipfile.ZipFile(package) as archive:
             infos = archive.infolist()
@@ -1327,8 +1646,21 @@ def _validate_zip(package: Path, expected: SourcePlugin | None = None) -> None:
                 _require(_safe_zip_name(info.filename), f"ZIP 条目路径非法：{_display(package)} -> {info.filename}")
             manifest = _zip_json(archive, "plugin.json", package)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
-            match = PACKAGE_PATTERN.fullmatch(package.name)
+            _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
+            match = (PACKAGE_PATTERN if mode == "stable" else PREVIEW_PACKAGE_PATTERN).fullmatch(package.name)
             _require(match is not None and manifest.get("artifactName") == match.group("artifact") and manifest.get("version") == match.group("version"), f"ZIP manifest 与文件名不一致：{_display(package)}")
+            artifact = expected_artifact or (expected.artifact_name if expected is not None else None)
+            version = expected_version or (expected.version if expected is not None else None)
+            if artifact is not None:
+                _require(match is not None and match.group("artifact") == artifact, f"ZIP artifactName 与预期不一致：{_display(package)}")
+            if version is not None:
+                _require(match is not None and match.group("version") == version, f"ZIP version 与预期不一致：{_display(package)}")
+            if mode == "preview":
+                _require(match is not None and match.group("sha256") == sha256(package), f"Preview ZIP 文件名 SHA256 不一致：{_display(package)}")
+                if expected_sha256 is not None:
+                    _require(match.group("sha256") == expected_sha256, f"Preview ZIP SHA256 与 catalog 不一致：{_display(package)}")
+            elif expected_sha256 is not None:
+                _require(sha256(package) == expected_sha256, f"Stable ZIP SHA256 与 catalog 不一致：{_display(package)}")
             names = {info.filename.replace("\\", "/") for info in infos}
             if expected is not None:
                 store = _zip_json(archive, "store.json", package)
@@ -1342,9 +1674,13 @@ def _validate_zip(package: Path, expected: SourcePlugin | None = None) -> None:
                     f"ZIP manifest 与源码不一致：{_display(package)}",
                 )
                 if expected.kind == "data-specialized":
-                    _require(any(name == "data" or name.startswith("data/") for name in names), f"专项插件 ZIP 缺少 data 目录：{_display(package)}")
+                    _validate_specialized_zip_payload(archive, names, manifest, package)
                 else:
                     _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
+            elif str(manifest.get("kind", "")).strip().lower() == "data-specialized":
+                _validate_specialized_zip_payload(archive, names, manifest, package)
+            elif str(manifest.get("kind", "")).strip().lower() == "managed-code":
+                _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
     except zipfile.BadZipFile as exc:
         raise RepositoryError(f"发行包不是有效 ZIP：{_display(package)}") from exc
 
@@ -1402,6 +1738,82 @@ def check_pr(root: Path, base: str) -> int:
     return len(changed)
 
 
+def _plugin_roots_at(root: Path, commit: str) -> dict[str, tuple[str, dict[str, Any]]]:
+    output = _git(root, ["ls-tree", "-r", "--name-only", commit, "--", "plugins"], f"读取插件基线树：{commit}")
+    result: dict[str, tuple[str, dict[str, Any]]] = {}
+    for path in output.splitlines():
+        normalized = path.replace("\\", "/")
+        if not normalized.endswith("/plugin.json"):
+            continue
+        parts = normalized.split("/")
+        if len(parts) != 4 or parts[0] != "plugins" or parts[1] not in {"general", "specialized"}:
+            continue
+        plugin_root = "/".join(parts[:3])
+        manifest = git_json_at(root, commit, normalized)
+        if isinstance(manifest, dict) and isinstance(manifest.get("artifactName"), str):
+            result[manifest["artifactName"]] = (plugin_root, manifest)
+    return result
+
+
+def _release_payload_tree_at(root: Path, commit: str, plugin_root: str) -> dict[str, str]:
+    output = _git(root, ["ls-tree", "-r", commit, "--", plugin_root], f"读取插件发行树：{plugin_root}")
+    result: dict[str, str] = {}
+    prefix = plugin_root.rstrip("/") + "/"
+    for line in output.splitlines():
+        if "\t" not in line:
+            continue
+        header, path = line.split("\t", 1)
+        fields = header.split()
+        if len(fields) < 3 or not path.startswith(prefix):
+            continue
+        relative = path[len(prefix):]
+        if relative == "" or relative.startswith("tests/") or "/tests/" in relative:
+            continue
+        result[relative] = fields[2]
+    return result
+
+
+def validate_candidate_against_base(root: Path, base: str, head: str | None = None) -> dict[str, Any]:
+    """校验 PR base 与当前 head 的发行版本纪律，不修改源码或发行状态。"""
+    root = root.resolve()
+    base_commit = git_commit(root, base)
+    head_commit = git_commit(root, head or "HEAD")
+    base_plugins = _plugin_roots_at(root, base_commit)
+    head_plugins = _plugin_roots_at(root, head_commit)
+    released = load_state(root).get("released", {})
+    _require(isinstance(released, dict), f"{STATE_FILE}.released 必须是对象")
+    checked: list[str] = []
+    for artifact, (head_root, head_manifest) in sorted(head_plugins.items()):
+        old = base_plugins.get(artifact)
+        changed = False
+        if old is not None:
+            old_root, old_manifest = old
+            changed = _release_payload_tree_at(root, base_commit, old_root) != _release_payload_tree_at(root, head_commit, head_root)
+            if changed:
+                old_version = old_manifest.get("version")
+                new_version = head_manifest.get("version")
+                _require(is_semver(old_version) and is_semver(new_version), f"插件 {artifact} 的 base/head 版本无效")
+                _require(
+                    parse_semver(new_version) > parse_semver(old_version),
+                    f"插件 {artifact} 的发行相关源码相对 base 必须提升 SemVer：{old_version} -> {new_version}",
+                )
+        published = released.get(artifact)
+        if isinstance(published, dict) and is_semver(published.get("version")) and is_semver(head_manifest.get("version")):
+            if parse_semver(head_manifest["version"]) < parse_semver(published["version"]):
+                raise RepositoryError(f"插件 {artifact} 的源码版本低于已发布游标：{head_manifest['version']} < {published['version']}")
+            if changed and head_manifest["version"] == published["version"]:
+                raise RepositoryError(f"插件 {artifact} 已发布版本不可变，但当前源码仍使用 {published['version']}")
+        checked.append(artifact)
+
+    for artifact, published in sorted(released.items()):
+        if artifact in head_plugins or not isinstance(published, dict):
+            continue
+        _require(is_semver(published.get("version")), f"已发布插件 {artifact} 的版本无效")
+    result = {"base": base_commit, "head": head_commit, "checkedArtifacts": checked}
+    print(f"[repository] candidate base/head 版本纪律通过：{base_commit} -> {head_commit}，{len(checked)} 个插件", flush=True)
+    return result
+
+
 def _managed_projects(root: Path, artifacts: Iterable[str]) -> list[tuple[SourcePlugin, Path]]:
     wanted = set(artifacts)
     result: list[tuple[SourcePlugin, Path]] = []
@@ -1428,7 +1840,13 @@ def cleanup_managed_build_artifacts(root: Path) -> None:
                 shutil.rmtree(target)
 
 
-def test_managed(root: Path, plan: dict[str, Any] | None = None, full: bool = False) -> int:
+def test_managed(
+    root: Path,
+    plan: dict[str, Any] | None = None,
+    full: bool = False,
+    *,
+    include_frontend: bool = True,
+) -> int:
     plugins = discover_source_plugins(root)
     artifacts = [plugin.artifact_name for plugin in plugins] if full or plan is None and full else (plan or {}).get("managed", [])
     if not artifacts:
@@ -1437,7 +1855,7 @@ def test_managed(root: Path, plan: dict[str, Any] | None = None, full: bool = Fa
     total = 0
     try:
         frontend_script = root / "tools" / "Test-FrontendPlugins.mjs"
-        if frontend_script.is_file():
+        if include_frontend and frontend_script.is_file():
             _run(("node", str(frontend_script)), "前端插件 conformance", root)
             total += 1
         for plugin, project in _managed_projects(root, artifacts):

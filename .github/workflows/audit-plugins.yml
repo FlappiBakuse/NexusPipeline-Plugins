@@ -2,8 +2,6 @@ name: Audit plugin repository
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17 3 * * 0"
 
 permissions:
   contents: read

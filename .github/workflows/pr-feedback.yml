@@ -1,0 +1,65 @@
+name: Plugin PR Feedback
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-pr-feedback-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    name: Feedback source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Run source feedback
+        run: python tools/repository.py qualification --group source --base "${{ github.event.pull_request.base.sha }}" --host-root ../NexusPipeline
+
+  frontend-managed:
+    name: Feedback frontend and managed
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: main
+          path: NexusPipeline
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run frontend-managed feedback
+        run: python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline

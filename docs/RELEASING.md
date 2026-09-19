@@ -4,7 +4,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 ## 发行模型
 
-插件发行包直接随 `main` 分支维护。本仓库不再为插件创建 Git tag 或 GitHub Release，宿主从固定官方 raw 地址下载 catalog 和 ZIP。
+stable 发行物由受信 Publisher App 写入 `main`；develop preview 使用固定的 `plugins-develop` GitHub Release。两条通道的 catalog、缓存和来源元数据隔离，preview 不写 stable 的 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 每个插件最多保留最近三个受限版本包。版本格式为 `major.minor.patch`、`major.minor.patch-beta.N` 或 `major.minor.patch-rc.N`，排序遵循 `beta < rc < stable`。旧包保留在仓库中作为发行存档，插件平台只展示和安装 catalog 当前版本，不提供旧版本选择或降级入口。
 
@@ -41,17 +41,17 @@ packages/
 
 每个 artifact 目录保留该插件最近三个受限版本包；`catalog.json` 只描述当前版本，归档包不提供安装入口。
 
-发行 ZIP 的根目录直接对应运行时插件目录内容：
+stable 发行 ZIP 的根目录直接对应运行时插件目录内容：
 
 ```text
 plugin.json
 data/resolve.json
 data/judge.js 或 data/judge.py
-web/main.js
-web/style.css
+web/main.js                         # 仅 managed-code 且声明 frontend 时
+web/style.css                       # 仅 managed-code 且声明 frontend 时
 ```
 
-managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON 运行时文件。包不包含 `src/`、测试文件、`obj/`、调试符号或用户数据；包内包含 `store.json`，有插件说明时包含 `README.md`。
+`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明文件，不得包含 `frontend/`、`web/`、浏览器载荷或 .NET 程序集。managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON 运行时文件；带前端的 managed 插件才额外包含 manifest 声明的 `web/` 资源。包不包含 `src/`、测试文件、`obj/`、调试符号或用户数据。
 
 ## 发布前准备
 
@@ -60,7 +60,7 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 以及可选 configValidator/configEditor 均位于 `data/`；
+- data-specialized 插件的 resolve、judgeScript 以及可选 configValidator/configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 
@@ -68,17 +68,15 @@ managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON �
 
 发行工具入口为 `python tools/repository.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
 
-本地可以执行：
+本地可以执行固定的 P1/P2/P3：
 
 ```text
-python tools/repository.py validate-source
-python tools/repository.py validate-host-locales --host-root ..\NexusPipeline
-python tools/repository.py check-syntax
-python -m unittest discover -s tools/tests -v
-python tools/repository.py plan --baseline auto --output .generated/release-plan.json
-python tools/repository.py test --plan .generated/release-plan.json
-python tools/repository.py release --plan .generated/release-plan.json --output .generated
-python tools/repository.py validate-generated --generated-root .generated
+python tools/repository.py qualification --group source --base main --host-root ..\NexusPipeline
+python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline
+python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline
+
+# develop preview，只生成并校验本地候选，不写 stable
+python tools/repository.py publish-develop --source-ref develop --output .generated/preview
 ```
 
 发布工作流把生成的 catalog 与 package 纳入主分支后，再运行 `python tools/repository.py validate` 核对主分支源码、catalog 和发行包集合。
@@ -87,7 +85,7 @@ python tools/repository.py validate-generated --generated-root .generated
 
 `validate-source` 用于在 PR 或新插件候选的 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁。`validate` 还会校验当前 catalog 集合与已存在发行包，因此只有 catalog/packages 已包含当前源码版本时才能通过；新插件或新版本进入候选时，源码阶段应先运行 `validate-source`，生成候选物后运行 `validate-generated`，正式发布流水线更新 catalog/packages 后再运行 `validate`。
 
-`validate-host-locales` 将 `host.lock.json` 的 `supportedLocales` 与当前宿主 checkout 的 Web/embedded locale registry 及对应资源文件逐项比对。插件构建可以继续使用锁定的宿主提交；该校验使用独立的当前宿主 checkout，避免两种契约相互覆盖。
+`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。每次 Qualification 的 preflight 通过 `tools/sdk_source.py` 固定官方 Host 的完整 `sdkSourceSha`，所有 P1/P2/P3 使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`validate-host-locales` 仍可作为独立诊断。
 
 普通发行的处理边界如下：
 
@@ -102,7 +100,7 @@ python tools/repository.py validate-generated --generated-root .generated
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
 
-工具、文档、工作流和宿主锁变化会触发契约检查与测试，既有 SemVer 包不会因此重建。managed-code 构建使用 `host.lock.json` 指定的 NexusPipeline 提交；GitHub Actions 将两个仓库 checkout 到同级目录，插件 `.csproj` 使用分类源码布局对应的固定兄弟仓库相对路径，不随 CI workspace 改写。当插件需要新宿主契约（例如 Plugin API v1.7 的模拟器 provider 或 v1.8 的通知收件人覆盖）时，宿主实现必须先进入实际可检出的 NexusPipeline 提交，再把 `host.lock.json` 的 `ref` 更新到该真实提交；在宿主提交可用前不要构建或发行依赖该端口的插件。`catalog.json`、`packages/` 与 `.release-state.json` 由发行流水线生成，不手工填写包摘要或发行事实。
+工具、文档、工作流和兼容元数据变化会触发契约检查和 Qualification；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 会写入资格关联和候选计划。`catalog.json`、`packages/` 与 `.release-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
 
 ## 模拟器支持真实设备验证
 
@@ -204,19 +202,18 @@ python tools/repository.py validate
 python tools/repository.py audit --full
 ```
 
-Full Audit 由手动触发或每周计划任务运行。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
+Full Audit 只由手动入口触发，不参与每次 PR/main 资格。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
 
-Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。合并后的 main 发布工作流使用 concurrency coalescing，从最新 main 和最近成功发行状态重新规划；Bot commit 的生成路径不触发下一轮发布。
+Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。stable publisher 使用 `.release-state.json.sourceCommit` 追踪已发布游标，写入前校验资格关联、不可变包、精确生成物白名单和远端快进；develop preview 使用不可变包名和最后切换 catalog 的顺序，不删除旧 preview 资产。
 
 ## 校验工作流
 
-`.github/workflows/validate-plugins.yml` 按变更路径拆成四个 Gate，`workflow_dispatch` 全部执行：
+本地 `qualification` 命令固定执行 P1/P2/P3；正式 PR 资格工作流必须执行全部 Gate，不使用 changed-path skip：
 
 | Gate | 运行环境 | 内容 |
 |---|---|---|
-| `plugin-source` | ubuntu | `check-pr --base`、`validate-source`、`validate-host-locales`、`check-syntax`、`tools/tests` 单元测试 |
-| `plugin-frontend` | ubuntu | `npm ci`、`Test-ConfigEditors.mjs`、`Test-FrontendPlugins.mjs` |
-| `plugin-managed` | windows | `test-managed --full` |
-| `plugin-package` | windows | `plan`、`test`、`release`、`validate-generated` |
+| `P1` | 固定的源 checkout/SDK | source contracts、locale、syntax、Config Editors、Python tests、PR base 检查 |
+| `P2` | 固定的 managed/Frontend 环境 | `npm ci`、Frontend conformance/typecheck/build、managed-code 全量构建测试 |
+| `P3` | 隔离候选目录 | base 版本纪律、candidate plan、全量发行包验证、stable 文件未修改 |
 
-`plugin-frontend` 不检出宿主仓库：`Test-FrontendPlugins.mjs` 使用 mock host 运行插件入口，元素白名单在无宿主检出时使用脚本内维护的清单。`plugin-managed` 与 `plugin-package` 按 `host.lock.json` 的 `ref` 检出对应宿主提交。每周 `audit --full` 与生产 `publish-plugins.yml` 保持全量校验。
+`tools/qualification.py` 负责本地编排，`tools/sdk_source.py` 负责一次解析并固定 SDK 来源；`tools/qualification_control.py`（部署后）负责外部 App Check 的 fail-closed 聚合。手动 `audit --full` 只作完整包诊断，不替代 P1/P2/P3，也不自动改变 stable 状态。

@@ -41,6 +41,9 @@ def _parser() -> argparse.ArgumentParser:
             "check-pr",
             "validate-generated",
             "validate-host-locales",
+            "qualification",
+            "publish-develop",
+            "publish-stable",
             "apply",
             "bootstrap-state",
         ),
@@ -52,8 +55,13 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--plan", type=Path, help="release/test 使用的唯一 release-plan.json")
     parser.add_argument("--output", type=Path, help="plan/release/bootstrap-state 输出路径")
     parser.add_argument("--generated-root", type=Path, help="生成候选物目录")
-    parser.add_argument("--host-root", type=Path, help="validate-host-locales 使用的当前宿主 checkout")
+    parser.add_argument("--host-root", type=Path, help="validate-host-locales/qualification 使用的当前宿主 checkout")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
+    parser.add_argument("--group", choices=("source", "frontend-managed", "candidate", "all"), default="all", help="qualification Gate 分组")
+    parser.add_argument("--sdk-sha", help="qualification 使用的固定 Host checkout SHA")
+    parser.add_argument("--source-ref", default="develop", help="publish-develop 的源码 ref")
+    parser.add_argument("--source-sha", help="publish-stable 的已验证源码 SHA")
+    parser.add_argument("--remote-write", action="store_true", help="请求受保护 publisher 远端写入（本地工具会拒绝）")
     return parser
 
 
@@ -116,6 +124,36 @@ def main(argv: list[str] | None = None) -> int:
                 raise RepositoryError("validate-host-locales 必须指定 --host-root")
             count = validate_host_locale_registry(root, args.host_root.resolve())
             print(f"[repository] 宿主 locale registry 同步校验通过：{count} 个 locale", flush=True)
+        elif args.command == "qualification":
+            from qualification import run_qualification
+
+            run_qualification(
+                root,
+                args.group,
+                base=args.base or "main",
+                host_root=args.host_root.resolve() if args.host_root else None,
+                sdk_sha=args.sdk_sha,
+                output=args.output.resolve() if args.output else None,
+                baseline=args.baseline,
+            )
+        elif args.command == "publish-develop":
+            from repository_publish import publish_develop
+
+            publish_develop(
+                root,
+                args.source_ref,
+                args.output.resolve() if args.output else None,
+                remote_write=args.remote_write,
+            )
+        elif args.command == "publish-stable":
+            from repository_publish import publish_stable
+
+            if not args.source_sha:
+                raise RepositoryError("publish-stable 必须指定 --source-sha")
+            generated = args.generated_root or args.output
+            if generated is None:
+                raise RepositoryError("publish-stable 必须指定 --generated-root")
+            publish_stable(root, args.source_sha, generated.resolve(), remote_write=args.remote_write)
         elif args.command == "apply":
             generated = args.generated_root or args.output
             if generated is None:
