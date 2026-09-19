@@ -898,10 +898,10 @@ def validate_json_tree(root: Path) -> int:
     return count
 
 
-def _run(command: Sequence[str], label: str, cwd: Path) -> None:
+def _run(command: Sequence[str], label: str, cwd: Path, *, env: dict[str, str] | None = None) -> None:
     print(f"[repository] {label}", flush=True)
     try:
-        completed = subprocess.run(list(command), cwd=cwd, check=False)
+        completed = subprocess.run(list(command), cwd=cwd, check=False, env=env)
     except OSError as exc:
         raise RepositoryError(f"{label}启动失败：{exc}") from exc
     if completed.returncode != 0:
@@ -1170,8 +1170,9 @@ def _changed_root_reasons(records: list[tuple[str, list[str]]]) -> dict[str, lis
     return reasons
 
 
-def _retention_removals(root: Path, artifact: str, current_version: str) -> list[str]:
-    directory = root / "packages" / artifact
+def _retention_removals(root: Path, artifact: str, current_version: str, distribution_root: Path | None = None) -> list[str]:
+    package_root = (distribution_root or root).resolve()
+    directory = package_root / "packages" / artifact
     if not directory.is_dir():
         return []
     versions: list[tuple[ParsedVersion, Path]] = []
@@ -1183,11 +1184,18 @@ def _retention_removals(root: Path, artifact: str, current_version: str) -> list
     if not any(path.name == candidate[1].name for _version, path in versions):
         versions.append(candidate)
     versions.sort(key=lambda item: item[0], reverse=True)
-    return [_display(path.relative_to(root)) for _version, path in versions[MAX_RETAINED_PACKAGES:]]
+    return [_display(path.relative_to(package_root)) for _version, path in versions[MAX_RETAINED_PACKAGES:]]
 
 
-def build_plan(root: Path, baseline: str = "auto", head: str | None = None) -> dict[str, Any]:
+def build_plan(
+    root: Path,
+    baseline: str = "auto",
+    head: str | None = None,
+    *,
+    distribution_root: Path | None = None,
+) -> dict[str, Any]:
     root = root.resolve()
+    distribution_root = (distribution_root or root).resolve()
     head_commit = git_commit(root, head or "HEAD")
     current_plugins = discover_source_plugins(root)
     current_by_root = {
@@ -1195,7 +1203,7 @@ def build_plan(root: Path, baseline: str = "auto", head: str | None = None) -> d
     }
     current_by_artifact = {plugin.artifact_name: plugin for plugin in current_plugins}
     if baseline == "auto":
-        current_state = load_state(root)
+        current_state = load_state(distribution_root)
         base_commit = git_commit(root, str(current_state["sourceCommit"]))
         previous_state = current_state
     else:
@@ -1257,7 +1265,7 @@ def build_plan(root: Path, baseline: str = "auto", head: str | None = None) -> d
     remove_packages = sorted(
         path
         for artifact in requires_package
-        for path in _retention_removals(root, artifact, current_by_artifact[artifact].version)
+        for path in _retention_removals(root, artifact, current_by_artifact[artifact].version, distribution_root)
     )
     remove_artifacts = sorted(f"packages/{artifact}" for artifact in deleted_artifacts)
     changed_paths_flat = [path for _status, paths in records for path in paths]
@@ -1315,19 +1323,20 @@ def _package_files(source: Path, destination: Path) -> None:
             archive.writestr(info, data)
 
 
-def _find_host_root(root: Path) -> Path:
+def _find_host_root(root: Path, host_root: Path | None) -> Path:
     marker = Path("src") / "NexusPipeline.Plugin.Abstractions" / "NexusPipeline.Plugin.Abstractions.csproj"
-    candidates = (root.parent / "NexusPipeline", root / "NexusPipeline")
-    for candidate in candidates:
-        if (candidate / marker).is_file():
-            return candidate.resolve()
-    raise RepositoryError("未找到兄弟仓库 NexusPipeline，无法构建 managed-code 插件")
+    if host_root is None:
+        raise RepositoryError("构建 managed-code 插件必须显式指定 --host-root")
+    candidate = host_root.resolve()
+    if not (candidate / marker).is_file():
+        raise RepositoryError(f"--host-root 不是有效 NexusPipeline checkout：{_display(candidate)}")
+    return candidate
 
 
-def _build_managed(plugin: SourcePlugin, output: Path, root: Path) -> None:
+def _build_managed(plugin: SourcePlugin, output: Path, root: Path, host_root: Path | None) -> None:
     projects = sorted((plugin.root / "src").glob("*.csproj"))
     _require(bool(projects), f"managed-code 插件缺少 csproj：{plugin.artifact_name}")
-    _find_host_root(root)
+    resolved_host_root = _find_host_root(root, host_root)
     properties = (
         "-p:DebugType=None",
         "-p:DebugSymbols=false",
@@ -1335,6 +1344,7 @@ def _build_managed(plugin: SourcePlugin, output: Path, root: Path) -> None:
         "-p:Deterministic=true",
         "-p:IncludeSourceRevisionInInformationalVersion=false",
         "-p:SuppressImplicitGitSourceLink=true",
+        f"-p:NexusHostRoot={resolved_host_root}",
     )
     _run(("dotnet", "build", str(projects[0]), "--configuration", "Release", "--nologo", "--output", str(output), *properties), f"构建插件：{plugin.artifact_name} v{plugin.version}", root)
 
@@ -1344,7 +1354,13 @@ def _copy_tree(source: Path, destination: Path) -> None:
     shutil.copytree(source, destination, dirs_exist_ok=True)
 
 
-def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) -> Path:
+def build_plugin_package(
+    plugin: SourcePlugin,
+    destination: Path,
+    root: Path,
+    *,
+    host_root: Path | None = None,
+) -> Path:
     if plugin.kind == "data-specialized":
         validate_specialized_contract(plugin)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -1361,7 +1377,7 @@ def build_plugin_package(plugin: SourcePlugin, destination: Path, root: Path) ->
             _copy_tree(plugin.root / "data", payload / "data")
         else:
             build_output = temporary_root / "build"
-            _build_managed(plugin, build_output, root)
+            _build_managed(plugin, build_output, root, host_root)
             copied = 0
             for file in sorted(build_output.iterdir()):
                 if file.is_file() and file.suffix.lower() in {".dll", ".json"} and not file.name.lower().endswith(".runtimeconfig.json"):
@@ -1489,7 +1505,52 @@ def _validate_preview_catalog_shape(
         _validate_zip(package, mode="preview", expected_artifact=artifact, expected_version=version, expected_sha256=sha)
 
 
-def build_preview(root: Path, source_ref: str = "HEAD", output: Path | None = None) -> dict[str, Any]:
+def validate_preview_candidate(generated_root: Path, *, expected_source_sha: str | None = None) -> dict[str, Any]:
+    """在不执行候选源码的前提下，重新验证 preview JSON、ZIP 与引用关系。"""
+    generated_root = generated_root.resolve()
+    _require(generated_root.is_dir(), f"preview 候选目录不存在：{_display(generated_root)}")
+    catalog = read_json(generated_root / "catalog.json")
+    _require(isinstance(catalog, dict), "preview catalog 必须是对象")
+    _require(catalog.get("schemaVersion") == 2 and catalog.get("repository") == REPOSITORY and catalog.get("channel") == "develop", "preview catalog 固定字段无效")
+    source_commit = catalog.get("sourceCommit")
+    _require(isinstance(source_commit, str) and re.fullmatch(r"[0-9a-f]{40}", source_commit) is not None, "preview sourceCommit 无效")
+    if expected_source_sha is not None:
+        _require(source_commit == expected_source_sha, "preview sourceCommit 与请求不一致")
+    entries = catalog.get("plugins")
+    _require(isinstance(entries, list) and bool(entries), "preview catalog.plugins 必须是非空数组")
+    _require(entries == _catalog_order(entries), "preview catalog 顺序不稳定")
+    packages_root = generated_root / "packages"
+    _require(packages_root.is_dir(), "preview 候选缺少 packages 目录")
+    referenced: set[str] = set()
+    for entry in entries:
+        _require(isinstance(entry, dict), "preview catalog entry 必须是对象")
+        artifact = entry.get("artifactName")
+        version = entry.get("version")
+        digest = entry.get("sha256")
+        _require(isinstance(artifact, str) and re.fullmatch(r"[A-Za-z0-9._-]+", artifact) is not None, "preview artifactName 无效")
+        _require(isinstance(version, str) and re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?", version) is not None, f"preview version 无效：{artifact}")
+        _require(isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest) is not None, f"preview SHA256 无效：{artifact}")
+        package_name = f"{artifact}-{version}-{digest}.zip"
+        package = packages_root / package_name
+        _require(package.is_file() and package.resolve().parent == packages_root.resolve(), f"preview ZIP 缺失或越界：{artifact}")
+        _require(entry.get("packageUrl") == f"{PREVIEW_RELEASE_URL_PREFIX}/{package_name}", f"preview packageUrl 无效：{artifact}")
+        _require(entry.get("sourceCommit") == source_commit, f"preview entry sourceCommit 不一致：{artifact}")
+        _require(entry.get("sizeBytes") == package.stat().st_size, f"preview sizeBytes 不一致：{artifact}")
+        _validate_zip(package, mode="preview", expected_artifact=artifact, expected_version=version, expected_sha256=digest)
+        _require(package_name not in referenced, f"preview ZIP 重复引用：{package_name}")
+        referenced.add(package_name)
+    actual = {path.name for path in packages_root.iterdir() if path.is_file()}
+    _require(actual == referenced, "preview packages 含未被 catalog 引用的文件")
+    return {"catalog": catalog, "sourceCommit": source_commit, "packageNames": sorted(referenced)}
+
+
+def build_preview(
+    root: Path,
+    source_ref: str = "HEAD",
+    output: Path | None = None,
+    *,
+    host_root: Path | None = None,
+) -> dict[str, Any]:
     """生成独立 develop preview 候选，不写 stable catalog/state/packages。"""
     root = root.resolve()
     source_commit = git_commit(root, source_ref)
@@ -1502,10 +1563,11 @@ def build_preview(root: Path, source_ref: str = "HEAD", output: Path | None = No
     packages_root.mkdir(parents=True, exist_ok=True)
     entries: list[dict[str, Any]] = []
     package_metadata_by_artifact: dict[str, dict[str, Any]] = {}
+    owned_build_paths = capture_managed_build_artifacts(root, host_root)
     try:
         for plugin in plugins:
             temporary = generated_root / f".{plugin.artifact_name}-{plugin.version}.zip"
-            build_plugin_package(plugin, temporary, root)
+            build_plugin_package(plugin, temporary, root, host_root=host_root)
             metadata = package_metadata(temporary)
             final_name = f"{plugin.artifact_name}-{plugin.version}-{metadata.sha256}.zip"
             final_package = packages_root / final_name
@@ -1534,7 +1596,7 @@ def build_preview(root: Path, source_ref: str = "HEAD", output: Path | None = No
         )
         return {"catalog": catalog, "output": str(generated_root), "sourceCommit": source_commit}
     finally:
-        cleanup_managed_build_artifacts(root)
+        cleanup_managed_build_artifacts(owned_build_paths)
 
 
 def validate_sources(root: Path) -> tuple[int, int]:
@@ -1773,14 +1835,20 @@ def _release_payload_tree_at(root: Path, commit: str, plugin_root: str) -> dict[
     return result
 
 
-def validate_candidate_against_base(root: Path, base: str, head: str | None = None) -> dict[str, Any]:
+def validate_candidate_against_base(
+    root: Path,
+    base: str,
+    head: str | None = None,
+    *,
+    distribution_root: Path | None = None,
+) -> dict[str, Any]:
     """校验 PR base 与当前 head 的发行版本纪律，不修改源码或发行状态。"""
     root = root.resolve()
     base_commit = git_commit(root, base)
     head_commit = git_commit(root, head or "HEAD")
     base_plugins = _plugin_roots_at(root, base_commit)
     head_plugins = _plugin_roots_at(root, head_commit)
-    released = load_state(root).get("released", {})
+    released = load_state((distribution_root or root).resolve()).get("released", {})
     _require(isinstance(released, dict), f"{STATE_FILE}.released 必须是对象")
     checked: list[str] = []
     for artifact, (head_root, head_manifest) in sorted(head_plugins.items()):
@@ -1826,18 +1894,25 @@ def _managed_projects(root: Path, artifacts: Iterable[str]) -> list[tuple[Source
     return result
 
 
-def cleanup_managed_build_artifacts(root: Path) -> None:
-    """清理本次工具运行产生的精确 bin/obj 目录。"""
+def capture_managed_build_artifacts(root: Path, host_root: Path | None = None) -> set[Path]:
+    """记录当前不存在的构建目录；只允许删除本次运行创建的精确路径。"""
     directories = {path.parent for path in (root / "plugins").rglob("*.csproj")}
-    try:
-        directories.add(_find_host_root(root) / "src" / "NexusPipeline.Plugin.Abstractions")
-    except RepositoryError:
-        pass
-    for directory in sorted(directories):
-        for name in ("bin", "obj"):
-            target = directory / name
-            if target.is_dir():
-                shutil.rmtree(target)
+    if host_root is not None:
+        resolved_host_root = _find_host_root(root, host_root)
+        directories.add(resolved_host_root / "src" / "NexusPipeline.Plugin.Abstractions")
+    return {
+        directory / name
+        for directory in directories
+        for name in ("bin", "obj")
+        if not (directory / name).exists()
+    }
+
+
+def cleanup_managed_build_artifacts(owned_paths: Iterable[Path]) -> None:
+    """删除本次工具运行新建的精确 bin/obj 目录，保留用户既有目录。"""
+    for target in sorted({path.resolve() for path in owned_paths}, key=str, reverse=True):
+        if target.is_dir():
+            shutil.rmtree(target)
 
 
 def test_managed(
@@ -1846,6 +1921,7 @@ def test_managed(
     full: bool = False,
     *,
     include_frontend: bool = True,
+    host_root: Path | None = None,
 ) -> int:
     plugins = discover_source_plugins(root)
     artifacts = [plugin.artifact_name for plugin in plugins] if full or plan is None and full else (plan or {}).get("managed", [])
@@ -1853,23 +1929,32 @@ def test_managed(
         print("[repository] managed-code 增量测试：没有受影响的项目", flush=True)
         return 0
     total = 0
+    owned_build_paths = capture_managed_build_artifacts(root, host_root)
+    resolved_host_root = _find_host_root(root, host_root) if artifacts else None
+    managed_projects = _managed_projects(root, artifacts)
+    managed_source_count = sum(1 for plugin in plugins if plugin.kind == "managed-code" and plugin.artifact_name in set(artifacts))
+    if managed_source_count and not managed_projects:
+        raise RepositoryError("当前 Qualification 需要 managed-code 项目，但没有可构建的 csproj")
+    if not managed_source_count:
+        print("[repository] managed-code 增量测试：当前源码没有适用项目", flush=True)
+        return 0
     try:
         frontend_script = root / "tools" / "Test-FrontendPlugins.mjs"
         if include_frontend and frontend_script.is_file():
             _run(("node", str(frontend_script)), "前端插件 conformance", root)
             total += 1
-        for plugin, project in _managed_projects(root, artifacts):
-            _run(("dotnet", "build", str(project), "--configuration", "Release", "--nologo", "-m:1"), f"managed-code 构建：{plugin.artifact_name}", root)
+        for plugin, project in managed_projects:
+            _run(("dotnet", "build", str(project), "--configuration", "Release", "--nologo", "-m:1", f"-p:NexusHostRoot={resolved_host_root}"), f"managed-code 构建：{plugin.artifact_name}", root)
             total += 1
         for plugin in plugins:
             tests = sorted((plugin.root / "tests").glob("*.Tests.csproj"))
             if plugin.artifact_name in artifacts:
                 for test in tests:
-                    _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1"), f"managed-code 测试：{plugin.artifact_name}", root)
+                    _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1", f"-p:NexusHostRoot={resolved_host_root}"), f"managed-code 测试：{plugin.artifact_name}", root)
                     total += 1
         return total
     finally:
-        cleanup_managed_build_artifacts(root)
+        cleanup_managed_build_artifacts(owned_build_paths)
 
 
 def _prepare_output(root: Path, output: Path) -> None:
@@ -1895,23 +1980,32 @@ def _state_entry(plugin: SourcePlugin, catalog_entry_value: dict[str, Any], sour
     }
 
 
-def release(root: Path, plan_path: Path, output: Path) -> dict[str, Any]:
+def release(
+    root: Path,
+    plan_path: Path,
+    output: Path,
+    *,
+    host_root: Path | None = None,
+    distribution_root: Path | None = None,
+) -> dict[str, Any]:
     root = root.resolve()
+    distribution_root = (distribution_root or root).resolve()
     plan = read_json(plan_path.resolve())
     _require(isinstance(plan, dict) and plan.get("schemaVersion") == 1, "release plan 无效")
     head = git_head(root)
     _require(plan.get("head") == head, f"release plan 与当前 HEAD 不一致：{plan.get('head')} / {head}")
     plugins = discover_source_plugins(root)
     by_artifact = {plugin.artifact_name: plugin for plugin in plugins}
-    old_catalog = read_json(root / "catalog.json")
+    old_catalog = read_json(distribution_root / "catalog.json")
     old_entries = _catalog_entry_by_artifact(old_catalog)
-    state = load_state(root)
+    state = load_state(distribution_root)
     require = set(plan.get("requiresPackage", []))
     relocated = set(plan.get("relocated", []))
     deleted = set(plan.get("deleted", []))
     _require(require <= set(by_artifact), "release plan 包含未知插件：" + ", ".join(sorted(require - set(by_artifact))))
     _require(relocated.isdisjoint(require | deleted), "release plan 的 relocation 与 package/delete 计划重叠")
     _prepare_output(root, output)
+    owned_build_paths = capture_managed_build_artifacts(root, host_root)
     generated_packages = output / "packages"
     generated_packages.mkdir()
     generated_entries: dict[str, dict[str, Any]] = {}
@@ -1919,8 +2013,8 @@ def release(root: Path, plan_path: Path, output: Path) -> dict[str, Any]:
     for artifact in sorted(require):
         plugin = by_artifact[artifact]
         package = generated_packages / artifact / f"{artifact}-{plugin.version}.zip"
-        build_plugin_package(plugin, package, root)
-        existing = root / "packages" / artifact / package.name
+        build_plugin_package(plugin, package, root, host_root=host_root)
+        existing = distribution_root / "packages" / artifact / package.name
         if existing.is_file():
             _require(_same_package_bytes(existing, package), f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(existing)}")
         metadata = package_metadata(package)
@@ -1975,20 +2069,21 @@ def release(root: Path, plan_path: Path, output: Path) -> dict[str, Any]:
     }
     write_json(output / STATE_FILE, new_state)
     write_json(output / "release-plan.json", plan)
-    validate_generated(root, output)
-    cleanup_managed_build_artifacts(root)
+    validate_generated(root, output, distribution_root=distribution_root)
+    cleanup_managed_build_artifacts(owned_build_paths)
     print(f"[repository] 增量发行候选物完成：{len(require)} 个包，删除 {len(deleted)} 个插件 entry", flush=True)
     return {"catalog": catalog, "state": new_state, "plan": plan}
 
 
-def validate_generated(root: Path, generated_root: Path) -> None:
+def validate_generated(root: Path, generated_root: Path, *, distribution_root: Path | None = None) -> None:
     generated_root = generated_root.resolve()
+    distribution_root = (distribution_root or root).resolve()
     plan = read_json(generated_root / "release-plan.json")
     catalog = read_json(generated_root / "catalog.json")
     state = read_json(generated_root / STATE_FILE)
     plugins = discover_source_plugins(root)
     _validate_catalog_shape(root, catalog, plugins, False)
-    old_catalog = read_json(root / "catalog.json")
+    old_catalog = read_json(distribution_root / "catalog.json")
     old_entries = _catalog_entry_by_artifact(old_catalog)
     requires = set(plan.get("requiresPackage", []))
     relocated = set(plan.get("relocated", []))
@@ -2012,10 +2107,16 @@ def validate_generated(root: Path, generated_root: Path) -> None:
         _require(metadata.get("sha256") == generated_entries[artifact]["sha256"], f"生成物 SHA256 metadata 不一致：{_display(package)}")
         _require(metadata.get("sizeBytes") == generated_entries[artifact]["sizeBytes"], f"生成物 sizeBytes metadata 不一致：{_display(package)}")
         _require(package.stat().st_size == metadata.get("sizeBytes"), f"生成物 sizeBytes 不一致：{_display(package)}")
+        actual_sha = sha256(package)
+        _require(actual_sha == metadata.get("sha256") == generated_entries[artifact]["sha256"], f"生成物 ZIP SHA256 与 catalog 不一致：{_display(package)}")
         _validate_zip(package, by_artifact[artifact])
     for artifact, entry in old_entries.items():
         if artifact not in requires and artifact not in deleted:
             _require(generated_entries.get(artifact) == entry, f"未变更 catalog entry 被修改：{artifact}")
+            package = distribution_root / "packages" / artifact / f"{artifact}-{entry.get('version')}.zip"
+            _require(package.is_file(), f"未变更 stable 包缺失：{_display(package)}")
+            _require(package.stat().st_size == entry.get("sizeBytes"), f"未变更 stable 包大小与 catalog 不一致：{artifact}")
+            _require(sha256(package) == entry.get("sha256"), f"未变更 stable 包 SHA256 与 catalog 不一致：{artifact}")
     _require(not (set(old_entries) & deleted & set(generated_entries)), "删除插件仍存在于 catalog")
     _require(state.get("sourceCommit") == plan.get("head"), "生成 state sourceCommit 不一致")
     state_entries = state.get("released", {})

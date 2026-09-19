@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
@@ -19,6 +20,27 @@ import urllib.request
 from collections.abc import Callable, Mapping
 from datetime import datetime, timezone
 from typing import Any
+
+try:
+    from .qualification_contract import (
+        ContractError,
+        make_external_id,
+        parse_strict_json,
+        validate_jobs,
+        validate_proof,
+        validate_run,
+        validate_squash,
+    )
+except ImportError:
+    from qualification_contract import (
+        ContractError,
+        make_external_id,
+        parse_strict_json,
+        validate_jobs,
+        validate_proof,
+        validate_run,
+        validate_squash,
+    )
 
 
 API_ROOT = "https://api.github.com"
@@ -34,6 +56,7 @@ CHECK_NAME = "Plugin Release Qualification"
 REQUIRED_GATES = ("P1", "P2", "P3")
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 EXTERNAL_ID = "plugins-release-qualification-v1"
+WORKFLOW_PATH = ".github/workflows/release-qualification.yml"
 
 
 class QualificationError(RuntimeError):
@@ -130,6 +153,7 @@ def read_pull_request(
     pull = github_request("GET", f"/repos/{repository}/pulls/{int(number)}", token, request_fn=request_fn)
     _require(isinstance(pull, dict), "PR API 返回不是对象")
     _require(pull.get("state") == "open", "PR 必须保持 open")
+    _require(pull.get("draft") is not True, "PR 不得是 draft")
     _require((pull.get("base") or {}).get("ref") == "main", "PR base 必须是 main")
     base_repo = ((pull.get("base") or {}).get("repo") or {}).get("full_name")
     head_repo = ((pull.get("head") or {}).get("repo") or {}).get("full_name")
@@ -187,6 +211,35 @@ def resolve_contract_input(
     return {"repository": partner, "contractSourceSha": resolved}
 
 
+def resolve_candidate_compatibility(
+    repository: str,
+    candidate_sha: str,
+    token: str | None,
+    *,
+    request_fn: RequestFn | None = None,
+) -> dict[str, Any]:
+    """从固定官方 API 读取候选 H 的 host.lock.json；不执行候选代码。"""
+
+    repository = _repository(repository)
+    candidate_sha = _sha(candidate_sha, "candidate H")
+    response = github_request(
+        "GET",
+        f"/repos/{repository}/contents/host.lock.json?ref={candidate_sha}",
+        token,
+        request_fn=request_fn,
+    )
+    _require(isinstance(response, dict) and response.get("path") == "host.lock.json" and response.get("encoding") == "base64", "候选 host.lock.json API 响应无效")
+    content = response.get("content")
+    _require(isinstance(content, str), "候选 host.lock.json 缺少 base64 内容")
+    try:
+        decoded = base64.b64decode(content.encode("ascii"), validate=True).decode("utf-8")
+        value = json.loads(decoded)
+    except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
+        raise QualificationError("候选 host.lock.json 不是有效 JSON") from exc
+    _require(isinstance(value, dict), "候选 host.lock.json 根节点必须是对象")
+    return value
+
+
 def begin_check(
     repository: str,
     head_sha: str,
@@ -194,6 +247,10 @@ def begin_check(
     token: str,
     association: Mapping[str, Any],
     *,
+    base_sha: str,
+    workflow_sha: str,
+    run_id: int | str,
+    run_attempt: int | str,
     request_fn: RequestFn | None = None,
 ) -> str:
     """创建或更新本控制器唯一的 in_progress App check。"""
@@ -208,17 +265,20 @@ def begin_check(
         request_fn=request_fn,
     )
     runs = listing.get("check_runs", []) if isinstance(listing, dict) else []
+    run_id_int = int(run_id)
+    run_attempt_int = int(run_attempt)
+    external_id = make_external_id(repository, head_sha, base_sha, workflow_sha, run_id_int, run_attempt_int)
     same_name = [run for run in runs if run.get("name") == CHECK_NAME]
     foreign = [run for run in same_name if str((run.get("app") or {}).get("id")) != str(app_id)]
     _require(not foreign, "发现其他 App 使用同名资格 check，拒绝混淆")
-    ours = [run for run in same_name if run.get("external_id") == EXTERNAL_ID]
+    ours = [run for run in same_name if run.get("external_id") == external_id]
     _require(len(ours) <= 1, "本控制器同一 H 存在重复 external_id")
     payload = {
         "name": CHECK_NAME,
         "head_sha": head_sha,
         "status": "in_progress",
         "started_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "external_id": EXTERNAL_ID,
+        "external_id": external_id,
         "output": {
             "title": "Plugin Release Qualification running",
             "summary": json.dumps(dict(association), ensure_ascii=False, sort_keys=True),
@@ -237,6 +297,7 @@ def begin_check(
 def _job_pages(
     repository: str,
     run_id: int | str,
+    run_attempt: int | str,
     token: str,
     request_fn: RequestFn | None,
 ) -> list[dict[str, Any]]:
@@ -245,7 +306,7 @@ def _job_pages(
     while True:
         response = github_request(
             "GET",
-            f"/repos/{repository}/actions/runs/{run_id}/attempts/1/jobs?per_page=100&page={page}",
+            f"/repos/{repository}/actions/runs/{run_id}/attempts/{run_attempt}/jobs?per_page=100&page={page}",
             token,
             request_fn=request_fn,
         )
@@ -264,22 +325,69 @@ def collect_gate_results(
     run_id: int | str,
     token: str,
     *,
+    run_attempt: int | str,
     gate_names: tuple[str, ...] = REQUIRED_GATES,
     request_fn: RequestFn | None = None,
 ) -> dict[str, dict[str, Any]]:
-    """收集 attempt=1 的全部必需 Gate，缺失/重复/非 success 一律拒绝。"""
+    """收集当前 attempt 的全部必需 Gate，缺失/重复/非 success 一律拒绝。"""
 
     repository = _repository(repository)
-    jobs = _job_pages(repository, run_id, token, request_fn)
-    result: dict[str, dict[str, Any]] = {}
-    for name in gate_names:
-        matches = [job for job in jobs if job.get("name") == name]
-        _require(len(matches) == 1, f"Gate {name} 必须恰有一个 job")
-        job = matches[0]
-        _require(job.get("run_attempt") == 1, f"Gate {name} 必须来自 attempt 1")
-        _require(job.get("status") == "completed" and job.get("conclusion") == "success", f"Gate {name} 未成功完成")
-        result[name] = job
+    jobs = _job_pages(repository, run_id, run_attempt, token, request_fn)
+    try:
+        return validate_jobs(
+            jobs,
+            request_run_id=int(run_id),
+            request_attempt=int(run_attempt),
+            gate_names=gate_names,
+        )
+    except (ContractError, ValueError) as exc:
+        raise QualificationError(str(exc)) from exc
+
+
+def _check_pages(
+    repository: str,
+    head_sha: str,
+    token: str,
+    request_fn: RequestFn | None,
+) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    page = 1
+    while True:
+        response = github_request(
+            "GET",
+            f"/repos/{repository}/commits/{head_sha}/check-runs?per_page=100&page={page}",
+            token,
+            request_fn=request_fn,
+        )
+        _require(isinstance(response, dict) and isinstance(response.get("check_runs"), list), "check-runs API 返回不完整")
+        result.extend(item for item in response["check_runs"] if isinstance(item, dict))
+        if len(response["check_runs"]) < 100:
+            break
+        page += 1
     return result
+
+
+def _find_owned_check(
+    repository: str,
+    head_sha: str,
+    check_id: str,
+    app_id: int,
+    external_id: str,
+    token: str,
+    request_fn: RequestFn | None,
+) -> dict[str, Any]:
+    _require(str(check_id).isdigit() and int(check_id) > 0, "check_id 必须是正整数")
+    matches = [
+        item for item in _check_pages(repository, head_sha, token, request_fn)
+        if item.get("id") == int(check_id) and item.get("name") == CHECK_NAME
+    ]
+    _require(len(matches) == 1, "check_id 不属于当前 H 的唯一 Qualification check")
+    check = matches[0]
+    _require(str((check.get("app") or {}).get("id")) == str(app_id), "Qualification check 来源 App 不匹配")
+    _require(check.get("head_sha") == head_sha, "Qualification check head SHA 不匹配")
+    _require(check.get("external_id") == external_id, "Qualification check external_id 不匹配")
+    _require(check.get("status") == "in_progress", "Qualification check 不是当前运行创建的 in_progress check")
+    return check
 
 
 def finish_check(
@@ -295,6 +403,8 @@ def finish_check(
     contract_source_sha: str,
     token: str,
     *,
+    run_attempt: int | str,
+    workflow_path: str = WORKFLOW_PATH,
     request_fn: RequestFn | None = None,
     gate_names: tuple[str, ...] = REQUIRED_GATES,
 ) -> dict[str, Any]:
@@ -304,17 +414,38 @@ def finish_check(
     h = _sha(expected_head_sha, "H")
     b = _sha(expected_base_sha, "B")
     c = _sha(workflow_sha, "C")
-    _sha(sdk_source_sha, "sdkSourceSha")
+    if repository == OFFICIAL_HOST_REPOSITORY:
+        _require(sdk_source_sha == "", "Host qualification 的 sdkSourceSha 必须为空")
+    else:
+        _sha(sdk_source_sha, "sdkSourceSha")
+        _require(sdk_source_sha == contract_source_sha, "Plugins qualification 的 SDK/契约 SHA 必须一致")
     _sha(contract_source_sha, "contractSourceSha")
+    run_id_int = int(run_id)
+    run_attempt_int = int(run_attempt)
+    app_id_int = int(app_id)
+    external_id = make_external_id(repository, h, b, c, run_id_int, run_attempt_int)
+    _find_owned_check(repository, h, check_id, app_id_int, external_id, token, request_fn)
     outcome = "success"
     reason = "全部 P1-P3 Gate 成功"
     try:
+        run = github_request("GET", f"/repos/{repository}/actions/runs/{run_id_int}", token, request_fn=request_fn)
+        try:
+            validate_run(
+                run,
+                repository=repository,
+                run_id=run_id_int,
+                run_attempt=run_attempt_int,
+                workflow_sha=c,
+                workflow_path=workflow_path,
+            )
+        except ContractError as exc:
+            raise QualificationError(str(exc)) from exc
         pull = read_pull_request(repository, number, h, token, request_fn=request_fn)
         main_ref = github_request("GET", f"/repos/{repository}/git/ref/heads/main", token, request_fn=request_fn)
         current_b = _ref_sha(main_ref, "当前 main")
         _require(current_b == b, "main 在资格期间前进")
         _require(c == b, "可信 workflow C 与 B 不一致")
-        gates = collect_gate_results(repository, run_id, token, gate_names=gate_names, request_fn=request_fn)
+        gates = collect_gate_results(repository, run_id_int, token, run_attempt=run_attempt_int, gate_names=gate_names, request_fn=request_fn)
     except QualificationError as exc:
         outcome = "failure"
         reason = str(exc)
@@ -331,15 +462,16 @@ def finish_check(
             "text": json.dumps(
                 {
                     "schemaVersion": 1,
-                    "prNumber": int(number),
-                    "H": h,
-                    "B": b,
-                    "C": c,
-                    "run_id": run_id,
-                    "run_attempt": 1,
+                    "repository": repository,
+                    "headSha": h,
+                    "baseSha": b,
+                    "workflowSha": c,
+                    "runId": run_id_int,
+                    "runAttempt": run_attempt_int,
+                    "appId": app_id_int,
                     "sdkSourceSha": sdk_source_sha,
                     "contractSourceSha": contract_source_sha,
-                    "gates": sorted(gates),
+                    "gates": {name: "success" for name in sorted(gates)},
                 },
                 ensure_ascii=False,
                 sort_keys=True,
@@ -348,7 +480,25 @@ def finish_check(
     }
     updated = github_request("PATCH", f"/repos/{repository}/check-runs/{check_id}", token, payload, request_fn=request_fn)
     _require(isinstance(updated, dict), "完成资格 check 未返回对象")
-    return {"conclusion": outcome, "reason": reason, "pull": pull, "gates": gates, "response": updated}
+    proof = parse_strict_json(payload["output"]["text"])
+    if outcome == "success":
+        try:
+            validate_proof(
+                proof,
+                repository=repository,
+                head_sha=h,
+                base_sha=b,
+                workflow_sha=c,
+                run_id=run_id_int,
+                run_attempt=run_attempt_int,
+                app_id=app_id_int,
+                gate_names=gate_names,
+                sdk_source_sha=sdk_source_sha,
+                contract_source_sha=contract_source_sha,
+            )
+        except ContractError as exc:
+            raise QualificationError(str(exc)) from exc
+    return {"conclusion": outcome, "reason": reason, "pull": pull, "gates": gates, "response": updated, "proof": proof}
 
 
 def verify_merged_candidate(
@@ -370,21 +520,67 @@ def verify_merged_candidate(
     m = _sha(merged_sha, "M")
     b = _sha(expected_base_sha, "B")
     h = _sha(expected_head_sha, "H")
+    _require(str(number).isdigit() and int(number) > 0, "pr_number 必须是正整数")
+    run_id_int = int(run_id)
+    app_id_int = int(app_id)
+    _require(run_id_int > 0, "run_id 必须是正整数")
     pull = github_request("GET", f"/repos/{repository}/pulls/{int(number)}", token, request_fn=request_fn)
     _require(pull.get("merged") is True and pull.get("merge_commit_sha") == m, "PR 未按预期合并到 M")
-    merged = github_request("GET", f"/repos/{repository}/commits/{m}", token, request_fn=request_fn)
-    head = github_request("GET", f"/repos/{repository}/commits/{h}", token, request_fn=request_fn)
-    parents = merged.get("parents") if isinstance(merged, dict) else None
-    _require(isinstance(parents, list) and len(parents) == 1 and parents[0].get("sha") == b, "M 必须只有一个父提交 B")
-    _require((merged.get("commit") or {}).get("tree", {}).get("sha") == (head.get("commit") or {}).get("tree", {}).get("sha"), "M tree 必须与 H tree 相同")
-    checks = github_request("GET", f"/repos/{repository}/commits/{h}/check-runs?per_page=100", token, request_fn=request_fn)
-    matches = [run for run in checks.get("check_runs", []) if run.get("id") == int(check_id) and run.get("name") == CHECK_NAME]
+    _require(pull.get("draft") is not True and (pull.get("base") or {}).get("ref") == "main", "PR 不是目标 main 的已合并 PR")
+    _require(((pull.get("head") or {}).get("repo") or {}).get("full_name") == repository, "合并 PR 不是同仓库来源")
+    merged = github_request("GET", f"/repos/{repository}/git/commits/{m}", token, request_fn=request_fn)
+    head = github_request("GET", f"/repos/{repository}/git/commits/{h}", token, request_fn=request_fn)
+    _require(isinstance(head, dict) and isinstance((head.get("tree") or {}).get("sha"), str), "H Git commit tree 缺失")
+    try:
+        validate_squash(merged, base_sha=b, head_tree_sha=head["tree"]["sha"])
+    except ContractError as exc:
+        raise QualificationError(str(exc)) from exc
+    checks = _check_pages(repository, h, token, request_fn)
+    matches = [run for run in checks if run.get("id") == int(check_id) and run.get("name") == CHECK_NAME]
     _require(len(matches) == 1, "M 缺少唯一 Qualification App check 关联")
     check = matches[0]
-    _require(str((check.get("app") or {}).get("id")) == str(app_id), "Qualification check 来源 App 不匹配")
-    _require(check.get("external_id") == EXTERNAL_ID and check.get("conclusion") == "success", "Qualification check 关联无效")
-    _require(str((check.get("output") or {}).get("text", "")).find(f'"run_id": {run_id}') >= 0, "Qualification check 未关联本次 run")
-    return {"mergedSha": m, "baseSha": b, "headSha": h, "checkId": check_id, "runId": run_id}
+    _require(str((check.get("app") or {}).get("id")) == str(app_id_int), "Qualification check 来源 App 不匹配")
+    proof_text = (check.get("output") or {}).get("text")
+    _require(isinstance(proof_text, str), "Qualification check 缺少结构化证明")
+    proof = parse_strict_json(proof_text)
+    expected_attempt = proof.get("runAttempt")
+    try:
+        sdk_source_sha = proof.get("sdkSourceSha")
+        contract_source_sha = proof.get("contractSourceSha")
+        _require(isinstance(sdk_source_sha, str), "Qualification check 缺少 sdkSourceSha")
+        _require(isinstance(contract_source_sha, str), "Qualification check 缺少 contractSourceSha")
+        validate_proof(
+            proof,
+            repository=repository,
+            head_sha=h,
+            base_sha=b,
+            workflow_sha=proof.get("workflowSha"),
+            run_id=run_id_int,
+            run_attempt=expected_attempt,
+            app_id=app_id_int,
+            gate_names=REQUIRED_GATES,
+            sdk_source_sha=sdk_source_sha,
+            contract_source_sha=contract_source_sha,
+        )
+        external_id = make_external_id(repository, h, b, proof["workflowSha"], run_id_int, expected_attempt)
+    except (ContractError, TypeError, ValueError) as exc:
+        raise QualificationError(f"Qualification check 证明无效：{exc}") from exc
+    _require(check.get("head_sha") == h and check.get("external_id") == external_id and check.get("conclusion") == "success", "Qualification check 关联无效")
+    run = github_request("GET", f"/repos/{repository}/actions/runs/{run_id_int}", token, request_fn=request_fn)
+    try:
+        validate_run(
+            run,
+            repository=repository,
+            run_id=run_id_int,
+            run_attempt=expected_attempt,
+            workflow_sha=proof["workflowSha"],
+            workflow_path=WORKFLOW_PATH,
+            require_completed=True,
+        )
+    except ContractError as exc:
+        raise QualificationError(str(exc)) from exc
+    collect_gate_results(repository, run_id_int, token, run_attempt=expected_attempt, request_fn=request_fn)
+    return {"mergedSha": m, "baseSha": b, "headSha": h, "checkId": check_id, "runId": run_id_int, "runAttempt": expected_attempt}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -398,11 +594,17 @@ def main(argv: list[str] | None = None) -> int:
     preflight.add_argument("--workflow-sha", required=True)
     preflight.add_argument("--contract-sha")
     preflight.add_argument("--app-id")
+    preflight.add_argument("--run-id")
+    preflight.add_argument("--run-attempt")
     preflight.add_argument("--token-env", default="QUALIFICATION_TOKEN")
     begin = sub.add_parser("begin")
     begin.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
     begin.add_argument("--head-sha", required=True)
     begin.add_argument("--app-id", required=True)
+    begin.add_argument("--base-sha", required=True)
+    begin.add_argument("--workflow-sha", required=True)
+    begin.add_argument("--run-id", required=True)
+    begin.add_argument("--run-attempt", required=True)
     begin.add_argument("--association-json", default="{}")
     begin.add_argument("--token-env", default="QUALIFICATION_TOKEN")
     finish = sub.add_parser("finish")
@@ -412,11 +614,27 @@ def main(argv: list[str] | None = None) -> int:
     finish.add_argument("--base-sha", required=True)
     finish.add_argument("--workflow-sha", required=True)
     finish.add_argument("--run-id", required=True)
+    finish.add_argument("--run-attempt", required=True)
     finish.add_argument("--check-id", required=True)
     finish.add_argument("--app-id", required=True)
     finish.add_argument("--sdk-source-sha", required=True)
     finish.add_argument("--contract-source-sha", required=True)
+    finish.add_argument("--workflow-path", default=WORKFLOW_PATH)
     finish.add_argument("--token-env", default="QUALIFICATION_TOKEN")
+    verify = sub.add_parser("verify-merged")
+    verify.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
+    verify.add_argument("--pr-number", required=True)
+    verify.add_argument("--merged-sha", required=True)
+    verify.add_argument("--base-sha", required=True)
+    verify.add_argument("--head-sha", required=True)
+    verify.add_argument("--check-id", required=True)
+    verify.add_argument("--app-id", required=True)
+    verify.add_argument("--run-id", required=True)
+    verify.add_argument("--token-env", default="QUALIFICATION_TOKEN")
+    compatibility = sub.add_parser("compatibility")
+    compatibility.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
+    compatibility.add_argument("--candidate-sha", required=True)
+    compatibility.add_argument("--token-env", default="QUALIFICATION_TOKEN")
     args = parser.parse_args(argv)
     if args.print_policy:
         print(json.dumps({"checkName": CHECK_NAME, "gates": REQUIRED_GATES, "repositories": sorted(OFFICIAL_REPOSITORIES)}, ensure_ascii=False))
@@ -427,14 +645,36 @@ def main(argv: list[str] | None = None) -> int:
         result = {**candidate, **contract, "prNumber": int(args.pr_number)}
         read_pull_request(args.repository, args.pr_number, args.expected_head_sha, token)
         if args.app_id:
-            result["checkId"] = begin_check(args.repository, args.expected_head_sha, args.app_id, token or "", result)
+            if args.run_id is None or args.run_attempt is None:
+                raise QualificationError("preflight 创建 check 必须提供 run-id/run-attempt")
+            result["checkId"] = begin_check(
+                args.repository,
+                args.expected_head_sha,
+                args.app_id,
+                token or "",
+                result,
+                base_sha=result["baseSha"],
+                workflow_sha=result["workflowSha"],
+                run_id=args.run_id,
+                run_attempt=args.run_attempt,
+            )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif args.command == "begin":
         try:
             association = json.loads(args.association_json)
         except json.JSONDecodeError as exc:
             raise QualificationError(f"association JSON 无效：{exc}") from exc
-        check_id = begin_check(args.repository, args.head_sha, args.app_id, os.environ.get(args.token_env, ""), association)
+        check_id = begin_check(
+            args.repository,
+            args.head_sha,
+            args.app_id,
+            os.environ.get(args.token_env, ""),
+            association,
+            base_sha=args.base_sha,
+            workflow_sha=args.workflow_sha,
+            run_id=args.run_id,
+            run_attempt=args.run_attempt,
+        )
         print(check_id)
     elif args.command == "finish":
         result = finish_check(
@@ -449,8 +689,28 @@ def main(argv: list[str] | None = None) -> int:
             args.sdk_source_sha,
             args.contract_source_sha,
             os.environ.get(args.token_env, ""),
+            run_attempt=args.run_attempt,
+            workflow_path=args.workflow_path,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True, default=str))
+        if result.get("conclusion") != "success":
+            return 1
+    elif args.command == "compatibility":
+        value = resolve_candidate_compatibility(args.repository, args.candidate_sha, os.environ.get(args.token_env))
+        print(json.dumps(value, ensure_ascii=False, sort_keys=True))
+    elif args.command == "verify-merged":
+        result = verify_merged_candidate(
+            args.repository,
+            args.pr_number,
+            args.merged_sha,
+            args.base_sha,
+            args.head_sha,
+            args.check_id,
+            args.app_id,
+            args.run_id,
+            os.environ.get(args.token_env, ""),
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     return 0
 
 

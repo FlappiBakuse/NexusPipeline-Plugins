@@ -70,7 +70,7 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertIsNone(core._canonical_locale("中文"))
 
     def test_localization_contract_requires_matching_keys_and_placeholders(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-localization-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-localization-test-"))
         try:
             plugin = root / "Plugin"
             (plugin / "i18n").mkdir(parents=True)
@@ -103,7 +103,7 @@ class RepositoryCoreTests(unittest.TestCase):
             self._remove_tree(root)
 
     def test_judge_locale_requires_current_host_contract(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-judge-locale-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-judge-locale-test-"))
         try:
             judge = root / "data" / "judge.js"
             judge.parent.mkdir(parents=True)
@@ -136,7 +136,7 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertEqual(core.SUPPORTED_LOCALES, set(lock["supportedLocales"]))
 
     def test_host_locale_registry_matches_lock_and_resources(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-host-locale-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-host-locale-test-"))
         try:
             host = root / "host"
             (host / "frontend" / "public" / "i18n").mkdir(parents=True)
@@ -178,7 +178,7 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertIsNone(plugin_root_from_path("docs/RELEASING.md"))
 
     def test_deterministic_zip_has_stable_bytes(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-repository-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-repository-test-"))
         try:
             source = root / "payload"
             (source / "z").mkdir(parents=True)
@@ -454,7 +454,7 @@ class RepositoryCoreTests(unittest.TestCase):
                 validate_generated(root, candidate)
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(calls), 3)
             self.assertEqual(calls[0].name, "Alpha-0.2.0.zip")
         finally:
             self._remove_tree(root)
@@ -475,7 +475,8 @@ class RepositoryCoreTests(unittest.TestCase):
                 release(root, plan_path, root / ".generated" / "candidate")
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(calls, [])
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0].name, "Alpha-0.1.0.zip")
         finally:
             self._remove_tree(root)
 
@@ -496,7 +497,8 @@ class RepositoryCoreTests(unittest.TestCase):
                 release(root, plan_path, root / ".generated" / "candidate")
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(calls, [])
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0].name, "Alpha-0.1.0.zip")
         finally:
             self._remove_tree(root)
 
@@ -514,7 +516,7 @@ class RepositoryCoreTests(unittest.TestCase):
         shutil.rmtree(root, onerror=onerror)
 
     def _create_git_fixture(self, legacy_flat: bool = False) -> Path:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-"))
         (root / "plugins" / "general").mkdir(parents=True)
         (root / "plugins" / "specialized").mkdir(parents=True)
         plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path("specialized") / "Alpha")

@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ OFFICIAL_REPOSITORY = "FlappiBakuse/NexusPipeline"
 OFFICIAL_REMOTE = f"https://github.com/{OFFICIAL_REPOSITORY}.git"
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+$")
+SDK_OWNER_FILE = ".nxp-sdk-owner.json"
 
 
 class SdkSourceError(ValueError):
@@ -84,13 +86,27 @@ def resolve_official_host(ref: str = "main") -> str:
     """从固定官方仓库解析 ref 的完整 SHA。"""
     _require(isinstance(ref, str) and ref and "\\" not in ref and ".." not in ref, "Host ref 无效")
     if SHA_PATTERN.fullmatch(ref):
-        refs = _run(["git", "ls-remote", OFFICIAL_REMOTE], capture=True).splitlines()
-        _require(any(line.split("\t", 1)[0] == ref for line in refs if "\t" in line), f"官方 Host 仓库不存在提交：{ref}")
+        with tempfile.TemporaryDirectory(prefix="nxp-sdk-ref-") as temporary:
+            repository = Path(temporary) / "official.git"
+            _run(["git", "init", "--bare", str(repository)], capture=True)
+            _run(
+                ["git", "--git-dir", str(repository), "fetch", "--no-tags", "--filter=blob:none", OFFICIAL_REMOTE, "refs/heads/main"],
+                capture=True,
+            )
+            _run(["git", "--git-dir", str(repository), "cat-file", "-e", f"{ref}^{{commit}}"], capture=True)
         return ref
     query = ref if ref.startswith("refs/") else f"refs/heads/{ref}"
     _require(re.fullmatch(r"refs/(heads|tags)/[A-Za-z0-9._/-]+", query) is not None, f"Host ref 不是受支持的官方 ref：{ref}")
-    output = _run(["git", "ls-remote", OFFICIAL_REMOTE, query], capture=True)
-    lines = [line for line in output.splitlines() if "\t" in line]
+    if query.startswith("refs/tags/"):
+        output = _run(["git", "ls-remote", OFFICIAL_REMOTE, query, f"{query}^{{}}"], capture=True)
+        lines = [line for line in output.splitlines() if "\t" in line]
+        peeled = next((line.split("\t", 1)[0] for line in lines if line.split("\t", 1)[1] == f"{query}^{{}}"), None)
+        if peeled is not None:
+            return _sha(peeled, f"官方 Host tag {ref}")
+        lines = [line for line in lines if line.split("\t", 1)[1] == query]
+    else:
+        output = _run(["git", "ls-remote", OFFICIAL_REMOTE, query], capture=True)
+        lines = [line for line in output.splitlines() if "\t" in line]
     _require(len(lines) == 1, f"官方 Host ref 解析结果不唯一或不存在：{ref}")
     return _sha(lines[0].split("\t", 1)[0], f"官方 Host ref {ref}")
 
@@ -151,9 +167,37 @@ def validate_host_checkout(host_root: Path, expected_sha: str, compatibility: di
     _require(actual_apis["hostApiVersion"] == compatibility["hostApiVersion"], f"Host API 兼容版本不匹配：{actual_apis['hostApiVersion']} / {compatibility['hostApiVersion']}")
     _require(actual_apis["frontendApiVersion"] == compatibility["frontendApiVersion"], f"Frontend API 兼容版本不匹配：{actual_apis['frontendApiVersion']} / {compatibility['frontendApiVersion']}")
     web_locales = _read_locale_ids(host_root / "frontend" / "public" / "i18n" / "locales.json", "Host Web locale registry")
-    embedded_locales = _read_locale_ids(host_root / "src" / "Shared" / "Localization" / "Resources" / "locales.json", "Host embedded locale registry")
+    localization_candidates = (
+        Path("src") / "Shared" / "Localization" / "Resources",
+        Path("src") / "Localization" / "Resources",
+    )
+    existing_localization = [
+        relative
+        for relative in localization_candidates
+        if _git_tree_file_exists(host_root, relative / "locales.json")
+    ]
+    _require(len(existing_localization) == 1, "Host checkout 的 Localization/Resources 目录无法唯一确定")
+    localization_root = host_root / existing_localization[0]
+    embedded_locales = _read_locale_ids(localization_root / "locales.json", "Host embedded locale registry")
     _require(web_locales == embedded_locales == compatibility["supportedLocales"], "Host locale registry 与 compatibility metadata 不一致")
-    return {**compatibility, "sdkSourceSha": expected_sha, "hostRoot": str(host_root)}
+    dirty = bool(_run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=host_root))
+    return {
+        **compatibility,
+        "sdkSourceSha": expected_sha,
+        "hostRoot": str(host_root),
+        "localizationRoot": str(existing_localization[0]).replace("\\", "/"),
+        "workingTreeDirty": dirty,
+    }
+
+
+def _git_tree_file_exists(root: Path, relative: Path) -> bool:
+    completed = subprocess.run(
+        ["git", "cat-file", "-e", f"HEAD:{relative.as_posix()}"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    return completed.returncode == 0
 
 
 def prepare_workspace(
@@ -166,7 +210,7 @@ def prepare_workspace(
     """创建本次资格使用的隔离 Host checkout，不改写调用方已有工作区。"""
     expected_sha = _sha(expected_sha, "expected_sha")
     workspace_root = workspace_root.resolve()
-    destination = (destination or workspace_root.parent / f".nxp-sdk-{expected_sha[:12]}").resolve()
+    destination = (destination or workspace_root.parent / f".nxp-sdk-{uuid.uuid4().hex}").resolve()
     _require(not destination.exists(), f"SDK 隔离目录已存在：{destination}")
     destination.parent.mkdir(parents=True, exist_ok=True)
     source = host_source.resolve() if host_source is not None else None
@@ -176,13 +220,25 @@ def prepare_workspace(
     else:
         _run(["git", "clone", "--filter=blob:none", OFFICIAL_REMOTE, str(destination)], capture=True)
     _run(["git", "checkout", "--detach", expected_sha], cwd=destination, capture=True)
+    (destination / SDK_OWNER_FILE).write_text(
+        json.dumps({"kind": "NexusPipeline.SDK", "path": str(destination), "nonce": uuid.uuid4().hex}, ensure_ascii=False),
+        encoding="utf-8",
+    )
     return destination
 
 
 def cleanup_workspace(path: Path) -> None:
     """仅删除本模块明确创建的隔离 SDK 目录。"""
     path = path.resolve()
-    _require(path.name.startswith(".nxp-sdk-"), f"拒绝清理非 SDK 临时目录：{path}")
+    owner = path / SDK_OWNER_FILE
+    _require(owner.is_file(), f"拒绝清理没有所有权清单的 SDK 目录：{path}")
+    metadata = _read_json(owner, "SDK 所有权清单")
+    _require(
+        isinstance(metadata, dict)
+        and metadata.get("kind") == "NexusPipeline.SDK"
+        and metadata.get("path") == str(path),
+        f"SDK 所有权清单不匹配：{path}",
+    )
     if path.exists():
         shutil.rmtree(path)
 

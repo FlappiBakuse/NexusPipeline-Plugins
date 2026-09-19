@@ -11,6 +11,7 @@ from tools.qualification_control import (
     read_pull_request,
     resolve_candidate,
 )
+from tools.qualification_contract import make_external_id
 
 
 H = "a" * 40
@@ -61,18 +62,18 @@ class QualificationControlTests(unittest.TestCase):
 
     def test_collect_gate_results_rejects_duplicate_or_skipped(self) -> None:
         jobs = [
-            {"name": "P1", "status": "completed", "conclusion": "success", "run_attempt": 1},
-            {"name": "P2", "status": "completed", "conclusion": "skipped", "run_attempt": 1},
-            {"name": "P3", "status": "completed", "conclusion": "success", "run_attempt": 1},
+            {"name": "P1", "run_id": 12, "status": "completed", "conclusion": "success", "run_attempt": 2, "steps": [{"name": "Execute gate", "status": "completed", "conclusion": "success"}]},
+            {"name": "P2", "run_id": 12, "status": "completed", "conclusion": "skipped", "run_attempt": 2, "steps": [{"name": "Execute gate", "status": "completed", "conclusion": "success"}]},
+            {"name": "P3", "run_id": 12, "status": "completed", "conclusion": "success", "run_attempt": 2, "steps": [{"name": "Execute gate", "status": "completed", "conclusion": "success"}]},
         ]
-        api = FakeApi({("GET", "/repos/FlappiBakuse/NexusPipeline-Plugins/actions/runs/12/attempts/1/jobs?per_page=100&page=1"): {"jobs": jobs}})
+        api = FakeApi({("GET", "/repos/FlappiBakuse/NexusPipeline-Plugins/actions/runs/12/attempts/2/jobs?per_page=100&page=1"): {"jobs": jobs}})
         with self.assertRaisesRegex(QualificationError, "P2"):
-            collect_gate_results("FlappiBakuse/NexusPipeline-Plugins", 12, "secret", request_fn=api)
+            collect_gate_results("FlappiBakuse/NexusPipeline-Plugins", 12, "secret", run_attempt=2, request_fn=api)
 
-        jobs[1] = {"name": "P2", "status": "completed", "conclusion": "success", "run_attempt": 1}
+        jobs[1] = {"name": "P2", "run_id": 12, "status": "completed", "conclusion": "success", "run_attempt": 2, "steps": [{"name": "Execute gate", "status": "completed", "conclusion": "success"}]}
         jobs.append(dict(jobs[0]))
         with self.assertRaisesRegex(QualificationError, "P1"):
-            collect_gate_results("FlappiBakuse/NexusPipeline-Plugins", 12, "secret", request_fn=api)
+            collect_gate_results("FlappiBakuse/NexusPipeline-Plugins", 12, "secret", run_attempt=2, request_fn=api)
 
     def test_begin_check_rejects_same_name_from_other_app(self) -> None:
         api = FakeApi({
@@ -81,10 +82,11 @@ class QualificationControlTests(unittest.TestCase):
             },
         })
         with self.assertRaisesRegex(QualificationError, "其他 App"):
-            begin_check("FlappiBakuse/NexusPipeline-Plugins", H, 456, "secret", {"H": H}, request_fn=api)
+            begin_check("FlappiBakuse/NexusPipeline-Plugins", H, 456, "secret", {"H": H}, base_sha=B, workflow_sha=B, run_id=12, run_attempt=2, request_fn=api)
 
     def test_policy_identifiers_are_stable(self) -> None:
         self.assertEqual(EXTERNAL_ID, "plugins-release-qualification-v1")
+        self.assertEqual(make_external_id("FlappiBakuse/NexusPipeline-Plugins", H, B, B, 12, 2), f"FlappiBakuse/NexusPipeline-Plugins:qualification:{H}:{B}:{B}:12:2")
 
 
 if __name__ == "__main__":

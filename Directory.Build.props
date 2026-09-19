@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <NexusHostRoot Condition="'$(NexusHostRoot)' == ''">$(MSBuildThisFileDirectory)..\NexusPipeline</NexusHostRoot>
+  </PropertyGroup>
+</Project>

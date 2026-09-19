@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 import repository_core as core
+from candidate_workspace import CandidateWorkspace
 from sdk_source import SdkSourceError, validate_host_checkout
 
 
@@ -24,6 +26,8 @@ def _preflight(root: Path, host_root: Path, sdk_sha: str | None) -> dict[str, An
     compatibility = core.read_host_compatibility(root)
     resolved_sha = sdk_sha or _host_head(host_root)
     result = validate_host_checkout(host_root, resolved_sha, compatibility)
+    if result.get("workingTreeDirty"):
+        raise SdkSourceError("正式 Qualification 不接受 dirty Host SDK checkout；本地联调请单独使用 validate_host_checkout")
     print(f"[qualification] SDK preflight 通过：{resolved_sha}", flush=True)
     return result
 
@@ -44,21 +48,24 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
     }
 
 
-def run_managed_gate(root: Path) -> dict[str, Any]:
+def run_managed_gate(root: Path, host_root: Path) -> dict[str, Any]:
     if (root / "package-lock.json").is_file():
         core._run((core._npm_executable(), "ci", "--no-audit", "--no-fund"), "Plugins 根 workspace npm ci", root)
     frontend = root / "tools" / "Test-FrontendPlugins.mjs"
-    if frontend.is_file():
-        core._run(("node", str(frontend)), "前端插件 conformance", root)
     if (root / "package.json").is_file():
         core._run((core._npm_executable(), "run", "typecheck:frontend"), "managed frontend typecheck", root)
         core._run((core._npm_executable(), "run", "build:frontend"), "managed frontend build", root)
-    managed_projects = core.test_managed(root, full=True, include_frontend=False)
+    if frontend.is_file():
+        environment = os.environ.copy()
+        environment["NEXUS_HOST_ROOT"] = str(host_root)
+        environment["NEXUS_OFFICIAL_PLUGINS_ROOT"] = str(root)
+        core._run(("node", str(frontend), "--host-root", str(host_root)), "前端插件 conformance", root, env=environment)
+    managed_projects = core.test_managed(root, full=True, include_frontend=False, host_root=host_root)
     return {"managedProjectsAndTests": managed_projects}
 
 
-def _verify_unchanged_stable(root: Path, candidate: Path) -> None:
-    old_catalog = core.read_json(root / "catalog.json")
+def _verify_unchanged_stable(root: Path, candidate: Path, distribution_root: Path) -> None:
+    old_catalog = core.read_json(distribution_root / "catalog.json")
     candidate_catalog = core.read_json(candidate / "catalog.json")
     old_entries = core._catalog_entry_by_artifact(old_catalog)
     new_entries = core._catalog_entry_by_artifact(candidate_catalog)
@@ -70,27 +77,53 @@ def _verify_unchanged_stable(root: Path, candidate: Path) -> None:
         _require_same = new_entries.get(artifact) == entry
         if not _require_same:
             raise core.RepositoryError(f"未变更 stable catalog entry 被修改：{artifact}")
-        package = root / "packages" / artifact / f"{artifact}-{entry['version']}.zip"
-        if package.is_file():
-            if core.sha256(package) != entry.get("sha256") or package.stat().st_size != entry.get("sizeBytes"):
-                raise core.RepositoryError(f"现有 stable 包与 catalog 发行事实不一致：{artifact}")
+        package = distribution_root / "packages" / artifact / f"{artifact}-{entry['version']}.zip"
+        if not package.is_file():
+            raise core.RepositoryError(f"现有 stable 包缺失：{artifact}")
+        if core.sha256(package) != entry.get("sha256") or package.stat().st_size != entry.get("sizeBytes"):
+            raise core.RepositoryError(f"现有 stable 包与 catalog 发行事实不一致：{artifact}")
 
 
 def run_candidate_gate(root: Path, host_root: Path, base: str, output: Path, baseline: str = "auto") -> dict[str, Any]:
-    core.validate_candidate_against_base(root, base)
-    plan = core.build_plan(root, baseline)
+    workspace = CandidateWorkspace.create(root, base)
     output = output.resolve()
     plan_path = output.parent / f"{output.name}-plan.json"
-    core.write_json(plan_path, plan)
-    generated = core.release(root, plan_path, output)
-    core.validate_generated(root, output)
-    _verify_unchanged_stable(root, output)
-    return {
-        "candidate": str(output),
-        "requiresPackage": list(generated["plan"].get("requiresPackage", [])),
-        "deleted": list(generated["plan"].get("deleted", [])),
-        "sdkSourceSha": None,
-    }
+    try:
+        core.validate_candidate_against_base(
+            root,
+            workspace.base_sha,
+            head=workspace.source_sha,
+            distribution_root=workspace.distribution_root,
+        )
+        plan = core.build_plan(
+            root,
+            baseline,
+            workspace.source_sha,
+            distribution_root=workspace.distribution_root,
+        )
+        core.write_json(plan_path, plan)
+        generated = core.release(
+            root,
+            plan_path,
+            output,
+            host_root=host_root,
+            distribution_root=workspace.distribution_root,
+        )
+        core.validate_generated(root, output, distribution_root=workspace.distribution_root)
+        _verify_unchanged_stable(root, output, workspace.distribution_root)
+        return {
+            "candidate": str(output),
+            "requiresPackage": list(generated["plan"].get("requiresPackage", [])),
+            "deleted": list(generated["plan"].get("deleted", [])),
+            "sourceSha": workspace.source_sha,
+            "baseSha": workspace.base_sha,
+            "stateSourceSha": workspace.state_source_sha,
+        }
+    finally:
+        if output.exists():
+            # 保留候选本身供 Qualification 结果和发布器消费；只释放 B 的隔离分发目录。
+            pass
+        workspace.cleanup()
 
 
 def run_qualification(
@@ -104,7 +137,9 @@ def run_qualification(
     baseline: str = "auto",
 ) -> dict[str, Any]:
     root = root.resolve()
-    host_root = (host_root or root.parent / "NexusPipeline").resolve()
+    if host_root is None:
+        raise core.RepositoryError("Qualification 必须显式指定 --host-root")
+    host_root = host_root.resolve()
     if group not in {"source", "frontend-managed", "candidate", "all"}:
         raise core.RepositoryError(f"Qualification group 无效：{group}")
     preflight = _preflight(root, host_root, sdk_sha)
@@ -112,7 +147,7 @@ def run_qualification(
     if group in {"source", "all"}:
         result["source"] = run_source_gate(root, host_root, base)
     if group in {"frontend-managed", "all"}:
-        result["frontend-managed"] = run_managed_gate(root)
+        result["frontend-managed"] = run_managed_gate(root, host_root)
     if group in {"candidate", "all"}:
         candidate_output = output or root / ".generated" / "qualification-candidate"
         candidate = run_candidate_gate(root, host_root, base, candidate_output, baseline)
