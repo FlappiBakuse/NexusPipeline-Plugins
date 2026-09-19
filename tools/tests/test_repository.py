@@ -34,6 +34,7 @@ from repository_core import (  # noqa: E402
     release,
     read_json,
     validate_source_plugin,
+    validate_candidate_against_base,
     validate_generated,
     write_json,
 )
@@ -223,6 +224,26 @@ class RepositoryCoreTests(unittest.TestCase):
             plan = build_plan(root)
             self.assertEqual(plan["requiresPackage"], [])
             self.assertIn("plugins/specialized/Alpha/tests/README.md", plan["globalChanges"])
+        finally:
+            self._remove_tree(root)
+
+    def test_plugin_project_metadata_does_not_require_package(self) -> None:
+        root = self._create_git_fixture(managed=True)
+        try:
+            base = git_head(root)
+            project_path = root / "plugins" / "general" / "Alpha" / "src" / "Alpha.csproj"
+            project_path.write_text(
+                "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0-windows</TargetFramework></PropertyGroup></Project>\n",
+                encoding="utf-8",
+            )
+            self._git(root, "add", project_path.relative_to(root).as_posix())
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "project metadata")
+
+            plan = build_plan(root)
+            self.assertEqual(plan["requiresPackage"], [])
+            self.assertIn("plugins/general/Alpha/src/Alpha.csproj", plan["globalChanges"])
+            result = validate_candidate_against_base(root, base, head="HEAD", distribution_root=root)
+            self.assertIn("Alpha", result["checkedArtifacts"])
         finally:
             self._remove_tree(root)
 
@@ -515,12 +536,19 @@ class RepositoryCoreTests(unittest.TestCase):
 
         shutil.rmtree(root, onerror=onerror)
 
-    def _create_git_fixture(self, legacy_flat: bool = False) -> Path:
+    def _create_git_fixture(self, legacy_flat: bool = False, managed: bool = False) -> Path:
         root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-"))
         (root / "plugins" / "general").mkdir(parents=True)
         (root / "plugins" / "specialized").mkdir(parents=True)
-        plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path("specialized") / "Alpha")
+        category = "general" if managed else "specialized"
+        plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path(category) / "Alpha")
         (plugin_root / "data").mkdir(parents=True)
+        if managed:
+            (plugin_root / "src").mkdir()
+            (plugin_root / "src" / "Alpha.csproj").write_text(
+                "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>\n",
+                encoding="utf-8",
+            )
         manifest = {
             "schemaVersion": 2,
             "name": "alpha",
@@ -528,12 +556,14 @@ class RepositoryCoreTests(unittest.TestCase):
             "displayName": "Alpha",
             "description": "test",
             "version": "0.1.0",
-            "kind": "data-specialized",
+            "kind": "managed-code" if managed else "data-specialized",
             "minHostVersion": "0.0.0",
             "capabilities": [],
             "resolve": "data/resolve.json",
             "judgeScript": "data/judge.js",
         }
+        if managed:
+            manifest["apiVersion"] = "1.7"
         store = {
             "schemaVersion": 1,
             "gameName": "Test",
@@ -551,7 +581,7 @@ class RepositoryCoreTests(unittest.TestCase):
         write_json(plugin_root / "data" / "resolve.json", resolve)
         (plugin_root / "data" / "judge.js").write_text("return null;\n", encoding="utf-8")
         (root / "README.md").write_text("baseline\n", encoding="utf-8")
-        plugin = SourcePlugin("specialized", plugin_root, manifest, store) if legacy_flat else validate_source_plugin(plugin_root)
+        plugin = SourcePlugin(category, plugin_root, manifest, store) if legacy_flat else validate_source_plugin(plugin_root)
         payload = root / "payload"
         (payload / "data").mkdir(parents=True)
         shutil.copy2(plugin_root / "plugin.json", payload / "plugin.json")

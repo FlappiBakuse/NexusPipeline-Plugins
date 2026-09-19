@@ -1165,7 +1165,11 @@ def _changed_root_reasons(records: list[tuple[str, list[str]]]) -> dict[str, lis
             plugin_root = plugin_root_from_path(path)
             normalized = path.replace("\\", "/")
             plugin_tests_prefix = f"{plugin_root}/tests/" if plugin_root is not None else ""
-            if plugin_root is not None and not normalized.startswith(plugin_tests_prefix):
+            if (
+                plugin_root is not None
+                and not normalized.startswith(plugin_tests_prefix)
+                and not _is_plugin_build_metadata_path(normalized, plugin_root)
+            ):
                 reasons.setdefault(plugin_root, []).append(path)
     return reasons
 
@@ -1817,6 +1821,25 @@ def _plugin_roots_at(root: Path, commit: str) -> dict[str, tuple[str, dict[str, 
     return result
 
 
+def _is_plugin_build_metadata_path(path: str, plugin_root: str | None = None) -> bool:
+    """Return whether a plugin path is build metadata rather than package input.
+
+    Managed project files are required to build a plugin but are never copied to
+    its ZIP.  In particular, changing a ProjectReference from a repository-
+    relative path to the explicit NexusHostRoot property must not force an
+    otherwise identical stable package to receive a new plugin version.  The
+    resulting build is still covered by the managed Qualification gate.
+    """
+    normalized = path.replace("\\", "/").strip("/")
+    if plugin_root is not None:
+        prefix = plugin_root.replace("\\", "/").rstrip("/") + "/"
+        if not normalized.startswith(prefix):
+            return False
+        normalized = normalized[len(prefix):]
+    name = normalized.rsplit("/", 1)[-1].casefold()
+    return name.endswith((".csproj", ".fsproj", ".vbproj", ".sln"))
+
+
 def _release_payload_tree_at(root: Path, commit: str, plugin_root: str) -> dict[str, str]:
     output = _git(root, ["ls-tree", "-r", commit, "--", plugin_root], f"读取插件发行树：{plugin_root}")
     result: dict[str, str] = {}
@@ -1829,7 +1852,12 @@ def _release_payload_tree_at(root: Path, commit: str, plugin_root: str) -> dict[
         if len(fields) < 3 or not path.startswith(prefix):
             continue
         relative = path[len(prefix):]
-        if relative == "" or relative.startswith("tests/") or "/tests/" in relative:
+        if (
+            relative == ""
+            or relative.startswith("tests/")
+            or "/tests/" in relative
+            or _is_plugin_build_metadata_path(relative)
+        ):
             continue
         result[relative] = fields[2]
     return result
