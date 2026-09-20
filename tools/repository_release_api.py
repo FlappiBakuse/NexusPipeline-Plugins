@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -20,6 +21,20 @@ class ReleaseApiError(RuntimeError):
 
 
 API_ORIGIN = "https://api.github.com"
+UPLOAD_ORIGIN = "https://uploads.github.com"
+
+
+class AssetRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        target = urllib.parse.urlsplit(newurl)
+        if (req.get_method() != "GET" or target.scheme != "https"
+                or target.hostname not in {"api.github.com", "release-assets.githubusercontent.com", "objects.githubusercontent.com"}
+                or target.username or target.password or target.port not in (None, 443)):
+            raise ReleaseApiError("Release asset redirect target is not allowed")
+        redirected = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if redirected is not None and target.hostname != "api.github.com":
+            redirected.remove_header("Authorization")
+        return redirected
 
 
 def _request(
@@ -30,16 +45,20 @@ def _request(
     body: bytes | None = None,
     content_type: str = "application/json",
     timeout: float = 30.0,
+    accept: str = "application/vnd.github+json",
+    upload: bool = False,
 ) -> tuple[int, bytes]:
     if not path.startswith("/repos/") or "?" in path and "=" not in path:
         raise ReleaseApiError("Release API path 必须是固定 GitHub 仓库 API 路径")
     if not token:
         raise ReleaseApiError("缺少 Release API token")
+    if upload and (method != "POST" or not re.fullmatch(r"/repos/[^/?]+/[^/?]+/releases/[0-9]+/assets\?name=.+", path)):
+        raise ReleaseApiError("Invalid Release asset upload endpoint")
     request = urllib.request.Request(
-        f"{API_ORIGIN}{path}",
+        f"{UPLOAD_ORIGIN if upload else API_ORIGIN}{path}",
         data=body,
         headers={
-            "Accept": "application/vnd.github+json",
+            "Accept": accept,
             "Authorization": f"Bearer {token}",
             "Content-Type": content_type,
             "User-Agent": "NexusPipeline-Plugins-publisher",
@@ -49,7 +68,7 @@ def _request(
     )
     for attempt in range(3):
         try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
+            with urllib.request.build_opener(AssetRedirectHandler()).open(request, timeout=timeout) as response:
                 return response.status, response.read()
         except urllib.error.HTTPError as error:
             payload = error.read()
@@ -142,7 +161,7 @@ def delete_asset(repository: str, asset_id: int, token: str) -> None:
 
 
 def download_asset(repository: str, asset_id: int, token: str) -> bytes:
-    status, payload = _request("GET", f"/repos/{repository}/releases/assets/{asset_id}", token, content_type="application/octet-stream")
+    status, payload = _request("GET", f"/repos/{repository}/releases/assets/{asset_id}", token, accept="application/octet-stream")
     if status != 200:
         raise ReleaseApiError(f"下载 Release asset 返回非成功状态：{status}", status_code=status)
     return payload
@@ -152,10 +171,11 @@ def upload_asset(repository: str, release_id: int, asset: Path, token: str, *, n
     data = asset.read_bytes()
     status, payload = _request(
         "POST",
-        f"/repos/{repository}/releases/{release_id}/assets?name={urllib.parse.quote(name)}",
+        f"/repos/{repository}/releases/{release_id}/assets?name={urllib.parse.quote(name, safe='')}",
         token,
         body=data,
         content_type="application/zip",
+        upload=True,
     )
     if status not in (200, 201):
         raise ReleaseApiError(f"上传 Release asset 返回非成功状态：{status}")
