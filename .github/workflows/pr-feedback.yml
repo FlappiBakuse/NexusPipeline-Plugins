@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: "24"
       - name: Run source feedback
-        run: python tools/repository.py qualification --group source --base "${{ github.event.pull_request.base.sha }}" --host-root ../NexusPipeline
+        run: python tools/repository.py qualification --group source --base "${{ github.event.pull_request.base.sha }}" --host-root NexusPipeline
 
   frontend-managed:
     name: Feedback frontend and managed
@@ -62,4 +62,4 @@ jobs:
         with:
           dotnet-version: "8.0.x"
       - name: Run frontend-managed feedback
-        run: python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline
+        run: python tools/repository.py qualification --group frontend-managed --host-root NexusPipeline
