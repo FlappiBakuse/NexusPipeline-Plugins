@@ -91,7 +91,22 @@ def get_release(repository: str, tag: str, token: str) -> dict[str, Any] | None:
         status, payload = _request("GET", f"/repos/{repository}/releases/tags/{tag}", token)
     except ReleaseApiError as exc:
         if exc.status_code == 404:
-            return None
+            matches = []
+            page = 1
+            while True:
+                _, listing = _request("GET", f"/repos/{repository}/releases?per_page=100&page={page}", token)
+                releases = json.loads(listing.decode("utf-8"))
+                if not isinstance(releases, list) or not all(isinstance(item, dict) for item in releases):
+                    raise ReleaseApiError("Release listing response is invalid")
+                matches.extend(item for item in releases if item.get("tag_name") == tag)
+                if len(releases) < 100:
+                    break
+                page += 1
+                if page > 100:
+                    raise ReleaseApiError("Release listing exceeds bounded lookup")
+            if len(matches) > 1:
+                raise ReleaseApiError("Multiple releases have the requested tag; refusing to guess")
+            return matches[0] if matches else None
         raise
     if status != 200:
         raise ReleaseApiError(f"读取 Release 返回非 200：{status}")
