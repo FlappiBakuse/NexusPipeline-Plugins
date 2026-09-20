@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -259,7 +260,8 @@ class GitHubGitTransport:
             env.update({
                 "GIT_CONFIG_COUNT": "1",
                 "GIT_CONFIG_KEY_0": "http.https://github.com/.extraheader",
-                "GIT_CONFIG_VALUE_0": f"AUTHORIZATION: bearer {token}",
+                "GIT_CONFIG_VALUE_0": "AUTHORIZATION: basic " + base64.b64encode(f"x-access-token:{token}".encode("utf-8")).decode("ascii"),
+                "GIT_TERMINAL_PROMPT": "0",
             })
             self._run(["git", "-c", "core.autocrlf=false", "clone", "--no-hardlinks", self.remote, str(checkout)], Path(temporary), env=env)
             self._run(["git", "config", "core.autocrlf", "false"], checkout, env=env)
@@ -621,10 +623,9 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
             uploaded_id = uploaded.get("id") if isinstance(uploaded, dict) else None
             core._require(isinstance(uploaded_id, int), "preview catalog 上传响应缺少合法 id")
             core._require(transport.download_asset(OFFICIAL_REPOSITORY, uploaded_id, token) == catalog_bytes, "preview catalog 上传后立即复核失败")
-        refreshed = transport.get_release(OFFICIAL_REPOSITORY, PREVIEW_TAG, token)
-        if refreshed is None:
-            raise core.RepositoryError("preview Release 在写入后不可读")
-        refreshed_assets = _release_asset_map(transport, OFFICIAL_REPOSITORY, refreshed, token)
+        # Drafts need not be addressable by tag until published. Verify all
+        # assets through the immutable release ID before making it public.
+        refreshed_assets = _release_asset_map(transport, OFFICIAL_REPOSITORY, release, token)
         catalog_asset = refreshed_assets.get("catalog.json")
         if catalog_asset is None or not isinstance(catalog_asset.get("id"), int) or transport.download_asset(OFFICIAL_REPOSITORY, catalog_asset["id"], token) != catalog_bytes:
             raise core.RepositoryError("preview catalog 上传后复核失败")

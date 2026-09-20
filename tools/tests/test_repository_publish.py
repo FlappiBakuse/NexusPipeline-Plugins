@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import shutil
 import sys
 import os
@@ -374,6 +375,16 @@ class RepositoryPublishTests(unittest.TestCase):
             candidate = root / ".generated" / "stable"
             release(root, plan_path, candidate)
             transport = GitHubGitTransport(remote=str(remote))
+            original_run = transport._run
+            def checked_run(command, cwd, *, env):
+                header = env["GIT_CONFIG_VALUE_0"]
+                self.assertTrue(header.startswith("AUTHORIZATION: basic "))
+                credentials = base64.b64decode(header.split(" ")[-1]).decode()
+                self.assertTrue(credentials.startswith("x-access-token:"))
+                self.assertEqual(env["GIT_TERMINAL_PROMPT"], "0")
+                self.assertNotIn(credentials, " ".join(command))
+                return original_run(command, cwd, env=env)
+            transport._run = checked_run
             writer_source = remote_parent / 'writer-source'
             _git(root, 'clone', '--depth', '1', root.as_uri(), str(writer_source))
             with self.assertRaisesRegex(RepositoryError, 'Git 基线'):

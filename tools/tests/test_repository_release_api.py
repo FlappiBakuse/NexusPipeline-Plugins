@@ -11,6 +11,18 @@ from tools import repository_release_api as api
 
 
 class ReleaseApiTests(unittest.TestCase):
+    def test_draft_lookup_uses_listing_and_rejects_ambiguity(self):
+        import json
+        draft = {"id": 1, "tag_name": "plugins-develop", "draft": True}
+        for matches in ([], [draft], [draft, {**draft, "id": 2}]):
+            with patch.object(api, "_request", side_effect=[api.ReleaseApiError("not found", status_code=404), (200, json.dumps(matches).encode())]) as request:
+                if len(matches) > 1:
+                    with self.assertRaisesRegex(api.ReleaseApiError, "Multiple releases"):
+                        api.get_release("owner/repo", "plugins-develop", "test-token")
+                else:
+                    self.assertEqual(api.get_release("owner/repo", "plugins-develop", "test-token"), draft if matches else None)
+                self.assertEqual(request.call_args.args[1], "/repos/owner/repo/releases?per_page=100&page=1")
+
     def test_upload_host_and_binary_download_accept(self):
         observed = []
         class Opener:
