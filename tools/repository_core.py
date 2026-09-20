@@ -389,13 +389,19 @@ SUPPORTED_LOCALES = _load_supported_locales()
 
 def validate_host_locale_registry(root: Path, host_root: Path) -> int:
     """验证插件锁定语言集合与宿主当前正式注册表及资源文件一致。"""
+    from sdk_source import SdkSourceError, resolve_localization_root
+
+    try:
+        localization_root = resolve_localization_root(host_root)
+    except SdkSourceError as exc:
+        raise RepositoryError(str(exc)) from exc
     locked_locales = _read_locked_host_locales(root)
     web_default, web_locales = _read_locale_registry(
         host_root / "frontend" / "public" / "i18n" / "locales.json",
         "宿主 Web locale registry",
     )
     embedded_default, embedded_locales = _read_locale_registry(
-        host_root / "src" / "Shared" / "Localization" / "Resources" / "locales.json",
+        localization_root / "locales.json",
         "宿主 embedded locale registry",
     )
     _require(web_default == embedded_default, "宿主 Web 与 embedded 的默认 locale 不一致")
@@ -403,7 +409,7 @@ def validate_host_locale_registry(root: Path, host_root: Path) -> int:
     _require(web_locales == locked_locales, "host.lock.json 的 supportedLocales 与宿主当前 locale registry 不一致")
     for locale in locked_locales:
         web_resource = host_root / "frontend" / "public" / "i18n" / f"{locale}.json"
-        embedded_resource = host_root / "src" / "Shared" / "Localization" / "Resources" / f"{locale}.json"
+        embedded_resource = localization_root / f"{locale}.json"
         _require(web_resource.is_file(), f"宿主缺少 Web locale 资源：{_display(web_resource)}")
         _require(embedded_resource.is_file(), f"宿主缺少 embedded locale 资源：{_display(embedded_resource)}")
         _require(isinstance(read_json(web_resource), dict), f"宿主 Web locale 资源必须是对象：{_display(web_resource)}")

@@ -210,6 +210,16 @@ class RepositoryCoreTests(unittest.TestCase):
 
             self.assertEqual(core.validate_host_locale_registry(root, host), 2)
 
+            current_resources = host / "src" / "Shared" / "Localization" / "Resources"
+            previous_resources = host / "src" / "Localization" / "Resources"
+            previous_resources.parent.mkdir(parents=True)
+            current_resources.rename(previous_resources)
+            self.assertEqual(core.validate_host_locale_registry(root, host), 2)
+            write_json(current_resources / "locales.json", registry)
+            with self.assertRaisesRegex(RepositoryError, "无法唯一确定"):
+                core.validate_host_locale_registry(root, host)
+            (current_resources / "locales.json").unlink()
+
             changed = dict(registry)
             changed["supported"] = [*registry["supported"], {"id": "ja-JP", "nativeName": "日本語"}]
             write_json(host / "frontend" / "public" / "i18n" / "locales.json", changed)
