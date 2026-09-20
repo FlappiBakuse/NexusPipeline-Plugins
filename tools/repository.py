@@ -46,6 +46,7 @@ def _parser() -> argparse.ArgumentParser:
             "publish-develop",
             "publish-preview",
             "publish-stable",
+            "write-stable-producer",
             "apply",
             "bootstrap-state",
         ),
@@ -69,6 +70,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-id", help="publisher workflow run id，仅写入非敏感 metadata")
     parser.add_argument("--run-attempt", help="publisher workflow run attempt")
     parser.add_argument("--workflow-sha", help="publisher workflow trusted SHA")
+    parser.add_argument("--base-sha", help="stable qualification historical base SHA")
+    parser.add_argument("--qualification-app-id", help="Qualification App id")
+    parser.add_argument("--qualification-check-id", help="Qualification App check id")
     return parser
 
 
@@ -188,6 +192,28 @@ def main(argv: list[str] | None = None) -> int:
                 distribution_root=args.distribution_root.resolve() if args.distribution_root else None,
                 token=os.environ.get(args.token_env),
                 git_transport=GitHubGitTransport() if args.remote_write else None,
+                base_sha=args.base_sha,
+                run_id=args.run_id,
+                run_attempt=args.run_attempt,
+                workflow_sha=args.workflow_sha,
+                qualification_app_id=args.qualification_app_id,
+                qualification_check_id=args.qualification_check_id,
+            )
+        elif args.command == "write-stable-producer":
+            from repository_publish import write_stable_producer
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.source_sha or not args.base_sha or not args.run_id or not args.run_attempt or not args.workflow_sha or not args.qualification_app_id or not args.qualification_check_id:
+                raise RepositoryError("write-stable-producer 缺少候选、source/base/run/workflow/App/check 身份")
+            write_stable_producer(
+                generated.resolve(),
+                source_sha=args.source_sha,
+                base_sha=args.base_sha,
+                run_id=args.run_id,
+                run_attempt=args.run_attempt,
+                workflow_sha=args.workflow_sha,
+                qualification_app_id=args.qualification_app_id,
+                qualification_check_id=args.qualification_check_id,
             )
         elif args.command == "apply":
             generated = args.generated_root or args.output

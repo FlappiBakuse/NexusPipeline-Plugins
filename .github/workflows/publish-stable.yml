@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - catalog.json
+      - .release-state.json
+      - packages/**
   workflow_dispatch:
     inputs:
       source_sha:
-        description: Exact source SHA with completed Plugin Release Qualification
+        description: Exact merged source SHA with completed Plugin Release Qualification
         required: true
         type: string
       pr_number:
@@ -38,10 +42,6 @@ on:
         description: Qualification App id
         required: false
         type: string
-      generated_root:
-        description: Optional prebuilt candidate directory for local recovery runs
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -51,8 +51,106 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  resolve-qualification:
+    name: resolve-qualification
+    runs-on: ubuntu-latest
+    environment: qualification-control
+    outputs:
+      source_sha: ${{ steps.resolve.outputs.source_sha }}
+      base_sha: ${{ steps.resolve.outputs.base_sha }}
+      head_sha: ${{ steps.resolve.outputs.head_sha }}
+      pr_number: ${{ steps.resolve.outputs.pr_number }}
+      check_id: ${{ steps.resolve.outputs.check_id }}
+      qualification_app_id: ${{ steps.resolve.outputs.qualification_app_id }}
+      qualification_run_id: ${{ steps.resolve.outputs.qualification_run_id }}
+      qualification_run_attempt: ${{ steps.resolve.outputs.qualification_run_attempt }}
+      workflow_sha: ${{ steps.resolve.outputs.workflow_sha }}
+      sdk_sha: ${{ steps.resolve.outputs.sdk_sha }}
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: Create qualification App token
+        id: qualification-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
+        with:
+          app-id: ${{ vars.QUALIFICATION_APP_ID }}
+          private-key: ${{ secrets.QUALIFICATION_APP_PRIVATE_KEY }}
+          owner: FlappiBakuse
+          repositories: NexusPipeline-Plugins
+          permission-actions: read
+          permission-checks: read
+          permission-contents: read
+          permission-pull-requests: read
+      - name: Resolve and verify immutable qualification
+        id: resolve
+        env:
+          QUALIFICATION_TOKEN: ${{ steps.qualification-token.outputs.token }}
+          QUALIFICATION_APP_ID: ${{ inputs.qualification_app_id || vars.QUALIFICATION_APP_ID }}
+          MERGED_SHA: ${{ inputs.merged_sha || inputs.source_sha || github.sha }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_BASE_SHA: ${{ inputs.base_sha }}
+          INPUT_HEAD_SHA: ${{ inputs.head_sha }}
+          INPUT_CHECK_ID: ${{ inputs.check_id }}
+          INPUT_RUN_ID: ${{ inputs.qualification_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            python tools/qualification_control.py resolve-main-queue \
+              --merged-sha "$MERGED_SHA" \
+              --app-id "$QUALIFICATION_APP_ID" \
+              --token-env QUALIFICATION_TOKEN > resolved.json
+          else
+            test -n "$INPUT_PR_NUMBER"
+            test -n "$INPUT_BASE_SHA"
+            test -n "$INPUT_HEAD_SHA"
+            test -n "$INPUT_CHECK_ID"
+          test -n "$INPUT_RUN_ID"
+            python tools/qualification_control.py verify-merged \
+              --pr-number "$INPUT_PR_NUMBER" \
+              --merged-sha "$MERGED_SHA" \
+              --base-sha "$INPUT_BASE_SHA" \
+              --head-sha "$INPUT_HEAD_SHA" \
+              --check-id "$INPUT_CHECK_ID" \
+              --app-id "$QUALIFICATION_APP_ID" \
+              --run-id "$INPUT_RUN_ID" \
+              --token-env QUALIFICATION_TOKEN > resolved.json
+          fi
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          with open("resolved.json", encoding="utf-8") as stream:
+              value = json.load(stream)
+          outputs = {
+              "source_sha": value["mergedSha"],
+              "base_sha": value["baseSha"],
+              "head_sha": value["headSha"],
+              "pr_number": value.get("prNumber") or os.environ.get("INPUT_PR_NUMBER", ""),
+              "check_id": value["checkId"],
+              "qualification_app_id": value.get("qualificationAppId", value["appId"]),
+              "qualification_run_id": value["runId"],
+              "qualification_run_attempt": value["runAttempt"],
+              "workflow_sha": value["workflowSha"],
+              "sdk_sha": value["sdkSourceSha"],
+          }
+          for key, item in outputs.items():
+              print(f"{key}={item}")
+          PY
+
   build-candidate:
     name: stable-candidate
+    needs: resolve-qualification
     runs-on: windows-latest
     outputs:
       source_sha: ${{ steps.source.outputs.sha }}
@@ -62,7 +160,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.source_sha || github.sha }}
+          ref: ${{ needs.resolve-qualification.outputs.source_sha }}
           path: NexusPipeline-Plugins
           fetch-depth: 0
           persist-credentials: false
@@ -78,7 +176,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: main
+          ref: ${{ needs.resolve-qualification.outputs.sdk_sha }}
           path: NexusPipeline
           fetch-depth: 1
           persist-credentials: false
@@ -89,9 +187,26 @@ jobs:
           $ErrorActionPreference = "Stop"
           $head = (git rev-parse HEAD).Trim()
           if ($head -notmatch '^[0-9a-f]{40}$') { throw "候选 checkout 未解析为完整 SHA" }
+          if ($head -ne "${{ needs.resolve-qualification.outputs.source_sha }}") { throw "候选 checkout 与资格 source SHA 不一致" }
           "sha=$head" >> $env:GITHUB_OUTPUT
       - name: Build isolated stable candidate
-        run: python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline --sdk-sha "$(git -C ..\NexusPipeline rev-parse HEAD)" --output .generated\stable-candidate
+        run: >-
+          python tools/repository.py qualification --group candidate
+          --base "${{ needs.resolve-qualification.outputs.base_sha }}"
+          --host-root ..\NexusPipeline
+          --sdk-sha "${{ needs.resolve-qualification.outputs.sdk_sha }}"
+          --output .generated\stable-candidate
+      - name: Bind candidate to qualification producer
+        run: >-
+          python tools/repository.py write-stable-producer
+          --generated-root .generated\stable-candidate
+          --source-sha "${{ needs.resolve-qualification.outputs.source_sha }}"
+          --base-sha "${{ needs.resolve-qualification.outputs.base_sha }}"
+          --run-id "${{ needs.resolve-qualification.outputs.qualification_run_id }}"
+          --run-attempt "${{ needs.resolve-qualification.outputs.qualification_run_attempt }}"
+          --workflow-sha "${{ needs.resolve-qualification.outputs.workflow_sha }}"
+          --qualification-app-id "${{ needs.resolve-qualification.outputs.qualification_app_id }}"
+          --qualification-check-id "${{ needs.resolve-qualification.outputs.check_id }}"
       - name: Verify candidate source identity
         shell: pwsh
         run: |
@@ -108,8 +223,7 @@ jobs:
 
   publish-candidate:
     name: stable-publish
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    needs: build-candidate
+    needs: [resolve-qualification, build-candidate]
     runs-on: ubuntu-latest
     environment: plugin-stable-publish
     defaults:
@@ -124,7 +238,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ needs.build-candidate.outputs.source_sha }}
+          ref: ${{ needs.resolve-qualification.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source
           fetch-depth: 1
           persist-credentials: false
@@ -147,18 +261,18 @@ jobs:
           permission-checks: read
           permission-contents: read
           permission-pull-requests: read
-      - name: Verify completed Plugin Release Qualification
+      - name: Reverify completed Plugin Release Qualification
         env:
           QUALIFICATION_TOKEN: ${{ steps.qualification-token.outputs.token }}
         run: >-
           python tools/qualification_control.py verify-merged
-          --pr-number "${{ inputs.pr_number }}"
-          --merged-sha "${{ needs.build-candidate.outputs.source_sha }}"
-          --base-sha "${{ inputs.base_sha }}"
-          --head-sha "${{ inputs.head_sha }}"
-          --check-id "${{ inputs.check_id }}"
-          --app-id "${{ inputs.qualification_app_id }}"
-          --run-id "${{ inputs.qualification_run_id }}"
+          --pr-number "${{ needs.resolve-qualification.outputs.pr_number }}"
+          --merged-sha "${{ needs.resolve-qualification.outputs.source_sha }}"
+          --base-sha "${{ needs.resolve-qualification.outputs.base_sha }}"
+          --head-sha "${{ needs.resolve-qualification.outputs.head_sha }}"
+          --check-id "${{ needs.resolve-qualification.outputs.check_id }}"
+          --app-id "${{ needs.resolve-qualification.outputs.qualification_app_id }}"
+          --run-id "${{ needs.resolve-qualification.outputs.qualification_run_id }}"
           --token-env QUALIFICATION_TOKEN
       - name: Create publisher App token
         id: app-token
@@ -172,4 +286,15 @@ jobs:
       - name: Publish stable candidate with immutable source identity
         env:
           PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: python tools/repository.py publish-stable --root ../NexusPipeline-Plugins-Source --source-sha "${{ needs.build-candidate.outputs.source_sha }}" --generated-root .generated/stable-candidate --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
+        run: >-
+          python tools/repository.py publish-stable
+          --root ../NexusPipeline-Plugins-Source
+          --source-sha "${{ needs.resolve-qualification.outputs.source_sha }}"
+          --base-sha "${{ needs.resolve-qualification.outputs.base_sha }}"
+          --generated-root .generated/stable-candidate
+          --run-id "${{ needs.resolve-qualification.outputs.qualification_run_id }}"
+          --run-attempt "${{ needs.resolve-qualification.outputs.qualification_run_attempt }}"
+          --workflow-sha "${{ needs.resolve-qualification.outputs.workflow_sha }}"
+          --qualification-app-id "${{ needs.resolve-qualification.outputs.qualification_app_id }}"
+          --qualification-check-id "${{ needs.resolve-qualification.outputs.check_id }}"
+          --remote-write --token-env PLUGIN_PUBLISHER_TOKEN

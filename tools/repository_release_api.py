@@ -82,6 +82,19 @@ def get_release(repository: str, tag: str, token: str) -> dict[str, Any] | None:
     return value
 
 
+def get_ref(repository: str, branch: str, token: str) -> str:
+    """读取固定仓库分支的完整 commit SHA。"""
+
+    status, payload = _request("GET", f"/repos/{repository}/git/ref/heads/{branch}", token)
+    if status != 200:
+        raise ReleaseApiError(f"读取 Git ref 返回非 200：{status}", status_code=status)
+    value = json.loads(payload.decode("utf-8"))
+    sha = ((value if isinstance(value, dict) else {}).get("object") or {}).get("sha")
+    if not isinstance(sha, str):
+        raise ReleaseApiError("Git ref 响应缺少 commit SHA")
+    return sha
+
+
 def create_release(repository: str, tag: str, token: str, *, name: str, body: str, target_commitish: str) -> dict[str, Any]:
     status, payload = _request(
         "POST",

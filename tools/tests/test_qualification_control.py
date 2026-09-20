@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import json
 import unittest
 
 from tools.qualification_control import (
@@ -10,12 +12,18 @@ from tools.qualification_control import (
     collect_gate_results,
     read_pull_request,
     resolve_candidate,
+    resolve_main_queue,
+    resolve_merged_candidate,
+    verify_merged_candidate,
 )
 from tools.qualification_contract import make_external_id
 
 
 H = "a" * 40
 B = "b" * 40
+M = "c" * 40
+C = B
+SDK = "d" * 40
 
 
 class FakeApi:
@@ -87,6 +95,69 @@ class QualificationControlTests(unittest.TestCase):
     def test_policy_identifiers_are_stable(self) -> None:
         self.assertEqual(EXTERNAL_ID, "plugins-release-qualification-v1")
         self.assertEqual(make_external_id("FlappiBakuse/NexusPipeline-Plugins", H, B, B, 12, 2), f"FlappiBakuse/NexusPipeline-Plugins:qualification:{H}:{B}:{B}:12:2")
+
+    def test_resolve_merged_discovers_and_rechecks_structured_proof(self) -> None:
+        repository = "FlappiBakuse/NexusPipeline-Plugins"
+        proof = {
+            "schemaVersion": 1,
+            "repository": repository,
+            "headSha": H,
+            "baseSha": B,
+            "workflowSha": C,
+            "runId": 12,
+            "runAttempt": 2,
+            "appId": 456,
+            "sdkSourceSha": SDK,
+            "contractSourceSha": SDK,
+            "gates": {name: "success" for name in ("P1", "P2", "P3")},
+        }
+        check = {
+            "id": 99,
+            "name": CHECK_NAME,
+            "head_sha": H,
+            "external_id": make_external_id(repository, H, B, C, 12, 2),
+            "app": {"id": 456},
+            "conclusion": "success",
+            "output": {"text": json.dumps(proof, separators=(",", ":"))},
+        }
+        pull = {
+            "number": 7,
+            "merged": True,
+            "merge_commit_sha": M,
+            "draft": False,
+            "base": {"ref": "main", "sha": B, "repo": {"full_name": repository}},
+            "head": {"sha": H, "repo": {"full_name": repository}},
+        }
+        jobs = [
+            {"name": name, "run_id": 12, "status": "completed", "conclusion": "success", "run_attempt": 2, "steps": [{"name": "Execute gate", "status": "completed", "conclusion": "success"}]}
+            for name in ("P1", "P2", "P3")
+        ]
+        api = FakeApi({
+            ("GET", f"/repos/{repository}/git/ref/heads/main"): {"object": {"sha": M}},
+            ("GET", f"/repos/{repository}/commits/{M}/pulls?per_page=100"): [{"number": 7}],
+            ("GET", f"/repos/{repository}/pulls/7"): pull,
+            ("GET", f"/repos/{repository}/commits/{H}/check-runs?per_page=100&page=1"): {"check_runs": [check]},
+            ("GET", f"/repos/{repository}/git/commits/{M}"): {"parents": [{"sha": B}], "tree": {"sha": "tree"}},
+            ("GET", f"/repos/{repository}/git/commits/{H}"): {"tree": {"sha": "tree"}},
+            ("GET", f"/repos/{repository}/actions/runs/12"): {"id": 12, "run_attempt": 2, "repository": {"full_name": repository}, "event": "workflow_dispatch", "head_branch": "main", "head_sha": C, "path": ".github/workflows/release-qualification.yml", "status": "completed", "conclusion": "success"},
+            ("GET", f"/repos/{repository}/actions/runs/12/attempts/2/jobs?per_page=100&page=1"): {"jobs": jobs},
+        })
+        result = resolve_merged_candidate(repository, M, 456, "secret", request_fn=api)
+        self.assertEqual(result["prNumber"], 7)
+        self.assertEqual(result["headSha"], H)
+        self.assertEqual(result["runAttempt"], 2)
+        self.assertEqual(result["sdkSourceSha"], SDK)
+
+    def test_resolve_main_queue_skips_generated_only_commit_and_never_guesses(self) -> None:
+        repository = "FlappiBakuse/NexusPipeline-Plugins"
+        state = base64.b64encode(json.dumps({"schemaVersion": 1, "sourceCommit": B}).encode("utf-8")).decode("ascii")
+        api = FakeApi({
+            ("GET", f"/repos/{repository}/git/ref/heads/main"): {"object": {"sha": M}},
+            ("GET", f"/repos/{repository}/contents/.release-state.json?ref=main"): {"encoding": "base64", "content": state},
+            ("GET", f"/repos/{repository}/commits/{M}"): {"parents": [{"sha": B}], "files": [{"filename": "catalog.json"}]},
+        })
+        with self.assertRaisesRegex(QualificationError, "source cursor 已追平"):
+            resolve_main_queue(repository, M, 456, "secret", request_fn=api)
 
 
 if __name__ == "__main__":

@@ -580,7 +580,194 @@ def verify_merged_candidate(
     except ContractError as exc:
         raise QualificationError(str(exc)) from exc
     collect_gate_results(repository, run_id_int, token, run_attempt=expected_attempt, request_fn=request_fn)
-    return {"mergedSha": m, "baseSha": b, "headSha": h, "checkId": check_id, "runId": run_id_int, "runAttempt": expected_attempt}
+    return {
+        "mergedSha": m,
+        "baseSha": b,
+        "headSha": h,
+        "checkId": check_id,
+        "appId": app_id_int,
+        "runId": run_id_int,
+        "runAttempt": expected_attempt,
+        "workflowSha": proof["workflowSha"],
+        "sdkSourceSha": proof["sdkSourceSha"],
+        "contractSourceSha": proof["contractSourceSha"],
+    }
+
+
+def resolve_merged_candidate(
+    repository: str,
+    merged_sha: str,
+    app_id: int | str,
+    token: str,
+    *,
+    request_fn: RequestFn | None = None,
+    require_current_main: bool = True,
+) -> dict[str, Any]:
+    """从当前 squash merge 自动发现并复核唯一成功的 Qualification 证明。"""
+
+    repository = _repository(repository)
+    merged_sha = _sha(merged_sha, "M")
+    _require(str(app_id).isdigit() and int(app_id) > 0, "Qualification App ID 必须是正整数")
+    app_id_int = int(app_id)
+    if require_current_main:
+        main_ref = github_request("GET", f"/repos/{repository}/git/ref/heads/main", token, request_fn=request_fn)
+        _require(_ref_sha(main_ref, "当前 main") == merged_sha, "main 已前进，当前 push 事件不是最新 source SHA")
+
+    listing = github_request("GET", f"/repos/{repository}/commits/{merged_sha}/pulls?per_page=100", token, request_fn=request_fn)
+    _require(isinstance(listing, list), "关联 PR API 返回不是数组")
+    pulls: list[dict[str, Any]] = []
+    for item in listing:
+        if not isinstance(item, dict):
+            continue
+        number = item.get("number")
+        if not isinstance(number, int) or number <= 0:
+            continue
+        pull = github_request("GET", f"/repos/{repository}/pulls/{number}", token, request_fn=request_fn)
+        if not isinstance(pull, dict):
+            continue
+        if (
+            pull.get("merged") is True
+            and pull.get("merge_commit_sha") == merged_sha
+            and (pull.get("base") or {}).get("ref") == "main"
+            and ((pull.get("base") or {}).get("repo") or {}).get("full_name") == repository
+            and ((pull.get("head") or {}).get("repo") or {}).get("full_name") == repository
+        ):
+            pulls.append(pull)
+    _require(len(pulls) == 1, "M 必须关联唯一同仓库 main squash PR")
+    pull = pulls[0]
+    number = pull.get("number")
+    base_sha = _sha((pull.get("base") or {}).get("sha"), "B")
+    head_sha = _sha((pull.get("head") or {}).get("sha"), "H")
+
+    checks = _check_pages(repository, head_sha, token, request_fn)
+    candidates: list[tuple[dict[str, Any], dict[str, Any]]] = []
+    for check in checks:
+        if (
+            check.get("name") != CHECK_NAME
+            or check.get("head_sha") != head_sha
+            or str((check.get("app") or {}).get("id")) != str(app_id_int)
+            or check.get("conclusion") != "success"
+            or not isinstance(check.get("id"), int)
+            or check.get("id") <= 0
+        ):
+            continue
+        proof_text = (check.get("output") or {}).get("text")
+        if not isinstance(proof_text, str):
+            continue
+        try:
+            proof = parse_strict_json(proof_text)
+            validate_proof(
+                proof,
+                repository=repository,
+                head_sha=head_sha,
+                base_sha=base_sha,
+                workflow_sha=proof.get("workflowSha"),
+                run_id=proof.get("runId"),
+                run_attempt=proof.get("runAttempt"),
+                app_id=app_id_int,
+                gate_names=REQUIRED_GATES,
+                sdk_source_sha=proof.get("sdkSourceSha"),
+                contract_source_sha=proof.get("contractSourceSha"),
+            )
+        except (ContractError, TypeError, ValueError):
+            continue
+        candidates.append((check, proof))
+    _require(candidates, "M 缺少唯一成功的 Qualification App 证明")
+    # 同一 H 允许历史重跑；只选择 check id 最大的成功证明，再由 verify_merged_candidate
+    # 重新读取 run、attempt、Gate 和 squash 树，避免使用旧的字符串输出作凭据。
+    candidates.sort(key=lambda item: int(item[0].get("id", 0)))
+    check, proof = candidates[-1]
+    check_id = check.get("id")
+    result = verify_merged_candidate(
+        repository,
+        number,
+        merged_sha,
+        base_sha,
+        head_sha,
+        str(check_id),
+        app_id_int,
+        proof["runId"],
+        token,
+        request_fn=request_fn,
+    )
+    result["prNumber"] = int(number)
+    result["qualificationAppId"] = app_id_int
+    return result
+
+
+def _read_release_cursor(repository: str, token: str, *, request_fn: RequestFn | None = None) -> str:
+    response = github_request("GET", f"/repos/{repository}/contents/.release-state.json?ref=main", token, request_fn=request_fn)
+    _require(isinstance(response, dict) and response.get("encoding") == "base64", "main .release-state.json API 响应无效")
+    content = response.get("content")
+    _require(isinstance(content, str), "main .release-state.json 缺少内容")
+    try:
+        state = json.loads(base64.b64decode(content.encode("ascii"), validate=True).decode("utf-8"))
+    except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
+        raise QualificationError("main .release-state.json 不是有效 JSON") from exc
+    _require(isinstance(state, dict), "main .release-state.json 根节点必须是对象")
+    return _sha(state.get("sourceCommit"), "发行 source cursor S")
+
+
+def _first_parent_chain(
+    repository: str,
+    start_sha: str,
+    stop_sha: str,
+    token: str,
+    *,
+    request_fn: RequestFn | None = None,
+) -> list[tuple[str, str, list[str]]]:
+    chain: list[tuple[str, str, list[str]]] = []
+    current = _sha(start_sha, "main head")
+    stop_sha = _sha(stop_sha, "发行 source cursor S")
+    for _ in range(1000):
+        if current == stop_sha:
+            return list(reversed(chain))
+        commit = github_request("GET", f"/repos/{repository}/commits/{current}", token, request_fn=request_fn)
+        _require(isinstance(commit, dict), "main commit API 返回不是对象")
+        parents = commit.get("parents")
+        _require(isinstance(parents, list) and len(parents) == 1 and isinstance(parents[0], dict), "main first-parent 链必须是线性提交")
+        parent = _sha(parents[0].get("sha"), "main first-parent")
+        files = commit.get("files")
+        _require(isinstance(files, list) and len(files) < 300, "main commit 文件列表不完整，拒绝猜测生成物范围")
+        paths: list[str] = []
+        for item in files:
+            _require(isinstance(item, dict) and isinstance(item.get("filename"), str), "main commit 文件记录无效")
+            paths.append(item["filename"].replace("\\", "/"))
+            previous = item.get("previous_filename")
+            if isinstance(previous, str):
+                paths.append(previous.replace("\\", "/"))
+        chain.append((current, parent, paths))
+        current = parent
+    raise QualificationError("main 待发布 first-parent 链超过 1000 个提交")
+
+
+def resolve_main_queue(
+    repository: str,
+    merged_sha: str,
+    app_id: int | str,
+    token: str,
+    *,
+    request_fn: RequestFn | None = None,
+) -> dict[str, Any]:
+    """依据 stable source cursor S 复核所有未发布源码提交，返回最新候选证明。"""
+
+    repository = _repository(repository)
+    merged_sha = _sha(merged_sha, "main head M")
+    main_ref = github_request("GET", f"/repos/{repository}/git/ref/heads/main", token, request_fn=request_fn)
+    _require(_ref_sha(main_ref, "当前 main") == merged_sha, "main 已前进，当前 push 事件不是最新 head")
+    cursor = _read_release_cursor(repository, token, request_fn=request_fn)
+    chain = _first_parent_chain(repository, merged_sha, cursor, token, request_fn=request_fn)
+    generated_prefixes = ("catalog.json", ".release-state.json", "packages/")
+    source_proofs: list[dict[str, Any]] = []
+    for commit_sha, _parent, paths in chain:
+        if paths and all(path == generated_prefixes[0] or path == generated_prefixes[1] or path.startswith(generated_prefixes[2]) for path in paths):
+            continue
+        source_proofs.append(resolve_merged_candidate(repository, commit_sha, app_id, token, request_fn=request_fn, require_current_main=False))
+    _require(source_proofs, "main source cursor 已追平，没有可发布的源码资格")
+    latest = source_proofs[-1]
+    latest["sourceCursor"] = cursor
+    latest["pendingSourceShas"] = [item["mergedSha"] for item in source_proofs]
+    return latest
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -631,6 +818,17 @@ def main(argv: list[str] | None = None) -> int:
     verify.add_argument("--app-id", required=True)
     verify.add_argument("--run-id", required=True)
     verify.add_argument("--token-env", default="QUALIFICATION_TOKEN")
+    resolve = sub.add_parser("resolve-merged")
+    resolve.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
+    resolve.add_argument("--merged-sha", required=True)
+    resolve.add_argument("--app-id", required=True)
+    resolve.add_argument("--allow-noncurrent", action="store_true")
+    resolve.add_argument("--token-env", default="QUALIFICATION_TOKEN")
+    queue = sub.add_parser("resolve-main-queue")
+    queue.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
+    queue.add_argument("--merged-sha", required=True)
+    queue.add_argument("--app-id", required=True)
+    queue.add_argument("--token-env", default="QUALIFICATION_TOKEN")
     compatibility = sub.add_parser("compatibility")
     compatibility.add_argument("--repository", default=OFFICIAL_PLUGINS_REPOSITORY)
     compatibility.add_argument("--candidate-sha", required=True)
@@ -708,6 +906,23 @@ def main(argv: list[str] | None = None) -> int:
             args.check_id,
             args.app_id,
             args.run_id,
+            os.environ.get(args.token_env, ""),
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    elif args.command == "resolve-merged":
+        result = resolve_merged_candidate(
+            args.repository,
+            args.merged_sha,
+            args.app_id,
+            os.environ.get(args.token_env, ""),
+            require_current_main=not args.allow_noncurrent,
+        )
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    elif args.command == "resolve-main-queue":
+        result = resolve_main_queue(
+            args.repository,
+            args.merged_sha,
+            args.app_id,
             os.environ.get(args.token_env, ""),
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
