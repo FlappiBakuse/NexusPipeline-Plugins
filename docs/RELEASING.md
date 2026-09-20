@@ -71,15 +71,18 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 本地可以执行固定的 P1/P2/P3：
 
 ```text
-python tools/repository.py qualification --group source --base main --host-root ..\NexusPipeline
-python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline
-python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline
+$env:HOST_ROOT="<absolute NexusPipeline checkout>"
+$env:SDK_SHA="<qualification fixed Host SDK source SHA>"
+python tools/repository.py qualification --group source --base main --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
+python tools/repository.py qualification --group frontend-managed --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
+python tools/repository.py qualification --group candidate --base main --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
 
 # develop preview，只生成并校验本地候选，不写 stable
-python tools/repository.py publish-develop --source-ref develop --output .generated/preview
+python tools/repository.py publish-develop --source-ref develop --output .generated/preview --producer-output .generated/preview-producer.json
+python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-sha <source commit> --run-id <run id> --run-attempt <attempt> --workflow-sha <qualification workflow SHA>
 ```
 
-发布工作流把生成的 catalog 与 package 纳入主分支后，再运行 `python tools/repository.py validate` 核对主分支源码、catalog 和发行包集合。
+候选目录是发布器的只读输入；preview 的 producer 资格关联写在候选目录外的 sidecar 中，promote 时必须显式传入并校验 source/catalog 身份。发布器会在每个包和 catalog 上传或复用后立即下载并核对字节与 SHA256，最后才允许切换 preview catalog。发布工作流把生成的 catalog 与 package 纳入主分支后，再运行 `python tools/repository.py validate` 核对主分支源码、catalog 和发行包集合。
 
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 

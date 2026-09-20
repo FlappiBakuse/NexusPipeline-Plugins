@@ -37,8 +37,8 @@ PREVIEW_TAG = "plugins-develop"
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 MAX_CANDIDATE_FILES = 4096
 MAX_CANDIDATE_BYTES = 512 * 1024 * 1024
-MAX_ZIP_ENTRIES = 8192
-MAX_ZIP_UNCOMPRESSED_BYTES = 128 * 1024 * 1024
+MAX_ZIP_ENTRIES = core.MAX_ZIP_ENTRIES
+MAX_ZIP_UNCOMPRESSED_BYTES = core.MAX_ZIP_UNCOMPRESSED_BYTES
 
 
 class GitHubTransport(Protocol):
@@ -106,22 +106,16 @@ def _validate_zip_limits(package: Path) -> None:
     try:
         with zipfile.ZipFile(package) as archive:
             infos = archive.infolist()
-            core._require(len(infos) <= MAX_ZIP_ENTRIES, f"候选 ZIP 条目过多：{package.name}")
-            total = 0
-            for info in infos:
-                name = info.filename.replace("\\", "/")
-                core._require(name and not name.startswith("/") and all(part not in {"", ".", ".."} for part in name.split("/")), f"候选 ZIP 路径非法：{name}")
-                core._require((info.external_attr >> 16) & 0o170000 != 0o120000, f"候选 ZIP 禁止 symlink：{package.name} -> {name}")
-                total += info.file_size
-            core._require(total <= MAX_ZIP_UNCOMPRESSED_BYTES, f"候选 ZIP 解压后过大：{package.name}")
+            core._validate_zip_layout(infos, package)
     except zipfile.BadZipFile as exc:
         raise core.RepositoryError(f"候选 ZIP 无效：{package}") from exc
 
 
-def _candidate_inventory(generated_root: Path) -> tuple[dict[str, Path], int]:
+def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[str, Path], int]:
     """Enumerate only candidate payload files and reject links/special files."""
 
     generated_root = _ordinary_directory(generated_root, "候选目录")
+    core.validate_stable_candidate_layout(source_root, generated_root)
     files: dict[str, Path] = {}
     total_bytes = 0
     for path in generated_root.rglob("*"):
@@ -131,7 +125,7 @@ def _candidate_inventory(generated_root: Path) -> tuple[dict[str, Path], int]:
         if path.is_dir():
             continue
         core._require(path.is_file(), f"候选目录包含特殊文件：{relative}")
-        if relative in {"release-plan.json", "stable-producer.json", "preview-producer.json", "preview-plan.json"}:
+        if relative in {"release-plan.json", "stable-producer.json"}:
             continue
         core._require(relative in {"catalog.json", core.STATE_FILE} or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
         if relative.startswith("packages/"):
@@ -157,7 +151,7 @@ def _preview_inventory(generated_root: Path) -> None:
         if path.is_dir():
             continue
         core._require(path.is_file(), f"preview 候选目录包含特殊文件：{relative}")
-        core._require(relative in {"catalog.json", "preview-plan.json", "preview-producer.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
+        core._require(relative in {"catalog.json", "preview-plan.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
         if relative.startswith("packages/"):
             core._require(path.suffix.lower() == ".zip", f"preview packages 只能包含 ZIP：{relative}")
             _validate_zip_limits(path)
@@ -247,7 +241,8 @@ class GitHubGitTransport:
         generated_root = _ordinary_directory(generated_root, "stable 候选目录")
         plan = core.read_json(generated_root / "release-plan.json")
         core._require(isinstance(plan, dict) and plan.get("head") == source_sha, "stable 候选 plan/source SHA 不一致")
-        files, _total = _candidate_inventory(generated_root)
+        core.validate_generated(root.resolve(), generated_root, distribution_root=root.resolve())
+        files, _total = _candidate_inventory(root.resolve(), generated_root)
         expected_paths = set(files)
         for key in ("removePackages", "removeArtifacts"):
             values = plan.get(key, [])
@@ -277,6 +272,13 @@ class GitHubGitTransport:
                 return {"sourceCommit": source_sha, "publishedCommit": current, "parent": current, "remoteWritten": True, "idempotent": True, **verification}
             core._require(current == source_sha, "stable main 已前进且尚未包含当前候选，拒绝覆盖")
             self._assert_checkout_modes(checkout, env)
+            for relative, candidate in sorted(files.items()):
+                if not relative.startswith("packages/"):
+                    continue
+                destination = checkout / relative
+                if destination.exists() or destination.is_symlink():
+                    core._require(destination.is_file() and not destination.is_symlink(), f"stable 目标包不是普通文件：{relative}")
+                    core._require(core._same_package_bytes(destination, candidate), f"同一 SemVer 的远端发行包字节不同，拒绝覆盖：{relative}")
             for relative in ("catalog.json", core.STATE_FILE):
                 source = files[relative]
                 destination = checkout / relative
@@ -494,15 +496,34 @@ def _release_asset_map(transport: GitHubTransport, repository: str, release: dic
     return result
 
 
-def _upload_or_reuse_asset(transport: GitHubTransport, repository: str, release: dict[str, Any], token: str, asset: Path, *, name: str, assets: dict[str, dict[str, Any]]) -> None:
+def _upload_or_reuse_asset(
+    transport: GitHubTransport,
+    repository: str,
+    release: dict[str, Any],
+    token: str,
+    asset: Path,
+    *,
+    name: str,
+    assets: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
     release_id = release["id"]
     existing = assets.get(name)
     if existing is not None:
         asset_id = existing.get("id")
-        if not isinstance(asset_id, int) or transport.download_asset(repository, asset_id, token) != asset.read_bytes():
+        if not isinstance(asset_id, int):
+            raise core.RepositoryError(f"preview asset 缺少合法 id：{name}")
+        if transport.download_asset(repository, asset_id, token) != asset.read_bytes():
             raise core.RepositoryError(f"同名 preview asset 内容不同，拒绝覆盖：{name}")
-        return
-    transport.upload_asset(repository, release_id, asset, token, name=name)
+        return existing
+    uploaded = transport.upload_asset(repository, release_id, asset, token, name=name)
+    asset_id = uploaded.get("id") if isinstance(uploaded, dict) else None
+    if not isinstance(asset_id, int):
+        raise core.RepositoryError(f"preview asset 上传响应缺少合法 id：{name}")
+    if transport.download_asset(repository, asset_id, token) != asset.read_bytes():
+        raise core.RepositoryError(f"preview asset 上传后立即复核失败：{name}")
+    result = {"id": asset_id, "name": name}
+    assets[name] = result
+    return result
 
 
 def _restore_catalog_asset(
@@ -510,7 +531,6 @@ def _restore_catalog_asset(
     release: dict[str, Any],
     token: str,
     old_catalog: bytes | None,
-    generated_root: Path,
 ) -> None:
     release_id = release.get("id")
     if not isinstance(release_id, int):
@@ -525,12 +545,10 @@ def _restore_catalog_asset(
         transport.delete_asset(OFFICIAL_REPOSITORY, current_id, token)
     if old_catalog is None:
         return
-    restore = generated_root / ".restore-catalog.json"
-    restore.write_bytes(old_catalog)
-    try:
-        transport.upload_asset(OFFICIAL_REPOSITORY, release_id, restore, token, name="catalog.json")
-    finally:
-        restore.unlink(missing_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".nxp-preview-restore-") as temporary:
+        restore = Path(temporary) / "catalog.json"
+        restore.write_bytes(old_catalog)
+        _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, restore, name="catalog.json", assets={})
 
 
 def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: GitHubTransport, run_id: str | None) -> dict[str, Any]:
@@ -539,6 +557,7 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
     core._require(isinstance(source_sha, str), "preview sourceCommit")
     _full_sha(source_sha, "preview source SHA")
     _preview_inventory(generated_root)
+    core.validate_preview_candidate(generated_root, expected_source_sha=source_sha)
     current_source = transport.get_source_head(OFFICIAL_REPOSITORY, "develop", token)
     _full_sha(current_source, "远端 develop source SHA")
     core._require(current_source == source_sha, f"SUPERSEDED：develop 已前进到 {current_source}，未发布旧 preview {source_sha}")
@@ -554,7 +573,7 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
             PREVIEW_TAG,
             token,
             name="Plugins develop preview",
-            body=f"sourceCommit={source_sha}\ncatalogSha256={catalog_hash}\nrunId={run_id or ''}",
+            body=f"sourceCommit={source_sha}\ncatalogSha256={catalog_hash}",
             target_commitish=source_sha,
         )
     release_id = release.get("id")
@@ -564,9 +583,22 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
     for package in packages:
         core._validate_zip(package, mode="preview")
         _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, package, name=package.name, assets=assets)
-    metadata_path = generated_root / f"preview-publisher-{source_sha}.json"
-    metadata_path.write_text(json.dumps({"schemaVersion": 1, "sourceSha": source_sha, "catalogSha256": catalog_hash, "runId": run_id or ""}, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, metadata_path, name=metadata_path.name, assets=assets)
+    with tempfile.TemporaryDirectory(prefix=".nxp-preview-publisher-") as temporary:
+        metadata_path = Path(temporary) / f"preview-publisher-{source_sha}-{catalog_hash}.json"
+        metadata_path.write_text(
+            json.dumps(
+                {"schemaVersion": 1, "sourceSha": source_sha, "catalogSha256": catalog_hash},
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, metadata_path, name=metadata_path.name, assets=assets)
+
+    current_source = transport.get_source_head(OFFICIAL_REPOSITORY, "develop", token)
+    _full_sha(current_source, "catalog 切换前远端 develop source SHA")
+    core._require(current_source == source_sha, f"SUPERSEDED：catalog 切换前 develop 已前进到 {current_source}，未发布旧 preview {source_sha}")
     old_catalog: bytes | None = None
     catalog_mutated = False
     try:
@@ -579,10 +611,16 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
             if old_catalog != catalog_bytes:
                 catalog_mutated = True
                 transport.delete_asset(OFFICIAL_REPOSITORY, old_id, token)
-                transport.upload_asset(OFFICIAL_REPOSITORY, release_id, catalog_path, token, name="catalog.json")
+                uploaded = transport.upload_asset(OFFICIAL_REPOSITORY, release_id, catalog_path, token, name="catalog.json")
+                uploaded_id = uploaded.get("id") if isinstance(uploaded, dict) else None
+                core._require(isinstance(uploaded_id, int), "preview catalog 上传响应缺少合法 id")
+                core._require(transport.download_asset(OFFICIAL_REPOSITORY, uploaded_id, token) == catalog_bytes, "preview catalog 上传后立即复核失败")
         else:
             catalog_mutated = True
-            transport.upload_asset(OFFICIAL_REPOSITORY, release_id, catalog_path, token, name="catalog.json")
+            uploaded = transport.upload_asset(OFFICIAL_REPOSITORY, release_id, catalog_path, token, name="catalog.json")
+            uploaded_id = uploaded.get("id") if isinstance(uploaded, dict) else None
+            core._require(isinstance(uploaded_id, int), "preview catalog 上传响应缺少合法 id")
+            core._require(transport.download_asset(OFFICIAL_REPOSITORY, uploaded_id, token) == catalog_bytes, "preview catalog 上传后立即复核失败")
         refreshed = transport.get_release(OFFICIAL_REPOSITORY, PREVIEW_TAG, token)
         if refreshed is None:
             raise core.RepositoryError("preview Release 在写入后不可读")
@@ -601,7 +639,7 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
     except Exception as exc:
         if catalog_mutated:
             try:
-                _restore_catalog_asset(transport, release, token, old_catalog, generated_root)
+                _restore_catalog_asset(transport, release, token, old_catalog)
             except Exception as restore_exc:
                 raise core.RepositoryError(f"preview catalog 失败且恢复失败：{restore_exc}") from exc
         raise
@@ -620,10 +658,24 @@ def publish_develop(
     run_id: str | None = None,
     run_attempt: str | None = None,
     workflow_sha: str | None = None,
+    producer_output: Path | None = None,
 ) -> dict[str, Any]:
     result = core.build_preview(root, source_ref, output, host_root=host_root)
     if run_id is not None:
-        core.write_json(Path(result["output"]) / "preview-producer.json", {"schemaVersion": 1, "sourceSha": result["sourceCommit"], "runId": int(run_id), "runAttempt": int(run_attempt or "1"), "workflowSha": workflow_sha or ""})
+        producer_path = (producer_output or (Path(result["output"]).parent / "preview-producer.json")).resolve()
+        candidate_root = Path(result["output"]).resolve()
+        core._require(candidate_root not in producer_path.parents, "preview producer sidecar 必须位于候选目录之外")
+        core.write_json(
+            producer_path,
+            {
+                "schemaVersion": 1,
+                "sourceSha": result["sourceCommit"],
+                "runId": int(run_id),
+                "runAttempt": int(run_attempt or "1"),
+                "workflowSha": workflow_sha or "",
+            },
+        )
+        result["producer"] = str(producer_path)
     if remote_write:
         core._require(run_id and run_attempt and workflow_sha, "preview remote write 缺少 producer workflow/run/attempt 身份")
         write_token, transport = _require_remote_inputs(True, token, github_transport)
@@ -641,6 +693,7 @@ def publish_preview(
     run_id: str,
     run_attempt: str,
     workflow_sha: str,
+    producer_path: Path | None = None,
     remote_write: bool = False,
     token: str | None = None,
     github_transport: GitHubTransport | None = None,
@@ -648,7 +701,9 @@ def publish_preview(
     """独立 publisher 只读取已生成候选数据，不执行候选源码。"""
     generated_root = _ordinary_directory(generated_root, "preview 候选目录")
     candidate = core.validate_preview_candidate(generated_root, expected_source_sha=source_sha)
-    producer = core.read_json(generated_root / "preview-producer.json")
+    producer_file = (producer_path or (generated_root.parent / "preview-producer.json")).resolve()
+    core._require(generated_root not in producer_file.parents, "preview producer sidecar 必须位于候选目录之外")
+    producer = core.read_json(producer_file)
     core._require(isinstance(producer, dict) and producer.get("schemaVersion") == 1, "preview producer metadata 无效")
     _full_sha(source_sha, "preview source SHA")
     _full_sha(workflow_sha, "preview workflow SHA")

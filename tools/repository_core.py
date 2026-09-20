@@ -32,6 +32,8 @@ PREVIEW_RELEASE_URL_PREFIX = f"https://github.com/{REPOSITORY}/releases/download
 STATE_FILE = ".release-state.json"
 STATE_SCHEMA_VERSION = 1
 MAX_RETAINED_PACKAGES = 3
+MAX_ZIP_ENTRIES = 8192
+MAX_ZIP_UNCOMPRESSED_BYTES = 128 * 1024 * 1024
 SUPPORTED_KINDS = {"managed-code", "data-specialized"}
 SEMVER_PATTERN = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
@@ -1618,14 +1620,79 @@ def validate_source_and_catalog(root: Path) -> tuple[int, int]:
     return count, json_count
 
 
+_WINDOWS_RESERVED_NAMES = frozenset({
+    "CON", "PRN", "AUX", "NUL",
+    *(f"COM{index}" for index in '123456789¹²³'),
+    *(f"LPT{index}" for index in '123456789¹²³'),
+})
+
+
+def _normalize_zip_name(name: str) -> str:
+    return name.replace("\\", "/").removesuffix("/")
+
+
 def _safe_zip_name(name: str) -> bool:
-    normalized = name.replace("\\", "/").rstrip("/")
-    return bool(normalized) and not normalized.startswith("/") and all(part not in {"", ".", ".."} for part in normalized.split("/"))
+    normalized = _normalize_zip_name(name)
+    if not normalized or normalized.startswith(("/", "//")):
+        return False
+    if re.match(r"^[A-Za-z]:", normalized) is not None:
+        return False
+    parts = normalized.split("/")
+    if any(part in {"", ".", ".."} for part in parts):
+        return False
+    for part in parts:
+        if any(ord(char) < 32 or char in '<>:"|?*' for char in part) or part.endswith((" ", ".")):
+            return False
+        stem = part.split(".", 1)[0].upper()
+        if stem in _WINDOWS_RESERVED_NAMES:
+            return False
+    return True
 
 
-def _zip_json(archive: zipfile.ZipFile, name: str, package: Path) -> dict[str, Any]:
+def _validate_zip_layout(infos: Sequence[zipfile.ZipInfo], package: Path) -> dict[str, zipfile.ZipInfo]:
+    """Validate the raw ZIP namespace before any manifest or payload is read."""
+
+    _require(len(infos) <= MAX_ZIP_ENTRIES, f"ZIP 条目过多：{_display(package)}")
+    total_size = 0
+    by_folded_name: dict[str, zipfile.ZipInfo] = {}
+    file_names: set[str] = set()
+    for info in infos:
+        normalized = _normalize_zip_name(info.filename)
+        _require(_safe_zip_name(info.orig_filename), f"ZIP 条目路径非法：{_display(package)} -> {info.filename}")
+        folded = normalized.casefold()
+        _require(folded not in by_folded_name, f"ZIP 条目重复或大小写冲突：{_display(package)} -> {info.filename}")
+        by_folded_name[folded] = info
+        is_directory = info.filename.endswith(("/", "\\"))
+        total_size += info.file_size
+        _require(0 <= info.file_size <= MAX_ZIP_UNCOMPRESSED_BYTES and total_size <= MAX_ZIP_UNCOMPRESSED_BYTES, f"ZIP 解压后大小超过上限：{_display(package)}")
+        _require(not is_directory or info.file_size == 0, f"ZIP 目录条目不得携带载荷：{info.filename}")
+        if not is_directory:
+            file_names.add(normalized)
+        mode = (info.external_attr >> 16) & 0o170000
+        _require(mode in ({0, 0o040000} if is_directory else {0, 0o100000}), f"ZIP 禁止符号链接、特殊类型或目录类型不匹配：{_display(package)} -> {info.filename}")
+
+    folded_files = {name.casefold() for name in file_names}
+    for name in by_folded_name:
+        parts = name.split("/")
+        for index in range(1, len(parts)):
+            _require(
+                "/".join(parts[:index]).casefold() not in folded_files,
+                f"ZIP 文件/目录祖先冲突：{_display(package)} -> {name}",
+            )
+    return {_normalize_zip_name(info.filename): info for info in infos}
+
+
+def _zip_json(
+    archive: zipfile.ZipFile,
+    name: str,
+    package: Path,
+    infos: dict[str, zipfile.ZipInfo] | None = None,
+) -> dict[str, Any]:
     try:
-        value = json.loads(archive.read(name).decode("utf-8-sig"))
+        info = (infos or {item.filename.replace("\\", "/").rstrip("/"): item for item in archive.infolist()}).get(name)
+        if info is None:
+            raise KeyError(name)
+        value = json.loads(archive.read(info).decode("utf-8-sig"))
     except (KeyError, UnicodeError, json.JSONDecodeError) as exc:
         raise RepositoryError(f"ZIP 根目录缺少或包含无效 {name}：{_display(package)}") from exc
     _require(isinstance(value, dict), f"ZIP {name} 必须是对象：{_display(package)}")
@@ -1637,6 +1704,7 @@ def _validate_specialized_zip_payload(
     names: set[str],
     manifest: dict[str, Any],
     package: Path,
+    infos: dict[str, zipfile.ZipInfo],
 ) -> None:
     artifact = str(manifest.get("artifactName", package.stem))
     _validate_specialized_manifest_contract(manifest, f"ZIP {_display(package)}")
@@ -1678,7 +1746,7 @@ def _validate_specialized_zip_payload(
         if Path(current).suffix.casefold() not in {".js", ".mjs"}:
             continue
         try:
-            source = archive.read(current).decode("utf-8")
+            source = archive.read(infos[current]).decode("utf-8")
         except (KeyError, UnicodeError) as exc:
             raise RepositoryError(f"专项插件 ZIP 脚本无法读取：{current} -> {_display(package)}") from exc
         for reference in import_pattern.findall(source):
@@ -1708,9 +1776,8 @@ def _validate_zip(
     try:
         with zipfile.ZipFile(package) as archive:
             infos = archive.infolist()
-            for info in infos:
-                _require(_safe_zip_name(info.filename), f"ZIP 条目路径非法：{_display(package)} -> {info.filename}")
-            manifest = _zip_json(archive, "plugin.json", package)
+            info_by_name = _validate_zip_layout(infos, package)
+            manifest = _zip_json(archive, "plugin.json", package, info_by_name)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
             _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
             match = (PACKAGE_PATTERN if mode == "stable" else PREVIEW_PACKAGE_PATTERN).fullmatch(package.name)
@@ -1727,9 +1794,9 @@ def _validate_zip(
                     _require(match.group("sha256") == expected_sha256, f"Preview ZIP SHA256 与 catalog 不一致：{_display(package)}")
             elif expected_sha256 is not None:
                 _require(sha256(package) == expected_sha256, f"Stable ZIP SHA256 与 catalog 不一致：{_display(package)}")
-            names = {info.filename.replace("\\", "/") for info in infos}
+            names = set(info_by_name)
             if expected is not None:
-                store = _zip_json(archive, "store.json", package)
+                store = _zip_json(archive, "store.json", package, info_by_name)
                 _require(store.get("schemaVersion") == 1 and isinstance(store.get("authors"), list), f"ZIP store.json 无效：{_display(package)}")
                 _require(
                     manifest.get("name") == expected.name
@@ -1740,11 +1807,11 @@ def _validate_zip(
                     f"ZIP manifest 与源码不一致：{_display(package)}",
                 )
                 if expected.kind == "data-specialized":
-                    _validate_specialized_zip_payload(archive, names, manifest, package)
+                    _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
                 else:
                     _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
             elif str(manifest.get("kind", "")).strip().lower() == "data-specialized":
-                _validate_specialized_zip_payload(archive, names, manifest, package)
+                _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
             elif str(manifest.get("kind", "")).strip().lower() == "managed-code":
                 _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
     except zipfile.BadZipFile as exc:
@@ -2103,6 +2170,58 @@ def release(
     return {"catalog": catalog, "state": new_state, "plan": plan}
 
 
+def _expected_stable_package_paths(root: Path, generated_root: Path) -> set[str]:
+    plan = read_json(generated_root / "release-plan.json")
+    _require(isinstance(plan, dict), "release plan 必须是对象")
+    requires_value = plan.get("requiresPackage", [])
+    _require(isinstance(requires_value, list), "release plan requiresPackage 必须是数组")
+    requires = [str(value) for value in requires_value]
+    _require(len(requires) == len(set(requires)), "release plan requiresPackage 不得重复")
+    plugins = {plugin.artifact_name: plugin for plugin in discover_source_plugins(root)}
+    _require(set(requires) <= set(plugins), "release plan 包含未知插件：" + ", ".join(sorted(set(requires) - set(plugins))))
+    return {
+        f"packages/{artifact}/{artifact}-{plugins[artifact].version}.zip"
+        for artifact in requires
+    }
+
+
+def validate_stable_candidate_layout(root: Path, generated_root: Path) -> dict[str, Path]:
+    """Validate the complete stable candidate tree and return its payload files."""
+
+    generated_root = generated_root.resolve()
+    _require(generated_root.is_dir() and not generated_root.is_symlink(), "stable 候选目录必须是普通目录")
+    expected_packages = _expected_stable_package_paths(root, generated_root)
+    required_files = {"catalog.json", STATE_FILE, "release-plan.json"}
+    optional_files = {"stable-producer.json"}
+    allowed_files = required_files | optional_files | expected_packages
+    allowed_directories = {"packages"}
+    for relative in expected_packages:
+        parts = relative.split("/")[:-1]
+        allowed_directories.update("/".join(parts[:index]) for index in range(1, len(parts) + 1))
+
+    files: dict[str, Path] = {}
+    names_by_folded: dict[str, str] = {}
+    for path in generated_root.rglob("*"):
+        relative = path.relative_to(generated_root).as_posix()
+        folded = relative.casefold()
+        _require(folded not in names_by_folded, f"候选路径重复或大小写冲突：{relative}")
+        names_by_folded[folded] = relative
+        _require(not path.is_symlink(), f"稳定候选不得包含 symlink：{relative}")
+        if path.is_dir():
+            _require(relative in allowed_directories, f"稳定候选目录不在白名单：{relative}")
+            continue
+        _require(path.is_file(), f"稳定候选包含特殊文件：{relative}")
+        _require(relative in allowed_files, f"稳定候选文件不在白名单：{relative}")
+        files[relative] = path
+
+    _require(required_files <= set(files), "稳定候选缺少 catalog/state/release-plan")
+    _require(
+        {relative for relative in files if relative.startswith("packages/")} == expected_packages,
+        "稳定候选 packages 文件集合必须与 requiresPackage 精确一致",
+    )
+    return files
+
+
 def validate_generated(root: Path, generated_root: Path, *, distribution_root: Path | None = None) -> None:
     generated_root = generated_root.resolve()
     distribution_root = (distribution_root or root).resolve()
@@ -2110,6 +2229,23 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     catalog = read_json(generated_root / "catalog.json")
     state = read_json(generated_root / STATE_FILE)
     plugins = discover_source_plugins(root)
+    _require(git_head(root) == plan.get("head"), "生成候选 source HEAD 与 release plan 不一致")
+    expected_plan = build_plan(root, baseline=str(plan.get("base", "")), head=str(plan.get("head", "")), distribution_root=distribution_root)
+    for key in (
+        "base",
+        "head",
+        "mode",
+        "changed",
+        "relocated",
+        "deleted",
+        "managed",
+        "requiresPackage",
+        "reasons",
+        "globalChanges",
+        "removePackages",
+        "removeArtifacts",
+    ):
+        _require(plan.get(key) == expected_plan.get(key), f"release plan {key} 与可信源码/分发基线推导不一致")
     _validate_catalog_shape(root, catalog, plugins, False)
     old_catalog = read_json(distribution_root / "catalog.json")
     old_entries = _catalog_entry_by_artifact(old_catalog)
@@ -2120,13 +2256,12 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     _require(isinstance(package_metadata_by_artifact, dict), "release plan packageMetadata 必须是对象")
     _require(set(package_metadata_by_artifact) == requires, "release plan packageMetadata 与 requiresPackage 不一致")
     _require(relocated.isdisjoint(requires | deleted), "release plan 的 relocation 与 package/delete 计划重叠")
+    generated_files = validate_stable_candidate_layout(root, generated_root)
     generated_packages_root = generated_root / "packages"
-    if generated_packages_root.is_dir():
-        for directory in generated_packages_root.iterdir():
-            _require(directory.name in requires, f"生成目录包含未计划的插件包：{directory.name}")
     by_artifact = {plugin.artifact_name: plugin for plugin in plugins}
     generated_entries = _catalog_entry_by_artifact(catalog)
     for artifact in requires:
+        _require(artifact in by_artifact, f"生成物包含未知变更插件：{artifact}")
         package = generated_packages_root / artifact / f"{artifact}-{by_artifact[artifact].version}.zip"
         _require(package.is_file(), f"生成物缺少变更插件包：{_display(package)}")
         metadata = package_metadata_by_artifact[artifact]
@@ -2138,6 +2273,10 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
         actual_sha = sha256(package)
         _require(actual_sha == metadata.get("sha256") == generated_entries[artifact]["sha256"], f"生成物 ZIP SHA256 与 catalog 不一致：{_display(package)}")
         _validate_zip(package, by_artifact[artifact])
+        existing = distribution_root / "packages" / artifact / package.name
+        if existing.exists() or existing.is_symlink():
+            _require(existing.is_file() and not existing.is_symlink(), f"stable 已存在包不是普通文件：{_display(existing)}")
+            _require(_same_package_bytes(existing, package), f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(existing)}")
     for artifact, entry in old_entries.items():
         if artifact not in requires and artifact not in deleted:
             _require(generated_entries.get(artifact) == entry, f"未变更 catalog entry 被修改：{artifact}")

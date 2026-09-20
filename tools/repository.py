@@ -70,6 +70,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-id", help="publisher workflow run id，仅写入非敏感 metadata")
     parser.add_argument("--run-attempt", help="publisher workflow run attempt")
     parser.add_argument("--workflow-sha", help="publisher workflow trusted SHA")
+    parser.add_argument("--producer-output", type=Path, help="preview producer sidecar 输出路径（必须位于候选目录之外）")
+    parser.add_argument("--producer", type=Path, help="preview producer sidecar 输入路径")
     parser.add_argument("--base-sha", help="stable qualification historical base SHA")
     parser.add_argument("--qualification-app-id", help="Qualification App id")
     parser.add_argument("--qualification-check-id", help="Qualification App check id")
@@ -160,6 +162,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=args.run_id,
                 run_attempt=args.run_attempt,
                 workflow_sha=args.workflow_sha,
+                producer_output=args.producer_output.resolve() if args.producer_output else None,
             )
         elif args.command == "publish-preview":
             from repository_publish import publish_preview
@@ -172,6 +175,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=args.run_id,
                 run_attempt=args.run_attempt,
                 workflow_sha=args.workflow_sha,
+                producer_path=args.producer.resolve() if args.producer else None,
                 remote_write=args.remote_write,
                 token=os.environ.get(args.token_env),
             )

@@ -47,6 +47,51 @@ class RepositoryCoreTests(unittest.TestCase):
         with patch.object(core.os, "name", "posix"):
             self.assertEqual(core._npm_executable(), "npm")
 
+    def test_zip_namespace_rejects_unsafe_and_colliding_paths(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-zip-layout-test-"))
+        try:
+            cases = {
+                "traversal": ["../escape.txt"],
+                "casefold": ["plugin.json", "PLUGIN.JSON"],
+                "ancestor": ["config", "config/settings.json"],
+                "directory-ancestor": ["config", "config/settings/"],
+                "duplicate": ["plugin.json", "plugin.json"],
+                "drive": ["C:/payload.dll"],
+                "ads": ["payload.dll:stream"],
+                "reserved": ["COM¹.txt"],
+                "wildcard": ["data/bad?.json"],
+                "control": ["data/bad\x01.json"],
+            }
+            for label, names in cases.items():
+                package = root / f"{label}.zip"
+                with zipfile.ZipFile(package, "w") as archive:
+                    for name in names:
+                        archive.writestr(name, b"" if name.endswith('/') else b"test")
+                with self.subTest(label=label), self.assertRaises(RepositoryError):
+                    with zipfile.ZipFile(package) as archive:
+                        core._validate_zip_layout(archive.infolist(), package)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_zip_type_and_resource_limits_are_checked_before_payload(self) -> None:
+        for mode in (0o120777, 0o010644, 0o060644):
+            info = zipfile.ZipInfo("payload")
+            info.external_attr = mode << 16
+            with self.subTest(mode=mode), self.assertRaises(RepositoryError):
+                core._validate_zip_layout([info], Path('test.zip'))
+        info = zipfile.ZipInfo('directory/')
+        info.file_size = 1
+        with self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
+        info = zipfile.ZipInfo('payload')
+        info.file_size = core.MAX_ZIP_UNCOMPRESSED_BYTES
+        core._validate_zip_layout([info], Path('test.zip'))
+        info.file_size += 1
+        with self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
+        with patch.object(core, 'MAX_ZIP_ENTRIES', 0), self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
+
     def test_semver_and_date_are_strict(self) -> None:
         self.assertEqual(parse_semver("0.14.6").text, "0.14.6")
         self.assertEqual(parse_semver("0.14.6-beta.2").text, "0.14.6-beta.2")

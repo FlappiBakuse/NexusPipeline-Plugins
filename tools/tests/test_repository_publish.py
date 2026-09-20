@@ -6,6 +6,7 @@ import os
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -39,6 +40,7 @@ def _git(root: Path, *args: str) -> str:
 def _create_fixture() -> Path:
     root = Path(tempfile.mkdtemp(prefix=".nxp-publish-test-"))
     (root / "plugins" / "general").mkdir(parents=True)
+    (root / "plugins" / "general" / ".gitkeep").write_text("", encoding="utf-8")
     plugin_root = root / "plugins" / "specialized" / "Alpha"
     (plugin_root / "data").mkdir(parents=True)
     manifest = {
@@ -175,8 +177,30 @@ class RepositoryPublishTests(unittest.TestCase):
             uploads = [name for event, name in transport.events if event == "upload_asset"]
             self.assertGreaterEqual(len(uploads), 3)
             self.assertEqual(uploads[-1], "catalog.json")
+            self.assertTrue(any(name.startswith("preview-publisher-") for name in uploads))
             self.assertTrue(all(uploads.index(name) < uploads.index("catalog.json") for name in uploads[:-1]))
             self.assertEqual(transport.events[0], ("get_source_head", "develop"))
+            catalog_index = transport.events.index(("upload_asset", "catalog.json"))
+            for name, (asset_id, _) in transport.assets.items():
+                if name.endswith('.zip'):
+                    self.assertLess(transport.events.index(("download_asset", str(asset_id))), catalog_index)
+        finally:
+            _remove_tree(root)
+
+    def test_preview_remote_is_idempotent_for_same_candidate(self) -> None:
+        root = _create_fixture()
+        try:
+            output = root / ".generated" / "preview"
+            result = publish_develop(root, source_ref="HEAD", output=output, run_id="12", run_attempt="1", workflow_sha=C)
+            transport = FakePreviewTransport()
+            transport.source_head = result["sourceCommit"]
+            _publish_preview_remote(result, token="secret", transport=transport, run_id="12")
+            event_count = len(transport.events)
+            before = {str(path.relative_to(output)): path.read_bytes() for path in output.rglob('*') if path.is_file()}
+            _publish_preview_remote(result, token="secret", transport=transport, run_id="13")
+            self.assertEqual(before, {str(path.relative_to(output)): path.read_bytes() for path in output.rglob('*') if path.is_file()})
+            self.assertNotIn("upload_asset", [event for event, _name in transport.events[event_count:]])
+            self.assertEqual(transport.assets["catalog.json"][1], (root / ".generated" / "preview" / "catalog.json").read_bytes())
         finally:
             _remove_tree(root)
 
@@ -199,6 +223,51 @@ class RepositoryPublishTests(unittest.TestCase):
             with self.assertRaises(RepositoryError):
                 _publish_preview_remote({"output": str(changed), "sourceCommit": result["sourceCommit"]}, token="secret", transport=transport, run_id="12")
             self.assertEqual(transport.assets["catalog.json"][1], old_catalog)
+            restored_id = transport.assets['catalog.json'][0]
+            self.assertIn(('download_asset', str(restored_id)), transport.events)
+        finally:
+            _remove_tree(root)
+
+    def test_preview_corrupt_package_and_mid_upload_supersession_never_switch_catalog(self) -> None:
+        root = _create_fixture()
+        try:
+            result = publish_develop(root, source_ref='HEAD', output=root / '.generated/preview')
+            for failure in ('corrupt', 'superseded'):
+                transport = FakePreviewTransport()
+                transport.source_head = result['sourceCommit']
+                download = transport.download_asset
+                def altered(repository, asset_id, token):
+                    data = download(repository, asset_id, token)
+                    if failure == 'corrupt': return data + b'corrupt'
+                    transport.source_head = 'e' * 40
+                    return data
+                with patch.object(transport, 'download_asset', side_effect=altered), self.assertRaises(RepositoryError):
+                    _publish_preview_remote(result, token='secret', transport=transport, run_id='12')
+                self.assertNotIn('catalog.json', transport.assets)
+        finally:
+            _remove_tree(root)
+
+    def test_preview_corrupt_restore_is_reported_as_restore_failure(self) -> None:
+        root = _create_fixture()
+        try:
+            output = root / '.generated/preview'
+            result = publish_develop(root, source_ref='HEAD', output=output)
+            transport = FakePreviewTransport()
+            transport.source_head = result['sourceCommit']
+            _publish_preview_remote(result, token='secret', transport=transport, run_id='12')
+            catalog = read_json(output / 'catalog.json')
+            catalog['generatedAt'] = '2099-01-01T00:00:00Z'
+            write_json(output / 'catalog.json', catalog)
+            transport.fail_name = 'catalog.json'
+            transport.fail_once = True
+            download = transport.download_asset
+            old_id = transport.assets['catalog.json'][0]
+            def corrupted_restore(repository, asset_id, token):
+                data = download(repository, asset_id, token)
+                current = transport.assets.get('catalog.json')
+                return data + b'bad' if current and current[0] == asset_id and asset_id != old_id else data
+            with patch.object(transport, 'download_asset', side_effect=corrupted_restore), self.assertRaisesRegex(RepositoryError, '恢复失败'):
+                _publish_preview_remote(result, token='secret', transport=transport, run_id='13')
         finally:
             _remove_tree(root)
 
@@ -257,16 +326,28 @@ class RepositoryPublishTests(unittest.TestCase):
             _remove_tree(root)
 
     def test_stable_candidate_inventory_rejects_extra_payload(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-publish-test-"))
+        root = _create_fixture()
         try:
-            (root / "catalog.json").write_text("{}", encoding="utf-8")
-            (root / ".release-state.json").write_text("{}", encoding="utf-8")
-            (root / "packages").mkdir()
-            (root / "packages" / "unexpected.txt").write_text("bad", encoding="utf-8")
-            with self.assertRaisesRegex(RepositoryError, "只能包含 ZIP"):
-                _candidate_inventory(root)
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = read_json(manifest_path)
+            store = read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            write_json(manifest_path, manifest)
+            write_json(store_path, store)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source")
+            plan = build_plan(root)
+            plan_path = root / ".generated" / "plan.json"
+            write_json(plan_path, plan)
+            candidate = root / ".generated" / "stable"
+            release(root, plan_path, candidate)
+            (candidate / "packages" / "unexpected.txt").write_text("bad", encoding="utf-8")
+            with self.assertRaisesRegex(RepositoryError, "候选文件不在白名单"):
+                _candidate_inventory(root, candidate)
         finally:
-            shutil.rmtree(root)
+            _remove_tree(root)
 
     def test_stable_git_writer_pushes_whitelist_and_is_idempotent(self) -> None:
         root = _create_fixture()
@@ -293,6 +374,33 @@ class RepositoryPublishTests(unittest.TestCase):
             candidate = root / ".generated" / "stable"
             release(root, plan_path, candidate)
             transport = GitHubGitTransport(remote=str(remote))
+            writer_source = remote_parent / 'writer-source'
+            _git(root, 'clone', '--depth', '1', root.as_uri(), str(writer_source))
+            with self.assertRaisesRegex(RepositoryError, 'Git 基线'):
+                core.validate_generated(writer_source, candidate)
+            _git(writer_source, 'fetch', '--unshallow', 'origin')
+            core.validate_generated(writer_source, candidate)
+            # Every hostile candidate must fail at the top-level boundary,
+            # before a local bare remote or any historical package can change.
+            write_stable_producer(candidate, source_sha=source, base_sha=base, run_id='12', run_attempt='1', workflow_sha=C, qualification_app_id='456', qualification_check_id='789')
+            original_plan = (candidate / 'release-plan.json').read_bytes()
+            remote_before = _git(remote, 'rev-parse', 'main').strip()
+            historical = (root / 'packages/Alpha/Alpha-0.1.0.zip').read_bytes()
+            for attack in ('history', 'unreferenced', 'remove', 'requires'):
+                extra = None
+                if attack in ('history', 'unreferenced'):
+                    extra = candidate / 'packages/Alpha' / ('Alpha-0.1.0.zip' if attack == 'history' else 'Alpha-0.9.0.zip')
+                    extra.write_bytes(b'foreign bytes')
+                else:
+                    altered = read_json(candidate / 'release-plan.json')
+                    altered['removeArtifacts' if attack == 'remove' else 'requiresPackage'] = ['packages/Alpha'] if attack == 'remove' else []
+                    write_json(candidate / 'release-plan.json', altered)
+                with self.subTest(attack=attack), self.assertRaises(RepositoryError):
+                    publish_stable(root, source, candidate, remote_write=True, token='secret', git_transport=transport, base_sha=base, run_id='12', run_attempt='1', workflow_sha=C, qualification_app_id='456', qualification_check_id='789')
+                self.assertEqual(_git(remote, 'rev-parse', 'main').strip(), remote_before)
+                self.assertEqual((root / 'packages/Alpha/Alpha-0.1.0.zip').read_bytes(), historical)
+                if extra: extra.unlink()
+                (candidate / 'release-plan.json').write_bytes(original_plan)
             first = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             second = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             self.assertFalse(first["idempotent"])
