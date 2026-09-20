@@ -21,7 +21,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 `emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API v1.7 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
 
-宿主使用 `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的源码树与包事实，`host.lock.json` 固定 managed-code 构建使用的宿主提交。
+宿主使用 stable `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包；develop preview 使用固定 `plugins-develop` Release asset 与同通道缓存，绝不回退到 stable。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的 stable 源码树与包事实，`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`；Qualification 另固定一次 `sdkSourceSha`。
 
 ## 插件本地化资源
 
@@ -29,7 +29,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 ## 发布规则
 
-插件发行包直接随主分支仓库内容维护，不再创建插件 Git tag 或 GitHub Release。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个受限版本包。版本使用 `major.minor.patch`、`-beta.N` 或 `-rc.N`，相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；普通发布只生成受影响插件的新版本包。
+stable 插件发行包由受保护 publisher 写回 `main` 的 `catalog.json`、`.release-state.json` 与 `packages/**` 维护；develop preview 固定发布到 `plugins-develop` Release，不提交 preview 生成物，也不创建 stable 状态。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个 stable 版本包。版本使用 `major.minor.patch`、`-beta.N` 或 `-rc.N`，stable 相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；preview 包名追加其完整 SHA256，可允许同版本不同内容。
 
 ```text
 packages/<ArtifactName>/<ArtifactName>-<version>.zip
@@ -50,23 +50,24 @@ NexusPipeline-Plugins/
 │   │   ├── web/                          # 构建后的 Frontend API 1.5 模块、样式和静态资源
 │   │   ├── i18n/                         # 可选 zh-CN/en-US 插件词典
 │   │   └── src/                          # managed-code 插件项目（.csproj 与 C# 源码）
-│   └── specialized/<ArtifactName>/      # data-specialized 专项插件源码
+│   └── specialized/<ArtifactName>/      # 只有声明/数据/后端脚本的专项源码
 │       ├── plugin.json                  # 元数据与入口声明
 │       ├── store.json                    # 商店展示元数据与更新记录
 │       ├── data/                         # data-specialized 插件资源
 │       │   ├── resolve.json              # 脚本根目录推导规则
 │       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
 │       │   └── config-editor.js          # 可选配置编辑准备脚本
-│       ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
-│       ├── web/                          # 构建后的 Frontend API 1.5 模块、样式和静态资源
 │       └── i18n/                         # 可选 zh-CN/en-US 插件词典
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
 ├── .release-state.json                  # 最近一次成功发行状态
-├── host.lock.json                       # managed-code 宿主提交锁
+├── host.lock.json                       # Host/Frontend API 与 locale 兼容元数据
 ├── tools/
-│   ├── repository.py                    # 发行计划、增量打包与审计入口
+│   ├── repository.py                    # 校验、Qualification、候选入口
 │   ├── repository_core.py               # 可测试的仓库规则实现
+│   ├── qualification.py                 # P1/P2/P3 固定门禁编排
+│   ├── sdk_source.py                    # 官方 Host SDK SHA 与 checkout 校验
+│   ├── repository_publish.py            # 本地候选生成与稳定 writer 边界
 │   ├── Test-ConfigEditors.mjs           # 配置编辑器前端契约门禁
 │   ├── Test-FrontendPlugins.mjs         # Frontend API 入口与元素门禁
 │   └── tests/                           # 仓库工具单元测试
@@ -79,7 +80,7 @@ NexusPipeline-Plugins/
     └── RELEASING.md                     # 打包、catalog 与包校验流程
 ```
 
-发行 ZIP 的根目录直接对应运行时插件目录内容。`data-specialized` 包含 `plugin.json`、`store.json` 与 `data/`；`managed-code` 包含 `plugin.json`、`store.json`、入口 DLL 及其依赖 DLL；带前端的插件额外包含 manifest 声明的 `web/` 资源和 `README.md`。源码目录中的测试草稿和个人配置不应进入发行包。
+发行 ZIP 的根目录直接对应运行时插件目录内容。`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明；禁止 `frontend`、`web`、浏览器载荷及 .NET 程序集。`managed-code` 包含 `plugin.json`、`store.json`、入口 DLL 及其依赖 DLL；带前端的 managed 插件额外包含 manifest 声明的 `web/` 资源和 `README.md`。源码目录中的测试草稿和个人配置不应进入发行包。
 
 ## 快速开始
 
@@ -89,7 +90,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，在源码阶段运行 `python tools/repository.py validate-source`、`plan` 和对应测试；候选包生成后运行 `validate-generated`，catalog/package 进入主分支后运行 `validate`。仓库根目录 `host.lock.json` 的 `supportedLocales` 记录当前宿主允许的 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；合并后发布工作流依据发行状态生成受影响插件的包、catalog 与状态文件。
+5. 更新插件自身版本和 `store.json`，在源码阶段运行 `python tools/repository.py qualification --group source --base main`；需要 managed/前端时再运行 `qualification --group frontend-managed`，候选阶段运行 `qualification --group candidate`。仓库根目录 `host.lock.json` 的兼容元数据记录 API 与 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；stable publisher 依据已验证资格和发行状态生成受影响插件的包、catalog 与状态文件。develop 预览使用 `publish-develop`，不改写 stable 文件。
 
 ## 重要运行语义
 

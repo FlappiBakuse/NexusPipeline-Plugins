@@ -62,7 +62,10 @@ const hostPrivateClasses = new Set([
 const scannableExtensions = new Set([".css", ".html", ".js", ".ts", ".vue"]);
 
 function parseArguments(args) {
-  const result = { repositoryRoot: "", hostRoot: "" };
+  const result = {
+    repositoryRoot: process.env.NEXUS_OFFICIAL_PLUGINS_ROOT || "",
+    hostRoot: process.env.NEXUS_HOST_ROOT || "",
+  };
   for (let index = 0; index < args.length; index += 1) {
     const value = args[index];
     if (value === "--host-root") {

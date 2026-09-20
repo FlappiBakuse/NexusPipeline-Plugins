@@ -1,6 +1,6 @@
 # 数据化专项插件开发指南
 
-数据化专项插件由静态目录组成。宿主发现插件后，根据 `resolve.json` 从用户选择的脚本根目录推导当前运行 profile；`judge.js` 或 `judge.py` 保持为插件资产，由每次运行/编辑解析并在本次操作开始时冻结。
+数据化专项插件由静态目录组成。宿主发现插件后，根据 `resolve.json` 从用户选择的脚本根目录推导当前运行 profile；`judge.js` 或 `judge.py` 保持为插件资产，由每次运行/编辑解析并在本次操作开始时冻结。专项插件没有浏览器扩展点，所有前端页面、路由、slot renderer、样式和静态资源都归 `managed-code` 宿主扩展处理。
 
 宿主运行时契约的完整定义位于 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)。本指南记录插件仓库作者最常用的目录、字段和验证方法。
 
@@ -20,6 +20,8 @@ plugins/specialized/Example/
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
+
+专项契约是硬边界：manifest 不得出现 `frontend` 字段（包括 `null` 或空对象），`capabilities` 只能使用 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。源码和 ZIP 都不得包含 `frontend/`、`web/`、HTML/CSS/TypeScript/Vue 等浏览器工程、Vite/webpack 配置、`.dll`、`.exe`、`.pdb`、`.csproj` 或 `.sln`。插件不能通过把文件放进未声明目录来绕过检查。
 
 ## plugin.json
 
@@ -65,6 +67,8 @@ plugins/specialized/Example/
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
+`data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configValidator`、`configEditor` 的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。保留这些脚本是为了维持现役配置编辑、校验、判断和恢复语义，并不提供任意浏览器代码执行能力。
+
 宿主内置 Generic ADB 与 MuMuManager。雷电、夜神和 BlueStacks 的厂商专属识别及实例关闭由官方 managed-code `EmulatorSupport` 扩展提供；需要这些厂商行为时，用户须在插件商店安装并启用扩展。
 
 宿主同时比较 `minHostVersion` 与当前受限 Nexus 版本。最低版本要求未满足时，插件保留在本地管理列表中并显示不兼容状态，宿主跳过能力注册、配置解析和前端运行时激活；用户升级宿主后重新加载插件。
@@ -108,6 +112,8 @@ plugins/specialized/Example/
 ### 配置编辑脚本
 
 `configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。
+
+能力由宿主统一投影：`emulator` 只开启现役模拟器选择语义，厂商 provider 仍由 managed-code `EmulatorSupport` 提供；`self-managed-pc-launch` 只收紧宿主 PC 启动计划且保留用户已保存参数；`no-fresh-config` 关闭 fresh 配置模式但保留 reuse 与恢复流程。专项插件只声明能力和 `resolve.inputs` 数据，不实现第二套 UI。
 
 `resolve.json` 可声明：
 

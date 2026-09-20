@@ -167,17 +167,7 @@ def validate_host_checkout(host_root: Path, expected_sha: str, compatibility: di
     _require(actual_apis["hostApiVersion"] == compatibility["hostApiVersion"], f"Host API 兼容版本不匹配：{actual_apis['hostApiVersion']} / {compatibility['hostApiVersion']}")
     _require(actual_apis["frontendApiVersion"] == compatibility["frontendApiVersion"], f"Frontend API 兼容版本不匹配：{actual_apis['frontendApiVersion']} / {compatibility['frontendApiVersion']}")
     web_locales = _read_locale_ids(host_root / "frontend" / "public" / "i18n" / "locales.json", "Host Web locale registry")
-    localization_candidates = (
-        Path("src") / "Shared" / "Localization" / "Resources",
-        Path("src") / "Localization" / "Resources",
-    )
-    existing_localization = [
-        relative
-        for relative in localization_candidates
-        if _git_tree_file_exists(host_root, relative / "locales.json")
-    ]
-    _require(len(existing_localization) == 1, "Host checkout 的 Localization/Resources 目录无法唯一确定")
-    localization_root = host_root / existing_localization[0]
+    localization_root = resolve_localization_root(host_root, tracked=True)
     embedded_locales = _read_locale_ids(localization_root / "locales.json", "Host embedded locale registry")
     _require(web_locales == embedded_locales == compatibility["supportedLocales"], "Host locale registry 与 compatibility metadata 不一致")
     dirty = bool(_run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=host_root))
@@ -185,9 +175,24 @@ def validate_host_checkout(host_root: Path, expected_sha: str, compatibility: di
         **compatibility,
         "sdkSourceSha": expected_sha,
         "hostRoot": str(host_root),
-        "localizationRoot": str(existing_localization[0]).replace("\\", "/"),
+        "localizationRoot": localization_root.relative_to(host_root).as_posix(),
         "workingTreeDirty": dirty,
     }
+
+
+def resolve_localization_root(host_root: Path, *, tracked: bool = False) -> Path:
+    """在固定 SDK 的两个受支持源码布局中选择唯一资源目录。"""
+    candidates = (
+        Path("src") / "Shared" / "Localization" / "Resources",
+        Path("src") / "Localization" / "Resources",
+    )
+    existing = [
+        relative for relative in candidates
+        if (_git_tree_file_exists(host_root, relative / "locales.json")
+            if tracked else (host_root / relative / "locales.json").is_file())
+    ]
+    _require(len(existing) == 1, "Host checkout 的 Localization/Resources 目录无法唯一确定")
+    return host_root / existing[0]
 
 
 def _git_tree_file_exists(root: Path, relative: Path) -> bool:

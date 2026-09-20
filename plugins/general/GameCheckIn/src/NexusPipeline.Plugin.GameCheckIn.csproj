@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\NexusPipeline\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" />
+    <ProjectReference Include="$(NexusHostRoot)\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力与 `data-specialized`、`managed-code` 类型相互独立。任意插件类型都可以在 manifest 中声明前端模块；需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.8，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.8，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -63,7 +63,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
 
 前端插件的持久化测试覆盖公开 API、公开元件的功能结果、ARIA、焦点、状态、提交、路由、API 效果和生命周期。截图匹配器、视觉回归套件、截图基线与像素/布局断言不属于持久化测试契约。需要检查配色、间距或响应式外观时，使用操作系统临时目录中的浏览器验证脚本，完成后删除脚本和输出。
 
-插件前端应通过公开 `nxp-*` Native Custom Elements 与稳定 slot 接入宿主；宿主 Vue 内部组件、私有 class、DOM 结构和未声明 host 能力不属于可依赖接口。
+插件前端应通过公开 `nxp-*` Native Custom Elements 与稳定 slot 接入宿主；宿主 Vue 内部组件、私有 class、DOM 结构和未声明 host 能力不属于可依赖接口。这里的“插件前端”专指 managed-code；专项插件没有 route、nav、slot 或静态资源注册入口。
 
 ## 入口生命周期
 
@@ -192,7 +192,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 运行条件
 
-`frontend-module` 表示插件请求前端能力。插件需要同时满足以下条件，入口才会出现在 `GET /api/plugin-runtime/frontend`：
+`frontend-module` 表示 managed-code 插件请求前端能力。插件需要同时满足以下条件，入口才会出现在 `GET /api/plugin-runtime/frontend`；data-specialized 永远不会出现在该接口：
 
 1. 插件已启用且运行时状态为 Active；
 2. Plugin API 与 Frontend API 版本兼容；

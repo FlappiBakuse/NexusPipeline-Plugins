@@ -31,10 +31,10 @@ from repository_core import (  # noqa: E402
     parse_date,
     parse_semver,
     plugin_root_from_path,
-    release_requires_full,
     release,
     read_json,
     validate_source_plugin,
+    validate_candidate_against_base,
     validate_generated,
     write_json,
 )
@@ -46,6 +46,51 @@ class RepositoryCoreTests(unittest.TestCase):
             self.assertEqual(core._npm_executable(), "npm.cmd")
         with patch.object(core.os, "name", "posix"):
             self.assertEqual(core._npm_executable(), "npm")
+
+    def test_zip_namespace_rejects_unsafe_and_colliding_paths(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-zip-layout-test-"))
+        try:
+            cases = {
+                "traversal": ["../escape.txt"],
+                "casefold": ["plugin.json", "PLUGIN.JSON"],
+                "ancestor": ["config", "config/settings.json"],
+                "directory-ancestor": ["config", "config/settings/"],
+                "duplicate": ["plugin.json", "plugin.json"],
+                "drive": ["C:/payload.dll"],
+                "ads": ["payload.dll:stream"],
+                "reserved": ["COM¹.txt"],
+                "wildcard": ["data/bad?.json"],
+                "control": ["data/bad\x01.json"],
+            }
+            for label, names in cases.items():
+                package = root / f"{label}.zip"
+                with zipfile.ZipFile(package, "w") as archive:
+                    for name in names:
+                        archive.writestr(name, b"" if name.endswith('/') else b"test")
+                with self.subTest(label=label), self.assertRaises(RepositoryError):
+                    with zipfile.ZipFile(package) as archive:
+                        core._validate_zip_layout(archive.infolist(), package)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_zip_type_and_resource_limits_are_checked_before_payload(self) -> None:
+        for mode in (0o120777, 0o010644, 0o060644):
+            info = zipfile.ZipInfo("payload")
+            info.external_attr = mode << 16
+            with self.subTest(mode=mode), self.assertRaises(RepositoryError):
+                core._validate_zip_layout([info], Path('test.zip'))
+        info = zipfile.ZipInfo('directory/')
+        info.file_size = 1
+        with self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
+        info = zipfile.ZipInfo('payload')
+        info.file_size = core.MAX_ZIP_UNCOMPRESSED_BYTES
+        core._validate_zip_layout([info], Path('test.zip'))
+        info.file_size += 1
+        with self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
+        with patch.object(core, 'MAX_ZIP_ENTRIES', 0), self.assertRaises(RepositoryError):
+            core._validate_zip_layout([info], Path('test.zip'))
 
     def test_semver_and_date_are_strict(self) -> None:
         self.assertEqual(parse_semver("0.14.6").text, "0.14.6")
@@ -71,7 +116,7 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertIsNone(core._canonical_locale("中文"))
 
     def test_localization_contract_requires_matching_keys_and_placeholders(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-localization-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-localization-test-"))
         try:
             plugin = root / "Plugin"
             (plugin / "i18n").mkdir(parents=True)
@@ -104,7 +149,7 @@ class RepositoryCoreTests(unittest.TestCase):
             self._remove_tree(root)
 
     def test_judge_locale_requires_current_host_contract(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-judge-locale-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-judge-locale-test-"))
         try:
             judge = root / "data" / "judge.js"
             judge.parent.mkdir(parents=True)
@@ -137,11 +182,11 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertEqual(core.SUPPORTED_LOCALES, set(lock["supportedLocales"]))
 
     def test_host_locale_registry_matches_lock_and_resources(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-host-locale-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-host-locale-test-"))
         try:
             host = root / "host"
             (host / "frontend" / "public" / "i18n").mkdir(parents=True)
-            (host / "src" / "Localization" / "Resources").mkdir(parents=True)
+            (host / "src" / "Shared" / "Localization" / "Resources").mkdir(parents=True)
             registry = {
                 "default": "zh-CN",
                 "supported": [
@@ -149,14 +194,31 @@ class RepositoryCoreTests(unittest.TestCase):
                     {"id": "en-US", "nativeName": "English"},
                 ],
             }
-            write_json(root / "host.lock.json", {"supportedLocales": ["zh-CN", "en-US"]})
+            write_json(
+                root / "host.lock.json",
+                {
+                    "hostApiVersion": "1.8",
+                    "frontendApiVersion": "1.5",
+                    "supportedLocales": ["zh-CN", "en-US"],
+                },
+            )
             write_json(host / "frontend" / "public" / "i18n" / "locales.json", registry)
-            write_json(host / "src" / "Localization" / "Resources" / "locales.json", registry)
+            write_json(host / "src" / "Shared" / "Localization" / "Resources" / "locales.json", registry)
             for locale in ("zh-CN", "en-US"):
                 write_json(host / "frontend" / "public" / "i18n" / f"{locale}.json", {})
-                write_json(host / "src" / "Localization" / "Resources" / f"{locale}.json", {})
+                write_json(host / "src" / "Shared" / "Localization" / "Resources" / f"{locale}.json", {})
 
             self.assertEqual(core.validate_host_locale_registry(root, host), 2)
+
+            current_resources = host / "src" / "Shared" / "Localization" / "Resources"
+            previous_resources = host / "src" / "Localization" / "Resources"
+            previous_resources.parent.mkdir(parents=True)
+            current_resources.rename(previous_resources)
+            self.assertEqual(core.validate_host_locale_registry(root, host), 2)
+            write_json(current_resources / "locales.json", registry)
+            with self.assertRaisesRegex(RepositoryError, "无法唯一确定"):
+                core.validate_host_locale_registry(root, host)
+            (current_resources / "locales.json").unlink()
 
             changed = dict(registry)
             changed["supported"] = [*registry["supported"], {"id": "ja-JP", "nativeName": "日本語"}]
@@ -170,10 +232,9 @@ class RepositoryCoreTests(unittest.TestCase):
         self.assertEqual(plugin_root_from_path("plugins/LiveScreenshot/src/Main.cs"), "plugins/LiveScreenshot")
         self.assertEqual(plugin_root_from_path("plugins\\specialized\\BAAH\\store.json"), "plugins/specialized/BAAH")
         self.assertIsNone(plugin_root_from_path("docs/RELEASING.md"))
-        self.assertFalse(release_requires_full(["tools/repository_core.py", ".github/workflows/publish-plugins.yml"]))
 
     def test_deterministic_zip_has_stable_bytes(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-repository-test-", dir=str(Path.cwd())))
+        root = Path(tempfile.mkdtemp(prefix=".nxp-repository-test-"))
         try:
             source = root / "payload"
             (source / "z").mkdir(parents=True)
@@ -210,14 +271,34 @@ class RepositoryCoreTests(unittest.TestCase):
     def test_plugin_conformance_tests_do_not_require_package(self) -> None:
         root = self._create_git_fixture()
         try:
-            test_path = root / "plugins" / "specialized" / "Alpha" / "tests" / "Alpha.Tests.csproj"
+            test_path = root / "plugins" / "specialized" / "Alpha" / "tests" / "README.md"
             test_path.parent.mkdir()
-            test_path.write_text("<Project />\n", encoding="utf-8")
-            self._git(root, "add", "plugins/specialized/Alpha/tests/Alpha.Tests.csproj")
+            test_path.write_text("test-only fixture\n", encoding="utf-8")
+            self._git(root, "add", "plugins/specialized/Alpha/tests/README.md")
             self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "plugin tests")
             plan = build_plan(root)
             self.assertEqual(plan["requiresPackage"], [])
-            self.assertIn("plugins/specialized/Alpha/tests/Alpha.Tests.csproj", plan["globalChanges"])
+            self.assertIn("plugins/specialized/Alpha/tests/README.md", plan["globalChanges"])
+        finally:
+            self._remove_tree(root)
+
+    def test_plugin_project_metadata_does_not_require_package(self) -> None:
+        root = self._create_git_fixture(managed=True)
+        try:
+            base = git_head(root)
+            project_path = root / "plugins" / "general" / "Alpha" / "src" / "Alpha.csproj"
+            project_path.write_text(
+                "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0-windows</TargetFramework></PropertyGroup></Project>\n",
+                encoding="utf-8",
+            )
+            self._git(root, "add", project_path.relative_to(root).as_posix())
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "project metadata")
+
+            plan = build_plan(root)
+            self.assertEqual(plan["requiresPackage"], [])
+            self.assertIn("plugins/general/Alpha/src/Alpha.csproj", plan["globalChanges"])
+            result = validate_candidate_against_base(root, base, head="HEAD", distribution_root=root)
+            self.assertIn("Alpha", result["checkedArtifacts"])
         finally:
             self._remove_tree(root)
 
@@ -285,6 +366,73 @@ class RepositoryCoreTests(unittest.TestCase):
             write_json(manifest_path, manifest)
             with self.assertRaisesRegex(RepositoryError, "必须位于 plugins/specialized/"):
                 discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_specialized_contract_rejects_frontend_and_unknown_capability(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            manifest = read_json(manifest_path)
+            manifest["frontend"] = None
+            write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(RepositoryError, r"Alpha.*frontend"):
+                discover_source_plugins(root)
+
+            manifest.pop("frontend")
+            manifest["capabilities"] = ["frontend-module"]
+            write_json(manifest_path, manifest)
+            with self.assertRaisesRegex(RepositoryError, r"Alpha.*capability"):
+                discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_specialized_contract_rejects_browser_payload_and_unreferenced_script(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            plugin_root = root / "plugins" / "specialized" / "Alpha"
+            (plugin_root / "web").mkdir()
+            (plugin_root / "web" / "main.js").write_text("export default {}\n", encoding="utf-8")
+            with self.assertRaisesRegex(RepositoryError, r"Alpha.*浏览器目录"):
+                discover_source_plugins(root)
+
+            shutil.rmtree(plugin_root / "web")
+            (plugin_root / "data" / "unused.js").write_text("return null;\n", encoding="utf-8")
+            with self.assertRaisesRegex(RepositoryError, r"Alpha.*后端脚本"):
+                discover_source_plugins(root)
+        finally:
+            self._remove_tree(root)
+
+    def test_specialized_zip_rejects_browser_payload(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            plugin_root = root / "plugins" / "specialized" / "Alpha"
+            plugin = validate_source_plugin(plugin_root)
+            payload = root / "zip-payload"
+            (payload / "data").mkdir(parents=True)
+            shutil.copy2(plugin_root / "plugin.json", payload / "plugin.json")
+            shutil.copy2(plugin_root / "store.json", payload / "store.json")
+            shutil.copytree(plugin_root / "data", payload / "data", dirs_exist_ok=True)
+            (payload / "web").mkdir()
+            (payload / "web" / "main.js").write_text("export default {};\n", encoding="utf-8")
+            package = root / "Alpha-0.1.0.zip"
+            _package_files(payload, package)
+            with self.assertRaisesRegex(RepositoryError, "浏览器目录"):
+                core._validate_zip(package, plugin)
+        finally:
+            self._remove_tree(root)
+
+    def test_build_preview_uses_hash_named_assets_without_stable_state(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            output = root / ".generated" / "preview"
+            result = core.build_preview(root, "HEAD", output)
+            self.assertEqual(result["sourceCommit"], git_head(root))
+            self.assertFalse((output / ".release-state.json").exists())
+            packages = sorted((output / "packages").glob("*.zip"))
+            self.assertEqual(len(packages), 1)
+            self.assertRegex(packages[0].name, r"^Alpha-0\.1\.0-[0-9a-f]{64}\.zip$")
+            self.assertEqual(read_json(output / "catalog.json")["channel"], "develop")
         finally:
             self._remove_tree(root)
 
@@ -382,7 +530,7 @@ class RepositoryCoreTests(unittest.TestCase):
                 validate_generated(root, candidate)
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(len(calls), 1)
+            self.assertEqual(len(calls), 3)
             self.assertEqual(calls[0].name, "Alpha-0.2.0.zip")
         finally:
             self._remove_tree(root)
@@ -403,7 +551,8 @@ class RepositoryCoreTests(unittest.TestCase):
                 release(root, plan_path, root / ".generated" / "candidate")
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(calls, [])
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0].name, "Alpha-0.1.0.zip")
         finally:
             self._remove_tree(root)
 
@@ -424,7 +573,8 @@ class RepositoryCoreTests(unittest.TestCase):
                 release(root, plan_path, root / ".generated" / "candidate")
             finally:
                 core.sha256 = original_sha256
-            self.assertEqual(calls, [])
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0].name, "Alpha-0.1.0.zip")
         finally:
             self._remove_tree(root)
 
@@ -441,12 +591,19 @@ class RepositoryCoreTests(unittest.TestCase):
 
         shutil.rmtree(root, onerror=onerror)
 
-    def _create_git_fixture(self, legacy_flat: bool = False) -> Path:
-        root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-", dir=str(Path.cwd())))
+    def _create_git_fixture(self, legacy_flat: bool = False, managed: bool = False) -> Path:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-plan-test-"))
         (root / "plugins" / "general").mkdir(parents=True)
         (root / "plugins" / "specialized").mkdir(parents=True)
-        plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path("specialized") / "Alpha")
+        category = "general" if managed else "specialized"
+        plugin_root = root / "plugins" / ("Alpha" if legacy_flat else Path(category) / "Alpha")
         (plugin_root / "data").mkdir(parents=True)
+        if managed:
+            (plugin_root / "src").mkdir()
+            (plugin_root / "src" / "Alpha.csproj").write_text(
+                "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>\n",
+                encoding="utf-8",
+            )
         manifest = {
             "schemaVersion": 2,
             "name": "alpha",
@@ -454,12 +611,14 @@ class RepositoryCoreTests(unittest.TestCase):
             "displayName": "Alpha",
             "description": "test",
             "version": "0.1.0",
-            "kind": "data-specialized",
+            "kind": "managed-code" if managed else "data-specialized",
             "minHostVersion": "0.0.0",
             "capabilities": [],
             "resolve": "data/resolve.json",
             "judgeScript": "data/judge.js",
         }
+        if managed:
+            manifest["apiVersion"] = "1.7"
         store = {
             "schemaVersion": 1,
             "gameName": "Test",
@@ -477,7 +636,7 @@ class RepositoryCoreTests(unittest.TestCase):
         write_json(plugin_root / "data" / "resolve.json", resolve)
         (plugin_root / "data" / "judge.js").write_text("return null;\n", encoding="utf-8")
         (root / "README.md").write_text("baseline\n", encoding="utf-8")
-        plugin = SourcePlugin("specialized", plugin_root, manifest, store) if legacy_flat else validate_source_plugin(plugin_root)
+        plugin = SourcePlugin(category, plugin_root, manifest, store) if legacy_flat else validate_source_plugin(plugin_root)
         payload = root / "payload"
         (payload / "data").mkdir(parents=True)
         shutil.copy2(plugin_root / "plugin.json", payload / "plugin.json")
@@ -485,6 +644,14 @@ class RepositoryCoreTests(unittest.TestCase):
         shutil.copytree(plugin_root / "data", payload / "data", dirs_exist_ok=True)
         package = root / "packages" / "Alpha" / "Alpha-0.1.0.zip"
         _package_files(payload, package)
+        write_json(
+            root / "host.lock.json",
+            {
+                "hostApiVersion": "1.8",
+                "frontendApiVersion": "1.5",
+                "supportedLocales": ["zh-CN", "en-US"],
+            },
+        )
         write_json(root / "catalog.json", {"schemaVersion": 2, "repository": "FlappiBakuse/NexusPipeline-Plugins", "generatedAt": "2026-01-01T00:00:00Z", "plugins": [catalog_entry(plugin, package)]})
         self._git(root, "init")
         self._git(root, "add", ".")

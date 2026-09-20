@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；宿主当前 Plugin API 为 `1.8`，managed-code 插件根据所需端口声明兼容的 API minor。`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider；前端能力与插件类型正交，按需在 manifest 中声明 Frontend API `1.5`，源码放在 `frontend/`，构建结果输出到 `web/`，文案资源放在 manifest 声明的 `i18n/` 目录。
+- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider。
 
 ## 开发流程
 
@@ -19,8 +19,8 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 若使用前端能力，校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 提升插件版本并更新 `store.json`；在 Pull Request 源码阶段运行 `python tools/repository.py validate-source`、`python tools/repository.py plan` 和受影响插件测试。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；生成候选发行物后运行 `validate-generated`，提交到主分支并由发布流水线更新 catalog/package 后再运行 `validate`。Pull Request 只提交源码与元数据，catalog、发行包和发行状态由发布工作流生成。
+6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
+7. 提升插件版本并更新 `store.json`；在 Pull Request 源码阶段运行固定 P1，候选阶段运行固定 P2/P3。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -34,9 +34,9 @@
 
 ## 发行包规则
 
-- 插件包由 main 发布工作流写入 `packages/<ArtifactName>/`，本仓库不创建插件 Git tag 或 GitHub Release。
+- stable 由受信 Publisher App 按资格记录写入 `main` 的 `catalog.json`、`.release-state.json` 和 `packages/<ArtifactName>/`；普通开发者、Agent 和常规 token 不得直接写入。develop preview 使用固定 `plugins-develop` Release，包名为 `<ArtifactName>-<version>-<sha256>.zip`，不修改 stable 文件。
 - 每个 artifact 目录最多保留最近三个受限版本包；版本排序遵循 `beta < rc < stable`，旧包仅用于仓库存档，插件平台不提供降级安装。
-- ZIP 文件名使用 `<ArtifactName>-<version>.zip`，目录名和文件名区分大小写；`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、raw `packageUrl`、`sha256`、`sizeBytes` 和最近更新记录。相同 `(artifactName, version)` 的发行包不可覆盖。
+- stable ZIP 文件名使用 `<ArtifactName>-<version>.zip`，preview ZIP 文件名使用 `<ArtifactName>-<version>-<sha256>.zip`；目录名和文件名区分大小写。`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、精确包 URL、`sha256`、`sizeBytes` 和最近更新记录。stable 相同 `(artifactName, version)` 的发行包不可覆盖；preview 允许同版本按包哈希更新。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
 
 ## 本地检查
@@ -44,33 +44,19 @@
 提交前至少执行以下检查：
 
 ```text
-# 源码 PR 或候选版本尚未进入 catalog/packages 时
-python tools/repository.py validate-source
+# 固定 P1：源码、兼容性、脚本和仓库工具门禁
+python tools/repository.py qualification --group source --base main --host-root ..\NexusPipeline
 
-# 校验宿主允许的 locale 与当前宿主资源
-python tools/repository.py validate-host-locales --host-root ..\NexusPipeline
+# 固定 P2：managed-code 的前端 conformance/typecheck/build 与全量构建测试
+python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline
 
-# 校验 JavaScript / Python 语法
-python tools/repository.py check-syntax
+# 固定 P3：相对 main 的版本纪律、候选包和未修改 stable 文件检查
+python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline
 
-# 校验 Frontend API 入口、slot 注册和 cleanup 生命周期
-node tools/Test-FrontendPlugins.mjs
+# develop preview：只写新的本地 .generated/preview，不写 stable 文件
+python tools/repository.py publish-develop --source-ref develop --output .generated/preview
 
-# 校验仓库工具
-python -m unittest discover -s tools/tests -v
-
-# 根据最近一次成功发行状态生成计划
-python tools/repository.py plan --baseline auto --output .generated/release-plan.json
-
-# 构建受影响的 managed-code 项目，并生成增量候选物
-python tools/repository.py test --plan .generated/release-plan.json
-python tools/repository.py release --plan .generated/release-plan.json --output .generated
-python tools/repository.py validate-generated --generated-root .generated
-
-# catalog 与发行包已进入主分支后
-python tools/repository.py validate
-
-# 全仓 ZIP / SHA256 / catalog 审计
+# 完整 ZIP / SHA256 / catalog 审计（手动诊断）
 python tools/repository.py audit --full
 ```
 

@@ -1,6 +1,6 @@
 {
-  "repository": "FlappiBakuse/NexusPipeline",
-  "ref": "7b01c0e3af2394b5e6ce86862c73b00faabbbe06",
+  "hostApiVersion": "1.8",
+  "frontendApiVersion": "1.5",
   "supportedLocales": [
     "zh-CN",
     "en-US"
