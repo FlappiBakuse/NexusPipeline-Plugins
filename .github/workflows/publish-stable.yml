@@ -218,6 +218,7 @@ jobs:
         with:
           name: plugins-stable-candidate-${{ steps.source.outputs.sha }}
           path: NexusPipeline-Plugins/.generated/stable-candidate
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
