@@ -232,12 +232,17 @@ def resolve_candidate_compatibility(
     content = response.get("content")
     _require(isinstance(content, str), "候选 host.lock.json 缺少 base64 内容")
     try:
-        decoded = base64.b64decode(content.encode("ascii"), validate=True).decode("utf-8")
+        decoded = decode_contents_base64(content).decode("utf-8")
         value = json.loads(decoded)
     except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
         raise QualificationError("候选 host.lock.json 不是有效 JSON") from exc
     _require(isinstance(value, dict), "候选 host.lock.json 根节点必须是对象")
     return value
+
+
+def decode_contents_base64(content: str) -> bytes:
+    """GitHub Contents 使用换行 Base64；仅去除 CR/LF，其余字符严格校验。"""
+    return base64.b64decode(content.replace("\r", "").replace("\n", "").encode("ascii"), validate=True)
 
 
 def begin_check(
@@ -701,7 +706,7 @@ def _read_release_cursor(repository: str, token: str, *, request_fn: RequestFn |
     content = response.get("content")
     _require(isinstance(content, str), "main .release-state.json 缺少内容")
     try:
-        state = json.loads(base64.b64decode(content.encode("ascii"), validate=True).decode("utf-8"))
+        state = json.loads(decode_contents_base64(content).decode("utf-8"))
     except (ValueError, UnicodeError, json.JSONDecodeError) as exc:
         raise QualificationError("main .release-state.json 不是有效 JSON") from exc
     _require(isinstance(state, dict), "main .release-state.json 根节点必须是对象")

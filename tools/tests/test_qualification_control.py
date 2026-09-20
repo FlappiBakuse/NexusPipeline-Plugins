@@ -10,8 +10,10 @@ from tools.qualification_control import (
     QualificationError,
     begin_check,
     collect_gate_results,
+    decode_contents_base64,
     read_pull_request,
     resolve_candidate,
+    resolve_candidate_compatibility,
     resolve_main_queue,
     resolve_merged_candidate,
     verify_merged_candidate,
@@ -50,6 +52,18 @@ def pull_payload(*, state: str = "open", head: str = H, head_repo: str = "Flappi
 
 
 class QualificationControlTests(unittest.TestCase):
+    def test_contents_base64_accepts_line_wrapping_and_rejects_invalid_characters(self) -> None:
+        repository = "FlappiBakuse/NexusPipeline-Plugins"
+        value = {"hostApiVersion": "1.8", "frontendApiVersion": "1.5", "supportedLocales": ["zh-CN", "en-US"]}
+        encoded = base64.encodebytes(json.dumps(value).encode()).decode()
+        for content in (encoded, encoded.replace("\n", "\r\n")):
+            api = FakeApi({("GET", f"/repos/{repository}/contents/host.lock.json?ref={H}"):
+                {"path": "host.lock.json", "encoding": "base64", "content": content}})
+            self.assertEqual(resolve_candidate_compatibility(repository, H, None, request_fn=api), value)
+        for content in ("e30= ", "e30=\t", "e!30=", "e30", "e30=\u00a0"):
+            with self.subTest(content=content), self.assertRaises(ValueError):
+                decode_contents_base64(content)
+
     def test_read_pull_rejects_fork_even_with_matching_head(self) -> None:
         api = FakeApi({("GET", "/repos/FlappiBakuse/NexusPipeline/pulls/7"): pull_payload(head_repo="someone/fork")})
         with self.assertRaisesRegex(QualificationError, "同一官方仓库"):
