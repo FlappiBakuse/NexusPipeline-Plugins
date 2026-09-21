@@ -138,6 +138,8 @@
   min-height: 104px;
   min-width: 0;
   padding: var(--nx-space-4) var(--nx-space-5);
+  /* Match the host list rows, accounting for the drag handle's inner space. */
+  padding-inline-start: calc(var(--nx-space-5) - var(--nx-space-2));
   border-bottom: 1px solid var(--nx-color-border);
   transition: background var(--nx-motion-duration-micro, 120ms) var(--nx-motion-ease, ease);
 }
@@ -403,6 +405,7 @@
   .gci-task-row {
     min-height: 0;
     padding: var(--nx-space-4);
+    padding-inline-start: calc(var(--nx-space-4) - var(--nx-space-2));
   }
 
   .gci-task-row-main {
