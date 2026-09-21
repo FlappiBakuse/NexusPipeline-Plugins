@@ -220,3 +220,5 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 | `P3` | 隔离候选目录 | base 版本纪律、candidate plan、全量发行包验证、stable 文件未修改 |
 
 `tools/qualification.py` 负责本地编排，`tools/sdk_source.py` 负责一次解析并固定 SDK 来源；`tools/qualification_control.py`（部署后）负责外部 App Check 的 fail-closed 聚合。手动 `audit --full` 只作完整包诊断，不替代 P1/P2/P3，也不自动改变 stable 状态。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

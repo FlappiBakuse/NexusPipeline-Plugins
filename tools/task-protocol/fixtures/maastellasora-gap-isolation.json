@@ -1,0 +1,46 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "任务开始: 每日任务"
+      ]
+    },
+    {
+      "gap": true,
+      "lines": [
+        "日志丢失"
+      ]
+    },
+    {
+      "lines": [
+        "任务完成: 每日任务"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "unknown"
+  },
+  "boundary": "open"
+}

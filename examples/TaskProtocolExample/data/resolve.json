@@ -1,0 +1,15 @@
+{
+  "inputs": [],
+  "require": [
+    {
+      "var": "main",
+      "file": "TaskFixture.exe"
+    }
+  ],
+  "paths": {
+    "mainExe": "{main}",
+    "args": "",
+    "configPath": "config.json",
+    "logPath": ""
+  }
+}

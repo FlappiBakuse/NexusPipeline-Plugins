@@ -1,0 +1,47 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"system\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"$task.Daily.label\"}, {\"name\": \"Other\"}]}"
+    },
+    {
+      "id": "locale-zh-CN",
+      "format": "text",
+      "text": "{\"task.Daily.label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "任务开始: 每日任务"
+      ],
+      "boundary": "open"
+    },
+    {
+      "lines": [
+        "任务完成: 每日任务"
+      ],
+      "boundary": "ended"
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  },
+  "boundary": "ended"
+}

@@ -14,3 +14,5 @@
 | 查询宿主接口 | [宿主 Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) | `src/NexusPipeline.Plugin.Abstractions` 与宿主公开注册表 |
 
 机器路由保存在 [map.json](map.json)。Frontend API 的公共 `nxp-*` 元件清单和 `minHostVersion` 规则也记录在 [Frontend 插件指南](FRONTEND_PLUGIN.md)。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

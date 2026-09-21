@@ -1,0 +1,32 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:one_dragon/_group.yml",
+      "format": "yaml",
+      "text": "{\"app_list\": [{\"app_id\": \"email\", \"enabled\": true}, {\"app_id\": \"future\", \"enabled\": true}, {\"app_id\": \"coffee\", \"enabled\": false}]}"
+    }
+  ],
+  "tasks": {
+    "one_dragon/email": {
+      "enabled": true
+    },
+    "one_dragon/future": {
+      "enabled": true
+    },
+    "one_dragon/coffee": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "指令[ 执行应用组 one_dragon ] 执行成功 返回状态 全部结束",
+        "关闭游戏成功"
+      ]
+    }
+  ],
+  "results": {},
+  "boundary": "open"
+}

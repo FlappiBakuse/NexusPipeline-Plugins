@@ -1,0 +1,572 @@
+{
+  "BetterGI": {
+    "id": "bettergi",
+    "implementation": "bettergi"
+  },
+  "March7thAssistant": {
+    "id": "march7th",
+    "implementation": "march7th",
+    "defaults": {
+      "log_overlay_enable": true,
+      "autoplot_skip_enable": true,
+      "autoplot_click_enable": true,
+      "autoplot_battle_detect_enable": true,
+      "autoplot_phone_detect_enable": true,
+      "debug_mode_enable": false,
+      "check_update": true,
+      "pause_after_success": true,
+      "exit_after_failure": false,
+      "play_audio": false,
+      "update_via_launcher": false,
+      "cloud_game_enable": false,
+      "cloud_game_fullscreen_enable": true,
+      "cloud_game_use_paid_time": false,
+      "browser_headless_enable": false,
+      "browser_headless_restart_on_not_logged_in": true,
+      "browser_dump_cookies_enable": false,
+      "browser_persistent_enable": true,
+      "browser_download_use_mirror": true,
+      "power_enable": true,
+      "power_plan_keep": false,
+      "tp_before_instance": false,
+      "build_target_enable": false,
+      "build_target_use_user_instance_when_only_erosion_and_ornament": false,
+      "break_down_level_four_relicset": false,
+      "instance_team_enable": false,
+      "merge_immersifier": false,
+      "use_reserved_trailblaze_power": false,
+      "use_fuel": false,
+      "echo_of_war_enable": false,
+      "borrow_enable": true,
+      "borrow_character_enable": false,
+      "reward_enable": true,
+      "reward_dispatch_enable": true,
+      "reward_mail_enable": true,
+      "reward_assist_enable": true,
+      "reward_quest_enable": true,
+      "reward_srpass_enable": true,
+      "reward_redemption_code_enable": true,
+      "reward_achievement_enable": false,
+      "reward_message_enable": false,
+      "daily_enable": true,
+      "daily_material_enable": true,
+      "daily_himeko_try_enable": false,
+      "daily_memory_one_enable": false,
+      "activity_enable": true,
+      "activity_dailycheckin_enable": true,
+      "activity_gardenofplenty_enable": false,
+      "activity_realmofthestrange_enable": false,
+      "activity_planarfissure_enable": false,
+      "activity_journey_highlights_notification_enable": false,
+      "asset_manager_enable": false,
+      "asset_self_molding_resin_enable": false,
+      "asset_ember_special_pass_enable": false,
+      "asset_ember_regular_pass_enable": false,
+      "asset_ember_tracks_of_destiny_enable": false,
+      "asset_lc3_star_superimpose_enable": false,
+      "currencywars_enable": false,
+      "currencywars_bonus_enable": false,
+      "currencywars_fast_mode": true,
+      "currencywars_strategy_restart_on_special_tags": true,
+      "weekly_divergent_enable": false,
+      "weekly_divergent_bonus_enable": false,
+      "weekly_divergent_stable_mode": false,
+      "divergent_station_priority_enable": false,
+      "universe_enable": false,
+      "universe_enable_gpu": false,
+      "universe_bonus_enable": false,
+      "universe_requirements": false,
+      "fight_enable": false,
+      "fight_team_enable": false,
+      "fight_requirements": false,
+      "genshin_starRail_fps_unlocker_allow": false,
+      "forgottenhall_enable": false,
+      "purefiction_enable": false,
+      "apocalyptic_enable": false,
+      "auto_battle_detect_enable": true,
+      "auto_set_resolution_enable": true,
+      "auto_set_game_path_enable": true,
+      "hotkey_toggle_autoplot_enable": false,
+      "scheduled_run_enable": false,
+      "scheduled_chain_continue_on_failure": true,
+      "use_background_screenshot": true,
+      "window_maximized": false,
+      "update_prerelease_enable": false,
+      "update_full_enable": true,
+      "auto_update": false,
+      "notification_enable": true,
+      "notify_merge": false,
+      "notify_send_images": true,
+      "notify_winotify_enable": true,
+      "notify_telegram_enable": false,
+      "notify_matrix_enable": false,
+      "notify_matrix_separately_text_media": true,
+      "notify_serverchanturbo_enable": false,
+      "notify_serverchan3_enable": false,
+      "notify_bark_enable": false,
+      "notify_smtp_enable": false,
+      "notify_smtp_ssl": true,
+      "notify_smtp_starttls": false,
+      "notify_smtp_ssl_unverified": false,
+      "notify_smtp_plain_text": false,
+      "notify_onebot_enable": false,
+      "notify_gocqhttp_enable": false,
+      "notify_dingtalk_enable": false,
+      "notify_pushplus_enable": false,
+      "notify_wechatworkapp_enable": false,
+      "notify_wechatworkbot_enable": false,
+      "notify_gotify_enable": false,
+      "notify_discord_enable": false,
+      "notify_pushdeer_enable": false,
+      "notify_lark_enable": false,
+      "notify_lark_imageenable": false,
+      "notify_kook_enable": false,
+      "notify_meow_enable": false,
+      "notify_webhook_enable": false,
+      "notify_custom_enable": false,
+      "telemetry_enable": true
+    },
+    "names": {
+      "echo_of_war_enable": "历战余响",
+      "reward_assist_enable": "支援奖励",
+      "reward_mail_enable": "邮件奖励",
+      "reward_dispatch_enable": "委托奖励",
+      "reward_quest_enable": "实训奖励",
+      "reward_srpass_enable": "无名勋礼",
+      "reward_achievement_enable": "成就奖励",
+      "reward_message_enable": "短信奖励",
+      "reward_redemption_code_enable": "兑换码",
+      "asset_self_molding_resin_enable": "自塑尘脂合成",
+      "asset_lc3_star_superimpose_enable": "3星光锥叠加",
+      "asset_ember_special_pass_enable": "星轨专票兑换",
+      "asset_ember_regular_pass_enable": "星轨通票兑换",
+      "asset_ember_tracks_of_destiny_enable": "命运的足迹兑换",
+      "activity_dailycheckin_enable": "活动签到",
+      "activity_gardenofplenty_enable": "花藏繁生",
+      "activity_realmofthestrange_enable": "异器盈界",
+      "activity_planarfissure_enable": "位面分裂",
+      "activity_journey_highlights_notification_enable": "旅途拾忆通知"
+    }
+  },
+  "ZenlessZoneZeroOneDragon": {
+    "id": "zzzonedragon",
+    "implementation": "zzz",
+    "apps": {
+      "charge_plan": "体力刷本",
+      "city_fund": "丽都城募",
+      "coffee": "咖啡店",
+      "commission_assistant": "委托助手",
+      "daily_signin": "每日签到",
+      "drive_disc_dismantle": "驱动盘拆解",
+      "email": "邮件",
+      "engagement_reward": "活跃度奖励",
+      "hou_hou_bakery": "吼吼饼铺",
+      "intel_board": "情报板",
+      "life_on_line": "真·拿命验收",
+      "notify": "通知",
+      "notorious_hunt": "恶名狩猎",
+      "one_dragon": "一条龙",
+      "random_play": "录像店营业",
+      "redemption_code": "兑换码",
+      "ridu_weekly": "丽都周纪 (领奖励)",
+      "scratch_card": "刮刮卡",
+      "shiyu_defense": "式舆防卫战",
+      "suibian_temple": "随便观",
+      "trigrams_collection": "卦象集录",
+      "world_patrol": "锄大地",
+      "lost_void": "迷失之地",
+      "withered_domain": "枯萎之都",
+      "mouse_sensitivity_checker": "鼠标灵敏度检测",
+      "predefined_team_checker": "预备编队角色识别",
+      "operation_debug": "指令调试",
+      "screenshot_helper": "闪避截图",
+      "auto_battle": "自动战斗",
+      "dodge_assistant": "闪避助手"
+    }
+  },
+  "BAAH": {
+    "id": "baah",
+    "implementation": "baah",
+    "classes": {
+      "登录游戏": "EnterGame",
+      "清momotalk": "InMomotalk",
+      "活动一览": "InEventRecap",
+      "长期签到": "Attendance",
+      "咖啡馆": "InCafe",
+      "咖啡馆只摸头": "InCafe",
+      "课程表": "InTimeTable",
+      "社团": "InClub",
+      "制造": "InCraft",
+      "商店": "InShop",
+      "每日免费奖励": "InFreeAward",
+      "购买AP": "BuyAP",
+      "悬赏通缉": "InWanted",
+      "特殊任务": "InSpecial",
+      "学园交流会": "InExchange",
+      "战术大赛": "InContest",
+      "战术测试": "InExam",
+      "总力战": "AutoAssault",
+      "大决战": "AutoGrandAssault",
+      "活动关卡": "InEvent",
+      "推活动关卡剧情和推图": "InEvent",
+      "每日任务": "CollectDailyRewards",
+      "邮件": "CollectMails",
+      "一键扫荡": "InQuest",
+      "普通关卡": "InQuest",
+      "普通推图": "InQuest",
+      "困难关卡": "InQuest",
+      "困难推图": "InQuest",
+      "主线剧情": "AutoStory",
+      "主线剧情第二部": "AutoStory",
+      "短篇剧情": "AutoStory",
+      "支线剧情": "AutoStory",
+      "挑战任务": "SolveChallenge",
+      "自定义任务": "UserTask"
+    },
+    "safe": [
+      "登录游戏",
+      "邮件",
+      "每日任务",
+      "长期签到",
+      "每日免费奖励"
+    ]
+  },
+  "MaaEnd": {
+    "id": "maaend",
+    "implementation": "mxu",
+    "project": "MaaEnd",
+    "imports": {
+      "tasks/AccountSwitch.json": "interface-part-0",
+      "tasks/AeroSalvage.json": "interface-part-1",
+      "tasks/AndroidOpenGame.json": "interface-part-2",
+      "tasks/AutoCollect.json": "interface-part-3",
+      "tasks/AutoEcoFarm.json": "interface-part-4",
+      "tasks/AutoEssence/AutoEssence.json": "interface-part-5",
+      "tasks/AutoEssence/Location/SelectLocation.json": "interface-part-6",
+      "tasks/AutoEssence/Location/Slot1.json": "interface-part-7",
+      "tasks/AutoEssence/Location/VFOriginLodespring.json": "interface-part-8",
+      "tasks/AutoEssence/Location/VFOriginiumSciencePark.json": "interface-part-9",
+      "tasks/AutoEssence/Location/VFPowerPlateau.json": "interface-part-10",
+      "tasks/AutoEssence/Location/VFTheHub.json": "interface-part-11",
+      "tasks/AutoEssence/Location/WLMarkerStone.json": "interface-part-12",
+      "tasks/AutoEssence/Location/WLNorthWulingExclusionZone.json": "interface-part-13",
+      "tasks/AutoEssence/Location/WLQingboStockade.json": "interface-part-14",
+      "tasks/AutoEssence/Location/WLSnowyForest.json": "interface-part-15",
+      "tasks/AutoEssence/Location/WLSwordVaultDale.json": "interface-part-16",
+      "tasks/AutoEssence/Location/WLTestArea.json": "interface-part-17",
+      "tasks/AutoEssence/Location/WLWulingCity.json": "interface-part-18",
+      "tasks/AutoEssence/Location/WLYinglungPass.json": "interface-part-19",
+      "tasks/AutoEssence/Target/Target.json": "interface-part-20",
+      "tasks/AutoSell.json": "interface-part-21",
+      "tasks/AutoStockStaple.json": "interface-part-22",
+      "tasks/AutoStockpile.json": "interface-part-23",
+      "tasks/BakerEntry.json": "interface-part-24",
+      "tasks/BatchAddFriends.json": "interface-part-25",
+      "tasks/BatchDeleteFriends.json": "interface-part-26",
+      "tasks/BatchUseDetector.json": "interface-part-27",
+      "tasks/ClaimSimulationRewards.json": "interface-part-28",
+      "tasks/CloseGame.json": "interface-part-29",
+      "tasks/CloseGamePC.json": "interface-part-30",
+      "tasks/Crafting.json": "interface-part-31",
+      "tasks/CreditShopping.json": "interface-part-32",
+      "tasks/DailyRewards.json": "interface-part-33",
+      "tasks/DeliveryJobs.json": "interface-part-34",
+      "tasks/DevTest.json": "interface-part-35",
+      "tasks/DijiangRewards.json": "interface-part-36",
+      "tasks/EnvironmentMonitoring.json": "interface-part-37",
+      "tasks/EssenceFilter.json": "interface-part-38",
+      "tasks/GearAssembly.json": "interface-part-39",
+      "tasks/GiftOperator.json": "interface-part-40",
+      "tasks/ImportBluePrints.json": "interface-part-41",
+      "tasks/IntelArchive.json": "interface-part-42",
+      "tasks/ItemTransfer.json": "interface-part-43",
+      "tasks/OutpostTrading.json": "interface-part-44",
+      "tasks/ProtocolSpace.json": "interface-part-45",
+      "tasks/PullCountCalculator.json": "interface-part-46",
+      "tasks/PuzzleSolver.json": "interface-part-47",
+      "tasks/ReadAllWiki.json": "interface-part-48",
+      "tasks/RealTimeTask.json": "interface-part-49",
+      "tasks/ReceiveProdManual.json": "interface-part-50",
+      "tasks/ResourceRecycleStation.json": "interface-part-51",
+      "tasks/SeizeDeliveryJobs.json": "interface-part-52",
+      "tasks/SimpleProductionBatchStart.json": "interface-part-53",
+      "tasks/StashBackpack.json": "interface-part-54",
+      "tasks/SwitchTeam.json": "interface-part-55",
+      "tasks/TrialOfSwordmancy.json": "interface-part-56",
+      "tasks/VisitFriends.json": "interface-part-57",
+      "tasks/Weapon.json": "interface-part-58",
+      "tasks/WebEvent202605.json": "interface-part-59",
+      "tasks/ZiplineImport.json": "interface-part-60",
+      "tasks/preset/DailyFull.json": "interface-part-61",
+      "tasks/preset/QuickDaily.json": "interface-part-62",
+      "tasks/preset/RealtimeAssist.json": "interface-part-63",
+      "tasks/pretasks/GameSetting.json": "interface-part-64",
+      "tasks/setting/Keymap.json": "interface-part-65",
+      "tasks/setting/Zipline.json": "interface-part-66"
+    },
+    "locales": {
+      "zh-CN": "locale-zh-CN",
+      "en-US": "locale-en-US",
+      "zh-TW": "locale-zh-TW",
+      "ja-JP": "locale-ja-JP",
+      "ko-KR": "locale-ko-KR"
+    },
+    "localePaths": {
+      "zh-CN": "locales/interface/zh_cn.json",
+      "en-US": "locales/interface/en_us.json",
+      "zh-TW": "locales/interface/zh_tw.json",
+      "ja-JP": "locales/interface/ja_jp.json",
+      "ko-KR": "locales/interface/ko_kr.json"
+    },
+    "technical": [
+      "AndroidOpenGame",
+      "CloseGame",
+      "CloseGamePC",
+      "登录游戏",
+      "关闭游戏"
+    ],
+    "safe": [],
+    "importTasks": {
+      "tasks/AccountSwitch.json": [
+        "AccountSwitch"
+      ],
+      "tasks/AeroSalvage.json": [
+        "AeroSalvage"
+      ],
+      "tasks/AndroidOpenGame.json": [
+        "AndroidOpenGame"
+      ],
+      "tasks/AutoCollect.json": [
+        "AutoCollect"
+      ],
+      "tasks/AutoEcoFarm.json": [
+        "AutoEcoFarm"
+      ],
+      "tasks/AutoEssence/AutoEssence.json": [
+        "AutoEssence"
+      ],
+      "tasks/AutoEssence/Location/SelectLocation.json": [],
+      "tasks/AutoEssence/Location/Slot1.json": [],
+      "tasks/AutoEssence/Location/VFOriginLodespring.json": [],
+      "tasks/AutoEssence/Location/VFOriginiumSciencePark.json": [],
+      "tasks/AutoEssence/Location/VFPowerPlateau.json": [],
+      "tasks/AutoEssence/Location/VFTheHub.json": [],
+      "tasks/AutoEssence/Location/WLMarkerStone.json": [],
+      "tasks/AutoEssence/Location/WLNorthWulingExclusionZone.json": [],
+      "tasks/AutoEssence/Location/WLQingboStockade.json": [],
+      "tasks/AutoEssence/Location/WLSnowyForest.json": [],
+      "tasks/AutoEssence/Location/WLSwordVaultDale.json": [],
+      "tasks/AutoEssence/Location/WLTestArea.json": [],
+      "tasks/AutoEssence/Location/WLWulingCity.json": [],
+      "tasks/AutoEssence/Location/WLYinglungPass.json": [],
+      "tasks/AutoEssence/Target/Target.json": [],
+      "tasks/AutoSell.json": [
+        "AutoSell"
+      ],
+      "tasks/AutoStockStaple.json": [
+        "AutoStockStaple"
+      ],
+      "tasks/AutoStockpile.json": [
+        "AutoStockpile"
+      ],
+      "tasks/BakerEntry.json": [
+        "BakerEntry"
+      ],
+      "tasks/BatchAddFriends.json": [
+        "BatchAddFriends"
+      ],
+      "tasks/BatchDeleteFriends.json": [
+        "BatchDeleteFriends"
+      ],
+      "tasks/BatchUseDetector.json": [
+        "BatchUseDetector"
+      ],
+      "tasks/ClaimSimulationRewards.json": [
+        "ClaimSimulationRewards"
+      ],
+      "tasks/CloseGame.json": [
+        "CloseGame"
+      ],
+      "tasks/CloseGamePC.json": [
+        "CloseGamePC"
+      ],
+      "tasks/Crafting.json": [
+        "Crafting"
+      ],
+      "tasks/CreditShopping.json": [
+        "CreditShoppingN2"
+      ],
+      "tasks/DailyRewards.json": [
+        "DailyRewards"
+      ],
+      "tasks/DeliveryJobs.json": [
+        "DeliveryJobs"
+      ],
+      "tasks/DevTest.json": [
+        "DevTest"
+      ],
+      "tasks/DijiangRewards.json": [
+        "DijiangRewards"
+      ],
+      "tasks/EnvironmentMonitoring.json": [
+        "EnvironmentMonitoring"
+      ],
+      "tasks/EssenceFilter.json": [
+        "EssenceFilter"
+      ],
+      "tasks/GearAssembly.json": [
+        "GearAssembly"
+      ],
+      "tasks/GiftOperator.json": [
+        "GiftOperator"
+      ],
+      "tasks/ImportBluePrints.json": [
+        "ImportBluePrints"
+      ],
+      "tasks/IntelArchive.json": [
+        "IntelArchive"
+      ],
+      "tasks/ItemTransfer.json": [
+        "ItemTransfer"
+      ],
+      "tasks/OutpostTrading.json": [
+        "SellProduct"
+      ],
+      "tasks/ProtocolSpace.json": [
+        "ProtocolSpace"
+      ],
+      "tasks/PullCountCalculator.json": [
+        "PullCountCalculator"
+      ],
+      "tasks/PuzzleSolver.json": [
+        "PuzzleSolver"
+      ],
+      "tasks/ReadAllWiki.json": [
+        "ReadAllWiki"
+      ],
+      "tasks/RealTimeTask.json": [
+        "RealTimeTask"
+      ],
+      "tasks/ReceiveProdManual.json": [
+        "ReceiveProdManual"
+      ],
+      "tasks/ResourceRecycleStation.json": [
+        "ResourceRecycleStation"
+      ],
+      "tasks/SeizeDeliveryJobs.json": [
+        "SeizeDeliveryJobs"
+      ],
+      "tasks/SimpleProductionBatchStart.json": [
+        "SimpleProductionBatchStart"
+      ],
+      "tasks/StashBackpack.json": [
+        "StashBackpack"
+      ],
+      "tasks/SwitchTeam.json": [
+        "SwitchTeam"
+      ],
+      "tasks/TrialOfSwordmancy.json": [
+        "TrialOfSwordmancy"
+      ],
+      "tasks/VisitFriends.json": [
+        "VisitFriends"
+      ],
+      "tasks/Weapon.json": [
+        "WeaponUpgrade"
+      ],
+      "tasks/WebEvent202605.json": [
+        "WebEvent202605"
+      ],
+      "tasks/ZiplineImport.json": [
+        "ZiplineImport"
+      ],
+      "tasks/preset/DailyFull.json": [],
+      "tasks/preset/QuickDaily.json": [],
+      "tasks/preset/RealtimeAssist.json": [],
+      "tasks/pretasks/GameSetting.json": [],
+      "tasks/setting/Keymap.json": [],
+      "tasks/setting/Zipline.json": []
+    }
+  },
+  "MaaStellaSora": {
+    "id": "maas",
+    "implementation": "mxu",
+    "project": "MaaStellaSora",
+    "imports": {
+      "resource/tasks/activity.json": "interface-part-0",
+      "resource/tasks/activity_challenge.json": "interface-part-1",
+      "resource/tasks/climb_tower.json": "interface-part-2",
+      "resource/tasks/climb_tower_presets.json": "interface-part-3",
+      "resource/tasks/fight.json": "interface-part-4",
+      "resource/tasks/friend.json": "interface-part-5",
+      "resource/tasks/grant.json": "interface-part-6",
+      "resource/tasks/invite.json": "interface-part-7",
+      "resource/tasks/login.json": "interface-part-8",
+      "resource/tasks/mail.json": "interface-part-9",
+      "resource/tasks/operation.json": "interface-part-10",
+      "resource/tasks/proving_grounds.json": "interface-part-11",
+      "resource/tasks/quest.json": "interface-part-12",
+      "resource/tasks/shop.json": "interface-part-13",
+      "resource/tasks/talk.json": "interface-part-14",
+      "resource/tasks/task.json": "interface-part-15"
+    },
+    "locales": {},
+    "localePaths": {},
+    "technical": [
+      "AndroidOpenGame",
+      "CloseGame",
+      "CloseGamePC",
+      "登录游戏",
+      "关闭游戏"
+    ],
+    "safe": [],
+    "importTasks": {
+      "resource/tasks/activity.json": [
+        "活动快速战斗"
+      ],
+      "resource/tasks/activity_challenge.json": [
+        "活动挑战关卡自动战斗"
+      ],
+      "resource/tasks/climb_tower.json": [
+        "新版爬塔"
+      ],
+      "resource/tasks/climb_tower_presets.json": [],
+      "resource/tasks/fight.json": [
+        "悬赏试炼快速战斗"
+      ],
+      "resource/tasks/friend.json": [
+        "领取与赠送干劲"
+      ],
+      "resource/tasks/grant.json": [
+        "领取基金奖励"
+      ],
+      "resource/tasks/invite.json": [
+        "邀约"
+      ],
+      "resource/tasks/login.json": [
+        "登录游戏"
+      ],
+      "resource/tasks/mail.json": [
+        "领取邮箱奖励"
+      ],
+      "resource/tasks/operation.json": [
+        "猎影合围"
+      ],
+      "resource/tasks/proving_grounds.json": [
+        "真格挑战"
+      ],
+      "resource/tasks/quest.json": [
+        "领取并重新派遣委托"
+      ],
+      "resource/tasks/shop.json": [
+        "领取每日奖励"
+      ],
+      "resource/tasks/talk.json": [
+        "心链送礼"
+      ],
+      "resource/tasks/task.json": [
+        "领取任务奖励"
+      ]
+    }
+  }
+}

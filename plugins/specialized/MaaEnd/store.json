@@ -7,9 +7,20 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["明日方舟：终末地", "专项插件", "模拟器"],
+  "tags": [
+    "明日方舟：终末地",
+    "专项插件",
+    "模拟器"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
   "changelog": [
+    {
+      "version": "0.3.0",
+      "date": "2026-09-21",
+      "items": [
+        "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+      ]
+    },
     {
       "version": "0.2.5",
       "date": "2026-09-13",
@@ -30,15 +41,29 @@
       "displayName": "MaaEnd",
       "gameName": "Arknights: Endfield",
       "description": "Manage MaaEnd script instances, configuration paths, logs, and failed-task retries.",
-      "tags": ["Arknights: Endfield", "Specialized plugin", "MaaEnd"],
+      "tags": [
+        "Arknights: Endfield",
+        "Specialized plugin",
+        "MaaEnd"
+      ],
       "changelog": [
         {
+          "version": "0.3.0",
+          "items": [
+            "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+          ]
+        },
+        {
           "version": "0.2.5",
-          "items": ["Updated the minimum host version requirement to 0.15.11."]
+          "items": [
+            "Updated the minimum host version requirement to 0.15.11."
+          ]
         },
         {
           "version": "0.2.3",
-          "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
+          "items": [
+            "Corrected the English store history metadata; runtime behavior is unchanged."
+          ]
         }
       ]
     }

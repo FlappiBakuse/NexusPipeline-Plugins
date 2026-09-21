@@ -1,0 +1,42 @@
+{
+  "artifact": "TaskProtocolJsonMap",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"enabled\": {\"a\": true, \"b\": true, \"closed\": false}, \"counter\": 7}"
+    }
+  ],
+  "tasks": {
+    "a": {
+      "enabled": true
+    },
+    "b": {
+      "enabled": true
+    },
+    "closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "TASK a START",
+        "TASK a OK"
+      ]
+    },
+    {
+      "lines": [
+        "TASK b START",
+        "TASK b FAIL",
+        "TASK closed OK"
+      ]
+    }
+  ],
+  "results": {
+    "a": "succeeded",
+    "b": "failed"
+  },
+  "example": true
+}

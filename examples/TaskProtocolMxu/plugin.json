@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "name": "task-protocol-mxu",
+  "artifactName": "TaskProtocolMxu",
+  "displayName": "TaskProtocolMxu",
+  "gameName": "Synthetic fixture",
+  "description": "Synthetic task protocol example",
+  "version": "0.1.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.16.8",
+  "resolve": "data/resolve.json",
+  "judgeScript": "data/judge.js",
+  "taskProtocol": {
+    "version": "1.0",
+    "discoverScript": "data/discover.js",
+    "retryScript": "data/retry.js",
+    "readResources": []
+  }
+}

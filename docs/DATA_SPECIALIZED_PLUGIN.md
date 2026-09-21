@@ -269,3 +269,5 @@ plugins/specialized/Example/
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。
 - judge 的语言扩展名、输入读取方式和输出 JSON 符合 [判断脚本指南](JUDGE_SCRIPT.md)。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

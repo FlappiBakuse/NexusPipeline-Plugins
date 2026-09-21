@@ -1,0 +1,46 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"DailyRewards\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [], \"import\": [\"tasks/DeliveryJobs.json\", \"tasks/DailyRewards.json\"]}"
+    },
+    {
+      "id": "interface-part-33",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"DailyRewards\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true,
+      "detection": "limited"
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 每日任务"
+      ]
+    },
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务完成: 每日任务"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  },
+  "boundary": "ended"
+}

@@ -603,8 +603,36 @@ def _validate_judge_locale_contract(plugin: Path, manifest: dict[str, Any], judg
     )
 
 
+def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
+    if "taskProtocol" not in manifest:
+        return {}
+    protocol = manifest["taskProtocol"]
+    _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
+    _require(isinstance(protocol, dict) and set(protocol) == {"version", "discoverScript", "retryScript", "readResources"}, "taskProtocol fields invalid")
+    _require(protocol["version"] == "1.0", "unsupported taskProtocol.version")
+    _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
+
+    def safe_path(value: Any) -> bool:
+        return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
+
+    scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
+    for value in [*scripts.values(), manifest.get("judgeScript")]:
+        _require(safe_path(value) and value.startswith("data/") and value.lower().endswith(".js"), "taskProtocol scripts require safe data/*.js paths")
+    resources = protocol["readResources"]
+    _require(isinstance(resources, list) and len(resources) <= 128, "taskProtocol.readResources invalid")
+    ids: set[str] = set()
+    for resource in resources:
+        _require(isinstance(resource, dict) and set(resource) == {"id", "source", "path", "format", "required"}, "taskProtocol resource fields invalid")
+        identity = resource["id"]
+        _require(isinstance(identity, str) and 0 < len(identity) <= 512 and not identity.startswith("config:") and identity not in ids, "taskProtocol resource id invalid")
+        ids.add(identity)
+        _require(resource["source"] in ("root", "extraConfig") and resource["format"] in ("json", "yaml", "text") and type(resource["required"]) is bool and safe_path(resource["path"]), "taskProtocol resource invalid")
+    return scripts
+
+
 def _validate_specialized_manifest_contract(manifest: dict[str, Any], label: str) -> None:
     """校验专项插件的声明面；源码与 ZIP 复用同一份白名单。"""
+    _task_protocol_scripts(manifest)
     artifact = str(manifest.get("artifactName", label))
     _require(str(manifest.get("kind", "")).strip().lower() == "data-specialized", f"专项插件 {artifact} 的 kind 必须为 data-specialized")
     _require("frontend" not in manifest, f"专项插件 {artifact} 禁止声明 frontend 字段（包括 null）")
@@ -641,10 +669,11 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
     closure: set[Path] = set()
     queue: list[Path] = []
     artifact = str(manifest.get("artifactName", root.name))
-    for field in ("judgeScript", "configValidator", "configEditor"):
-        if field not in manifest:
+    declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+        if field not in declarations:
             continue
-        script = _safe_relative(root, manifest.get(field), f"专项插件 {artifact} 的 {field}")
+        script = _safe_relative(root, declarations.get(field), f"专项插件 {artifact} 的 {field}")
         data_root = (root / "data").resolve()
         resolved = script.resolve()
         _require(resolved == data_root or data_root in resolved.parents, f"专项插件 {artifact} 的 {field} 必须位于 data/ 内")
@@ -665,6 +694,7 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
             text = source.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as exc:
             raise RepositoryError(f"专项插件脚本无法读取：{_display(source)}；{exc}") from exc
+        _require("__NXP_ADAPTATION_REQUIRED__" not in text, f"专项插件仍有未适配模板标记：{_display(source)}")
         for reference in import_pattern.findall(text):
             target = _resolve_specialized_script_reference(root, source, reference, f"{artifact}/{source.name}")
             if target is not None:
@@ -808,6 +838,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     store = read_json(store_path)
     _require(isinstance(manifest, dict), f"plugin.json 必须是对象：{_display(manifest_path)}")
     _require(isinstance(store, dict), f"store.json 必须是对象：{_display(store_path)}")
+    _task_protocol_scripts(manifest)
     _require(manifest.get("schemaVersion") == 2, f"插件 {root.name} 的 plugin.json schemaVersion 必须为 2")
     artifact = manifest.get("artifactName")
     _require(isinstance(artifact, str) and ARTIFACT_PATTERN.fullmatch(artifact) and any(char.isupper() for char in artifact), f"artifactName 无效：{artifact}")
@@ -1735,8 +1766,9 @@ def _validate_specialized_zip_payload(
     )
     closure: set[str] = set()
     queue: list[str] = []
-    for field in ("judgeScript", "configValidator", "configEditor"):
-        value = manifest.get(field)
+    declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+        value = declarations.get(field)
         if value is None:
             continue
         _require(isinstance(value, str) and value.startswith("data/"), f"专项插件 ZIP 的 {field} 必须位于 data/：{value}")
@@ -1755,6 +1787,7 @@ def _validate_specialized_zip_payload(
             source = archive.read(infos[current]).decode("utf-8")
         except (KeyError, UnicodeError) as exc:
             raise RepositoryError(f"专项插件 ZIP 脚本无法读取：{current} -> {_display(package)}") from exc
+        _require("__NXP_ADAPTATION_REQUIRED__" not in source, f"专项插件 ZIP 仍有未适配模板标记：{current}")
         for reference in import_pattern.findall(source):
             if not reference.startswith("."):
                 continue
@@ -1784,6 +1817,7 @@ def _validate_zip(
             infos = archive.infolist()
             info_by_name = _validate_zip_layout(infos, package)
             manifest = _zip_json(archive, "plugin.json", package, info_by_name)
+            _task_protocol_scripts(manifest)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
             _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
             match = (PACKAGE_PATTERN if mode == "stable" else PREVIEW_PACKAGE_PATTERN).fullmatch(package.name)

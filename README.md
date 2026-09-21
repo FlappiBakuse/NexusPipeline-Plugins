@@ -117,3 +117,5 @@ NexusPipeline-Plugins/
 - [RELEASING.md](docs/RELEASING.md)
 - [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)
 - [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。
