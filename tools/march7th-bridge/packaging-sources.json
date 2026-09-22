@@ -1,0 +1,62 @@
+[
+  {
+    "path": ".github/workflows/1.build_release.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/1.build_release.yml",
+    "sha256": "fb3685b6c052a9a36bbb0cc5afe50f0bc93e0ce93c64b6275dc1bb1b59c04d03"
+  },
+  {
+    "path": ".github/workflows/2.realtime_release.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/2.realtime_release.yml",
+    "sha256": "dfa62811816991b42eeddcf4d2f7063008adf93617e8509553deb68ea94d8ace"
+  },
+  {
+    "path": ".github/workflows/3.update_submodule.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/3.update_submodule.yml",
+    "sha256": "4b0f1c8e0c611a527c86ae10bcb1830d0c1f3009a47e4922ee88b6a08e262f38"
+  },
+  {
+    "path": ".github/workflows/4.upload_mirrorchyan.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/4.upload_mirrorchyan.yml",
+    "sha256": "e2f587707aff9134fd7060ba81cd6300d1355850fa4559b5599557fb7d2c8968"
+  },
+  {
+    "path": ".github/workflows/5.upload_mirrorchyan_release_note.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/5.upload_mirrorchyan_release_note.yml",
+    "sha256": "5eff150de33169bbe8442d4b227d42b6ac7b8aa2ab11780eb7f64a2b2fc76f4b"
+  },
+  {
+    "path": ".github/workflows/6.build_docker_image.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/6.build_docker_image.yml",
+    "sha256": "9586ab4105621aa685384ddf295707096efc8eb7db1d382e1b142e71dff58d03"
+  },
+  {
+    "path": ".github/workflows/7.close_quality_pr.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/7.close_quality_pr.yml",
+    "sha256": "d974988ff3f2eabbf618cc73988e80d19d7185b38e7dca27e8a7abbd952f1d03"
+  },
+  {
+    "path": ".github/workflows/8.test.yml",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/.github/workflows/8.test.yml",
+    "sha256": "8c428abafa975213dcf8c4774c3a530d09185e25bbfd9bc30d4c3c757bf6b471"
+  },
+  {
+    "path": "LICENSE",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/LICENSE",
+    "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+  },
+  {
+    "path": "March7th Assistant.spec",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/March7th%20Assistant.spec",
+    "sha256": "3882b83825e14574d72df9b1251a188b2a6bf2f42fdb6a6a4fbcbe345b2525a1"
+  },
+  {
+    "path": "March7th Launcher.spec",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/March7th%20Launcher.spec",
+    "sha256": "c3800988408165cdc240b9aea8ebfaf22141b102ecf64117b118c432c6d44c90"
+  },
+  {
+    "path": "March7th Updater.spec",
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/7423dea64552f71332cc71f3c02481695aaec151/March7th%20Updater.spec",
+    "sha256": "62a9c3d38f73803a4108a3592843c3f0debca71e126782b8b208b9f62fed0a74"
+  }
+]

@@ -1,0 +1,50 @@
+--- a/tasks/activity/activitytemplate.py
++++ b/tasks/activity/activitytemplate.py
+@@ -20,10 +20,12 @@
+         return self.run()
+ 
+     def prepare(self):
++        self._nxp_entry_ready = False
+         screen.change_to('activity')
+         if not auto.click_element(self.name, "text", None, crop=(53.0 / 1920, 109.0 / 1080, 190.0 / 1920, 846.0 / 1080), include=True):
+             return
+         time.sleep(1)
++        self._nxp_entry_ready = True
+ 
+     @abstractmethod
+     def run(self):
+--- a/tasks/activity/checkInactivity.py
++++ b/tasks/activity/checkInactivity.py
+@@ -1,3 +1,4 @@
++from nxp_bridge import emit as _nxp_emit
+ import time
+ from module.automation import auto
+ from module.logger import log
+@@ -17,16 +18,27 @@
+             auto.find_element(CheckInActivity.RECEIVE2_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD)
+ 
+     def _collect_rewards(self):
++        self._nxp_collected = 0
+         while auto.click_element(CheckInActivity.RECEIVE_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \
+                 auto.click_element(CheckInActivity.RECEIVE_FIN_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \
+                 auto.click_element(CheckInActivity.RECEIVE2_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD):
+             auto.click_element(CheckInActivity.CLOSE_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD, max_retries=10)
+             time.sleep(1)
++            self._nxp_collected += 1
+ 
+     def run(self):
++        _nxp_emit("task.started", self.name, "checkin_entered")
+         if self._has_reward():
+             log.hr(f"检测到{self.name}奖励", 2)
+             self._collect_rewards()
+             log.info(f"领取{self.name}奖励完成")
++            if getattr(self, "_nxp_entry_ready", False) and self._nxp_collected > 0:
++                _nxp_emit("task.result", self.name, "reward_collected", "succeeded")
++            else:
++                _nxp_emit("task.result", self.name, "collection_not_confirmed", "unknown")
++        elif getattr(self, "_nxp_entry_ready", False):
++            _nxp_emit("task.result", self.name, "entry_ready_no_reward", "succeeded")
++        else:
++            _nxp_emit("task.result", self.name, "entry_not_confirmed", "unknown")
+ 
+         return True
