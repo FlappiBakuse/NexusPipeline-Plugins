@@ -1,0 +1,83 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:one_dragon_app.yml",
+      "format": "yaml",
+      "text": "{\"app_run_list\": [\"email\"]}"
+    }
+  ],
+  "tasks": {
+    "one_dragon/redemption_code": {
+      "enabled": false
+    },
+    "one_dragon/email": {
+      "enabled": true
+    },
+    "one_dragon/daily_signin": {
+      "enabled": false
+    },
+    "one_dragon/random_play": {
+      "enabled": false
+    },
+    "one_dragon/coffee": {
+      "enabled": false
+    },
+    "one_dragon/charge_plan": {
+      "enabled": false
+    },
+    "one_dragon/engagement_reward": {
+      "enabled": false
+    },
+    "one_dragon/city_fund": {
+      "enabled": false
+    },
+    "one_dragon/ridu_weekly": {
+      "enabled": false
+    },
+    "one_dragon/notorious_hunt": {
+      "enabled": false
+    },
+    "one_dragon/lost_void": {
+      "enabled": false
+    },
+    "one_dragon/withered_domain": {
+      "enabled": false
+    },
+    "one_dragon/shiyu_defense": {
+      "enabled": false
+    },
+    "one_dragon/intel_board": {
+      "enabled": false
+    },
+    "one_dragon/suibian_temple": {
+      "enabled": false
+    },
+    "one_dragon/world_patrol": {
+      "enabled": false
+    },
+    "one_dragon/life_on_line": {
+      "enabled": false
+    },
+    "one_dragon/drive_disc_dismantle": {
+      "enabled": false
+    },
+    "one_dragon/notify": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {
+    "one_dragon/email": "unknown"
+  },
+  "source": {
+    "type": "source_derived_migration",
+    "upstreamCommit": "a91a606b4726a335af1556dd47f54e9249f9ea2a",
+    "split": "development",
+    "sourcePaths": [
+      "src/one_dragon/base/config/one_dragon_app_config.py",
+      "src/one_dragon/base/operation/application/application_group_manager.py"
+    ]
+  }
+}

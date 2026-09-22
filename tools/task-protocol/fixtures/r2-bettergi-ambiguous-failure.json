@@ -1,0 +1,38 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "source": {
+    "type": "source_derived",
+    "originalArtifact": null,
+    "upstreamCommit": "bfe5f868ed088e67f7e73caddc0c05627dbfa935",
+    "scope": "Explicit task failure followed by outer boundary; not a real run"
+  },
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskDefinitions\": {\"a\": \"自动地脉花\", \"b\": \"自动地脉花\"}, \"TaskOrder\": [\"a\", \"b\"], \"TaskEnabledList\": {\"a\": true, \"b\": true}}"
+    }
+  ],
+  "tasks": {
+    "a": {
+      "enabled": true
+    },
+    "b": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "自动地脉花执行失败",
+        "一条龙和配置组任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "a": "unknown",
+    "b": "unknown"
+  },
+  "boundary": "ended"
+}

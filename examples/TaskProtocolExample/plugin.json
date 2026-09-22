@@ -11,9 +11,16 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "1.0",
+    "version": "1.1",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
-    "readResources": []
+    "readResources": [],
+    "localization": {
+      "defaultLocale": "zh-CN",
+      "messages": {
+        "zh-CN": "data/task-text.zh-CN.json",
+        "en-US": "data/task-text.en-US.json"
+      }
+    }
   }
 }

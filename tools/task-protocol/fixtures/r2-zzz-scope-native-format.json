@@ -1,0 +1,39 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:one_dragon/_group.yml",
+      "format": "yaml",
+      "text": "{\"app_list\": [{\"app_id\": \"email\", \"enabled\": true}, {\"app_id\": \"future\", \"enabled\": true}, {\"app_id\": \"coffee\", \"enabled\": false}]}"
+    }
+  ],
+  "tasks": {
+    "one_dragon/email": {
+      "enabled": true
+    },
+    "one_dragon/future": {
+      "enabled": true
+    },
+    "one_dragon/coffee": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 执行应用组 one_dragon ] 节点 检测游戏窗口 -> 获取应用组配置 返回状态 成功",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 邮件 ] 节点 检测游戏窗口 返回状态 成功",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 邮件 ] 节点 检测游戏窗口 返回状态 成功",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 邮件 ] 执行失败 返回状态 child failure",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 邮件 ] 节点 打开邮件 -> 全部领取 返回状态 全部领取",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 邮件 ] 执行成功 返回状态 大世界-普通",
+        "[00:00:00.000] [operation.py 435] [INFO]: 指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 下一个"
+      ]
+    }
+  ],
+  "results": {
+    "one_dragon/email": "succeeded",
+    "one_dragon/future": "unknown"
+  }
+}

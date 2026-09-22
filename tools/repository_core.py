@@ -608,12 +608,25 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         return {}
     protocol = manifest["taskProtocol"]
     _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    _require(isinstance(protocol, dict) and set(protocol) == {"version", "discoverScript", "retryScript", "readResources"}, "taskProtocol fields invalid")
-    _require(protocol["version"] == "1.0", "unsupported taskProtocol.version")
+    _require(isinstance(protocol, dict) and protocol.get("version") in {"1.0", "1.1"}, "unsupported taskProtocol.version")
+    fields = {"version", "discoverScript", "retryScript", "readResources"}
+    if protocol["version"] == "1.1":
+        fields.add("localization")
+    _require(set(protocol) == fields, "taskProtocol fields invalid")
     _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
 
     def safe_path(value: Any) -> bool:
         return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
+
+    if protocol["version"] == "1.1":
+        localization = protocol["localization"]
+        _require(isinstance(localization, dict) and set(localization) == {"defaultLocale", "messages"}, "task localization fields invalid")
+        messages = localization["messages"]
+        _require(isinstance(messages, dict) and 0 < len(messages) <= 16 and localization["defaultLocale"] in messages, "task localization locales invalid")
+        _require(len({locale.lower() for locale in messages}) == len(messages), "duplicate task locale")
+        for locale, path in messages.items():
+            _require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
+            _require(safe_path(path) and path.startswith("data/") and path.endswith(".json"), "task localization requires safe data/*.json")
 
     scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
     for value in [*scripts.values(), manifest.get("judgeScript")]:
@@ -628,6 +641,30 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         ids.add(identity)
         _require(resource["source"] in ("root", "extraConfig") and resource["format"] in ("json", "yaml", "text") and type(resource["required"]) is bool and safe_path(resource["path"]), "taskProtocol resource invalid")
     return scripts
+
+
+def _validate_task_localization(manifest: dict[str, Any], read) -> None:
+    declaration = manifest.get("taskProtocol", {}).get("localization")
+    if declaration is None:
+        return
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            _require(key not in result, "duplicate task localization message")
+            result[key] = value
+        return result
+    budget = 0
+    for path in declaration["messages"].values():
+        try:
+            data = read(path)
+            budget += len(data)
+            _require(budget <= 256 * 1024, "task localization budget exceeded")
+            messages = json.loads(data.decode("utf-8-sig"), object_pairs_hook=unique)
+        except (OSError, KeyError, UnicodeError, ValueError) as exc:
+            raise RepositoryError("cannot read task localization: " + path) from exc
+        _require(isinstance(messages, dict) and len(messages) <= 4096, "task localization messages invalid")
+        for key, value in messages.items():
+            _require(re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", key) is not None and isinstance(value, str) and 0 < len(value) <= 2048, "task localization message invalid")
 
 
 def _validate_specialized_manifest_contract(manifest: dict[str, Any], label: str) -> None:
@@ -670,6 +707,12 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
     queue: list[Path] = []
     artifact = str(manifest.get("artifactName", root.name))
     declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    def read_text_asset(path):
+        asset = _safe_relative(root, path, "task localization")
+        _require(not asset.is_symlink() and not any(parent.is_symlink() for parent in asset.parents if parent != root.parent), "task localization cannot use symlinks")
+        _require(asset.stat().st_size <= 256 * 1024, "task localization asset too large")
+        return asset.read_bytes()
+    _validate_task_localization(manifest, read_text_asset)
     for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
         if field not in declarations:
             continue
@@ -1767,6 +1810,10 @@ def _validate_specialized_zip_payload(
     closure: set[str] = set()
     queue: list[str] = []
     declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    def read_text_asset(path):
+        _require(path in infos and infos[path].file_size <= 256 * 1024, "task localization asset missing or too large")
+        return archive.read(infos[path])
+    _validate_task_localization(manifest, read_text_asset)
     for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
         value = declarations.get(field)
         if value is None:

@@ -15,9 +15,11 @@ if (source === null) {
   throw new Error("无法读取 one_dragon.yml 工作副本");
 }
 
-const newline = source.includes("\r\n") ? "\r\n" : "\n";
-const hasFinalNewline = source.endsWith("\n");
-const lines = source.split(/\r?\n/);
+const hasBom = source.startsWith("\uFEFF");
+const body = hasBom ? source.slice(1) : source;
+const newline = body.includes("\r\n") ? "\r\n" : "\n";
+const hasFinalNewline = body.endsWith("\n");
+const lines = body.split(/\r?\n/);
 if (hasFinalNewline && lines[lines.length - 1] === "") {
   lines.pop();
 }
@@ -133,11 +135,24 @@ if (!fields.has("active_in_od")) {
   selectedEntry.block.push(" ".repeat(selectedEntry.idxIndent) + "active_in_od: true");
 }
 
-const output = lines
+const outputLines = lines
   .slice(0, firstContent)
   .concat(selectedEntry.block)
-  .concat(lines.slice(sectionEnd))
-  .join(newline) + (hasFinalNewline ? newline : "");
+  .concat(lines.slice(sectionEnd));
+// This is the isolated binding work copy. Explicitly select CURRENT as well as
+// retaining only the selected instance; never persist an all-account launch mode.
+let runModeSeen = false;
+for (let index = 0; index < outputLines.length; index += 1) {
+  const match = outputLines[index].match(/^(\s*)instance_run\s*:(.*)$/);
+  if (!match || match[1].length !== sectionIndent) continue;
+  if (runModeSeen) throw new Error("one_dragon.yml 存在重复 instance_run");
+  runModeSeen = true;
+  const value = match[2].match(/^\s*(?:全部实例|仅运行当前|'全部实例'|'仅运行当前'|"全部实例"|"仅运行当前")\s*(#.*)?$/);
+  if (!value) throw new Error("one_dragon.yml instance_run 格式无效");
+  outputLines[index] = match[1] + "instance_run: 仅运行当前" + (value[1] ? " " + value[1] : "");
+}
+if (!runModeSeen) outputLines.push(" ".repeat(sectionIndent) + "instance_run: 仅运行当前");
+const output = (hasBom ? "\uFEFF" : "") + outputLines.join(newline) + (hasFinalNewline ? newline : "");
 if (!nexus.writeFile("@extra0/" + file, output)) {
   throw new Error("无法写回 one_dragon.yml 工作副本");
 }

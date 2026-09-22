@@ -1,0 +1,54 @@
+{
+  "id": "okww",
+  "implementation": "okww",
+  "protocolVersion": "1.1",
+  "configDependencies": [
+    {
+      "task": "farm_4c",
+      "file": "FarmEchoTask.json",
+      "keys": [
+        "Teleport to Boss",
+        "Boss Level",
+        "Boss",
+        "Repeat Farm Count",
+        "Combat Wait Time",
+        "Which Weekly Boss to Teleport",
+        "Which Boss Challenge to Teleport"
+      ]
+    },
+    {
+      "task": "nightmare",
+      "file": "NightmareNestTask.json",
+      "keys": [
+        "Which to Farm"
+      ]
+    }
+  ],
+  "taskTextKeys": {
+    "nightmare": "task.nightmare",
+    "daily_reward": "task.daily_reward",
+    "mail": "task.mail",
+    "battle_pass": "task.battle_pass",
+    "garden": "task.garden",
+    "merge": "task.merge",
+    "farm_4c": "task.farm_4c"
+  },
+  "reasonTexts": {
+    "okww.step.started": "日常步骤已开始",
+    "okww.garden.already_done": "每周花园已经完成",
+    "okww.nightmare.started": "梦魇任务已开始",
+    "okww.step.caught_failure": "该步骤捕获异常后继续；后续完成不覆盖此失败",
+    "okww.battle_pass.not_found": "未找到通行证入口，奖励领取未确认"
+  },
+  "staminaTextKeys": {
+    "Tacet Suppression": "task.stamina_tacet",
+    "Forgery Challenge": "task.stamina_forgery",
+    "Simulation Challenge": "task.stamina_simulation"
+  },
+  "runtimeRelease": {
+    "name": "ok-ww",
+    "version": "v3.6.7",
+    "commit": "6d3ce9df9f35f2c7b4c72bd00bc55449eeed4396",
+    "tagObject": "2eaacbf8d5dc6eb323c0f73d1d145d33c22f7eaa"
+  }
+}

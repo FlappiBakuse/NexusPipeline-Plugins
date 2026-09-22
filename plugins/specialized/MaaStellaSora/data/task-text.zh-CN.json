@@ -1,0 +1,22 @@
+{
+  "diagnostic.mxu.autostart_invalid": "自动执行实例已不存在或标识重复。请通过“编辑配置”重新选择有效实例，关闭编辑器后重新读取计划。",
+  "diagnostic.mxu.autostart_missing": "尚未设置自动执行实例。请点击“编辑配置”，在当前绑定用户的配置中选择自动执行的实例，关闭编辑器后重新读取计划；当前打开的配置页不等于自动执行目标。",
+  "reason.mxu.task.failed": "外层任务回调失败",
+  "reason.mxu.task.running": "外层任务已开始",
+  "reason.mxu.task.succeeded": "外层任务回调成功",
+  "task.bond_gifts": "心链送礼",
+  "task.bounty_trial_quick_battle": "悬赏试炼快速战斗",
+  "task.claim_and_dispatch_commissions": "领取并重新派遣委托",
+  "task.claim_and_send_stamina": "领取与赠送干劲",
+  "task.claim_daily_rewards": "领取每日奖励",
+  "task.claim_fund_rewards": "领取基金奖励",
+  "task.claim_mailbox_rewards": "领取邮箱奖励",
+  "task.claim_mission_rewards": "领取任务奖励",
+  "task.encircling_hunt": "猎影合围",
+  "task.event_challenge_auto_battle": "活动挑战关卡自动战斗",
+  "task.event_quick_battle": "活动快速战斗",
+  "task.invitation": "邀约",
+  "task.log_in": "登录游戏",
+  "task.serious_challenge": "真格挑战",
+  "task.tower_climb": "新版爬塔"
+}

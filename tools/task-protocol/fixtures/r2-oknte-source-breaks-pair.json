@@ -1,0 +1,75 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:DailyRoutineTask.json",
+      "format": "json",
+      "text": "{\"Routine Items\": [{\"id\": \"daily_anomaly\", \"enabled\": false}, {\"id\": \"daily_anomaly_hunter\", \"enabled\": false}, {\"id\": \"coffee\", \"enabled\": false}, {\"id\": \"daily_claim\", \"enabled\": true}, {\"id\": \"cinema_date\", \"enabled\": false}, {\"id\": \"fountain\", \"enabled\": false}, {\"id\": \"furniture\", \"enabled\": false}, {\"id\": \"gift\", \"enabled\": true}], \"unchanged\": \"preserve\"}"
+    },
+    {
+      "id": "runtime-app",
+      "format": "json",
+      "text": "{\"name\": \"ok-nte\", \"installed\": true, \"current_profile\": \"Global\", \"current_version\": \"v1.3.19\", \"update_state\": \"idle\", \"update_target_version\": null, \"update_error\": null, \"running\": false, \"available_versions\": [\"v1.3.19\"]}"
+    },
+    {
+      "id": "runtime-head",
+      "format": "text",
+      "text": "9ac3157afbeeb10758330085e67273cfa460a9e8\n"
+    },
+    {
+      "id": "runtime-tag",
+      "format": "text",
+      "text": "fad77859cc09e2ee475057f29bcb07fe7643d5c8\n"
+    }
+  ],
+  "tasks": {
+    "daily_anomaly": {
+      "enabled": false
+    },
+    "daily_anomaly_hunter": {
+      "enabled": false
+    },
+    "coffee": {
+      "enabled": false
+    },
+    "daily_claim": {
+      "enabled": true
+    },
+    "cinema_date": {
+      "enabled": false
+    },
+    "fountain": {
+      "enabled": false
+    },
+    "furniture": {
+      "enabled": false
+    },
+    "gift": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始执行日常任务",
+        "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始任务: 日常领取"
+      ]
+    },
+    {
+      "lines": [
+        "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:任务完成: 日常领取"
+      ],
+      "source": "another"
+    }
+  ],
+  "results": {
+    "daily_claim": "unknown"
+  },
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "upstreamCommit": "0339cfc44a9827ad8cd1ebeabe432660e87f2acb",
+    "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
+  }
+}

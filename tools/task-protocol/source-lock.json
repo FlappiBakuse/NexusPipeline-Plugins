@@ -89,6 +89,7 @@
     "commit": "bfe5f868ed088e67f7e73caddc0c05627dbfa935",
     "files": {
       "BetterGenshinImpact/Core/Config/OneDragonFlowConfig.cs": "ec161bd9bf3d044c8860883e49f7c6ce46111bd6fed770400a9450817efa5b26",
+      "BetterGenshinImpact/GameTask/AutoLeyLineOutcrop/AutoLeyLineOutcropTask.cs": "2f53a37c19486504ab181c44cf612c02a752c6401d770a99e16a0f355129fbdb",
       "BetterGenshinImpact/GameTask/Common/Job/ClaimBattlePassRewardsTask.cs": "157a2fe7e755c6ee0d2a1cba3a8e2b454f7f491a8fa754c14552e32435b6772d",
       "BetterGenshinImpact/GameTask/Common/Job/ClaimMailRewardsTask.cs": "cfd311f5757aaac00ec61abf78ba8b4ef8bdbadc1492a94583247d1db5e2cf82",
       "BetterGenshinImpact/GameTask/Common/Job/GoToAdventurersGuildTask.cs": "60f67df1026d381d7d70bddf27bd2ec526dfea8a8f93cf08be9028882008282e",
@@ -355,7 +356,8 @@
       "src/utils/logger.ts": "0e4436541b400e5bf530134c1d991bc0d01ed34dd435cb54486a1d260485ab50",
       "src/utils/taskControllerCache.ts": "b4ffde4802a1c9c48dd34f155f78b2593e3308f1e79d43560e71d1b874a33047",
       "src/utils/taskRunFilter.ts": "68c733cdc9840b6a1891e2c7d93fa33de408c404ce38b6e45f7deb824bcf5ead",
-      "src/utils/useMaaCallbackLogger.ts": "61f2a40face46eb75304246be39e27331528abfa53ce8a5241f072d9cc9e37ce"
+      "src/utils/useMaaCallbackLogger.ts": "61f2a40face46eb75304246be39e27331528abfa53ce8a5241f072d9cc9e37ce",
+      "src/stores/helpers.ts": "83ef34b13a13ce8a9c1be4cfbfc1f2153da755feaad713fc34ee7f4716668203"
     },
     "key": "mxu",
     "refAtReview": "main",
@@ -626,10 +628,68 @@
       "src/zzz_od/application/zzz_application.py": "125bebdbbf025e5bf7e349f715e340af9aca103e25a51cfef5a4a75a2374017d",
       "src/zzz_od/application/zzz_application_launcher.py": "82f44b2e51e0fe794836b66e1de1228375a6be91b93b6641d1a78c50734e770f",
       "src/zzz_od/context/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "src/zzz_od/context/zzz_context.py": "45bd70245b73df48e6ed80bb2b06a80ea2599cdda50900728a8bed5332256820"
+      "src/zzz_od/context/zzz_context.py": "45bd70245b73df48e6ed80bb2b06a80ea2599cdda50900728a8bed5332256820",
+      "src/one_dragon/base/config/one_dragon_app_config.py": "01059eb58931f0dab0fe621b005436b7f698bc9fce92816cf9cb989abcc3b2e8",
+      "src/one_dragon/base/config/one_dragon_config.py": "09d240977c1f74c9da95cbfa7774a12776620daa82f4a31c66ae6b90d151e7ce",
+      "src/one_dragon/base/config/yaml_config.py": "db14c9ac5e3f646b5b2c89572534c50f85fa935f213769908a65caa9a5fd6fcb",
+      "src/zzz_od/operation/compendium/area_patrol.py": "7a610d39433931164ff00989ee65449ac5dbd154a44cb259db38dd3db6e2843b",
+      "src/zzz_od/operation/compendium/combat_simulation.py": "3becd49b870b4d53e41feb6181630370d127524b27a6bfa4e4a3994918286207",
+      "src/zzz_od/operation/compendium/expert_challenge.py": "f3ab161bcda5cba73e39e75eea93da09d0646af30a287870c088bd8ab3fb961e",
+      "src/zzz_od/operation/compendium/notorious_hunt.py": "8eef6f49a08e39ae5d6fdf2a7b0aa3ee9c58d4c777e71055555012709c839a57",
+      "src/zzz_od/operation/battle/base.py": "030616ce3e78f938839cfd07a3f3aa2851600bf846323c2417af74a6a27b6f89"
     },
     "key": "zzz",
     "refAtReview": "main",
     "repository": "OneDragon-Anything/ZenlessZoneZero-OneDragon"
+  },
+  "oknte": {
+    "repository": "BnanZ0/ok-nte",
+    "commit": "0339cfc44a9827ad8cd1ebeabe432660e87f2acb",
+    "files": {
+      "src/config.py": "88b0939c08031da877f15de495335e72f3c45292debcc52d2e31fdf76dbb6ec3",
+      "src/tasks/daily/DailyRoutineTask.py": "555f8e49c91bd9739a177eb84807e044274f076d24782a005a534a4c5a4ed6b8",
+      "src/tasks/LauncherTask.py": "9f8f3b95c630435831ec326ea7b714ff7a4abfeae0cdbd19f32b63416bbbb8d1",
+      "requirements.txt": "afd243dca0a9f061ab940b4039e4b10f259d2abb37255ee76fec60e1b521645b",
+      "pyappify.yml": "f6303972764c6873dc7c1ac4c13e7092a3a7caebbd2e6b39ac6f45cad28596c3",
+      "src/tasks/AnomalyTask.py": "bba33d7475cad3faaf97c2d17a257e2b3fc6d8ee96ba48f57921648c9ac6f7d9",
+      "src/tasks/AnomalyHunter.py": "8bfa96965415f31e4288b4f3db121ee3a07c9dcb7c2a3542a2b44dfe2871a8db",
+      "src/tasks/daily/CinemaDateTask.py": "f6d21d7227848354bdfcb2fd7c8519e7f30d12ff711d22695cc2a48b9cd2eb21",
+      "src/tasks/daily/CoffeeTask.py": "79889c6b814847623e5775bf7d4bf61ee94cbb923ea5dcad02c7a49cfde9bd5f",
+      "src/tasks/daily/DailyClaimTask.py": "bc9cb2f1ed0d74d50fb74b9fb386b19e43200a66ba8e723641bb829cbcef06b0",
+      "src/tasks/daily/FountainTask.py": "9020a8b9ef48ce341c8b00e2d598587d2f9832a27f9d05f05ba6f09b63bacc7e",
+      "src/tasks/daily/FurnitureTask.py": "0d935d631311d420fb6e6d0469a584dae40212d02658cb494ab31b090e56220e",
+      "src/tasks/daily/GiftTask.py": "636e7646a7a298a190bd720173aeec6eb895d70773056623ad8b97bd8719c241"
+    },
+    "framework": {
+      "version": "2.0.4",
+      "url": "https://files.pythonhosted.org/packages/d4/2f/211fd57e153057ab58756e1aa59489fca1f81c991e43fc360c765ddf5dc6/ok_script-2.0.4-py3-none-any.whl",
+      "sha256": "425dcc023f8000a610bbf8de38c454e0f940e2cf3f92e67ea1d6eae2078016da",
+      "size": 1113286
+    }
+  },
+  "okww": {
+    "repository": "ok-oldking/ok-wuthering-waves",
+    "commit": "016c19e807fcc16800c42c89fdb3b01ea6947ee9",
+    "files": {
+      "config.py": "4feeb2ce79fe5c095b9a495af4120328e22e70821c9ef6187f42c2d1b3ace6a2",
+      "src/task/DailyTask.py": "93a69bdd16a67bf6ec15fc74f9603df0febf0d73cca364aa70b81a9d37769f2e",
+      "requirements.txt": "7b1e45583f1dc73f1b1439cd9d710c9ef8224114ecf5f3e3352520e9366d769b",
+      "pyappify.yml": "df42f17d30670a388b74427eb052a5b524df3a99de6426c256ae09a74bc5fdda",
+      "src/task/FarmEchoTask.py": "74b1063b9baf9d02475a838b01eaf04c5840557fb0790708a2cb2fab9b528dcb",
+      "src/task/NightmareNestTask.py": "92a8e8286910f15197f0b9edd0c0148eae5ccdfb8db9c832fab2cc71566e2a80",
+      "src/task/GardenTask.py": "38d5a57a9e6b97de9db629e69e8352d7a179fa5cdc0f3315fb9d52a944793722",
+      "src/task/MergeEchoTask.py": "5dbbf3183e676951e837a9133faec88cf04d6dce6d7ece81d7a75414aa885359",
+      "src/task/TacetTask.py": "17b30f2ad5a411b1da510652a4f87902055269ddd41218d1d083f3570237df23",
+      "src/task/ForgeryTask.py": "7617c16e8ef25b4899c01a07e842b59a3af3da9fa0bae3dfb6387532effe0c1a",
+      "src/task/SimulationTask.py": "dc063594f1ad2f9d7d1e5e3bcb075cb54d8984d07a601779da71044c4b78832d",
+      "src/task/BaseWWTask.py": "bc1676e68df70f38028264a57b5e7a5b667ce837ff8605122c11a75328f57968",
+      "src/task/WWOneTimeTask.py": "3ef1be3e7c6de9b1c42b48cde12f670f256074584bf8d1edea8e8eabc833a8a1"
+    },
+    "framework": {
+      "version": "2.0.7b1",
+      "url": "https://files.pythonhosted.org/packages/f3/c9/9fbc47e8acf50ded04a234a7522d29de6856d56186ec264e3c1a2f08aa32/ok_script-2.0.7b1-py3-none-any.whl",
+      "sha256": "7d9b9570d22390f9edcd612ea2a700e9365b8706318caeb6e520f7228de1fe75",
+      "size": 1139070
+    }
   }
 }

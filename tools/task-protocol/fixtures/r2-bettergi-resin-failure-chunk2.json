@@ -1,0 +1,35 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "source": {
+    "type": "source_derived",
+    "originalArtifact": null,
+    "upstreamCommit": "bfe5f868ed088e67f7e73caddc0c05627dbfa935",
+    "scope": "Synthetic branch regression; same source group across all chunk sizes; not holdout or real run",
+    "group": "resin-failure"
+  },
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskEnabledList\": {\"合成树脂\": true}}"
+    }
+  ],
+  "tasks": {
+    "合成树脂": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "合成树脂执行异常：模拟错误",
+        "一条龙和配置组任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "合成树脂": "failed"
+  },
+  "boundary": "ended"
+}

@@ -1,0 +1,17 @@
+{
+  "diagnostic.runtime_unqualified": "官方发行版本或更新状态未就绪，已阻止自动运行。请先完成官方 Global 启动器初始化并关闭它，再检查支持版本。",
+  "reason.oknte.item.completed": "日常子任务报告完成",
+  "reason.oknte.item.failed": "日常子任务报告失败",
+  "reason.oknte.item.language_unsupported": "当前语言不支持此任务",
+  "reason.oknte.item.started": "日常子任务已开始",
+  "reason.oknte.item.unhandled_exception": "当前任务因未处理异常中断",
+  "reason.oknte.routine.aborted_before_item": "日常流程中断，此任务尚未执行",
+  "task.cinema_date": "影院约会",
+  "task.coffee": "一咖舍",
+  "task.daily_anomaly": "异象界域",
+  "task.daily_anomaly_hunter": "异象追猎",
+  "task.daily_claim": "日常领取",
+  "task.fountain": "喷泉签到",
+  "task.furniture": "异象家具",
+  "task.gift": "羁遇赠礼"
+}

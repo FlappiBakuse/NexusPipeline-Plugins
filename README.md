@@ -14,6 +14,8 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
+| `okww` | `OkWutheringWaves` | 鸣潮（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
+| `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
 | `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
 | `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API v1.7 provider |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |

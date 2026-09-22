@@ -1,0 +1,54 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"每日免费奖励\", \"每日免费奖励\"], \"TASK_ONOFF\": [true, true]}]}, \"OPEN_GAME_APP_TASK\": true, \"DO_POST_ALL_TASK\": false}"
+    }
+  ],
+  "tasks": {
+    "0/0/每日免费奖励": {
+      "enabled": true,
+      "order": 1
+    },
+    "0/1/每日免费奖励": {
+      "enabled": true,
+      "order": 2
+    },
+    "automatic-login": {
+      "enabled": true,
+      "order": 0
+    },
+    "automatic-cleanup": {
+      "enabled": false,
+      "order": 3
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "v1.0 - 00:01 - ERROR : Error occurred: controlled unscoped exception"
+      ],
+      "boundary": "open"
+    },
+    {
+      "lines": [],
+      "final": true,
+      "terminationReason": "process_exited",
+      "boundary": "aborted"
+    }
+  ],
+  "results": {
+    "automatic-login": "unknown",
+    "0/0/每日免费奖励": "unknown",
+    "0/1/每日免费奖励": "unknown"
+  },
+  "incidents": [
+    {
+      "task": null,
+      "resolution": "open"
+    }
+  ]
+}

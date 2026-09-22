@@ -1,0 +1,63 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:one_dragon/_group.yml",
+      "format": "yaml",
+      "text": "{\"app_list\": [{\"app_id\": \"charge_plan\", \"enabled\": true}]}"
+    }
+  ],
+  "tasks": {
+    "one_dragon/charge_plan": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "指令[ 执行应用组 one_dragon ] 节点 检测游戏窗口 -> 获取应用组配置 返回状态 成功",
+        "指令[ 体力刷本 ] 节点 检测游戏窗口 返回状态 成功",
+        "指令[ 体力刷本 ] 节点 传送 -> 识别副本分类 返回状态 区域巡防"
+      ]
+    },
+    {
+      "lines": [
+        "指令[ 区域巡防 迅雷与裂爪 ] 节点 检测游戏窗口 返回状态 成功",
+        "指令[ 区域巡防 迅雷与裂爪 ] 执行出错",
+        "指令[ 区域巡防 迅雷与裂爪 ] 节点 加载自动战斗指令 -> 等待战斗画面加载 返回状态 成功"
+      ]
+    },
+    {
+      "lines": [
+        "指令[ 区域巡防 迅雷与裂爪 ] 执行成功 返回状态 完成",
+        "指令[ 体力刷本 ] 节点 识别副本分类 -> 区域巡防 返回状态 完成",
+        "指令[ 体力刷本 ] 节点 区域巡防 -> 挑战完成 返回状态 成功"
+      ]
+    },
+    {
+      "lines": [
+        "指令[ 体力刷本 ] 执行成功 返回状态 剩余电量 0",
+        "指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 下一个"
+      ]
+    }
+  ],
+  "results": {
+    "one_dragon/charge_plan": "succeeded"
+  },
+  "incidents": [
+    {
+      "task": "one_dragon/charge_plan",
+      "resolution": "open"
+    },
+    {
+      "task": "one_dragon/charge_plan",
+      "resolution": "recovered"
+    }
+  ],
+  "source": {
+    "type": "source_derived_control_flow",
+    "upstreamCommit": "a91a606b4726a335af1556dd47f54e9249f9ea2a",
+    "note": "Canonical native logger syntax derived from pinned source; not normalized OCR issue text or a complete real-game log."
+  }
+}

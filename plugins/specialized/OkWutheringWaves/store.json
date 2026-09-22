@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "gameName": "鸣潮",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": [
+    "鸣潮",
+    "专项插件"
+  ],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-09-21",
+      "items": [
+        "初始日常适配开发版本；Windows 安装发行资格验证尚未完成。"
+      ]
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "ok-ww daily",
+      "gameName": "Wuthering Waves",
+      "description": "Single-account daily task plans and observations.",
+      "tags": [
+        "Wuthering Waves",
+        "Specialized plugin"
+      ],
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "items": [
+            "Initial daily adapter candidate; Windows installed-distribution qualification is pending."
+          ]
+        }
+      ]
+    }
+  }
+}

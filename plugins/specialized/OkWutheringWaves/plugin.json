@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "name": "okww",
+  "artifactName": "OkWutheringWaves",
+  "displayName": "ok-ww 日常",
+  "gameName": "鸣潮",
+  "description": "单账号日常任务计划、配置隔离与任务结果判定",
+  "version": "0.1.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.16.8",
+  "resolve": "data/resolve.json",
+  "judgeScript": "data/judge.js",
+  "capabilities": [
+    "no-fresh-config"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  },
+  "taskProtocol": {
+    "version": "1.1",
+    "discoverScript": "data/discover.js",
+    "retryScript": "data/retry.js",
+    "readResources": [
+      {
+        "id": "runtime-app",
+        "source": "root",
+        "path": "data/apps/ok-ww/app.json",
+        "format": "json",
+        "required": false
+      },
+      {
+        "id": "runtime-head",
+        "source": "root",
+        "path": "data/apps/ok-ww/repo/.git/HEAD",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "runtime-tag",
+        "source": "root",
+        "path": "data/apps/ok-ww/repo/.git/refs/tags/v3.6.7",
+        "format": "text",
+        "required": false
+      }
+    ],
+    "localization": {
+      "defaultLocale": "zh-CN",
+      "messages": {
+        "zh-CN": "data/task-text.zh-CN.json",
+        "en-US": "data/task-text.en-US.json"
+      }
+    }
+  }
+}

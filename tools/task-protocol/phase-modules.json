@@ -1,0 +1,531 @@
+{
+  "modules": {
+    "core/requireValue": {
+      "file": "core/requireValue.js",
+      "provides": [
+        "requireValue"
+      ],
+      "requires": []
+    },
+    "core/object": {
+      "file": "core/object.js",
+      "provides": [
+        "object"
+      ],
+      "requires": []
+    },
+    "core/unique": {
+      "file": "core/unique.js",
+      "provides": [
+        "unique"
+      ],
+      "requires": []
+    },
+    "core/clean": {
+      "file": "core/clean.js",
+      "provides": [
+        "clean"
+      ],
+      "requires": []
+    },
+    "core/configOne": {
+      "file": "core/configOne.js",
+      "provides": [
+        "configOne"
+      ],
+      "requires": [
+        "core/requireValue"
+      ]
+    },
+    "core/jsonc": {
+      "file": "core/jsonc.js",
+      "provides": [
+        "jsonc"
+      ],
+      "requires": []
+    },
+    "core/resourceCache": {
+      "file": "core/resourceCache.js",
+      "provides": [
+        "resourceCache"
+      ],
+      "requires": []
+    },
+    "core/resource": {
+      "file": "core/resource.js",
+      "provides": [
+        "resource"
+      ],
+      "requires": [
+        "core/jsonc",
+        "core/resourceCache"
+      ]
+    },
+    "core/endRun": {
+      "file": "core/endRun.js",
+      "provides": [
+        "endRun"
+      ],
+      "requires": []
+    },
+    "core/createPlan": {
+      "file": "core/createPlan.js",
+      "provides": [
+        "createPlan"
+      ],
+      "requires": []
+    },
+    "core/behavior": {
+      "file": "core/behavior.js",
+      "provides": [
+        "behavior"
+      ],
+      "requires": []
+    },
+    "core/addTask": {
+      "file": "core/addTask.js",
+      "provides": [
+        "addTask"
+      ],
+      "requires": [
+        "core/requireValue"
+      ]
+    },
+    "core/select": {
+      "file": "core/select.js",
+      "provides": [
+        "select"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object"
+      ]
+    },
+    "core/retryPlan": {
+      "file": "core/retryPlan.js",
+      "provides": [
+        "retryPlan"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/select"
+      ]
+    },
+    "core/observeRules": {
+      "file": "core/observeRules.js",
+      "provides": [
+        "observeRules"
+      ],
+      "requires": [
+        "core/clean"
+      ]
+    },
+    "bettergi/discover": {
+      "file": "bettergi/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object",
+        "core/unique",
+        "core/configOne",
+        "core/resource",
+        "core/createPlan",
+        "core/behavior",
+        "core/addTask"
+      ]
+    },
+    "bettergi/observe": {
+      "file": "bettergi/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": []
+    },
+    "march7th/discover": {
+      "file": "march7th/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object",
+        "core/configOne",
+        "core/createPlan",
+        "core/behavior",
+        "core/addTask"
+      ]
+    },
+    "march7th/observe": {
+      "file": "march7th/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "core/endRun",
+        "march7th/powerScope"
+      ]
+    },
+    "baah/discover": {
+      "file": "baah/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object",
+        "core/configOne",
+        "core/createPlan",
+        "core/behavior",
+        "core/addTask"
+      ]
+    },
+    "baah/customRetryPatches": {
+      "file": "baah/customRetryPatches.js",
+      "provides": [
+        "customRetryPatches"
+      ],
+      "requires": [
+        "core/select"
+      ]
+    },
+    "baah/observe": {
+      "file": "baah/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "core/endRun"
+      ]
+    },
+    "zzz/discover": {
+      "file": "zzz/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/object",
+        "core/requireValue",
+        "core/unique",
+        "core/configOne",
+        "core/createPlan",
+        "core/behavior",
+        "core/addTask"
+      ]
+    },
+    "zzz/observe": {
+      "file": "zzz/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "core/endRun",
+        "zzz/observeCharge"
+      ]
+    },
+    "zzz/observeCharge": {
+      "file": "zzz/observeCharge.js",
+      "provides": [
+        "observeCharge"
+      ],
+      "requires": []
+    },
+    "mxu/discover": {
+      "file": "mxu/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object",
+        "core/unique",
+        "core/configOne",
+        "core/resource",
+        "core/createPlan",
+        "core/behavior",
+        "core/addTask",
+        "mxu/optionSummary"
+      ]
+    },
+    "mxu/mxuAliasCache": {
+      "file": "mxu/mxuAliasCache.js",
+      "provides": [
+        "mxuAliasCache"
+      ],
+      "requires": []
+    },
+    "mxu/mxuAliases": {
+      "file": "mxu/mxuAliases.js",
+      "provides": [
+        "mxuAliases"
+      ],
+      "requires": [
+        "core/resource",
+        "mxu/mxuAliasCache"
+      ]
+    },
+    "mxu/observe": {
+      "file": "mxu/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "core/endRun",
+        "mxu/mxuAliases"
+      ]
+    },
+    "example/discover": {
+      "file": "example/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/requireValue",
+        "core/object",
+        "core/unique",
+        "core/configOne",
+        "core/createPlan",
+        "core/addTask"
+      ]
+    },
+    "example/customRetryPatches": {
+      "file": "example/customRetryPatches.js",
+      "provides": [
+        "customRetryPatches"
+      ],
+      "requires": [
+        "core/select"
+      ]
+    },
+    "example/observe": {
+      "file": "example/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": []
+    },
+    "march7th/instanceTemplate": {
+      "file": "march7th/instanceTemplate.js",
+      "provides": [
+        "instanceTemplate"
+      ],
+      "requires": [
+        "core/resourceCache"
+      ]
+    },
+    "march7th/powerScope": {
+      "file": "march7th/powerScope.js",
+      "provides": [
+        "powerScope"
+      ],
+      "requires": [
+        "march7th/instanceTemplate",
+        "core/requireValue"
+      ]
+    },
+    "okscript/parseOkLog": {
+      "file": "okscript/parseOkLog.js",
+      "provides": [
+        "parseOkLog"
+      ],
+      "requires": []
+    },
+    "oknte/normalizeItems": {
+      "file": "oknte/normalizeItems.js",
+      "provides": [
+        "normalizeItems"
+      ],
+      "requires": []
+    },
+    "oknte/discover": {
+      "file": "oknte/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/createPlan",
+        "core/configOne",
+        "core/requireValue",
+        "core/object",
+        "core/addTask",
+        "core/behavior",
+        "oknte/normalizeItems",
+        "okscript/runtimeReady"
+      ]
+    },
+    "oknte/observe": {
+      "file": "oknte/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "okscript/parseOkLog",
+        "core/endRun"
+      ]
+    },
+    "okww/discover": {
+      "file": "okww/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/createPlan",
+        "core/configOne",
+        "core/requireValue",
+        "core/object",
+        "core/addTask",
+        "core/behavior",
+        "core/unique",
+        "okscript/runtimeReady"
+      ]
+    },
+    "okww/observe": {
+      "file": "okww/observe.js",
+      "provides": [
+        "observe"
+      ],
+      "requires": [
+        "okscript/parseOkLog",
+        "core/endRun"
+      ]
+    },
+    "baah/finalizeObserve": {
+      "file": "baah/finalizeObserve.js",
+      "provides": [
+        "finalizeObserve"
+      ],
+      "requires": [
+        "core/endRun"
+      ]
+    },
+    "okscript/runtimeReady": {
+      "file": "okscript/runtimeReady.js",
+      "provides": [
+        "runtimeReady"
+      ],
+      "requires": [
+        "core/resource",
+        "core/object"
+      ]
+    },
+    "mxu/optionSummary": {
+      "file": "mxu/optionSummary.js",
+      "provides": [
+        "optionSummary"
+      ],
+      "requires": [
+        "core/object"
+      ]
+    }
+  },
+  "entries": {
+    "bettergi": {
+      "discover": [
+        "bettergi/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "bettergi/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "bettergi/discover"
+      ]
+    },
+    "march7th": {
+      "discover": [
+        "march7th/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "march7th/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "march7th/discover"
+      ]
+    },
+    "baah": {
+      "discover": [
+        "baah/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "baah/observe",
+        "baah/finalizeObserve"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "baah/discover",
+        "baah/customRetryPatches"
+      ]
+    },
+    "zzz": {
+      "discover": [
+        "zzz/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "zzz/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "zzz/discover"
+      ]
+    },
+    "mxu": {
+      "discover": [
+        "mxu/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "mxu/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "mxu/discover"
+      ]
+    },
+    "example": {
+      "discover": [
+        "example/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "example/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "example/discover",
+        "example/customRetryPatches"
+      ]
+    },
+    "oknte": {
+      "discover": [
+        "oknte/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "oknte/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "oknte/discover"
+      ]
+    },
+    "okww": {
+      "discover": [
+        "okww/discover"
+      ],
+      "observe": [
+        "core/observeRules",
+        "okww/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "okww/discover"
+      ]
+    }
+  }
+}

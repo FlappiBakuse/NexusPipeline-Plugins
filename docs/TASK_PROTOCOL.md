@@ -1,4 +1,4 @@
-# 专项任务协议 1.0
+# 专项任务协议
 
 `data-specialized` 插件可以通过 `taskProtocol` 显式启用任务计划、日志事实与选择性重试。最低宿主版本为 `0.16.8`；旧式 judge 仍使用原有接口。声明错误、缺失脚本或未知协议版本会被拒绝，不能回退到旧 judge。
 
@@ -16,6 +16,26 @@
 ```
 
 三个脚本均在宿主 Jint 内执行，一次只能 `console.log` 一个 JSON 结果。`input` 与 `nexus.input` 相同。仅提供 `nexus.readConfig(id)` 和 `nexus.readResource(id)`，返回 `{document, format, revision}`；缺失资源抛出可捕获的 `config_unavailable`。没有任意文件读写、进程、网络、截图或 CLR 接口。
+
+## 1.1 文本引用
+
+March7thAssistant 开发候选使用 1.1；其他适配器和生成模板仍使用 1.0。Host 开发源码和本仓源码/ZIP 校验器支持 1.1 文本与问题事件扩展；正式发布前必须填写获批准且实际支持 1.1 的 minHostVersion，不能将当前未升版的 0.16.8 元数据当作 1.1 的发行声明。旧 Host 会拒绝未知的 1.1 协议。
+
+1.1 manifest 在 taskProtocol 增加必填 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/task-text.zh-CN.json", "en-US": "data/task-text.en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。
+
+所有阶段使用协商的 `input.protocolVersion`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
+
+```json
+{"kind":"plugin","key":"task.daily.name","args":{},"fallback":"每日任务"}
+```
+
+```json
+{"kind":"literal","value":"用户自定义名称"}
+```
+
+key 限 160 个 ASCII 字母、数字、点、横线或下划线。args 限 16 项，值只能为字符串（256 字符以内）、有限数值或布尔值；使用 `{argument}` 占位符，不递归替换，不传账号、凭据或原始日志。literal/fallback 最长 2048 字符。引用不接受 owner，Host 自动绑定当前插件；动态名称直接使用 literal，不按中文反向查词典。1.0 输出不能携带这些新字段，即使值为 null。
+
+Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻译；运行中新出现的原因 key 也只能读取该冻结词典。卸载/更新不影响历史。超出显示预算时保留任务、原名、代码与 fallback，不删任务。语言回退依次为请求 locale、同语言、defaultLocale、fallback、原名/代码。文本不影响任务身份、配置行为签名或安全重试。
 
 `readResources` 最多 128 项，每项为 `{id, source, path, format, required}`。`source` 为 `root` 或 `extraConfig`；前者相对实例根目录，后者路径以附加配置索引开头，例如 `0/settings.json`。格式为 `json`、`yaml` 或 `text`；JSONC 接口可声明为 text 后由适配器解析。路径禁止绝对路径、回退段和重解析点；只读资源永远不可作为补丁目标。
 
@@ -41,6 +61,10 @@
 
 输出 `{protocolVersion,type:"observation",runId,attemptId,observations,runBoundary,boundaryEvidence,diagnostics,cursorState}`。observation 为 `{id,taskId,executionOrdinal,status,reasonCode,evidence,skipKind?}`。evidence 为 `{sourceId,epoch,sequence,ruleId}`，必须引用当前尝试已收到的真实日志。skipped 必须明确 satisfied/inapplicable；blocked 必须有可确认未执行的日志证据。runBoundary 为 open/ended/aborted/unknown，ended/aborted 也要证据。
 
+1.1 可增加 `incidents`，每项为 `{id,taskId,scopeId,executionOrdinal,kind,resolution,reasonCode,reasonText?,evidence}`。kind 为 transient_error/business_error/unattributed_error；无法归属时 taskId 必须为 null 且 kind 为 unattributed_error。resolution 从 open 开始，只能转为 recovered 或 terminal；转换必须保持身份和原原因，保留原证据并增加新证据。相同事件重放幂等，冲突使整批拒绝。每批最多 2048 项，每次运行最多 4096 条历史事件且序列化累计不超过 256 KiB；证据上限与普通观察一致。1.0 禁止携带该字段，包括 null。
+
+问题事件不直接改变业务状态、计数或重试选择。适配器另行依据范围退出、内部重试和目标完成事实发出 observation。历史保存每次事件变更与原文，卡片显示该尝试中最新的问题状态；恢复不会擦除旧失败证据。前缀、通知级别和外层完成都不能替代范围归属或恢复证明。
+
 观察异常或非法输出不推进游标，完全相同的 observation ID 可幂等重放，变更事实的同 ID 会被拒绝。同一执行序号的矛盾终态变为 unknown；内部重跑需先提交更高序号的 running。可用 cursorState 保存跨批次嵌套栈等纯日志派生状态，最多 64 KiB；它不是持久配置或成功依据。hasGap 时不得从缺失的开始/结束配对推断成功。进程退出只触发最终日志排空，不证明业务成功。
 
 ## 选择重试与恢复
@@ -55,7 +79,9 @@
 
 每次输出最多 1 MiB；预览预算 2 秒，运行阶段 30 秒，最多 200 万条语句。配置单文件 2 MiB、总计 32 MiB/256 个资源；选择事务最多 32 个文件和 2048 个字段。日志缓冲受限，超限显式 hasGap；每条证据最多保存 1024 字符片段，完整日志仍走历史归档。
 
-生产脚本由 `tools/task-protocol/common.js`、各适配器源文件与 `adapters.json` 确定性生成。上游固定版本和文件摘要保存在 `source-lock.json`；fixture 使用合成数据，规则来自对应源码，不读取真实用户数据。
+生产脚本由 `tools/task-protocol/phase-modules.json` 声明模块、提供的符号、依赖及三阶段入口，结合只记录元数据路径的 `adapters.json` 确定性生成；各适配器的规则索引和文本键放在自身目录的 `*.metadata.json`。纯函数位于 `core/`，各适配器函数位于独立目录；不保留另一份完整 bundle 源文件。依赖先于调用者输出，缺依赖、循环、重复符号和未知阶段均失败。重试复用发现与当前配置校验，观察不携带发现和重试执行器；MXU 观察仍包含其确实需要的只读资源解析。上游固定版本和文件摘要保存在 `source-lock.json`；fixture 使用合成数据，规则来自对应源码，不读取真实用户数据。
+
+修改模块时同步依赖清单。三个入口都在业务处理前严格检查 `input.phase`，错误阶段不能降级为“配置不支持”。`--check` 只比较，不改输出字节或时间戳。Python 构建测试验证依赖闭包，Host 联调验证真实 Jint 三阶段行为和权限；脚本哈希不同本身不代表阶段拆分通过。
 
 ```text
 python tools/generate_task_protocol.py
@@ -64,7 +90,7 @@ dotnet run --project <Host>/tools/NexusPipeline.TaskProtocolTests -- --plugin-ro
 python tools/repository.py qualification --group source --base <B> --host-root <Host> --sdk-sha <SDK_SHA>
 ```
 
-P1 执行生成一致性与真实 Host Jint/归并器/配置 journal 的六适配器测试。Node 语法检查不是此测试的替代品；零夹具或缺少任何适配器均失败。完整正式资格还要求 P2/P3 和干净且固定 SHA 的 Host checkout。
+P1 执行生成一致性与真实 Host Jint/归并器/配置 journal 的八适配器测试。Node 语法检查不是此测试的替代品；零夹具或缺少任何适配器均失败。完整正式资格还要求 P2/P3 和干净且固定 SHA 的 Host checkout。
 
 ## 作者模板
 
@@ -72,6 +98,8 @@ P1 执行生成一致性与真实 Host Jint/归并器/配置 journal 的六适�
 
 `--example` 生成完整的合成协议示例。[TaskProtocolExample](../examples/TaskProtocolExample/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种结构。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
+默认生成协议 1.1 和插件自有中英文词典；`--protocol-version 1.0` 保留严格旧协议示例。用户自定义名称使用 literal，不按名称猜测词典键。
 
-六个官方适配器的源码分支、保守支持范围和作者审查清单见 [专项适配边界](TASK_ADAPTERS.md)。
+生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
+
+八个官方适配器的源码分支、保守支持范围和作者审查清单见 [专项适配边界](TASK_ADAPTERS.md)。

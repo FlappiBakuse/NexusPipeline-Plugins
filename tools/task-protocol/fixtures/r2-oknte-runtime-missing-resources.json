@@ -1,0 +1,20 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:DailyRoutineTask.json",
+      "format": "json",
+      "text": "{\"Routine Items\": [{\"id\": \"daily_anomaly_hunter\", \"enabled\": true}, {\"id\": \"daily_anomaly\", \"enabled\": true}]}"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "upstreamCommit": "0339cfc44a9827ad8cd1ebeabe432660e87f2acb",
+    "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
+  }
+}

@@ -45,6 +45,9 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
         core._run((sys.executable, str(root / "tools" / "create_task_plugin.py"), "--artifact", artifact,
                    "--name", "task-protocol-" + preset, "--preset", preset, "--example", "--check",
                    "--output", str(root / "examples" / artifact)), "Generated " + preset + " example", root)
+    core._run((sys.executable, str(root / "tools" / "create_task_plugin.py"), "--artifact", "TaskProtocolLegacy",
+               "--name", "task-protocol-legacy", "--protocol-version", "1.0", "--example", "--check",
+               "--output", str(root / "examples" / "TaskProtocolLegacy")), "Generated legacy example", root)
     core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
                "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
     core._run(("node", str(root / "tools" / "Test-ConfigEditors.mjs")), "Test-ConfigEditors", root)

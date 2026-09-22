@@ -1,0 +1,35 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"$missing.runtime.label\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "任务开始: missing.runtime.label",
+        "任务完成: missing.runtime.label"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  }
+}

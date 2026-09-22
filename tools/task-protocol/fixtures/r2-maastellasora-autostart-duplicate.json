@@ -1,0 +1,26 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}], \"lastActiveInstanceId\": \"chosen\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mxu.autostart_invalid",
+      "zh-CN": "自动执行实例已不存在或标识重复。请通过“编辑配置”重新选择有效实例，关闭编辑器后重新读取计划。",
+      "en-US": "The automatic-run instance is missing or has a duplicate ID. Use Edit configuration to select a valid instance, close the editor, then reload the plan."
+    }
+  ]
+}

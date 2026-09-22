@@ -1,0 +1,22 @@
+{
+  "diagnostic.mxu.autostart_invalid": "The automatic-run instance is missing or has a duplicate ID. Use Edit configuration to select a valid instance, close the editor, then reload the plan.",
+  "diagnostic.mxu.autostart_missing": "No automatic-run instance is selected. Use Edit configuration to select it for this bound user, close the editor, then reload the plan. The active tab is not an automatic-run target.",
+  "reason.mxu.task.failed": "Outer task callback failed",
+  "reason.mxu.task.running": "Outer task started",
+  "reason.mxu.task.succeeded": "Outer task callback succeeded",
+  "task.bond_gifts": "Bond gifts",
+  "task.bounty_trial_quick_battle": "Bounty trial quick battle",
+  "task.claim_and_dispatch_commissions": "Claim and dispatch commissions",
+  "task.claim_and_send_stamina": "Claim and send stamina",
+  "task.claim_daily_rewards": "Claim daily rewards",
+  "task.claim_fund_rewards": "Claim fund rewards",
+  "task.claim_mailbox_rewards": "Claim mailbox rewards",
+  "task.claim_mission_rewards": "Claim mission rewards",
+  "task.encircling_hunt": "Encircling Hunt",
+  "task.event_challenge_auto_battle": "Event challenge auto battle",
+  "task.event_quick_battle": "Event quick battle",
+  "task.invitation": "Invitation",
+  "task.log_in": "Log in",
+  "task.serious_challenge": "Serious Challenge",
+  "task.tower_climb": "Tower climb"
+}

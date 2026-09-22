@@ -1,0 +1,39 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"ko-KR\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "작업 시작: 每日任务"
+      ]
+    },
+    {
+      "lines": [
+        "작업 완료: 每日任务"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  }
+}

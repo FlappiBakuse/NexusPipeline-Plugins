@@ -1,0 +1,21 @@
+{
+  "diagnostic.farm_4c.configuration_unsupported": "Daily 4C requires Weekly Challenge or Boss Challenge teleport and a positive finite integer repeat count. No settings were changed.",
+  "diagnostic.runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
+  "reason.okww.battle_pass.not_found": "The battle pass entry was not found; reward collection is unconfirmed",
+  "reason.okww.garden.already_done": "The weekly garden is already complete",
+  "reason.okww.nightmare.started": "Nightmare task started",
+  "reason.okww.step.caught_failure": "This step caught an exception and continued; later completion does not clear the failure",
+  "reason.okww.step.started": "Daily step started",
+  "task.battle_pass": "Battle pass rewards",
+  "task.daily_reward": "Daily rewards",
+  "task.farm_4c": "Daily extra: teleport and farm 4C",
+  "task.garden": "Weekly garden",
+  "task.mail": "Mail",
+  "task.merge": "Discarded echo merge",
+  "task.nightmare": "Daily nightmare task",
+  "task.nightmare_all": "Additional task: all Nightmare Nests",
+  "task.nightmare_daily": "Nightmare Nest for daily echo",
+  "task.stamina_forgery": "Daily stamina: Forgery Challenge",
+  "task.stamina_simulation": "Daily stamina: Simulation Challenge",
+  "task.stamina_tacet": "Daily stamina: Tacet Suppression"
+}
