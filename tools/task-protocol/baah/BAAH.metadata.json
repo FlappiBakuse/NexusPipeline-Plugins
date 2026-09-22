@@ -60,7 +60,11 @@
     "长期签到",
     "每日免费奖励"
   ],
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
+  "configRules": [
+    { "id": "baah.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionIdByMode": { "pc": "baah-pc-game-target", "emulator": "baah-adb-target", "unknown": "baah-pc-game-target" }, "reasonKey": "diagnostic.config.path_mismatch", "fallback": "绑定的游戏目标与配置中的目标不一致。", "location": { "source": "context", "field": "gameTarget" } },
+    { "id": "baah.file_logging", "required": true, "criticality": "critical_when_applicable", "kind": "file_logging", "resourceId": "software-config", "reasonKey": "diagnostic.baah.file_logging", "fallback": "未确认可读取的 BAAH 日志来源。", "location": { "source": "resource", "resourceId": "software-config", "selector": ["SAVE_LOG_TO_FILE"] } }
+  ],
   "taskTextKeys": {
     "automatic-login": "task.automatic_login",
     "automatic-cleanup": "task.cleanup"

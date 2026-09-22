@@ -18,7 +18,7 @@ function discover() {
     requireValue(typeof name === 'string' && typeof pipeline.TASK_ONOFF[i] === 'boolean');
     const task = addTask(plan, config.id, index + '/' + i + '/' + name, name, pipeline.TASK_ONOFF[i], null,
       ADAPTER.safe.includes(name) ? 'safe' : 'unknown', ADAPTER.classes[name] ? 'limited' : 'unsupported', name === '登录游戏' ? 'technical' : 'business');
-    if (ADAPTER.protocolVersion === '1.1' && ADAPTER.taskNameTextKeys?.[name])
+    if ((ADAPTER.protocolVersion === '1.1' || ADAPTER.protocolVersion === '1.2') && ADAPTER.taskNameTextKeys?.[name])
       task.nameText = { kind: 'plugin', key: ADAPTER.taskNameTextKeys[name], args: {}, fallback: name };
   });
   if (login?.enabled) plan.tasks.filter(t => t.role === 'business').forEach(t => t.dependencies.push(login.id));

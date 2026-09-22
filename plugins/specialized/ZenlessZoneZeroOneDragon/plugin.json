@@ -10,8 +10,7 @@
   "minHostVersion": "0.16.8",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
-  "configValidator": "data/config-validator.js",
-  "configEditor": "data/config-editor.js",
+  "configEditor": "data/editor.js",
   "capabilities": [
     "no-fresh-config"
   ],
@@ -23,16 +22,22 @@
     }
   },
   "taskProtocol": {
-    "version": "1.1",
+    "version": "1.2",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
-        "zh-CN": "data/task-text.zh-CN.json",
-        "en-US": "data/task-text.en-US.json"
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
       }
+    },
+      "configRules": [
+        { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual" }
+      ],
+      "environmentChecks": [
+        { "id": "zzz-game-target", "source": { "kind": "config", "resourceId": "config:game_account.yml", "selector": ["game_path"] }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
+      ]
     }
   }
-}

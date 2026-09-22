@@ -75,6 +75,13 @@
       ],
       "requires": []
     },
+    "core/configAssessment": {
+      "file": "core/configAssessment.js",
+      "provides": [
+        "finalizeAssessment"
+      ],
+      "requires": []
+    },
     "core/behavior": {
       "file": "core/behavior.js",
       "provides": [
@@ -422,7 +429,8 @@
   "entries": {
     "bettergi": {
       "discover": [
-        "bettergi/discover"
+        "bettergi/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -435,7 +443,8 @@
     },
     "march7th": {
       "discover": [
-        "march7th/discover"
+        "march7th/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -448,7 +457,8 @@
     },
     "baah": {
       "discover": [
-        "baah/discover"
+        "baah/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -463,7 +473,8 @@
     },
     "zzz": {
       "discover": [
-        "zzz/discover"
+        "zzz/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -476,7 +487,8 @@
     },
     "mxu": {
       "discover": [
-        "mxu/discover"
+        "mxu/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -489,7 +501,8 @@
     },
     "example": {
       "discover": [
-        "example/discover"
+        "example/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -503,7 +516,8 @@
     },
     "oknte": {
       "discover": [
-        "oknte/discover"
+        "oknte/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",
@@ -516,7 +530,8 @@
     },
     "okww": {
       "discover": [
-        "okww/discover"
+        "okww/discover",
+        "core/configAssessment"
       ],
       "observe": [
         "core/observeRules",

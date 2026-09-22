@@ -1,7 +1,10 @@
 {
   "id": "bettergi",
   "implementation": "bettergi",
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
+  "configRules": [
+    { "id": "bettergi.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionId": "bettergi-game-target", "reasonKey": "diagnostic.config.path_mismatch", "fallback": "BetterGI 配置中的游戏路径与绑定目标不一致。", "location": { "source": "resource", "resourceId": "extra-user-config", "selector": ["genshinStartConfig", "installPath"] } }
+  ],
   "taskTextKeys": {
     "领取邮件": "task.claim_mail"
   },

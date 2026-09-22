@@ -14,7 +14,6 @@
   ],
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
-  "configValidator": "data/config-validator.js",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -23,16 +22,32 @@
     }
   },
   "taskProtocol": {
-    "version": "1.1",
+    "version": "1.2",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
-    "readResources": [],
+    "readResources": [
+      {
+        "id": "software-config",
+        "source": "extraConfig",
+        "path": "0",
+        "format": "json",
+        "required": false
+      }
+    ],
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
-        "zh-CN": "data/task-text.zh-CN.json",
-        "en-US": "data/task-text.en-US.json"
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
       }
-    }
+    },
+      "configRules": [
+        { "id": "baah.game_target", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "baah.file_logging", "required": true, "criticality": "critical_when_applicable" }
+      ],
+      "environmentChecks": [
+        { "id": "baah-pc-game-target", "source": { "kind": "host", "field": "gameTarget" }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false },
+        { "id": "baah-adb-target", "source": { "kind": "host", "field": "gameTarget" }, "expectedKind": "adb_endpoint", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
+      ]
   }
 }

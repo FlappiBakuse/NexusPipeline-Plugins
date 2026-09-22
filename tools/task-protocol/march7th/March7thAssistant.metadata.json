@@ -142,7 +142,12 @@
     "activity_planarfissure_enable": "位面分裂",
     "activity_journey_highlights_notification_enable": "旅途拾忆通知"
   },
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
+  "configRules": [
+    { "id": "march7th.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionId": "march7th-game-target", "reasonKey": "diagnostic.config.path_mismatch", "fallback": "三月七小助手配置中的游戏路径与绑定目标不一致。", "location": { "source": "config", "resourceId": "config:config.yaml", "selector": ["game_path"] } },
+    { "id": "march7th.finish_action", "required": true, "criticality": "critical_when_applicable", "kind": "finish_action", "resourceId": "config:config.yaml", "selector": ["after_finish"], "reasonKey": "diagnostic.march7th.finish_action", "fallback": "完成后的系统动作可能影响队列后续工作。", "location": { "source": "config", "resourceId": "config:config.yaml", "selector": ["after_finish"] } },
+    { "id": "march7th.process_exit", "required": true, "criticality": "advisory_or_contextual", "kind": "process_exit", "resourceId": "config:config.yaml", "selectors": [["pause_after_success"], ["exit_after_failure"]], "reasonKey": "diagnostic.march7th.process_exit", "fallback": "无法确认脚本完成或失败后的退出策略。", "locations": [{ "source": "config", "resourceId": "config:config.yaml", "selector": ["pause_after_success"] }, { "source": "config", "resourceId": "config:config.yaml", "selector": ["exit_after_failure"] }] }
+  ],
   "taskTextKeys": {
     "daily_enable": "task.daily_enable.name",
     "power_enable": "task.power_enable.name",

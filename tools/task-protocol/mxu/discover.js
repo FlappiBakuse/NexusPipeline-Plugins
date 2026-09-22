@@ -56,7 +56,7 @@ function discover() {
     const safe = ADAPTER.safe.includes(task.taskName) && (!object(task.enabledByController) || cached === undefined);
     const created = addTask(plan, config.id, instance.id + '/' + task.id, name, enabled, selector,
       safe ? 'safe' : 'unknown', def && importsComplete ? 'limited' : 'unsupported', technical ? 'technical' : 'business');
-    if (ADAPTER.protocolVersion === '1.1' && def && !task.customName && ADAPTER.taskNameTextKeys?.[task.taskName])
+    if ((ADAPTER.protocolVersion === '1.1' || ADAPTER.protocolVersion === '1.2') && def && !task.customName && ADAPTER.taskNameTextKeys?.[task.taskName])
       created.nameText = { kind: 'plugin', key: ADAPTER.taskNameTextKeys[task.taskName], args: {}, fallback: name };
     optionSummary(plan, created, task, def, options);
   }

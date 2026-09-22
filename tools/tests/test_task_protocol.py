@@ -27,6 +27,17 @@ class TaskProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             author.generate('ExampleTask', 'example-task', True, 'ok-script-daily')
 
+    def test_author_version12_uses_diagnostic_assets(self):
+        current = author.generate('ExampleTask', 'example-task', True, protocol_version='1.2')
+        protocol = json.loads(current['plugin.json'])['taskProtocol']
+        self.assertEqual('1.2', protocol['version'])
+        self.assertEqual('data/i18n/zh-CN.json', protocol['localization']['messages']['zh-CN'])
+        self.assertEqual(1, len(protocol['configRules']))
+        self.assertEqual([], protocol['environmentChecks'])
+        self.assertIn('data/i18n/zh-CN.json', current)
+        self.assertNotIn('configValidator', json.loads(current['plugin.json']))
+        core._task_protocol_scripts(json.loads(current['plugin.json']))
+
     def manifest(self):
         return {
             "kind": "data-specialized", "artifactName": "Example", "minHostVersion": "0.16.8",

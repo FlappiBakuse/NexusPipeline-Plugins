@@ -15,7 +15,7 @@ function discover() {
     const task = addTask(plan, config.id, key, name, declared && d.TaskEnabledList[key] && activeKeys.includes(key) && (start < 0 || activeKeys.indexOf(key) >= start),
       declared ? ['TaskEnabledList', key] : null, name === '领取邮件' && !d.NextTaskId ? 'safe' : 'unknown',
       name === '领取邮件' ? 'supported' : 'limited');
-    if (ADAPTER.protocolVersion === '1.1' && modern) task.nameText = { kind: 'literal', value: name };
+    if ((ADAPTER.protocolVersion === '1.1' || ADAPTER.protocolVersion === '1.2') && modern) task.nameText = { kind: 'literal', value: name };
   });
   if (d.NextTaskId) plan.diagnostics.push({ code: 'retry.cursor_not_verified', message: 'A one-shot start cursor narrows this run; automatic retry is disabled.' });
   plan.diagnostics.push({ code: 'coverage_limited', message: 'Outer completion does not prove custom scripts, resource consumption or nested actions succeeded.' });

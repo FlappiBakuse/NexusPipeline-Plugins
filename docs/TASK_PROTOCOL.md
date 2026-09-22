@@ -19,9 +19,7 @@
 
 ## 1.1 文本引用
 
-March7thAssistant 开发候选使用 1.1；其他适配器和生成模板仍使用 1.0。Host 开发源码和本仓源码/ZIP 校验器支持 1.1 文本与问题事件扩展；正式发布前必须填写获批准且实际支持 1.1 的 minHostVersion，不能将当前未升版的 0.16.8 元数据当作 1.1 的发行声明。旧 Host 会拒绝未知的 1.1 协议。
-
-1.1 manifest 在 taskProtocol 增加必填 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/task-text.zh-CN.json", "en-US": "data/task-text.en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。
+1.1 manifest 在 taskProtocol 增加必填 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/task-text.zh-CN.json", "en-US": "data/task-text.en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。`data/task-text.*.json` 是旧 1.1 资产布局，只为过渡期插件保留。
 
 所有阶段使用协商的 `input.protocolVersion`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
 
@@ -39,11 +37,41 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 `readResources` 最多 128 项，每项为 `{id, source, path, format, required}`。`source` 为 `root` 或 `extraConfig`；前者相对实例根目录，后者路径以附加配置索引开头，例如 `0/settings.json`。格式为 `json`、`yaml` 或 `text`；JSONC 接口可声明为 text 后由适配器解析。路径禁止绝对路径、回退段和重解析点；只读资源永远不可作为补丁目标。
 
+## 1.2 discover 配置诊断
+
+1.2 保留同一组 `discover`、`observe`、`retry` 阶段，在 1.1 文本引用之上增加只读 `configAssessment`。1.2 的任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`，并且不得同时声明旧的 `configValidator`。旧 1.0/1.1 插件在一个过渡周期内继续由旧校验器 runner 执行，不会自动获得 1.2 诊断，也不会与新诊断双跑。
+
+`configRules` 是插件规则 ID 清单，形如 `{ "id": "example.configuration", "required": true, "criticality": "advisory_or_contextual" }`；`criticality` 只能是 `critical_when_applicable` 或 `advisory_or_contextual`。每次 1.2 discover 必须为每条 required 规则返回一次 `satisfied`、`violated`、`unknown` 或 `not_applicable`，不能缺失后默认为通过。
+
+配置评估的结构为：
+
+```json
+{
+  "schemaVersion": "1",
+  "checks": [{
+    "ruleId": "example.configuration",
+    "evaluation": "violated",
+    "severity": "error",
+    "executionEffect": "block",
+    "scope": { "kind": "binding" },
+    "locations": [{ "source": "config", "resourceId": "config:settings.json", "selector": ["enabled"] }],
+    "reasonText": { "kind": "plugin", "key": "diagnostic.configuration", "args": {}, "fallback": "请检查配置。" },
+    "actions": [{ "kind": "open_binding_editor" }, { "kind": "refresh_plan" }]
+  }]
+}
+```
+
+`severity` 为 `info`、`warning` 或 `error`；`executionEffect` 为 `none`、`warn` 或 `block`。`scope` 限于 binding、queue 或当前计划中的 task。`locations` 只能引用已声明资源/配置 selector、受限 context field 或 manifest 中的 environment inspection ID；每个检查最多 8 个位置、3 个动作，整个评估最多 128 个检查。动作仅允许打开绑定编辑器、打开脚本设置或重新检查。阻断必须来自 manifest 的 critical 规则并带有合法 `reasonText`；unknown 不是 violated，也不能被普通建议规则擅自升级为阻断。
+
+1.2 discover 输入附带 Host 生成的 `executionContext`。脚本只能调用 `nexus.inspectDeclaredTarget(id)` 查询 manifest 已声明目标的状态/类型/上下文匹配结果；API 不接受任意路径、不返回原始内容、不读网络、不启动进程。Host 将合法评估聚合为独立的 `currentReadiness`（ready、attention、unknown、blocked），并生成 `checkedAt`、`configRevision`、`contextFingerprint` 和 `assessmentId`。这些可信身份不能由插件伪造，语言变化也不能改变任务行为签名。
+
+配置保存成功后，诊断失败只更新检查状态，不回滚保存。预览是只读的；启动前、前置脚本完成后和 retry 前均须用实际配置重新检查。阻断启动建立 `admissionBlocked` 事实，不创建虚假的游戏 attempt、任务失败日志或成功配额消耗；历史显示“未启动：配置检查未通过”。
+
 ## 发现与只读预览
 
 `phase: discover` 输入包含 `pluginId`、`userId`、`scriptInstanceId`、`origin`、`locale` 和 `configResources: [{id,format}]`。资源标识采用 `config:<相对路径>`。预览读取用户存储快照，不交换配置、不启动上游、不执行前后置脚本。运行在前置脚本完成后重新读取实际配置，冻结独立的 originalPlan。
 
-输出为 `{protocolVersion:"1.0",type:"discovery",coverage,tasks,diagnostics,selectionFields,behaviorFields}`。coverage 为 complete、partial、unsupported。每项 task 包含稳定 id/sourceKey、name、parentId、role、enabled、order、countsAsUnit、requiredForParent、retryUnitId、retryRisk、dependencies、detection，可附 configRef。角色 business/technical/cleanup；检测 supported/limited/unsupported；风险 safe/conditional/unsafe/unknown。未知任务必须保留。任务最多 1024 个，父链最多 8 层，依赖链最多 128 层，禁止环和重名身份。
+输出为 `{protocolVersion,type:"discovery",coverage,tasks,diagnostics,selectionFields,behaviorFields}`；1.2 另需提供 `configAssessment`，由 Host 在生成的 TaskPlan 上附加 `currentReadiness`。coverage 为 complete、partial、unsupported。每项 task 包含稳定 id/sourceKey、name、parentId、role、enabled、order、countsAsUnit、requiredForParent、retryUnitId、retryRisk、dependencies、detection，可附 configRef。角色 business/technical/cleanup；检测 supported/limited/unsupported；风险 safe/conditional/unsafe/unknown。未知任务必须保留。任务最多 1024 个，父链最多 8 层，依赖链最多 128 层，禁止环和重名身份。
 
 `selectionFields` 是补丁授权清单：`{resourceId,selector,purpose}`，purpose 仅 selection/cursor。宿主冻结字段身份、原值和当前值；重试不能扩大授权。selector 示例：
 
@@ -98,7 +126,7 @@ P1 执行生成一致性与真实 Host Jint/归并器/配置 journal 的八适�
 
 `--example` 生成完整的合成协议示例。[TaskProtocolExample](../examples/TaskProtocolExample/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-默认生成协议 1.1 和插件自有中英文词典；`--protocol-version 1.0` 保留严格旧协议示例。用户自定义名称使用 literal，不按名称猜测词典键。
+默认生成协议 1.1 和插件自有中英文词典；`--protocol-version 1.0` 保留严格旧协议示例，`--protocol-version 1.2` 生成 `data/i18n/`、`configRules` 和 `environmentChecks` 骨架。用户自定义名称使用 literal，不按名称猜测词典键。
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 

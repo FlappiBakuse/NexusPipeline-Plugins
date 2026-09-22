@@ -603,22 +603,83 @@ def _validate_judge_locale_contract(plugin: Path, manifest: dict[str, Any], judg
     )
 
 
+def _validate_task_protocol_selector(selector: Any) -> None:
+    _require(isinstance(selector, list) and 0 < len(selector) <= 32, "taskProtocol environment selector invalid")
+    for token in selector:
+        if isinstance(token, str):
+            _require(0 < len(token) <= 256, "taskProtocol selector property invalid")
+            continue
+        _require(isinstance(token, dict), "taskProtocol selector token invalid")
+        if "by" in token:
+            _require(set(token) == {"by", "value"} and isinstance(token.get("by"), str) and bool(token["by"]), "taskProtocol identity selector invalid")
+        else:
+            _require(
+                set(token) == {"index", "guardKey", "guardValue"}
+                and isinstance(token.get("index"), int)
+                and token["index"] >= 0
+                and isinstance(token.get("guardKey"), str)
+                and bool(token["guardKey"]),
+                "taskProtocol guard selector invalid",
+            )
+
+
+def _validate_task_protocol_config_rules(value: Any) -> None:
+    _require(isinstance(value, list) and 0 < len(value) <= 32, "taskProtocol.configRules must contain 1..32 rules")
+    identifiers: set[str] = set()
+    for rule in value:
+        _require(isinstance(rule, dict) and set(rule) == {"id", "required", "criticality"}, "taskProtocol config rule fields invalid")
+        identifier = rule.get("id")
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol config rule id invalid")
+        identifiers.add(identifier)
+        _require(type(rule.get("required")) is bool and rule.get("criticality") in {"critical_when_applicable", "advisory_or_contextual"}, "taskProtocol config rule invalid")
+
+
+def _validate_task_protocol_environment_checks(value: Any) -> None:
+    _require(isinstance(value, list) and len(value) <= 32, "taskProtocol.environmentChecks must contain at most 32 checks")
+    identifiers: set[str] = set()
+    for check in value:
+        _require(isinstance(check, dict) and set(check) == {"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints"}, "taskProtocol environment check fields invalid")
+        identifier = check.get("id")
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol environment check id invalid")
+        identifiers.add(identifier)
+        _require(
+            check.get("expectedKind") in {"file", "directory", "adb_endpoint"}
+            and check.get("relativeBase") in {"script_root", "config_directory", "none"}
+            and check.get("networkAccess") is False
+            and check.get("followReparsePoints") is False,
+            "taskProtocol environment check policy invalid",
+        )
+        source = check.get("source")
+        _require(isinstance(source, dict) and isinstance(source.get("kind"), str), "taskProtocol environment check source invalid")
+        kind = source["kind"]
+        if kind in {"config", "resource"}:
+            _require(set(source) == {"kind", "resourceId", "selector"} and isinstance(source.get("resourceId"), str) and bool(source["resourceId"]), "taskProtocol environment resource source invalid")
+            _validate_task_protocol_selector(source["selector"])
+        elif kind == "host":
+            _require(set(source) == {"kind", "field"} and source.get("field") in {"gameTarget", "scriptExecutable"}, "taskProtocol environment host source invalid")
+        else:
+            raise RepositoryError("taskProtocol environment source kind invalid")
+
+
 def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     if "taskProtocol" not in manifest:
         return {}
     protocol = manifest["taskProtocol"]
     _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    _require(isinstance(protocol, dict) and protocol.get("version") in {"1.0", "1.1"}, "unsupported taskProtocol.version")
+    _require(isinstance(protocol, dict) and protocol.get("version") in {"1.0", "1.1", "1.2"}, "unsupported taskProtocol.version")
     fields = {"version", "discoverScript", "retryScript", "readResources"}
-    if protocol["version"] == "1.1":
+    if protocol["version"] in {"1.1", "1.2"}:
         fields.add("localization")
+    if protocol["version"] == "1.2":
+        fields.update({"configRules", "environmentChecks"})
+        _require("configValidator" not in manifest, "taskProtocol 1.2 cannot declare configValidator")
     _require(set(protocol) == fields, "taskProtocol fields invalid")
     _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
 
     def safe_path(value: Any) -> bool:
         return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
 
-    if protocol["version"] == "1.1":
+    if protocol["version"] in {"1.1", "1.2"}:
         localization = protocol["localization"]
         _require(isinstance(localization, dict) and set(localization) == {"defaultLocale", "messages"}, "task localization fields invalid")
         messages = localization["messages"]
@@ -626,7 +687,11 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         _require(len({locale.lower() for locale in messages}) == len(messages), "duplicate task locale")
         for locale, path in messages.items():
             _require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
-            _require(safe_path(path) and path.startswith("data/") and path.endswith(".json"), "task localization requires safe data/*.json")
+            prefix = "data/i18n/" if protocol["version"] == "1.2" else "data/"
+            _require(safe_path(path) and path.startswith(prefix) and path.endswith(".json"), f"task localization requires safe {prefix}*.json")
+    if protocol["version"] == "1.2":
+        _validate_task_protocol_config_rules(protocol["configRules"])
+        _validate_task_protocol_environment_checks(protocol["environmentChecks"])
 
     scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
     for value in [*scripts.values(), manifest.get("judgeScript")]:

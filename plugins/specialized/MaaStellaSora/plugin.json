@@ -21,7 +21,7 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "1.1",
+    "version": "1.2",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -148,9 +148,14 @@
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
-        "zh-CN": "data/task-text.zh-CN.json",
-        "en-US": "data/task-text.en-US.json"
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
       }
+    },
+      "configRules": [
+        { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable" },
+        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" }
+      ],
+      "environmentChecks": []
     }
   }
-}

@@ -21,7 +21,7 @@
     }
   },
   "taskProtocol": {
-    "version": "1.1",
+    "version": "1.2",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -50,9 +50,15 @@
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
-        "zh-CN": "data/task-text.zh-CN.json",
-        "en-US": "data/task-text.en-US.json"
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
       }
+    },
+      "configRules": [
+        { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable" },
+        { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable" },
+        { "id": "oknte.routine_schema", "required": true, "criticality": "critical_when_applicable" }
+      ],
+      "environmentChecks": []
     }
   }
-}

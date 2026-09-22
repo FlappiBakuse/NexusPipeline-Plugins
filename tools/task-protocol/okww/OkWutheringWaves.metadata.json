@@ -1,7 +1,13 @@
 {
   "id": "okww",
   "implementation": "okww",
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
+  "configRules": [
+    { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable", "kind": "runtime_distribution", "reasonKey": "diagnostic.runtime_unqualified", "fallback": "官方发行版本或更新状态未就绪，已阻止自动运行。", "location": { "source": "resource", "resourceId": "runtime-app", "selector": ["current_profile"] } },
+    { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable", "kind": "single_daily", "reasonKey": "diagnostic.okscript.single_daily", "fallback": "当前计划不是可确认的单一日常执行计划。", "location": { "source": "context", "field": "effectiveLaunch.entryId" } },
+    { "id": "okww.finite_additions", "required": true, "criticality": "critical_when_applicable", "kind": "finite_additions", "resourceId": "config:FarmEchoTask.json", "taskKey": "farm_4c", "reasonKey": "diagnostic.okww.finite_additions", "fallback": "4C 附加任务的传送模式或有限次数无法确认。", "location": { "source": "config", "resourceId": "config:FarmEchoTask.json", "selector": ["Teleport to Boss"] } }
+  ],
+  "dailyTaskKeys": ["nightmare", "stamina", "daily_reward", "mail", "battle_pass", "garden", "merge", "farm_4c"],
   "configDependencies": [
     {
       "task": "farm_4c",
@@ -44,6 +50,14 @@
     "Tacet Suppression": "task.stamina_tacet",
     "Forgery Challenge": "task.stamina_forgery",
     "Simulation Challenge": "task.stamina_simulation"
+  },
+  "runtimeProfiles": {
+    "Global": {
+      "name": "ok-ww",
+      "version": "v3.6.7",
+      "commit": "6d3ce9df9f35f2c7b4c72bd00bc55449eeed4396",
+      "tagObject": "2eaacbf8d5dc6eb323c0f73d1d145d33c22f7eaa"
+    }
   },
   "runtimeRelease": {
     "name": "ok-ww",

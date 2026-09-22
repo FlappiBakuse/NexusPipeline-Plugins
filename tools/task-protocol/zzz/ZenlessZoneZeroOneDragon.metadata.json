@@ -54,7 +54,10 @@
     "drive_disc_dismantle",
     "notify"
   ],
-  "protocolVersion": "1.1",
+  "protocolVersion": "1.2",
+  "configRules": [
+    { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionId": "zzz-game-target", "reasonKey": "diagnostic.config.path_mismatch", "fallback": "绝区零一条龙当前账号中的游戏路径与绑定目标不一致。", "location": { "source": "config", "resourceId": "config:game_account.yml", "selector": ["game_path"] } }
+  ],
   "taskTextKeys": {
     "one_dragon/charge_plan": "task.charge_plan",
     "one_dragon/city_fund": "task.city_fund",
