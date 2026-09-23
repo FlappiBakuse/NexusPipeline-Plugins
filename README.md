@@ -113,6 +113,7 @@ NexusPipeline-Plugins/
 
 ## 贡献入口
 
+- [项目状态与待办](STATUS.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [DATA_SPECIALIZED_PLUGIN.md](docs/DATA_SPECIALIZED_PLUGIN.md)
 - [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)
