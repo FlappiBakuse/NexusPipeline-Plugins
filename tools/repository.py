@@ -45,6 +45,7 @@ def _parser() -> argparse.ArgumentParser:
             "validate-generated",
             "validate-host-locales",
             "qualification",
+            "candidate",
             "verify",
             "scope",
             "publish-develop",
@@ -155,6 +156,27 @@ def main(argv: list[str] | None = None) -> int:
                 output=args.output.resolve() if args.output else None,
                 baseline=args.baseline,
             )
+        elif args.command == "candidate":
+            from repository_candidate import build_stable_candidate
+
+            if args.host_root is None or not args.sdk_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("candidate 必须指定 --host-root、--sdk-sha、--workflow-sha、--run-id、--run-attempt")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            result = build_stable_candidate(
+                root,
+                args.host_root.resolve(),
+                args.output.resolve() if args.output else root / ".generated" / "stable-candidate",
+                sdk_sha=args.sdk_sha,
+                workflow_sha=args.workflow_sha,
+                run_id=int(args.run_id),
+                run_attempt=int(args.run_attempt),
+            )
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"status={result['status']}\n")
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         elif args.command == "scope":
             from verification import fast_scope
 

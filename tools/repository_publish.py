@@ -126,7 +126,7 @@ def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[
         if path.is_dir():
             continue
         core._require(path.is_file(), f"候选目录包含特殊文件：{relative}")
-        if relative in {"release-plan.json", "stable-producer.json"}:
+        if relative in {"release-plan.json", "stable-producer.json", "candidate.json"}:
             continue
         core._require(relative in {"catalog.json", core.STATE_FILE} or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
         if relative.startswith("packages/"):

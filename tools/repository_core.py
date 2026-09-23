@@ -2372,6 +2372,26 @@ def _expected_stable_package_paths(root: Path, generated_root: Path) -> set[str]
     }
 
 
+def verify_unchanged_stable(root: Path, candidate: Path, distribution_root: Path) -> None:
+    """Keep existing stable entries and packages byte-for-byte unchanged."""
+    old_catalog = read_json(distribution_root / "catalog.json")
+    candidate_catalog = read_json(candidate / "catalog.json")
+    old_entries = _catalog_entry_by_artifact(old_catalog)
+    new_entries = _catalog_entry_by_artifact(candidate_catalog)
+    plan = read_json(candidate / "release-plan.json")
+    changed = set(plan.get("requiresPackage", [])) | set(plan.get("deleted", []))
+    for artifact, entry in old_entries.items():
+        if artifact in changed:
+            continue
+        _require(new_entries.get(artifact) == entry,
+                 f"未变更 stable catalog entry 被修改：{artifact}")
+        package = distribution_root / "packages" / artifact / f"{artifact}-{entry['version']}.zip"
+        _require(package.is_file(), f"现有 stable 包缺失：{artifact}")
+        _require(sha256(package) == entry.get("sha256")
+                 and package.stat().st_size == entry.get("sizeBytes"),
+                 f"现有 stable 包与 catalog 发行事实不一致：{artifact}")
+
+
 def validate_stable_candidate_layout(root: Path, generated_root: Path) -> dict[str, Path]:
     """Validate the complete stable candidate tree and return its payload files."""
 
@@ -2379,7 +2399,7 @@ def validate_stable_candidate_layout(root: Path, generated_root: Path) -> dict[s
     _require(generated_root.is_dir() and not generated_root.is_symlink(), "stable 候选目录必须是普通目录")
     expected_packages = _expected_stable_package_paths(root, generated_root)
     required_files = {"catalog.json", STATE_FILE, "release-plan.json"}
-    optional_files = {"stable-producer.json"}
+    optional_files = {"stable-producer.json", "candidate.json"}
     allowed_files = required_files | optional_files | expected_packages
     allowed_directories = {"packages"}
     for relative in expected_packages:

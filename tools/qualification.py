@@ -18,26 +18,6 @@ from sdk_source import SdkSourceError
 from verification import preflight, run_managed_gate, run_source_gate
 
 
-def _verify_unchanged_stable(root: Path, candidate: Path, distribution_root: Path) -> None:
-    old_catalog = core.read_json(distribution_root / "catalog.json")
-    candidate_catalog = core.read_json(candidate / "catalog.json")
-    old_entries = core._catalog_entry_by_artifact(old_catalog)
-    new_entries = core._catalog_entry_by_artifact(candidate_catalog)
-    plan = core.read_json(candidate / "release-plan.json")
-    changed = set(plan.get("requiresPackage", [])) | set(plan.get("deleted", []))
-    for artifact, entry in old_entries.items():
-        if artifact in changed:
-            continue
-        _require_same = new_entries.get(artifact) == entry
-        if not _require_same:
-            raise core.RepositoryError(f"未变更 stable catalog entry 被修改：{artifact}")
-        package = distribution_root / "packages" / artifact / f"{artifact}-{entry['version']}.zip"
-        if not package.is_file():
-            raise core.RepositoryError(f"现有 stable 包缺失：{artifact}")
-        if core.sha256(package) != entry.get("sha256") or package.stat().st_size != entry.get("sizeBytes"):
-            raise core.RepositoryError(f"现有 stable 包与 catalog 发行事实不一致：{artifact}")
-
-
 def run_candidate_gate(root: Path, host_root: Path, base: str, output: Path, baseline: str = "auto") -> dict[str, Any]:
     workspace = CandidateWorkspace.create(root, base)
     output = output.resolve()
@@ -64,7 +44,7 @@ def run_candidate_gate(root: Path, host_root: Path, base: str, output: Path, bas
             distribution_root=workspace.distribution_root,
         )
         core.validate_generated(root, output, distribution_root=workspace.distribution_root)
-        _verify_unchanged_stable(root, output, workspace.distribution_root)
+        core.verify_unchanged_stable(root, output, workspace.distribution_root)
         return {
             "candidate": str(output),
             "requiresPackage": list(generated["plan"].get("requiresPackage", [])),
