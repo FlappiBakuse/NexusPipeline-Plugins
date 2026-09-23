@@ -45,8 +45,6 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
         core._run((sys.executable, str(root / "tools" / "create_task_plugin.py"), "--artifact", artifact,
                    "--name", "task-protocol-" + preset, "--preset", preset, "--example", "--check",
                    "--output", str(root / "examples" / artifact)), "Generated " + preset + " example", root)
-    core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
-               "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
     core._run(("node", str(root / "tools" / "Test-ConfigEditors.mjs")), "Test-ConfigEditors", root)
     core._run((sys.executable, "-m", "unittest", "discover", "-s", "tools/tests", "-v"), "Plugins Python 单元测试", root)
     changed = core.check_pr(root, base)
@@ -60,6 +58,10 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
 
 
 def run_managed_gate(root: Path, host_root: Path) -> dict[str, Any]:
+    # The Host Jint runner references the Windows-targeted Host assembly.
+    # P2 preserves all adapter fixtures on its existing Windows/.NET runner.
+    core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
+               "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
     if (root / "package-lock.json").is_file():
         core._run((core._npm_executable(), "ci", "--no-audit", "--no-fund"), "Plugins 根 workspace npm ci", root)
     frontend = root / "tools" / "Test-FrontendPlugins.mjs"
