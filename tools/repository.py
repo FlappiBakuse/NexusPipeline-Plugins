@@ -46,6 +46,7 @@ def _parser() -> argparse.ArgumentParser:
             "validate-host-locales",
             "qualification",
             "candidate",
+            "candidate-scope",
             "validate-candidate",
             "extract-candidate",
             "extract-preview",
@@ -183,6 +184,16 @@ def main(argv: list[str] | None = None) -> int:
             if args.github_output:
                 with args.github_output.open("a", encoding="utf-8") as stream:
                     stream.write(f"status={result['status']}\n")
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "candidate-scope":
+            from repository_candidate import stable_candidate_scope
+
+            result = stable_candidate_scope(root)
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"status={result['status']}\n")
+                    stream.write(f"needs_build={'true' if result['needsBuild'] else 'false'}\n")
                     stream.write(f"source_sha={result['sourceSha']}\n")
             print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         elif args.command == "extract-candidate":

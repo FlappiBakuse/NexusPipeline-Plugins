@@ -12,12 +12,30 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repository_core as core
 from candidate_workspace import CandidateWorkspace
-from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, extract_preview_artifact, validate_inventory, write_candidate_manifest
+from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, extract_preview_artifact, stable_candidate_scope, validate_inventory, write_candidate_manifest
 from repository_publish import GitHubGitTransport
 from test_repository_publish import _create_fixture, _git, _remove_tree
 
 
 class StableCandidateContractTests(unittest.TestCase):
+    def test_scope_skips_generated_only_event_and_selects_payload_change(self) -> None:
+        root = _create_fixture()
+        try:
+            self.assertEqual(stable_candidate_scope(root)["status"], "NO_CHANGES")
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = core.read_json(manifest_path)
+            store = core.read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            core.write_json(manifest_path, manifest)
+            core.write_json(store_path, store)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source")
+            self.assertEqual(stable_candidate_scope(root)["status"], "BUILD_REQUIRED")
+        finally:
+            _remove_tree(root)
+
     def test_artifact_extraction_rejects_foreign_paths_and_duplicate_names(self) -> None:
         with tempfile.TemporaryDirectory(prefix="nxp-candidate-zip-") as temporary:
             root = Path(temporary)

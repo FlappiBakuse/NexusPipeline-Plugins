@@ -103,21 +103,21 @@ def build_stable_candidate(
     core._require(not output.exists(), f"candidate 输出已存在，拒绝覆盖：{output}")
     core._require(not core._git(root, ["status", "--porcelain=v1", "--untracked-files=all"], "检查候选工作树"),
                   "candidate 源码工作树不干净")
-    sdk = preflight(root, host_root, sdk_sha)
     workspace = CandidateWorkspace.create(root, "HEAD")
     plan_path = output.parent / f"{output.name}-plan.json"
     try:
         core.validate_candidate_against_base(root, workspace.state_source_sha,
                                              head=workspace.source_sha,
                                              distribution_root=workspace.distribution_root)
-        core.validate_sources(root)
-        core.check_syntax(root)
-        core.validate_host_locale_registry(root, host_root)
         plan = core.build_plan(root, "auto", workspace.source_sha,
                                distribution_root=workspace.distribution_root)
         if not (plan["requiresPackage"] or plan["deleted"] or plan["relocated"]):
             return {"status": "NO_CHANGES", "sourceSha": workspace.source_sha,
                     "distributionSha": workspace.base_sha, "candidate": None}
+        sdk = preflight(root, host_root, sdk_sha)
+        core.validate_sources(root)
+        core.check_syntax(root)
+        core.validate_host_locale_registry(root, host_root)
         core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
                    "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
         selected = [item for item in plan.get("managed", []) if isinstance(item, str)]
@@ -136,6 +136,26 @@ def build_stable_candidate(
         return {"status": "VALIDATED", "sourceSha": workspace.source_sha,
                 "distributionSha": workspace.base_sha, "candidate": str(output),
                 "files": len(candidate["files"])}
+    finally:
+        workspace.cleanup()
+
+
+def stable_candidate_scope(root: Path) -> dict[str, Any]:
+    """Cheap, fail-closed main event classification before SDK checkout."""
+    root = root.resolve()
+    core._require(not core._git(root, ["status", "--porcelain=v1", "--untracked-files=all"], "检查候选工作树"),
+                  "candidate 源码工作树不干净")
+    workspace = CandidateWorkspace.create(root, "HEAD")
+    try:
+        core.validate_candidate_against_base(root, workspace.state_source_sha,
+                                             head=workspace.source_sha,
+                                             distribution_root=workspace.distribution_root)
+        plan = core.build_plan(root, "auto", workspace.source_sha,
+                               distribution_root=workspace.distribution_root)
+        needs_build = bool(plan["requiresPackage"] or plan["deleted"] or plan["relocated"])
+        return {"status": "BUILD_REQUIRED" if needs_build else "NO_CHANGES",
+                "needsBuild": needs_build, "sourceSha": workspace.source_sha,
+                "distributionSha": workspace.base_sha}
     finally:
         workspace.cleanup()
 

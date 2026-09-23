@@ -61,8 +61,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 90
     outputs:
-      status: ${{ steps.build.outputs.status }}
-      source_sha: ${{ steps.build.outputs.source_sha }}
+      status: ${{ steps.build.outputs.status || steps.scope.outputs.status }}
+      source_sha: ${{ steps.build.outputs.source_sha || steps.scope.outputs.source_sha }}
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -76,13 +76,20 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
+      - name: Classify cumulative stable delta
+        id: scope
+        shell: pwsh
+        run: python tools/repository.py candidate-scope --github-output $env:GITHUB_OUTPUT
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.scope.outputs.needs_build == 'true'
         with:
           node-version: "24"
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        if: steps.scope.outputs.needs_build == 'true'
         with:
           dotnet-version: "8.0.424"
       - name: Resolve fixed official Host SDK
+        if: steps.scope.outputs.needs_build == 'true'
         id: host
         shell: pwsh
         run: |
@@ -92,12 +99,14 @@ jobs:
           if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
           "sha=$sha" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: steps.scope.outputs.needs_build == 'true'
         with:
           repository: FlappiBakuse/NexusPipeline
           ref: ${{ steps.host.outputs.sha }}
           path: NexusPipeline
           persist-credentials: false
       - name: Build and verify cumulative candidate
+        if: steps.scope.outputs.needs_build == 'true'
         id: build
         shell: pwsh
         run: >-
