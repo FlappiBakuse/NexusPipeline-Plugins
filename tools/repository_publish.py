@@ -275,7 +275,23 @@ class GitHubGitTransport:
             if self._matches_candidate(checkout, generated_root, plan, source_sha, current, expected_paths, env):
                 verification = self._verify_published_tree(checkout, generated_root, plan, source_sha, current, files, env)
                 return {"sourceCommit": source_sha, "publishedCommit": current, "parent": current, "remoteWritten": True, "idempotent": True, **verification}
-            core._require(current == source_sha, "stable main 已前进且尚未包含当前候选，拒绝覆盖")
+            ancestor = self._run(["git", "merge-base", source_sha, current], checkout, env=env)
+            core._require(ancestor == source_sha, "SUPERSEDED：candidate source 已不在当前 main 历史中")
+            if current != source_sha:
+                intervening = self._parse_changed_paths(self._run(
+                    ["git", "diff", "--name-status", "--find-renames", "-z", f"{source_sha}..{current}"],
+                    checkout, env=env))
+                core._require(all(path in {"catalog.json", core.STATE_FILE} or path.startswith("packages/")
+                                  for path in intervening),
+                              "SUPERSEDED：main 已有更新源码，旧候选不再写入")
+            if (generated_root / "candidate.json").is_file():
+                for relative in ("catalog.json", core.STATE_FILE, "packages"):
+                    original_tree = self._run(["git", "rev-parse", f"{base_sha}:{relative}"], checkout, env=env)
+                    current_tree = self._run(["git", "rev-parse", f"{current}:{relative}"], checkout, env=env)
+                    core._require(original_tree == current_tree,
+                                  f"BASELINE_STALE：main 分发基线 {relative} 已改变，需要新候选")
+            else:
+                core._require(current == source_sha, "stable main 已前进且尚未包含当前旧资格候选")
             self._assert_checkout_modes(checkout, env)
             for relative, candidate in sorted(files.items()):
                 if not relative.startswith("packages/"):
@@ -307,6 +323,7 @@ class GitHubGitTransport:
                 if target.exists() or target.is_symlink():
                     core._require(target.is_dir() and not target.is_symlink(), f"stable 删除目标不是普通目录：{relative}")
                     shutil.rmtree(target)
+            self._run(["git", "fetch", "origin", "main"], checkout, env=env)
             latest = self._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
             core._require(latest == current, "stable main 在写入前发生竞争，拒绝使用旧父提交")
             self._run(["git", "add", "--all", "--", "catalog.json", core.STATE_FILE, "packages"], checkout, env=env)

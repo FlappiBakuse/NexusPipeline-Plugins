@@ -4,10 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - catalog.json
-      - .release-state.json
-      - packages/**
   workflow_dispatch:
     inputs:
       source_sha:

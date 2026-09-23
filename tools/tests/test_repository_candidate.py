@@ -117,11 +117,34 @@ class StableCandidateContractTests(unittest.TestCase):
             transport = GitHubGitTransport(remote=str(remote))
             options = dict(remote_write=True, token="test-token", run_id=12,
                            run_attempt=2, workflow_sha=source)
+            racer = remote_parent / "racer"
+            _git(root, "clone", str(remote), str(racer))
+            _git(racer, "-c", "user.email=test@example.test", "-c", "user.name=Test",
+                 "commit", "--allow-empty", "-m", "unchanged distribution tree")
+            unchanged_parent = core.git_head(racer)
+            _git(racer, "push", "origin", "main")
             first = transport.publish_stable_candidate(root, output, source, source, **options)
             second = transport.publish_stable_candidate(root, output, source, source, **options)
             self.assertFalse(first["idempotent"])
             self.assertTrue(second["idempotent"])
+            self.assertEqual(first["parent"], unchanged_parent)
             self.assertEqual(first["publishedCommit"], second["publishedCommit"])
+            _git(racer, "pull", "--ff-only", "origin", "main")
+            catalog_path = racer / "catalog.json"
+            catalog_path.write_bytes(catalog_path.read_bytes() + b"\n")
+            _git(racer, "add", "catalog.json")
+            _git(racer, "-c", "user.email=test@example.test", "-c", "user.name=Test",
+                 "commit", "-m", "new distribution baseline")
+            _git(racer, "push", "origin", "main")
+            with self.assertRaisesRegex(core.RepositoryError, "BASELINE_STALE"):
+                transport.publish_stable_candidate(root, output, source, source, **options)
+            (racer / "README.md").write_text("next source\n", encoding="utf-8")
+            _git(racer, "add", "README.md")
+            _git(racer, "-c", "user.email=test@example.test", "-c", "user.name=Test",
+                 "commit", "-m", "new source")
+            _git(racer, "push", "origin", "main")
+            with self.assertRaisesRegex(core.RepositoryError, "SUPERSEDED"):
+                transport.publish_stable_candidate(root, output, source, source, **options)
         finally:
             _remove_tree(root)
             _remove_tree(remote_parent)
