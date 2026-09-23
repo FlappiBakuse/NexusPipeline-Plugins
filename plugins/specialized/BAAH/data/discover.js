@@ -68,6 +68,58 @@ function discover() {
   return plan;
 }
 
+// Shared by discovery coverage and configuration admission. These checks are
+// local installation metadata, not proof of an immutable working tree.
+function runtimeIdentity(app, head, tag) {
+  const profiles = ADAPTER.runtimeProfiles || {};
+  const release = profiles[app?.current_profile] || (app?.current_profile === 'Global' ? ADAPTER.runtimeRelease : null);
+  return !!(app && release && app.name === release.name && app.installed === true
+    && app.current_profile && app.current_version === release.version
+    && app.update_state === 'idle' && !app.update_target_version && !app.update_error
+    && app.current_version_missing !== true && app.running !== true
+    && Array.isArray(app.available_versions) && app.available_versions.includes(release.version)
+    && typeof head === 'string' && head.trim() === release.commit
+    && typeof tag === 'string' && tag.trim() === release.tagObject);
+}
+
+// Pure projection of DailyRoutineTask.normalize_items; never writes user configuration.
+function normalizeItems(raw, entries) {
+  const items = [], seen = new Set(), diagnostics = [];
+  const truth = value => Array.isArray(value) ? value.length > 0
+    : value !== null && typeof value === 'object' ? Object.keys(value).length > 0 : Boolean(value);
+  for (const item of Array.isArray(raw) ? raw : []) {
+    if (!item || Array.isArray(item) || typeof item !== 'object') continue;
+    if (typeof item.id !== 'string') {
+      diagnostics.push({ code: 'oknte.invalid_id', id: null });
+      continue;
+    }
+    const entry = entries.find(e => e.id === item.id);
+    if (!entry) {
+      diagnostics.push({ code: 'oknte.unknown_id', id: item.id });
+      continue;
+    }
+    if (seen.has(item.id)) continue;
+    seen.add(item.id);
+    items.push({ id: item.id, enabled: truth(item.enabled) });
+  }
+  for (const entry of entries) if (!seen.has(entry.id))
+    items.push({ id: entry.id, enabled: entry.enabledByDefault });
+  const groups = new Set();
+  for (const item of items) {
+    const group = entries.find(e => e.id === item.id).exclusiveGroup;
+    if (item.enabled && group) {
+      if (groups.has(group)) item.enabled = false;
+      else groups.add(group);
+    }
+  }
+  // Scalar retry selectors require a complete, unique, explicitly boolean list.
+  // Otherwise normalization could re-enable an absent default after the patch.
+  const canPatchSelection = Array.isArray(raw) && raw.length === entries.length
+    && diagnostics.length === 0 && new Set(raw.map(i => i && i.id)).size === entries.length
+    && raw.every(i => i && entries.some(e => e.id === i.id) && typeof i.enabled === 'boolean');
+  return { items, diagnostics, canPatchSelection };
+}
+
 // Configuration checks are deliberately declarative and read-only. The Host owns
 // the final assessment identity/readiness; this module only supplies rule facts.
 function finalizeAssessment(plan) {
@@ -84,10 +136,60 @@ function finalizeAssessment(plan) {
     }
     return current;
   };
+  const mainConfigId = () => {
+    const resources = Array.isArray(input.configResources) ? input.configResources : [];
+    const found = resources.filter(resource => resource && typeof resource.id === 'string'
+      && resource.id.startsWith('config:') && resource.format === 'json');
+    return found.length === 1 ? found[0].id : undefined;
+  };
+  const normalizedAction = value => {
+    if (value === undefined || value === null) return undefined;
+    const raw = String(value).trim();
+    const key = raw.toLowerCase().replace(/[ _-]/g, '');
+    return ({
+      none: 'None', noneoperation: 'None', 无: 'None', 无操作: 'None',
+      exit: 'Exit', close: 'Exit', 退出: 'Exit', 退出程序: 'Exit',
+      runscript: 'RunScript', 运行脚本: 'RunScript',
+      loop: 'Loop', 循环: 'Loop',
+      shutdown: 'Shutdown', 关机: 'Shutdown',
+      sleep: 'Sleep', 睡眠: 'Sleep',
+      hibernate: 'Hibernate', 休眠: 'Hibernate',
+      restart: 'Restart', reboot: 'Restart', 重启: 'Restart',
+      logoff: 'Logoff', 注销: 'Logoff',
+      turnoffdisplay: 'TurnOffDisplay', screenoff: 'TurnOffDisplay', 关闭显示器: 'TurnOffDisplay',
+      mute: 'None', unmute: 'None'
+    })[key] || ({
+      None: 'None', Exit: 'Exit', RunScript: 'RunScript', Loop: 'Loop',
+      Shutdown: 'Shutdown', Sleep: 'Sleep', Hibernate: 'Hibernate',
+      Restart: 'Restart', Logoff: 'Logoff', TurnOffDisplay: 'TurnOffDisplay'
+    })[raw];
+  };
+  const finishAction = (rule, value) => {
+    const action = normalizedAction(value);
+    if (!action) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    if (['RunScript', 'Loop'].includes(action))
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    if (['Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
+      const context = input.executionContext || {}, following = context.queue && context.queue.hasFollowingWork;
+      if (following === 'yes')
+        return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+      if (following !== 'no')
+        return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    }
+    return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+  };
   const text = rule => rule.reasonKey
     ? { kind: 'plugin', key: rule.reasonKey, args: {}, fallback: rule.fallback }
     : { kind: 'literal', value: rule.fallback || 'Configuration could not be verified.' };
-  const location = rule => Array.isArray(rule.locations) ? rule.locations : rule.location ? [rule.location] : [];
+  const location = rule => {
+    const declared = Array.isArray(rule.locations) ? rule.locations : rule.location ? [rule.location] : [];
+    const available = new Set((input.configResources || []).map(resource => resource.id));
+    // Missing optional files still produce a check, but cannot offer a field
+    // location in a config resource the Host has not exposed in this snapshot.
+    return declared.filter(item => item.source !== 'config' || available.has(item.resourceId));
+  };
   const push = (rule, evaluation, severity, effect, locations, reason, actions) => {
     const value = { ruleId: rule.id, evaluation, severity, executionEffect: effect,
       scope: rule.scope || { kind: 'binding' }, locations: locations || [], actions: actions || [] };
@@ -139,31 +241,45 @@ function finalizeAssessment(plan) {
     if (value === true) return push(rule, 'satisfied', 'info', 'none', location(rule));
     if (value === false) {
       const context = input.executionContext || {};
-      const hasConsole = context.launchOwner === 'host' || context.launchOwner === 'already_running';
-      if (hasConsole) return push(rule, 'satisfied', 'info', 'none', location(rule));
+      const source = context.logSource || {};
+      if (source.kind === 'stdout' && source.available === true)
+        return push(rule, 'satisfied', 'info', 'none', location(rule));
       return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     }
     return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
   };
   const inspectFinishAction = rule => {
-    const document = read('config', rule.resourceId);
+    const resourceId = rule.configResource === 'main' ? mainConfigId() : rule.resourceId;
+    const document = resourceId ? read(rule.readKind === 'resource' ? 'resource' : 'config', resourceId) : undefined;
     if (!document || typeof document !== 'object')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     const value = select(document, rule.selector);
     if (value === undefined || value === null) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    const context = input.executionContext || {}, action = String(value);
-    if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    if (['RunScript', 'Loop'].includes(action))
+    return finishAction(rule, value);
+  };
+  const inspectMxuFinishAction = rule => {
+    const document = read('config', rule.resourceId);
+    if (!document || typeof document !== 'object')
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
+    const target = document.settings && document.settings.autoStartInstanceId;
+    const instances = Array.isArray(document.instances) ? document.instances.filter(item => item && item.id === target) : [];
+    if (instances.length !== 1)
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    if (['Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
-      const following = context.queue && context.queue.hasFollowingWork;
-      if (following === 'yes')
-        return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-      if (following !== 'no')
-        return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
-      return push(rule, 'satisfied', 'info', 'none', location(rule));
-    }
-    return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    if (!Array.isArray(instances[0].tasks))
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    const tasks = instances[0].tasks.filter(task => task && task.taskName === rule.taskName && task.enabled !== false);
+    if (tasks.length === 0) return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    const values = tasks.map(task => {
+      if (task.enabled !== true) return undefined;
+      const option = task.optionValues && task.optionValues[rule.optionId];
+      const value = option && typeof option === 'object' ? option.caseName : option;
+      return normalizedAction(value === undefined ? rule.defaultAction : value);
+    });
+    const disruptive = values.find(value => ['Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(value));
+    if (disruptive) return finishAction(rule, disruptive);
+    if (values.some(value => !value))
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    return finishAction(rule, values[0]);
   };
   const inspectProcessExit = rule => {
     const selectors = Array.isArray(rule.selectors) ? rule.selectors : [rule.selector];
@@ -187,7 +303,7 @@ function finalizeAssessment(plan) {
   const inspectSingleDaily = rule => {
     const enabled = plan.tasks.filter(task => task.enabled && task.role !== 'technical');
     if (enabled.length === 0) return push(rule, 'not_applicable', 'info', 'none', location(rule));
-    const allowed = new Set(rule.dailyTaskKeys || []);
+    const allowed = new Set(rule.allowedTaskKeys || []);
     if (allowed.size > 0 && enabled.every(task => allowed.has(task.sourceKey)))
       return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
@@ -204,36 +320,20 @@ function finalizeAssessment(plan) {
     return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
   };
   const inspectRoutine = rule => {
-    const document = read('config', rule.resourceId), raw = document && document['Routine Items'];
-    if (!Array.isArray(raw)) return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    const known = new Set((ADAPTER.entries || []).map(e => e.id));
-    const ids = raw.map(item => item && item.id);
-    const groups = new Set();
-    const valid = raw.every(item => {
-      if (!item || Array.isArray(item) || typeof item !== 'object'
-        || typeof item.id !== 'string' || !known.has(item.id) || typeof item.enabled !== 'boolean') return false;
-      if (ids.filter(id => id === item.id).length !== 1) return false;
-      const group = (ADAPTER.entries || []).find(entry => entry.id === item.id)?.exclusiveGroup;
-      if (item.enabled && group) {
-        if (groups.has(group)) return false;
-        groups.add(group);
-      }
-      return true;
-    });
-    if (valid) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    const document = read('config', rule.resourceId);
+    if (!document || typeof document !== 'object' || Array.isArray(document))
+      return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    // The same upstream projection governs discovery and admission. Missing
+    // defaults/duplicate selections affect patch safety, not initial validity.
+    const normalized = normalizeItems(document['Routine Items'], ADAPTER.entries);
+    if (normalized.diagnostics.length === 0) return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
   };
   const inspectRuntime = rule => {
     const app = read('resource', 'runtime-app');
     const head = read('resource', 'runtime-head');
     const tag = read('resource', 'runtime-tag');
-    const profiles = ADAPTER.runtimeProfiles || {};
-    const release = app && (profiles[app.current_profile] || (app.current_profile === 'Global' ? ADAPTER.runtimeRelease : null));
-    const valid = app && release && app.name === release.name && app.installed === true
-      && app.current_version === release.version && app.update_state === 'idle'
-      && !app.update_target_version && !app.update_error && app.running !== true;
-    const identity = valid && typeof head === 'string' && head.trim() === release.commit
-      && typeof tag === 'string' && tag.trim() === release.tagObject;
+    const identity = runtimeIdentity(app, head, tag);
     if (identity) return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
@@ -243,15 +343,22 @@ function finalizeAssessment(plan) {
       else if (rule.kind === 'autostart') inspectAutostart(rule);
       else if (rule.kind === 'file_logging') inspectLogging(rule);
       else if (rule.kind === 'finish_action') inspectFinishAction(rule);
+      else if (rule.kind === 'mxu_finish_action') inspectMxuFinishAction(rule);
       else if (rule.kind === 'process_exit') inspectProcessExit(rule);
       else if (rule.kind === 'controller_resource') inspectControllerResource(rule);
       else if (rule.kind === 'single_daily') inspectSingleDaily(rule);
       else if (rule.kind === 'finite_additions') inspectFinite(rule);
       else if (rule.kind === 'routine_schema') inspectRoutine(rule);
       else if (rule.kind === 'runtime_distribution') inspectRuntime(rule);
-      else push(rule, 'not_applicable', 'info', 'none', location(rule));
+      else {
+        const critical = rule.required === true && rule.criticality === 'critical_when_applicable';
+        push(rule, 'unknown', critical ? 'error' : (rule.severity || 'warning'), critical ? 'block' : (rule.effect || 'warn'),
+          location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
+      }
     } catch {
-      push(rule, 'unknown', rule.severity || 'warning', rule.effect || 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
+      const critical = rule.required === true && rule.criticality === 'critical_when_applicable';
+      push(rule, 'unknown', critical ? 'error' : (rule.severity || 'warning'), critical ? 'block' : (rule.effect || 'warn'),
+        location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     }
   }
   return { schemaVersion: '1', checks };

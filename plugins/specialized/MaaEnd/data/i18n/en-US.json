@@ -1,4 +1,5 @@
 {
+  "diagnostic.mxu.finish_action": "The action after MXU finishes may affect subsequent queue work.",
   "diagnostic.mxu.autostart_invalid": "The automatic-run instance is missing or has a duplicate ID. Use Edit configuration to select a valid instance, close the editor, then reload the plan.",
   "diagnostic.mxu.autostart_missing": "No automatic-run instance is selected. Use Edit configuration to select it for this bound user, close the editor, then reload the plan. The active tab is not an automatic-run target.",
   "option.DailyClaimDeliveryJobsRewards.disabled": "Delivery rewards: disabled (configuration only; no independent completion evidence)",

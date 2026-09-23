@@ -25,7 +25,15 @@
     "version": "1.2",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
-    "readResources": [],
+    "readResources": [
+      {
+        "id": "zzz-extra-config",
+        "source": "extraConfig",
+        "path": "0",
+        "format": "yaml",
+        "required": false
+      }
+    ],
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
@@ -34,7 +42,8 @@
       }
     },
       "configRules": [
-        { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual" }
+        { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "zzz.finish_action", "required": true, "criticality": "critical_when_applicable" }
       ],
       "environmentChecks": [
         { "id": "zzz-game-target", "source": { "kind": "config", "resourceId": "config:game_account.yml", "selector": ["game_path"] }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }

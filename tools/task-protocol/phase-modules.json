@@ -80,7 +80,10 @@
       "provides": [
         "finalizeAssessment"
       ],
-      "requires": []
+      "requires": [
+        "core/runtimeIdentity",
+        "oknte/normalizeItems"
+      ]
     },
     "core/behavior": {
       "file": "core/behavior.js",
@@ -413,7 +416,8 @@
       ],
       "requires": [
         "core/resource",
-        "core/object"
+        "core/object",
+        "core/runtimeIdentity"
       ]
     },
     "mxu/optionSummary": {
@@ -424,6 +428,13 @@
       "requires": [
         "core/object"
       ]
+    },
+    "core/runtimeIdentity": {
+      "file": "core/runtimeIdentity.js",
+      "provides": [
+        "runtimeIdentity"
+      ],
+      "requires": []
     }
   },
   "entries": {

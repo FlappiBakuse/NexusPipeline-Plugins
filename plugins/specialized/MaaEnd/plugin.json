@@ -546,7 +546,8 @@
     },
       "configRules": [
         { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" }
+        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "mxu.finish_action", "required": true, "criticality": "critical_when_applicable" }
       ],
       "environmentChecks": []
     }

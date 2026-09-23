@@ -1,4 +1,5 @@
 {
+  "diagnostic.bettergi.finish_action": "BetterGI 一条龙完成后的系统动作可能影响队列后续工作。",
   "task.claim_mail": "领取邮件",
   "reason.bettergi.leyline.failed": "地脉任务报告失败",
   "reason.bettergi.daily.guild_exception": "每日委托领奖异常",

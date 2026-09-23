@@ -39,10 +39,11 @@
       }
     },
       "configRules": [
-        { "id": "bettergi.game_target", "required": true, "criticality": "advisory_or_contextual" }
+        { "id": "bettergi.game_target", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "bettergi.finish_action", "required": true, "criticality": "critical_when_applicable" }
       ],
       "environmentChecks": [
-        { "id": "bettergi-game-target", "source": { "kind": "resource", "resourceId": "extra-user-config", "selector": ["genshinStartConfig", "installPath"] }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
+        { "id": "bettergi-game-target", "source": { "kind": "resource", "resourceId": "extra-user-config", "selector": ["genshinStartConfig", "installPath"] }, "expectedKind": "file_or_directory", "relativeBase": "none", "comparison": "path_or_executable_parent", "networkAccess": false, "followReparsePoints": false }
       ]
     }
   }

@@ -90,7 +90,8 @@
     "CloseGame",
     "CloseGamePC",
     "登录游戏",
-    "关闭游戏"
+    "关闭游戏",
+    "__MXU_POWER__"
   ],
   "safe": [],
   "importTasks": {
@@ -256,8 +257,60 @@
   },
   "protocolVersion": "1.2",
   "configRules": [
-    { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable", "kind": "autostart", "resourceId": "config:mxu-MaaEnd.json", "missingReasonKey": "diagnostic.mxu.autostart_missing", "invalidReasonKey": "diagnostic.mxu.autostart_invalid", "fallback": "当前绑定配置没有唯一有效的自动执行实例。", "location": { "source": "config", "resourceId": "config:mxu-MaaEnd.json", "selector": ["settings", "autoStartInstanceId"] } },
-    { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual", "kind": "controller_resource", "resourceId": "config:mxu-MaaEnd.json", "fallback": "自动执行实例的控制器或资源选择无法确认。", "location": { "source": "config", "resourceId": "config:mxu-MaaEnd.json", "selector": ["settings", "autoStartInstanceId"] } }
+    {
+      "id": "mxu.autostart_target",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "autostart",
+      "resourceId": "config:mxu-MaaEnd.json",
+      "missingReasonKey": "diagnostic.mxu.autostart_missing",
+      "invalidReasonKey": "diagnostic.mxu.autostart_invalid",
+      "fallback": "当前绑定配置没有唯一有效的自动执行实例。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": [
+          "settings",
+          "autoStartInstanceId"
+        ]
+      }
+    },
+    {
+      "id": "mxu.controller_resource",
+      "required": true,
+      "criticality": "advisory_or_contextual",
+      "kind": "controller_resource",
+      "resourceId": "config:mxu-MaaEnd.json",
+      "fallback": "自动执行实例的控制器或资源选择无法确认。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": [
+          "settings",
+          "autoStartInstanceId"
+        ]
+      }
+    },
+    {
+      "id": "mxu.finish_action",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "mxu_finish_action",
+      "resourceId": "config:mxu-MaaEnd.json",
+      "taskName": "__MXU_POWER__",
+      "optionId": "__MXU_POWER_OPTION__",
+      "reasonKey": "diagnostic.mxu.finish_action",
+      "fallback": "MXU 完成后的系统动作可能影响队列后续工作。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": [
+          "settings",
+          "autoStartInstanceId"
+        ]
+      },
+      "defaultAction": "shutdown"
+    }
   ],
   "taskTextKeys": {},
   "taskNameTextKeys": {

@@ -1,4 +1,5 @@
 {
+  "diagnostic.mxu.finish_action": "完成后的系统动作可能影响队列后续工作。",
   "diagnostic.mxu.autostart_invalid": "自动执行实例已不存在或标识重复。请通过“编辑配置”重新选择有效实例，关闭编辑器后重新读取计划。",
   "diagnostic.mxu.autostart_missing": "尚未设置自动执行实例。请点击“编辑配置”，在当前绑定用户的配置中选择自动执行的实例，关闭编辑器后重新读取计划；当前打开的配置页不等于自动执行目标。",
   "reason.mxu.task.failed": "外层任务回调失败",

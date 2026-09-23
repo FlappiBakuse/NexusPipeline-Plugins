@@ -31,5 +31,12 @@
     "split": "development",
     "upstreamCommit": "0339cfc44a9827ad8cd1ebeabe432660e87f2acb",
     "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
-  }
+  },
+  "configChecks": [
+    {
+      "ruleId": "okscript.distribution",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ]
 }

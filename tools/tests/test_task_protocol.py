@@ -1,4 +1,7 @@
 import sys
+import json
+import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -128,6 +131,83 @@ class TaskProtocolTests(unittest.TestCase):
                 else:
                     with self.assertRaises(core.RepositoryError):
                         core._specialized_script_closure(root, manifest)
+
+    @unittest.skipUnless(shutil.which('node'), 'node is required for generated runtime assessment coverage')
+    def test_generated_finish_action_assessment_covers_bettergi_and_mxu(self):
+        cases = [
+            (
+                'BetterGI',
+                'config:fixture.json',
+                {'TaskEnabledList': {'daily': True}, 'CompletionAction': '关机'},
+                {},
+                'bettergi.finish_action',
+            ),
+            (
+                'MaaEnd',
+                'config:mxu-MaaEnd.json',
+                {
+                    'settings': {'autoStartInstanceId': 'instance-1'},
+                    'instances': [{
+                        'id': 'instance-1', 'controllerName': 'Win32-Front', 'resourceName': '官服',
+                        'tasks': [{
+                            'id': 'power', 'taskName': '__MXU_POWER__', 'enabled': True,
+                            'optionValues': {'__MXU_POWER_OPTION__': {'caseName': 'shutdown'}},
+                        }],
+                    }],
+                },
+                {'interface': '{"name":"MaaEnd","task":[]}'},
+                'mxu.finish_action',
+            ),
+            (
+                'ZenlessZoneZeroOneDragon',
+                'config:one_dragon/_group.yml',
+                {'app_list': []},
+                {
+                    'zzz-extra-config': {
+                        'instance_list': [{
+                            'idx': 1, 'name': '01', 'active': True, 'active_in_od': True,
+                            'force_login_before_run': False,
+                        }],
+                        'after_done': '关机',
+                        'instance_run': '仅运行当前',
+                    },
+                },
+                'zzz.finish_action',
+            ),
+        ]
+        for artifact, config_id, config, resources, rule_id in cases:
+            with self.subTest(artifact=artifact):
+                script_path = Path(__file__).resolve().parents[2] / 'plugins' / 'specialized' / artifact / 'data' / 'discover.js'
+                js = f"""
+const fs = require('fs');
+const vm = require('vm');
+const captured = [];
+const input = {{ phase: 'discover', protocolVersion: '1.2',
+  configResources: [{{ id: {json.dumps(config_id, ensure_ascii=False)}, format: 'json' }}],
+  executionContext: {{ mode: 'pc', queue: {{ hasFollowingWork: 'yes' }} }} }};
+const config = {json.dumps(config, ensure_ascii=False)};
+const resources = {json.dumps(resources, ensure_ascii=False)};
+const nexus = {{
+  readConfig: id => ({{ document: id === input.configResources[0].id ? config : undefined }}),
+  readResource: id => ({{ document: resources[id], format: 'text' }}),
+  inspectDeclaredTarget: () => ({{ status: 'present', matchesContext: true }})
+}};
+vm.runInNewContext(fs.readFileSync({json.dumps(str(script_path), ensure_ascii=False)}, 'utf8'),
+  {{ input, nexus, console: {{ log: value => captured.push(value) }} }});
+const check = captured.at(-1).configAssessment.checks.find(value => value.ruleId === {json.dumps(rule_id)});
+if (!check || check.evaluation !== 'violated' || check.executionEffect !== 'block')
+  throw new Error(JSON.stringify(check));
+console.log(JSON.stringify(check));
+"""
+                completed = subprocess.run(
+                    ['node', '--input-type=commonjs', '-e', js],
+                    cwd=Path(__file__).resolve().parents[2],
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    check=False,
+                )
+                self.assertEqual(0, completed.returncode, completed.stderr or completed.stdout)
 
     def test_author_names_cannot_escape_output(self):
         for artifact, name in [("../Escape", "test"), ("Example", "../escape"), ("Example", "MixedCase")]:

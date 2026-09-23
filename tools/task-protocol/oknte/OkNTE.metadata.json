@@ -4,10 +4,9 @@
   "protocolVersion": "1.2",
   "configRules": [
     { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable", "kind": "runtime_distribution", "reasonKey": "diagnostic.runtime_unqualified", "fallback": "官方发行版本或更新状态未就绪，已阻止自动运行。", "location": { "source": "resource", "resourceId": "runtime-app", "selector": ["current_profile"] } },
-    { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable", "kind": "single_daily", "reasonKey": "diagnostic.okscript.single_daily", "fallback": "当前计划不是可确认的单一日常执行计划。", "location": { "source": "context", "field": "effectiveLaunch.entryId" } },
+    { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable", "kind": "single_daily", "allowedTaskKeys": ["daily_anomaly", "daily_anomaly_hunter", "coffee", "daily_claim", "cinema_date", "fountain", "furniture", "gift"], "reasonKey": "diagnostic.okscript.single_daily", "fallback": "当前计划不是可确认的单一日常执行计划。", "location": { "source": "context", "field": "effectiveLaunch.entryId" } },
     { "id": "oknte.routine_schema", "required": true, "criticality": "critical_when_applicable", "kind": "routine_schema", "resourceId": "config:DailyRoutineTask.json", "reasonKey": "diagnostic.oknte.routine_schema", "fallback": "DailyRoutineTask 的日常选择结构无法确认。", "location": { "source": "config", "resourceId": "config:DailyRoutineTask.json", "selector": ["Routine Items"] } }
   ],
-  "dailyTaskKeys": ["daily_anomaly", "daily_anomaly_hunter", "coffee", "daily_claim", "cinema_date", "fountain", "furniture", "gift"],
   "entries": [
     {
       "id": "daily_anomaly",

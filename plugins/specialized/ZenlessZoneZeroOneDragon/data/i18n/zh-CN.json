@@ -33,5 +33,6 @@
   "reason.zzz.charge.child_error": "当前体力副本执行出现异常或失败",
   "reason.zzz.charge.abandoned": "上游已跳过失败的体力计划，其他计划成功不能抵消",
   "reason.zzz.application.terminal": "应用执行已结束",
-  "reason.zzz.application.already_done": "应用报告本次已完成"
+  "reason.zzz.application.already_done": "应用报告本次已完成",
+  "diagnostic.zzz.finish_action": "绝区零一条龙完成后的系统动作可能影响队列后续工作。"
 }

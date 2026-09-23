@@ -46,8 +46,8 @@
         { "id": "baah.file_logging", "required": true, "criticality": "critical_when_applicable" }
       ],
       "environmentChecks": [
-        { "id": "baah-pc-game-target", "source": { "kind": "host", "field": "gameTarget" }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false },
-        { "id": "baah-adb-target", "source": { "kind": "host", "field": "gameTarget" }, "expectedKind": "adb_endpoint", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
+        { "id": "baah-pc-game-target", "source": { "kind": "resource", "resourceId": "software-config", "selector": ["TARGET_EMULATOR_PATH"] }, "expectedKind": "file", "relativeBase": "none", "comparison": "exact", "networkAccess": false, "followReparsePoints": false },
+        { "id": "baah-adb-target", "source": { "kind": "resource", "resourceId": "software-config", "selector": ["TARGET_IP_PATH"] }, "expectedKind": "adb_endpoint", "relativeBase": "none", "comparison": "adb_endpoint_with_port", "secondarySelector": ["TARGET_PORT"], "networkAccess": false, "followReparsePoints": false }
       ]
   }
 }

@@ -1,6 +1,9 @@
 {
   "artifact": "OkWutheringWaves",
   "coverage": "unsupported",
+  "configChecks": [
+    { "ruleId": "okww.finite_additions", "evaluation": "unknown", "executionEffect": "block", "locationCount": 0 }
+  ],
   "resources": [
     {
       "id": "config:DailyTask.json",
