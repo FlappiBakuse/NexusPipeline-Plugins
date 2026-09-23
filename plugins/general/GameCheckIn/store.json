@@ -19,6 +19,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.3.5",
+      "date": "2026-09-21",
+      "items": [
+        "调整签到任务卡片的左侧留白，与用户、脚本实例及调度队列卡片保持一致。"
+      ]
+    },
+    {
       "version": "0.3.4",
       "date": "2026-09-18",
       "items": [
@@ -30,13 +37,6 @@
       "date": "2026-09-18",
       "items": [
         "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
-      ]
-    },
-    {
-      "version": "0.3.2",
-      "date": "2026-09-17",
-      "items": [
-        "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
       ]
     }
   ],
@@ -56,6 +56,12 @@
       ],
       "changelog": [
         {
+          "version": "0.3.5",
+          "items": [
+            "Aligned check-in task card spacing with user, script instance and queue cards."
+          ]
+        },
+        {
           "version": "0.3.4",
           "items": [
             "Unified check-in schedule controls with the queue editor's public button state and responsive layout."
@@ -65,12 +71,6 @@
           "version": "0.3.3",
           "items": [
             "Fixed frontend styles that depended on the host drag control's internal selectors."
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "items": [
-            "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
           ]
         }
       ]

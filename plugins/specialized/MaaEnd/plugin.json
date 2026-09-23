@@ -5,9 +5,9 @@
   "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.15.11",
+  "minHostVersion": "0.16.8",
   "capabilities": [
     "emulator"
   ],
@@ -19,5 +19,536 @@
     }
   },
   "resolve": "data/resolve.json",
-  "judgeScript": "data/judge.js"
-}
+  "judgeScript": "data/judge.js",
+  "taskProtocol": {
+    "version": "0.1.0",
+    "discoverScript": "data/discover.js",
+    "retryScript": "data/retry.js",
+    "readResources": [
+      {
+        "id": "interface",
+        "source": "root",
+        "path": "interface.json",
+        "format": "text",
+        "required": true
+      },
+      {
+        "id": "interface-part-0",
+        "source": "root",
+        "path": "tasks/AccountSwitch.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-1",
+        "source": "root",
+        "path": "tasks/AeroSalvage.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-2",
+        "source": "root",
+        "path": "tasks/AndroidOpenGame.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-3",
+        "source": "root",
+        "path": "tasks/AutoCollect.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-4",
+        "source": "root",
+        "path": "tasks/AutoEcoFarm.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-5",
+        "source": "root",
+        "path": "tasks/AutoEssence/AutoEssence.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-6",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/SelectLocation.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-7",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/Slot1.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-8",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/VFOriginLodespring.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-9",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/VFOriginiumSciencePark.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-10",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/VFPowerPlateau.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-11",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/VFTheHub.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-12",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLMarkerStone.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-13",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLNorthWulingExclusionZone.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-14",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLQingboStockade.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-15",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLSnowyForest.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-16",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLSwordVaultDale.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-17",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLTestArea.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-18",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLWulingCity.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-19",
+        "source": "root",
+        "path": "tasks/AutoEssence/Location/WLYinglungPass.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-20",
+        "source": "root",
+        "path": "tasks/AutoEssence/Target/Target.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-21",
+        "source": "root",
+        "path": "tasks/AutoSell.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-22",
+        "source": "root",
+        "path": "tasks/AutoStockStaple.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-23",
+        "source": "root",
+        "path": "tasks/AutoStockpile.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-24",
+        "source": "root",
+        "path": "tasks/BakerEntry.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-25",
+        "source": "root",
+        "path": "tasks/BatchAddFriends.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-26",
+        "source": "root",
+        "path": "tasks/BatchDeleteFriends.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-27",
+        "source": "root",
+        "path": "tasks/BatchUseDetector.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-28",
+        "source": "root",
+        "path": "tasks/ClaimSimulationRewards.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-29",
+        "source": "root",
+        "path": "tasks/CloseGame.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-30",
+        "source": "root",
+        "path": "tasks/CloseGamePC.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-31",
+        "source": "root",
+        "path": "tasks/Crafting.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-32",
+        "source": "root",
+        "path": "tasks/CreditShopping.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-33",
+        "source": "root",
+        "path": "tasks/DailyRewards.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-34",
+        "source": "root",
+        "path": "tasks/DeliveryJobs.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-35",
+        "source": "root",
+        "path": "tasks/DevTest.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-36",
+        "source": "root",
+        "path": "tasks/DijiangRewards.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-37",
+        "source": "root",
+        "path": "tasks/EnvironmentMonitoring.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-38",
+        "source": "root",
+        "path": "tasks/EssenceFilter.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-39",
+        "source": "root",
+        "path": "tasks/GearAssembly.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-40",
+        "source": "root",
+        "path": "tasks/GiftOperator.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-41",
+        "source": "root",
+        "path": "tasks/ImportBluePrints.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-42",
+        "source": "root",
+        "path": "tasks/IntelArchive.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-43",
+        "source": "root",
+        "path": "tasks/ItemTransfer.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-44",
+        "source": "root",
+        "path": "tasks/OutpostTrading.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-45",
+        "source": "root",
+        "path": "tasks/ProtocolSpace.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-46",
+        "source": "root",
+        "path": "tasks/PullCountCalculator.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-47",
+        "source": "root",
+        "path": "tasks/PuzzleSolver.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-48",
+        "source": "root",
+        "path": "tasks/ReadAllWiki.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-49",
+        "source": "root",
+        "path": "tasks/RealTimeTask.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-50",
+        "source": "root",
+        "path": "tasks/ReceiveProdManual.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-51",
+        "source": "root",
+        "path": "tasks/ResourceRecycleStation.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-52",
+        "source": "root",
+        "path": "tasks/SeizeDeliveryJobs.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-53",
+        "source": "root",
+        "path": "tasks/SimpleProductionBatchStart.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-54",
+        "source": "root",
+        "path": "tasks/StashBackpack.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-55",
+        "source": "root",
+        "path": "tasks/SwitchTeam.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-56",
+        "source": "root",
+        "path": "tasks/TrialOfSwordmancy.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-57",
+        "source": "root",
+        "path": "tasks/VisitFriends.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-58",
+        "source": "root",
+        "path": "tasks/Weapon.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-59",
+        "source": "root",
+        "path": "tasks/WebEvent202605.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-60",
+        "source": "root",
+        "path": "tasks/ZiplineImport.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-61",
+        "source": "root",
+        "path": "tasks/preset/DailyFull.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-62",
+        "source": "root",
+        "path": "tasks/preset/QuickDaily.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-63",
+        "source": "root",
+        "path": "tasks/preset/RealtimeAssist.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-64",
+        "source": "root",
+        "path": "tasks/pretasks/GameSetting.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-65",
+        "source": "root",
+        "path": "tasks/setting/Keymap.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-66",
+        "source": "root",
+        "path": "tasks/setting/Zipline.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "locale-zh-CN",
+        "source": "root",
+        "path": "locales/interface/zh_cn.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "locale-en-US",
+        "source": "root",
+        "path": "locales/interface/en_us.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "locale-zh-TW",
+        "source": "root",
+        "path": "locales/interface/zh_tw.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "locale-ja-JP",
+        "source": "root",
+        "path": "locales/interface/ja_jp.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "locale-ko-KR",
+        "source": "root",
+        "path": "locales/interface/ko_kr.json",
+        "format": "text",
+        "required": false
+      }
+    ],
+    "localization": {
+      "defaultLocale": "zh-CN",
+      "messages": {
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
+      }
+    },
+      "configRules": [
+        { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable" },
+        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "mxu.finish_action", "required": true, "criticality": "critical_when_applicable" }
+      ],
+      "environmentChecks": []
+    }
+  }

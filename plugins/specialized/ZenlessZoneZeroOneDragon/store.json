@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
   "changelog": [
     {
+      "version": "0.3.0",
+      "date": "2026-09-21",
+      "items": [
+        "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+      ]
+    },
+    {
       "version": "0.2.10",
       "date": "2026-09-13",
       "items": [
@@ -34,15 +41,29 @@
       "displayName": "ZenlessZoneZeroOneDragon",
       "gameName": "Zenless Zone Zero",
       "description": "Manage ZenlessZoneZeroOneDragon script instances, configuration paths, logs, and bound user settings.",
-      "tags": ["Zenless Zone Zero", "Specialized plugin", "OneDragon"],
+      "tags": [
+        "Zenless Zone Zero",
+        "Specialized plugin",
+        "OneDragon"
+      ],
       "changelog": [
         {
+          "version": "0.3.0",
+          "items": [
+            "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+          ]
+        },
+        {
           "version": "0.2.10",
-          "items": ["Updated the minimum host version requirement to 0.15.11."]
+          "items": [
+            "Updated the minimum host version requirement to 0.15.11."
+          ]
         },
         {
           "version": "0.2.8",
-          "items": ["Corrected the English store history metadata; runtime behavior is unchanged."]
+          "items": [
+            "Corrected the English store history metadata; runtime behavior is unchanged."
+          ]
         }
       ]
     }

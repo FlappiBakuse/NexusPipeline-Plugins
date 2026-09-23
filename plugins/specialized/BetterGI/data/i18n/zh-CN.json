@@ -1,0 +1,11 @@
+{
+  "diagnostic.bettergi.finish_action": "BetterGI 一条龙完成后的系统动作可能影响队列后续工作。",
+  "task.claim_mail": "领取邮件",
+  "reason.bettergi.leyline.failed": "地脉任务报告失败",
+  "reason.bettergi.daily.guild_exception": "每日委托领奖异常",
+  "reason.bettergi.resin.exception": "树脂任务异常",
+  "reason.bettergi.mail.claim": "已确认领取邮件",
+  "reason.bettergi.mail.empty": "没有可领取邮件",
+  "reason.bettergi.mail.exception": "领取邮件异常",
+  "reason.bettergi.leyline.not_due": "当前无需执行地脉任务"
+}

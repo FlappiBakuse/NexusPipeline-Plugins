@@ -1,0 +1,41 @@
+{
+  "artifact": "TaskProtocolExample",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"tasks\": [{\"id\": \"daily-reward\", \"name\": \"每日奖励\", \"builtin\": true, \"enabled\": true}, {\"id\": \"custom\", \"name\": \"每日奖励\", \"customName\": \"<b>User label</b>\", \"enabled\": true}]}"
+    }
+  ],
+  "tasks": {
+    "daily-reward": {
+      "enabled": true
+    },
+    "custom": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "TASK daily-reward OK",
+        "TASK custom OK"
+      ]
+    }
+  ],
+  "results": {
+    "daily-reward": "succeeded",
+    "custom": "succeeded"
+  },
+  "displayNames": {
+    "en-US": {
+      "daily-reward": "Daily rewards",
+      "custom": "<b>User label</b>"
+    },
+    "zh-CN": {
+      "daily-reward": "每日奖励",
+      "custom": "<b>User label</b>"
+    }
+  }
+}

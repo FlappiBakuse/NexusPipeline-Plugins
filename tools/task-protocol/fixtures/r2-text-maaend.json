@@ -1,0 +1,41 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"DailyRewards\", \"enabled\": true}, {\"id\": \"custom\", \"taskName\": \"DailyRewards\", \"customName\": \"User name\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"DailyRewards\", \"label\": \"每日奖励\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/custom": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 每日奖励",
+        "[2026-09-21 10:00:00.124] 任务完成: 每日奖励"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  },
+  "displayNames": {
+    "en-US": {
+      "chosen/one": "📅 Claim Daily Rewards",
+      "chosen/custom": "User name"
+    }
+  }
+}

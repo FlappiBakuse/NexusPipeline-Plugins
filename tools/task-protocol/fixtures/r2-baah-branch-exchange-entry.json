@@ -1,0 +1,43 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"学园交流会\"], \"TASK_ONOFF\": [true]}]}, \"OPEN_GAME_APP_TASK\": false, \"DO_POST_ALL_TASK\": false}"
+    }
+  ],
+  "tasks": {
+    "0/0/学园交流会": {
+      "enabled": true
+    },
+    "automatic-login": {
+      "enabled": false
+    },
+    "automatic-cleanup": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "当前激活: pipeline 1",
+        "判断任务InExchange是否可以执行",
+        "执行任务InExchange",
+        "无法打开交换页面，任务退出",
+        "任务InExchange执行结束",
+        "所有任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "0/0/学园交流会": "failed"
+  },
+  "incidents": [
+    {
+      "task": "0/0/学园交流会",
+      "resolution": "open"
+    }
+  ]
+}

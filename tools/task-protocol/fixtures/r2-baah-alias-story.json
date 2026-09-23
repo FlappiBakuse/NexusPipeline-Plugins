@@ -1,0 +1,143 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"主线剧情\", \"支线剧情\"], \"TASK_ONOFF\": [true, true]}]}, \"OPEN_GAME_APP_TASK\": true, \"DO_POST_ALL_TASK\": false}"
+    }
+  ],
+  "tasks": {
+    "automatic-login": {
+      "enabled": true,
+      "order": 0
+    },
+    "automatic-cleanup": {
+      "enabled": false,
+      "order": 3
+    },
+    "0/0/主线剧情": {
+      "enabled": true,
+      "order": 1
+    },
+    "0/1/支线剧情": {
+      "enabled": true,
+      "order": 2
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "当前激活: pipeline 1"
+      ]
+    },
+    {
+      "lines": [
+        "判断任务EnterGame是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "执行任务EnterGame"
+      ]
+    },
+    {
+      "lines": [
+        "任务EnterGame执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "判断任务AutoStory是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "执行任务AutoStory"
+      ]
+    },
+    {
+      "lines": [
+        "判断任务AutoStory是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "执行任务AutoStory"
+      ]
+    },
+    {
+      "lines": [
+        "任务AutoStory执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "运行出错: first occurrence failed"
+      ]
+    },
+    {
+      "lines": [
+        "当前激活: pipeline 1"
+      ]
+    },
+    {
+      "lines": [
+        "CURRENT_PERIOD_TASK_INDEX = 2，继续运行"
+      ]
+    },
+    {
+      "lines": [
+        "判断任务EnterGame是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "执行任务EnterGame"
+      ]
+    },
+    {
+      "lines": [
+        "任务EnterGame执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "判断任务AutoStory是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "执行任务AutoStory"
+      ]
+    },
+    {
+      "lines": [
+        "运行出错: second occurrence failed"
+      ]
+    },
+    {
+      "lines": [],
+      "final": true,
+      "terminationReason": "process_exited",
+      "boundary": "aborted"
+    }
+  ],
+  "results": {
+    "automatic-login": "succeeded",
+    "0/0/主线剧情": "failed",
+    "0/1/支线剧情": "failed"
+  },
+  "boundary": "aborted",
+  "incidents": [
+    {
+      "task": "0/0/主线剧情",
+      "resolution": "open"
+    },
+    {
+      "task": "0/1/支线剧情",
+      "resolution": "open"
+    }
+  ]
+}

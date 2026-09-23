@@ -1,0 +1,30 @@
+{
+  "artifact": "OkWutheringWaves",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:DailyTask.json",
+      "format": "json",
+      "text": "{\"Which to Farm\": \"Tacet Suppression\"}"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "upstreamCommit": "016c19e807fcc16800c42c89fdb3b01ea6947ee9",
+    "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
+  },
+  "configChecks": [
+    {
+      "ruleId": "okscript.distribution",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "resourceSets": [
+    "resources/okww-code-verified.json"
+  ]
+}

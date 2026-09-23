@@ -7,9 +7,22 @@
       "url": "https://github.com/FlappiBakuse"
     }
   ],
-  "tags": ["蔚蓝档案", "Blue Archive", "专项插件", "模拟器", "BAAH"],
+  "tags": [
+    "蔚蓝档案",
+    "Blue Archive",
+    "专项插件",
+    "模拟器",
+    "BAAH"
+  ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
   "changelog": [
+    {
+      "version": "0.2.0",
+      "date": "2026-09-21",
+      "items": [
+        "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+      ]
+    },
     {
       "version": "0.1.5",
       "date": "2026-09-13",
@@ -30,15 +43,30 @@
       "displayName": "BAAH",
       "gameName": "Blue Archive",
       "description": "Manage BAAH script instances, configuration files, logs, and retry-failed-task behavior.",
-      "tags": ["Blue Archive", "Specialized plugin", "Emulator", "BAAH"],
+      "tags": [
+        "Blue Archive",
+        "Specialized plugin",
+        "Emulator",
+        "BAAH"
+      ],
       "changelog": [
         {
+          "version": "0.2.0",
+          "items": [
+            "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+          ]
+        },
+        {
           "version": "0.1.5",
-          "items": ["Updated the minimum host version requirement to 0.15.11."]
+          "items": [
+            "Updated the minimum host version requirement to 0.15.11."
+          ]
         },
         {
           "version": "0.1.3",
-          "items": ["Added English store metadata and localized configuration-input labels and descriptions."]
+          "items": [
+            "Added English store metadata and localized configuration-input labels and descriptions."
+          ]
         }
       ]
     }

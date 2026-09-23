@@ -5,13 +5,12 @@
   "displayName": "绝区零一条龙",
   "gameName": "绝区零",
   "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.2.10",
+  "version": "0.3.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.15.11",
+  "minHostVersion": "0.16.8",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
-  "configValidator": "data/config-validator.js",
-  "configEditor": "data/config-editor.js",
+  "configEditor": "data/editor.js",
   "capabilities": [
     "no-fresh-config"
   ],
@@ -21,5 +20,33 @@
       "zh-CN": "i18n/zh-CN.json",
       "en-US": "i18n/en-US.json"
     }
+  },
+  "taskProtocol": {
+    "version": "0.1.0",
+    "discoverScript": "data/discover.js",
+    "retryScript": "data/retry.js",
+    "readResources": [
+      {
+        "id": "zzz-extra-config",
+        "source": "extraConfig",
+        "path": "0",
+        "format": "yaml",
+        "required": false
+      }
+    ],
+    "localization": {
+      "defaultLocale": "zh-CN",
+      "messages": {
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
+      }
+    },
+      "configRules": [
+        { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual" },
+        { "id": "zzz.finish_action", "required": true, "criticality": "critical_when_applicable" }
+      ],
+      "environmentChecks": [
+        { "id": "zzz-game-target", "source": { "kind": "config", "resourceId": "config:game_account.yml", "selector": ["game_path"] }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
+      ]
+    }
   }
-}

@@ -398,3 +398,5 @@ BetterGI 的 TaskEnabledList 是 map 型参考；MaaEnd 的 instances[id=...].ta
 6. 处理日志截断、日志轮换和重复调用。
 7. 保证多次调用幂等。
 8. reason 写成用户可理解的结果，调试细节留在必要的日志中。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

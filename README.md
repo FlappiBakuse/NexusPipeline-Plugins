@@ -14,6 +14,8 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
+| `okww` | `OkWutheringWaves` | 鸣潮（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
+| `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
 | `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
 | `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API v1.7 provider |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
@@ -73,6 +75,7 @@ NexusPipeline-Plugins/
 │   └── tests/                           # 仓库工具单元测试
 └── docs/
     ├── README.md                       # 插件作者任务入口与文档地图
+    ├── STATUS.md                       # 当前待办与未验证范围
     ├── map.json                        # 机器可读主题路由
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── FRONTEND_PLUGIN.md              # 前端插件开发指南
@@ -111,9 +114,12 @@ NexusPipeline-Plugins/
 
 ## 贡献入口
 
+- [项目状态与待办](docs/STATUS.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [DATA_SPECIALIZED_PLUGIN.md](docs/DATA_SPECIALIZED_PLUGIN.md)
 - [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)
 - [RELEASING.md](docs/RELEASING.md)
 - [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)
 - [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。

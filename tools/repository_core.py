@@ -603,8 +603,166 @@ def _validate_judge_locale_contract(plugin: Path, manifest: dict[str, Any], judg
     )
 
 
+def _validate_task_protocol_selector(selector: Any) -> None:
+    _require(isinstance(selector, list) and 0 < len(selector) <= 32, "taskProtocol environment selector invalid")
+    for token in selector:
+        if isinstance(token, str):
+            _require(0 < len(token) <= 256, "taskProtocol selector property invalid")
+            continue
+        _require(isinstance(token, dict), "taskProtocol selector token invalid")
+        if "by" in token:
+            _require(set(token) == {"by", "value"} and isinstance(token.get("by"), str) and bool(token["by"]), "taskProtocol identity selector invalid")
+        else:
+            _require(
+                set(token) == {"index", "guardKey", "guardValue"}
+                and isinstance(token.get("index"), int)
+                and token["index"] >= 0
+                and isinstance(token.get("guardKey"), str)
+                and bool(token["guardKey"]),
+                "taskProtocol guard selector invalid",
+            )
+
+
+def _validate_task_protocol_config_rules(value: Any) -> None:
+    _require(isinstance(value, list) and 0 < len(value) <= 32, "taskProtocol.configRules must contain 1..32 rules")
+    identifiers: set[str] = set()
+    for rule in value:
+        _require(isinstance(rule, dict) and set(rule) == {"id", "required", "criticality"}, "taskProtocol config rule fields invalid")
+        identifier = rule.get("id")
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol config rule id invalid")
+        identifiers.add(identifier)
+        _require(type(rule.get("required")) is bool and rule.get("criticality") in {"critical_when_applicable", "advisory_or_contextual"}, "taskProtocol config rule invalid")
+
+
+def _validate_task_protocol_environment_checks(value: Any) -> None:
+    _require(isinstance(value, list) and len(value) <= 32, "taskProtocol.environmentChecks must contain at most 32 checks")
+    identifiers: set[str] = set()
+    for check in value:
+        _require(
+            isinstance(check, dict)
+            and set(check).issubset({"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints", "comparison", "secondarySelector", "defaultValue", "secondaryDefaultValue"})
+            and {"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints"}.issubset(check),
+            "taskProtocol environment check fields invalid",
+        )
+        identifier = check.get("id")
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol environment check id invalid")
+        identifiers.add(identifier)
+        _require(
+            check.get("expectedKind") in {"file", "directory", "file_or_directory", "adb_endpoint"}
+            and check.get("relativeBase") in {"script_root", "config_directory", "none"}
+            and check.get("networkAccess") is False
+            and check.get("followReparsePoints") is False,
+            "taskProtocol environment check policy invalid",
+        )
+        source = check.get("source")
+        _require(isinstance(source, dict) and isinstance(source.get("kind"), str), "taskProtocol environment check source invalid")
+        kind = source["kind"]
+        if kind in {"config", "resource"}:
+            _require(set(source) == {"kind", "resourceId", "selector"} and isinstance(source.get("resourceId"), str) and bool(source["resourceId"]), "taskProtocol environment resource source invalid")
+            _validate_task_protocol_selector(source["selector"])
+        elif kind == "mainConfig":
+            _require(set(source) == {"kind", "selector"}, "taskProtocol main config source invalid")
+            _validate_task_protocol_selector(source["selector"])
+        elif kind == "host":
+            _require(set(source) == {"kind", "field"} and source.get("field") in {"gameTarget", "scriptExecutable"}, "taskProtocol environment host source invalid")
+        else:
+            raise RepositoryError("taskProtocol environment source kind invalid")
+        comparison = check.get("comparison", "exact")
+        _require(comparison in {"exact", "path_or_executable_parent", "adb_endpoint_with_port"}, "taskProtocol environment comparison invalid")
+        _require(
+            comparison != "path_or_executable_parent" or check.get("expectedKind") == "file_or_directory",
+            "taskProtocol path comparison requires file_or_directory",
+        )
+        if comparison == "adb_endpoint_with_port":
+            _require(
+                kind in {"resource", "config", "mainConfig"}
+                and check.get("expectedKind") == "adb_endpoint"
+                and isinstance(check.get("secondarySelector"), list),
+                "taskProtocol adb endpoint comparison invalid",
+            )
+            _validate_task_protocol_selector(check["secondarySelector"])
+        else:
+            _require("secondarySelector" not in check, "taskProtocol secondary selector invalid")
+        for field in ("defaultValue", "secondaryDefaultValue"):
+            if field in check:
+                selector = source.get("selector") if field == "defaultValue" else check.get("secondarySelector")
+                _require(kind != "host" and isinstance(selector, list) and len(selector) == 1 and isinstance(selector[0], str)
+                         and isinstance(check[field], str) and 0 < len(check[field]) <= 512, "taskProtocol target default invalid")
+
+
+def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
+    if "taskProtocol" not in manifest:
+        return {}
+    protocol = manifest["taskProtocol"]
+    _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
+    _require(isinstance(protocol, dict) and protocol.get("version") == "0.1.0", "unsupported taskProtocol.version")
+    fields = {"version", "discoverScript", "retryScript", "readResources", "localization", "configRules", "environmentChecks"}
+    _require("configValidator" not in manifest, "taskProtocol 0.1.0 cannot declare configValidator")
+    _require(set(protocol) == fields, "taskProtocol fields invalid")
+    _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
+
+    def safe_path(value: Any) -> bool:
+        return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
+
+    localization = protocol["localization"]
+    _require(isinstance(localization, dict) and set(localization) == {"defaultLocale", "messages"}, "task localization fields invalid")
+    messages = localization["messages"]
+    _require(isinstance(messages, dict) and 0 < len(messages) <= 16 and localization["defaultLocale"] in messages, "task localization locales invalid")
+    _require(len({locale.lower() for locale in messages}) == len(messages), "duplicate task locale")
+    for locale, path in messages.items():
+        _require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
+        _require(safe_path(path) and path.startswith("data/i18n/") and path.endswith(".json"), "task localization requires safe data/i18n/*.json")
+    _validate_task_protocol_config_rules(protocol["configRules"])
+    _validate_task_protocol_environment_checks(protocol["environmentChecks"])
+
+    scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
+    for value in [*scripts.values(), manifest.get("judgeScript")]:
+        _require(safe_path(value) and value.startswith("data/") and value.lower().endswith(".js"), "taskProtocol scripts require safe data/*.js paths")
+    resources = protocol["readResources"]
+    _require(isinstance(resources, list) and len(resources) <= 128, "taskProtocol.readResources invalid")
+    ids: set[str] = set()
+    for resource in resources:
+        fields = {"id", "source", "path", "format", "required"}
+        _require(isinstance(resource, dict), "taskProtocol resource fields invalid")
+        if "sha256" in resource:
+            fields.add("sha256")
+            _require(isinstance(resource["sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", resource["sha256"]) is not None
+                     and resource.get("source") == "root" and resource.get("format") == "text", "taskProtocol resource.sha256 invalid")
+        _require(set(resource) == fields, "taskProtocol resource fields invalid")
+        identity = resource["id"]
+        _require(isinstance(identity, str) and 0 < len(identity) <= 512 and not identity.startswith("config:") and identity not in ids, "taskProtocol resource id invalid")
+        ids.add(identity)
+        _require(resource["source"] in ("root", "extraConfig") and resource["format"] in ("json", "yaml", "text") and type(resource["required"]) is bool and safe_path(resource["path"]), "taskProtocol resource invalid")
+    return scripts
+
+
+def _validate_task_localization(manifest: dict[str, Any], read) -> None:
+    declaration = manifest.get("taskProtocol", {}).get("localization")
+    if declaration is None:
+        return
+    def unique(pairs):
+        result = {}
+        for key, value in pairs:
+            _require(key not in result, "duplicate task localization message")
+            result[key] = value
+        return result
+    budget = 0
+    for path in declaration["messages"].values():
+        try:
+            data = read(path)
+            budget += len(data)
+            _require(budget <= 256 * 1024, "task localization budget exceeded")
+            messages = json.loads(data.decode("utf-8-sig"), object_pairs_hook=unique)
+        except (OSError, KeyError, UnicodeError, ValueError) as exc:
+            raise RepositoryError("cannot read task localization: " + path) from exc
+        _require(isinstance(messages, dict) and len(messages) <= 4096, "task localization messages invalid")
+        for key, value in messages.items():
+            _require(re.fullmatch(r"[A-Za-z0-9_.-]{1,160}", key) is not None and isinstance(value, str) and 0 < len(value) <= 2048, "task localization message invalid")
+
+
 def _validate_specialized_manifest_contract(manifest: dict[str, Any], label: str) -> None:
     """校验专项插件的声明面；源码与 ZIP 复用同一份白名单。"""
+    _task_protocol_scripts(manifest)
     artifact = str(manifest.get("artifactName", label))
     _require(str(manifest.get("kind", "")).strip().lower() == "data-specialized", f"专项插件 {artifact} 的 kind 必须为 data-specialized")
     _require("frontend" not in manifest, f"专项插件 {artifact} 禁止声明 frontend 字段（包括 null）")
@@ -641,10 +799,17 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
     closure: set[Path] = set()
     queue: list[Path] = []
     artifact = str(manifest.get("artifactName", root.name))
-    for field in ("judgeScript", "configValidator", "configEditor"):
-        if field not in manifest:
+    declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    def read_text_asset(path):
+        asset = _safe_relative(root, path, "task localization")
+        _require(not asset.is_symlink() and not any(parent.is_symlink() for parent in asset.parents if parent != root.parent), "task localization cannot use symlinks")
+        _require(asset.stat().st_size <= 256 * 1024, "task localization asset too large")
+        return asset.read_bytes()
+    _validate_task_localization(manifest, read_text_asset)
+    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+        if field not in declarations:
             continue
-        script = _safe_relative(root, manifest.get(field), f"专项插件 {artifact} 的 {field}")
+        script = _safe_relative(root, declarations.get(field), f"专项插件 {artifact} 的 {field}")
         data_root = (root / "data").resolve()
         resolved = script.resolve()
         _require(resolved == data_root or data_root in resolved.parents, f"专项插件 {artifact} 的 {field} 必须位于 data/ 内")
@@ -665,6 +830,7 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
             text = source.read_text(encoding="utf-8")
         except (OSError, UnicodeError) as exc:
             raise RepositoryError(f"专项插件脚本无法读取：{_display(source)}；{exc}") from exc
+        _require("__NXP_ADAPTATION_REQUIRED__" not in text, f"专项插件仍有未适配模板标记：{_display(source)}")
         for reference in import_pattern.findall(text):
             target = _resolve_specialized_script_reference(root, source, reference, f"{artifact}/{source.name}")
             if target is not None:
@@ -808,6 +974,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     store = read_json(store_path)
     _require(isinstance(manifest, dict), f"plugin.json 必须是对象：{_display(manifest_path)}")
     _require(isinstance(store, dict), f"store.json 必须是对象：{_display(store_path)}")
+    _task_protocol_scripts(manifest)
     _require(manifest.get("schemaVersion") == 2, f"插件 {root.name} 的 plugin.json schemaVersion 必须为 2")
     artifact = manifest.get("artifactName")
     _require(isinstance(artifact, str) and ARTIFACT_PATTERN.fullmatch(artifact) and any(char.isupper() for char in artifact), f"artifactName 无效：{artifact}")
@@ -1735,8 +1902,13 @@ def _validate_specialized_zip_payload(
     )
     closure: set[str] = set()
     queue: list[str] = []
-    for field in ("judgeScript", "configValidator", "configEditor"):
-        value = manifest.get(field)
+    declarations = {**manifest, **_task_protocol_scripts(manifest)}
+    def read_text_asset(path):
+        _require(path in infos and infos[path].file_size <= 256 * 1024, "task localization asset missing or too large")
+        return archive.read(infos[path])
+    _validate_task_localization(manifest, read_text_asset)
+    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+        value = declarations.get(field)
         if value is None:
             continue
         _require(isinstance(value, str) and value.startswith("data/"), f"专项插件 ZIP 的 {field} 必须位于 data/：{value}")
@@ -1755,6 +1927,7 @@ def _validate_specialized_zip_payload(
             source = archive.read(infos[current]).decode("utf-8")
         except (KeyError, UnicodeError) as exc:
             raise RepositoryError(f"专项插件 ZIP 脚本无法读取：{current} -> {_display(package)}") from exc
+        _require("__NXP_ADAPTATION_REQUIRED__" not in source, f"专项插件 ZIP 仍有未适配模板标记：{current}")
         for reference in import_pattern.findall(source):
             if not reference.startswith("."):
                 continue
@@ -1784,6 +1957,7 @@ def _validate_zip(
             infos = archive.infolist()
             info_by_name = _validate_zip_layout(infos, package)
             manifest = _zip_json(archive, "plugin.json", package, info_by_name)
+            _task_protocol_scripts(manifest)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
             _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
             match = (PACKAGE_PATTERN if mode == "stable" else PREVIEW_PACKAGE_PATTERN).fullmatch(package.name)

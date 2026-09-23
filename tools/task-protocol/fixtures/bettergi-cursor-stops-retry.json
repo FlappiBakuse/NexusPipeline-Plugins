@@ -1,0 +1,33 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskDefinitions\": {\"mail\": \"领取邮件\", \"closed\": \"领取邮件\", \"custom\": \"用户脚本\"}, \"TaskOrder\": [\"mail\", \"closed\", \"custom\"], \"TaskEnabledList\": {\"mail\": true, \"closed\": false, \"custom\": true}, \"NextTaskId\": \"mail\"}"
+    }
+  ],
+  "tasks": {
+    "mail": {
+      "enabled": true
+    },
+    "closed": {
+      "enabled": false
+    },
+    "custom": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "领取邮件奖励异常: synthetic"
+      ]
+    }
+  ],
+  "results": {
+    "mail": "failed",
+    "custom": "unknown"
+  }
+}

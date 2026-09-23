@@ -1,0 +1,11 @@
+{
+  "diagnostic.bettergi.finish_action": "The action after BetterGI finishes may affect subsequent queue work.",
+  "task.claim_mail": "Claim mail",
+  "reason.bettergi.leyline.failed": "Ley Line task reported failure",
+  "reason.bettergi.daily.guild_exception": "Daily commission reward exception",
+  "reason.bettergi.resin.exception": "Resin task exception",
+  "reason.bettergi.mail.claim": "Mail claim confirmed",
+  "reason.bettergi.mail.empty": "No mail to claim",
+  "reason.bettergi.mail.exception": "Mail claim exception",
+  "reason.bettergi.leyline.not_due": "Ley Line task is not due"
+}

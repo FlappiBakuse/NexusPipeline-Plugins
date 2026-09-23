@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "name": "task-protocol-example",
+  "artifactName": "TaskProtocolExample",
+  "displayName": "TaskProtocolExample",
+  "gameName": "Synthetic fixture",
+  "description": "Synthetic task protocol example",
+  "version": "0.1.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.16.8",
+  "resolve": "data/resolve.json",
+  "judgeScript": "data/judge.js",
+  "taskProtocol": {
+    "version": "0.1.0",
+    "discoverScript": "data/discover.js",
+    "retryScript": "data/retry.js",
+    "readResources": [],
+    "localization": {
+      "defaultLocale": "zh-CN",
+      "messages": {
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
+      }
+    },
+    "configRules": [
+      {
+        "id": "example.configuration",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      }
+    ],
+    "environmentChecks": []
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"每日免费奖励\", \"每日免费奖励\"], \"TASK_ONOFF\": [true, true]}]}, \"OPEN_GAME_APP_TASK\": true, \"DO_POST_ALL_TASK\": false}"
+    }
+  ],
+  "tasks": {
+    "0/0/每日免费奖励": {
+      "enabled": true,
+      "order": 1
+    },
+    "0/1/每日免费奖励": {
+      "enabled": true,
+      "order": 2
+    },
+    "automatic-login": {
+      "enabled": true,
+      "order": 0
+    },
+    "automatic-cleanup": {
+      "enabled": false,
+      "order": 3
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 当前激活: pipeline 1"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 判断任务EnterGame是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 执行任务EnterGame"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 任务EnterGame执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 判断任务InFreeAward是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 执行任务InFreeAward"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 判断任务CollectMails是否可以执行",
+        "v1.0 - 00:01 - INFO : 执行任务CollectMails",
+        "v1.0 - 00:01 - ERROR : 运行出错: controlled nested exception"
+      ],
+      "boundary": "open"
+    },
+    {
+      "lines": [],
+      "final": true,
+      "terminationReason": "process_exited",
+      "boundary": "aborted"
+    }
+  ],
+  "results": {
+    "automatic-login": "succeeded",
+    "0/0/每日免费奖励": "failed",
+    "0/1/每日免费奖励": "blocked"
+  },
+  "incidents": [
+    {
+      "task": "0/0/每日免费奖励",
+      "resolution": "open",
+      "reason": "任务执行异常，已返回顶层错误处理"
+    }
+  ]
+}

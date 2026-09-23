@@ -1,0 +1,18 @@
+{
+  "require": [
+    {
+      "var": "main",
+      "file": "ok-ww.exe"
+    },
+    {
+      "var": "dailySource",
+      "file": "data/apps/ok-ww/working/src/task/DailyTask.py"
+    }
+  ],
+  "paths": {
+    "mainExe": "{main}",
+    "args": "-a true -u manual -t 1 -e",
+    "configPath": "data/apps/ok-ww/working/configs",
+    "logPath": "data/apps/ok-ww/working/logs/ok-script.log"
+  }
+}

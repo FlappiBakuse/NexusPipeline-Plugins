@@ -19,6 +19,8 @@ plugins/specialized/Example/
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
+上例展示的是兼容旧插件的最小目录。启用 `taskProtocol` 0.1.0 的插件应把任务/原因/诊断词典放在 `data/i18n/`，公开的 `configEditor` 字段仍保持不变但资产路径使用 `data/editor.js`；0.1.0 插件不得声明 `configValidator`，配置检查由 discover 的 `configAssessment` 提供。
+
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
 专项契约是硬边界：manifest 不得出现 `frontend` 字段（包括 `null` 或空对象），`capabilities` 只能使用 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。源码和 ZIP 都不得包含 `frontend/`、`web/`、HTML/CSS/TypeScript/Vue 等浏览器工程、Vite/webpack 配置、`.dll`、`.exe`、`.pdb`、`.csproj` 或 `.sln`。插件不能通过把文件放进未声明目录来绕过检查。
@@ -62,12 +64,12 @@ plugins/specialized/Example/
 | `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式；此声明不注册模拟器驱动）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项；宿主仅在运行时收紧 PC 启动计划，保留用户保存的启动参数）、`no-fresh-config`（插件不允许使用全新配置文件模式） |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
-| `configValidator` | 配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
-| `configEditor` | 配置编辑准备阶段的可选工作副本调整脚本，相对插件目录 | 仅 `data-specialized` 可声明；必须是插件目录内存在的 `.js` 文件 |
+| `configValidator` | 旧插件配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅无 0.1.0 `taskProtocol` 的过渡插件可声明；必须是插件目录内存在的 `.js` 文件；0.1.0 与该字段双声明会被拒绝 |
+| `configEditor` | 配置编辑准备阶段的可选工作副本调整脚本，相对插件目录 | 仅 `data-specialized` 可声明；公共字段不改；0.1.0 官方资产约定为 `data/editor.js` |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
-`data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configValidator`、`configEditor` 的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。保留这些脚本是为了维持现役配置编辑、校验、判断和恢复语义，并不提供任意浏览器代码执行能力。
+`data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configValidator`、`configEditor` 或 0.1.0 `taskProtocol` 三阶段脚本的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。0.1.0 的 discover 配置检查是只读的，不提供任意浏览器代码执行能力。
 
 宿主内置 Generic ADB 与 MuMuManager。雷电、夜神和 BlueStacks 的厂商专属识别及实例关闭由官方 managed-code `EmulatorSupport` 扩展提供；需要这些厂商行为时，用户须在插件商店安装并启用扩展。
 
@@ -89,7 +91,7 @@ plugins/specialized/Example/
 
 `zh-CN` 与 `en-US` 资源必须使用相同的 key 集合和占位符集合。key 使用 ASCII 字母、数字、`.`、`_`、`-`，资源值不能为空；输入字段可通过 `labelKey` 与 `descriptionKey` 引用这些资源，`label` 与 `description` 作为回退文本保留。宿主按请求语言返回解析后的 `label` 与 `description`，持久化输入名、默认值和校验规则保持不变。
 
-`configValidator` 是可选能力，不影响没有声明该字段的插件。宿主在两个时机执行校验脚本：
+`configValidator` 是旧插件的可选过渡能力，不影响没有声明该字段的插件；0.1.0 插件不得与它双声明。宿主在两个时机执行旧校验脚本：
 
 - `config-edit`：配置编辑提交成功后，以当前脚本实例用户的配置 store 为主工作根目录运行一次。
 - `script-save`：脚本实例保存（新建/编辑）后，按每个绑定用户逐个以其 store 为根运行，通知聚合去重后随保存响应返回。
@@ -109,9 +111,11 @@ plugins/specialized/Example/
 
 `nexus.input.extras` 按声明顺序列出附加配置路径（`path`）与其用户快照文件清单（`files`）；校验脚本以 `@extra<序号>/相对路径` **只读**访问对应快照，用于与 `input.script` 的当前设置（如游戏路径）做一致性比较。校验脚本使用内置 Jint 执行，受执行时长、单文件读写大小、文件列表和反馈数量限制。脚本没有删除、网络、进程、PowerShell、Node.js、Python、CLR 或环境变量 API；路径必须保持在当前 store 与附加配置快照内。建议把校验设计为幂等的比较与提醒，并在输入文件缺失、内容不完整或格式错误时保守跳过。
 
+0.1.0 插件不使用上述写型校验器迁移语义。它在三阶段 `discover` 中返回 `configAssessment`，只能读取已声明配置资源；保存成功后检查失败不回滚保存。关键阻断会影响运行准入，但不影响保存；普通路径不一致或可由上游接管的情形应返回 warning。具体字段、规则 ID、环境目标和 `nexus.inspectDeclaredTarget(id)` 权限见[专项任务协议](TASK_PROTOCOL.md)。
+
 ### 配置编辑脚本
 
-`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。
+`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。0.1.0 只改资产命名约定（`data/editor.js`），不改变 `configEditor` 的公共字段或编辑副本写入边界。
 
 能力由宿主统一投影：`emulator` 只开启现役模拟器选择语义，厂商 provider 仍由 managed-code `EmulatorSupport` 提供；`self-managed-pc-launch` 只收紧宿主 PC 启动计划且保留用户已保存参数；`no-fresh-config` 关闭 fresh 配置模式但保留 reuse 与恢复流程。专项插件只声明能力和 `resolve.inputs` 数据，不实现第二套 UI。
 
@@ -264,8 +268,10 @@ plugins/specialized/Example/
 ## 发布前检查
 
 - 插件目录名与 manifest `artifactName` 严格一致，manifest `name` 使用小写机器标识。
-- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在；若声明 `configValidator`，对应脚本也必须存在。
+- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在；若声明 `configValidator`，对应脚本也必须存在且插件不能是 0.1.0；0.1.0 插件必须具备 `taskProtocol.configRules`、`environmentChecks`、`data/i18n/` 词典和三阶段脚本。
 - 所有 `require` 在目标软件目录中都能找到，向上搜索不超过 4 层。
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。
 - judge 的语言扩展名、输入读取方式和输出 JSON 符合 [判断脚本指南](JUDGE_SCRIPT.md)。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

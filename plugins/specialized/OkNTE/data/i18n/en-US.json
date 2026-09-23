@@ -1,0 +1,22 @@
+{
+  "diagnostic.runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
+  "reason.oknte.item.completed": "Daily item reported completion",
+  "reason.oknte.item.failed": "Daily item reported failure",
+  "reason.oknte.item.language_unsupported": "This task is unavailable in the current language",
+  "reason.oknte.item.started": "Daily item started",
+  "reason.oknte.item.unhandled_exception": "The current item stopped with an unhandled exception",
+  "reason.oknte.routine.aborted_before_item": "The routine aborted before this item ran",
+  "task.cinema_date": "Cinema date",
+  "task.coffee": "Coffee",
+  "task.daily_anomaly": "Anomaly Realm",
+  "task.daily_anomaly_hunter": "Anomaly Hunt",
+  "task.daily_claim": "Daily rewards",
+  "task.fountain": "Fountain check-in",
+  "task.furniture": "Anomaly furniture",
+  "task.gift": "Gifts",
+  "diagnostic.runtime.installation": "Cannot confirm the official installation ({channel} / {version}). Initialize a supported official channel.",
+  "diagnostic.runtime.version": "This release has not been qualified ({channel} / {version}). Check the installed version.",
+  "diagnostic.runtime.busy": "The updater or application is not ready ({channel} / {version}). Finish updating and close it before checking again.",
+  "diagnostic.runtime.repository": "Local HEAD/tag differs from the qualified release ({channel} / {version}). Check the official installation.",
+  "diagnostic.runtime.code": "Required runtime files are missing or differ from the qualified release ({channel} / {version}). Repair the official installation and check again."
+}

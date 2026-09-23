@@ -35,7 +35,7 @@
 
 `managed-code` 可以提供公开 Plugin API 以及 Frontend API 1.5 的 slot/route、生命周期与公开 `nxp-*` Native Custom Elements。禁止依赖 Host Vue 内部组件、私有 class 或未声明的宿主服务。
 
-`data-specialized` 只包含 manifest、数据、允许的后端判定/配置脚本、i18n 和说明。浏览器扩展点仅声明受支持的 Host 能力，代码由 Host 实现。拒绝 frontend 字段（含 null/空对象）、frontend-module、frontend/、web/、浏览器工程、HTML/CSS 浏览器载荷和 .NET 程序集。不能按 .js 后缀把现役 judge/configEditor/configValidator 后端脚本一并删除。
+`data-specialized` 只包含 manifest、数据、允许的后端判定/配置脚本、i18n 和说明。浏览器扩展点仅声明受支持的 Host 能力，代码由 Host 实现。拒绝 frontend 字段（含 null/空对象）、frontend-module、frontend/、web/、浏览器工程、HTML/CSS 浏览器载荷和 .NET 程序集。未声明 taskProtocol 的旧插件不能按 .js 后缀删除现役 judge/configEditor/configValidator；声明首发 taskProtocol 0.1.0 的官方插件必须删除 configValidator，保持 configEditor 公共字段但使用 `data/editor.js`。旧开发协议 1.0/1.1/1.2 不作为兼容契约加载。
 
 当前专项能力为 `emulator`、`self-managed-pc-launch`、`no-fresh-config`；`resolve.inputs` 使用 Host 的声明式输入表单。新增能力必须先实现宿主语义、双仓契约及测试。未知能力应清楚报告插件和字段，不静默启用。专项源码、ZIP、Host install/load/serve 都执行相同边界验证。
 

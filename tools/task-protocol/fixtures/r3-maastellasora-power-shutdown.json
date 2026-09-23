@@ -1,0 +1,37 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\"}, \"instances\": [{\"id\": \"other\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"shutdown\"}}}]}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"shutdown\"}}}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": []}"
+    }
+  ],
+  "tasks": {
+    "chosen/power": {
+      "enabled": true,
+      "role": "technical"
+    }
+  },
+  "configChecks": [
+    {
+      "ruleId": "mxu.finish_action",
+      "evaluation": "violated",
+      "executionEffect": "block"
+    }
+  ],
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "upstreamCommit": "b9de7becb57d98125edbfc2036a050e8ee04b828",
+    "note": "MXU specialTasks.ts power options/default and enabled selection; synthetic configuration, no game or power action executed."
+  }
+}

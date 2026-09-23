@@ -1,0 +1,22 @@
+{
+  "diagnostic.runtime_unqualified": "官方发行版本或更新状态未就绪，已阻止自动运行。请先完成官方 Global 启动器初始化并关闭它，再检查支持版本。",
+  "reason.oknte.item.completed": "日常子任务报告完成",
+  "reason.oknte.item.failed": "日常子任务报告失败",
+  "reason.oknte.item.language_unsupported": "当前语言不支持此任务",
+  "reason.oknte.item.started": "日常子任务已开始",
+  "reason.oknte.item.unhandled_exception": "当前任务因未处理异常中断",
+  "reason.oknte.routine.aborted_before_item": "日常流程中断，此任务尚未执行",
+  "task.cinema_date": "影院约会",
+  "task.coffee": "一咖舍",
+  "task.daily_anomaly": "异象界域",
+  "task.daily_anomaly_hunter": "异象追猎",
+  "task.daily_claim": "日常领取",
+  "task.fountain": "喷泉签到",
+  "task.furniture": "异象家具",
+  "task.gift": "羁遇赠礼",
+  "diagnostic.runtime.installation": "无法确认官方安装身份（{channel} / {version}），请初始化受支持的官方渠道。",
+  "diagnostic.runtime.version": "当前发行版本尚未通过适配验证（{channel} / {version}），请检查安装版本。",
+  "diagnostic.runtime.busy": "更新器或上游程序尚未就绪（{channel} / {version}），请完成更新并关闭后重新检查。",
+  "diagnostic.runtime.repository": "本地 HEAD/tag 与受支持发行不一致（{channel} / {version}），请核对官方安装。",
+  "diagnostic.runtime.code": "关键运行文件缺失或与已验证发行不同（{channel} / {version}），请修复官方安装后重新检查。"
+}

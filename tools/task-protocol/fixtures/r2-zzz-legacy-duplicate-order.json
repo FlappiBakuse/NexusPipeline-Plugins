@@ -1,0 +1,23 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:one_dragon_app.yml",
+      "format": "yaml",
+      "text": "{\"app_order\": [\"email\", \"email\"], \"app_run_list\": [\"email\"]}"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_migration",
+    "upstreamCommit": "a91a606b4726a335af1556dd47f54e9249f9ea2a",
+    "split": "development",
+    "sourcePaths": [
+      "src/one_dragon/base/config/one_dragon_app_config.py",
+      "src/one_dragon/base/operation/application/application_group_manager.py"
+    ]
+  }
+}

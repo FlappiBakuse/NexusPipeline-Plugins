@@ -1,0 +1,71 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"DailyRewards\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"DailyRewards\", \"label\": \"每日任务\", \"option\": [\"DailyEmailRewards\", \"DailyTaskRewards\", \"DailyClaimDeliveryJobsRewards\", \"DailyEventRewards\", \"DailyProtocolPassRewards\"]}, {\"name\": \"Other\"}], \"option\": {\"DailyEmailRewards\": {\"type\": \"switch\", \"cases\": [{\"name\": \"Yes\"}, {\"name\": \"No\"}], \"controller\": [\"Other\"]}, \"DailyTaskRewards\": {\"type\": \"switch\", \"cases\": [{\"name\": \"Yes\"}, {\"name\": \"No\"}]}, \"DailyClaimDeliveryJobsRewards\": {\"type\": \"switch\", \"cases\": [{\"name\": \"Yes\"}, {\"name\": \"No\"}]}, \"DailyEventRewards\": {\"type\": \"switch\", \"cases\": [{\"name\": \"Yes\"}, {\"name\": \"No\"}]}, \"DailyProtocolPassRewards\": {\"type\": \"switch\", \"cases\": [{\"name\": \"Yes\"}, {\"name\": \"No\"}]}}}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 每日任务"
+      ]
+    },
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务完成: 每日任务"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  },
+  "diagnostics": [
+    {
+      "code": "mxu.option.DailyEmailRewards.unknown",
+      "task": "chosen/one",
+      "zh-CN": "邮件奖励：无法确认（配置选项，无独立完成证据）",
+      "en-US": "Mail rewards: unverified (configuration only; no independent completion evidence)"
+    },
+    {
+      "code": "mxu.option.DailyTaskRewards.enabled",
+      "task": "chosen/one",
+      "zh-CN": "每日任务奖励：已开启（配置选项，无独立完成证据）",
+      "en-US": "Daily task rewards: enabled (configuration only; no independent completion evidence)"
+    },
+    {
+      "code": "mxu.option.DailyClaimDeliveryJobsRewards.enabled",
+      "task": "chosen/one",
+      "zh-CN": "委托奖励：已开启（配置选项，无独立完成证据）",
+      "en-US": "Delivery rewards: enabled (configuration only; no independent completion evidence)"
+    },
+    {
+      "code": "mxu.option.DailyEventRewards.enabled",
+      "task": "chosen/one",
+      "zh-CN": "活动奖励：已开启（配置选项，无独立完成证据）",
+      "en-US": "Event rewards: enabled (configuration only; no independent completion evidence)"
+    },
+    {
+      "code": "mxu.option.DailyProtocolPassRewards.enabled",
+      "task": "chosen/one",
+      "zh-CN": "通行证奖励：已开启（配置选项，无独立完成证据）",
+      "en-US": "Protocol pass rewards: enabled (configuration only; no independent completion evidence)"
+    }
+  ]
+}

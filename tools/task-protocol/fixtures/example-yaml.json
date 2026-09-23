@@ -1,0 +1,42 @@
+{
+  "artifact": "TaskProtocolYaml",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:config.yaml",
+      "format": "yaml",
+      "text": "enabled:\n  a: true\n  b: true\n  closed: false\ncounter: 7\n"
+    }
+  ],
+  "tasks": {
+    "a": {
+      "enabled": true
+    },
+    "b": {
+      "enabled": true
+    },
+    "closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "TASK a START",
+        "TASK a OK"
+      ]
+    },
+    {
+      "lines": [
+        "TASK b START",
+        "TASK b FAIL",
+        "TASK closed OK"
+      ]
+    }
+  ],
+  "results": {
+    "a": "succeeded",
+    "b": "failed"
+  },
+  "example": true
+}

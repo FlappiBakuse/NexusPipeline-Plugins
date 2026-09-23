@@ -1,0 +1,162 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"每日免费奖励\", \"每日免费奖励\"], \"TASK_ONOFF\": [true, true]}]}, \"OPEN_GAME_APP_TASK\": true, \"DO_POST_ALL_TASK\": false}"
+    }
+  ],
+  "tasks": {
+    "0/0/每日免费奖励": {
+      "enabled": true,
+      "order": 1
+    },
+    "0/1/每日免费奖励": {
+      "enabled": true,
+      "order": 2
+    },
+    "automatic-login": {
+      "enabled": true,
+      "order": 0
+    },
+    "automatic-cleanup": {
+      "enabled": false,
+      "order": 3
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 当前激活: pipeline 1"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 判断任务EnterGame是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 执行任务EnterGame"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 任务EnterGame执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 判断任务InFreeAward是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 执行任务InFreeAward"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - INFO : 任务InFreeAward执行后条件不成立或超时"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:01 - ERROR : 运行出错: 任务InFreeAward执行后条件不成立或超时，且无法正确返回主页，程序退出"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 脚本自动重新执行，当前重新执行 1/2 次，从 任务1 开始执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 当前激活: pipeline 1"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : CURRENT_PERIOD_TASK_INDEX = 1，继续运行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 判断任务EnterGame是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 执行任务EnterGame"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 任务EnterGame执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 判断任务InFreeAward是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 执行任务InFreeAward"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 免费奖励领取成功"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 任务InFreeAward执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 判断任务InFreeAward是否可以执行"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 执行任务InFreeAward"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 免费奖励领取成功"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 任务InFreeAward执行结束"
+      ]
+    },
+    {
+      "lines": [
+        "v1.0 - 00:02 - INFO : 所有任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "automatic-login": "succeeded",
+    "0/0/每日免费奖励": "succeeded",
+    "0/1/每日免费奖励": "succeeded"
+  },
+  "boundary": "ended",
+  "incidents": [
+    {
+      "task": "0/0/每日免费奖励",
+      "resolution": "open"
+    },
+    {
+      "task": "0/0/每日免费奖励",
+      "resolution": "recovered"
+    }
+  ]
+}

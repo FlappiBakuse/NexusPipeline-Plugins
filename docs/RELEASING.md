@@ -60,7 +60,7 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 以及可选 configValidator/configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；
+- data-specialized 插件的 resolve、judgeScript 以及可选旧 configValidator/configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.1.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，并禁止 configValidator；公开 configEditor 字段不变但官方资产使用 `data/editor.js`；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 
@@ -216,7 +216,9 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 | Gate | 运行环境 | 内容 |
 |---|---|---|
 | `P1` | 固定的源 checkout/SDK | source contracts、locale、syntax、Config Editors、Python tests、PR base 检查 |
-| `P2` | 固定的 managed/Frontend 环境 | `npm ci`、Frontend conformance/typecheck/build、managed-code 全量构建测试 |
+| `P2` | 固定的 Windows managed/Frontend 环境 | 真实 Host Jint 专项适配器联调、`npm ci`、Frontend conformance/typecheck/build、managed-code 全量构建测试 |
 | `P3` | 隔离候选目录 | base 版本纪律、candidate plan、全量发行包验证、stable 文件未修改 |
 
 `tools/qualification.py` 负责本地编排，`tools/sdk_source.py` 负责一次解析并固定 SDK 来源；`tools/qualification_control.py`（部署后）负责外部 App Check 的 fail-closed 聚合。手动 `audit --full` 只作完整包诊断，不替代 P1/P2/P3，也不自动改变 stable 状态。
+
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

@@ -1,0 +1,26 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}], \"lastActiveInstanceId\": \"chosen\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mxu.autostart_missing",
+      "zh-CN": "尚未设置自动执行实例。请点击“编辑配置”，在当前绑定用户的配置中选择自动执行的实例，关闭编辑器后重新读取计划；当前打开的配置页不等于自动执行目标。",
+      "en-US": "No automatic-run instance is selected. Use Edit configuration to select it for this bound user, close the editor, then reload the plan. The active tab is not an automatic-run target."
+    }
+  ]
+}

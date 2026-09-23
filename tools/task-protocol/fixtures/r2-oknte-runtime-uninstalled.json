@@ -1,0 +1,45 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "unsupported",
+  "resources": [
+    {
+      "id": "config:DailyRoutineTask.json",
+      "format": "json",
+      "text": "{\"Routine Items\": [{\"id\": \"daily_anomaly_hunter\", \"enabled\": true}, {\"id\": \"daily_anomaly\", \"enabled\": true}]}"
+    },
+    {
+      "id": "runtime-app",
+      "format": "json",
+      "text": "{\"name\": \"ok-nte\", \"installed\": false, \"current_profile\": \"Global\", \"current_version\": \"v1.3.19\", \"update_state\": \"idle\", \"update_target_version\": null, \"update_error\": null, \"running\": false, \"available_versions\": [\"v1.3.19\"]}"
+    },
+    {
+      "id": "runtime-head",
+      "format": "text",
+      "text": "9ac3157afbeeb10758330085e67273cfa460a9e8\n"
+    },
+    {
+      "id": "runtime-tag",
+      "format": "text",
+      "text": "fad77859cc09e2ee475057f29bcb07fe7643d5c8\n"
+    }
+  ],
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "upstreamCommit": "0339cfc44a9827ad8cd1ebeabe432660e87f2acb",
+    "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
+  },
+  "configChecks": [
+    {
+      "ruleId": "okscript.distribution",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "resourceSets": [
+    "resources/oknte-code-verified.json"
+  ]
+}
