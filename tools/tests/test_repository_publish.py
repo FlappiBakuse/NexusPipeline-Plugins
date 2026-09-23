@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repository_core as core
+from repository_candidate import inspect_preview_candidate
 from repository_core import RepositoryError, bootstrap_state, build_plan, catalog_entry, git_head, read_json, release, validate_source_plugin, write_json
 from repository_publish import (
     _candidate_inventory,
@@ -193,6 +194,8 @@ class RepositoryPublishTests(unittest.TestCase):
         try:
             output = root / ".generated" / "preview"
             result = publish_develop(root, source_ref="HEAD", output=output, run_id="12", run_attempt="1", workflow_sha=C)
+            self.assertEqual(inspect_preview_candidate(output, output.parent / "preview-producer.json",
+                                                       workflow_sha=C, run_id=12, run_attempt=1), result["sourceCommit"])
             transport = FakePreviewTransport()
             transport.source_head = result["sourceCommit"]
             _publish_preview_remote(result, token="secret", transport=transport, run_id="12")
@@ -278,9 +281,19 @@ class RepositoryPublishTests(unittest.TestCase):
             output = root / ".generated" / "preview"
             result = publish_develop(root, source_ref="HEAD", output=output, run_id="12", run_attempt="1", workflow_sha=C)
             transport = FakePreviewTransport()
-            result = publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, github_transport=transport)
+            result = publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, github_transport=transport, source_root=root)
             self.assertFalse(result["remoteWritten"])
             self.assertEqual(transport.events, [])
+            manifest = read_json(output / "candidate.json")
+            manifest["producer"]["runAttempt"] = 2
+            write_json(output / "candidate.json", manifest)
+            with self.assertRaisesRegex(RepositoryError, "producer"):
+                publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, source_root=root)
+            manifest["producer"]["runAttempt"] = 1
+            manifest["files"][0]["sha256"] = "0" * 64
+            write_json(output / "candidate.json", manifest)
+            with self.assertRaisesRegex(RepositoryError, "inventory"):
+                publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, source_root=root)
         finally:
             _remove_tree(root)
 

@@ -152,7 +152,7 @@ def _preview_inventory(generated_root: Path) -> None:
         if path.is_dir():
             continue
         core._require(path.is_file(), f"preview 候选目录包含特殊文件：{relative}")
-        core._require(relative in {"catalog.json", "preview-plan.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
+        core._require(relative in {"catalog.json", "preview-plan.json", "candidate.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
         if relative.startswith("packages/"):
             core._require(path.suffix.lower() == ".zip", f"preview packages 只能包含 ZIP：{relative}")
             _validate_zip_limits(path)
@@ -665,6 +665,8 @@ def publish_develop(
         preflight(root, host_root, core.git_head(host_root))
     result = core.build_preview(root, source_ref, output, host_root=host_root)
     if run_id is not None:
+        from repository_candidate import write_preview_manifest
+
         producer_path = (producer_output or (Path(result["output"]).parent / "preview-producer.json")).resolve()
         candidate_root = Path(result["output"]).resolve()
         core._require(candidate_root not in producer_path.parents, "preview producer sidecar 必须位于候选目录之外")
@@ -678,6 +680,10 @@ def publish_develop(
                 "workflowSha": workflow_sha or "",
             },
         )
+        write_preview_manifest(root, candidate_root,
+                               partner_sha=core.git_head(host_root) if host_root is not None else None,
+                               workflow_sha=workflow_sha or "", run_id=int(run_id),
+                               run_attempt=int(run_attempt or "1"))
         result["producer"] = str(producer_path)
     if remote_write:
         core._require(run_id and run_attempt and workflow_sha, "preview remote write 缺少 producer workflow/run/attempt 身份")
@@ -700,6 +706,7 @@ def publish_preview(
     remote_write: bool = False,
     token: str | None = None,
     github_transport: GitHubTransport | None = None,
+    source_root: Path | None = None,
 ) -> dict[str, Any]:
     """独立 publisher 只读取已生成候选数据，不执行候选源码。"""
     generated_root = _ordinary_directory(generated_root, "preview 候选目录")
@@ -713,6 +720,13 @@ def publish_preview(
     expected_run_id = _parse_positive_int(run_id, "preview runId")
     expected_run_attempt = _parse_positive_int(run_attempt, "preview runAttempt")
     core._require(producer.get("sourceSha") == source_sha and producer.get("runId") == expected_run_id and producer.get("runAttempt") == expected_run_attempt and producer.get("workflowSha") == workflow_sha, "preview producer identity 不匹配")
+    if (generated_root / "candidate.json").exists():
+        from repository_candidate import validate_preview_manifest
+
+        core._require(source_root is not None, "preview candidate 清单需要原源码 checkout")
+        validate_preview_manifest(source_root.resolve(), generated_root, source_sha=source_sha,
+                                  workflow_sha=workflow_sha, run_id=expected_run_id,
+                                  run_attempt=expected_run_attempt)
     result = {"output": str(generated_root), "sourceCommit": candidate["sourceCommit"], "remoteWritten": False}
     if remote_write:
         write_token, transport = _require_remote_inputs(True, token, github_transport)

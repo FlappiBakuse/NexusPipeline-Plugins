@@ -48,6 +48,8 @@ def _parser() -> argparse.ArgumentParser:
             "candidate",
             "validate-candidate",
             "extract-candidate",
+            "extract-preview",
+            "inspect-preview",
             "publish-candidate",
             "verify",
             "scope",
@@ -69,6 +71,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--artifact-zip", type=Path, help="原 Actions candidate artifact ZIP")
     parser.add_argument("--expected-digest", help="Actions 服务端 artifact SHA256")
     parser.add_argument("--host-root", type=Path, help="validate-host-locales/qualification 使用的当前宿主 checkout")
+    parser.add_argument("--source-root", type=Path, help="preview 原源码的独立 checkout")
     parser.add_argument("--distribution-root", type=Path, help="候选资格使用的 stable catalog/state/packages 分发基线")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
     parser.add_argument("--group", choices=("source", "frontend-managed", "candidate", "all"), default="all", help="qualification Gate 分组")
@@ -189,6 +192,28 @@ def main(argv: list[str] | None = None) -> int:
                 raise RepositoryError("extract-candidate 必须指定 --artifact-zip、--output、--expected-digest")
             extract_candidate_artifact(args.artifact_zip.resolve(), args.output.resolve(),
                                        expected_digest=args.expected_digest)
+        elif args.command == "extract-preview":
+            from repository_candidate import extract_preview_artifact
+
+            if args.artifact_zip is None or args.output is None or not args.expected_digest:
+                raise RepositoryError("extract-preview 必须指定 --artifact-zip、--output、--expected-digest")
+            extract_preview_artifact(args.artifact_zip.resolve(), args.output.resolve(),
+                                     expected_digest=args.expected_digest)
+        elif args.command == "inspect-preview":
+            from repository_candidate import inspect_preview_candidate
+
+            generated = args.generated_root or args.output
+            if generated is None or args.producer is None or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("inspect-preview 缺少候选目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("preview run/attempt 必须为正整数")
+            source_sha = inspect_preview_candidate(generated.resolve(), args.producer.resolve(),
+                                                   workflow_sha=args.workflow_sha,
+                                                   run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"source_sha={source_sha}\n")
+            print(json.dumps({"sourceSha": source_sha}, ensure_ascii=False), flush=True)
         elif args.command == "validate-candidate":
             from repository_candidate import validate_original_candidate
 
@@ -292,6 +317,7 @@ def main(argv: list[str] | None = None) -> int:
                 producer_path=args.producer.resolve() if args.producer else None,
                 remote_write=args.remote_write,
                 token=os.environ.get(args.token_env),
+                source_root=args.source_root.resolve() if args.source_root else None,
             )
         elif args.command == "publish-stable":
             from repository_publish import GitHubGitTransport, publish_stable

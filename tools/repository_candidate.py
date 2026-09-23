@@ -18,6 +18,8 @@ from verification import preflight, run_managed_gate
 
 WORKFLOW_PATH = ".github/workflows/publish-stable.yml"
 JOB_NAME = "stable-candidate"
+PREVIEW_WORKFLOW_PATH = ".github/workflows/publish-develop.yml"
+PREVIEW_JOB_NAME = "preview-build"
 FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
@@ -250,3 +252,168 @@ def validate_original_candidate(root: Path, output: Path, *, source_sha: str,
                               expected_partner_sha=partner_sha,
                               expected_producer=expected_producer,
                               expected_distribution_sha=distribution_sha)
+
+
+def _preview_files(output: Path) -> list[dict[str, Any]]:
+    core._require(output.is_dir() and not output.is_symlink(), "preview candidate 目录无效")
+    files = []
+    total = 0
+    folded: set[str] = set()
+    for path in output.rglob("*"):
+        relative = path.relative_to(output).as_posix()
+        core._require(not path.is_symlink(), f"preview candidate 禁止链接：{relative}")
+        if path.is_dir():
+            core._require(relative == "packages", f"preview candidate 目录越界：{relative}")
+            continue
+        core._require(path.is_file(), f"preview candidate 特殊文件：{relative}")
+        core._require(relative in {"catalog.json", "preview-plan.json", "candidate.json"}
+                      or (relative.startswith("packages/") and relative.count("/") == 1
+                          and relative.endswith(".zip")),
+                      f"preview candidate 文件越界：{relative}")
+        key = relative.casefold()
+        core._require(key not in folded, f"preview candidate 路径大小写冲突：{relative}")
+        folded.add(key)
+        if relative == "candidate.json":
+            continue
+        size = path.stat().st_size
+        total += size
+        core._require(len(files) < 4096 and total <= 512 * 1024 * 1024,
+                      "preview candidate 文件数或大小超限")
+        files.append({"path": relative, "sha256": _sha_file(path), "sizeBytes": size})
+    core._require({"catalog.json", "preview-plan.json"} <= {item["path"] for item in files},
+                  "preview candidate 缺少 catalog/plan")
+    return sorted(files, key=lambda item: item["path"])
+
+
+def write_preview_manifest(root: Path, output: Path, *, partner_sha: str | None,
+                           workflow_sha: str, run_id: int, run_attempt: int) -> dict[str, Any]:
+    source_sha = core.git_head(root)
+    core._require(FULL_SHA.fullmatch(workflow_sha) is not None,
+                  "preview workflow SHA 无效")
+    core._require(partner_sha is None or FULL_SHA.fullmatch(partner_sha) is not None,
+                  "preview partner SHA 无效")
+    core._require(type(run_id) is int and run_id > 0 and type(run_attempt) is int and run_attempt > 0,
+                  "preview run/attempt 无效")
+    core._require(not (output / "candidate.json").exists(), "preview candidate.json 已存在")
+    core.validate_preview_candidate(output, expected_source_sha=source_sha)
+    candidate = {
+        "schemaVersion": 1, "repository": core.REPOSITORY, "channel": "plugins-preview",
+        "sourceSha": source_sha,
+        "sourceTreeSha": core._git(root, ["rev-parse", f"{source_sha}^{{tree}}"], "读取 preview tree"),
+        "partnerSha": partner_sha,
+        "producer": {"workflowPath": PREVIEW_WORKFLOW_PATH, "workflowSha": workflow_sha,
+                     "runId": run_id, "runAttempt": run_attempt, "jobName": PREVIEW_JOB_NAME},
+        "files": _preview_files(output), "releaseLabel": "plugins-develop", "distribution": None,
+    }
+    core.write_json(output / "candidate.json", candidate)
+    return candidate
+
+
+def validate_preview_manifest(source_root: Path, output: Path, *, source_sha: str,
+                              workflow_sha: str, run_id: int, run_attempt: int) -> dict[str, Any]:
+    candidate = core.read_json(output / "candidate.json")
+    core._require(isinstance(candidate, dict) and set(candidate) == {
+        "schemaVersion", "repository", "channel", "sourceSha", "sourceTreeSha", "partnerSha",
+        "producer", "files", "releaseLabel", "distribution"}, "preview candidate 字段集合无效")
+    core._require(candidate["schemaVersion"] == 1 and candidate["repository"] == core.REPOSITORY
+                  and candidate["channel"] == "plugins-preview"
+                  and candidate["releaseLabel"] == "plugins-develop" and candidate["distribution"] is None,
+                  "preview candidate 仓库或通道无效")
+    core._require(core.git_head(source_root) == source_sha
+                  and candidate["sourceSha"] == source_sha
+                  and candidate["sourceTreeSha"] == core._git(source_root, ["rev-parse", f"{source_sha}^{{tree}}"], "读取 preview tree"),
+                  "preview candidate source/tree 不一致")
+    core._require(candidate["partnerSha"] is None
+                  or (isinstance(candidate["partnerSha"], str)
+                      and FULL_SHA.fullmatch(candidate["partnerSha"]) is not None),
+                  "preview candidate partner SHA 无效")
+    core._require(candidate["producer"] == {
+        "workflowPath": PREVIEW_WORKFLOW_PATH, "workflowSha": workflow_sha,
+        "runId": run_id, "runAttempt": run_attempt, "jobName": PREVIEW_JOB_NAME},
+        "preview candidate 原 producer 身份不符")
+    core._require(candidate["files"] == _preview_files(output),
+                  "preview candidate inventory 不符")
+    core.validate_preview_candidate(output, expected_source_sha=source_sha)
+    return candidate
+
+
+def extract_preview_artifact(archive_path: Path, output: Path, *, expected_digest: str) -> None:
+    """Extract only preview candidate data and its separate producer sidecar."""
+    core._require(isinstance(expected_digest, str)
+                  and re.fullmatch(r"sha256:[0-9a-f]{64}", expected_digest) is not None,
+                  "preview artifact 服务端摘要无效")
+    core._require(archive_path.is_file() and not archive_path.is_symlink(), "preview artifact ZIP 无效")
+    core._require(not output.exists() and not output.is_symlink(), "preview artifact 输出已存在")
+    core._require(_sha_file(archive_path) == expected_digest.removeprefix("sha256:"),
+                  "preview artifact 服务端 SHA256 不符")
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            infos = archive.infolist()
+            core._require(1 <= len(infos) <= 4096, "preview artifact 文件数超限")
+            names: set[str] = set()
+            total = 0
+            for info in infos:
+                name = info.filename
+                parts = name.rstrip("/").split("/")
+                core._require(not name.startswith("/") and "\\" not in name
+                              and all(part not in {"", ".", ".."} for part in parts)
+                              and not re.match(r"^[A-Za-z]:", name),
+                              f"preview artifact 路径无效：{name}")
+                folded = name.rstrip("/").casefold()
+                core._require(folded not in names, f"preview artifact 重复路径：{name}")
+                names.add(folded)
+                mode = (info.external_attr >> 16) & 0o170000
+                core._require(mode in {0, 0o040000 if info.is_dir() else 0o100000},
+                              f"preview artifact 禁止链接或特殊条目：{name}")
+                if info.is_dir():
+                    core._require(name.rstrip("/") in {"preview", "preview/packages"},
+                                  f"preview artifact 目录越界：{name}")
+                    continue
+                core._require(name == "preview-producer.json"
+                              or name in {"preview/catalog.json", "preview/preview-plan.json",
+                                          "preview/candidate.json"}
+                              or (len(parts) == 3 and parts[:2] == ["preview", "packages"]
+                                  and name.endswith(".zip")),
+                              f"preview artifact 文件越界：{name}")
+                total += info.file_size
+                core._require(0 <= info.file_size <= 512 * 1024 * 1024
+                              and total <= 512 * 1024 * 1024,
+                              "preview artifact 展开字节数超限")
+            core._require({"preview-producer.json", "preview/catalog.json",
+                           "preview/preview-plan.json", "preview/candidate.json"} <= names,
+                          "preview artifact 缺少元数据")
+            output.mkdir(parents=True)
+            for info in infos:
+                target = output / info.filename
+                if info.is_dir():
+                    target.mkdir(parents=True, exist_ok=True)
+                    continue
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(info) as source, target.open("xb") as destination:
+                    shutil.copyfileobj(source, destination, 1024 * 1024)
+    except zipfile.BadZipFile as exc:
+        raise core.RepositoryError("preview artifact ZIP 损坏") from exc
+
+
+def inspect_preview_candidate(output: Path, producer_path: Path, *, workflow_sha: str,
+                              run_id: int, run_attempt: int) -> str:
+    """Read the payload source from data after binding it to the original job."""
+    candidate = core.read_json(output / "candidate.json")
+    producer = core.read_json(producer_path)
+    core._require(isinstance(candidate, dict) and isinstance(producer, dict),
+                  "preview candidate/producer 必须是对象")
+    source_sha = candidate.get("sourceSha")
+    core._require(isinstance(source_sha, str) and FULL_SHA.fullmatch(source_sha) is not None,
+                  "preview source SHA 无效")
+    core._require(candidate.get("producer") == {
+        "workflowPath": PREVIEW_WORKFLOW_PATH, "workflowSha": workflow_sha,
+        "runId": run_id, "runAttempt": run_attempt, "jobName": PREVIEW_JOB_NAME},
+        "preview candidate 原 producer 身份不符")
+    core._require(producer == {"schemaVersion": 1, "sourceSha": source_sha,
+                              "runId": run_id, "runAttempt": run_attempt,
+                              "workflowSha": workflow_sha},
+                  "preview producer sidecar 身份不符")
+    core._require(candidate.get("files") == _preview_files(output),
+                  "preview candidate inventory 不符")
+    core.validate_preview_candidate(output, expected_source_sha=source_sha)
+    return source_sha

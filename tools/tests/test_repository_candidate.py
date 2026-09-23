@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repository_core as core
 from candidate_workspace import CandidateWorkspace
-from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, validate_inventory, write_candidate_manifest
+from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, extract_preview_artifact, validate_inventory, write_candidate_manifest
 from repository_publish import GitHubGitTransport
 from test_repository_publish import _create_fixture, _git, _remove_tree
 
@@ -32,6 +32,21 @@ class StableCandidateContractTests(unittest.TestCase):
                     with self.assertRaises(core.RepositoryError):
                         extract_candidate_artifact(archive, root / "output", expected_digest=digest)
                     self.assertFalse((root / "foreign").exists())
+
+    def test_preview_artifact_extraction_rejects_path_escape(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="nxp-preview-zip-") as temporary:
+            root = Path(temporary)
+            archive = root / "artifact.zip"
+            with zipfile.ZipFile(archive, "w") as target:
+                target.writestr("preview/candidate.json", b"{}")
+                target.writestr("preview-producer.json", b"{}")
+                target.writestr("preview/catalog.json", b"{}")
+                target.writestr("preview/preview-plan.json", b"{}")
+                target.writestr("preview/../../foreign", b"bad")
+            digest = "sha256:" + hashlib.sha256(archive.read_bytes()).hexdigest()
+            with self.assertRaises(core.RepositoryError):
+                extract_preview_artifact(archive, root / "output", expected_digest=digest)
+            self.assertFalse((root / "foreign").exists())
 
     def test_inventory_and_original_producer_are_bound_to_distribution(self) -> None:
         root = _create_fixture()
