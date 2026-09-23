@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-18T10:28:58Z",
+  "generatedAt": "2026-09-23T09:23:11Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -148,19 +148,26 @@
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-09-18",
+      "updatedAt": "2026-09-21",
       "hasReadme": true,
-      "version": "0.3.4",
+      "version": "0.3.5",
       "kind": "managed-code",
       "apiVersion": "1.8",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.16.6",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.4.zip",
-      "sha256": "dea9de6a6bcf8b30b8dc666e9b2fa4556c2d73bd5b8c7497841ae1368e4643f6",
-      "sizeBytes": 381457,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.3.5.zip",
+      "sha256": "e136a07d59685f107fc71b43a81304892d7a56c8f9cb16793baaed2e1726ff49",
+      "sizeBytes": 380996,
       "changelog": [
+        {
+          "version": "0.3.5",
+          "date": "2026-09-21",
+          "items": [
+            "调整签到任务卡片的左侧留白，与用户、脚本实例及调度队列卡片保持一致。"
+          ]
+        },
         {
           "version": "0.3.4",
           "date": "2026-09-18",
@@ -173,13 +180,6 @@
           "date": "2026-09-18",
           "items": [
             "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-09-17",
-          "items": [
-            "将任务与计划排序交互迁移到宿主公开 nxp-* 控件，保持任务编辑和计划列表的排序操作。"
           ]
         }
       ],
@@ -199,6 +199,12 @@
           ],
           "changelog": [
             {
+              "version": "0.3.5",
+              "items": [
+                "Aligned check-in task card spacing with user, script instance and queue cards."
+              ]
+            },
+            {
               "version": "0.3.4",
               "items": [
                 "Unified check-in schedule controls with the queue editor's public button state and responsive layout."
@@ -208,12 +214,6 @@
               "version": "0.3.3",
               "items": [
                 "Fixed frontend styles that depended on the host drag control's internal selectors."
-              ]
-            },
-            {
-              "version": "0.3.2",
-              "items": [
-                "Migrated task and schedule sorting interactions to the host's public nxp-* controls while preserving reorder operations in task editing and schedule lists."
               ]
             }
           ]
@@ -327,20 +327,27 @@
         "BAAH"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
-      "updatedAt": "2026-09-13",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.1.5",
+      "version": "0.2.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator",
         "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.1.5.zip",
-      "sha256": "c6652c6eab878911122e74304b20f51a5709ae5a52facb3bc44fcc57c328c846",
-      "sizeBytes": 21319,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.2.0.zip",
+      "sha256": "e584e136d509f04900b02c512b4466dbeec5cac07cb201d53061ef4df2613c74",
+      "sizeBytes": 85220,
       "changelog": [
+        {
+          "version": "0.2.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.1.5",
           "date": "2026-09-13",
@@ -368,6 +375,12 @@
             "BAAH"
           ],
           "changelog": [
+            {
+              "version": "0.2.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
             {
               "version": "0.1.5",
               "items": [
@@ -402,17 +415,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
-      "updatedAt": "2026-09-13",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.2.10",
+      "version": "0.3.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.2.10.zip",
-      "sha256": "5653accd40f87dbef7fdd73e34e3b77743e87a02aedcf7052e32cf39b0289b40",
-      "sizeBytes": 15436,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.3.0.zip",
+      "sha256": "96a3e73b76f6b87296cd3439171f6c7028f74d5c10a38f26111348496967f5da",
+      "sizeBytes": 53276,
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.2.10",
           "date": "2026-09-13",
@@ -439,6 +459,12 @@
             "Configuration"
           ],
           "changelog": [
+            {
+              "version": "0.3.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
             {
               "version": "0.2.10",
               "items": [
@@ -473,19 +499,26 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-09-13",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.2.5",
+      "version": "0.3.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.2.5.zip",
-      "sha256": "67f425c7e48d9c5cfabaab353e86a9112f44a60822226977bc7b24d48d8862d0",
-      "sizeBytes": 12405,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.3.0.zip",
+      "sha256": "5fa2ec19081fe14313e34da1ecf3076e099924faa45dcfa751246f8ae385cdbe",
+      "sizeBytes": 112651,
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.2.5",
           "date": "2026-09-13",
@@ -512,6 +545,12 @@
             "MaaEnd"
           ],
           "changelog": [
+            {
+              "version": "0.3.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
             {
               "version": "0.2.5",
               "items": [
@@ -547,19 +586,26 @@
         "MaaFramework"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
-      "updatedAt": "2026-09-12",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.1.3",
+      "version": "0.2.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.1.3.zip",
-      "sha256": "e241d509e832db3cbab44fb6162fe7b549108b803aa49a63c24a89b35ec8917c",
-      "sizeBytes": 11250,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.2.0.zip",
+      "sha256": "ce9db4547380b5a3dfd9248f3746999280b276b393e320141c6c02aa44eea5e8",
+      "sizeBytes": 75310,
       "changelog": [
+        {
+          "version": "0.2.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.1.3",
           "date": "2026-09-12",
@@ -572,13 +618,6 @@
           "date": "2026-09-10",
           "items": [
             "新增中英文商店元数据，完善多语言展示。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-09-07",
-          "items": [
-            "同步官方插件源码分类目录与主页地址，运行行为保持不变。"
           ]
         }
       ],
@@ -594,6 +633,12 @@
           ],
           "changelog": [
             {
+              "version": "0.2.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
+            {
               "version": "0.1.3",
               "items": [
                 "Renamed the machine identifier from maastellasora to maas and requires the host migration for existing settings."
@@ -603,12 +648,6 @@
               "version": "0.1.2",
               "items": [
                 "Added English store metadata for the official plugin catalog."
-              ]
-            },
-            {
-              "version": "0.1.1",
-              "items": [
-                "Synced the official plugin source layout and homepage; runtime behavior is unchanged."
               ]
             }
           ]
@@ -633,17 +672,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
-      "updatedAt": "2026-09-13",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.2.6",
+      "version": "0.3.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.2.6.zip",
-      "sha256": "e63627d297872d2f11b73bb4fb56a4ddf49fd4d0e2bc99d87711c8a442d358e4",
-      "sizeBytes": 8802,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.3.0.zip",
+      "sha256": "38a4f1ad0ca1de6a50856c66a59e780b2b883861f02cc9d327134368691a95ef",
+      "sizeBytes": 96318,
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.2.6",
           "date": "2026-09-13",
@@ -671,6 +717,12 @@
           ],
           "changelog": [
             {
+              "version": "0.3.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
+            {
               "version": "0.2.6",
               "items": [
                 "Updated the minimum host version requirement to 0.15.11."
@@ -680,6 +732,122 @@
               "version": "0.2.4",
               "items": [
                 "Corrected the English store history metadata; runtime behavior is unchanged."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "oknte",
+      "artifactName": "OkNTE",
+      "displayName": "ok-nte 日常",
+      "gameName": "异环",
+      "description": "单账号日常任务计划、配置隔离与任务结果判定",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "异环",
+        "专项插件"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkNTE",
+      "updatedAt": "2026-09-21",
+      "hasReadme": true,
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [
+        "no-fresh-config"
+      ],
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkNTE/OkNTE-0.1.0.zip",
+      "sha256": "7bca3ef780d28e730acbf4d05e944e702bb26212f5c90cf01236c988716dcdf6",
+      "sizeBytes": 72070,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-09-21",
+          "items": [
+            "初始日常适配开发版本；Windows 安装发行资格验证尚未完成。"
+          ]
+        }
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "ok-nte daily",
+          "gameName": "Neverness to Everness",
+          "description": "Single-account daily task plans and observations.",
+          "tags": [
+            "Neverness to Everness",
+            "Specialized plugin"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.0",
+              "items": [
+                "Initial daily adapter candidate; Windows installed-distribution qualification is pending."
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "okww",
+      "artifactName": "OkWutheringWaves",
+      "displayName": "ok-ww 日常",
+      "gameName": "鸣潮",
+      "description": "单账号日常任务计划、配置隔离与任务结果判定",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "鸣潮",
+        "专项插件"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
+      "updatedAt": "2026-09-21",
+      "hasReadme": true,
+      "version": "0.1.0",
+      "kind": "data-specialized",
+      "apiVersion": "",
+      "capabilities": [
+        "no-fresh-config"
+      ],
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkWutheringWaves/OkWutheringWaves-0.1.0.zip",
+      "sha256": "21013c6c4b021488e1c1c615cc6d8fe340810bb885e28004052c7e00caee4972",
+      "sizeBytes": 74946,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-09-21",
+          "items": [
+            "初始日常适配开发版本；Windows 安装发行资格验证尚未完成。"
+          ]
+        }
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "ok-ww daily",
+          "gameName": "Wuthering Waves",
+          "description": "Single-account daily task plans and observations.",
+          "tags": [
+            "Wuthering Waves",
+            "Specialized plugin"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.0",
+              "items": [
+                "Initial daily adapter candidate; Windows installed-distribution qualification is pending."
               ]
             }
           ]
@@ -704,19 +872,26 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-13",
+      "updatedAt": "2026-09-21",
       "hasReadme": false,
-      "version": "0.2.10",
+      "version": "0.3.0",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.15.11",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.2.10.zip",
-      "sha256": "299d84eb0ed2504f947c5842d3c284ffbcd6a8d2e79705e47cbd5d663bed4d94",
-      "sizeBytes": 16286,
+      "minHostVersion": "0.16.8",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.3.0.zip",
+      "sha256": "3b848f2ffb81282f78038e32908788eccd4c765481ea158716eca81d32423625",
+      "sizeBytes": 74425,
       "changelog": [
+        {
+          "version": "0.3.0",
+          "date": "2026-09-21",
+          "items": [
+            "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
+          ]
+        },
         {
           "version": "0.2.10",
           "date": "2026-09-13",
@@ -743,6 +918,12 @@
             "OneDragon"
           ],
           "changelog": [
+            {
+              "version": "0.3.0",
+              "items": [
+                "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
+              ]
+            },
             {
               "version": "0.2.10",
               "items": [
