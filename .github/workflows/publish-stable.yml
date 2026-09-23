@@ -125,7 +125,7 @@ jobs:
 
   resolve-qualification:
     name: resolve-qualification
-    if: github.event_name == 'push' || inputs.candidate_run_id == ''
+    if: (github.event_name == 'push' && vars.SCHEME_B_STABLE_AUTO_ENABLED != 'true') || (github.event_name == 'workflow_dispatch' && inputs.candidate_run_id == '')
     runs-on: ubuntu-latest
     environment: qualification-control
     outputs:
@@ -375,7 +375,8 @@ jobs:
 
   publish-only:
     name: Publish original Plugins candidate
-    if: github.event_name == 'workflow_dispatch' && inputs.candidate_run_id != ''
+    needs: candidate
+    if: always() && ((github.event_name == 'push' && vars.SCHEME_B_STABLE_AUTO_ENABLED == 'true' && needs.candidate.result == 'success' && needs.candidate.outputs.status == 'VALIDATED') || (github.event_name == 'workflow_dispatch' && inputs.candidate_run_id != ''))
     runs-on: windows-latest
     environment: plugin-stable-publish
     permissions:
@@ -399,7 +400,7 @@ jobs:
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id || github.run_id }}
           CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
         run: |
           if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Publisher control must run from main' }

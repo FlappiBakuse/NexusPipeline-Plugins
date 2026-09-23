@@ -659,6 +659,10 @@ def publish_develop(
     workflow_sha: str | None = None,
     producer_output: Path | None = None,
 ) -> dict[str, Any]:
+    if host_root is not None:
+        from verification import preflight
+
+        preflight(root, host_root, core.git_head(host_root))
     result = core.build_preview(root, source_ref, output, host_root=host_root)
     if run_id is not None:
         producer_path = (producer_output or (Path(result["output"]).parent / "preview-producer.json")).resolve()
