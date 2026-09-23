@@ -75,6 +75,7 @@ NexusPipeline-Plugins/
 │   └── tests/                           # 仓库工具单元测试
 └── docs/
     ├── README.md                       # 插件作者任务入口与文档地图
+    ├── STATUS.md                       # 当前待办与未验证范围
     ├── map.json                        # 机器可读主题路由
     ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
     ├── FRONTEND_PLUGIN.md              # 前端插件开发指南
@@ -113,7 +114,7 @@ NexusPipeline-Plugins/
 
 ## 贡献入口
 
-- [项目状态与待办](STATUS.md)
+- [项目状态与待办](docs/STATUS.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 - [DATA_SPECIALIZED_PLUGIN.md](docs/DATA_SPECIALIZED_PLUGIN.md)
 - [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)
