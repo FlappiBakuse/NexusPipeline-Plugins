@@ -34,7 +34,7 @@ def generate(artifact, name, example=False, preset="json-id-array", protocol_ver
       'README.md':'# '+artifact+'\n\nStructure preset: '+preset+'\n\n'+('Synthetic protocol fixture; config.tasks entries are {id,name,enabled}. Logs use TASK <id> START|OK|FAIL. Run via the Host task protocol integration tool.\n' if example else
         'Replace the adaptation marker after reviewing upstream task selection, current-log evidence, risk and retry units. Add positive and negative fixtures before packaging.\n')}
     if protocol_version in ('1.1', '1.2'):
-        text_root = 'data/i18n/' if protocol_version == '1.2' else 'data/'
+        text_root = 'data/i18n/' if protocol_version == '1.2' else 'data/task-text.'
         files['plugin.json']['taskProtocol']['localization']={'defaultLocale':'zh-CN','messages':{
             'zh-CN':text_root+'zh-CN.json','en-US':text_root+'en-US.json'}}
         files[text_root+'zh-CN.json']={'task.daily_reward':'每日奖励',

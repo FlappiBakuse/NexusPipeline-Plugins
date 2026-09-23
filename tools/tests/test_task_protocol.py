@@ -19,6 +19,7 @@ class TaskProtocolTests(unittest.TestCase):
         current = author.generate('ExampleTask', 'example-task', True)
         protocol = json.loads(current['plugin.json'])['taskProtocol']
         self.assertEqual('1.1', protocol['version'])
+        self.assertEqual('data/task-text.zh-CN.json', protocol['localization']['messages']['zh-CN'])
         for path in protocol['localization']['messages'].values():
             self.assertIn('task.daily_reward', json.loads(current[path]))
         legacy = author.generate('ExampleTask', 'example-task', True, protocol_version='1.0')
