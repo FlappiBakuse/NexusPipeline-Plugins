@@ -122,10 +122,10 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 python tools/generate_task_protocol.py
 python tools/generate_task_protocol.py --check
 dotnet run --project <Host>/tools/NexusPipeline.TaskProtocolTests -- --plugin-root <Plugins>
-python tools/repository.py qualification --group source --base <B> --host-root <Host> --sdk-sha <SDK_SHA>
+python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <Host> --sdk-sha <SDK_SHA>
 ```
 
-P1 执行生成一致性与真实 Host Jint/归并器/配置 journal 的八适配器测试。Node 语法检查不是此测试的替代品；零夹具或缺少任何适配器均失败。完整正式资格还要求 P2/P3 和干净且固定 SHA 的 Host checkout。
+`verify --scope all` 执行生成一致性、真实 Host Jint/归并器/配置 journal 的八适配器测试，以及适用的 managed 和前端契约检查。Node 语法检查不是 Host Jint 测试的替代品；零夹具或缺少任何适配器均失败。运行时使用干净且固定 SHA 的 Host checkout。
 
 ## 作者模板
 

@@ -23,8 +23,6 @@ from repository_publish import (
     GitHubGitTransport,
     publish_develop,
     publish_preview,
-    publish_stable,
-    write_stable_producer,
 )
 
 
@@ -162,15 +160,6 @@ class FakePreviewTransport:
         self.next_id += 1
         self.assets[name] = (asset_id, asset.read_bytes())
         return {"id": asset_id, "name": name}
-
-
-class FakeGitTransport:
-    def __init__(self) -> None:
-        self.calls: list[dict] = []
-
-    def publish_stable_candidate(self, root: Path, generated_root: Path, source_sha: str, base_sha: str, **kwargs: object) -> dict:
-        self.calls.append({"root": root, "generated_root": generated_root, "source_sha": source_sha, "base_sha": base_sha, **kwargs})
-        return {"publishedCommit": "d" * 40, "parent": source_sha, "remoteWritten": True}
 
 
 class RepositoryPublishTests(unittest.TestCase):
@@ -333,35 +322,6 @@ class RepositoryPublishTests(unittest.TestCase):
         finally:
             _remove_tree(root)
 
-    def test_stable_writer_requires_producer_identity_and_forwards_it(self) -> None:
-        root = _create_fixture()
-        try:
-            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
-            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
-            manifest = read_json(manifest_path)
-            store = read_json(store_path)
-            manifest["version"] = "0.2.0"
-            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
-            write_json(manifest_path, manifest)
-            write_json(store_path, store)
-            _git(root, "add", ".")
-            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source")
-            source = git_head(root)
-            plan = build_plan(root)
-            plan_path = root / ".generated" / "plan.json"
-            write_json(plan_path, plan)
-            candidate = root / ".generated" / "stable"
-            release(root, plan_path, candidate)
-            write_stable_producer(candidate, source_sha=source, base_sha=B, run_id="12", run_attempt="2", workflow_sha=C, qualification_app_id="456", qualification_check_id="789")
-            transport = FakeGitTransport()
-            result = publish_stable(root, source, candidate, remote_write=True, token="secret", git_transport=transport, base_sha=B, run_id="12", run_attempt="2", workflow_sha=C, qualification_app_id="456", qualification_check_id="789")
-            self.assertTrue(result["remoteWritten"])
-            self.assertEqual(transport.calls[0]["source_sha"], source)
-            self.assertEqual(transport.calls[0]["base_sha"], B)
-            self.assertEqual(transport.calls[0]["run_id"], 12)
-        finally:
-            _remove_tree(root)
-
     def test_stable_candidate_inventory_rejects_extra_payload(self) -> None:
         root = _create_fixture()
         try:
@@ -427,27 +387,6 @@ class RepositoryPublishTests(unittest.TestCase):
                 core.validate_generated(writer_source, candidate)
             _git(writer_source, 'fetch', '--unshallow', 'origin')
             core.validate_generated(writer_source, candidate)
-            # Every hostile candidate must fail at the top-level boundary,
-            # before a local bare remote or any historical package can change.
-            write_stable_producer(candidate, source_sha=source, base_sha=base, run_id='12', run_attempt='1', workflow_sha=C, qualification_app_id='456', qualification_check_id='789')
-            original_plan = (candidate / 'release-plan.json').read_bytes()
-            remote_before = _git(remote, 'rev-parse', 'main').strip()
-            historical = (root / 'packages/Alpha/Alpha-0.1.0.zip').read_bytes()
-            for attack in ('history', 'unreferenced', 'remove', 'requires'):
-                extra = None
-                if attack in ('history', 'unreferenced'):
-                    extra = candidate / 'packages/Alpha' / ('Alpha-0.1.0.zip' if attack == 'history' else 'Alpha-0.9.0.zip')
-                    extra.write_bytes(b'foreign bytes')
-                else:
-                    altered = read_json(candidate / 'release-plan.json')
-                    altered['removeArtifacts' if attack == 'remove' else 'requiresPackage'] = ['packages/Alpha'] if attack == 'remove' else []
-                    write_json(candidate / 'release-plan.json', altered)
-                with self.subTest(attack=attack), self.assertRaises(RepositoryError):
-                    publish_stable(root, source, candidate, remote_write=True, token='secret', git_transport=transport, base_sha=base, run_id='12', run_attempt='1', workflow_sha=C, qualification_app_id='456', qualification_check_id='789')
-                self.assertEqual(_git(remote, 'rev-parse', 'main').strip(), remote_before)
-                self.assertEqual((root / 'packages/Alpha/Alpha-0.1.0.zip').read_bytes(), historical)
-                if extra: extra.unlink()
-                (candidate / 'release-plan.json').write_bytes(original_plan)
             first = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             second = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             self.assertFalse(first["idempotent"])

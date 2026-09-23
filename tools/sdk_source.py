@@ -1,4 +1,4 @@
-"""解析并验证 Plugins Qualification 使用的 NexusPipeline SDK 来源。
+"""解析并验证 Plugins 检查和候选使用的 NexusPipeline SDK 来源。
 
 host.lock.json 只声明兼容元数据；本模块负责在一次 preflight 中解析具体
 源码 SHA，并让后续 P1/P2/P3 复用同一个源码 checkout。所有远端操作都固定

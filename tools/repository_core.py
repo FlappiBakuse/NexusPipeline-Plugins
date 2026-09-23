@@ -353,7 +353,7 @@ def read_host_compatibility(root: Path) -> dict[str, Any]:
     """读取并严格校验本仓库声明的 Host/Frontend 兼容元数据。
 
     该文件只表达公开契约版本与 locale 集合，不再承担 SDK 源码或 Git 提交
-    锁定职责。SDK 的具体源码 SHA 由 qualification preflight 单独记录。
+    锁定职责。SDK 的具体源码 SHA 由验证和候选任务单独固定。
     """
     lock_path = root / "host.lock.json"
     data = read_json(lock_path)
@@ -2082,7 +2082,7 @@ def _is_plugin_build_metadata_path(path: str, plugin_root: str | None = None) ->
     its ZIP.  In particular, changing a ProjectReference from a repository-
     relative path to the explicit NexusHostRoot property must not force an
     otherwise identical stable package to receive a new plugin version.  The
-    resulting build is still covered by the managed Qualification gate.
+    resulting build is still covered by the managed verification gate.
     """
     normalized = path.replace("\\", "/").strip("/")
     if plugin_root is not None:
@@ -2216,7 +2216,7 @@ def test_managed(
     managed_projects = _managed_projects(root, artifacts)
     managed_source_count = sum(1 for plugin in plugins if plugin.kind == "managed-code" and plugin.artifact_name in set(artifacts))
     if managed_source_count and not managed_projects:
-        raise RepositoryError("当前 Qualification 需要 managed-code 项目，但没有可构建的 csproj")
+        raise RepositoryError("当前验证需要 managed-code 项目，但没有可构建的 csproj")
     if not managed_source_count:
         print("[repository] managed-code 增量测试：当前源码没有适用项目", flush=True)
         return 0
@@ -2399,7 +2399,7 @@ def validate_stable_candidate_layout(root: Path, generated_root: Path) -> dict[s
     _require(generated_root.is_dir() and not generated_root.is_symlink(), "stable 候选目录必须是普通目录")
     expected_packages = _expected_stable_package_paths(root, generated_root)
     required_files = {"catalog.json", STATE_FILE, "release-plan.json"}
-    optional_files = {"stable-producer.json", "candidate.json"}
+    optional_files = {"candidate.json"}
     allowed_files = required_files | optional_files | expected_packages
     allowed_directories = {"packages"}
     for relative in expected_packages:
