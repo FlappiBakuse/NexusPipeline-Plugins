@@ -49,6 +49,43 @@ class TaskProtocolTests(unittest.TestCase):
                 "version": "1.0", "discoverScript": "data/discover.js",
                 "retryScript": "data/retry.js", "readResources": []}}
 
+    def test_pinned_resource_requires_12_and_root_text(self):
+        for version, source, fmt, digest, valid in [
+            ('1.0', 'root', 'text', 'a' * 64, False),
+            ('1.1', 'root', 'text', 'a' * 64, False),
+            ('1.2', 'root', 'text', 'a' * 64, True),
+            ('1.2', 'extraConfig', 'text', 'a' * 64, False),
+            ('1.2', 'root', 'json', 'a' * 64, False),
+            ('1.2', 'root', 'text', 'A' * 64, False),
+            ('1.2', 'root', 'text', None, False),
+        ]:
+            with self.subTest(version=version, source=source, fmt=fmt, digest=digest):
+                manifest = self.manifest()
+                protocol = manifest['taskProtocol']
+                protocol['version'] = version
+                if version != '1.0':
+                    protocol['localization'] = {'defaultLocale': 'en-US', 'messages': {'en-US': 'data/i18n/en.json'}}
+                if version == '1.2':
+                    protocol.update(configRules=[dict(id='runtime', required=True, criticality='critical_when_applicable')], environmentChecks=[])
+                protocol['readResources'] = [dict(id='code', source=source, path='main.py', format=fmt, required=False, sha256=digest)]
+                if valid:
+                    core._task_protocol_scripts(manifest)
+                else:
+                    with self.assertRaises(core.RepositoryError):
+                        core._task_protocol_scripts(manifest)
+
+    def test_main_config_target_defaults_remain_bounded(self):
+        check = dict(id='adb', source=dict(kind='mainConfig', selector=['ip']), expectedKind='adb_endpoint',
+                     relativeBase='none', networkAccess=False, followReparsePoints=False,
+                     comparison='adb_endpoint_with_port', secondarySelector=['port'], defaultValue='127.0.0.1', secondaryDefaultValue='5555')
+        core._validate_task_protocol_environment_checks([check])
+        for fields in [dict(defaultValue=None), dict(defaultValue=''), dict(defaultValue=123),
+                       dict(source=dict(kind='mainConfig', selector=['parent', 'ip'])),
+                       dict(source=dict(kind='mainConfig', selector=['ip'], resourceId='other')),
+                       dict(comparison='exact'), dict(networkAccess=True)]:
+            with self.subTest(fields=fields), self.assertRaises(core.RepositoryError):
+                core._validate_task_protocol_environment_checks([dict(check, **fields)])
+
     def test_legacy_and_current_contract(self):
         self.assertEqual({}, core._task_protocol_scripts({}))
         self.assertEqual(2, len(core._task_protocol_scripts(self.manifest())))

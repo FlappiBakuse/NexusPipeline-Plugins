@@ -1,0 +1,124 @@
+{
+  "artifact": "March7thAssistant",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.yaml",
+      "format": "yaml",
+      "text": "{\"daily_enable\": true, \"power_enable\": false, \"universe_enable\": false, \"weekly_divergent_enable\": false, \"currencywars_enable\": false, \"fight_enable\": false, \"forgottenhall_enable\": false, \"purefiction_enable\": false, \"apocalyptic_enable\": false, \"asset_manager_enable\": false, \"reward_enable\": false, \"activity_enable\": false, \"build_target_enable\": false, \"echo_of_war_enable\": false, \"reward_assist_enable\": false, \"reward_mail_enable\": false, \"reward_dispatch_enable\": false, \"reward_quest_enable\": false, \"reward_srpass_enable\": false, \"reward_achievement_enable\": false, \"reward_message_enable\": false, \"reward_redemption_code_enable\": false, \"asset_self_molding_resin_enable\": false, \"asset_lc3_star_superimpose_enable\": false, \"asset_ember_special_pass_enable\": false, \"asset_ember_regular_pass_enable\": false, \"asset_ember_tracks_of_destiny_enable\": false, \"activity_dailycheckin_enable\": false, \"activity_gardenofplenty_enable\": false, \"activity_realmofthestrange_enable\": false, \"activity_planarfissure_enable\": false, \"activity_journey_highlights_notification_enable\": false, \"after_finish\": \"Loop\"}"
+    }
+  ],
+  "tasks": {
+    "daily_enable": {
+      "enabled": true
+    },
+    "power_enable": {
+      "enabled": false
+    },
+    "universe_enable": {
+      "enabled": false
+    },
+    "weekly_divergent_enable": {
+      "enabled": false
+    },
+    "currencywars_enable": {
+      "enabled": false
+    },
+    "fight_enable": {
+      "enabled": false
+    },
+    "forgottenhall_enable": {
+      "enabled": false
+    },
+    "purefiction_enable": {
+      "enabled": false
+    },
+    "apocalyptic_enable": {
+      "enabled": false
+    },
+    "asset_manager_enable": {
+      "enabled": false
+    },
+    "reward_enable": {
+      "enabled": false
+    },
+    "activity_enable": {
+      "enabled": false
+    },
+    "build_target_enable": {
+      "enabled": false
+    },
+    "echo_of_war_enable": {
+      "enabled": false
+    },
+    "reward_assist_enable": {
+      "enabled": false
+    },
+    "reward_mail_enable": {
+      "enabled": false
+    },
+    "reward_dispatch_enable": {
+      "enabled": false
+    },
+    "reward_quest_enable": {
+      "enabled": false
+    },
+    "reward_srpass_enable": {
+      "enabled": false
+    },
+    "reward_achievement_enable": {
+      "enabled": false
+    },
+    "reward_message_enable": {
+      "enabled": false
+    },
+    "reward_redemption_code_enable": {
+      "enabled": false
+    },
+    "asset_self_molding_resin_enable": {
+      "enabled": false
+    },
+    "asset_lc3_star_superimpose_enable": {
+      "enabled": false
+    },
+    "asset_ember_special_pass_enable": {
+      "enabled": false
+    },
+    "asset_ember_regular_pass_enable": {
+      "enabled": false
+    },
+    "asset_ember_tracks_of_destiny_enable": {
+      "enabled": false
+    },
+    "activity_dailycheckin_enable": {
+      "enabled": false
+    },
+    "activity_gardenofplenty_enable": {
+      "enabled": false
+    },
+    "activity_realmofthestrange_enable": {
+      "enabled": false
+    },
+    "activity_planarfissure_enable": {
+      "enabled": false
+    },
+    "activity_journey_highlights_notification_enable": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {},
+  "queueFollowingWork": "no",
+  "configChecks": [
+    {
+      "ruleId": "march7th.finish_action",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "source": {
+    "type": "source_derived_control_flow",
+    "upstreamCommit": "7423dea64552f71332cc71f3c02481695aaec151",
+    "note": "tasks/game/__init__.py start cloud/local branch and stop detect_loop; synthetic input, no game/system action."
+  }
+}

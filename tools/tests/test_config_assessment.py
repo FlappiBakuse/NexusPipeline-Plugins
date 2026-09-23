@@ -34,11 +34,14 @@ console.log('PASS critical and advisory rule exceptions');
     def test_missing_config_location_does_not_erase_the_check(self):
         root = Path(__file__).resolve().parents[2]
         fixture = json.loads((root / 'tools/task-protocol/fixtures/r2-okww-4c-missing.json').read_text(encoding='utf-8'))
+        for resource_set in fixture.get('resourceSets', []):
+            fixture['resources'].extend(json.loads((root / 'tools/task-protocol/fixtures' / resource_set).read_text(encoding='utf-8'))['resources'])
         script = r'''
 const fs = require('fs'), vm = require('vm');
 const fixture = JSON.parse(fs.readFileSync(0, 'utf8'));
 const data = Object.fromEntries(fixture.resources.map(r => [r.id,
-  { document: r.format === 'json' ? JSON.parse(r.text) : r.text }]));
+  { document: r.format === 'json' ? JSON.parse(r.text) : r.text,
+    integrity: r.sha256 ? (require('crypto').createHash('sha256').update(r.text).digest('hex') === r.sha256 ? 'verified' : 'mismatch') : undefined }]));
 let result;
 vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
   input: { phase: 'discover', protocolVersion: '1.2', configResources: fixture.resources.filter(r => r.id.startsWith('config:')) },

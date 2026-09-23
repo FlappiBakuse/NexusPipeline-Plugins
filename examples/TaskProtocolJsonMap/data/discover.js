@@ -61,18 +61,30 @@ function discover() {
   plan.coverage = 'complete'; return plan;
 }
 
-// Shared by discovery coverage and configuration admission. These checks are
-// local installation metadata, not proof of an immutable working tree.
+// Local metadata plus pinned interpretation files; not complete interpreter attestation.
 function runtimeIdentity(app, head, tag) {
-  const profiles = ADAPTER.runtimeProfiles || {};
-  const release = profiles[app?.current_profile] || (app?.current_profile === 'Global' ? ADAPTER.runtimeRelease : null);
-  return !!(app && release && app.name === release.name && app.installed === true
-    && app.current_profile && app.current_version === release.version
-    && app.update_state === 'idle' && !app.update_target_version && !app.update_error
-    && app.current_version_missing !== true && app.running !== true
-    && Array.isArray(app.available_versions) && app.available_versions.includes(release.version)
-    && typeof head === 'string' && head.trim() === release.commit
-    && typeof tag === 'string' && tag.trim() === release.tagObject);
+  const channel = ['China', 'Global'].includes(app?.current_profile) ? app.current_profile : 'unknown';
+  const version = typeof app?.current_version === 'string' && /^v[0-9]+\.[0-9]+\.[0-9]+(?:[-.][A-Za-z0-9]+)*$/.test(app.current_version)
+    && app.current_version.length <= 48 ? app.current_version : 'unknown';
+  const failure = (reason, fallback) => ({ ready: false, reasonText: {
+    kind: 'plugin', key: 'diagnostic.runtime.' + reason, args: { channel, version }, fallback
+  } });
+  const release = ADAPTER.runtimeProfiles?.[channel] || (channel === 'Global' ? ADAPTER.runtimeRelease : null);
+  if (!app || app.name !== release?.name || app.installed !== true || !release)
+    return failure('installation', '无法确认官方安装身份（{channel} / {version}），请初始化受支持的官方渠道。');
+  if (app.current_version !== release.version || app.current_version_missing === true
+      || !Array.isArray(app.available_versions) || !app.available_versions.includes(release.version))
+    return failure('version', '当前发行版本尚未通过适配验证（{channel} / {version}），请检查安装版本。');
+  if (app.update_state !== 'idle' || app.update_target_version || app.update_error || app.running === true)
+    return failure('busy', '更新器或上游程序尚未就绪（{channel} / {version}），请完成更新并关闭后重新检查。');
+  if (typeof head !== 'string' || head.trim() !== release.commit || typeof tag !== 'string' || tag.trim() !== release.tagObject)
+    return failure('repository', '本地 HEAD/tag 与受支持发行不一致（{channel} / {version}），请核对官方安装。');
+  const code = ADAPTER.runtimeCodeResources;
+  let verified = false;
+  try { verified = Array.isArray(code) && code.length > 0 && code.every(id => nexus.readResource(id).integrity === 'verified'); }
+  catch { /* Missing/unreadable bytes are unqualified. */ }
+  if (!verified) return failure('code', '关键运行文件缺失或与已验证发行不同（{channel} / {version}），请修复官方安装后重新检查。');
+  return { ready: true };
 }
 
 // Pure projection of DailyRoutineTask.normalize_items; never writes user configuration.
@@ -161,9 +173,9 @@ function finalizeAssessment(plan) {
     const action = normalizedAction(value);
     if (!action) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    if (['RunScript', 'Loop'].includes(action))
+    if (action === 'RunScript')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    if (['Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
+    if (['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
       const context = input.executionContext || {}, following = context.queue && context.queue.hasFollowingWork;
       if (following === 'yes')
         return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
@@ -195,6 +207,18 @@ function finalizeAssessment(plan) {
     return rule.inspectionIdByMode?.[mode] || rule.inspectionIdByMode?.unknown;
   };
   const inspectTarget = rule => {
+    if (rule.unverifiedWhen && input.executionContext?.mode === rule.unverifiedWhen.mode) {
+      const condition = rule.unverifiedWhen;
+      const id = condition.resourceId === 'main' ? mainConfigId() : condition.resourceId;
+      const value = select(read('config', id), condition.selector);
+      if (value === condition.equals || condition.requireBoolean === true && value !== undefined && typeof value !== 'boolean')
+        return push(rule, 'unknown', 'warning', 'warn', location(rule), text(condition), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    }
+    if (rule.notApplicableWhen) {
+      const condition = rule.notApplicableWhen;
+      const value = select(read('config', condition.resourceId), condition.selector);
+      if (value === condition.equals) return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    }
     const inspectionId = targetInspectionId(rule);
     if (!inspectionId) return push(rule, 'unknown', rule.severity || 'warning', rule.effect || 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     let inspection;
@@ -230,7 +254,7 @@ function finalizeAssessment(plan) {
     const document = read('resource', rule.resourceId);
     if (!document || typeof document !== 'object')
       return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
-    const value = document && document.SAVE_LOG_TO_FILE;
+    const value = Object.prototype.hasOwnProperty.call(document, 'SAVE_LOG_TO_FILE') ? document.SAVE_LOG_TO_FILE : false;
     if (value === true) return push(rule, 'satisfied', 'info', 'none', location(rule));
     if (value === false) {
       const context = input.executionContext || {};
@@ -327,8 +351,8 @@ function finalizeAssessment(plan) {
     const head = read('resource', 'runtime-head');
     const tag = read('resource', 'runtime-tag');
     const identity = runtimeIdentity(app, head, tag);
-    if (identity) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
+    if (identity.ready) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    return push(rule, 'unknown', 'error', 'block', location(rule), identity.reasonText, rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
   for (const rule of ADAPTER.configRules || []) {
     try {

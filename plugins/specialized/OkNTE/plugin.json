@@ -45,6 +45,142 @@
         "path": "data/apps/ok-nte/repo/.git/refs/tags/v1.3.19",
         "format": "text",
         "required": false
+      },
+      {
+        "id": "runtime-code-0",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/main.py",
+        "format": "text",
+        "required": false,
+        "sha256": "08ebf5b5b561f73d6537581043b662d00826fef8dd08541c93d394af0c2cfe5d"
+      },
+      {
+        "id": "runtime-code-1",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/ok/feature/Feature.py",
+        "format": "text",
+        "required": false,
+        "sha256": "8d656c4d68c3a36bdde667ae93ffac10e5b9b3bca3351f29f32d00587a854902"
+      },
+      {
+        "id": "runtime-code-2",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/ok/task/TaskExecutor.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bcf441ea610d6e67f6773bc41e97999ffed649e778c751e7e3d68432d132b3af"
+      },
+      {
+        "id": "runtime-code-3",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/ok/ui/qt/StartController.py",
+        "format": "text",
+        "required": false,
+        "sha256": "fb512d1a56e6015ea312d15e80c1517a68f87ad01addd994cdbc235e05fcebde"
+      },
+      {
+        "id": "runtime-code-4",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/pyappify.yml",
+        "format": "text",
+        "required": false,
+        "sha256": "f6303972764c6873dc7c1ac4c13e7092a3a7caebbd2e6b39ac6f45cad28596c3"
+      },
+      {
+        "id": "runtime-code-5",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/requirements.txt",
+        "format": "text",
+        "required": false,
+        "sha256": "1c4cfac2cf0cca284de0720dd4e083f309e4fa0e0bf864950b0588d3fe0f7ba4"
+      },
+      {
+        "id": "runtime-code-6",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/config.py",
+        "format": "text",
+        "required": false,
+        "sha256": "f4a585edb3fcf6a24ee5af06bae8ac6810ac99b678a5c6af9817e58bbccd1c5e"
+      },
+      {
+        "id": "runtime-code-7",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/AnomalyHunter.py",
+        "format": "text",
+        "required": false,
+        "sha256": "8bfa96965415f31e4288b4f3db121ee3a07c9dcb7c2a3542a2b44dfe2871a8db"
+      },
+      {
+        "id": "runtime-code-8",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/AnomalyTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bba33d7475cad3faaf97c2d17a257e2b3fc6d8ee96ba48f57921648c9ac6f7d9"
+      },
+      {
+        "id": "runtime-code-9",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/LauncherTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "9f8f3b95c630435831ec326ea7b714ff7a4abfeae0cdbd19f32b63416bbbb8d1"
+      },
+      {
+        "id": "runtime-code-10",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/CinemaDateTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "f6d21d7227848354bdfcb2fd7c8519e7f30d12ff711d22695cc2a48b9cd2eb21"
+      },
+      {
+        "id": "runtime-code-11",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/CoffeeTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "79889c6b814847623e5775bf7d4bf61ee94cbb923ea5dcad02c7a49cfde9bd5f"
+      },
+      {
+        "id": "runtime-code-12",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/DailyClaimTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bc9cb2f1ed0d74d50fb74b9fb386b19e43200a66ba8e723641bb829cbcef06b0"
+      },
+      {
+        "id": "runtime-code-13",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/DailyRoutineTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "555f8e49c91bd9739a177eb84807e044274f076d24782a005a534a4c5a4ed6b8"
+      },
+      {
+        "id": "runtime-code-14",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/FountainTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "9020a8b9ef48ce341c8b00e2d598587d2f9832a27f9d05f05ba6f09b63bacc7e"
+      },
+      {
+        "id": "runtime-code-15",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/FurnitureTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "0d935d631311d420fb6e6d0469a584dae40212d02658cb494ab31b090e56220e"
+      },
+      {
+        "id": "runtime-code-16",
+        "source": "root",
+        "path": "data/apps/ok-nte/working/src/tasks/daily/GiftTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "636e7646a7a298a190bd720173aeec6eb895d70773056623ad8b97bd8719c241"
       }
     ],
     "localization": {
@@ -54,11 +190,23 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "oknte.routine_schema", "required": true, "criticality": "critical_when_applicable" }
-      ],
-      "environmentChecks": []
-    }
+    "configRules": [
+      {
+        "id": "okscript.distribution",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "okscript.single_daily",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "oknte.routine_schema",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      }
+    ],
+    "environmentChecks": []
   }
+}

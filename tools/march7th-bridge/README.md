@@ -1,6 +1,6 @@
 # 三月七签到日志桥原型
 
-默认关闭，仅在显式创建的隔离源码会话启用。此目录不进入 data-specialized ZIP，不安装到真实软件，不启动游戏、服务或网络监听。当前官方发行支持为 **not_verified**；生产适配器继续使用原生日志，其静默路径仍按现有检测能力处理。
+默认关闭，仅在显式创建的隔离源码会话启用。此目录不进入 data-specialized ZIP，不安装到真实软件，不启动游戏、服务或网络监听。当前支持边界为 **源码原型可验证；官方 v2026.9.7 旁置文件接入不支持**；生产适配器继续使用原生日志，其静默路径仍按现有检测能力处理。
 
 ## 来源与实际执行边界
 
@@ -30,4 +30,6 @@ python -X utf8 -m unittest discover -s tools/tests -v
 
 锁定版本的 `March7th Assistant.spec` 从 main.py 生成 PyInstaller PYZ，`runtime_hooks=[]`；官方 `1.build_release.yml` 使用 `uv sync --group build`、`uv run python build.py --task ocr`，再运行 Assistant/Launcher/Updater 三个 spec 并合并产物。参考原件及 hash 见 [packaging-sources.json](packaging-sources.json)。这些构建入口没有装配本原型的钩子；把 Python 文件放到安装目录不能宣称已修改归档内的业务分支。
 
-本原型未验证官方二进制可扩展点，未构建/安装修改版 Assistant，不能标为官方包支持。要运行修改版须在另一份锁定源码中审查并应用 patch，提供 nxp_bridge 模块和显式会话驱动，再依照上游完整构建要求构建；现有用户安装不在本工具操作范围内。当前可运行验证入口只需 Python 标准库及 Host 联调工具，不依赖上游游戏环境。进一步产品装配和官方发行验证仍是单独工作。
+已在官方 v2026.9.7 完整包的隔离副本上执行未修改 EXE 的 `--help`：管理员进程退出 0、原生帮助完整输出，安装根和 libraries 下的 sitecustomize/usercustomize/nxp_bridge，以及 utils 包旁置标记均未加载。EXE 字节保持不变；打包归档包含活动模块，启动脚本表没有本桥。这证明所测试旁置接入方式不可用，不证明所有可能的扩展机制均不存在。未构建/安装修改版 Assistant，不能标为官方包业务桥支持。要运行修改版须在另一份锁定源码中审查并应用 patch，提供 nxp_bridge 模块和显式会话驱动，再依照上游完整构建要求构建；现有用户安装不在本工具操作范围内。当前可运行验证入口只需 Python 标准库及 Host 联调工具，不依赖上游游戏环境。进一步产品装配和官方发行验证仍是单独工作。
+
+官方实验来源为 [v2026.9.7](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.9.7)，完整 ZIP 大小 788029060 字节、SHA-256 `b5a3eff7d393dbd908529c7095268c1e7023e14fe151d5def57e4c11d03f7048`，包内 Assistant EXE SHA-256 `3f3ef51c786be58ad57ec74c7fa309da5fdc80fc0feeda4a5c8d852d628e7a7b`。其 Python 为 3.14，PE 清单 requireAdministrator；测试需针对隔离副本的显式 UAC 授权。先静态确认帮助解析位于配置/遥测/任务导入之前，才运行 `--help`；不得为了探测钩子直接运行默认任务。源码原型锁定提交与该正式发行版本分别记录，不混作同一候选。

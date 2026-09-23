@@ -50,9 +50,9 @@ MXU 的 system 语言配置按可用接口翻译解析，观察阶段接受经�
 
 ## 作者审查清单
 
-两个 ok 插件的初始版本为 `0.1.0`。当前属于开发候选：已核查 Global ok-ww v3.6.7、ok-nte v1.3.19 完整安装包，日常源码及关键内嵌框架文件与源码锁/对应 wheel 完全一致。经用户明确授权的隔离管理员测试验证官方启动器实际转发 `-a true -u manual -t 1/2 -e`，子进程为包内 Python 3.12.10 `pythonw.exe`，工作目录为 `data/apps/<name>/working/`。解释器保护在业务代码前退出，不能算真实日常完成。
+两个 ok 插件的初始版本为 `0.1.0`。当前属于开发候选：已核查 China 与 Global 的 ok-ww v3.6.7、ok-nte v1.3.19 完整安装包，日常源码及关键内嵌框架文件与源码锁/对应 wheel 完全一致。经用户明确授权的隔离管理员测试验证官方启动器实际转发 `-a true -u manual -t 1/2 -e`，子进程为包内 Python 3.12.10 `pythonw.exe`，工作目录为 `data/apps/<name>/working/`。解释器保护在业务代码前退出，不能算真实日常完成。
 
-PyAppify 的版本身份异常分支会在手动模式下强制更新；实测异环 v1.3.19 安装包首次启动更新到 v1.3.20。发现/重试阶段只读核对发行 `app.json`、detached HEAD 和独立 tag ref，要求精确 Global 版本、已安装、空闲更新器、非运行状态；未知版本及缺失/不匹配身份返回带本地化原因的 unsupported。annotated tag object 与 peeled commit 分别固定，不把两者当同一 SHA。此准入只覆盖检查时的本地身份，不能消除启动器之后远端 tag 变化或外部更新的竞争，也不证明任意安装修改后的注册列表仍匹配；完整发行资格仍未完成。`-e` 的框架完成通知不证明业务成功，LauncherTask 完成也不能关闭异环日常范围。
+PyAppify 的版本身份异常分支会在手动模式下强制更新；实测异环 v1.3.19 安装包首次启动更新到 v1.3.20。发现/重试阶段只读核对发行 `app.json`、detached HEAD、独立 tag ref 和 manifest 固定的 working 文件 SHA-256，要求与 China/Global 渠道分别匹配的精确版本、已安装、空闲更新器、非运行状态；未知版本及缺失/不匹配身份返回带本地化原因的 unsupported。annotated tag object 与 peeled commit 分别固定，不把两者当同一 SHA。此准入只覆盖检查时的本地身份，不能消除启动器之后远端 tag 变化或外部更新的竞争，固定文件包含入口、配置注册、日常与已解释的业务分支、任务执行器及启动控制器；Host 在运行观察和结束阶段复核，变化后拒绝后续证据及重试。这不验证完整解释器/依赖，也不能证明瞬时替换未发生；完整发行资格仍须执行。`-e` 的框架完成通知不证明业务成功，LauncherTask 完成也不能关闭异环日常范围。
 
 可复现的上游对照工具（所有输出使用仓库外新路径，游戏与 GUI 不会启动）：
 
@@ -116,3 +116,13 @@ python tools/Probe-OkNteBranches.py --source <锁定DailyRoutineTask.py> --outpu
 体力计划的四类副本按分类、具体子调用开始、子返回、父分类节点返回、`挑战完成` 配对。锁定 `ChargePlanApp.challenge_complete` 会把失败计划设为 skipped，同时返回成功让外层继续；该路径保留失败事件，在应用组终态中维持 failed，别的计划成功不清除。操作内异常由原 `Operation.execute` 重试，只有同一子调用成功及父返回确认才将事件记为 recovered；在此之前父任务仍 running。缺少子开始/父回执则保留无法确认，不把外层成功当作恢复。
 
 `python tools/Probe-ZzzBranches.py --source-root <锁定源码> --output <新报告.json>` 执行原 Operation 重试/日志、ChargePlan 返回值消费及 GroupApplication 顺序/跳过方法；节点图和游戏识别是受控依赖，不启动游戏。公开 issue #2797 的转贴格式仅用于定位上述源码，夹具明确是原生格式的源码派生输入，不冒充原始日志附件。其他应用全部内部业务分支和英文日志覆盖仍需各自核查。
+
+China 与 Global 使用独立的 commit/tag 身份，关键 working 文件逐字节一致。China 隔离官方 EXE 的参数转发测试同样通过；两款启动后的版本和业务入口保持原身份。`fixtures/resources/` 中的共享文件明确标注 synthetic，仅测试真实 Host 的哈希机制，不能用作官方包的来源证据。
+
+M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 在明确有后续队列时阻断，没有后续时允许，队列未知则提醒；普通暂停与 Host 清理不冲突，不要求用户强制关闭游戏或脚本。
+
+BAAH 目标字段 `TARGET_EMULATOR_PATH`、`TARGET_IP_PATH`、`TARGET_PORT` 来自当前用户主配置，软件配置仅提供 `SAVE_LOG_TO_FILE`。路径声明按唯一主配置解析，文件改名不会切换账号；缺省 IP/port 按锁定 defaultSettings 为 127.0.0.1/5555。端口支持原生整数；显式 null 或错误类型不伪装为缺省。直接 ADB 序列号不能与 Host 的网络端点证明为同一设备，显示 unknown/warn。日志开关缺省 false；文件日志关闭且无可用 stdout 时阻断，有可用 stdout 时无需强制开启文件日志。
+
+Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`（id/artifact/root/expectedEvaluation）只读捕获官方安装资源，账号配置仍为合成夹具；`output` 指向不存在的报告路径。`--validator-comparison <inputs.json>` 使用显式 legacyCommit/scripts（artifact/path/sha256）与当前四个生产适配器进行只读 Jint 对照，覆盖路径、ADB 默认值和日志开关。两者均先传 `--plugin-root <插件检出>`；不能用合成资源集合代替安装来源证据。运行前用 `dotnet build <Host>/tools/NexusPipeline.TaskProtocolTests -m:1 -p:NexusTestHost=true` 构建，随后运行对应 Test Host 输出 DLL。
+
+MXU 匿名 focus 的限制已通过锁定原 `handleCallback` 实际执行核实：异步内容解析可晚于下一任务开始，输出 log/stdout 不携带原 task_id。适配器因此不按“最近任务”分配它，也不把此类文本当成独立业务终态；两产品均有 Jint 反例。外层回调只能证明其自身配对范围，无身份的内部 focus 仍是明确受限项，不能承诺从外层成功确认每个内部资源节点。

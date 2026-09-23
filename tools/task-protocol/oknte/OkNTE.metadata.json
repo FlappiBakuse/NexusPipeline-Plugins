@@ -3,9 +3,59 @@
   "implementation": "oknte",
   "protocolVersion": "1.2",
   "configRules": [
-    { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable", "kind": "runtime_distribution", "reasonKey": "diagnostic.runtime_unqualified", "fallback": "官方发行版本或更新状态未就绪，已阻止自动运行。", "location": { "source": "resource", "resourceId": "runtime-app", "selector": ["current_profile"] } },
-    { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable", "kind": "single_daily", "allowedTaskKeys": ["daily_anomaly", "daily_anomaly_hunter", "coffee", "daily_claim", "cinema_date", "fountain", "furniture", "gift"], "reasonKey": "diagnostic.okscript.single_daily", "fallback": "当前计划不是可确认的单一日常执行计划。", "location": { "source": "context", "field": "effectiveLaunch.entryId" } },
-    { "id": "oknte.routine_schema", "required": true, "criticality": "critical_when_applicable", "kind": "routine_schema", "resourceId": "config:DailyRoutineTask.json", "reasonKey": "diagnostic.oknte.routine_schema", "fallback": "DailyRoutineTask 的日常选择结构无法确认。", "location": { "source": "config", "resourceId": "config:DailyRoutineTask.json", "selector": ["Routine Items"] } }
+    {
+      "id": "okscript.distribution",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "runtime_distribution",
+      "reasonKey": "diagnostic.runtime_unqualified",
+      "fallback": "官方发行版本或更新状态未就绪，已阻止自动运行。",
+      "location": {
+        "source": "resource",
+        "resourceId": "runtime-app",
+        "selector": [
+          "current_profile"
+        ]
+      }
+    },
+    {
+      "id": "okscript.single_daily",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "single_daily",
+      "allowedTaskKeys": [
+        "daily_anomaly",
+        "daily_anomaly_hunter",
+        "coffee",
+        "daily_claim",
+        "cinema_date",
+        "fountain",
+        "furniture",
+        "gift"
+      ],
+      "reasonKey": "diagnostic.okscript.single_daily",
+      "fallback": "当前计划不是可确认的单一日常执行计划。",
+      "location": {
+        "source": "context",
+        "field": "effectiveLaunch.entryId"
+      }
+    },
+    {
+      "id": "oknte.routine_schema",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "routine_schema",
+      "resourceId": "config:DailyRoutineTask.json",
+      "reasonKey": "diagnostic.oknte.routine_schema",
+      "fallback": "DailyRoutineTask 的日常选择结构无法确认。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:DailyRoutineTask.json",
+        "selector": [
+          "Routine Items"
+        ]
+      }
+    }
   ],
   "entries": [
     {
@@ -81,6 +131,12 @@
       "version": "v1.3.19",
       "commit": "9ac3157afbeeb10758330085e67273cfa460a9e8",
       "tagObject": "fad77859cc09e2ee475057f29bcb07fe7643d5c8"
+    },
+    "China": {
+      "name": "ok-nte",
+      "version": "v1.3.19",
+      "commit": "8d92e1007c564970003db1de01c77a278ceb4581",
+      "tagObject": "942ffdb71eda0996979dcd8959f938a12b01adb9"
     }
   },
   "runtimeRelease": {
@@ -88,5 +144,24 @@
     "version": "v1.3.19",
     "commit": "9ac3157afbeeb10758330085e67273cfa460a9e8",
     "tagObject": "fad77859cc09e2ee475057f29bcb07fe7643d5c8"
-  }
+  },
+  "runtimeCodeResources": [
+    "runtime-code-0",
+    "runtime-code-1",
+    "runtime-code-2",
+    "runtime-code-3",
+    "runtime-code-4",
+    "runtime-code-5",
+    "runtime-code-6",
+    "runtime-code-7",
+    "runtime-code-8",
+    "runtime-code-9",
+    "runtime-code-10",
+    "runtime-code-11",
+    "runtime-code-12",
+    "runtime-code-13",
+    "runtime-code-14",
+    "runtime-code-15",
+    "runtime-code-16"
+  ]
 }

@@ -51,5 +51,6 @@
   "reason.baah.task.child_failed": "内部剧情任务明确报告失败",
   "reason.baah.task.no_unread": "已检查，没有未读对话",
   "reason.baah.task.price_unreadable": "无法识别购买单价",
-  "reason.baah.task.price_limit": "单价超过配置上限，未购买"
+  "reason.baah.task.price_limit": "单价超过配置上限，未购买",
+  "diagnostic.baah.adb_serial_unverified": "当前配置直接使用 ADB 序列号，无法与绑定的网络端点确认一致。"
 }

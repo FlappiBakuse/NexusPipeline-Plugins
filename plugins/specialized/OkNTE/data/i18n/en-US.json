@@ -13,5 +13,10 @@
   "task.daily_claim": "Daily rewards",
   "task.fountain": "Fountain check-in",
   "task.furniture": "Anomaly furniture",
-  "task.gift": "Gifts"
+  "task.gift": "Gifts",
+  "diagnostic.runtime.installation": "Cannot confirm the official installation ({channel} / {version}). Initialize a supported official channel.",
+  "diagnostic.runtime.version": "This release has not been qualified ({channel} / {version}). Check the installed version.",
+  "diagnostic.runtime.busy": "The updater or application is not ready ({channel} / {version}). Finish updating and close it before checking again.",
+  "diagnostic.runtime.repository": "Local HEAD/tag differs from the qualified release ({channel} / {version}). Check the official installation.",
+  "diagnostic.runtime.code": "Required runtime files are missing or differ from the qualified release ({channel} / {version}). Repair the official installation and check again."
 }

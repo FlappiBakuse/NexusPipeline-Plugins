@@ -45,6 +45,142 @@
         "path": "data/apps/ok-ww/repo/.git/refs/tags/v3.6.7",
         "format": "text",
         "required": false
+      },
+      {
+        "id": "runtime-code-0",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/config.py",
+        "format": "text",
+        "required": false,
+        "sha256": "374cf3505329e7294947495e7c82a7f16f0bb15415e84e5228c7f29392ae12d0"
+      },
+      {
+        "id": "runtime-code-1",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/main.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bf7e59dc37bc56ddb5f8e2850612a47186eddd0cd0b0f4d05004a332d8677ad7"
+      },
+      {
+        "id": "runtime-code-2",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/ok/feature/Feature.py",
+        "format": "text",
+        "required": false,
+        "sha256": "8d656c4d68c3a36bdde667ae93ffac10e5b9b3bca3351f29f32d00587a854902"
+      },
+      {
+        "id": "runtime-code-3",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/ok/task/TaskExecutor.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bcf441ea610d6e67f6773bc41e97999ffed649e778c751e7e3d68432d132b3af"
+      },
+      {
+        "id": "runtime-code-4",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/ok/ui/qt/StartController.py",
+        "format": "text",
+        "required": false,
+        "sha256": "fb512d1a56e6015ea312d15e80c1517a68f87ad01addd994cdbc235e05fcebde"
+      },
+      {
+        "id": "runtime-code-5",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/pyappify.yml",
+        "format": "text",
+        "required": false,
+        "sha256": "df42f17d30670a388b74427eb052a5b524df3a99de6426c256ae09a74bc5fdda"
+      },
+      {
+        "id": "runtime-code-6",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/requirements.txt",
+        "format": "text",
+        "required": false,
+        "sha256": "2adef21bff8bf891309318e5bdcb0da64bf9a710d0d07e995c497f391e0e2261"
+      },
+      {
+        "id": "runtime-code-7",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/BaseWWTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "bc1676e68df70f38028264a57b5e7a5b667ce837ff8605122c11a75328f57968"
+      },
+      {
+        "id": "runtime-code-8",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/DailyTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "93a69bdd16a67bf6ec15fc74f9603df0febf0d73cca364aa70b81a9d37769f2e"
+      },
+      {
+        "id": "runtime-code-9",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/FarmEchoTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "74b1063b9baf9d02475a838b01eaf04c5840557fb0790708a2cb2fab9b528dcb"
+      },
+      {
+        "id": "runtime-code-10",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/ForgeryTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "7617c16e8ef25b4899c01a07e842b59a3af3da9fa0bae3dfb6387532effe0c1a"
+      },
+      {
+        "id": "runtime-code-11",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/GardenTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "38d5a57a9e6b97de9db629e69e8352d7a179fa5cdc0f3315fb9d52a944793722"
+      },
+      {
+        "id": "runtime-code-12",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/MergeEchoTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "5dbbf3183e676951e837a9133faec88cf04d6dce6d7ece81d7a75414aa885359"
+      },
+      {
+        "id": "runtime-code-13",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/NightmareNestTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "92a8e8286910f15197f0b9edd0c0148eae5ccdfb8db9c832fab2cc71566e2a80"
+      },
+      {
+        "id": "runtime-code-14",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/SimulationTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "dc063594f1ad2f9d7d1e5e3bcb075cb54d8984d07a601779da71044c4b78832d"
+      },
+      {
+        "id": "runtime-code-15",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/TacetTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "17b30f2ad5a411b1da510652a4f87902055269ddd41218d1d083f3570237df23"
+      },
+      {
+        "id": "runtime-code-16",
+        "source": "root",
+        "path": "data/apps/ok-ww/working/src/task/WWOneTimeTask.py",
+        "format": "text",
+        "required": false,
+        "sha256": "3ef1be3e7c6de9b1c42b48cde12f670f256074584bf8d1edea8e8eabc833a8a1"
       }
     ],
     "localization": {
@@ -54,11 +190,23 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "okscript.distribution", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "okscript.single_daily", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "okww.finite_additions", "required": true, "criticality": "critical_when_applicable" }
-      ],
-      "environmentChecks": []
-    }
+    "configRules": [
+      {
+        "id": "okscript.distribution",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "okscript.single_daily",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "okww.finite_additions",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      }
+    ],
+    "environmentChecks": []
   }
+}

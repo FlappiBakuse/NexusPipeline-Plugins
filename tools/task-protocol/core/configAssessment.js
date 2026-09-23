@@ -46,9 +46,9 @@ function finalizeAssessment(plan) {
     const action = normalizedAction(value);
     if (!action) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    if (['RunScript', 'Loop'].includes(action))
+    if (action === 'RunScript')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    if (['Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
+    if (['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
       const context = input.executionContext || {}, following = context.queue && context.queue.hasFollowingWork;
       if (following === 'yes')
         return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
@@ -80,6 +80,18 @@ function finalizeAssessment(plan) {
     return rule.inspectionIdByMode?.[mode] || rule.inspectionIdByMode?.unknown;
   };
   const inspectTarget = rule => {
+    if (rule.unverifiedWhen && input.executionContext?.mode === rule.unverifiedWhen.mode) {
+      const condition = rule.unverifiedWhen;
+      const id = condition.resourceId === 'main' ? mainConfigId() : condition.resourceId;
+      const value = select(read('config', id), condition.selector);
+      if (value === condition.equals || condition.requireBoolean === true && value !== undefined && typeof value !== 'boolean')
+        return push(rule, 'unknown', 'warning', 'warn', location(rule), text(condition), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    }
+    if (rule.notApplicableWhen) {
+      const condition = rule.notApplicableWhen;
+      const value = select(read('config', condition.resourceId), condition.selector);
+      if (value === condition.equals) return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    }
     const inspectionId = targetInspectionId(rule);
     if (!inspectionId) return push(rule, 'unknown', rule.severity || 'warning', rule.effect || 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     let inspection;
@@ -115,7 +127,7 @@ function finalizeAssessment(plan) {
     const document = read('resource', rule.resourceId);
     if (!document || typeof document !== 'object')
       return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
-    const value = document && document.SAVE_LOG_TO_FILE;
+    const value = Object.prototype.hasOwnProperty.call(document, 'SAVE_LOG_TO_FILE') ? document.SAVE_LOG_TO_FILE : false;
     if (value === true) return push(rule, 'satisfied', 'info', 'none', location(rule));
     if (value === false) {
       const context = input.executionContext || {};
@@ -212,8 +224,8 @@ function finalizeAssessment(plan) {
     const head = read('resource', 'runtime-head');
     const tag = read('resource', 'runtime-tag');
     const identity = runtimeIdentity(app, head, tag);
-    if (identity) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
+    if (identity.ready) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    return push(rule, 'unknown', 'error', 'block', location(rule), identity.reasonText, rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
   for (const rule of ADAPTER.configRules || []) {
     try {

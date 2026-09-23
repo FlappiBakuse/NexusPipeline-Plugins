@@ -51,5 +51,6 @@
   "reason.baah.task.child_failed": "The inner story task explicitly reported failure",
   "reason.baah.task.no_unread": "Checked: no unread conversations",
   "reason.baah.task.price_unreadable": "Could not recognize the purchase price",
-  "reason.baah.task.price_limit": "Price exceeds the configured limit; no purchase made"
+  "reason.baah.task.price_limit": "Price exceeds the configured limit; no purchase made",
+  "diagnostic.baah.adb_serial_unverified": "The configuration uses an ADB serial number; its identity cannot be confirmed against the bound network endpoint."
 }

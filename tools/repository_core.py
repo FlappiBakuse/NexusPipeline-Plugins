@@ -640,7 +640,7 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
     for check in value:
         _require(
             isinstance(check, dict)
-            and set(check).issubset({"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints", "comparison", "secondarySelector"})
+            and set(check).issubset({"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints", "comparison", "secondarySelector", "defaultValue", "secondaryDefaultValue"})
             and {"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints"}.issubset(check),
             "taskProtocol environment check fields invalid",
         )
@@ -660,6 +660,9 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
         if kind in {"config", "resource"}:
             _require(set(source) == {"kind", "resourceId", "selector"} and isinstance(source.get("resourceId"), str) and bool(source["resourceId"]), "taskProtocol environment resource source invalid")
             _validate_task_protocol_selector(source["selector"])
+        elif kind == "mainConfig":
+            _require(set(source) == {"kind", "selector"}, "taskProtocol main config source invalid")
+            _validate_task_protocol_selector(source["selector"])
         elif kind == "host":
             _require(set(source) == {"kind", "field"} and source.get("field") in {"gameTarget", "scriptExecutable"}, "taskProtocol environment host source invalid")
         else:
@@ -672,7 +675,7 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
         )
         if comparison == "adb_endpoint_with_port":
             _require(
-                kind == "resource"
+                kind in {"resource", "config", "mainConfig"}
                 and check.get("expectedKind") == "adb_endpoint"
                 and isinstance(check.get("secondarySelector"), list),
                 "taskProtocol adb endpoint comparison invalid",
@@ -680,6 +683,11 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
             _validate_task_protocol_selector(check["secondarySelector"])
         else:
             _require("secondarySelector" not in check, "taskProtocol secondary selector invalid")
+        for field in ("defaultValue", "secondaryDefaultValue"):
+            if field in check:
+                selector = source.get("selector") if field == "defaultValue" else check.get("secondarySelector")
+                _require(kind != "host" and isinstance(selector, list) and len(selector) == 1 and isinstance(selector[0], str)
+                         and isinstance(check[field], str) and 0 < len(check[field]) <= 512, "taskProtocol target default invalid")
 
 
 def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
@@ -721,7 +729,13 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     _require(isinstance(resources, list) and len(resources) <= 128, "taskProtocol.readResources invalid")
     ids: set[str] = set()
     for resource in resources:
-        _require(isinstance(resource, dict) and set(resource) == {"id", "source", "path", "format", "required"}, "taskProtocol resource fields invalid")
+        fields = {"id", "source", "path", "format", "required"}
+        _require(isinstance(resource, dict), "taskProtocol resource fields invalid")
+        if protocol["version"] == "1.2" and "sha256" in resource:
+            fields.add("sha256")
+            _require(isinstance(resource["sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", resource["sha256"]) is not None
+                     and resource.get("source") == "root" and resource.get("format") == "text", "taskProtocol resource.sha256 invalid")
+        _require(set(resource) == fields, "taskProtocol resource fields invalid")
         identity = resource["id"]
         _require(isinstance(identity, str) and 0 < len(identity) <= 512 and not identity.startswith("config:") and identity not in ids, "taskProtocol resource id invalid")
         ids.add(identity)

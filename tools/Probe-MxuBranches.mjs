@@ -54,7 +54,37 @@ check('explicit No default wins', () => assert.equal(sandbox.createDefaultOption
 check('reversed switch order defaults off', () => assert.equal(sandbox.createDefaultOptionValue({ type: 'switch', cases: [{ name: 'No' }, { name: 'Yes' }] }).value, false));
 check('mismatched saved option type resets to defaults', () => assert.equal(sandbox.sanitizeOptionValue('mail', { type: 'select', caseName: 'No' }, { mail: { type: 'switch', cases: [{ name: 'Yes' }, { name: 'No' }] } }), null));
 check('explicit saved false is preserved', () => assert.equal(sandbox.sanitizeOptionValue('mail', { type: 'switch', value: false }, { mail: { type: 'switch', cases: [{ name: 'Yes' }, { name: 'No' }] } }).value, false));
-const output = { repository: lock.repository, commit: lock.commit, files, cases,
+// Execute the original async focus dispatch with controlled content resolution;
+// no React hook, network, image decoder, or target task is executed.
+load('src/utils/useMaaCallbackLogger.ts', ['parseFocusEntry', 'handleCallback']);
+sandbox.useAppStore = { getState: () => ({}) };
+sandbox.getTaskDisplayName = (_instance, taskId) => ({ 11: 'First', 22: 'Second' })[taskId];
+const pendingFocus = new Map(), focusLogs = [];
+sandbox.resolveFocusContent = (template, details) => new Promise(resolve => pendingFocus.set(details.task_id, () => resolve({ message: template })));
+const translation = (key, values) => key + ': ' + values.name;
+const append = (instance, entry) => { focusLogs.push({ instance, ...entry }); sandbox.forwardLogToStdout(entry.message); };
+sandbox.logs.length = 0;
+sandbox.handleCallback('instance', 'Node.Action.Failed', { task_id: 11, focus: { 'Node.Action.Failed': 'Synthetic delayed focus failure' } }, translation, append);
+sandbox.handleCallback('instance', 'Tasker.Task.Starting', { task_id: 22 }, translation, append);
+check('focus resolution is not ordered with next task callback', () => {
+  assert.equal(focusLogs.length, 1);
+  assert.equal(focusLogs[0].message, 'logs.messages.taskStarting: Second');
+});
+pendingFocus.get(11)();
+await Promise.resolve();
+await Promise.resolve();
+check('resolved focus drops originating task id from log entry', () => {
+  assert.equal(focusLogs.length, 2);
+  assert.equal(focusLogs[1].type, 'focus');
+  assert.equal(Object.hasOwn(focusLogs[1], 'task_id'), false);
+  assert.equal(focusLogs[1].message, 'Synthetic delayed focus failure');
+});
+check('stdout focus cannot identify originating task', () => {
+  assert.equal(sandbox.logs.join('\n'), 'logs.messages.taskStarting: Second\nSynthetic delayed focus failure');
+});
+const focusExperiment = { logs: focusLogs, stdout: [...sandbox.logs],
+  limitation: 'Controlled resolver timing proves anonymous focus may arrive after a later task starts. No latest-task attribution is justified.' };
+const output = { repository: lock.repository, commit: lock.commit, files, cases, focusExperiment,
   method: 'SHA-guarded original TypeScript function declarations transpiled without rewriting function bodies; pure dependencies and stdout capture only.' };
 fs.writeFileSync(path.resolve(args[5]), JSON.stringify(output, null, 2) + '\n', { flag: 'wx' });
 console.log(`PASS ${cases.length} locked original MXU branches`);

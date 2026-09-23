@@ -65,5 +65,8 @@
     "split": "development",
     "upstreamCommit": "016c19e807fcc16800c42c89fdb3b01ea6947ee9",
     "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
-  }
+  },
+  "resourceSets": [
+    "resources/okww-code-verified.json"
+  ]
 }

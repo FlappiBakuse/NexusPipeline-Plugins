@@ -72,5 +72,8 @@
       "evaluation": "satisfied",
       "executionEffect": "none"
     }
+  ],
+  "resourceSets": [
+    "resources/oknte-code-verified.json"
   ]
 }

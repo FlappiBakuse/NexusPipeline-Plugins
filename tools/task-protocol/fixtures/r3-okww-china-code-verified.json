@@ -1,0 +1,68 @@
+{
+  "artifact": "OkWutheringWaves",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:DailyTask.json",
+      "format": "json",
+      "text": "{\"Which to Farm\": \"Tacet Suppression\"}"
+    },
+    {
+      "id": "runtime-app",
+      "format": "json",
+      "text": "{\"name\": \"ok-ww\", \"installed\": true, \"current_profile\": \"China\", \"current_version\": \"v3.6.7\", \"update_state\": \"idle\", \"update_target_version\": null, \"update_error\": null, \"running\": false, \"available_versions\": [\"v3.6.7\"]}"
+    },
+    {
+      "id": "runtime-head",
+      "format": "text",
+      "text": "2376cc98fcb69e6cc513dac5d705468793231fd5\n"
+    },
+    {
+      "id": "runtime-tag",
+      "format": "text",
+      "text": "cbbf3b44ac8325936b79386a3e68eeb571d80ed2\n"
+    }
+  ],
+  "tasks": {
+    "nightmare": {
+      "enabled": false
+    },
+    "stamina": {
+      "enabled": true
+    },
+    "daily_reward": {
+      "enabled": true
+    },
+    "mail": {
+      "enabled": true
+    },
+    "battle_pass": {
+      "enabled": true
+    },
+    "garden": {
+      "enabled": true
+    },
+    "merge": {
+      "enabled": false
+    },
+    "farm_4c": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "note": "Synthetic channel and byte-integrity mechanics; official package/EXE evidence is tracked separately."
+  },
+  "resourceSets": [
+    "resources/okww-code-verified.json"
+  ],
+  "configChecks": [
+    {
+      "ruleId": "okscript.distribution",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ]
+}

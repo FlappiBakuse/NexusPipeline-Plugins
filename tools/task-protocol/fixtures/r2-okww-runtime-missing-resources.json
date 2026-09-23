@@ -23,5 +23,8 @@
       "evaluation": "unknown",
       "executionEffect": "block"
     }
+  ],
+  "resourceSets": [
+    "resources/okww-code-verified.json"
   ]
 }
