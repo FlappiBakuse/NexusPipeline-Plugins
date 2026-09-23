@@ -1,4 +1,4 @@
-"""Build and validate a cumulative stable candidate without Qualification proofs."""
+"""Build and validate a cumulative stable candidate from protected main."""
 
 from __future__ import annotations
 

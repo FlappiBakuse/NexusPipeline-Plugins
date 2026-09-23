@@ -81,7 +81,7 @@ python tools/repository.py publish-develop --source-ref develop --output .genera
 python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
 ```
 
-上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。原 candidate job 成功后，自动 writer 与手动恢复共用服务端 run/attempt、artifact ID/digest、source/tree、分发快照与文件清单的验证。恢复命令从 `main` 运行 `gh workflow run publish-stable.yml --ref main -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。自动 writer 的仓库开关 `SCHEME_B_STABLE_AUTO_ENABLED` 在 ruleset 切换和验收后启用。
+上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。原 candidate job 成功后，自动 writer 与手动恢复共用服务端 run/attempt、artifact ID/digest、source/tree、分发快照与文件清单的验证。恢复命令从 `main` 运行 `gh workflow run publish-stable.yml --ref main -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main 的候选验收成功且有发行变化时自动进入独立 writer。
 
 预览候选由 `publish-develop.yml` 的审核过的 main 工具打包受控 `develop` 源码，build job 可取消，promote job 不取消。原 preview-build 成功但 promote 失败时，从 `main` 执行 `gh workflow run publish-develop.yml --ref main -f source_ref=develop -f candidate_run_id=<原 run ID>`；同 run 多候选时指定 `candidate_artifact_id`。恢复仅下载原包，不重新构建。preview 的 producer sidecar 位于候选目录外，同包清单、原 run/attempt、源码 tree 与在线 develop 最新 SHA 均需一致；旧 catalog 来源不得回退。发布器先上传并复核包，最后切换 catalog。
 

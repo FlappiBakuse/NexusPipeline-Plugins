@@ -1,6 +1,6 @@
 """读取 Plugins 的 Host/Frontend 兼容元数据。
 
-源码 SDK 的具体 commit 不放在 host.lock.json；Qualification preflight 解析一次
+源码 SDK 的具体 commit 不放在 host.lock.json；验证和候选任务各自固定一次
 官方 checkout SHA，并通过 output/参数传递给所有 Gate。
 """
 

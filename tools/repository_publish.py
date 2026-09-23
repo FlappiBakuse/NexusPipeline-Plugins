@@ -129,7 +129,7 @@ def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[
         if path.is_dir():
             continue
         core._require(path.is_file(), f"候选目录包含特殊文件：{relative}")
-        if relative in {"release-plan.json", "stable-producer.json", "candidate.json"}:
+        if relative in {"release-plan.json", "candidate.json"}:
             continue
         core._require(relative in {"catalog.json", core.STATE_FILE} or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
         if relative.startswith("packages/"):
@@ -164,41 +164,6 @@ def _preview_inventory(generated_root: Path) -> None:
         core._require(files <= MAX_CANDIDATE_FILES, "preview 候选文件数量超过上限")
         core._require(total_bytes <= MAX_CANDIDATE_BYTES, "preview 候选文件总大小超过上限")
     core._require((generated_root / "catalog.json").is_file(), "preview 候选缺少 catalog")
-
-
-def _read_stable_producer(generated_root: Path, *, source_sha: str, base_sha: str, run_id: str, run_attempt: str, workflow_sha: str, app_id: str, check_id: str) -> dict[str, Any]:
-    producer = core.read_json(generated_root / "stable-producer.json")
-    core._require(isinstance(producer, dict), "stable producer metadata 必须是对象")
-    expected = {
-        "schemaVersion": 1,
-        "sourceSha": _full_sha(source_sha, "source SHA"),
-        "baseSha": _full_sha(base_sha, "base SHA"),
-        "runId": _parse_positive_int(run_id, "qualification runId"),
-        "runAttempt": _parse_positive_int(run_attempt, "qualification runAttempt"),
-        "workflowSha": _full_sha(workflow_sha, "qualification workflow SHA"),
-        "qualificationAppId": _parse_positive_int(app_id, "qualification App ID"),
-        "qualificationCheckId": _parse_positive_int(check_id, "qualification check id"),
-    }
-    core._require(producer == expected, "stable producer identity 与 writer 请求不一致")
-    return producer
-
-
-class GitTransport(Protocol):
-    """稳定 writer 的隔离 Git 写入端口；不得由候选源码实现。"""
-
-    def publish_stable_candidate(
-        self,
-        root: Path,
-        generated_root: Path,
-        source_sha: str,
-        base_sha: str,
-        *,
-        remote_write: bool,
-        token: str,
-        run_id: int,
-        run_attempt: int,
-        workflow_sha: str,
-    ) -> dict[str, Any]: ...
 
 
 class GitHubGitTransport:
@@ -239,9 +204,9 @@ class GitHubGitTransport:
         core._require(remote_write and bool(token), "stable remote write 必须有 publisher token")
         source_sha = _full_sha(source_sha, "stable source SHA")
         _full_sha(base_sha, "stable base SHA")
-        _positive_int(run_id, "qualification runId")
-        _positive_int(run_attempt, "qualification runAttempt")
-        _full_sha(workflow_sha, "qualification workflow SHA")
+        _positive_int(run_id, "candidate runId")
+        _positive_int(run_attempt, "candidate runAttempt")
+        _full_sha(workflow_sha, "candidate workflow SHA")
         generated_root = _ordinary_directory(generated_root, "stable 候选目录")
         plan = core.read_json(generated_root / "release-plan.json")
         core._require(isinstance(plan, dict) and plan.get("head") == source_sha, "stable 候选 plan/source SHA 不一致")
@@ -766,91 +731,3 @@ def publish_preview(
         result.update(_publish_preview_remote(result, token=write_token, transport=transport, run_id=run_id))
     print(f"[publisher] preview 候选校验通过（{'已写远端' if result.get('remoteWritten') else '未写远端'}）：{generated_root}", flush=True)
     return result
-
-
-def publish_stable(
-    root: Path,
-    source_sha: str,
-    generated_root: Path,
-    *,
-    remote_write: bool = False,
-    host_root: Path | None = None,
-    distribution_root: Path | None = None,
-    token: str | None = None,
-    git_transport: GitTransport | None = None,
-    base_sha: str | None = None,
-    run_id: str | None = None,
-    run_attempt: str | None = None,
-    workflow_sha: str | None = None,
-    qualification_app_id: str | None = None,
-    qualification_check_id: str | None = None,
-) -> dict[str, Any]:
-    generated_root = _ordinary_directory(generated_root, "stable 候选目录")
-    core.validate_generated(root, generated_root, distribution_root=distribution_root)
-    plan = core.read_json(generated_root / "release-plan.json")
-    core._require(plan.get("head") == source_sha, f"stable 候选 source SHA 不一致：{plan.get('head')} / {source_sha}")
-    result = {"sourceCommit": source_sha, "generatedRoot": str(generated_root), "remoteWritten": False}
-    if remote_write:
-        if git_transport is None:
-            raise core.RepositoryError("remote publish-stable 必须注入受保护 GitTransport")
-        core._require(base_sha and run_id and run_attempt and workflow_sha and qualification_app_id and qualification_check_id, "stable remote write 缺少资格/候选身份")
-        producer = _read_stable_producer(
-            generated_root,
-            source_sha=source_sha,
-            base_sha=base_sha or "",
-            run_id=run_id or "",
-            run_attempt=run_attempt or "",
-            workflow_sha=workflow_sha or "",
-            app_id=qualification_app_id or "",
-            check_id=qualification_check_id or "",
-        )
-        result.update(
-            git_transport.publish_stable_candidate(
-                root,
-                generated_root,
-                source_sha,
-                base_sha or "",
-                remote_write=True,
-                token=token or "",
-                run_id=producer["runId"],
-                run_attempt=producer["runAttempt"],
-                workflow_sha=producer["workflowSha"],
-            )
-        )
-        result["remoteWritten"] = True
-    print(f"[publisher] stable 候选校验通过（{'已写远端' if result.get('remoteWritten') else '未写远端'}）：{generated_root}", flush=True)
-    return result
-
-
-def write_stable_producer(
-    generated_root: Path,
-    *,
-    source_sha: str,
-    base_sha: str,
-    run_id: str,
-    run_attempt: str,
-    workflow_sha: str,
-    qualification_app_id: str,
-    qualification_check_id: str,
-) -> Path:
-    """在构建 runner 中写入候选与资格运行的不可变关联元数据。"""
-
-    generated_root = _ordinary_directory(generated_root, "stable 候选目录")
-    _full_sha(source_sha, "source SHA")
-    _full_sha(base_sha, "base SHA")
-    _full_sha(workflow_sha, "qualification workflow SHA")
-    producer = {
-        "schemaVersion": 1,
-        "sourceSha": source_sha,
-        "baseSha": base_sha,
-        "runId": _parse_positive_int(run_id, "qualification runId"),
-        "runAttempt": _parse_positive_int(run_attempt, "qualification runAttempt"),
-        "workflowSha": workflow_sha,
-        "qualificationAppId": _parse_positive_int(qualification_app_id, "qualification App ID"),
-        "qualificationCheckId": _parse_positive_int(qualification_check_id, "qualification check id"),
-    }
-    plan = core.read_json(generated_root / "release-plan.json")
-    core._require(isinstance(plan, dict) and plan.get("head") == source_sha, "stable producer source SHA 与候选 plan 不一致")
-    path = generated_root / "stable-producer.json"
-    core.write_json(path, producer)
-    return path

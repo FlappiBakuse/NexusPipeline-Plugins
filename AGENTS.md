@@ -23,7 +23,7 @@
 ## 2. 授权、Git、版本与数据
 
 - 本地代码实施与 commit/push/tag/PR/合并/规则修改/Release 发布分别受用户授权。缺少发布凭据不阻止纯规则、工具和测试实现；不得把缺权限当作 writer 可以永久留空的理由。
-- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / Required` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。迁移窗口以 GitHub 当前实际 ruleset 为准，旧资格检查退役前仍须满足它。
+- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / Required` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。
 - 唯一生成物直推例外为专用 stable publisher App，路径白名单严格为 `catalog.json`、`.release-state.json`、`packages/**`。例外不包含源码、工作流、host.lock 或版本修改。Writer 校验实际 Git 差异、父链和来源后正常快进推送；bypass 权限本身不提供路径隔离。
 - 发布控制文件的修改仍通过当时实际生效的 PR 门禁与维护者审核；不得用 Publisher bypass 提交源码或工作流，也不伪造检查结果。
 - `develop` 同一目标版本可多次修改和预览，不强制每次 bump；不修改稳定 catalog/state/packages。稳定 `(artifactName, version)` 不得对应不同字节。正式版本及日期按用户明确指示，发布脚本不自动 bump。
@@ -58,7 +58,7 @@ python tools/repository.py candidate --host-root <Host路径> --sdk-sha <SDK_SHA
 
 PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享输入保守扩大。合并后稳定候选使用当前受保护 main 的 catalog/state/packages 快照，按已发布游标覆盖累计未发行变更。没有发行变化返回 `NO_CHANGES`，不得制造新版本或空生成物提交。本地合成 run ID 只用于诊断，不能用于远端发布。
 
-`host.lock.json` 记录 `hostApiVersion`、`frontendApiVersion`、`supportedLocales` 等兼容契约；SHA 用于固定一次编译输入，不是兼容版本。SDK 来源在 preflight 固定，所有 Gate、candidate build 和 publisher 验证使用同一值。当前阶段可使用真实 Host Abstractions 的 ProjectReference；checkout 布局和 `--host-root` 必须指向同一个 SDK，不手写 stub 冒充 SDK。Host API 版本与 Abstractions 包版本分别治理，不自行统一或递增。
+`host.lock.json` 记录 `hostApiVersion`、`frontendApiVersion`、`supportedLocales` 等兼容契约；SHA 用于固定一次编译输入，不是兼容版本。验证和候选任务各自固定 SDK 来源，同一任务内的构建与检查使用同一值；候选清单绑定该值供 writer 复核。当前阶段可使用真实 Host Abstractions 的 ProjectReference；checkout 布局和 `--host-root` 必须指向同一个 SDK，不手写 stub 冒充 SDK。Host API 版本与 Abstractions 包版本分别治理，不自行统一或递增。
 
 先构建前端再执行依赖构建输出的 conformance。所有工具退出码向上传递；未知分组、缺依赖、意外空选择、零用例、意外 skip、缺报告和 timeout 均不算通过。测试最低有效层覆盖实际结果，不读取源码函数体匹配普通行为。UI 测试不持久化视觉截图/像素/布局基线，不依赖私有 DOM/class。跨宿主 Smoke 复用 Host 核心流程，不扩增装饰性 UI 测试。
 
