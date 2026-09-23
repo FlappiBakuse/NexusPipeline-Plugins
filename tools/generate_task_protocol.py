@@ -38,8 +38,37 @@ def load_adapters(source=None):
         data = json.loads(path.read_text(encoding='utf-8'), object_pairs_hook=unique_members)
         if not isinstance(data, dict) or not isinstance(data.get('id'), str) or not isinstance(data.get('implementation'), str):
             raise ValueError('Invalid adapter metadata: ' + artifact)
+        validate_adapter_metadata(data, artifact)
         adapters[artifact] = data
     return adapters
+
+
+def validate_adapter_metadata(adapter, artifact):
+    """Validate metadata facts consumed by generated configuration diagnostics."""
+    if 'dailyTaskKeys' in adapter:
+        raise ValueError(f'{artifact}: dailyTaskKeys is not an authoritative field')
+    entries = adapter.get('entries', [])
+    entry_ids = {
+        entry.get('id') for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get('id'), str)
+    }
+    rules = adapter.get('configRules', [])
+    if not isinstance(rules, list):
+        raise ValueError(f'{artifact}: configRules must be a list')
+    for rule in rules:
+        if not isinstance(rule, dict):
+            raise ValueError(f'{artifact}: invalid config rule')
+        if rule.get('kind') != 'single_daily':
+            continue
+        if 'dailyTaskKeys' in rule:
+            raise ValueError(f'{artifact}: single_daily must use allowedTaskKeys')
+        allowed = rule.get('allowedTaskKeys')
+        if (not isinstance(allowed, list) or not allowed
+                or any(not isinstance(key, str) or not key for key in allowed)
+                or len(set(allowed)) != len(allowed)):
+            raise ValueError(f'{artifact}: single_daily allowedTaskKeys must be unique and non-empty')
+        if entry_ids and not set(allowed).issubset(entry_ids):
+            raise ValueError(f'{artifact}: single_daily allowedTaskKeys contains an unknown task')
 
 
 def load_graph():

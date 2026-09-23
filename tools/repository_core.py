@@ -638,12 +638,17 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
     _require(isinstance(value, list) and len(value) <= 32, "taskProtocol.environmentChecks must contain at most 32 checks")
     identifiers: set[str] = set()
     for check in value:
-        _require(isinstance(check, dict) and set(check) == {"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints"}, "taskProtocol environment check fields invalid")
+        _require(
+            isinstance(check, dict)
+            and set(check).issubset({"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints", "comparison", "secondarySelector"})
+            and {"id", "source", "expectedKind", "relativeBase", "networkAccess", "followReparsePoints"}.issubset(check),
+            "taskProtocol environment check fields invalid",
+        )
         identifier = check.get("id")
         _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol environment check id invalid")
         identifiers.add(identifier)
         _require(
-            check.get("expectedKind") in {"file", "directory", "adb_endpoint"}
+            check.get("expectedKind") in {"file", "directory", "file_or_directory", "adb_endpoint"}
             and check.get("relativeBase") in {"script_root", "config_directory", "none"}
             and check.get("networkAccess") is False
             and check.get("followReparsePoints") is False,
@@ -659,6 +664,22 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
             _require(set(source) == {"kind", "field"} and source.get("field") in {"gameTarget", "scriptExecutable"}, "taskProtocol environment host source invalid")
         else:
             raise RepositoryError("taskProtocol environment source kind invalid")
+        comparison = check.get("comparison", "exact")
+        _require(comparison in {"exact", "path_or_executable_parent", "adb_endpoint_with_port"}, "taskProtocol environment comparison invalid")
+        _require(
+            comparison != "path_or_executable_parent" or check.get("expectedKind") == "file_or_directory",
+            "taskProtocol path comparison requires file_or_directory",
+        )
+        if comparison == "adb_endpoint_with_port":
+            _require(
+                kind == "resource"
+                and check.get("expectedKind") == "adb_endpoint"
+                and isinstance(check.get("secondarySelector"), list),
+                "taskProtocol adb endpoint comparison invalid",
+            )
+            _validate_task_protocol_selector(check["secondarySelector"])
+        else:
+            _require("secondarySelector" not in check, "taskProtocol secondary selector invalid")
 
 
 def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:

@@ -50,6 +50,26 @@ class TaskPhaseBuildTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build.bundle(next(iter(metadata.values())), 'write')
 
+    def test_single_daily_metadata_has_one_authoritative_allowlist(self):
+        metadata = build.load_adapters()
+        for artifact, adapter in metadata.items():
+            for rule in adapter.get('configRules', []):
+                if rule.get('kind') == 'single_daily':
+                    self.assertTrue(rule.get('allowedTaskKeys'), artifact)
+                    self.assertEqual(len(rule['allowedTaskKeys']), len(set(rule['allowedTaskKeys'])), artifact)
+                    self.assertNotIn('dailyTaskKeys', adapter)
+
+    def test_single_daily_metadata_rejects_legacy_allowlist_shape(self):
+        adapter = {
+            'id': 'example', 'implementation': 'example',
+            'entries': [{'id': 'daily'}],
+            'configRules': [{
+                'kind': 'single_daily', 'dailyTaskKeys': ['daily'],
+            }],
+        }
+        with self.assertRaises(ValueError):
+            build.validate_adapter_metadata(adapter, 'Example')
+
     def test_adapter_metadata_cannot_escape_index_or_hide_duplicate_members(self):
         with tempfile.TemporaryDirectory(prefix='nxp-adapter-index-') as temporary:
             root = Path(temporary)
