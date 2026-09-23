@@ -12,14 +12,13 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: plugin-develop-preview-build
-  cancel-in-progress: true
-
 jobs:
   build-preview:
     name: preview-build
     runs-on: windows-latest
+    concurrency:
+      group: plugin-develop-preview-build
+      cancel-in-progress: true
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -27,6 +26,11 @@ jobs:
       source_sha: ${{ steps.source.outputs.sha }}
       workflow_sha: ${{ steps.source.outputs.workflow_sha }}
     steps:
+      - name: Require controlled develop source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: test "$SOURCE_REF" = develop
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ inputs.source_ref }}
