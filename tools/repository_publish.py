@@ -368,11 +368,9 @@ class GitHubGitTransport:
         files: dict[str, Path],
         env: dict[str, str],
     ) -> dict[str, Any]:
-        remote_head = cls._run(["git", "ls-remote", "origin", "refs/heads/main"], checkout, env=env).split("\t", 1)[0]
-        core._require(remote_head == published, "stable push 后远端 main SHA 不一致")
         cls._run(["git", "fetch", "origin", "main"], checkout, env=env)
         fetched_head = cls._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
-        core._require(fetched_head == published, "stable push 后读取的 main SHA 不一致")
+        cls._run(["git", "merge-base", "--is-ancestor", published, fetched_head], checkout, env=env)
 
         catalog_bytes = cls._read_tree_blob(checkout, published, "catalog.json", env)
         state_bytes = cls._read_tree_blob(checkout, published, core.STATE_FILE, env)

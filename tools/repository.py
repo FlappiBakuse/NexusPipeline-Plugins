@@ -46,6 +46,9 @@ def _parser() -> argparse.ArgumentParser:
             "validate-host-locales",
             "qualification",
             "candidate",
+            "validate-candidate",
+            "extract-candidate",
+            "publish-candidate",
             "verify",
             "scope",
             "publish-develop",
@@ -63,6 +66,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--plan", type=Path, help="release/test 使用的唯一 release-plan.json")
     parser.add_argument("--output", type=Path, help="plan/release/bootstrap-state 输出路径")
     parser.add_argument("--generated-root", type=Path, help="生成候选物目录")
+    parser.add_argument("--artifact-zip", type=Path, help="原 Actions candidate artifact ZIP")
+    parser.add_argument("--expected-digest", help="Actions 服务端 artifact SHA256")
     parser.add_argument("--host-root", type=Path, help="validate-host-locales/qualification 使用的当前宿主 checkout")
     parser.add_argument("--distribution-root", type=Path, help="候选资格使用的 stable catalog/state/packages 分发基线")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
@@ -176,6 +181,46 @@ def main(argv: list[str] | None = None) -> int:
                 with args.github_output.open("a", encoding="utf-8") as stream:
                     stream.write(f"status={result['status']}\n")
                     stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "extract-candidate":
+            from repository_candidate import extract_candidate_artifact
+
+            if args.artifact_zip is None or args.output is None or not args.expected_digest:
+                raise RepositoryError("extract-candidate 必须指定 --artifact-zip、--output、--expected-digest")
+            extract_candidate_artifact(args.artifact_zip.resolve(), args.output.resolve(),
+                                       expected_digest=args.expected_digest)
+        elif args.command == "validate-candidate":
+            from repository_candidate import validate_original_candidate
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.source_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("validate-candidate 缺少目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            result = validate_original_candidate(root, generated.resolve(), source_sha=args.source_sha,
+                                                 workflow_sha=args.workflow_sha,
+                                                 run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            print(json.dumps({"sourceSha": result["sourceSha"], "distribution": result["distribution"],
+                              "files": len(result["files"])}, ensure_ascii=False), flush=True)
+        elif args.command == "publish-candidate":
+            from repository_candidate import validate_original_candidate
+            from repository_publish import GitHubGitTransport
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.source_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("publish-candidate 缺少目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            manifest = validate_original_candidate(root, generated.resolve(), source_sha=args.source_sha,
+                                                   workflow_sha=args.workflow_sha,
+                                                   run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if not args.remote_write or not os.environ.get(args.token_env):
+                raise RepositoryError("publish-candidate 必须由受保护 writer 提供 Publisher App token")
+            result = GitHubGitTransport().publish_stable_candidate(
+                root, generated.resolve(), args.source_sha, manifest["distribution"]["headSha"],
+                remote_write=True, token=os.environ[args.token_env],
+                run_id=int(args.run_id), run_attempt=int(args.run_attempt),
+                workflow_sha=args.workflow_sha)
             print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         elif args.command == "scope":
             from verification import fast_scope
