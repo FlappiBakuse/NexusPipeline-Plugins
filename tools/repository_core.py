@@ -1138,13 +1138,20 @@ def git_json_at(root: Path, commit: str, path: str) -> Any:
 def changed_paths(root: Path, base: str, head: str) -> list[tuple[str, list[str]]]:
     if base == head:
         return []
-    output = _git(root, ["diff", "--name-status", "--find-renames=50%", f"{base}...{head}", "--"], "读取 Git 发行变更")
+    output = _git(root, ["diff", "--name-status", "--find-renames=50%", "-z", f"{base}...{head}", "--"], "读取 Git 发行变更")
     result: list[tuple[str, list[str]]] = []
-    for line in output.splitlines():
-        fields = line.split("\t")
-        if len(fields) < 2:
+    tokens = output.split("\0")
+    index = 0
+    while index < len(tokens):
+        status = tokens[index]
+        index += 1
+        if not status:
             continue
-        result.append((fields[0], [field.replace("\\", "/") for field in fields[1:] if field]))
+        count = 2 if status.startswith(("R", "C")) else 1
+        paths = tokens[index:index + count]
+        _require(len(paths) == count and all(paths), "Git 变更列表不完整")
+        index += count
+        result.append((status, [file.replace("\\", "/") for file in paths]))
     return result
 
 

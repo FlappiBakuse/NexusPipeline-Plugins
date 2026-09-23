@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
+from sdk_source import SdkSourceError
 
 from repository_core import (
     RepositoryError,
@@ -43,6 +45,8 @@ def _parser() -> argparse.ArgumentParser:
             "validate-generated",
             "validate-host-locales",
             "qualification",
+            "verify",
+            "scope",
             "publish-develop",
             "publish-preview",
             "publish-stable",
@@ -62,6 +66,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--distribution-root", type=Path, help="候选资格使用的 stable catalog/state/packages 分发基线")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
     parser.add_argument("--group", choices=("source", "frontend-managed", "candidate", "all"), default="all", help="qualification Gate 分组")
+    parser.add_argument("--scope", choices=("docs", "source", "managed", "all"), default="all", help="verify 验证范围")
+    parser.add_argument("--github-output", type=Path, help="scope 写入 GitHub Actions step output")
     parser.add_argument("--sdk-sha", help="qualification 使用的固定 Host checkout SHA")
     parser.add_argument("--source-ref", default="develop", help="publish-develop 的源码 ref")
     parser.add_argument("--source-sha", help="publish-stable 的已验证源码 SHA")
@@ -149,6 +155,47 @@ def main(argv: list[str] | None = None) -> int:
                 output=args.output.resolve() if args.output else None,
                 baseline=args.baseline,
             )
+        elif args.command == "scope":
+            from verification import fast_scope
+
+            if not args.base:
+                raise RepositoryError("scope 必须指定 --base")
+            selected = fast_scope(root, args.base)
+            line = f"docs_only={'true' if selected['docsOnly'] else 'false'}"
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(line + "\n")
+            print(line, flush=True)
+        elif args.command == "verify":
+            from verification import managed_selection, preflight, run_docs_gate, run_managed_gate, run_source_gate
+
+            if not args.base:
+                raise RepositoryError("verify 必须指定 --base")
+            if args.scope == "docs":
+                print(json.dumps({"scope": "docs", "docs": run_docs_gate(root, args.base)}, ensure_ascii=False, indent=2), flush=True)
+                return 0
+            selection: list[str] = []
+            reason = "source-only"
+            if args.scope in {"managed", "all"}:
+                selection, reason = managed_selection(root, args.base)
+            sdk = None
+            if args.scope in {"source", "all"} or selection:
+                if args.host_root is None:
+                    raise RepositoryError("选中的验证需要 --host-root")
+                sdk = preflight(root, args.host_root.resolve(), args.sdk_sha)
+            result: dict = {"scope": args.scope, "selectionReason": reason}
+            if sdk is not None:
+                result["sdkSourceSha"] = sdk["sdkSourceSha"]
+            if args.scope in {"source", "all"}:
+                result["source"] = run_source_gate(root, args.host_root.resolve(), args.base)
+            if args.scope in {"managed", "all"}:
+                result["managed"] = run_managed_gate(
+                    root,
+                    args.host_root.resolve() if args.host_root else root,
+                    selected=selection,
+                    host_integration=False,
+                )
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         elif args.command == "publish-develop":
             from repository_publish import publish_develop
 
@@ -229,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
             write_json(output, bootstrap_state(root, args.head))
             print(f"[repository] 已生成发行状态：{output}", flush=True)
         return 0
-    except RepositoryError as exc:
+    except (RepositoryError, SdkSourceError) as exc:
         print(f"[repository] 错误：{exc}", file=sys.stderr, flush=True)
         return 1
 

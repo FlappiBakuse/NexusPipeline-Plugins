@@ -8,73 +8,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
 
 import repository_core as core
 from candidate_workspace import CandidateWorkspace
-from sdk_source import SdkSourceError, validate_host_checkout
-
-
-def _host_head(host_root: Path) -> str:
-    return core.git_head(host_root)
-
-
-def _preflight(root: Path, host_root: Path, sdk_sha: str | None) -> dict[str, Any]:
-    compatibility = core.read_host_compatibility(root)
-    resolved_sha = sdk_sha or _host_head(host_root)
-    result = validate_host_checkout(host_root, resolved_sha, compatibility)
-    if result.get("workingTreeDirty"):
-        raise SdkSourceError("正式 Qualification 不接受 dirty Host SDK checkout；本地联调请单独使用 validate_host_checkout")
-    print(f"[qualification] SDK preflight 通过：{resolved_sha}", flush=True)
-    return result
-
-
-def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
-    count, json_count = core.validate_sources(root)
-    locales = core.validate_host_locale_registry(root, host_root)
-    syntax = core.check_syntax(root)
-    core._run((sys.executable, str(root / "tools" / "generate_task_protocol.py"), "--check"), "Task adapter generation", root)
-    core._run((sys.executable, str(root / "tools" / "generate_task_schema.py"), "--check"), "Task protocol schema", root)
-    core._run((sys.executable, str(root / "tools" / "create_task_plugin.py"), "--artifact", "TaskProtocolExample",
-               "--name", "task-protocol-example", "--example", "--check", "--output", str(root / "examples" / "TaskProtocolExample")), "Generated author example", root)
-    for preset in ("json-map", "json-parallel-array", "yaml", "mxu"):
-        artifact = "TaskProtocol" + "".join(part.title() for part in preset.split("-"))
-        core._run((sys.executable, str(root / "tools" / "create_task_plugin.py"), "--artifact", artifact,
-                   "--name", "task-protocol-" + preset, "--preset", preset, "--example", "--check",
-                   "--output", str(root / "examples" / artifact)), "Generated " + preset + " example", root)
-    core._run(("node", str(root / "tools" / "Test-ConfigEditors.mjs")), "Test-ConfigEditors", root)
-    core._run((sys.executable, "-m", "unittest", "discover", "-s", "tools/tests", "-v"), "Plugins Python 单元测试", root)
-    changed = core.check_pr(root, base)
-    return {
-        "plugins": count,
-        "jsonFiles": json_count,
-        "locales": locales,
-        "syntaxFiles": syntax,
-        "changedPaths": changed,
-    }
-
-
-def run_managed_gate(root: Path, host_root: Path) -> dict[str, Any]:
-    # The Host Jint runner references the Windows-targeted Host assembly.
-    # P2 preserves all adapter fixtures on its existing Windows/.NET runner.
-    core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
-               "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
-    if (root / "package-lock.json").is_file():
-        core._run((core._npm_executable(), "ci", "--no-audit", "--no-fund"), "Plugins 根 workspace npm ci", root)
-    frontend = root / "tools" / "Test-FrontendPlugins.mjs"
-    if (root / "package.json").is_file():
-        core._run((core._npm_executable(), "run", "typecheck:frontend"), "managed frontend typecheck", root)
-        core._run((core._npm_executable(), "run", "build:frontend"), "managed frontend build", root)
-    if frontend.is_file():
-        environment = os.environ.copy()
-        environment["NEXUS_HOST_ROOT"] = str(host_root)
-        environment["NEXUS_OFFICIAL_PLUGINS_ROOT"] = str(root)
-        core._run(("node", str(frontend), "--host-root", str(host_root)), "前端插件 conformance", root, env=environment)
-    managed_projects = core.test_managed(root, full=True, include_frontend=False, host_root=host_root)
-    return {"managedProjectsAndTests": managed_projects}
+from sdk_source import SdkSourceError
+from verification import preflight, run_managed_gate, run_source_gate
 
 
 def _verify_unchanged_stable(root: Path, candidate: Path, distribution_root: Path) -> None:
@@ -155,8 +96,8 @@ def run_qualification(
     host_root = host_root.resolve()
     if group not in {"source", "frontend-managed", "candidate", "all"}:
         raise core.RepositoryError(f"Qualification group 无效：{group}")
-    preflight = _preflight(root, host_root, sdk_sha)
-    result: dict[str, Any] = {"group": group, "sdkSourceSha": preflight["sdkSourceSha"]}
+    sdk = preflight(root, host_root, sdk_sha)
+    result: dict[str, Any] = {"group": group, "sdkSourceSha": sdk["sdkSourceSha"]}
     if group in {"source", "all"}:
         result["source"] = run_source_gate(root, host_root, base)
     if group in {"frontend-managed", "all"}:
@@ -164,7 +105,7 @@ def run_qualification(
     if group in {"candidate", "all"}:
         candidate_output = output or root / ".generated" / "qualification-candidate"
         candidate = run_candidate_gate(root, host_root, base, candidate_output, baseline)
-        candidate["sdkSourceSha"] = preflight["sdkSourceSha"]
+        candidate["sdkSourceSha"] = sdk["sdkSourceSha"]
         result["candidate"] = candidate
     print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
     return result
