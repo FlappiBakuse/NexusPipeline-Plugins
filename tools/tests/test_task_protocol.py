@@ -31,6 +31,21 @@ class TaskProtocolTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             author.generate('ExampleTask', 'example-task', True, 'ok-script-daily')
 
+    def test_generated_discovery_diagnostics_respect_negotiated_version(self):
+        driver = """
+const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+=chunk);process.stdin.on('end',()=>{
+ const outputs=[];const context={input:{protocolVersion:process.argv[1],phase:'discover',configResources:[{id:'config:main',format:'json'}]},
+ nexus:{readConfig:()=>({document:{tasks:[]},revision:'fixture'})},console:{log:result=>outputs.push(result)}};
+ vm.runInNewContext(source,context);process.stdout.write(JSON.stringify(outputs));});
+"""
+        for version in ('1.0', '1.1', '1.2'):
+            source = author.generate('ExampleTask', 'example-task', True, protocol_version=version)['data/discover.js']
+            result = subprocess.run(['node', '-e', driver, version], input=source, text=True, encoding='utf-8', capture_output=True, check=True)
+            outputs = json.loads(result.stdout)
+            self.assertEqual(1, len(outputs))
+            self.assertEqual(version, outputs[0]['protocolVersion'])
+            self.assertEqual(version == '1.2', 'configAssessment' in outputs[0])
+
     def test_author_version12_uses_diagnostic_assets(self):
         current = author.generate('ExampleTask', 'example-task', True, protocol_version='1.2')
         protocol = json.loads(current['plugin.json'])['taskProtocol']

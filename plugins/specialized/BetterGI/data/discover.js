@@ -403,7 +403,7 @@ function finalizeAssessment(plan) {
 }
 
 let result;
-try { result = discover(); if (typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); delete result.slots; }
+try { result = discover(); if (ADAPTER.protocolVersion === '1.2' && typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); delete result.slots; }
 catch { result = { protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'discovery', coverage: 'unsupported', tasks: [], selectionFields: [],
-  diagnostics: [{ code: 'unsupported_schema', message: 'Configuration identity or schema could not be verified.' }] }; if (typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); }
+  diagnostics: [{ code: 'unsupported_schema', message: 'Configuration identity or schema could not be verified.' }] }; if (ADAPTER.protocolVersion === '1.2' && typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); }
 console.log(result);
