@@ -18,7 +18,7 @@ function discover() {
       requireValue(typeof task.id === 'string' && /^[A-Za-z0-9_-]+$/.test(task.id));
       const created = addTask(plan, config.id, task.id, task.customName || task.name, task.enabled,
         prefix.concat(['tasks', {by:'id',value:task.id}, 'enabled']), 'safe', 'supported');
-      if (ADAPTER.protocolVersion === '1.1' && (task.builtin !== true || task.customName))
+      if (task.builtin !== true || task.customName)
         created.nameText = { kind: 'literal', value: created.name };
     }
   }

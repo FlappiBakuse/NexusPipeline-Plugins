@@ -1,6 +1,6 @@
 // Isolated prototype only: the caller freezes bridgeSession before consuming any payload.
-if (input.protocolVersion !== '1.1' || input.phase !== 'observe') throw new Error('protocol_error: bridge phase/version');
-const out = {protocolVersion:'1.1',type:'observation',runId:input.runId,attemptId:input.attemptId,
+if (input.protocolVersion !== '0.1.0' || input.phase !== 'observe') throw new Error('protocol_error: bridge phase/version');
+const out = {protocolVersion:'0.1.0',type:'observation',runId:input.runId,attemptId:input.attemptId,
   observations:[],incidents:[],diagnostics:[],runBoundary:'open',boundaryEvidence:[],cursorState:input.adapterState || {}};
 const state = out.cursorState;
 const allowed = input.bridgeSession;

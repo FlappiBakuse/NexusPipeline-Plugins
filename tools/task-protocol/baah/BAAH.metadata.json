@@ -209,7 +209,7 @@
     "长期签到",
     "每日免费奖励"
   ],
-  "protocolVersion": "1.2",
+  "protocolVersion": "0.1.0",
   "configRules": [
     {
       "id": "baah.game_target",

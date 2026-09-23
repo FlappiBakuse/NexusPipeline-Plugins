@@ -255,7 +255,7 @@
     "tasks/setting/Keymap.json": [],
     "tasks/setting/Zipline.json": []
   },
-  "protocolVersion": "1.2",
+  "protocolVersion": "0.1.0",
   "configRules": [
     {
       "id": "mxu.autostart_target",

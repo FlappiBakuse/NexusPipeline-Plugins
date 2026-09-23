@@ -22,7 +22,7 @@
     }
   },
   "taskProtocol": {
-    "version": "1.2",
+    "version": "0.1.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [

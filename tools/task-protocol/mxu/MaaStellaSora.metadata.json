@@ -79,7 +79,7 @@
       "领取任务奖励"
     ]
   },
-  "protocolVersion": "1.2",
+  "protocolVersion": "0.1.0",
   "configRules": [
     {
       "id": "mxu.autostart_target",

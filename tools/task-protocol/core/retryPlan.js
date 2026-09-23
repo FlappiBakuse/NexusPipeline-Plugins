@@ -1,5 +1,5 @@
 function retryPlan(discover) {
-  const stop = reason => ({ protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'retry', decision: 'stop', reasonCode: reason,
+  const stop = reason => ({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'stop', reasonCode: reason,
     includedTaskIds: [], prerequisiteTaskIds: [], expandedUnitIds: [], filePatches: [] });
   if (input.cancelled || input.budgetExhausted || input.attemptsUsed >= input.maxAttempts) return stop('retry.budget_exhausted');
   const tasks = input.originalPlan.tasks, selected = new Set(tasks.filter(t => t.enabled && ['failed', 'blocked'].includes(input.taskStates[t.id])).map(t => t.id));
@@ -25,7 +25,7 @@ function retryPlan(discover) {
   const current = discover(), patches = {};
   if (typeof customRetryPatches === 'function') {
     const custom = customRetryPatches(current, selected);
-    return { protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
+    return { protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
       prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: custom };
   }
   for (const task of tasks) {
@@ -38,6 +38,6 @@ function retryPlan(discover) {
     if (!patches[slot.resourceId]) patches[slot.resourceId] = { resourceId: slot.resourceId, format: r.format, expectedRevision: r.revision, operations: [] };
     patches[slot.resourceId].operations.push({ selector: slot.selector, expected, value, purpose: 'selection' });
   }
-  return { protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
+  return { protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
     prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: Object.values(patches) };
 }

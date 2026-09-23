@@ -1,1 +1,1 @@
-function createPlan() { return { protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'discovery', coverage: 'partial', tasks: [], selectionFields: [], behaviorFields: [], diagnostics: [], slots: {} }; }
+function createPlan() { return { protocolVersion: ADAPTER.protocolVersion, type: 'discovery', coverage: 'partial', tasks: [], selectionFields: [], behaviorFields: [], diagnostics: [], slots: {} }; }

@@ -142,7 +142,7 @@
     "activity_planarfissure_enable": "位面分裂",
     "activity_journey_highlights_notification_enable": "旅途拾忆通知"
   },
-  "protocolVersion": "1.2",
+  "protocolVersion": "0.1.0",
   "configRules": [
     {
       "id": "march7th.game_target",

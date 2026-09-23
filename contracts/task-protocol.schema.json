@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:nxp:task-protocol:1.0",
-  "title": "NexusPipeline task protocol 1.0 outputs",
+  "$id": "urn:nxp:task-protocol:0.1.0",
+  "title": "NexusPipeline task protocol 0.1.0 outputs",
   "oneOf": [
     {
       "$ref": "#/$defs/discovery"
@@ -14,6 +14,61 @@
     }
   ],
   "$defs": {
+    "textRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "plugin"
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._-]{1,160}$"
+            },
+            "args": {
+              "type": "object",
+              "maxProperties": 16,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ]
+              }
+            },
+            "fallback": {
+              "type": "string",
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "kind",
+            "key",
+            "args",
+            "fallback"
+          ]
+        }
+      ]
+    },
     "selector": {
       "type": "array",
       "items": {
@@ -147,6 +202,9 @@
               "type": "null"
             }
           ]
+        },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
         }
       },
       "required": [
@@ -245,6 +303,9 @@
               "type": "null"
             }
           ]
+        },
+        "nameText": {
+          "$ref": "#/$defs/textRef"
         }
       },
       "required": [
@@ -263,12 +324,210 @@
         "detection"
       ]
     },
+    "configScope": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "binding",
+                "queue"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "task"
+            },
+            "taskId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "required": [
+            "kind",
+            "taskId"
+          ]
+        }
+      ]
+    },
+    "configLocation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "enum": [
+                "config",
+                "resource"
+              ]
+            },
+            "resourceId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "selector": {
+              "$ref": "#/$defs/selector"
+            }
+          },
+          "required": [
+            "source",
+            "resourceId",
+            "selector"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "context"
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "required": [
+            "source",
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "source": {
+              "const": "environment"
+            },
+            "inspectionId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            }
+          },
+          "required": [
+            "source",
+            "inspectionId"
+          ]
+        }
+      ]
+    },
+    "configCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ruleId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "evaluation": {
+          "enum": [
+            "satisfied",
+            "violated",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "executionEffect": {
+          "enum": [
+            "none",
+            "warn",
+            "block"
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/configScope"
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configLocation"
+          },
+          "maxItems": 8
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "open_binding_editor",
+                  "open_script_settings",
+                  "refresh_plan"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "maxItems": 3
+        },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
+        }
+      },
+      "required": [
+        "ruleId",
+        "evaluation",
+        "severity",
+        "executionEffect",
+        "scope",
+        "locations",
+        "actions"
+      ]
+    },
+    "configAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "1"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configCheck"
+          },
+          "maxItems": 128,
+          "minItems": 1
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "checks"
+      ]
+    },
     "discovery": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "protocolVersion": {
-          "const": "1.0"
+          "const": "0.1.0"
         },
         "type": {
           "const": "discovery"
@@ -307,6 +566,9 @@
             "$ref": "#/$defs/behaviorField"
           },
           "maxItems": 2048
+        },
+        "configAssessment": {
+          "$ref": "#/$defs/configAssessment"
         }
       },
       "required": [
@@ -314,7 +576,8 @@
         "type",
         "coverage",
         "tasks",
-        "diagnostics"
+        "diagnostics",
+        "configAssessment"
       ]
     },
     "evidence": {
@@ -380,6 +643,9 @@
           "minLength": 1,
           "maxLength": 512
         },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
+        },
         "evidence": {
           "type": "array",
           "items": {
@@ -410,12 +676,83 @@
         "evidence"
       ]
     },
+    "incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "taskId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scopeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "executionOrdinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "enum": [
+            "transient_error",
+            "business_error",
+            "unattributed_error"
+          ]
+        },
+        "resolution": {
+          "enum": [
+            "open",
+            "recovered",
+            "terminal"
+          ]
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "id",
+        "taskId",
+        "scopeId",
+        "executionOrdinal",
+        "kind",
+        "resolution",
+        "reasonCode",
+        "evidence"
+      ]
+    },
     "observation": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "protocolVersion": {
-          "const": "1.0"
+          "const": "0.1.0"
         },
         "type": {
           "const": "observation"
@@ -464,6 +801,13 @@
             "object",
             "null"
           ]
+        },
+        "incidents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/incident"
+          },
+          "maxItems": 2048
         }
       },
       "required": [
@@ -570,7 +914,7 @@
       "additionalProperties": false,
       "properties": {
         "protocolVersion": {
-          "const": "1.0"
+          "const": "0.1.0"
         },
         "type": {
           "const": "retry"
@@ -585,6 +929,9 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 512
+        },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
         },
         "includedTaskIds": {
           "type": "array",

@@ -5,7 +5,7 @@ function addTask(plan, resourceId, key, name, enabled, selector, risk, detection
     order: plan.tasks.length, countsAsUnit: !parentId && (!role || role === 'business'), requiredForParent: true,
     retryUnitId: parentId || id, retryRisk: risk || 'unknown', dependencies: [], detection: detection || 'limited', configRef: resourceId };
   const textKey = ADAPTER.taskTextKeys?.[key];
-  if (ADAPTER.protocolVersion === '1.1' || ADAPTER.protocolVersion === '1.2') task.nameText = textKey
+  task.nameText = textKey
     ? { kind: 'plugin', key: textKey, args: {}, fallback: name } : { kind: 'literal', value: name };
   plan.tasks.push(task);
   if (selector) {

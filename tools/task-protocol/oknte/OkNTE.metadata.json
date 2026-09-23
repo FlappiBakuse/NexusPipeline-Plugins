@@ -1,7 +1,7 @@
 {
   "id": "oknte",
   "implementation": "oknte",
-  "protocolVersion": "1.2",
+  "protocolVersion": "0.1.0",
   "configRules": [
     {
       "id": "okscript.distribution",

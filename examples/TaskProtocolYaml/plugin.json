@@ -11,16 +11,24 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "1.1",
+    "version": "0.1.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
     "localization": {
       "defaultLocale": "zh-CN",
       "messages": {
-        "zh-CN": "data/task-text.zh-CN.json",
-        "en-US": "data/task-text.en-US.json"
+        "zh-CN": "data/i18n/zh-CN.json",
+        "en-US": "data/i18n/en-US.json"
       }
-    }
+    },
+    "configRules": [
+      {
+        "id": "example.configuration",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      }
+    ],
+    "environmentChecks": []
   }
 }

@@ -44,7 +44,7 @@ const data = Object.fromEntries(fixture.resources.map(r => [r.id,
     integrity: r.sha256 ? (require('crypto').createHash('sha256').update(r.text).digest('hex') === r.sha256 ? 'verified' : 'mismatch') : undefined }]));
 let result;
 vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
-  input: { phase: 'discover', protocolVersion: '1.2', configResources: fixture.resources.filter(r => r.id.startsWith('config:')) },
+  input: { phase: 'discover', protocolVersion: '0.1.0', configResources: fixture.resources.filter(r => r.id.startsWith('config:')) },
   nexus: { readConfig: id => data[id], readResource: id => data[id] },
   console: { log: value => { result = value; } }
 });

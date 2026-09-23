@@ -45,6 +45,8 @@ def load_adapters(source=None):
 
 def validate_adapter_metadata(adapter, artifact):
     """Validate metadata facts consumed by generated configuration diagnostics."""
+    if adapter.get('protocolVersion') != '0.1.0':
+        raise ValueError(f'{artifact}: unsupported task protocol version')
     if 'dailyTaskKeys' in adapter:
         raise ValueError(f'{artifact}: dailyTaskKeys is not an authoritative field')
     entries = adapter.get('entries', [])
@@ -142,7 +144,7 @@ def bundle(adapter, phase, *, scaffold=False):
     content += 'const ADAPTER = ' + json.dumps(adapter, ensure_ascii=False, separators=(',', ':')) + ';\n'
     # Check outside discover's schema fallback: a wrong phase is a protocol error.
     content += 'if (input.phase !== ' + json.dumps(phase) + ') throw new Error("protocol_error: wrong phase");\n'
-    content += 'if (input.protocolVersion !== ' + json.dumps(adapter.get('protocolVersion', '1.0')) + ') throw new Error("protocol_error: wrong version");\n'
+    content += 'if (input.protocolVersion !== ' + json.dumps(adapter['protocolVersion']) + ') throw new Error("protocol_error: wrong version");\n'
     if scaffold:
         content += '// __NXP_ADAPTATION_REQUIRED__\nthrow new Error("adapter_not_implemented");\n'
         return content
@@ -153,9 +155,9 @@ def bundle(adapter, phase, *, scaffold=False):
         content += path.read_text(encoding='utf-8') + '\n'
     if phase == 'discover':
         content += '''let result;
-try { result = discover(); if (ADAPTER.protocolVersion === '1.2' && typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); delete result.slots; }
-catch { result = { protocolVersion: ADAPTER.protocolVersion || '1.0', type: 'discovery', coverage: 'unsupported', tasks: [], selectionFields: [],
-  diagnostics: [{ code: 'unsupported_schema', message: 'Configuration identity or schema could not be verified.' }] }; if (ADAPTER.protocolVersion === '1.2' && typeof finalizeAssessment === 'function') result.configAssessment = finalizeAssessment(result); }
+try { result = discover(); result.configAssessment = finalizeAssessment(result); delete result.slots; }
+catch { result = { protocolVersion: ADAPTER.protocolVersion, type: 'discovery', coverage: 'unsupported', tasks: [], selectionFields: [],
+  diagnostics: [{ code: 'unsupported_schema', message: 'Configuration identity or schema could not be verified.' }] }; result.configAssessment = finalizeAssessment(result); }
 console.log(result);
 '''
     elif phase == 'observe':

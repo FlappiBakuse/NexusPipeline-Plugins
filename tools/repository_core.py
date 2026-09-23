@@ -695,32 +695,25 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         return {}
     protocol = manifest["taskProtocol"]
     _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    _require(isinstance(protocol, dict) and protocol.get("version") in {"1.0", "1.1", "1.2"}, "unsupported taskProtocol.version")
-    fields = {"version", "discoverScript", "retryScript", "readResources"}
-    if protocol["version"] in {"1.1", "1.2"}:
-        fields.add("localization")
-    if protocol["version"] == "1.2":
-        fields.update({"configRules", "environmentChecks"})
-        _require("configValidator" not in manifest, "taskProtocol 1.2 cannot declare configValidator")
+    _require(isinstance(protocol, dict) and protocol.get("version") == "0.1.0", "unsupported taskProtocol.version")
+    fields = {"version", "discoverScript", "retryScript", "readResources", "localization", "configRules", "environmentChecks"}
+    _require("configValidator" not in manifest, "taskProtocol 0.1.0 cannot declare configValidator")
     _require(set(protocol) == fields, "taskProtocol fields invalid")
     _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
 
     def safe_path(value: Any) -> bool:
         return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
 
-    if protocol["version"] in {"1.1", "1.2"}:
-        localization = protocol["localization"]
-        _require(isinstance(localization, dict) and set(localization) == {"defaultLocale", "messages"}, "task localization fields invalid")
-        messages = localization["messages"]
-        _require(isinstance(messages, dict) and 0 < len(messages) <= 16 and localization["defaultLocale"] in messages, "task localization locales invalid")
-        _require(len({locale.lower() for locale in messages}) == len(messages), "duplicate task locale")
-        for locale, path in messages.items():
-            _require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
-            prefix = "data/i18n/" if protocol["version"] == "1.2" else "data/"
-            _require(safe_path(path) and path.startswith(prefix) and path.endswith(".json"), f"task localization requires safe {prefix}*.json")
-    if protocol["version"] == "1.2":
-        _validate_task_protocol_config_rules(protocol["configRules"])
-        _validate_task_protocol_environment_checks(protocol["environmentChecks"])
+    localization = protocol["localization"]
+    _require(isinstance(localization, dict) and set(localization) == {"defaultLocale", "messages"}, "task localization fields invalid")
+    messages = localization["messages"]
+    _require(isinstance(messages, dict) and 0 < len(messages) <= 16 and localization["defaultLocale"] in messages, "task localization locales invalid")
+    _require(len({locale.lower() for locale in messages}) == len(messages), "duplicate task locale")
+    for locale, path in messages.items():
+        _require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
+        _require(safe_path(path) and path.startswith("data/i18n/") and path.endswith(".json"), "task localization requires safe data/i18n/*.json")
+    _validate_task_protocol_config_rules(protocol["configRules"])
+    _validate_task_protocol_environment_checks(protocol["environmentChecks"])
 
     scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
     for value in [*scripts.values(), manifest.get("judgeScript")]:
@@ -731,7 +724,7 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     for resource in resources:
         fields = {"id", "source", "path", "format", "required"}
         _require(isinstance(resource, dict), "taskProtocol resource fields invalid")
-        if protocol["version"] == "1.2" and "sha256" in resource:
+        if "sha256" in resource:
             fields.add("sha256")
             _require(isinstance(resource["sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", resource["sha256"]) is not None
                      and resource.get("source") == "root" and resource.get("format") == "text", "taskProtocol resource.sha256 invalid")

@@ -15,41 +15,46 @@ import zipfile
 
 
 class TaskProtocolTests(unittest.TestCase):
-    def test_author_versions_and_blocked_daily_preset(self):
+    def test_author_current_protocol_and_blocked_daily_preset(self):
         current = author.generate('ExampleTask', 'example-task', True)
         protocol = json.loads(current['plugin.json'])['taskProtocol']
-        self.assertEqual('1.1', protocol['version'])
-        self.assertEqual('data/task-text.zh-CN.json', protocol['localization']['messages']['zh-CN'])
+        self.assertEqual('0.1.0', protocol['version'])
+        self.assertEqual('data/i18n/zh-CN.json', protocol['localization']['messages']['zh-CN'])
+        self.assertEqual(1, len(protocol['configRules']))
+        self.assertEqual([], protocol['environmentChecks'])
         for path in protocol['localization']['messages'].values():
             self.assertIn('task.daily_reward', json.loads(current[path]))
-        legacy = author.generate('ExampleTask', 'example-task', True, protocol_version='1.0')
-        self.assertNotIn('localization', json.loads(legacy['plugin.json'])['taskProtocol'])
-        self.assertFalse(any('task-text.' in path for path in legacy))
+        for obsolete in ('1.0', '1.1', '1.2'):
+            with self.subTest(obsolete=obsolete), self.assertRaises(ValueError):
+                author.generate('ExampleTask', 'example-task', True, protocol_version=obsolete)
         blocked = author.generate('ExampleTask', 'example-task', preset='ok-script-daily')
         for phase in ('discover', 'judge', 'retry'):
             self.assertIn(author.MARKER, blocked['data/' + phase + '.js'])
         with self.assertRaises(ValueError):
             author.generate('ExampleTask', 'example-task', True, 'ok-script-daily')
 
-    def test_generated_discovery_diagnostics_respect_negotiated_version(self):
+    def test_generated_discovery_requires_first_public_version_and_assessment(self):
         driver = """
 const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+=chunk);process.stdin.on('end',()=>{
  const outputs=[];const context={input:{protocolVersion:process.argv[1],phase:'discover',configResources:[{id:'config:main',format:'json'}]},
  nexus:{readConfig:()=>({document:{tasks:[]},revision:'fixture'})},console:{log:result=>outputs.push(result)}};
  vm.runInNewContext(source,context);process.stdout.write(JSON.stringify(outputs));});
 """
-        for version in ('1.0', '1.1', '1.2'):
-            source = author.generate('ExampleTask', 'example-task', True, protocol_version=version)['data/discover.js']
-            result = subprocess.run(['node', '-e', driver, version], input=source, text=True, encoding='utf-8', capture_output=True, check=True)
-            outputs = json.loads(result.stdout)
-            self.assertEqual(1, len(outputs))
-            self.assertEqual(version, outputs[0]['protocolVersion'])
-            self.assertEqual(version == '1.2', 'configAssessment' in outputs[0])
+        source = author.generate('ExampleTask', 'example-task', True)['data/discover.js']
+        result = subprocess.run(['node', '-e', driver, '0.1.0'], input=source, text=True, encoding='utf-8', capture_output=True, check=True)
+        outputs = json.loads(result.stdout)
+        self.assertEqual(1, len(outputs))
+        self.assertEqual('0.1.0', outputs[0]['protocolVersion'])
+        self.assertIn('configAssessment', outputs[0])
+        for obsolete in ('1.0', '1.1', '1.2'):
+            with self.subTest(obsolete=obsolete):
+                rejected = subprocess.run(['node', '-e', driver, obsolete], input=source, text=True, encoding='utf-8', capture_output=True)
+                self.assertNotEqual(0, rejected.returncode)
 
-    def test_author_version12_uses_diagnostic_assets(self):
-        current = author.generate('ExampleTask', 'example-task', True, protocol_version='1.2')
+    def test_author_uses_diagnostic_assets(self):
+        current = author.generate('ExampleTask', 'example-task', True)
         protocol = json.loads(current['plugin.json'])['taskProtocol']
-        self.assertEqual('1.2', protocol['version'])
+        self.assertEqual('0.1.0', protocol['version'])
         self.assertEqual('data/i18n/zh-CN.json', protocol['localization']['messages']['zh-CN'])
         self.assertEqual(1, len(protocol['configRules']))
         self.assertEqual([], protocol['environmentChecks'])
@@ -61,27 +66,27 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
         return {
             "kind": "data-specialized", "artifactName": "Example", "minHostVersion": "0.16.8",
             "judgeScript": "data/judge.js", "taskProtocol": {
-                "version": "1.0", "discoverScript": "data/discover.js",
-                "retryScript": "data/retry.js", "readResources": []}}
+                "version": "0.1.0", "discoverScript": "data/discover.js",
+                "retryScript": "data/retry.js", "readResources": [],
+                "localization": {"defaultLocale": "en-US", "messages": {"en-US": "data/i18n/en.json"}},
+                "configRules": [{"id": "runtime", "required": True, "criticality": "critical_when_applicable"}],
+                "environmentChecks": []}}
 
-    def test_pinned_resource_requires_12_and_root_text(self):
+    def test_pinned_resource_requires_root_text_and_current_protocol(self):
         for version, source, fmt, digest, valid in [
             ('1.0', 'root', 'text', 'a' * 64, False),
             ('1.1', 'root', 'text', 'a' * 64, False),
-            ('1.2', 'root', 'text', 'a' * 64, True),
-            ('1.2', 'extraConfig', 'text', 'a' * 64, False),
-            ('1.2', 'root', 'json', 'a' * 64, False),
-            ('1.2', 'root', 'text', 'A' * 64, False),
-            ('1.2', 'root', 'text', None, False),
+            ('1.2', 'root', 'text', 'a' * 64, False),
+            ('0.1.0', 'root', 'text', 'a' * 64, True),
+            ('0.1.0', 'extraConfig', 'text', 'a' * 64, False),
+            ('0.1.0', 'root', 'json', 'a' * 64, False),
+            ('0.1.0', 'root', 'text', 'A' * 64, False),
+            ('0.1.0', 'root', 'text', None, False),
         ]:
             with self.subTest(version=version, source=source, fmt=fmt, digest=digest):
                 manifest = self.manifest()
                 protocol = manifest['taskProtocol']
                 protocol['version'] = version
-                if version != '1.0':
-                    protocol['localization'] = {'defaultLocale': 'en-US', 'messages': {'en-US': 'data/i18n/en.json'}}
-                if version == '1.2':
-                    protocol.update(configRules=[dict(id='runtime', required=True, criticality='critical_when_applicable')], environmentChecks=[])
                 protocol['readResources'] = [dict(id='code', source=source, path='main.py', format=fmt, required=False, sha256=digest)]
                 if valid:
                     core._task_protocol_scripts(manifest)
@@ -101,17 +106,17 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
             with self.subTest(fields=fields), self.assertRaises(core.RepositoryError):
                 core._validate_task_protocol_environment_checks([dict(check, **fields)])
 
-    def test_legacy_and_current_contract(self):
+    def test_legacy_judge_without_task_protocol_and_current_contract(self):
         self.assertEqual({}, core._task_protocol_scripts({}))
         self.assertEqual(2, len(core._task_protocol_scripts(self.manifest())))
 
-    def test_text_dictionary_requires_11_and_valid_bounded_assets(self):
+    def test_text_dictionary_requires_current_layout_and_valid_bounded_assets(self):
         manifest = self.manifest()
         protocol = manifest['taskProtocol']
         protocol['localization'] = {'defaultLocale': 'en-US', 'messages': {'en-US': 'data/texts.json'}}
         with self.assertRaises(core.RepositoryError):
             core._task_protocol_scripts(manifest)
-        protocol['version'] = '1.1'
+        protocol['localization']['messages']['en-US'] = 'data/i18n/en.json'
         core._task_protocol_scripts(manifest)
         core._validate_task_localization(manifest, lambda path: b'{"task.name":"Frozen name"}')
         for data in [b'{"a":"one","a":"two"}', b'{"a":null}', b'{"a":[]}', b'x' * (256 * 1024 + 1)]:
@@ -121,7 +126,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
     def test_text_dictionary_is_checked_in_source_and_zip(self):
         files = author.generate('ExampleTask', 'example-task', True)
         manifest = json.loads(files['plugin.json'])
-        manifest['taskProtocol'].update(version='1.1', localization={'defaultLocale':'en-US', 'messages':{'en-US':'data/texts.json'}})
+        manifest['taskProtocol']['localization'] = {'defaultLocale':'en-US', 'messages':{'en-US':'data/i18n/missing.json'}}
         files['plugin.json'] = json.dumps(manifest)
         with tempfile.TemporaryDirectory(prefix='nxp-text-assets-') as temporary:
             root = Path(temporary)
@@ -131,7 +136,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
                 path.write_text(content, encoding='utf-8')
             with self.assertRaises(core.RepositoryError):
                 core._specialized_script_closure(root, manifest)
-            (root/'data/texts.json').write_text('{"name":"Frozen"}', encoding='utf-8')
+            (root/'data/i18n/missing.json').write_text('{"name":"Frozen"}', encoding='utf-8')
             core._specialized_script_closure(root, manifest)
         payload = io.BytesIO()
         with zipfile.ZipFile(payload, 'w') as archive:
@@ -142,7 +147,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
             core._validate_specialized_zip_payload(archive, set(infos), manifest, Path('ExampleTask.zip'), infos)
 
     def test_invalid_declaration_cannot_fall_back(self):
-        for field, value in [("version", "2.0"), ("discoverScript", "../secret.js"),
+        for field, value in [("version", "2.0"), ("version", "1.0"), ("version", "1.1"), ("version", "1.2"), ("discoverScript", "../secret.js"),
                              ("retryScript", "data/retry.py"), ("retryScript", "data/C:x.js"),
                              ("readResources", None)]:
             with self.subTest(field=field, value=value):
@@ -161,6 +166,8 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
         with tempfile.TemporaryDirectory(prefix="nxp-task-protocol-") as temporary:
             root = Path(temporary)
             (root / "data").mkdir()
+            (root / "data" / "i18n").mkdir()
+            (root / "data" / "i18n" / "en.json").write_text('{}', encoding='utf-8')
             for name in ("judge", "discover", "retry"):
                 (root / "data" / (name + ".js")).write_text("// fixture", encoding="utf-8")
             closure = core._specialized_script_closure(root, self.manifest())
@@ -235,7 +242,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
 const fs = require('fs');
 const vm = require('vm');
 const captured = [];
-const input = {{ phase: 'discover', protocolVersion: '1.2',
+const input = {{ phase: 'discover', protocolVersion: '0.1.0',
   configResources: [{{ id: {json.dumps(config_id, ensure_ascii=False)}, format: 'json' }}],
   executionContext: {{ mode: 'pc', queue: {{ hasFollowingWork: 'yes' }} }} }};
 const config = {json.dumps(config, ensure_ascii=False)};

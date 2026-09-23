@@ -61,7 +61,7 @@ class TaskPhaseBuildTests(unittest.TestCase):
 
     def test_single_daily_metadata_rejects_legacy_allowlist_shape(self):
         adapter = {
-            'id': 'example', 'implementation': 'example',
+            'id': 'example', 'implementation': 'example', 'protocolVersion': '0.1.0',
             'entries': [{'id': 'daily'}],
             'configRules': [{
                 'kind': 'single_daily', 'dailyTaskKeys': ['daily'],
@@ -69,6 +69,11 @@ class TaskPhaseBuildTests(unittest.TestCase):
         }
         with self.assertRaises(ValueError):
             build.validate_adapter_metadata(adapter, 'Example')
+
+    def test_adapter_metadata_rejects_unreleased_versions(self):
+        for version in ('1.0', '1.1', '1.2'):
+            with self.subTest(version=version), self.assertRaises(ValueError):
+                build.validate_adapter_metadata({'protocolVersion': version}, 'Example')
 
     def test_adapter_metadata_cannot_escape_index_or_hide_duplicate_members(self):
         with tempfile.TemporaryDirectory(prefix='nxp-adapter-index-') as temporary:
