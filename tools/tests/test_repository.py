@@ -6,6 +6,7 @@ import tempfile
 import unittest
 import zipfile
 import os
+from types import SimpleNamespace
 from unittest.mock import patch
 from pathlib import Path
 
@@ -41,6 +42,81 @@ from repository_core import (  # noqa: E402
 
 
 class RepositoryCoreTests(unittest.TestCase):
+    @staticmethod
+    def _managed_plugin(root: Path, *, with_tests: bool = True):
+        plugin_root = root / "plugins" / "general" / "Managed"
+        (plugin_root / "src").mkdir(parents=True)
+        (plugin_root / "src" / "Managed.csproj").write_text("<Project />", encoding="utf-8")
+        if with_tests:
+            (plugin_root / "tests").mkdir()
+            (plugin_root / "tests" / "Managed.Tests.csproj").write_text("<Project />", encoding="utf-8")
+        return SimpleNamespace(root=plugin_root, artifact_name="Managed", kind="managed-code")
+
+    @staticmethod
+    def _write_trx(command, *, total: int, executed: int, passed: int, failed: int = 0,
+                   skipped: int = 0) -> None:
+        arguments = list(command)
+        results = Path(arguments[arguments.index("--results-directory") + 1])
+        logger = arguments[arguments.index("--logger") + 1]
+        report = results / logger.split("=", 1)[1]
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(
+            f'<TestRun><ResultSummary><Counters total="{total}" executed="{executed}" '
+            f'passed="{passed}" failed="{failed}" notExecuted="{skipped}" />'
+            '</ResultSummary></TestRun>', encoding="utf-8")
+
+    def test_managed_requires_a_test_project_for_each_selected_plugin(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-managed-missing-tests-"))
+        try:
+            plugin = self._managed_plugin(root, with_tests=False)
+            with patch.object(core, "discover_source_plugins", return_value=[plugin]), \
+                 patch.object(core, "_find_host_root", return_value=root), \
+                 patch.object(core, "capture_managed_build_artifacts", return_value=set()), \
+                 patch.object(core, "_run"):
+                with self.assertRaisesRegex(RepositoryError, "缺少必需的 Tests.csproj"):
+                    core.test_managed(root, {"managed": ["Managed"]}, host_root=root, include_frontend=False)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_managed_requires_complete_non_skipped_trx_results(self) -> None:
+        for label, counts, message in (
+            ("zero", (0, 0, 0, 0), "实际执行用例为零|结果不完整"),
+            ("skipped", (2, 1, 1, 1), "结果不完整"),
+        ):
+            with self.subTest(label=label):
+                root = Path(tempfile.mkdtemp(prefix=f".nxp-managed-{label}-"))
+                try:
+                    plugin = self._managed_plugin(root)
+                    def run(command, _description, _cwd, **_kwargs):
+                        if list(command)[:2] == ["dotnet", "test"]:
+                            total, executed, passed, skipped = counts
+                            self._write_trx(command, total=total, executed=executed,
+                                            passed=passed, skipped=skipped)
+                    with patch.object(core, "discover_source_plugins", return_value=[plugin]), \
+                         patch.object(core, "_find_host_root", return_value=root), \
+                         patch.object(core, "capture_managed_build_artifacts", return_value=set()), \
+                         patch.object(core, "_run", side_effect=run):
+                        with self.assertRaisesRegex(RepositoryError, message):
+                            core.test_managed(root, {"managed": ["Managed"]}, host_root=root, include_frontend=False)
+                finally:
+                    shutil.rmtree(root, ignore_errors=True)
+
+    def test_managed_reports_build_test_project_and_native_case_counts(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix=".nxp-managed-counts-"))
+        try:
+            plugin = self._managed_plugin(root)
+            def run(command, _description, _cwd, **_kwargs):
+                if list(command)[:2] == ["dotnet", "test"]:
+                    self._write_trx(command, total=3, executed=3, passed=3)
+            with patch.object(core, "discover_source_plugins", return_value=[plugin]), \
+                 patch.object(core, "_find_host_root", return_value=root), \
+                 patch.object(core, "capture_managed_build_artifacts", return_value=set()), \
+                 patch.object(core, "_run", side_effect=run):
+                result = core.test_managed(root, {"managed": ["Managed"]}, host_root=root, include_frontend=False)
+            self.assertEqual(result, {"builds": 1, "testProjects": 1, "testCases": 3})
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
     def test_npm_executable_uses_windows_cmd_shim(self) -> None:
         with patch.object(core.os, "name", "nt"):
             self.assertEqual(core._npm_executable(), "npm.cmd")

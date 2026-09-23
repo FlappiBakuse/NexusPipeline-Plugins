@@ -372,6 +372,7 @@ class RepositoryPublishTests(unittest.TestCase):
             release(root, plan_path, candidate)
             transport = GitHubGitTransport(remote=str(remote))
             original_run = transport._run
+            lose_push_response = [True]
             def checked_run(command, cwd, *, env):
                 header = env["GIT_CONFIG_VALUE_0"]
                 self.assertTrue(header.startswith("AUTHORIZATION: basic "))
@@ -379,7 +380,11 @@ class RepositoryPublishTests(unittest.TestCase):
                 self.assertTrue(credentials.startswith("x-access-token:"))
                 self.assertEqual(env["GIT_TERMINAL_PROMPT"], "0")
                 self.assertNotIn(credentials, " ".join(command))
-                return original_run(command, cwd, env=env)
+                result = original_run(command, cwd, env=env)
+                if command[:2] == ["git", "push"] and lose_push_response[0]:
+                    lose_push_response[0] = False
+                    raise RepositoryError("simulated lost push response")
+                return result
             transport._run = checked_run
             writer_source = remote_parent / 'writer-source'
             _git(root, 'clone', '--depth', '1', root.as_uri(), str(writer_source))
@@ -390,6 +395,7 @@ class RepositoryPublishTests(unittest.TestCase):
             first = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             second = transport.publish_stable_candidate(root, candidate, source, base, remote_write=True, token="secret", run_id=12, run_attempt=1, workflow_sha=C)
             self.assertFalse(first["idempotent"])
+            self.assertTrue(first["writeRecovered"])
             self.assertTrue(second["idempotent"])
             self.assertNotEqual(first["publishedCommit"], source)
             self.assertRegex(first["catalogSha256"], r"^[0-9a-f]{64}$")
@@ -398,6 +404,103 @@ class RepositoryPublishTests(unittest.TestCase):
             changed = _git(remote, "--no-pager", "diff", "--name-only", f"{source}..{first['publishedCommit']}").splitlines()
             self.assertTrue(changed)
             self.assertTrue(all(path == "catalog.json" or path == ".release-state.json" or path.startswith("packages/") for path in changed))
+        finally:
+            _remove_tree(root)
+            _remove_tree(remote_parent)
+
+    def test_stable_completed_release_remains_idempotent_after_source_advances(self) -> None:
+        root = _create_fixture()
+        remote_parent = Path(tempfile.mkdtemp(prefix=".nxp-stable-spq-"))
+        try:
+            base = git_head(root)
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = read_json(manifest_path)
+            store = read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            write_json(manifest_path, manifest)
+            write_json(store_path, store)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source S")
+            source = git_head(root)
+            _git(root, "branch", "-M", "main")
+            remote = remote_parent / "remote.git"
+            _git(root, "clone", "--bare", ".", str(remote))
+            plan_path = root / ".generated" / "plan.json"
+            write_json(plan_path, build_plan(root))
+            candidate = root / ".generated" / "stable"
+            release(root, plan_path, candidate)
+            transport = GitHubGitTransport(remote=str(remote))
+            options = dict(remote_write=True, token="test-token", run_id=12,
+                           run_attempt=1, workflow_sha=C)
+            published = transport.publish_stable_candidate(root, candidate, source, base, **options)
+
+            racer = remote_parent / "racer"
+            _git(root, "clone", str(remote), str(racer))
+            (racer / "README.md").write_text("ordinary source Q\n", encoding="utf-8")
+            _git(racer, "add", "README.md")
+            _git(racer, "-c", "user.email=test@example.test", "-c", "user.name=Test",
+                 "commit", "-m", "docs: advance after published P")
+            q = git_head(racer)
+            _git(racer, "push", "origin", "main")
+
+            resumed = transport.publish_stable_candidate(root, candidate, source, base, **options)
+            self.assertTrue(resumed["idempotent"])
+            self.assertEqual(resumed["publishedCommit"], q)
+            self.assertNotEqual(published["publishedCommit"], q)
+            self.assertEqual(_git(remote, "rev-parse", "main").strip(), q)
+        finally:
+            _remove_tree(root)
+            _remove_tree(remote_parent)
+
+    def test_stable_push_conflict_never_reads_candidate_bytes_from_local_checkout(self) -> None:
+        root = _create_fixture()
+        remote_parent = Path(tempfile.mkdtemp(prefix=".nxp-stable-conflict-"))
+        remote = remote_parent / "remote.git"
+        try:
+            base = git_head(root)
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = read_json(manifest_path)
+            store = read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            write_json(manifest_path, manifest)
+            write_json(store_path, store)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source")
+            source = git_head(root)
+            _git(root, "branch", "-M", "main")
+            _git(root, "clone", "--bare", ".", str(remote))
+            plan_path = root / ".generated" / "plan.json"
+            write_json(plan_path, build_plan(root))
+            candidate = root / ".generated" / "stable"
+            release(root, plan_path, candidate)
+
+            transport = GitHubGitTransport(remote=str(remote))
+            original_run = transport._run
+            race_once = [True]
+
+            def race_before_push(command, cwd, *, env):
+                if command[:2] == ["git", "push"] and race_once[0]:
+                    race_once[0] = False
+                    racer = remote_parent / "racer"
+                    _git(root, "clone", str(remote), str(racer))
+                    (racer / "README.md").write_text("racing source\n", encoding="utf-8")
+                    _git(racer, "add", "README.md")
+                    _git(racer, "-c", "user.email=test@example.test", "-c", "user.name=Test",
+                         "commit", "-m", "race")
+                    _git(racer, "push", "origin", "main")
+                return original_run(command, cwd, env=env)
+
+            transport._run = race_before_push
+            with self.assertRaisesRegex(RepositoryError, "NON_FAST_FORWARD_OR_WRITE_UNCERTAIN"):
+                transport.publish_stable_candidate(
+                    root, candidate, source, base, remote_write=True, token="secret",
+                    run_id=12, run_attempt=1, workflow_sha=C)
+            remote_state = json.loads(_git(remote, "show", "main:.release-state.json"))
+            self.assertNotEqual(remote_state["sourceCommit"], source)
         finally:
             _remove_tree(root)
             _remove_tree(remote_parent)

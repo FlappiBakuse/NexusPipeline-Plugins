@@ -81,11 +81,13 @@ python tools/repository.py publish-develop --source-ref develop --output .genera
 python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
 ```
 
-上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。原 candidate job 成功后，自动 writer 与手动恢复共用服务端 run/attempt、artifact ID/digest、source/tree、分发快照与文件清单的验证。恢复命令从 `main` 运行 `gh workflow run publish-stable.yml --ref main -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main 的候选验收成功且有发行变化时自动进入独立 writer。
+上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。手动入口明确选择 `operation=candidate` 或 `operation=publish-only`：candidate 可从受保护 main 历史固定 source，且不持有发布令牌；publish-only 必须给出原 candidate run ID，只消费下载并复核过的 artifact，不运行源码、单测或构建。恢复命令为 `gh workflow run publish-stable.yml --ref main -f operation=publish-only -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main 的候选验收成功且有发行变化时自动进入独立 writer。
 
-预览候选由 `publish-develop.yml` 的审核过的 main 工具打包受控 `develop` 源码，build job 可取消，promote job 不取消。原 preview-build 成功但 promote 失败时，从 `main` 执行 `gh workflow run publish-develop.yml --ref main -f source_ref=develop -f candidate_run_id=<原 run ID>`；同 run 多候选时指定 `candidate_artifact_id`。恢复仅下载原包，不重新构建。preview 的 producer sidecar 位于候选目录外，同包清单、原 run/attempt、源码 tree 与在线 develop 最新 SHA 均需一致；旧 catalog 来源不得回退。发布器先上传并复核包，最后切换 catalog。
+预览候选由 `publish-develop.yml` 的审核过的 main 控制工具打包显式 `develop` payload。`operation=candidate,publish=false` 是不创建 Publisher token 的只读候选路径；远端缺少 develop 时最早步骤明确报告 `SOURCE_UNAVAILABLE`。发布使用同一 candidate 操作并显式 `publish=true`。原 preview-build 成功但 promote 失败时，从 `main` 选择 `operation=restore`、`publish=true` 并传 `candidate_run_id=<原 run ID>`；同 run 多候选时指定 `candidate_artifact_id`。恢复仅下载原包，不重新构建。preview 的 producer sidecar 位于候选目录外，同包清单、原 run/attempt、源码 tree 与在线 develop 最新 SHA 均需一致；旧 catalog 来源不得回退。发布器先上传并复核包，最后切换 catalog。
 
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
+
+分发基线变化后应显式运行新的 candidate；可传入既有服务端 candidate 作为 `reuse_candidate_run_id`。新候选始终以最新 catalog/state/packages 重算计划，只对 package input identity（插件源码、Host lock/API 输入、构建器、SDK 与平台）完全一致且清单/ZIP 摘要复核通过的包复制原字节，其余目标各构建一次。writer 不执行源码或重新编译。
 
 `validate-source` 用于在 PR 或新插件候选的 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁。`validate` 还会校验当前 catalog 集合与已存在发行包，因此只有 catalog/packages 已包含当前源码版本时才能通过；新插件或新版本进入候选时，源码阶段应先运行 `validate-source`，生成候选物后运行 `validate-generated`，正式发布流水线更新 catalog/packages 后再运行 `validate`。
 
@@ -212,6 +214,6 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 
 ## 校验工作流
 
-`Plugins / Required` 使用 PR merge checkout，按完整变更范围选择文档、源码、适用 managed 检查；未知共享输入保守扩大，失败或零有效验证不报成功。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行必要的 Host Jint 与包验收。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
+`Plugins / Required` 使用 PR merge checkout，按完整变更范围选择文档、源码、适用 managed 检查；未知共享输入保守扩大。managed build、测试项目和 TRX 用例分别计数；适用项目缺 Tests.csproj、缺报告、零用例、失败或 skip 均失败，明确无 managed 影响才报告 N/A。Python unittest 同样拒绝零发现和 skip。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行 Host Jint、实际生产打包与包验收，不重复 PR 的完整 managed 单测。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -119,11 +120,25 @@ def github_fetch(token: str, path: str) -> dict[str, Any]:
         headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json",
                  "X-GitHub-Api-Version": "2022-11-28"},
     )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return json.load(response)
-    except (OSError, urllib.error.HTTPError, ValueError) as exc:
-        raise CandidateSourceError(f"读取 Actions 服务端事实失败：{type(exc).__name__}") from exc
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as exc:
+            if (exc.code == 429 or exc.code >= 500) and attempt < 2:
+                retry_after = exc.headers.get("Retry-After", "1")
+                delay = min(5, max(1, int(retry_after))) if retry_after.isdecimal() else 1
+                time.sleep(delay)
+                continue
+            raise CandidateSourceError(f"读取 Actions 服务端事实失败：HTTP {exc.code}") from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
+            raise CandidateSourceError(f"读取 Actions 服务端事实失败：{type(exc).__name__}") from exc
+        except ValueError as exc:
+            raise CandidateSourceError("读取 Actions 服务端事实失败：响应 JSON 无效") from exc
+    raise CandidateSourceError("读取 Actions 服务端事实失败：超过有界重试")
 
 
 def main() -> None:

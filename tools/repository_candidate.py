@@ -13,7 +13,7 @@ from typing import Any
 
 import repository_core as core
 from candidate_workspace import CandidateWorkspace
-from verification import preflight, run_managed_gate
+from verification import preflight
 
 
 WORKFLOW_PATH = ".github/workflows/publish-stable.yml"
@@ -21,6 +21,91 @@ JOB_NAME = "stable-candidate"
 PREVIEW_WORKFLOW_PATH = ".github/workflows/publish-develop.yml"
 PREVIEW_JOB_NAME = "preview-build"
 FULL_SHA = re.compile(r"[0-9a-f]{40}")
+
+
+def _builder_fingerprint() -> str:
+    repository = Path(__file__).resolve().parents[1]
+    paths = [path for path in (repository / "tools").rglob("*")
+             if path.is_file() and not path.is_symlink()
+             and path.suffix.lower() in {".py", ".mjs", ".js", ".ps1"}
+             and "__pycache__" not in path.parts]
+    workflow = repository / WORKFLOW_PATH
+    if workflow.is_file():
+        paths.append(workflow)
+    digest = hashlib.sha256()
+    for path in sorted(paths):
+        digest.update(path.relative_to(repository).as_posix().encode("utf-8") + b"\0")
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def package_input_identities(root: Path, plan: dict[str, Any], partner_sha: str) -> dict[str, str]:
+    """Identity all inputs that can affect one candidate package's bytes."""
+    head = core.git_head(root)
+    plugins = {plugin.artifact_name: plugin for plugin in core.discover_source_plugins(root)}
+    shared = []
+    for relative in ("host.lock.json", "package.json", "package-lock.json"):
+        if (root / relative).exists():
+            shared.append((relative, core._git(root, ["rev-parse", f"{head}:{relative}"],
+                                               f"读取 package input {relative}")))
+    result: dict[str, str] = {}
+    for artifact in plan.get("requiresPackage", []):
+        plugin = plugins.get(artifact)
+        core._require(plugin is not None, f"package input 包含未知插件：{artifact}")
+        relative = plugin.root.relative_to(root).as_posix()
+        identity = {
+            "artifact": artifact,
+            "version": plugin.version,
+            "kind": plugin.kind,
+            "sourceTree": core.git_tree(root, head, relative),
+            "shared": shared,
+            "builderFingerprint": _builder_fingerprint(),
+            "sdkSha": partner_sha if plugin.kind == "managed-code" else None,
+            "platform": "windows-x64" if plugin.kind == "managed-code" else "portable-data",
+        }
+        result[artifact] = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+    return result
+
+
+def reusable_candidate_packages(root: Path, candidate_root: Path,
+                                expected_inputs: dict[str, str]) -> dict[str, Path]:
+    """Treat an older candidate as data and return only byte-verified reusable packages."""
+    candidate = core.read_json(candidate_root / "candidate.json")
+    core._require(isinstance(candidate, dict) and candidate.get("schemaVersion") == 2,
+                  "复用候选不含 package input identity；需要重新构建")
+    declared_inputs = candidate.get("packageInputs")
+    inventory = candidate.get("files")
+    core._require(isinstance(declared_inputs, dict) and isinstance(inventory, list),
+                  "复用候选 input/inventory 无效")
+    inventory_by_path: dict[str, dict[str, Any]] = {}
+    for item in inventory:
+        core._require(isinstance(item, dict) and isinstance(item.get("path"), str),
+                      "复用候选 inventory 条目无效")
+        inventory_by_path[item["path"]] = item
+    plan = core.read_json(candidate_root / "release-plan.json")
+    metadata = plan.get("packageMetadata") if isinstance(plan, dict) else None
+    core._require(isinstance(metadata, dict), "复用候选缺少 packageMetadata")
+    reusable: dict[str, Path] = {}
+    for artifact, input_sha in expected_inputs.items():
+        if declared_inputs.get(artifact) != input_sha:
+            continue
+        item = metadata.get(artifact)
+        core._require(isinstance(item, dict) and isinstance(item.get("path"), str),
+                      f"复用候选缺少包路径：{artifact}")
+        relative = item["path"]
+        core._require(relative.startswith(f"packages/{artifact}/") and ".." not in relative.split("/"),
+                      f"复用候选包路径无效：{relative}")
+        path = candidate_root / relative
+        declared = inventory_by_path.get(relative)
+        core._require(path.is_file() and not path.is_symlink() and isinstance(declared, dict),
+                      f"复用候选包文件无效：{relative}")
+        core._require(_sha_file(path) == declared.get("sha256") == item.get("sha256")
+                      and path.stat().st_size == declared.get("sizeBytes") == item.get("sizeBytes"),
+                      f"复用候选包摘要或大小不符：{relative}")
+        reusable[artifact] = path
+    return reusable
 
 
 def _sha_file(path: Path) -> str:
@@ -68,8 +153,9 @@ def write_candidate_manifest(
     core._require(core.git_head(root) == source_sha, "candidate source 与 HEAD 不一致")
     core._require(not (output / "candidate.json").exists(), "candidate.json 已存在，拒绝覆盖")
     inventory = _inventory(root, output)
+    plan = core.read_json(output / "release-plan.json")
     candidate = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "repository": core.REPOSITORY,
         "channel": "plugins-stable",
         "sourceSha": source_sha,
@@ -82,6 +168,7 @@ def write_candidate_manifest(
         "distribution": {"headSha": distribution_sha,
                          "stateSha256": _sha_file(distribution / core.STATE_FILE),
                          "catalogSha256": _sha_file(distribution / "catalog.json")},
+        "packageInputs": package_input_identities(root, plan, partner_sha),
     }
     core.write_json(output / "candidate.json", candidate)
     return candidate
@@ -96,6 +183,7 @@ def build_stable_candidate(
     workflow_sha: str,
     run_id: int,
     run_attempt: int,
+    reuse_candidate: Path | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     host_root = host_root.resolve()
@@ -120,11 +208,12 @@ def build_stable_candidate(
         core.validate_host_locale_registry(root, host_root)
         core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
                    "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
-        selected = [item for item in plan.get("managed", []) if isinstance(item, str)]
-        run_managed_gate(root, host_root, selected=selected, host_integration=False)
+        inputs = package_input_identities(root, plan, sdk["sdkSourceSha"])
+        reuse = reusable_candidate_packages(root, reuse_candidate.resolve(), inputs) if reuse_candidate else {}
         core.write_json(plan_path, plan)
         core.release(root, plan_path, output, host_root=host_root,
-                     distribution_root=workspace.distribution_root)
+                     distribution_root=workspace.distribution_root,
+                     reuse_packages=reuse)
         core.validate_generated(root, output, distribution_root=workspace.distribution_root)
         core.verify_unchanged_stable(root, output, workspace.distribution_root)
         candidate = write_candidate_manifest(root, output, workspace.distribution_root,
@@ -135,7 +224,7 @@ def build_stable_candidate(
                                              run_id=run_id, run_attempt=run_attempt)
         return {"status": "VALIDATED", "sourceSha": workspace.source_sha,
                 "distributionSha": workspace.base_sha, "candidate": str(output),
-                "files": len(candidate["files"])}
+                "files": len(candidate["files"]), "reusedPackages": sorted(reuse)}
     finally:
         workspace.cleanup()
 
@@ -165,17 +254,29 @@ def validate_inventory(root: Path, output: Path, *, expected_source_sha: str,
                        expected_distribution_sha: str) -> dict[str, Any]:
     core._require(core.git_head(root) == expected_source_sha, "writer source checkout 与 candidate 不一致")
     candidate = core.read_json(output / "candidate.json")
-    core._require(isinstance(candidate, dict) and set(candidate) == {
-        "schemaVersion", "repository", "channel", "sourceSha", "sourceTreeSha", "partnerSha",
-        "producer", "files", "releaseLabel", "distribution"}, "candidate 字段集合无效")
-    core._require(type(candidate["schemaVersion"]) is int and candidate["schemaVersion"] == 1
+    v1_fields = {"schemaVersion", "repository", "channel", "sourceSha", "sourceTreeSha", "partnerSha",
+                 "producer", "files", "releaseLabel", "distribution"}
+    core._require(isinstance(candidate, dict) and set(candidate) in (v1_fields, v1_fields | {"packageInputs"}),
+                  "candidate 字段集合无效")
+    core._require(type(candidate["schemaVersion"]) is int and candidate["schemaVersion"] in {1, 2}
                   and candidate["repository"] == core.REPOSITORY and candidate["channel"] == "plugins-stable"
                   and candidate["releaseLabel"] is None, "candidate 仓库或通道无效")
+    core._require((candidate["schemaVersion"] == 1 and "packageInputs" not in candidate)
+                  or (candidate["schemaVersion"] == 2 and "packageInputs" in candidate),
+                  "candidate schema/packageInputs 不一致")
     core._require(candidate["sourceSha"] == expected_source_sha
                   and candidate["sourceTreeSha"] == core._git(root, ["rev-parse", f"{expected_source_sha}^{{tree}}"], "读取 source tree")
                   and candidate["partnerSha"] == expected_partner_sha,
                   "candidate source/tree/partner 与可信输入不一致")
     core._require(candidate["producer"] == expected_producer, "candidate 原 producer 身份不符")
+    if candidate["schemaVersion"] == 2:
+        plan = core.read_json(output / "release-plan.json")
+        package_inputs = candidate["packageInputs"]
+        core._require(isinstance(package_inputs, dict)
+                      and set(package_inputs) == set(plan.get("requiresPackage", []))
+                      and all(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)
+                              for value in package_inputs.values()),
+                      "candidate package input identity 无效")
     distribution = candidate["distribution"]
     core._require(isinstance(distribution, dict) and set(distribution) == {
         "headSha", "stateSha256", "catalogSha256"}
@@ -192,6 +293,27 @@ def validate_inventory(root: Path, output: Path, *, expected_source_sha: str,
         core.validate_generated(root, output, distribution_root=distribution_root)
         core.verify_unchanged_stable(root, output, distribution_root)
     return candidate
+
+
+def inspect_candidate_identity(output: Path, *, workflow_sha: str,
+                               run_id: int, run_attempt: int) -> dict[str, str]:
+    """Read only the identity needed to checkout a safely extracted candidate source."""
+    candidate = core.read_json(output / "candidate.json")
+    core._require(isinstance(candidate, dict), "candidate.json 根节点无效")
+    source_sha = candidate.get("sourceSha")
+    partner_sha = candidate.get("partnerSha")
+    core._require(isinstance(source_sha, str) and FULL_SHA.fullmatch(source_sha) is not None,
+                  "candidate source SHA 无效")
+    core._require(isinstance(partner_sha, str) and FULL_SHA.fullmatch(partner_sha) is not None,
+                  "candidate partner SHA 无效")
+    core._require(candidate.get("producer") == {
+        "workflowPath": WORKFLOW_PATH,
+        "workflowSha": workflow_sha,
+        "runId": run_id,
+        "runAttempt": run_attempt,
+        "jobName": JOB_NAME,
+    }, "candidate 原 producer 身份不符")
+    return {"sourceSha": source_sha, "partnerSha": partner_sha}
 
 
 def extract_candidate_artifact(archive_path: Path, output: Path, *, expected_digest: str) -> None:
