@@ -23,7 +23,7 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 
 `emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API v1.7 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
 
-宿主使用 stable `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包；develop preview 使用固定 `plugins-develop` Release asset 与同通道缓存，绝不回退到 stable。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的 stable 源码树与包事实，`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`；Qualification 另固定一次 `sdkSourceSha`。
+宿主使用 stable `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包；develop preview 使用固定 `plugins-develop` Release asset 与同通道缓存，绝不回退到 stable。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的 stable 源码树与包事实，`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`；每个验证或候选 job 固定一次官方 Host `sdkSourceSha`。
 
 ## 插件本地化资源
 
@@ -65,9 +65,9 @@ NexusPipeline-Plugins/
 ├── .release-state.json                  # 最近一次成功发行状态
 ├── host.lock.json                       # Host/Frontend API 与 locale 兼容元数据
 ├── tools/
-│   ├── repository.py                    # 校验、Qualification、候选入口
+│   ├── repository.py                    # 范围校验、候选与发布入口
 │   ├── repository_core.py               # 可测试的仓库规则实现
-│   ├── qualification.py                 # P1/P2/P3 固定门禁编排
+│   ├── repository_candidate.py          # 稳定/预览候选清单与来源校验
 │   ├── sdk_source.py                    # 官方 Host SDK SHA 与 checkout 校验
 │   ├── repository_publish.py            # 本地候选生成与稳定 writer 边界
 │   ├── Test-ConfigEditors.mjs           # 配置编辑器前端契约门禁
@@ -93,7 +93,7 @@ NexusPipeline-Plugins/
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
 4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 更新插件自身版本和 `store.json`，在源码阶段运行 `python tools/repository.py qualification --group source --base main`；需要 managed/前端时再运行 `qualification --group frontend-managed`，候选阶段运行 `qualification --group candidate`。仓库根目录 `host.lock.json` 的兼容元数据记录 API 与 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；stable publisher 依据已验证资格和发行状态生成受影响插件的包、catalog 与状态文件。develop 预览使用 `publish-develop`，不改写 stable 文件。
+5. 发行 payload 变化时更新插件自身版本和 `store.json`，在源码阶段按[发行指南](docs/RELEASING.md)运行 `python tools/repository.py verify --scope all`；合并后稳定候选根据已发布游标计算累计变化，工具与文档改动不强制版本提升。仓库根目录 `host.lock.json` 的兼容元数据记录 API 与 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；stable publisher 根据验收通过的原候选生成受影响插件的包、catalog 与状态文件。develop 预览使用 `publish-develop`，不改写 stable 文件。
 
 ## 重要运行语义
 

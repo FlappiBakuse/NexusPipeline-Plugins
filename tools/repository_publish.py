@@ -25,6 +25,7 @@ from repository_release_api import (
     download_asset,
     get_ref,
     get_release,
+    is_ancestor,
     list_assets,
     update_release,
     upload_asset,
@@ -44,6 +45,7 @@ MAX_ZIP_UNCOMPRESSED_BYTES = core.MAX_ZIP_UNCOMPRESSED_BYTES
 
 class GitHubTransport(Protocol):
     def get_source_head(self, repository: str, branch: str, token: str) -> str: ...
+    def is_ancestor(self, repository: str, older: str, newer: str, token: str) -> bool: ...
     def get_release(self, repository: str, tag: str, token: str) -> dict[str, Any] | None: ...
     def create_release(self, repository: str, tag: str, token: str, *, name: str, body: str, target_commitish: str) -> dict[str, Any]: ...
     def update_release(self, repository: str, release_id: int, token: str, **fields: Any) -> dict[str, Any]: ...
@@ -57,6 +59,7 @@ class HttpGitHubTransport:
     """真实 GitHub Release transport；远端写入只由显式 publisher 调用。"""
 
     get_source_head = staticmethod(get_ref)
+    is_ancestor = staticmethod(is_ancestor)
     get_release = staticmethod(get_release)
     create_release = staticmethod(create_release)
     update_release = staticmethod(update_release)
@@ -126,7 +129,7 @@ def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[
         if path.is_dir():
             continue
         core._require(path.is_file(), f"候选目录包含特殊文件：{relative}")
-        if relative in {"release-plan.json", "stable-producer.json"}:
+        if relative in {"release-plan.json", "stable-producer.json", "candidate.json"}:
             continue
         core._require(relative in {"catalog.json", core.STATE_FILE} or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
         if relative.startswith("packages/"):
@@ -152,7 +155,7 @@ def _preview_inventory(generated_root: Path) -> None:
         if path.is_dir():
             continue
         core._require(path.is_file(), f"preview 候选目录包含特殊文件：{relative}")
-        core._require(relative in {"catalog.json", "preview-plan.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
+        core._require(relative in {"catalog.json", "preview-plan.json", "candidate.json"} or (relative.startswith("packages/") and "/" not in relative[len("packages/"):]), f"preview 候选路径不在白名单：{relative}")
         if relative.startswith("packages/"):
             core._require(path.suffix.lower() == ".zip", f"preview packages 只能包含 ZIP：{relative}")
             _validate_zip_limits(path)
@@ -272,7 +275,23 @@ class GitHubGitTransport:
             if self._matches_candidate(checkout, generated_root, plan, source_sha, current, expected_paths, env):
                 verification = self._verify_published_tree(checkout, generated_root, plan, source_sha, current, files, env)
                 return {"sourceCommit": source_sha, "publishedCommit": current, "parent": current, "remoteWritten": True, "idempotent": True, **verification}
-            core._require(current == source_sha, "stable main 已前进且尚未包含当前候选，拒绝覆盖")
+            ancestor = self._run(["git", "merge-base", source_sha, current], checkout, env=env)
+            core._require(ancestor == source_sha, "SUPERSEDED：candidate source 已不在当前 main 历史中")
+            if current != source_sha:
+                intervening = self._parse_changed_paths(self._run(
+                    ["git", "diff", "--name-status", "--find-renames", "-z", f"{source_sha}..{current}"],
+                    checkout, env=env))
+                core._require(all(path in {"catalog.json", core.STATE_FILE} or path.startswith("packages/")
+                                  for path in intervening),
+                              "SUPERSEDED：main 已有更新源码，旧候选不再写入")
+            if (generated_root / "candidate.json").is_file():
+                for relative in ("catalog.json", core.STATE_FILE, "packages"):
+                    original_tree = self._run(["git", "rev-parse", f"{base_sha}:{relative}"], checkout, env=env)
+                    current_tree = self._run(["git", "rev-parse", f"{current}:{relative}"], checkout, env=env)
+                    core._require(original_tree == current_tree,
+                                  f"BASELINE_STALE：main 分发基线 {relative} 已改变，需要新候选")
+            else:
+                core._require(current == source_sha, "stable main 已前进且尚未包含当前旧资格候选")
             self._assert_checkout_modes(checkout, env)
             for relative, candidate in sorted(files.items()):
                 if not relative.startswith("packages/"):
@@ -304,6 +323,7 @@ class GitHubGitTransport:
                 if target.exists() or target.is_symlink():
                     core._require(target.is_dir() and not target.is_symlink(), f"stable 删除目标不是普通目录：{relative}")
                     shutil.rmtree(target)
+            self._run(["git", "fetch", "origin", "main"], checkout, env=env)
             latest = self._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
             core._require(latest == current, "stable main 在写入前发生竞争，拒绝使用旧父提交")
             self._run(["git", "add", "--all", "--", "catalog.json", core.STATE_FILE, "packages"], checkout, env=env)
@@ -368,11 +388,9 @@ class GitHubGitTransport:
         files: dict[str, Path],
         env: dict[str, str],
     ) -> dict[str, Any]:
-        remote_head = cls._run(["git", "ls-remote", "origin", "refs/heads/main"], checkout, env=env).split("\t", 1)[0]
-        core._require(remote_head == published, "stable push 后远端 main SHA 不一致")
         cls._run(["git", "fetch", "origin", "main"], checkout, env=env)
         fetched_head = cls._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
-        core._require(fetched_head == published, "stable push 后读取的 main SHA 不一致")
+        cls._run(["git", "merge-base", "--is-ancestor", published, fetched_head], checkout, env=env)
 
         catalog_bytes = cls._read_tree_blob(checkout, published, "catalog.json", env)
         state_bytes = cls._read_tree_blob(checkout, published, core.STATE_FILE, env)
@@ -582,6 +600,19 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
     if not isinstance(release_id, int):
         raise core.RepositoryError("preview Release 缺少合法 id")
     assets = _release_asset_map(transport, OFFICIAL_REPOSITORY, release, token)
+    old_catalog_asset = assets.get("catalog.json")
+    if old_catalog_asset is not None:
+        old_id = old_catalog_asset.get("id")
+        core._require(isinstance(old_id, int), "旧 preview catalog asset id 无效")
+        try:
+            old_catalog_data = json.loads(transport.download_asset(OFFICIAL_REPOSITORY, old_id, token).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise core.RepositoryError("旧 preview catalog 不是有效 JSON") from exc
+        old_source = old_catalog_data.get("sourceCommit") if isinstance(old_catalog_data, dict) else None
+        _full_sha(old_source, "旧 preview source SHA")
+        if old_source != source_sha:
+            core._require(transport.is_ancestor(OFFICIAL_REPOSITORY, old_source, source_sha, token),
+                          f"SUPERSEDED：已发布 preview source {old_source} 不允许回退到 {source_sha}")
     for package in packages:
         core._validate_zip(package, mode="preview")
         _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, package, name=package.name, assets=assets)
@@ -661,8 +692,14 @@ def publish_develop(
     workflow_sha: str | None = None,
     producer_output: Path | None = None,
 ) -> dict[str, Any]:
+    if host_root is not None:
+        from verification import preflight
+
+        preflight(root, host_root, core.git_head(host_root))
     result = core.build_preview(root, source_ref, output, host_root=host_root)
     if run_id is not None:
+        from repository_candidate import write_preview_manifest
+
         producer_path = (producer_output or (Path(result["output"]).parent / "preview-producer.json")).resolve()
         candidate_root = Path(result["output"]).resolve()
         core._require(candidate_root not in producer_path.parents, "preview producer sidecar 必须位于候选目录之外")
@@ -676,6 +713,10 @@ def publish_develop(
                 "workflowSha": workflow_sha or "",
             },
         )
+        write_preview_manifest(root, candidate_root,
+                               partner_sha=core.git_head(host_root) if host_root is not None else None,
+                               workflow_sha=workflow_sha or "", run_id=int(run_id),
+                               run_attempt=int(run_attempt or "1"))
         result["producer"] = str(producer_path)
     if remote_write:
         core._require(run_id and run_attempt and workflow_sha, "preview remote write 缺少 producer workflow/run/attempt 身份")
@@ -698,6 +739,7 @@ def publish_preview(
     remote_write: bool = False,
     token: str | None = None,
     github_transport: GitHubTransport | None = None,
+    source_root: Path | None = None,
 ) -> dict[str, Any]:
     """独立 publisher 只读取已生成候选数据，不执行候选源码。"""
     generated_root = _ordinary_directory(generated_root, "preview 候选目录")
@@ -711,6 +753,13 @@ def publish_preview(
     expected_run_id = _parse_positive_int(run_id, "preview runId")
     expected_run_attempt = _parse_positive_int(run_attempt, "preview runAttempt")
     core._require(producer.get("sourceSha") == source_sha and producer.get("runId") == expected_run_id and producer.get("runAttempt") == expected_run_attempt and producer.get("workflowSha") == workflow_sha, "preview producer identity 不匹配")
+    if (generated_root / "candidate.json").exists():
+        from repository_candidate import validate_preview_manifest
+
+        core._require(source_root is not None, "preview candidate 清单需要原源码 checkout")
+        validate_preview_manifest(source_root.resolve(), generated_root, source_sha=source_sha,
+                                  workflow_sha=workflow_sha, run_id=expected_run_id,
+                                  run_attempt=expected_run_attempt)
     result = {"output": str(generated_root), "sourceCommit": candidate["sourceCommit"], "remoteWritten": False}
     if remote_write:
         write_token, transport = _require_remote_inputs(True, token, github_transport)

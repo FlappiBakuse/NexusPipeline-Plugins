@@ -20,7 +20,7 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 提升插件版本并更新 `store.json`；在 Pull Request 源码阶段运行固定 P1，候选阶段运行固定 P2/P3。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
+7. 发行 payload 变化时提升插件版本并更新 `store.json`；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -34,7 +34,7 @@
 
 ## 发行包规则
 
-- stable 由受信 Publisher App 按资格记录写入 `main` 的 `catalog.json`、`.release-state.json` 和 `packages/<ArtifactName>/`；普通开发者、Agent 和常规 token 不得直接写入。develop preview 使用固定 `plugins-develop` Release，包名为 `<ArtifactName>-<version>-<sha256>.zip`，不修改 stable 文件。
+- stable 由受信 Publisher App 在验证原 candidate job 与包清单后写入 `main` 的 `catalog.json`、`.release-state.json` 和 `packages/<ArtifactName>/`；普通开发者、Agent 和常规 token 不得直接写入。develop preview 使用固定 `plugins-develop` Release，包名为 `<ArtifactName>-<version>-<sha256>.zip`，不修改 stable 文件。
 - 每个 artifact 目录最多保留最近三个受限版本包；版本排序遵循 `beta < rc < stable`，旧包仅用于仓库存档，插件平台不提供降级安装。
 - stable ZIP 文件名使用 `<ArtifactName>-<version>.zip`，preview ZIP 文件名使用 `<ArtifactName>-<version>-<sha256>.zip`；目录名和文件名区分大小写。`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、精确包 URL、`sha256`、`sizeBytes` 和最近更新记录。stable 相同 `(artifactName, version)` 的发行包不可覆盖；preview 允许同版本按包哈希更新。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
@@ -44,14 +44,11 @@
 提交前至少执行以下检查：
 
 ```text
-# 固定 P1：源码、兼容性、脚本和仓库工具门禁
-python tools/repository.py qualification --group source --base main --host-root ..\NexusPipeline
+# PR 范围验证：从官方 Host main 固定完整 SHA 后传入
+python tools/repository.py verify --scope all --base origin/main --host-root ..\NexusPipeline --sdk-sha <Host_SHA>
 
-# 固定 P2：managed-code 的前端 conformance/typecheck/build 与全量构建测试
-python tools/repository.py qualification --group frontend-managed --host-root ..\NexusPipeline
-
-# 固定 P3：相对 main 的版本纪律、候选包和未修改 stable 文件检查
-python tools/repository.py qualification --group candidate --base main --host-root ..\NexusPipeline
+# 合并后本地候选诊断：合成 run ID 不能用于远端发布
+python tools/repository.py candidate --host-root ..\NexusPipeline --sdk-sha <Host_SHA> --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
 
 # develop preview：只写新的本地 .generated/preview，不写 stable 文件
 python tools/repository.py publish-develop --source-ref develop --output .generated/preview

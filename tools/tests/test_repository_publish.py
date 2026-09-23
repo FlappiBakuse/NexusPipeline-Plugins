@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import json
 import shutil
 import sys
 import os
@@ -14,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repository_core as core
+from repository_candidate import inspect_preview_candidate
 from repository_core import RepositoryError, bootstrap_state, build_plan, catalog_entry, git_head, read_json, release, validate_source_plugin, write_json
 from repository_publish import (
     _candidate_inventory,
@@ -104,12 +106,17 @@ class FakePreviewTransport:
         self.release: dict | None = None
         self.assets: dict[str, tuple[int, bytes]] = {}
         self.next_id = 1
+        self.ancestor_result = True
         self.fail_name = fail_name
         self.fail_once = fail_once
 
     def get_source_head(self, _repository: str, branch: str, _token: str) -> str:
         self.events.append(("get_source_head", branch))
         return self.source_head
+
+    def is_ancestor(self, _repository: str, older: str, newer: str, _token: str) -> bool:
+        self.events.append(("is_ancestor", older + ".." + newer))
+        return self.ancestor_result
 
     def get_release(self, _repository: str, tag: str, _token: str) -> dict | None:
         self.events.append(("get_release", tag))
@@ -193,6 +200,8 @@ class RepositoryPublishTests(unittest.TestCase):
         try:
             output = root / ".generated" / "preview"
             result = publish_develop(root, source_ref="HEAD", output=output, run_id="12", run_attempt="1", workflow_sha=C)
+            self.assertEqual(inspect_preview_candidate(output, output.parent / "preview-producer.json",
+                                                       workflow_sha=C, run_id=12, run_attempt=1), result["sourceCommit"])
             transport = FakePreviewTransport()
             transport.source_head = result["sourceCommit"]
             _publish_preview_remote(result, token="secret", transport=transport, run_id="12")
@@ -278,9 +287,19 @@ class RepositoryPublishTests(unittest.TestCase):
             output = root / ".generated" / "preview"
             result = publish_develop(root, source_ref="HEAD", output=output, run_id="12", run_attempt="1", workflow_sha=C)
             transport = FakePreviewTransport()
-            result = publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, github_transport=transport)
+            result = publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, github_transport=transport, source_root=root)
             self.assertFalse(result["remoteWritten"])
             self.assertEqual(transport.events, [])
+            manifest = read_json(output / "candidate.json")
+            manifest["producer"]["runAttempt"] = 2
+            write_json(output / "candidate.json", manifest)
+            with self.assertRaisesRegex(RepositoryError, "producer"):
+                publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, source_root=root)
+            manifest["producer"]["runAttempt"] = 1
+            manifest["files"][0]["sha256"] = "0" * 64
+            write_json(output / "candidate.json", manifest)
+            with self.assertRaisesRegex(RepositoryError, "inventory"):
+                publish_preview(output, source_sha=result["sourceCommit"], run_id="12", run_attempt="1", workflow_sha=C, source_root=root)
         finally:
             _remove_tree(root)
 
@@ -294,6 +313,23 @@ class RepositoryPublishTests(unittest.TestCase):
             with self.assertRaisesRegex(RepositoryError, "SUPERSEDED"):
                 _publish_preview_remote(result, token="secret", transport=transport, run_id="12")
             self.assertEqual([event for event in transport.events if event[0] in {"create_release", "upload_asset", "update_release"}], [])
+        finally:
+            _remove_tree(root)
+
+    def test_preview_rejects_rollback_from_active_catalog_before_write(self) -> None:
+        root = _create_fixture()
+        try:
+            output = root / ".generated" / "preview"
+            result = publish_develop(root, source_ref="HEAD", output=output)
+            transport = FakePreviewTransport()
+            transport.source_head = result["sourceCommit"]
+            transport.release = {"id": 1, "draft": False, "prerelease": True}
+            transport.assets["catalog.json"] = (7, json.dumps({"sourceCommit": "e" * 40}).encode())
+            transport.ancestor_result = False
+            with self.assertRaisesRegex(RepositoryError, "SUPERSEDED"):
+                _publish_preview_remote(result, token="secret", transport=transport, run_id="12")
+            self.assertEqual([event for event in transport.events
+                              if event[0] in {"create_release", "upload_asset", "update_release"}], [])
         finally:
             _remove_tree(root)
 

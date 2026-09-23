@@ -4,15 +4,19 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - catalog.json
-      - .release-state.json
-      - packages/**
   workflow_dispatch:
     inputs:
       source_sha:
         description: Exact merged source SHA with completed Plugin Release Qualification
-        required: true
+        required: false
+        type: string
+      candidate_run_id:
+        description: Original successful stable candidate run ID for publish-only recovery
+        required: false
+        type: string
+      candidate_artifact_id:
+        description: Artifact ID when the run has multiple successful candidates
+        required: false
         type: string
       pr_number:
         description: Same-repository merged PR carrying the qualified source
@@ -51,8 +55,82 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  candidate:
+    name: Build and validate Plugins candidate
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 90
+    outputs:
+      status: ${{ steps.build.outputs.status || steps.scope.outputs.status }}
+      source_sha: ${{ steps.build.outputs.source_sha || steps.scope.outputs.source_sha }}
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: Classify cumulative stable delta
+        id: scope
+        shell: pwsh
+        run: python tools/repository.py candidate-scope --github-output $env:GITHUB_OUTPUT
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        if: steps.scope.outputs.needs_build == 'true'
+        with:
+          node-version: "24"
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        if: steps.scope.outputs.needs_build == 'true'
+        with:
+          dotnet-version: "8.0.424"
+      - name: Resolve fixed official Host SDK
+        if: steps.scope.outputs.needs_build == 'true'
+        id: host
+        shell: pwsh
+        run: |
+          $line = @(git ls-remote https://github.com/FlappiBakuse/NexusPipeline.git refs/heads/main)
+          if ($LASTEXITCODE -ne 0 -or $line.Count -ne 1) { throw 'Cannot resolve official Host main' }
+          $sha = ($line[0] -split '\s+')[0]
+          if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
+          "sha=$sha" >> $env:GITHUB_OUTPUT
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        if: steps.scope.outputs.needs_build == 'true'
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ steps.host.outputs.sha }}
+          path: NexusPipeline
+          persist-credentials: false
+      - name: Build and verify cumulative candidate
+        if: steps.scope.outputs.needs_build == 'true'
+        id: build
+        shell: pwsh
+        run: >-
+          python tools/repository.py candidate
+          --host-root ../NexusPipeline
+          --sdk-sha '${{ steps.host.outputs.sha }}'
+          --workflow-sha '${{ github.workflow_sha }}'
+          --run-id '${{ github.run_id }}'
+          --run-attempt '${{ github.run_attempt }}'
+          --output .generated/stable-candidate
+          --github-output $env:GITHUB_OUTPUT
+      - name: Upload validated candidate
+        if: steps.build.outputs.status == 'VALIDATED'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugins-stable-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/stable-candidate
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
   resolve-qualification:
     name: resolve-qualification
+    if: (github.event_name == 'push' && vars.SCHEME_B_STABLE_AUTO_ENABLED != 'true') || (github.event_name == 'workflow_dispatch' && inputs.candidate_run_id == '')
     runs-on: ubuntu-latest
     environment: qualification-control
     outputs:
@@ -298,4 +376,91 @@ jobs:
           --workflow-sha "${{ needs.resolve-qualification.outputs.workflow_sha }}"
           --qualification-app-id "${{ needs.resolve-qualification.outputs.qualification_app_id }}"
           --qualification-check-id "${{ needs.resolve-qualification.outputs.check_id }}"
+          --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
+
+  publish-only:
+    name: Publish original Plugins candidate
+    needs: candidate
+    if: always() && ((github.event_name == 'push' && vars.SCHEME_B_STABLE_AUTO_ENABLED == 'true' && needs.candidate.result == 'success' && needs.candidate.outputs.status == 'VALIDATED') || (github.event_name == 'workflow_dispatch' && inputs.candidate_run_id != ''))
+    runs-on: windows-latest
+    environment: plugin-stable-publish
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: Resolve original successful producer and artifact
+        id: source
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id || github.run_id }}
+          CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Publisher control must run from main' }
+          $arguments = @('--candidate-run-id', $env:CANDIDATE_RUN_ID, '--current-run-id', $env:GITHUB_RUN_ID, '--github-output', $env:GITHUB_OUTPUT)
+          if ($env:CANDIDATE_ARTIFACT_ID) { $arguments += @('--artifact-id', $env:CANDIDATE_ARTIFACT_ID) }
+          python tools/repository_candidate_source.py @arguments
+          if ($LASTEXITCODE -ne 0) { throw 'Original candidate source was not verifiable' }
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          path: NexusPipeline-Plugins-Source
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download artifact and verify server digest
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.source.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ steps.source.outputs.artifact_digest }}
+        run: |
+          New-Item -ItemType Directory -Path '.generated' -Force | Out-Null
+          $uri = "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$env:ARTIFACT_ID/zip"
+          curl.exe -fsSL -H "Authorization: Bearer $env:GITHUB_TOKEN" -H 'Accept: application/octet-stream' --output '.generated/stable-candidate-artifact.zip' $uri
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact download failed' }
+          python tools/repository.py extract-candidate --artifact-zip '.generated/stable-candidate-artifact.zip' --expected-digest $env:ARTIFACT_DIGEST --output '.generated/stable-candidate'
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact failed server digest or path validation' }
+      - name: Validate source, producer, distribution and package bytes
+        shell: pwsh
+        run: >-
+          python tools/repository.py validate-candidate
+          --root ../NexusPipeline-Plugins-Source
+          --generated-root .generated/stable-candidate
+          --source-sha '${{ steps.source.outputs.source_sha }}'
+          --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
+          --run-id '${{ steps.source.outputs.run_id }}'
+          --run-attempt '${{ steps.source.outputs.run_attempt }}'
+      - name: Create publisher App token
+        id: app-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
+        with:
+          app-id: ${{ vars.PLUGIN_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.PLUGIN_PUBLISHER_PRIVATE_KEY }}
+          owner: FlappiBakuse
+          repositories: NexusPipeline-Plugins
+          permission-contents: write
+      - name: Publish exact validated candidate without rebuilding
+        shell: pwsh
+        env:
+          PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: >-
+          python tools/repository.py publish-candidate
+          --root ../NexusPipeline-Plugins-Source
+          --generated-root .generated/stable-candidate
+          --source-sha '${{ steps.source.outputs.source_sha }}'
+          --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
+          --run-id '${{ steps.source.outputs.run_id }}'
+          --run-attempt '${{ steps.source.outputs.run_attempt }}'
           --remote-write --token-env PLUGIN_PUBLISHER_TOKEN

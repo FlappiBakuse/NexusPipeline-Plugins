@@ -8,18 +8,26 @@ on:
         required: true
         default: develop
         type: string
+      candidate_run_id:
+        description: Original preview candidate run ID for publish-only recovery
+        required: false
+        type: string
+      candidate_artifact_id:
+        description: Artifact ID when the original run has multiple successful candidates
+        required: false
+        type: string
 
 permissions:
   contents: read
 
-concurrency:
-  group: plugin-develop-preview-build
-  cancel-in-progress: true
-
 jobs:
   build-preview:
     name: preview-build
+    if: inputs.candidate_run_id == ''
     runs-on: windows-latest
+    concurrency:
+      group: plugin-develop-preview-build
+      cancel-in-progress: true
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -27,10 +35,21 @@ jobs:
       source_sha: ${{ steps.source.outputs.sha }}
       workflow_sha: ${{ steps.source.outputs.workflow_sha }}
     steps:
+      - name: Require controlled develop source
+        shell: bash
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: test "$SOURCE_REF" = develop
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+          persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ inputs.source_ref }}
-          path: NexusPipeline-Plugins
+          path: NexusPipeline-Plugins-Source
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -42,30 +61,42 @@ jobs:
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
           dotnet-version: "8.0.424"
+      - name: Resolve fixed official Host SDK
+        id: host
+        shell: pwsh
+        run: |
+          $line = @(git ls-remote https://github.com/FlappiBakuse/NexusPipeline.git refs/heads/main)
+          if ($LASTEXITCODE -ne 0 -or $line.Count -ne 1) { throw 'Cannot resolve official Host main' }
+          $sha = ($line[0] -split '\s+')[0]
+          if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
+          "sha=$sha" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: main
+          ref: ${{ steps.host.outputs.sha }}
           path: NexusPipeline
           fetch-depth: 1
           persist-credentials: false
       - name: Resolve immutable source identity
         id: source
         shell: pwsh
+        env:
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
         run: |
           $ErrorActionPreference = "Stop"
-          $sha = (git rev-parse HEAD).Trim()
+          $sha = (git -C ../NexusPipeline-Plugins-Source rev-parse HEAD).Trim()
           if ($sha -notmatch '^[0-9a-f]{40}$') { throw "source ref 未解析为完整 SHA" }
           "sha=$sha" >> $env:GITHUB_OUTPUT
-          "workflow_sha=$env:GITHUB_WORKFLOW_SHA" >> $env:GITHUB_OUTPUT
+          "workflow_sha=$env:WORKFLOW_SHA" >> $env:GITHUB_OUTPUT
       - name: Build and validate preview candidate
         env:
           SOURCE_SHA: ${{ steps.source.outputs.sha }}
-        run: python tools/repository.py publish-develop --source-ref "$env:SOURCE_SHA" --output .generated\preview --producer-output .generated\preview-producer.json --host-root ..\NexusPipeline --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT" --workflow-sha "$env:GITHUB_WORKFLOW_SHA"
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: python tools/repository.py publish-develop --root ..\NexusPipeline-Plugins-Source --source-ref "$env:SOURCE_SHA" --output .generated\preview --producer-output .generated\preview-producer.json --host-root ..\NexusPipeline --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT" --workflow-sha "$env:WORKFLOW_SHA"
       - name: Upload immutable local candidate for separately authorized promotion
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: plugins-develop-preview-${{ steps.source.outputs.sha }}
+          name: plugins-develop-preview-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             NexusPipeline-Plugins/.generated/preview
             NexusPipeline-Plugins/.generated/preview-producer.json
@@ -75,6 +106,7 @@ jobs:
   promote-preview:
     name: preview-publish
     needs: build-preview
+    if: inputs.candidate_run_id == ''
     runs-on: ubuntu-latest
     environment: plugin-preview-publish
     concurrency:
@@ -90,12 +122,18 @@ jobs:
           path: NexusPipeline-Plugins
           fetch-depth: 1
           persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.build-preview.outputs.source_sha }}
+          path: NexusPipeline-Plugins-Source
+          fetch-depth: 1
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: plugins-develop-preview-${{ needs.build-preview.outputs.source_sha }}
+          name: plugins-develop-preview-${{ github.run_id }}-${{ github.run_attempt }}
           path: NexusPipeline-Plugins/.generated
       - name: Create publisher App token
         id: app-token
@@ -111,4 +149,100 @@ jobs:
           PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
           SOURCE_SHA: ${{ needs.build-preview.outputs.source_sha }}
           WORKFLOW_SHA: ${{ needs.build-preview.outputs.workflow_sha }}
-        run: python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-sha "$SOURCE_SHA" --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" --workflow-sha "$WORKFLOW_SHA" --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
+        run: python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root ../NexusPipeline-Plugins-Source --source-sha "$SOURCE_SHA" --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" --workflow-sha "$WORKFLOW_SHA" --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
+
+  restore-preview:
+    name: Restore original preview candidate
+    if: inputs.candidate_run_id != ''
+    runs-on: ubuntu-latest
+    environment: plugin-preview-publish
+    concurrency:
+      group: plugin-develop-preview-publish
+      cancel-in-progress: false
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: Resolve original successful producer and artifact
+        id: original
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/main'
+          args=(--candidate-run-id "$CANDIDATE_RUN_ID" --current-run-id "$GITHUB_RUN_ID" --github-output "$GITHUB_OUTPUT")
+          if [[ -n "$CANDIDATE_ARTIFACT_ID" ]]; then args+=(--artifact-id "$CANDIDATE_ARTIFACT_ID"); fi
+          python tools/repository_preview_source.py "${args[@]}"
+      - name: Download exact original artifact
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ steps.original.outputs.artifact_id }}
+          ARTIFACT_DIGEST: ${{ steps.original.outputs.artifact_digest }}
+        run: |
+          mkdir -p .generated
+          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/octet-stream' \
+            --output .generated/preview-artifact.zip \
+            "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$ARTIFACT_ID/zip"
+          python tools/repository.py extract-preview --artifact-zip .generated/preview-artifact.zip \
+            --expected-digest "$ARTIFACT_DIGEST" --output .generated/preview-restore
+      - name: Inspect candidate source before checkout
+        id: source
+        run: >-
+          python tools/repository.py inspect-preview
+          --generated-root .generated/preview-restore/preview
+          --producer .generated/preview-restore/preview-producer.json
+          --workflow-sha '${{ steps.original.outputs.workflow_sha }}'
+          --run-id '${{ steps.original.outputs.run_id }}'
+          --run-attempt '${{ steps.original.outputs.run_attempt }}'
+          --github-output "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+          path: NexusPipeline-Plugins-Source
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Validate original source tree, candidate and producer
+        run: >-
+          python tools/repository.py publish-preview
+          --generated-root .generated/preview-restore/preview
+          --producer .generated/preview-restore/preview-producer.json
+          --source-root ../NexusPipeline-Plugins-Source
+          --source-sha '${{ steps.source.outputs.source_sha }}'
+          --workflow-sha '${{ steps.original.outputs.workflow_sha }}'
+          --run-id '${{ steps.original.outputs.run_id }}'
+          --run-attempt '${{ steps.original.outputs.run_attempt }}'
+      - name: Create publisher App token
+        id: app-token
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
+        with:
+          app-id: ${{ vars.PLUGIN_PUBLISHER_APP_ID }}
+          private-key: ${{ secrets.PLUGIN_PUBLISHER_PRIVATE_KEY }}
+          owner: FlappiBakuse
+          repositories: NexusPipeline-Plugins
+          permission-contents: write
+      - name: Publish original preview bytes without rebuilding
+        env:
+          PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: >-
+          python tools/repository.py publish-preview
+          --generated-root .generated/preview-restore/preview
+          --producer .generated/preview-restore/preview-producer.json
+          --source-root ../NexusPipeline-Plugins-Source
+          --source-sha '${{ steps.source.outputs.source_sha }}'
+          --workflow-sha '${{ steps.original.outputs.workflow_sha }}'
+          --run-id '${{ steps.original.outputs.run_id }}'
+          --run-attempt '${{ steps.original.outputs.run_attempt }}'
+          --remote-write --token-env PLUGIN_PUBLISHER_TOKEN

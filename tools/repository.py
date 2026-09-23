@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
 from pathlib import Path
+from sdk_source import SdkSourceError
 
 from repository_core import (
     RepositoryError,
@@ -43,6 +45,15 @@ def _parser() -> argparse.ArgumentParser:
             "validate-generated",
             "validate-host-locales",
             "qualification",
+            "candidate",
+            "candidate-scope",
+            "validate-candidate",
+            "extract-candidate",
+            "extract-preview",
+            "inspect-preview",
+            "publish-candidate",
+            "verify",
+            "scope",
             "publish-develop",
             "publish-preview",
             "publish-stable",
@@ -58,10 +69,15 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--plan", type=Path, help="release/test 使用的唯一 release-plan.json")
     parser.add_argument("--output", type=Path, help="plan/release/bootstrap-state 输出路径")
     parser.add_argument("--generated-root", type=Path, help="生成候选物目录")
+    parser.add_argument("--artifact-zip", type=Path, help="原 Actions candidate artifact ZIP")
+    parser.add_argument("--expected-digest", help="Actions 服务端 artifact SHA256")
     parser.add_argument("--host-root", type=Path, help="validate-host-locales/qualification 使用的当前宿主 checkout")
+    parser.add_argument("--source-root", type=Path, help="preview 原源码的独立 checkout")
     parser.add_argument("--distribution-root", type=Path, help="候选资格使用的 stable catalog/state/packages 分发基线")
     parser.add_argument("--full", action="store_true", help="test 命令测试所有 managed-code 插件")
     parser.add_argument("--group", choices=("source", "frontend-managed", "candidate", "all"), default="all", help="qualification Gate 分组")
+    parser.add_argument("--scope", choices=("docs", "source", "managed", "all"), default="all", help="verify 验证范围")
+    parser.add_argument("--github-output", type=Path, help="scope 写入 GitHub Actions step output")
     parser.add_argument("--sdk-sha", help="qualification 使用的固定 Host checkout SHA")
     parser.add_argument("--source-ref", default="develop", help="publish-develop 的源码 ref")
     parser.add_argument("--source-sha", help="publish-stable 的已验证源码 SHA")
@@ -149,6 +165,140 @@ def main(argv: list[str] | None = None) -> int:
                 output=args.output.resolve() if args.output else None,
                 baseline=args.baseline,
             )
+        elif args.command == "candidate":
+            from repository_candidate import build_stable_candidate
+
+            if args.host_root is None or not args.sdk_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("candidate 必须指定 --host-root、--sdk-sha、--workflow-sha、--run-id、--run-attempt")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            result = build_stable_candidate(
+                root,
+                args.host_root.resolve(),
+                args.output.resolve() if args.output else root / ".generated" / "stable-candidate",
+                sdk_sha=args.sdk_sha,
+                workflow_sha=args.workflow_sha,
+                run_id=int(args.run_id),
+                run_attempt=int(args.run_attempt),
+            )
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"status={result['status']}\n")
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "candidate-scope":
+            from repository_candidate import stable_candidate_scope
+
+            result = stable_candidate_scope(root)
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"status={result['status']}\n")
+                    stream.write(f"needs_build={'true' if result['needsBuild'] else 'false'}\n")
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "extract-candidate":
+            from repository_candidate import extract_candidate_artifact
+
+            if args.artifact_zip is None or args.output is None or not args.expected_digest:
+                raise RepositoryError("extract-candidate 必须指定 --artifact-zip、--output、--expected-digest")
+            extract_candidate_artifact(args.artifact_zip.resolve(), args.output.resolve(),
+                                       expected_digest=args.expected_digest)
+        elif args.command == "extract-preview":
+            from repository_candidate import extract_preview_artifact
+
+            if args.artifact_zip is None or args.output is None or not args.expected_digest:
+                raise RepositoryError("extract-preview 必须指定 --artifact-zip、--output、--expected-digest")
+            extract_preview_artifact(args.artifact_zip.resolve(), args.output.resolve(),
+                                     expected_digest=args.expected_digest)
+        elif args.command == "inspect-preview":
+            from repository_candidate import inspect_preview_candidate
+
+            generated = args.generated_root or args.output
+            if generated is None or args.producer is None or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("inspect-preview 缺少候选目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("preview run/attempt 必须为正整数")
+            source_sha = inspect_preview_candidate(generated.resolve(), args.producer.resolve(),
+                                                   workflow_sha=args.workflow_sha,
+                                                   run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"source_sha={source_sha}\n")
+            print(json.dumps({"sourceSha": source_sha}, ensure_ascii=False), flush=True)
+        elif args.command == "validate-candidate":
+            from repository_candidate import validate_original_candidate
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.source_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("validate-candidate 缺少目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            result = validate_original_candidate(root, generated.resolve(), source_sha=args.source_sha,
+                                                 workflow_sha=args.workflow_sha,
+                                                 run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            print(json.dumps({"sourceSha": result["sourceSha"], "distribution": result["distribution"],
+                              "files": len(result["files"])}, ensure_ascii=False), flush=True)
+        elif args.command == "publish-candidate":
+            from repository_candidate import validate_original_candidate
+            from repository_publish import GitHubGitTransport
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.source_sha or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("publish-candidate 缺少目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            manifest = validate_original_candidate(root, generated.resolve(), source_sha=args.source_sha,
+                                                   workflow_sha=args.workflow_sha,
+                                                   run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if not args.remote_write or not os.environ.get(args.token_env):
+                raise RepositoryError("publish-candidate 必须由受保护 writer 提供 Publisher App token")
+            result = GitHubGitTransport().publish_stable_candidate(
+                root, generated.resolve(), args.source_sha, manifest["distribution"]["headSha"],
+                remote_write=True, token=os.environ[args.token_env],
+                run_id=int(args.run_id), run_attempt=int(args.run_attempt),
+                workflow_sha=args.workflow_sha)
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "scope":
+            from verification import fast_scope
+
+            if not args.base:
+                raise RepositoryError("scope 必须指定 --base")
+            selected = fast_scope(root, args.base)
+            line = f"docs_only={'true' if selected['docsOnly'] else 'false'}"
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(line + "\n")
+            print(line, flush=True)
+        elif args.command == "verify":
+            from verification import managed_selection, preflight, run_docs_gate, run_managed_gate, run_source_gate
+
+            if not args.base:
+                raise RepositoryError("verify 必须指定 --base")
+            if args.scope == "docs":
+                print(json.dumps({"scope": "docs", "docs": run_docs_gate(root, args.base)}, ensure_ascii=False, indent=2), flush=True)
+                return 0
+            selection: list[str] = []
+            reason = "source-only"
+            if args.scope in {"managed", "all"}:
+                selection, reason = managed_selection(root, args.base)
+            sdk = None
+            if args.scope in {"source", "all"} or selection:
+                if args.host_root is None:
+                    raise RepositoryError("选中的验证需要 --host-root")
+                sdk = preflight(root, args.host_root.resolve(), args.sdk_sha)
+            result: dict = {"scope": args.scope, "selectionReason": reason}
+            if sdk is not None:
+                result["sdkSourceSha"] = sdk["sdkSourceSha"]
+            if args.scope in {"source", "all"}:
+                result["source"] = run_source_gate(root, args.host_root.resolve(), args.base)
+            if args.scope in {"managed", "all"}:
+                result["managed"] = run_managed_gate(
+                    root,
+                    args.host_root.resolve() if args.host_root else root,
+                    selected=selection,
+                    host_integration=False,
+                )
+            print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
         elif args.command == "publish-develop":
             from repository_publish import publish_develop
 
@@ -178,6 +328,7 @@ def main(argv: list[str] | None = None) -> int:
                 producer_path=args.producer.resolve() if args.producer else None,
                 remote_write=args.remote_write,
                 token=os.environ.get(args.token_env),
+                source_root=args.source_root.resolve() if args.source_root else None,
             )
         elif args.command == "publish-stable":
             from repository_publish import GitHubGitTransport, publish_stable
@@ -229,7 +380,7 @@ def main(argv: list[str] | None = None) -> int:
             write_json(output, bootstrap_state(root, args.head))
             print(f"[repository] 已生成发行状态：{output}", flush=True)
         return 0
-    except RepositoryError as exc:
+    except (RepositoryError, SdkSourceError) as exc:
         print(f"[repository] 错误：{exc}", file=sys.stderr, flush=True)
         return 1
 
