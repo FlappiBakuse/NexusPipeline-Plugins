@@ -68,27 +68,28 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 
 发行工具入口为 `python tools/repository.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
 
-本地可以执行固定的 P1/P2/P3：
+PR 用固定 Host checkout 运行选中的源码和 managed 检查；当前代码合入 `main` 后，稳定候选从该提交取源码，并从同一受保护快照取 catalog/state/packages。工作流不扫描历史资格证明，也不为工具或文档改动自动提升插件版本。
 
 ```text
 $env:HOST_ROOT="<absolute NexusPipeline checkout>"
-$env:SDK_SHA="<qualification fixed Host SDK source SHA>"
-python tools/repository.py qualification --group source --base main --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
-python tools/repository.py qualification --group frontend-managed --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
-python tools/repository.py qualification --group candidate --base main --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
+$env:SDK_SHA="<fixed official Host SHA>"
+python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
+python tools/repository.py candidate --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
 
 # develop preview，只生成并校验本地候选，不写 stable
-python tools/repository.py publish-develop --source-ref develop --output .generated/preview --producer-output .generated/preview-producer.json
-python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-sha <source commit> --run-id <run id> --run-attempt <attempt> --workflow-sha <qualification workflow SHA>
+python tools/repository.py publish-develop --source-ref develop --output .generated/preview --producer-output .generated/preview-producer.json --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
+python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
 ```
 
-候选目录是发布器的只读输入；preview 的 producer 资格关联写在候选目录外的 sidecar 中，promote 时必须显式传入并校验 source/catalog 身份。发布器会在每个包和 catalog 上传或复用后立即下载并核对字节与 SHA256，最后才允许切换 preview catalog。发布工作流把生成的 catalog 与 package 纳入主分支后，再运行 `python tools/repository.py validate` 核对主分支源码、catalog 和发行包集合。
+上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。原 candidate job 成功后，自动 writer 与手动恢复共用服务端 run/attempt、artifact ID/digest、source/tree、分发快照与文件清单的验证。恢复命令从 `main` 运行 `gh workflow run publish-stable.yml --ref main -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。自动 writer 的仓库开关 `SCHEME_B_STABLE_AUTO_ENABLED` 在 ruleset 切换和验收后启用。
+
+预览候选由 `publish-develop.yml` 的审核过的 main 工具打包受控 `develop` 源码，build job 可取消，promote job 不取消。原 preview-build 成功但 promote 失败时，从 `main` 执行 `gh workflow run publish-develop.yml --ref main -f source_ref=develop -f candidate_run_id=<原 run ID>`；同 run 多候选时指定 `candidate_artifact_id`。恢复仅下载原包，不重新构建。preview 的 producer sidecar 位于候选目录外，同包清单、原 run/attempt、源码 tree 与在线 develop 最新 SHA 均需一致；旧 catalog 来源不得回退。发布器先上传并复核包，最后切换 catalog。
 
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
 `validate-source` 用于在 PR 或新插件候选的 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁。`validate` 还会校验当前 catalog 集合与已存在发行包，因此只有 catalog/packages 已包含当前源码版本时才能通过；新插件或新版本进入候选时，源码阶段应先运行 `validate-source`，生成候选物后运行 `validate-generated`，正式发布流水线更新 catalog/packages 后再运行 `validate`。
 
-`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。每次 Qualification 的 preflight 通过 `tools/sdk_source.py` 固定官方 Host 的完整 `sdkSourceSha`，所有 P1/P2/P3 使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`validate-host-locales` 仍可作为独立诊断。
+`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`validate-host-locales` 仍可作为独立诊断。
 
 普通发行的处理边界如下：
 
@@ -103,7 +104,7 @@ python tools/repository.py publish-preview --generated-root .generated/preview -
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
 
-工具、文档、工作流和兼容元数据变化会触发契约检查和 Qualification；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 会写入资格关联和候选计划。`catalog.json`、`packages/` 与 `.release-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
+工具、文档、工作流和兼容元数据变化会触发适用检查；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 写入候选清单。`catalog.json`、`packages/` 与 `.release-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
 
 ## 模拟器支持真实设备验证
 
@@ -205,20 +206,12 @@ python tools/repository.py validate
 python tools/repository.py audit --full
 ```
 
-Full Audit 只由手动入口触发，不参与每次 PR/main 资格。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
+Full Audit 只由手动入口触发，不参与每次 PR/main 快速检查。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
 
-Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。stable publisher 使用 `.release-state.json.sourceCommit` 追踪已发布游标，写入前校验资格关联、不可变包、精确生成物白名单和远端快进；develop preview 使用不可变包名和最后切换 catalog 的顺序，不删除旧 preview 资产。
+Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。stable publisher 使用 `.release-state.json.sourceCommit` 追踪已发布游标，写入前校验原候选 producer、不可变包、精确生成物白名单和远端快进；develop preview 使用不可变包名和最后切换 catalog 的顺序，不删除旧 preview 资产。
 
 ## 校验工作流
 
-本地 `qualification` 命令固定执行 P1/P2/P3；正式 PR 资格工作流必须执行全部 Gate，不使用 changed-path skip：
-
-| Gate | 运行环境 | 内容 |
-|---|---|---|
-| `P1` | 固定的源 checkout/SDK | source contracts、locale、syntax、Config Editors、Python tests、PR base 检查 |
-| `P2` | 固定的 Windows managed/Frontend 环境 | 真实 Host Jint 专项适配器联调、`npm ci`、Frontend conformance/typecheck/build、managed-code 全量构建测试 |
-| `P3` | 隔离候选目录 | base 版本纪律、candidate plan、全量发行包验证、stable 文件未修改 |
-
-`tools/qualification.py` 负责本地编排，`tools/sdk_source.py` 负责一次解析并固定 SDK 来源；`tools/qualification_control.py`（部署后）负责外部 App Check 的 fail-closed 聚合。手动 `audit --full` 只作完整包诊断，不替代 P1/P2/P3，也不自动改变 stable 状态。
+`Plugins / Required` 使用 PR merge checkout，按完整变更范围选择文档、源码、适用 managed 检查；未知共享输入保守扩大，失败或零有效验证不报成功。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行必要的 Host Jint 与包验收。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

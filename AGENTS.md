@@ -15,7 +15,7 @@
 | data-specialized 数据/能力/脚本 | `docs/DATA_SPECIALIZED_PLUGIN.md` |
 | managed 浏览器扩展与公共元素 | `docs/FRONTEND_PLUGIN.md` |
 | 判断脚本 | `docs/JUDGE_SCRIPT.md` |
-| Preview、Qualification、stable 发布 | `docs/RELEASING.md` |
+| Preview、stable 候选与发布 | `docs/RELEASING.md` |
 | 文档导航 | `docs/README.md`、`docs/map.json` |
 
 修改公共契约时同时读取 Host 的 `docs/reference/plugin-api/README.md` 和公开元素注册表。不要根据某台机器的相邻目录或旧 commit 猜测当前 API。CI 在一个运行中固定 SDK source SHA；本地联调显式提供 Host 路径。
@@ -23,9 +23,9 @@
 ## 2. 授权、Git、版本与数据
 
 - 本地代码实施与 commit/push/tag/PR/合并/规则修改/Release 发布分别受用户授权。缺少发布凭据不阻止纯规则、工具和测试实现；不得把缺权限当作 writer 可以永久留空的理由。
-- 日常开发进入 `develop`；`main` 源码经 PR、全量 `Plugin Release Qualification`、squash 合并。普通开发者/Agent 不直推或 force push `main`。
+- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / Required` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。迁移窗口以 GitHub 当前实际 ruleset 为准，旧资格检查退役前仍须满足它。
 - 唯一生成物直推例外为专用 stable publisher App，路径白名单严格为 `catalog.json`、`.release-state.json`、`packages/**`。例外不包含源码、工作流、host.lock 或版本修改。Writer 校验实际 Git 差异、父链和来源后正常快进推送；bypass 权限本身不提供路径隔离。
-- 首次安装仓库资格控制面时，单独的控制面初始化 PR 按当时实际生效的门禁与维护者明确审核合入；不携带产品功能或生成物、不伪造新资格、不自动发布。此初始化操作需要独立授权，不能成为已启用门禁后的绕过入口。
+- 发布控制文件的修改仍通过当时实际生效的 PR 门禁与维护者审核；不得用 Publisher bypass 提交源码或工作流，也不伪造检查结果。
 - `develop` 同一目标版本可多次修改和预览，不强制每次 bump；不修改稳定 catalog/state/packages。稳定 `(artifactName, version)` 不得对应不同字节。正式版本及日期按用户明确指示，发布脚本不自动 bump。
 - 修改前保存 HEAD、diff 和未提交文件的仓库外检查点。未经具体授权不使用 reset/clean/stash/覆盖恢复。备份 tag 仅本地，不推送。
 - 不提交账号、Cookie、Token、密钥、用户设置、日志、运行现场、缓存、临时目录、调试符号或无关构建产物。只清理本次生成且核验过的精确路径；保留用户数据和失败证据。
@@ -52,28 +52,27 @@ python tools/repository.py validate-source
 python tools/repository.py check-syntax
 node tools/Test-ConfigEditors.mjs
 python -m unittest discover -s tools/tests -v
-python tools/repository.py qualification --group source --base <B> --host-root <Host路径> --sdk-sha <SDK_SHA>
-python tools/repository.py qualification --group frontend-managed --host-root <Host路径> --sdk-sha <SDK_SHA>
-python tools/repository.py qualification --group candidate --base <B> --host-root <Host路径> --sdk-sha <SDK_SHA> --output <隔离候选目录>
+python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <Host路径> --sdk-sha <SDK_SHA>
+python tools/repository.py candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output .generated/stable-candidate
 ```
 
-P1 = 源码、兼容/本地化元数据、语法、配置编辑器、工具测试和 PR 生成物政策。P2 = 全部 managed 构建/测试和适用前端 typecheck/build/conformance。P3 = 基于目标 main 发行状态的候选计划、实际 ZIP/hash/catalog 验证。最终资格 P1/P2/P3 全跑，不能把未提供 full/plan 导致零项目执行当全量通过。
+PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享输入保守扩大。合并后稳定候选使用当前受保护 main 的 catalog/state/packages 快照，按已发布游标覆盖累计未发行变更。没有发行变化返回 `NO_CHANGES`，不得制造新版本或空生成物提交。本地合成 run ID 只用于诊断，不能用于远端发布。
 
 `host.lock.json` 记录 `hostApiVersion`、`frontendApiVersion`、`supportedLocales` 等兼容契约；SHA 用于固定一次编译输入，不是兼容版本。SDK 来源在 preflight 固定，所有 Gate、candidate build 和 publisher 验证使用同一值。当前阶段可使用真实 Host Abstractions 的 ProjectReference；checkout 布局和 `--host-root` 必须指向同一个 SDK，不手写 stub 冒充 SDK。Host API 版本与 Abstractions 包版本分别治理，不自行统一或递增。
 
-先构建前端再执行依赖构建输出的 conformance。所有工具退出码向上传递；未知分组、缺依赖、空选择、零用例、意外 skip、缺报告和 timeout 均不算通过。测试最低有效层覆盖实际结果，不读取源码函数体匹配普通行为。UI 测试不持久化视觉截图/像素/布局基线，不依赖私有 DOM/class。跨宿主 Smoke 复用 Host 核心流程，不扩增装饰性 UI 测试。
+先构建前端再执行依赖构建输出的 conformance。所有工具退出码向上传递；未知分组、缺依赖、意外空选择、零用例、意外 skip、缺报告和 timeout 均不算通过。测试最低有效层覆盖实际结果，不读取源码函数体匹配普通行为。UI 测试不持久化视觉截图/像素/布局基线，不依赖私有 DOM/class。跨宿主 Smoke 复用 Host 核心流程，不扩增装饰性 UI 测试。
 
 命令 UTF-8、非交互、显示实时阶段与失败摘要。Python 用于适合的文件/规则工具；现役 dotnet/npm/node/.cmd 入口按文档执行。失败保留证据并修根因，不用重试或跳过掩盖。
 
-## 5. Qualification 与发布
+## 5. 候选与发布
 
-PR Feedback 最多 P1/P2/P3 三类，可按影响范围选择；最终手动 Qualification 不接受路径过滤。main 前进后候选同步再完整验证。资格由受信 App 写到确切候选 H，并绑定目标 B、实际工作流 C、runId/runAttempt 和 SDK SHA。只接受所有必需 job 真实成功；相同名称不代表相同来源。
+PR 使用唯一 `Plugins / Required` 检查。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
 
-构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Qualification App 与 Publisher App 分离；令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
+构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Publisher App 令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
 
 Preview 固定 `plugins-develop` Pre-release；平面资产名 `<Artifact>-<version>-<sha256>.zip`。包上传、下载复核后再切换 `catalog.json`。旧 catalog 引用的包不立即回收；短暂不可用由 Host 同通道缓存或明确错误处理。build 可取消，promote 不因新 build 自动取消；旧候选不得覆盖新候选。
 
-Stable 在通过资格的源码合入 main 后构建并写回生成物；不重复全量测试。使用目标 main 的 catalog/state/packages 作为发行基线，候选源码只提供源码输入。维护 `.release-state.json.sourceCommit` 游标，正常快进更新；竞争后重新校验，不 reset 用户工作目录，不依赖工作流排队顺序。App 自身生成物提交的递归过滤同时验证 App 身份、父链和路径，不能只看 actor 名/提交消息。
+Stable 在源码合入 main 后构建并写回生成物；不重复全量测试。使用目标 main 的 catalog/state/packages 作为发行基线，候选源码只提供源码输入。维护 `.release-state.json.sourceCommit` 游标，正常快进更新；竞争后重新校验，不 reset 用户工作目录，不依赖工作流排队顺序。旧候选遇到更新源码或分发事实时拒绝覆盖，并为最新源码重新产生候选。App 自身生成物提交的递归处理同时验证父链和路径，不能只看 actor 名或提交消息。
 
 dry-run 不写远端。实际写入入口必须有可测试实现，不能以永久抛异常代替。上传 Actions artifact 只是候选交付，不是 stable/preview 已发布。远端发布成功须有资产下载及 hash 复核。
 

@@ -25,6 +25,7 @@ from repository_release_api import (
     download_asset,
     get_ref,
     get_release,
+    is_ancestor,
     list_assets,
     update_release,
     upload_asset,
@@ -44,6 +45,7 @@ MAX_ZIP_UNCOMPRESSED_BYTES = core.MAX_ZIP_UNCOMPRESSED_BYTES
 
 class GitHubTransport(Protocol):
     def get_source_head(self, repository: str, branch: str, token: str) -> str: ...
+    def is_ancestor(self, repository: str, older: str, newer: str, token: str) -> bool: ...
     def get_release(self, repository: str, tag: str, token: str) -> dict[str, Any] | None: ...
     def create_release(self, repository: str, tag: str, token: str, *, name: str, body: str, target_commitish: str) -> dict[str, Any]: ...
     def update_release(self, repository: str, release_id: int, token: str, **fields: Any) -> dict[str, Any]: ...
@@ -57,6 +59,7 @@ class HttpGitHubTransport:
     """真实 GitHub Release transport；远端写入只由显式 publisher 调用。"""
 
     get_source_head = staticmethod(get_ref)
+    is_ancestor = staticmethod(is_ancestor)
     get_release = staticmethod(get_release)
     create_release = staticmethod(create_release)
     update_release = staticmethod(update_release)
@@ -580,6 +583,19 @@ def _publish_preview_remote(result: dict[str, Any], *, token: str, transport: Gi
     if not isinstance(release_id, int):
         raise core.RepositoryError("preview Release 缺少合法 id")
     assets = _release_asset_map(transport, OFFICIAL_REPOSITORY, release, token)
+    old_catalog_asset = assets.get("catalog.json")
+    if old_catalog_asset is not None:
+        old_id = old_catalog_asset.get("id")
+        core._require(isinstance(old_id, int), "旧 preview catalog asset id 无效")
+        try:
+            old_catalog_data = json.loads(transport.download_asset(OFFICIAL_REPOSITORY, old_id, token).decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise core.RepositoryError("旧 preview catalog 不是有效 JSON") from exc
+        old_source = old_catalog_data.get("sourceCommit") if isinstance(old_catalog_data, dict) else None
+        _full_sha(old_source, "旧 preview source SHA")
+        if old_source != source_sha:
+            core._require(transport.is_ancestor(OFFICIAL_REPOSITORY, old_source, source_sha, token),
+                          f"SUPERSEDED：已发布 preview source {old_source} 不允许回退到 {source_sha}")
     for package in packages:
         core._validate_zip(package, mode="preview")
         _upload_or_reuse_asset(transport, OFFICIAL_REPOSITORY, release, token, package, name=package.name, assets=assets)

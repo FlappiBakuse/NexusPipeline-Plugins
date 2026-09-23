@@ -129,6 +129,19 @@ def get_ref(repository: str, branch: str, token: str) -> str:
     return sha
 
 
+def is_ancestor(repository: str, older: str, newer: str, token: str) -> bool:
+    """Ask GitHub whether the active preview source reaches the new source."""
+    if not re.fullmatch(r"[0-9a-f]{40}", older) or not re.fullmatch(r"[0-9a-f]{40}", newer):
+        raise ReleaseApiError("preview compare 必须使用完整 commit SHA")
+    status, payload = _request("GET", f"/repos/{repository}/compare/{older}...{newer}", token)
+    if status != 200:
+        raise ReleaseApiError(f"preview compare 返回非 200：{status}", status_code=status)
+    value = json.loads(payload.decode("utf-8"))
+    if not isinstance(value, dict) or value.get("status") not in {"ahead", "identical", "behind", "diverged"}:
+        raise ReleaseApiError("preview compare 响应状态无效")
+    return value["status"] in {"ahead", "identical"}
+
+
 def create_release(repository: str, tag: str, token: str, *, name: str, body: str, target_commitish: str) -> dict[str, Any]:
     status, payload = _request(
         "POST",

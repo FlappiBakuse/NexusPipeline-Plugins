@@ -11,6 +11,17 @@ from tools import repository_release_api as api
 
 
 class ReleaseApiTests(unittest.TestCase):
+    def test_preview_compare_accepts_only_forward_ancestry(self):
+        import json
+        for status, allowed in (("ahead", True), ("identical", True),
+                                ("behind", False), ("diverged", False)):
+            with self.subTest(status=status), patch.object(
+                api, "_request", return_value=(200, json.dumps({"status": status}).encode())
+            ) as request:
+                self.assertEqual(api.is_ancestor("owner/repo", "a" * 40, "b" * 40, "token"), allowed)
+                self.assertEqual(request.call_args.args[1],
+                                 "/repos/owner/repo/compare/" + "a" * 40 + "..." + "b" * 40)
+
     def test_draft_lookup_uses_listing_and_rejects_ambiguity(self):
         import json
         draft = {"id": 1, "tag_name": "plugins-develop", "draft": True}
