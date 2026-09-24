@@ -46,6 +46,7 @@ def _parser() -> argparse.ArgumentParser:
             "validate-host-locales",
             "candidate",
             "candidate-scope",
+            "inspect-candidate",
             "validate-candidate",
             "extract-candidate",
             "extract-preview",
@@ -84,6 +85,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--workflow-sha", help="publisher workflow trusted SHA")
     parser.add_argument("--producer-output", type=Path, help="preview producer sidecar 输出路径（必须位于候选目录之外）")
     parser.add_argument("--producer", type=Path, help="preview producer sidecar 输入路径")
+    parser.add_argument("--reuse-candidate", type=Path, help="已验证旧 stable candidate；仅复用相同输入包")
     return parser
 
 
@@ -120,7 +122,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command in {"test", "test-managed"}:
             plan = _load_plan(args.plan) if args.plan else None
-            print(f"[repository] managed-code 测试完成：{test_managed(root, plan, args.full, host_root=args.host_root)} 个项目", flush=True)
+            managed = test_managed(root, plan, args.full, host_root=args.host_root)
+            print(f"[repository] managed-code 测试完成：{managed['builds']} 个构建，"
+                  f"{managed['testProjects']} 个测试项目，{managed['testCases']} 个用例", flush=True)
         elif args.command == "release":
             plan_path = args.plan.resolve() if args.plan else root / ".generated" / "release-plan.json"
             if not plan_path.is_file():
@@ -161,6 +165,7 @@ def main(argv: list[str] | None = None) -> int:
                 workflow_sha=args.workflow_sha,
                 run_id=int(args.run_id),
                 run_attempt=int(args.run_attempt),
+                reuse_candidate=args.reuse_candidate,
             )
             if args.github_output:
                 with args.github_output.open("a", encoding="utf-8") as stream:
@@ -184,6 +189,20 @@ def main(argv: list[str] | None = None) -> int:
                 raise RepositoryError("extract-candidate 必须指定 --artifact-zip、--output、--expected-digest")
             extract_candidate_artifact(args.artifact_zip.resolve(), args.output.resolve(),
                                        expected_digest=args.expected_digest)
+        elif args.command == "inspect-candidate":
+            from repository_candidate import inspect_candidate_identity
+
+            generated = args.generated_root or args.output
+            if generated is None or not args.workflow_sha or not args.run_id or not args.run_attempt:
+                raise RepositoryError("inspect-candidate 缺少候选目录或原 producer 身份")
+            if not args.run_id.isdecimal() or not args.run_attempt.isdecimal():
+                raise RepositoryError("candidate run/attempt 必须为正整数")
+            identity = inspect_candidate_identity(generated.resolve(), workflow_sha=args.workflow_sha,
+                                                  run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"source_sha={identity['sourceSha']}\npartner_sha={identity['partnerSha']}\n")
+            print(json.dumps(identity, ensure_ascii=False), flush=True)
         elif args.command == "extract-preview":
             from repository_candidate import extract_preview_artifact
 

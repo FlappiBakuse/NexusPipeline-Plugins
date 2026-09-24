@@ -72,14 +72,14 @@ def _request(
                 return response.status, response.read()
         except urllib.error.HTTPError as error:
             payload = error.read()
-            if error.code == 429 or error.code >= 500:
+            if method == "GET" and (error.code == 429 or error.code >= 500):
                 if attempt < 2:
                     time.sleep(2**attempt)
                     continue
             detail = payload.decode("utf-8", errors="replace")[:500]
             raise ReleaseApiError(f"GitHub Release API HTTP {error.code}: {detail}", status_code=error.code) from error
         except (urllib.error.URLError, TimeoutError) as error:
-            if attempt < 2:
+            if method == "GET" and attempt < 2:
                 time.sleep(2**attempt)
                 continue
             raise ReleaseApiError(f"GitHub Release API 网络失败：{error}") from error

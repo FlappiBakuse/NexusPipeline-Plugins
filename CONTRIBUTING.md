@@ -50,6 +50,9 @@ python tools/repository.py verify --scope all --base origin/main --host-root ..\
 # 合并后本地候选诊断：合成 run ID 不能用于远端发布
 python tools/repository.py candidate --host-root ..\NexusPipeline --sdk-sha <Host_SHA> --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
 
+# Actions 手动只读候选；publish-only 必须另传原 candidate run ID
+gh workflow run publish-stable.yml --ref main -f operation=candidate -f source_ref=main
+
 # develop preview：只写新的本地 .generated/preview，不写 stable 文件
 python tools/repository.py publish-develop --source-ref develop --output .generated/preview
 

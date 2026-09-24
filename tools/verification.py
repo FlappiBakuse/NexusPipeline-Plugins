@@ -6,6 +6,7 @@ import os
 import json
 import re
 import sys
+import unittest
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
@@ -38,10 +39,27 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
                    "--name", "task-protocol-" + preset, "--preset", preset, "--example", "--check",
                    "--output", str(root / "examples" / artifact)), "Generated " + preset + " example", root)
     core._run(("node", str(root / "tools" / "Test-ConfigEditors.mjs")), "Test-ConfigEditors", root)
-    core._run((sys.executable, "-m", "unittest", "discover", "-s", "tools/tests", "-v"), "Plugins Python 单元测试", root)
+    python_tests = run_python_unit_gate(root)
     changed = core.check_pr(root, base)
     return {"plugins": count, "jsonFiles": json_count, "locales": locales,
-            "syntaxFiles": syntax, "changedPaths": changed}
+            "syntaxFiles": syntax, "pythonTests": python_tests, "changedPaths": changed}
+
+
+def run_python_unit_gate(root: Path) -> dict[str, int]:
+    """运行标准库 unittest，并把原生结果计数作为 gate 语义。"""
+    suite = unittest.defaultTestLoader.discover(str(root / "tools" / "tests"))
+    result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(suite)
+    tests_run = int(result.testsRun)
+    failures = len(result.failures)
+    errors = len(result.errors)
+    skipped = len(result.skipped)
+    if tests_run <= 0:
+        raise core.RepositoryError("Plugins Python 单元测试发现零用例")
+    if failures or errors or skipped:
+        raise core.RepositoryError(
+            "Plugins Python 单元测试结果不完整："
+            f"testsRun={tests_run} failures={failures} errors={errors} skipped={skipped}")
+    return {"testsRun": tests_run, "failures": failures, "errors": errors, "skipped": skipped}
 
 
 def managed_selection(root: Path, base: str) -> tuple[list[str], str]:
@@ -138,7 +156,8 @@ def run_managed_gate(
     host_integration: bool = True,
 ) -> dict[str, Any]:
     if selected is not None and not selected:
-        return {"managedProjectsAndTests": 0, "selected": [], "applicability": "not-applicable"}
+        return {"managedBuilds": 0, "managedTestProjects": 0, "managedTestCases": 0,
+                "selected": [], "applicability": "not-applicable"}
     if host_integration:
         core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
                    "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
@@ -156,13 +175,15 @@ def run_managed_gate(
             environment["NEXUS_HOST_ROOT"] = str(host_root)
             environment["NEXUS_OFFICIAL_PLUGINS_ROOT"] = str(root)
             core._run(("node", str(frontend), "--host-root", str(host_root)), "前端插件 conformance", root, env=environment)
-    managed_projects = core.test_managed(
+    managed = core.test_managed(
         root,
         {"managed": selected} if selected is not None else None,
         full=selected is None,
         include_frontend=False,
         host_root=host_root,
     )
-    return {"managedProjectsAndTests": managed_projects,
+    return {"managedBuilds": managed["builds"],
+            "managedTestProjects": managed["testProjects"],
+            "managedTestCases": managed["testCases"],
             "selected": selected if selected is not None else sorted(plugin.artifact_name for plugin in by_artifact.values() if plugin.kind == "managed-code"),
             "applicability": "required"}

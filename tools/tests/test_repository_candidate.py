@@ -12,12 +12,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import repository_core as core
 from candidate_workspace import CandidateWorkspace
-from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, extract_preview_artifact, stable_candidate_scope, validate_inventory, write_candidate_manifest
+from repository_candidate import JOB_NAME, WORKFLOW_PATH, extract_candidate_artifact, extract_preview_artifact, inspect_candidate_identity, package_input_identities, reusable_candidate_packages, stable_candidate_scope, validate_inventory, write_candidate_manifest
 from repository_publish import GitHubGitTransport
 from test_repository_publish import _create_fixture, _git, _remove_tree
 
 
 class StableCandidateContractTests(unittest.TestCase):
+    def test_candidate_identity_separates_source_from_manual_controller(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="nxp-plugin-candidate-identity-") as temporary:
+            output = Path(temporary)
+            candidate = {
+                "sourceSha": "a" * 40,
+                "partnerSha": "b" * 40,
+                "producer": {"workflowPath": WORKFLOW_PATH, "workflowSha": "c" * 40,
+                             "runId": 12, "runAttempt": 2, "jobName": JOB_NAME},
+            }
+            core.write_json(output / "candidate.json", candidate)
+            self.assertEqual(inspect_candidate_identity(output, workflow_sha="c" * 40,
+                                                        run_id=12, run_attempt=2),
+                             {"sourceSha": "a" * 40, "partnerSha": "b" * 40})
+            with self.assertRaisesRegex(core.RepositoryError, "producer"):
+                inspect_candidate_identity(output, workflow_sha="d" * 40,
+                                           run_id=12, run_attempt=2)
     def test_scope_skips_generated_only_event_and_selects_payload_change(self) -> None:
         root = _create_fixture()
         try:
@@ -101,6 +117,45 @@ class StableCandidateContractTests(unittest.TestCase):
             (output / "release-plan.json").write_bytes(b"{}")
             with self.assertRaises(core.RepositoryError):
                 validate_inventory(root, output, **expected)
+        finally:
+            _remove_tree(root)
+
+    def test_refresh_reuses_only_matching_byte_verified_package_inputs(self) -> None:
+        root = _create_fixture()
+        try:
+            manifest_path = root / "plugins" / "specialized" / "Alpha" / "plugin.json"
+            store_path = root / "plugins" / "specialized" / "Alpha" / "store.json"
+            manifest = core.read_json(manifest_path)
+            store = core.read_json(store_path)
+            manifest["version"] = "0.2.0"
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            core.write_json(manifest_path, manifest)
+            core.write_json(store_path, store)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "source")
+            source = core.git_head(root)
+            plan_path = root / ".generated" / "plan.json"
+            plan = core.build_plan(root)
+            core.write_json(plan_path, plan)
+            output = root / ".generated" / "stable"
+            core.release(root, plan_path, output)
+            with tempfile.TemporaryDirectory(prefix="nxp-refresh-distribution-") as temporary:
+                distribution = Path(temporary)
+                CandidateWorkspace._extract_distribution(root, source, distribution)
+                write_candidate_manifest(root, output, distribution, source_sha=source,
+                                         distribution_sha=source, partner_sha="a" * 40,
+                                         workflow_sha=source, run_id=12, run_attempt=1)
+            inputs = package_input_identities(root, plan, "a" * 40)
+            reusable = reusable_candidate_packages(root, output, inputs)
+            self.assertEqual(set(reusable), {"Alpha"})
+            package_entry = next(item for item in core.read_json(output / "candidate.json")["files"]
+                                 if item["path"].endswith(".zip"))
+            self.assertEqual(hashlib.sha256(reusable["Alpha"].read_bytes()).hexdigest(),
+                             package_entry["sha256"])
+            self.assertEqual(reusable_candidate_packages(root, output, {"Alpha": "0" * 64}), {})
+            reusable["Alpha"].write_bytes(reusable["Alpha"].read_bytes() + b"tamper")
+            with self.assertRaisesRegex(core.RepositoryError, "摘要或大小"):
+                reusable_candidate_packages(root, output, inputs)
         finally:
             _remove_tree(root)
 

@@ -20,6 +20,7 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Sequence
@@ -2204,13 +2205,15 @@ def test_managed(
     *,
     include_frontend: bool = True,
     host_root: Path | None = None,
-) -> int:
+) -> dict[str, int]:
     plugins = discover_source_plugins(root)
     artifacts = [plugin.artifact_name for plugin in plugins] if full or plan is None and full else (plan or {}).get("managed", [])
     if not artifacts:
         print("[repository] managed-code 增量测试：没有受影响的项目", flush=True)
-        return 0
-    total = 0
+        return {"builds": 0, "testProjects": 0, "testCases": 0}
+    build_count = 0
+    test_project_count = 0
+    test_case_count = 0
     owned_build_paths = capture_managed_build_artifacts(root, host_root)
     resolved_host_root = _find_host_root(root, host_root) if artifacts else None
     managed_projects = _managed_projects(root, artifacts)
@@ -2219,22 +2222,55 @@ def test_managed(
         raise RepositoryError("当前验证需要 managed-code 项目，但没有可构建的 csproj")
     if not managed_source_count:
         print("[repository] managed-code 增量测试：当前源码没有适用项目", flush=True)
-        return 0
+        return {"builds": 0, "testProjects": 0, "testCases": 0}
     try:
         frontend_script = root / "tools" / "Test-FrontendPlugins.mjs"
         if include_frontend and frontend_script.is_file():
             _run(("node", str(frontend_script)), "前端插件 conformance", root)
-            total += 1
         for plugin, project in managed_projects:
             _run(("dotnet", "build", str(project), "--configuration", "Release", "--nologo", "-m:1", f"-p:NexusHostRoot={resolved_host_root}"), f"managed-code 构建：{plugin.artifact_name}", root)
-            total += 1
-        for plugin in plugins:
+            build_count += 1
+        selected_plugins = [plugin for plugin in plugins
+                            if plugin.kind == "managed-code" and plugin.artifact_name in artifacts]
+        results_root = root / ".generated" / "test-results" / "managed"
+        results_root.mkdir(parents=True, exist_ok=True)
+        for plugin in selected_plugins:
             tests = sorted((plugin.root / "tests").glob("*.Tests.csproj"))
-            if plugin.artifact_name in artifacts:
-                for test in tests:
-                    _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1", f"-p:NexusHostRoot={resolved_host_root}"), f"managed-code 测试：{plugin.artifact_name}", root)
-                    total += 1
-        return total
+            _require(tests, f"managed-code 插件 {plugin.artifact_name} 缺少必需的 Tests.csproj")
+            for index, test in enumerate(tests, start=1):
+                report_name = f"{plugin.artifact_name}-{index}.trx"
+                report = results_root / report_name
+                if report.exists():
+                    report.unlink()
+                _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1",
+                      f"-p:NexusHostRoot={resolved_host_root}", "--logger", f"trx;LogFileName={report_name}",
+                      "--results-directory", str(results_root)), f"managed-code 测试：{plugin.artifact_name}", root)
+                _require(report.is_file() and not report.is_symlink(),
+                         f"managed-code 测试缺少 TRX 报告：{plugin.artifact_name}/{test.name}")
+                try:
+                    document = ET.parse(report)
+                except (ET.ParseError, OSError) as exc:
+                    raise RepositoryError(f"managed-code TRX 无法读取：{report.name}：{exc}") from exc
+                counters = next((element for element in document.iter()
+                                 if element.tag.rsplit('}', 1)[-1] == "Counters"), None)
+                _require(counters is not None, f"managed-code TRX 缺少 Counters：{report.name}")
+                try:
+                    total = int(counters.attrib.get("total", "-1"))
+                    executed = int(counters.attrib.get("executed", "-1"))
+                    passed = int(counters.attrib.get("passed", "-1"))
+                    failed = int(counters.attrib.get("failed", "0"))
+                    skipped = int(counters.attrib.get("notExecuted", "0"))
+                except ValueError as exc:
+                    raise RepositoryError(f"managed-code TRX 计数无效：{report.name}") from exc
+                _require(total > 0 and executed == total and passed == total
+                         and failed == 0 and skipped == 0,
+                         f"managed-code 测试结果不完整：{report.name} "
+                         f"total={total} executed={executed} passed={passed} failed={failed} skipped={skipped}")
+                test_project_count += 1
+                test_case_count += total
+        _require(test_project_count >= len(selected_plugins), "managed-code 测试项目集合不完整")
+        _require(test_case_count > 0, "managed-code 实际执行用例为零")
+        return {"builds": build_count, "testProjects": test_project_count, "testCases": test_case_count}
     finally:
         cleanup_managed_build_artifacts(owned_build_paths)
 
@@ -2269,6 +2305,7 @@ def release(
     *,
     host_root: Path | None = None,
     distribution_root: Path | None = None,
+    reuse_packages: dict[str, Path] | None = None,
 ) -> dict[str, Any]:
     root = root.resolve()
     distribution_root = (distribution_root or root).resolve()
@@ -2292,10 +2329,19 @@ def release(
     generated_packages.mkdir()
     generated_entries: dict[str, dict[str, Any]] = {}
     generated_metadata: dict[str, PackageMetadata] = {}
+    reuse_packages = reuse_packages or {}
+    _require(set(reuse_packages) <= require, "复用包集合超出 release plan")
     for artifact in sorted(require):
         plugin = by_artifact[artifact]
         package = generated_packages / artifact / f"{artifact}-{plugin.version}.zip"
-        build_plugin_package(plugin, package, root, host_root=host_root)
+        reusable = reuse_packages.get(artifact)
+        if reusable is not None:
+            _require(reusable.is_file() and not reusable.is_symlink(), f"复用包不是普通文件：{artifact}")
+            package.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(reusable, package)
+            print(f"[repository] 复用已验证候选包：{artifact} v{plugin.version}", flush=True)
+        else:
+            build_plugin_package(plugin, package, root, host_root=host_root)
         existing = distribution_root / "packages" / artifact / package.name
         if existing.is_file():
             _require(_same_package_bytes(existing, package), f"同一 SemVer 的发行包已存在且内容不同，拒绝覆盖：{_display(existing)}")

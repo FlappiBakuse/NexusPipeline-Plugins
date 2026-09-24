@@ -45,15 +45,34 @@ class ManagedSelectionTests(unittest.TestCase):
         plugin = SimpleNamespace(root=self.root / "plugins/general/EmulatorSupport", artifact_name="EmulatorSupport", kind="managed-code")
         with patch.object(verification.core, "discover_source_plugins", return_value=[plugin]), \
              patch.object(verification.core, "_run") as run, \
-             patch.object(verification.core, "test_managed", return_value=2) as managed:
+             patch.object(verification.core, "test_managed", return_value={"builds": 1, "testProjects": 1, "testCases": 7}) as managed:
             result = verification.run_managed_gate(self.root, self.root, selected=["EmulatorSupport"], host_integration=False)
-        self.assertEqual(result["managedProjectsAndTests"], 2)
+        self.assertEqual((result["managedBuilds"], result["managedTestProjects"], result["managedTestCases"]), (1, 1, 7))
         run.assert_not_called()
         self.assertEqual(managed.call_args.kwargs["include_frontend"], False)
 
     def test_empty_diff_is_not_success(self):
         with self.assertRaisesRegex(verification.core.RepositoryError, "变更范围为空"):
             self.selection([])
+
+    def test_python_unit_gate_rejects_zero_and_unexpected_skip(self):
+        suite = object()
+        for label, result, message in (
+            ("zero", SimpleNamespace(testsRun=0, failures=[], errors=[], skipped=[]), "零用例"),
+            ("skip", SimpleNamespace(testsRun=2, failures=[], errors=[], skipped=[("case", "reason")]), "skipped=1"),
+        ):
+            with self.subTest(label=label), \
+                 patch.object(verification.unittest.defaultTestLoader, "discover", return_value=suite), \
+                 patch.object(verification.unittest.TextTestRunner, "run", return_value=result), \
+                 self.assertRaisesRegex(verification.core.RepositoryError, message):
+                verification.run_python_unit_gate(self.root)
+
+    def test_python_unit_gate_reports_native_counts(self):
+        result = SimpleNamespace(testsRun=7, failures=[], errors=[], skipped=[])
+        with patch.object(verification.unittest.defaultTestLoader, "discover", return_value=object()), \
+             patch.object(verification.unittest.TextTestRunner, "run", return_value=result):
+            self.assertEqual(verification.run_python_unit_gate(self.root),
+                             {"testsRun": 7, "failures": 0, "errors": 0, "skipped": 0})
 
     def test_git_diff_parser_preserves_both_rename_paths_and_whitespace(self):
         raw = "R100\0plugins/general/Old/a file.cs\0plugins/general/Managed/a file.cs\0M\0docs/new\nline.md\0"

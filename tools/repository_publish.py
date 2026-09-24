@@ -303,7 +303,22 @@ class GitHubGitTransport:
                 return {"sourceCommit": source_sha, "publishedCommit": current, "parent": current, "remoteWritten": True, "idempotent": True, **verification}
             self._run(["git", "-c", "user.name=NexusPipeline Stable Publisher", "-c", "user.email=noreply@nexuspipeline.invalid", "commit", "--no-verify", "-m", "chore: 更新稳定插件生成物"], checkout, env=env)
             published = self._run(["git", "rev-parse", "HEAD"], checkout, env=env)
-            self._run(["git", "push", "origin", "HEAD:refs/heads/main"], checkout, env=env)
+            try:
+                self._run(["git", "push", "origin", "HEAD:refs/heads/main"], checkout, env=env)
+            except core.RepositoryError as push_error:
+                # A transport can lose the response after the server accepted the
+                # push.  Read back first; never blindly repeat a write.
+                self._run(["git", "fetch", "origin", "main"], checkout, env=env)
+                observed = self._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
+                if self._matches_candidate(checkout, generated_root, plan, source_sha,
+                                           observed, expected_paths, env):
+                    verification = self._verify_published_tree(
+                        checkout, generated_root, plan, source_sha, observed, files, env)
+                    return {"sourceCommit": source_sha, "publishedCommit": observed,
+                            "parent": current, "remoteWritten": True, "idempotent": False,
+                            "writeRecovered": True, **verification}
+                raise core.RepositoryError(
+                    f"NON_FAST_FORWARD_OR_WRITE_UNCERTAIN：stable push 未确认且远端不是候选字节；{push_error}") from push_error
             verification = self._verify_published_tree(
                 checkout,
                 generated_root,
@@ -428,32 +443,32 @@ class GitHubGitTransport:
                 return False
             if merge_base != source_sha:
                 return False
-            changed = cls._parse_changed_paths(cls._run(["git", "diff", "--name-status", "--find-renames", "-z", f"{source_sha}..{current}"], checkout, env=env))
-            removed = tuple(_safe_relative(value, "stable plan removeArtifacts") for value in plan.get("removeArtifacts", []))
-            if any(path not in expected_paths and not any(path.startswith(directory.rstrip("/") + "/") for directory in removed) for path in changed):
-                return False
+            # Idempotent readback is a statement about already-published bytes.  A
+            # later README or ordinary source commit must not erase that fact.
+            # New writes are still guarded below by the source/baseline diff.
         for relative in ("catalog.json", core.STATE_FILE):
-            current_path = checkout / relative
             candidate_path = generated_root / relative
-            if not current_path.is_file() or current_path.read_bytes() != candidate_path.read_bytes():
+            current_bytes = cls._read_tree_blob(checkout, current, relative, env)
+            if current_bytes is None or current_bytes != candidate_path.read_bytes():
                 return False
         for relative in sorted(path for path in expected_paths if path.startswith("packages/")):
             if not (generated_root / relative).is_file():
                 continue
-            current_path = checkout / relative
-            if not current_path.is_file() or current_path.read_bytes() != (generated_root / relative).read_bytes():
+            current_bytes = cls._read_tree_blob(checkout, current, relative, env)
+            if current_bytes is None or current_bytes != (generated_root / relative).read_bytes():
                 return False
+        tree_paths = cls._run(["git", "ls-tree", "-r", "--name-only", current, "--", "packages"], checkout, env=env).splitlines()
         for relative in plan.get("removePackages", []):
-            target = checkout / _safe_relative(relative, "stable plan removePackages")
-            if target.exists() or target.is_symlink():
+            if _safe_relative(relative, "stable plan removePackages") in tree_paths:
                 return False
         for relative in plan.get("removeArtifacts", []):
-            target = checkout / _safe_relative(relative, "stable plan removeArtifacts")
-            if target.exists() or target.is_symlink():
+            target = _safe_relative(relative, "stable plan removeArtifacts").rstrip("/")
+            if any(path == target or path.startswith(target + "/") for path in tree_paths):
                 return False
         try:
-            state = core.read_json(checkout / core.STATE_FILE)
-        except core.RepositoryError:
+            state_bytes = cls._read_tree_blob(checkout, current, core.STATE_FILE, env)
+            state = json.loads(state_bytes.decode("utf-8")) if state_bytes is not None else None
+        except (UnicodeDecodeError, json.JSONDecodeError):
             return False
         return isinstance(state, dict) and state.get("sourceCommit") == source_sha
 

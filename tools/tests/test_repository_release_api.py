@@ -1,16 +1,44 @@
 from __future__ import annotations
 
 import io
+import sys
 import tempfile
 import unittest
 import urllib.request
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
-from tools import repository_release_api as api
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import repository_release_api as api
 
 
 class ReleaseApiTests(unittest.TestCase):
+    def test_transient_reads_are_bounded_but_writes_are_not_blindly_retried(self):
+        class Opener:
+            def __init__(self):
+                self.calls = 0
+            def open(self, request, timeout):
+                self.calls += 1
+                if self.calls == 1:
+                    raise urllib.error.HTTPError(request.full_url, 503, "temporary", {}, io.BytesIO(b"busy"))
+                response = io.BytesIO(b"{}")
+                response.status = 200
+                return response
+
+        read = Opener()
+        with patch.object(api.urllib.request, "build_opener", return_value=read), \
+             patch.object(api.time, "sleep"):
+            self.assertEqual(api._request("GET", "/repos/owner/repo/releases/1", "token"), (200, b"{}"))
+        self.assertEqual(read.calls, 2)
+
+        write = Opener()
+        with patch.object(api.urllib.request, "build_opener", return_value=write), \
+             patch.object(api.time, "sleep"), \
+             self.assertRaisesRegex(api.ReleaseApiError, "HTTP 503"):
+            api._request("PATCH", "/repos/owner/repo/releases/1", "token", body=b"{}")
+        self.assertEqual(write.calls, 1)
     def test_preview_compare_accepts_only_forward_ancestry(self):
         import json
         for status, allowed in (("ahead", True), ("identical", True),

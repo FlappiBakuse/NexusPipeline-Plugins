@@ -3,6 +3,19 @@ name: Build develop preview candidate
 on:
   workflow_dispatch:
     inputs:
+      operation:
+        description: Build/promote a new preview candidate or restore an original candidate
+        required: true
+        default: candidate
+        type: choice
+        options:
+          - candidate
+          - restore
+      publish:
+        description: Promote the validated candidate with the protected Publisher App
+        required: true
+        default: false
+        type: boolean
       source_ref:
         description: Source ref to build (normally develop)
         required: true
@@ -23,7 +36,7 @@ permissions:
 jobs:
   build-preview:
     name: preview-build
-    if: inputs.candidate_run_id == ''
+    if: inputs.operation == 'candidate'
     runs-on: windows-latest
     concurrency:
       group: plugin-develop-preview-build
@@ -36,10 +49,23 @@ jobs:
       workflow_sha: ${{ steps.source.outputs.workflow_sha }}
     steps:
       - name: Require controlled develop source
+        working-directory: ${{ github.workspace }}
         shell: bash
         env:
           SOURCE_REF: ${{ inputs.source_ref }}
-        run: test "$SOURCE_REF" = develop
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+          PUBLISH: ${{ inputs.publish }}
+          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test "$SOURCE_REF" = develop
+          test -z "$CANDIDATE_RUN_ID"
+          test -z "$CANDIDATE_ARTIFACT_ID"
+          if ! git ls-remote --exit-code "$REPOSITORY_URL" refs/heads/develop >/dev/null 2>&1; then
+            echo '::error title=SOURCE_UNAVAILABLE::Remote develop is required to build a preview candidate.'
+            exit 1
+          fi
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
@@ -106,7 +132,7 @@ jobs:
   promote-preview:
     name: preview-publish
     needs: build-preview
-    if: inputs.candidate_run_id == ''
+    if: inputs.operation == 'candidate' && inputs.publish
     runs-on: ubuntu-latest
     environment: plugin-preview-publish
     concurrency:
@@ -153,7 +179,7 @@ jobs:
 
   restore-preview:
     name: Restore original preview candidate
-    if: inputs.candidate_run_id != ''
+    if: inputs.operation == 'restore'
     runs-on: ubuntu-latest
     environment: plugin-preview-publish
     concurrency:
@@ -166,6 +192,18 @@ jobs:
       run:
         working-directory: NexusPipeline-Plugins
     steps:
+      - name: Require main-controlled restore inputs
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        env:
+          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/main'
+          test -n "$CANDIDATE_RUN_ID"
+          test "$SOURCE_REF" = develop
+          test "$PUBLISH" = true
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
@@ -193,7 +231,7 @@ jobs:
           ARTIFACT_DIGEST: ${{ steps.original.outputs.artifact_digest }}
         run: |
           mkdir -p .generated
-          curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/octet-stream' \
+          curl -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/octet-stream' \
             --output .generated/preview-artifact.zip \
             "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$ARTIFACT_ID/zip"
           python tools/repository.py extract-preview --artifact-zip .generated/preview-artifact.zip \

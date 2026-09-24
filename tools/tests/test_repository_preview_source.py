@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import copy
+import io
 import sys
 import unittest
+import urllib.error
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from repository_preview_source import CandidateSourceError, resolve_candidate
+from repository_preview_source import CandidateSourceError, github_fetch, resolve_candidate
 
 
 REPO = "FlappiBakuse/NexusPipeline-Plugins"
@@ -67,6 +70,27 @@ class CandidateSourceTests(unittest.TestCase):
         paths[f"{PREFIX}/runs/12/artifacts?per_page=100&page=1"]["artifacts"][0]["name"] = "host-diagnostics-12-2"
         with self.assertRaisesRegex(CandidateSourceError, "不存在"):
             self.resolve(paths)
+
+    @mock.patch("repository_preview_source.time.sleep")
+    @mock.patch("repository_preview_source.urllib.request.urlopen")
+    def test_actions_reads_retry_only_three_times_for_transient_failures(self, urlopen, sleep):
+        response = mock.MagicMock()
+        response.__enter__.return_value = io.BytesIO(b'{"ok": true}')
+        urlopen.side_effect = [
+            urllib.error.HTTPError("https://api.github.test", 429, "limited", {"Retry-After": "9"}, io.BytesIO()),
+            urllib.error.HTTPError("https://api.github.test", 503, "temporary", {}, io.BytesIO()),
+            response,
+        ]
+        self.assertEqual(github_fetch("token", "path"), {"ok": True})
+        self.assertEqual(urlopen.call_count, 3)
+        self.assertEqual([call.args[0] for call in sleep.call_args_list], [5, 1])
+
+        urlopen.reset_mock()
+        sleep.reset_mock()
+        urlopen.side_effect = [TimeoutError("timeout")] * 3
+        with self.assertRaisesRegex(CandidateSourceError, "TimeoutError"):
+            github_fetch("token", "path")
+        self.assertEqual(urlopen.call_count, 3)
 
 
 if __name__ == "__main__":
