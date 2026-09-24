@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import io
 import sys
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -58,8 +60,8 @@ class ManagedSelectionTests(unittest.TestCase):
     def test_python_unit_gate_rejects_zero_and_unexpected_skip(self):
         suite = object()
         for label, result, message in (
-            ("zero", SimpleNamespace(testsRun=0, failures=[], errors=[], skipped=[]), "零用例"),
-            ("skip", SimpleNamespace(testsRun=2, failures=[], errors=[], skipped=[("case", "reason")]), "skipped=1"),
+            ("zero", SimpleNamespace(testsRun=0, failures=[], errors=[], skipped=[], unexpectedSuccesses=[], wasSuccessful=lambda: True), "零用例"),
+            ("skip", SimpleNamespace(testsRun=2, failures=[], errors=[], skipped=[("case", "reason")], unexpectedSuccesses=[], wasSuccessful=lambda: True), "skipped=1"),
         ):
             with self.subTest(label=label), \
                  patch.object(verification.unittest.defaultTestLoader, "discover", return_value=suite), \
@@ -68,11 +70,56 @@ class ManagedSelectionTests(unittest.TestCase):
                 verification.run_python_unit_gate(self.root)
 
     def test_python_unit_gate_reports_native_counts(self):
-        result = SimpleNamespace(testsRun=7, failures=[], errors=[], skipped=[])
+        result = SimpleNamespace(testsRun=7, failures=[], errors=[], skipped=[], unexpectedSuccesses=[], wasSuccessful=lambda: True)
         with patch.object(verification.unittest.defaultTestLoader, "discover", return_value=object()), \
              patch.object(verification.unittest.TextTestRunner, "run", return_value=result):
             self.assertEqual(verification.run_python_unit_gate(self.root),
-                             {"testsRun": 7, "failures": 0, "errors": 0, "skipped": 0})
+                             {"testsRun": 7, "failures": 0, "errors": 0, "skipped": 0, "unexpectedSuccesses": 0})
+
+    def test_python_unit_gate_honors_native_unexpected_success(self):
+        class NativeResult(unittest.TestCase):
+            @unittest.expectedFailure
+            def test_unexpectedly_passes(self):
+                self.assertTrue(True)
+
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(NativeResult)
+        with patch.object(verification.unittest.defaultTestLoader, "discover", return_value=suite), \
+             self.assertRaisesRegex(verification.core.RepositoryError, "unexpectedSuccesses=1"):
+            verification.run_python_unit_gate(self.root)
+
+    def test_python_unit_gate_native_pass_skip_failure_error_and_mixed(self):
+        class NativeResult(unittest.TestCase):
+            def test_pass(self):
+                self.assertTrue(True)
+
+            @unittest.skip("selected case")
+            def test_skip(self):
+                self.fail("must not execute")
+
+            def test_failure(self):
+                self.fail("assertion failed")
+
+            def test_error(self):
+                raise RuntimeError("test error")
+
+        cases = (
+            (("test_pass",), None),
+            (("test_skip",), "skipped=1"),
+            (("test_failure",), "failures=1"),
+            (("test_error",), "errors=1"),
+            (("test_pass", "test_failure"), "failures=1"),
+        )
+        for names, error in cases:
+            with self.subTest(names=names):
+                suite = unittest.TestSuite(NativeResult(name) for name in names)
+                output = io.StringIO()
+                with patch.object(verification.unittest.defaultTestLoader, "discover", return_value=suite), redirect_stdout(output):
+                    if error is None:
+                        self.assertEqual(verification.run_python_unit_gate(self.root)["testsRun"], 1)
+                    else:
+                        with self.assertRaisesRegex(verification.core.RepositoryError, error):
+                            verification.run_python_unit_gate(self.root)
+                        self.assertIn("skipped=1" if "test_skip" in names else "FAILED", output.getvalue())
 
     def test_git_diff_parser_preserves_both_rename_paths_and_whitespace(self):
         raw = "R100\0plugins/general/Old/a file.cs\0plugins/general/Managed/a file.cs\0M\0docs/new\nline.md\0"
