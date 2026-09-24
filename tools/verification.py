@@ -53,13 +53,16 @@ def run_python_unit_gate(root: Path) -> dict[str, int]:
     failures = len(result.failures)
     errors = len(result.errors)
     skipped = len(result.skipped)
+    unexpected_successes = len(result.unexpectedSuccesses)
     if tests_run <= 0:
         raise core.RepositoryError("Plugins Python 单元测试发现零用例")
-    if failures or errors or skipped:
+    if not result.wasSuccessful() or skipped:
         raise core.RepositoryError(
             "Plugins Python 单元测试结果不完整："
-            f"testsRun={tests_run} failures={failures} errors={errors} skipped={skipped}")
-    return {"testsRun": tests_run, "failures": failures, "errors": errors, "skipped": skipped}
+            f"testsRun={tests_run} failures={failures} errors={errors} skipped={skipped} "
+            f"unexpectedSuccesses={unexpected_successes}")
+    return {"testsRun": tests_run, "failures": failures, "errors": errors, "skipped": skipped,
+            "unexpectedSuccesses": unexpected_successes}
 
 
 def managed_selection(root: Path, base: str) -> tuple[list[str], str]:
