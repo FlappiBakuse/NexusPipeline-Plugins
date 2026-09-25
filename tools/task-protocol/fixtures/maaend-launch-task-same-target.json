@@ -1,0 +1,14 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "executionContext": { "mode": "pc", "launchOwner": "already_running", "gameTarget": "C:\\Games\\game.exe", "ready": false },
+  "resources": [
+    { "id": "config:mxu-MaaEnd.json", "format": "json", "text": "{\"settings\":{\"autoStartInstanceId\":\"chosen\"},\"instances\":[{\"id\":\"chosen\",\"controllerName\":\"Win32\",\"resourceName\":\"Official\",\"tasks\":[{\"id\":\"launch\",\"taskName\":\"__MXU_LAUNCH__\",\"enabled\":true,\"optionValues\":{\"__MXU_LAUNCH_OPTION__\":{\"type\":\"input\",\"values\":{\"program\":\"C:\\\\Games\\\\game.exe\",\"args\":\"\"}}}}]}]}" },
+    { "id": "interface", "format": "text", "text": "{\"name\":\"MaaEnd\",\"task\":[]}" }
+  ],
+  "tasks": { "chosen/launch": { "enabled": true, "role": "technical" } },
+  "configChecks": [{ "ruleId": "mxu.launch_owner", "evaluation": "satisfied", "executionEffect": "none" }],
+  "batches": [],
+  "results": {},
+  "source": { "type": "source_derived_control_flow", "upstreamCommit": "a7fdd0b32bfadc1df1bf8c6293bf2395676542b8", "note": "MXU v2.6.1 specialTasks.ts input option name and saved value shape; synthetic launch, no program executed." }
+}

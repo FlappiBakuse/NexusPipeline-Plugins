@@ -4,9 +4,24 @@ MaaEnd 的 DailyRewards 五个一级开关（邮件、每日任务、委托、�
 
 实现入口为 `tools/task-protocol/`，发布脚本由生成器写入各插件 `data/`。上游仓库、固定 commit 和逐文件 SHA256 见 [source-lock.json](../tools/task-protocol/source-lock.json)。更新上游后需要重新审查，不能只更新摘要。所有配置和日志夹具均为合成数据，不含用户现场。
 
+## 官方发行发现与本轮资格（2026-09-25，中国时间）
+
+发行页只证明版本存在；源码锁、安装包入口和真实业务支持须分别核验。下列发现不自动扩大本仓库适配器的高级能力。
+
+| 产品 | 最新稳定发行发现 | 本轮可报告范围 |
+|---|---|---|
+| BetterGI | [0.65.0](https://github.com/babalae/better-genshin-impact/releases/tag/0.65.0) | 单配置真实运行结束，3 项未核验；真实手动取消完成且保留游戏，重复领奖/资源边界尚未逐项确认 |
+| March7thAssistant | [v2026.9.25](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.9.25) | 高权限单配置真实运行：1 项确认成功、2 项未核验；静默活动和新发行全部分支尚未确认 |
+| ZenlessZoneZeroOneDragon | [v2.5.2](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.2) | 单配置真实运行 5 项确认成功；多账号和应用组顺序的全部变体仍待运行 |
+| MaaEnd / MXU | [v2.29.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.29.0) / [v2.6.1](https://github.com/MistEO/MXU/releases/tag/v2.6.1) | 明确实例后在高权限 Host 中真实启动游戏并自行退出，3 项确认成功、2 项未核验；超时变体未运行 |
+| MaaStellaSora / MXU | [v1.4.4](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.4.4) / [v2.6.1](https://github.com/MistEO/MXU/releases/tag/v2.6.1) | 本机接口仅由 import 提供任务定义，适配器已兼容并真实启动游戏；3 项未核验，多语言与资源组合未遍历 |
+| BAAH | [BAAH2.4.13](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.13) | PC 客户端单配置真实运行结束，3 项未核验；ADB 和静默领取确认仍待验证 |
+| OkNTE | [v1.4.0](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.0) | 本机 China 启动器自行更新到 v1.4.2；精确官方 CNB 来源与受限计划已通过合成及实际准入。两次完整真实执行均因上游运行元数据/配置写入被旧冻结规则误报，最终修正通过 Host 单测但第三次实测依用户要求取消；主游戏退出后启动器进程仍存活，不能报告受限运行完成。Global 未运行，高级判定仍锁定旧组合 |
+| OkWutheringWaves | [v3.6.7](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.6.7) | 现有固定高级组合；受限路径仍按身份与状态检查，真实游戏未运行 |
+
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
-| BetterGI | GUID/旧任务名、TaskDefinitions、显式 TaskOrder；缺省顺序回退开关键；NextTaskId 限定本轮 | 邮件领取/空邮件；地脉明确失败、协会领取异常和合成树脂异常；地脉不在运行日期；整轮结束仅为边界 | 无一次性游标时的邮件；重复名称、未知任务、消耗资源均保守停止 |
+| BetterGI | GUID/旧任务名、TaskDefinitions、显式 TaskOrder；缺省顺序回退开关键；NextTaskId 限定本轮 | 邮件领取/空邮件；地脉明确失败、协会领取异常和合成树脂异常；地脉不在运行日期；整轮结束仅为边界 | 无一次性游标时，独立邮件或每日奖励失败项；重复名称、未知任务、消耗资源均保守停止 |
 | MaaEnd | MXU autoStartInstanceId 唯一实例、稳定任务 ID、运行时 interface/import、customName/locale、controller/resource 兼容 | MXU stdout 当前任务开始/完成/失败配对；时间前缀不参与身份 | 风险未证实的任务停止；不按显示名称写配置 |
 | MaaStellaSora | 同一 MXU 协议，只接受 MaaStellaSora 接口；机器 ID 保持 maas | 与 MaaEnd 共用来源与配对规则 | 非 MXU、未知接口/缺失实例明确不支持 |
 | March7thAssistant | config.yaml 与上游默认值，13 个一级入口、奖励/活动/资产/历战子开关；父禁用抑制子任务 | 日常目标、宇宙固定次数、当前运行未刷新；奖励子模块的明确完成或无可领奖励均为成功；模块明确失败 | 所有未证明完整重跑安全的模块停止；固定次数/日期不当作成功日志 |
@@ -15,7 +30,13 @@ MaaEnd 的 DailyRewards 五个一级开关（邮件、每日任务、委托、�
 | OkNTE | DailyRoutineTask 的 Routine Items，按上游顺序去重、补默认和处理互斥；子配置只取 DailyRoutineTaskConfigs | 日常范围内开始/完成/失败配对；语言不支持跳过；异常归当前项及后续 blocked | 完整显式布尔选择列表中的日常领取；只补丁选择，不写日常子配置或进度 |
 | OkWutheringWaves | DailyTask 三类体力分支、条件梦魇、隐含奖励和启用的日常附加项 | 捕获后继续的梦魇/花园/合成失败独立保留；花园已完成为已满足跳过 | 隐含步骤缺少独立开关，整轮重跑安全性未证明时停止 |
 
-已识别配置的生产适配器当前 coverage 为 partial；被拒绝的配置为 unsupported，，不承诺任意第三方版本和自定义脚本都能完整判定。没有对应当前运行证据时保持 unknown；未知任务不会被从分母移除。MXU 的外层 callback 不证明每一个内部资源节点都达到业务目标，因此不伪造无独立证据的子任务。
+已识别配置的生产适配器当前 coverage 为 partial；被拒绝的配置为 unsupported，不承诺任意第三方版本和自定义脚本都能完整判定。没有对应当前运行证据时保持 unknown；未知任务不会被从分母移除。MXU 的外层 callback 不证明每一个内部资源节点都达到业务目标，因此不伪造无独立证据的子任务。
+
+## MXU PC 启动准入（v0.16.9）
+
+MaaEnd 与 MaaStellaSora 的自动执行实例在 PC 模式分别评估 Host、上游和已经运行的启动责任。Host 选择启动时必须配置游戏目标，由 Host 的窗口就绪等待负责确认；Host 不启动时，运行前可见游戏窗口或当前实例明确同目标的 `preActions` / `__MXU_LAUNCH__` 任务可准入。没有窗口且双方均无启动动作时阻断；配置了其他启动器或预任务但不能确认它会启动同目标时给未知警告。预览不读取运行时窗口事实，显示未知。启动动作准入不等于 MXU 控制器已连接，运行期仍由 stdout、总预算、启动及无活动超时判断。当前尝试的 MXU 启动动作明确报告程序启动或参数错误时，Host 立即失败、确认进程清理，并使用原有专项任务状态决定是否安全重试。
+
+这条规则只用于 PC：MaaEnd 官方 `AndroidOpenGame` 任务限定 ADB/CloudADB/PlayCover，不能用作 PC 启动证据；MaaStellaSora 官方接口的桌面端、安卓端和 PlayCover 是独立控制器。两者机器 ID 保持现有 `maaend` / `maas`。当前官方定向源码核对：MXU [v2.6.1](https://github.com/MistEO/MXU/releases/tag/v2.6.1) commit `a7fdd0b32bfadc1df1bf8c6293bf2395676542b8`，`src/types/specialTasks.ts` SHA256 `6fd4ee57923ff5f2ac9b6c79b98caf0a8f347c9d9d46380d1db7cb07a3d3e465`、`src/components/Toolbar.tsx` `b3ceb0e9a8199a4163b0687f4d84d402f791980f9f40ccbd4347925fdd20c089`、`src-tauri/src/mxu_actions.rs` `4daef34a40080b23c0f855bca601ee2f9d9dc3cf3dff5968746d6ac4253d1abe`。MaaEnd [v2.29.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.29.0) commit `1ce59e63cf3807212f6655d7eba6981ed2c59508`，`assets/interface.json` SHA256 `85709d60057125789e2f1687604037da58e180bbb512e103ee113a0cce1937e9`；MaaStellaSora [v1.4.4](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.4.4) commit `4009bc79591ad189d80f8f5d74d34d78bb8508cd`，`assets/interface.json` SHA256 `91fffd3dbe413a94205424e8299c4ce0e327edeb481dbccbf0cc4ecbb83f7f`。这是针对启动字段与控制器的审查，不替代两款安装包和真实游戏验证；`source-lock.json` 的高级日志/任务分支仍需逐文件重新审查。
 
 ## 运行结束边界
 
@@ -29,21 +50,23 @@ MaaEnd 的 DailyRewards 五个一级开关（邮件、每日任务、委托、�
 | BAAH | BAAH_main 在 my_AllTask.run 返回后输出“所有任务结束”，早于可选关闭游戏/模拟器；通用退出提示不作为成功依据 |
 | MaaEnd / MaaStellaSora | 同一 stdout epoch 内，全部已选任务具有唯一名称匹配的开始与终态回调；缺失、歧义或日志缺口保持未确认 |
 
-MXU 的 system 语言配置按可用接口翻译解析，观察阶段接受经声明的各语言名称；开始/完成/失败回调支持简中、繁中、英文、日文与韩文。缺失接口翻译时按上游输出去掉 `$` 的键名。stdout 按上游去除名称中的 HTML 标签，显示仍保存原名称；归一化后同名（包括与 unsupported 任务同名）拒绝归属。适配器自身 `*.metadata.json` 的 importTasks 记录固定源码审查得到的导入任务索引，只读取本轮配置涉及的接口分片，避免无关的大型选项树耗尽 Jint 配额。索引未知的导入仍尝试读取，无法确认的任务保留 unsupported；上游调整导入布局时需重新审查。JSONC 解析保留字符串中的 URL、注释样式文本和逗号，宿主原有时间、语句与内存限额保持不变。
+MXU 的 system 语言配置按可用接口翻译解析，观察阶段接受经声明的各语言名称；开始/完成/失败回调支持简中、繁中、英文、日文与韩文。缺失接口翻译时按上游输出去掉 `$` 的键名。stdout 按上游去除名称中的 HTML 标签，显示仍保存原名称；归一化后同名（包括与 unsupported 任务同名）拒绝归属。适配器自身 `*.metadata.json` 的 importTasks 记录固定源码审查得到的导入任务索引，只读取本轮配置涉及的接口分片，避免无关的大型选项树耗尽 Jint 配额。接口可在顶层省略 `task`，前提是声明了非空 import 数组；此时任务定义只从导入分片读取，缺失或无法确认的分片仍降低对应任务覆盖，不以空顶层任务误判整个配置。顶层 `task` 若存在但不是数组仍拒绝解析。索引未知的导入仍尝试读取，无法确认的任务保留 unsupported；上游调整导入布局时需重新审查。JSONC 解析保留字符串中的 URL、注释样式文本和逗号，宿主原有时间、语句与内存限额保持不变。
 
 冷启动选择使用持久化 `enabled`。`runOnce` 不属于上游 SavedTask，也不由 importConfig 恢复；`enabledByController` 由控制器切换逻辑消费，不能直接覆盖冷启动的 enabled。已移除的控制器/资源名称按 importConfig 清除、Toolbar 回退到当前首项，再计算兼容性；不改写用户配置。`Probe-MxuBranches.mjs` 接受显式上游源码和 Host 目录，校验 source-lock 后执行原 TypeScript 纯函数，核实翻译回退、运行时选择、控制器切换和 stdout 规则。
 
-真实实例导出可以通过显式只读回放入口检查；单份当前配置不代表每一份历史日志当时的配置。原始配置、日志及包含实例身份的报告保留在仓库外，正式 fixture 使用合成数据。星塔旅人无真实样本时仅报告同架构源码与合成契约验证，不冒称完成真机验证。
+真实实例导出可以通过显式只读回放入口检查；单份当前配置不代表每一份历史日志当时的配置。原始配置、日志及包含实例身份的报告保留在仓库外，正式 fixture 使用合成数据。星塔旅人已有单配置真实启动和退出样本，业务终态仍未核验；不能借此宣称多语言、全部资源和安装包组合通过。
 
 ## 关键源码分支与反例
 
 - BetterGI `OneDragonFlowViewModel.LoadDisplayTaskListFromConfig` 使用非空 TaskOrder 作为完整可执行顺序，遗漏的开关键不自动追加执行；现代结构缺失定义也不执行。一次性 NextTaskId 在内存中清空，当前适配器对带游标计划停止自动重试。TaskRunner/外层返回可吞内部异常，只有独立规则证明的业务事实才计成功。
 - BetterGI 锁定版本的 `AutoLeyLineOutcropTask.Start` 在“自动地脉花执行失败”之后抛异常；`GoToAdventurersGuildTask.Start` 的 `_retryTimes = 1`，因此协会异常也是终止失败，并映射到“领取每日奖励”。`OneDragonTaskItem` 捕获的树脂异常仍须报告业务失败。这些规则仅在当前选择中名称唯一时归属，重复名字不任选第一个；后续整轮结束不覆盖失败。匹配命名消息边界，不把引用或堆栈提及当成该任务日志。当前修复不代表已有完整开始、成功或内部恢复覆盖；未来上游改变重试次数必须重审。
+- BetterGI 官方 [0.65.0 `OneDragonTaskItem`](https://github.com/babalae/better-genshin-impact/blob/0.65.0/BetterGenshinImpact/Model/OneDragonTaskItem.cs) 将“领取每日奖励”独立挂到 `TaskEnabledList`，依次执行冒险家协会与纪行领取；[`GoToAdventurersGuildTask`](https://github.com/babalae/better-genshin-impact/blob/0.65.0/BetterGenshinImpact/GameTask/Common/Job/GoToAdventurersGuildTask.cs) 对已领每日奖励及探索派遣有状态检查，[`OneDragonFlowViewModel`](https://github.com/babalae/better-genshin-impact/blob/0.65.0/BetterGenshinImpact/ViewModel/Pages/OneDragonFlowViewModel.cs) 以 GUID、TaskOrder 和开关执行。故仅在名称唯一、无一次性 NextTaskId 且收到该项明确失败时，按独立开关重试每日奖励；已成功邮件和无证据尘歌壶项不纳入。真实账号行为仍未验证；版本变化须复核幂等性。
 - MXU `commands/state.rs` 在 stdout 添加毫秒时间前缀。UI 任务消息经 log_to_stdout 才进入宿主；文件中的同名文本、单独结束行、跨 epoch/缺口和重复显示名称都不建立成功。interface import 不在声明白名单或缺失时降低检测覆盖。
 - March7th 日常/宇宙、日周月刷新和奖励子模块独立建模。随机内部补做不会扩大冻结的业务范围；培养目标属于技术角色。奖励总包装完成、保存时间戳、历史分数不能替代子模块日志。命名奖励模块的“奖励完成”和明确“未检测到奖励”表示领取检查已成功完成，无需实际领到物品；所有已启用必需奖励子任务满足后，领取奖励父任务才汇总成功。
 - March7th `InstanceNotCompleted` 从有效配置模板经 `Base.send_notification_with_screenshot` 逐行写入 INFO，随后才截图和发送 ERROR 级通知。四个已核实失败分支记录当前 source/epoch、父任务、目标副本和内部执行序号；首次失败保留 open 问题事件，不提前重启整项任务。连续三次重试耗尽且退出范围才形成失败；相同目标的显式重试、完整轮次和目标次数证据才能恢复对应事件。另一副本成功、通用完成横幅、历史时间戳不能洗掉失败。历战余响与活动调用独立归属；无法确定范围时保留 unattributed_error，不猜给清体力。
 - `Probe-March7thBranches.py` 在哈希锁定的上游原方法体中执行四个通知分支、截图失败、三次重试和同目标恢复，依赖均为内存控制对象。夹具中的公开 issue #690 只有正文摘录及报告者版本，不等同已验证发行二进制或完整运行。孤立的旧式 ERROR 简化行属于负例。默认关闭的签到 [日志桥原型](../tools/march7th-bridge/README.md) 独立于专项 ZIP；它不表示官方安装版已支持静默分支。
 - ZZZ `ApplicationGroupConfig.update_full_app_list` 将未保存的新注册应用默认设为禁用，不需要虚构启用项。`GroupApplication` 先过滤启用与已完成，再调用外层 Application；嵌套 Operation 与应用组结束不代表全部业务成功。
+- 官方 [v2.5.2 `ApplicationGroupConfig`](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/blob/v2.5.2/src/one_dragon/base/operation/application/application_group_config.py) 将尚未持久化的默认应用置于保存列表之前；[`GroupApplication`](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/blob/v2.5.2/src/one_dragon/base/operation/application/group_application.py) 仍为每项输出“应用未启用”并推进游标。观察器只在当前组开始且尚未认领保存项时接受与缺失默认注册身份一致的禁用行，不为其虚构任务或可写选择字段。随后五条已完成保存项各自解释为已满足 skipped；名称不符、缺口、跨 epoch 与未知动态应用仍不认领。
 - ZZZ 绑定根是 `config/<两位实例>/`。新 `one_dragon/_group.yml` 存在时优先使用；不存在时只读取 `one_dragon_app.yml`，不把全局 `one_dragon.yml` 当成任务列表。按锁定 GroupManager 的迁移逻辑，用旧 app_order 排序、app_run_list 决定启用，并补入遗漏的默认注册应用；新注册应用未被旧运行列表选择时保持禁用。旧格式投影仅用于读取，自动重试不改旧列表，因为上游启动会创建新组文件；此时需重新冻结新组后才能获得可验证的补丁目标。`Probe-ZzzMigration.py` 执行锁定上游原类方法验证迁移及新文件优先级。
 - ZZZ 编辑工作副本只保留选中实例并写入 `instance_run: 仅运行当前`，保留 BOM、换行和无关根字段；重复或未知运行模式拒绝。`-i` 仅接受绑定的两位实例号，不接受逗号多实例输入。配置隔离不证明或自动切换游戏认证会话。
 - BAAH `myAllTask.parse_task/run` 先按 TASK_ONOFF 过滤再执行。`CURRENT_PERIOD_TASK_INDEX` 属于 sessiondict，`MyConfig.parse_user_config` 默认清空，独立新进程不继承旧游标。通用 Task.run 完成仅证明 post_condition；CollectMails 和 CollectDailyRewards 存在无业务确认的返回分支，不能据此计成功。当前日志只支持外层任务身份，嵌套收尾不覆盖外层结果。
@@ -52,7 +75,11 @@ MXU 的 system 语言配置按可用接口翻译解析，观察阶段接受经�
 
 两个 ok 插件的初始版本为 `0.1.0`。当前属于开发候选：已核查 China 与 Global 的 ok-ww v3.6.7、ok-nte v1.3.19 完整安装包，日常源码及关键内嵌框架文件与源码锁/对应 wheel 完全一致。经用户明确授权的隔离管理员测试验证官方启动器实际转发 `-a true -u manual -t 1/2 -e`，子进程为包内 Python 3.12.10 `pythonw.exe`，工作目录为 `data/apps/<name>/working/`。解释器保护在业务代码前退出，不能算真实日常完成。
 
-PyAppify 的版本身份异常分支会在手动模式下强制更新；实测异环 v1.3.19 安装包首次启动更新到 v1.3.20。发现/重试阶段只读核对发行 `app.json`、detached HEAD、独立 tag ref 和 manifest 固定的 working 文件 SHA-256，要求与 China/Global 渠道分别匹配的精确版本、已安装、空闲更新器、非运行状态；未知版本及缺失/不匹配身份返回带本地化原因的 unsupported。annotated tag object 与 peeled commit 分别固定，不把两者当同一 SHA。此准入只覆盖检查时的本地身份，不能消除启动器之后远端 tag 变化或外部更新的竞争，固定文件包含入口、配置注册、日常与已解释的业务分支、任务执行器及启动控制器；Host 在运行观察和结束阶段复核，变化后拒绝后续证据及重试。这不验证完整解释器/依赖，也不能证明瞬时替换未发生；完整发行资格仍须执行。`-e` 的框架完成通知不证明业务成功，LauncherTask 完成也不能关闭异环日常范围。
+PyAppify 的版本身份异常分支会在手动模式下强制更新；实测异环 v1.3.19 安装包首次启动更新到 v1.3.20。已验证组合的高级判定只读核对发行 `app.json`、detached HEAD、独立 tag ref 和 manifest 固定的 working 文件 SHA-256，要求与 China/Global 渠道分别匹配的精确版本、已安装、空闲更新器、非运行状态。annotated tag object 与 peeled commit 分别固定，不把两者当同一 SHA。
+
+较新的同主版本可在基础边界成立时受限运行：安装元数据必须指向同款同渠道、当前稳定版本在上游可用版本表中、更新器空闲、HEAD 为完整提交 ID，且仓库 origin 精确指向对应官方来源。OkNTE China 额外接受其[官方构建工作流](https://github.com/BnanZ0/ok-nte/blob/main/.github/workflows/build.yml)列出的精确 `https://cnb.cool/BnanZ0/ok-nte-update.git`；Global 不接受该地址，相似域名和路径也不接受。基础配置对象必须可读取；异环还要求 `Routine Items` 为数组。此分流发生在旧工作文件哈希判定前；Host 仅保留生命周期、超时、取消、清理与隔离，使用单一“任务未核验”占位，不调用旧版观察脚本或选择重试。`single_daily` 只在确认为受限模式且唯一任务为该占位时放行。受限 Host 运行仅把发行资源作为身份冻结对象；启动器自行改写的 `running`、`last_start` 不作为发行身份，可写用户配置仍由现有事务恢复。更新中、错误来源、缺失身份、配置形态不符仍不能进入受限路径；China v1.4.2 的真实正常收尾与 Global 新版安装组合仍待验证。
+
+身份准入只覆盖检查时的本地状态，不能消除启动器之后远端 tag 变化或外部更新的竞争。Host 在运行观察和结束阶段复核冻结资源，变化后拒绝后续证据及重试。固定文件校验不验证完整解释器/依赖，也不能证明瞬时替换未发生；完整发行资格仍须执行。`-e` 的框架完成通知不证明业务成功，LauncherTask 完成也不能关闭异环日常范围。
 
 可复现的上游对照工具（所有输出使用仓库外新路径，游戏与 GUI 不会启动）：
 
@@ -119,10 +146,10 @@ python tools/Probe-OkNteBranches.py --source <锁定DailyRoutineTask.py> --outpu
 
 China 与 Global 使用独立的 commit/tag 身份，关键 working 文件逐字节一致。China 隔离官方 EXE 的参数转发测试同样通过；两款启动后的版本和业务入口保持原身份。`fixtures/resources/` 中的共享文件明确标注 synthetic，仅测试真实 Host 的哈希机制，不能用作官方包的来源证据。
 
-M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 在明确有后续队列时阻断，没有后续时允许，队列未知则提醒；普通暂停与 Host 清理不冲突，不要求用户强制关闭游戏或脚本。
+M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上游在 Host 配置恢复前继续循环，因此即使是队列末项也阻断；普通暂停与 Host 清理不冲突，不要求用户强制关闭游戏或脚本。
 
 BAAH 目标字段 `TARGET_EMULATOR_PATH`、`TARGET_IP_PATH`、`TARGET_PORT` 来自当前用户主配置，软件配置仅提供 `SAVE_LOG_TO_FILE`。路径声明按唯一主配置解析，文件改名不会切换账号；缺省 IP/port 按锁定 defaultSettings 为 127.0.0.1/5555。端口支持原生整数；显式 null 或错误类型不伪装为缺省。直接 ADB 序列号不能与 Host 的网络端点证明为同一设备，显示 unknown/warn。日志开关缺省 false；文件日志关闭且无可用 stdout 时阻断，有可用 stdout 时无需强制开启文件日志。
 
-Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`（id/artifact/root/expectedEvaluation）只读捕获官方安装资源，账号配置仍为合成夹具；`output` 指向不存在的报告路径。`--validator-comparison <inputs.json>` 使用显式 legacyCommit/scripts（artifact/path/sha256）与当前四个生产适配器进行只读 Jint 对照，覆盖路径、ADB 默认值和日志开关。两者均先传 `--plugin-root <插件检出>`；不能用合成资源集合代替安装来源证据。运行前用 `dotnet build <Host>/tools/NexusPipeline.TaskProtocolTests -m:1 -p:NexusTestHost=true` 构建，随后运行对应 Test Host 输出 DLL。
+Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`（id/artifact/root/expectedEvaluation）只读捕获官方安装资源，账号配置仍为合成夹具；`output` 指向不存在的报告路径。先传 `--plugin-root <插件检出>`；不能用合成资源集合代替安装来源证据。旧 `configValidator` 对照入口已随该执行器退役。运行前用 `dotnet build <Host>/tools/NexusPipeline.TaskProtocolTests -m:1 -p:NexusTestHost=true` 构建，随后运行对应 Test Host 输出 DLL。
 
 MXU 匿名 focus 的限制已通过锁定原 `handleCallback` 实际执行核实：异步内容解析可晚于下一任务开始，输出 log/stdout 不携带原 task_id。适配器因此不按“最近任务”分配它，也不把此类文本当成独立业务终态；两产品均有 Jint 反例。外层回调只能证明其自身配对范围，无身份的内部 focus 仍是明确受限项，不能承诺从外层成功确认每个内部资源节点。

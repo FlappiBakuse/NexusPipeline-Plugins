@@ -13,13 +13,12 @@ plugins/specialized/Example/
 └── data/
     ├── resolve.json
     ├── judge.js
-    ├── config-validator.js
-    └── config-editor.js
+    └── editor.js
 ```
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
-上例展示的是兼容旧插件的最小目录。启用 `taskProtocol` 0.1.0 的插件应把任务/原因/诊断词典放在 `data/i18n/`，公开的 `configEditor` 字段仍保持不变但资产路径使用 `data/editor.js`；0.1.0 插件不得声明 `configValidator`，配置检查由 discover 的 `configAssessment` 提供。
+上例是目录示意。专项插件应声明 `taskProtocol` 0.1.0，把任务/原因/诊断词典放在 `data/i18n/`；公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
 
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
@@ -43,8 +42,7 @@ plugins/specialized/Example/
   "capabilities": [],
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
-  "configValidator": "data/config-validator.js",
-  "configEditor": "data/config-editor.js"
+  "configEditor": "data/editor.js"
 }
 ```
 
@@ -64,12 +62,12 @@ plugins/specialized/Example/
 | `capabilities` | 能力 key 列表 | 已接入宿主语义的 key：`emulator`（脚本实例可选「安卓模拟器」启动方式；此声明不注册模拟器驱动）、`self-managed-pc-launch`（PC 客户端启动由脚本自身含启动器完成，脚本弹窗在 PC 模式下禁用游戏启动项；宿主仅在运行时收紧 PC 启动计划，保留用户保存的启动参数）、`no-fresh-config`（插件不允许使用全新配置文件模式） |
 | `resolve` | 推导规则文件，相对插件目录 | 文件必须存在 |
 | `judgeScript` | 判断脚本，相对插件目录 | 文件必须存在；扩展名决定语言 |
-| `configValidator` | 旧插件配置编辑完成后的可选配置校验与自修复脚本，相对插件目录 | 仅无 0.1.0 `taskProtocol` 的过渡插件可声明；必须是插件目录内存在的 `.js` 文件；0.1.0 与该字段双声明会被拒绝 |
+| `configValidator` | 已退役的旧字段 | Host v0.16.9 拒绝声明此字段的包，并提示升级或卸载；用户配置不会被修改 |
 | `configEditor` | 配置编辑准备阶段的可选工作副本调整脚本，相对插件目录 | 仅 `data-specialized` 可声明；公共字段不改；0.1.0 官方资产约定为 `data/editor.js` |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
 
-`data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configValidator`、`configEditor` 或 0.1.0 `taskProtocol` 三阶段脚本的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。0.1.0 的 discover 配置检查是只读的，不提供任意浏览器代码执行能力。
+`data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configEditor` 或 0.1.0 `taskProtocol` 三阶段脚本的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。0.1.0 的 discover 配置检查是只读的，不提供任意浏览器代码执行能力。
 
 宿主内置 Generic ADB 与 MuMuManager。雷电、夜神和 BlueStacks 的厂商专属识别及实例关闭由官方 managed-code `EmulatorSupport` 扩展提供；需要这些厂商行为时，用户须在插件商店安装并启用扩展。
 
@@ -91,27 +89,7 @@ plugins/specialized/Example/
 
 `zh-CN` 与 `en-US` 资源必须使用相同的 key 集合和占位符集合。key 使用 ASCII 字母、数字、`.`、`_`、`-`，资源值不能为空；输入字段可通过 `labelKey` 与 `descriptionKey` 引用这些资源，`label` 与 `description` 作为回退文本保留。宿主按请求语言返回解析后的 `label` 与 `description`，持久化输入名、默认值和校验规则保持不变。
 
-`configValidator` 是旧插件的可选过渡能力，不影响没有声明该字段的插件；0.1.0 插件不得与它双声明。宿主在两个时机执行旧校验脚本：
-
-- `config-edit`：配置编辑提交成功后，以当前脚本实例用户的配置 store 为主工作根目录运行一次。
-- `script-save`：脚本实例保存（新建/编辑）后，按每个绑定用户逐个以其 store 为根运行，通知聚合去重后随保存响应返回。
-
-两种时机都通过 `nexus.input.trigger` 区分。脚本工作根目录固定为当前用户的配置 store，只能通过相对路径访问其中的文件；保存结果不会因为脚本语法、运行时或超时错误回滚，脚本已经写入的文件也会保留。取消配置编辑不会执行校验脚本。
-
-脚本可使用以下宿主 API：
-
-| API | 作用 |
-|---|---|
-| `nexus.listFiles()` | 返回 store 内的相对文件路径列表（附加配置快照条目带 `@extra<序号>/` 前缀） |
-| `nexus.readFile(path)` | 读取一个相对文件；无法读取时返回 `null` |
-| `nexus.writeFile(path, content)` | 以单文件原子替换方式写入文本并返回成功状态（`@extra` 前缀目标被拒绝） |
-| `nexus.exists(path)` | 检查相对文件是否存在 |
-| `nexus.toast(message, kind)` | 排队本次结果中的短提示 |
-| `nexus.notify(title, body, kind)` | 排队本次结果中的角落通知 |
-
-`nexus.input.extras` 按声明顺序列出附加配置路径（`path`）与其用户快照文件清单（`files`）；校验脚本以 `@extra<序号>/相对路径` **只读**访问对应快照，用于与 `input.script` 的当前设置（如游戏路径）做一致性比较。校验脚本使用内置 Jint 执行，受执行时长、单文件读写大小、文件列表和反馈数量限制。脚本没有删除、网络、进程、PowerShell、Node.js、Python、CLR 或环境变量 API；路径必须保持在当前 store 与附加配置快照内。建议把校验设计为幂等的比较与提醒，并在输入文件缺失、内容不完整或格式错误时保守跳过。
-
-0.1.0 插件不使用上述写型校验器迁移语义。它在三阶段 `discover` 中返回 `configAssessment`，只能读取已声明配置资源；保存成功后检查失败不回滚保存。关键阻断会影响运行准入，但不影响保存；普通路径不一致或可由上游接管的情形应返回 warning。具体字段、规则 ID、环境目标和 `nexus.inspectDeclaredTarget(id)` 权限见[专项任务协议](TASK_PROTOCOL.md)。
+Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例保存后的检查统一由 `discover.configAssessment` 提供，只读取已声明配置资源；保存成功后检查失败不回滚保存。关键阻断会影响运行准入，但不影响保存；普通路径不一致或可由上游接管的情形应返回 warning。具体字段、规则 ID、环境目标和 `nexus.inspectDeclaredTarget(id)` 权限见[专项任务协议](TASK_PROTOCOL.md)。
 
 ### 配置编辑脚本
 
@@ -153,7 +131,7 @@ plugins/specialized/Example/
 
 `paths` 中的 `mainExe`、`args`、`configPath`、`logPath` 都应提供明确值。`mainExe` 解析后必须指向真实存在的文件，其他路径由宿主在运行和配置编辑阶段继续解析。`logPath` 允许为空字符串：为空表示目标软件没有专用日志文件，判定日志改由进程标准输出提供。
 
-`paths.extraConfigPaths`（可选）是附加配置文件/文件夹路径数组（相对脚本根目录，支持 `{input:名称}`）。附加路径与主配置路径一样按用户快照隔离交换（运行前快照覆盖现场、运行后与编辑提交差异入库，首次编辑先生成工作副本，保存时建立快照），配置校验脚本可以读取可见的用户快照，**判定脚本始终不可见**。适用对象是软件级配置（如 BAAH 的 `DATA/CONFIGS/software_config.json`、BetterGI 的 `User/config.json`）；快照缺失宽容，现场也不存在时保持为空。
+`paths.extraConfigPaths`（可选）是附加配置文件/文件夹路径数组（相对脚本根目录，支持 `{input:名称}`）。附加路径与主配置路径一样按用户快照隔离交换（运行前快照覆盖现场、运行后与编辑提交差异入库，首次编辑先生成工作副本，保存时建立快照）；协议诊断只能读取声明的资源，**判定脚本始终不可见**。适用对象是软件级配置（如 BAAH 的 `DATA/CONFIGS/software_config.json`、BetterGI 的 `User/config.json`）；快照缺失宽容，现场也不存在时保持为空。
 
 ### require
 
@@ -268,7 +246,7 @@ plugins/specialized/Example/
 ## 发布前检查
 
 - 插件目录名与 manifest `artifactName` 严格一致，manifest `name` 使用小写机器标识。
-- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在；若声明 `configValidator`，对应脚本也必须存在且插件不能是 0.1.0；0.1.0 插件必须具备 `taskProtocol.configRules`、`environmentChecks`、`data/i18n/` 词典和三阶段脚本。
+- `kind` 为 `data-specialized`，`resolve` 和 `judgeScript` 文件存在；不得声明 `configValidator`；0.1.0 插件必须具备 `taskProtocol.configRules`、`environmentChecks`、`data/i18n/` 词典和三阶段脚本。
 - 所有 `require` 在目标软件目录中都能找到，向上搜索不超过 4 层。
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。

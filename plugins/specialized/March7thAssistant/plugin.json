@@ -5,7 +5,7 @@
   "displayName": "三月七小助手",
   "gameName": "崩坏：星穹铁道",
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.8",
   "localization": {
@@ -29,13 +29,38 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "march7th.game_target", "required": true, "criticality": "advisory_or_contextual" },
-        { "id": "march7th.finish_action", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "march7th.process_exit", "required": true, "criticality": "advisory_or_contextual" }
-      ],
-      "environmentChecks": [
-        { "id": "march7th-game-target", "source": { "kind": "config", "resourceId": "config:config.yaml", "selector": ["game_path"] }, "expectedKind": "file", "relativeBase": "none", "networkAccess": false, "followReparsePoints": false }
-      ]
-    }
+    "configRules": [
+      {
+        "id": "march7th.game_target",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      },
+      {
+        "id": "march7th.finish_action",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "march7th.process_exit",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      }
+    ],
+    "environmentChecks": [
+      {
+        "id": "march7th-game-target",
+        "source": {
+          "kind": "config",
+          "resourceId": "config:config.yaml",
+          "selector": [
+            "game_path"
+          ]
+        },
+        "expectedKind": "file",
+        "relativeBase": "none",
+        "networkAccess": false,
+        "followReparsePoints": false
+      }
+    ]
   }
+}

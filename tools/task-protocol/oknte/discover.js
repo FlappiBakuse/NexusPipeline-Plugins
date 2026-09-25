@@ -3,6 +3,12 @@ function discover() {
   if (!runtimeReady(plan)) return plan;
   const config = configOne(r => r.id === 'config:DailyRoutineTask.json');
   requireValue(object(config.document));
+  if (plan.runtimeRestricted) {
+    requireValue(Array.isArray(config.document['Routine Items']));
+    addTask(plan, config.id, 'runtime_unverified', '本次基础流程（任务未核验）', true, null, 'unsafe', 'unsupported');
+    delete plan.runtimeRestricted;
+    return plan;
+  }
   const normalized = normalizeItems(config.document['Routine Items'], ADAPTER.entries);
   for (const item of normalized.items) {
     const entry = ADAPTER.entries.find(e => e.id === item.id);

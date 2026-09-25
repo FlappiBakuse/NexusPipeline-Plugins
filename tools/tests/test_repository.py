@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import json
 import subprocess
 import tempfile
 import unittest
@@ -495,6 +496,24 @@ class RepositoryCoreTests(unittest.TestCase):
             _package_files(payload, package)
             with self.assertRaisesRegex(RepositoryError, "浏览器目录"):
                 core._validate_zip(package, plugin)
+        finally:
+            self._remove_tree(root)
+
+    def test_retired_config_validator_is_rejected_in_source_and_zip(self) -> None:
+        root = self._create_git_fixture()
+        try:
+            plugin_root = root / "plugins" / "specialized" / "Alpha"
+            manifest_path = plugin_root / "plugin.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["configValidator"] = "data/config-validator.js"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(RepositoryError, "configValidator"):
+                validate_source_plugin(plugin_root)
+            package = root / "Alpha-0.1.0.zip"
+            with zipfile.ZipFile(package, "w") as archive:
+                archive.write(manifest_path, "plugin.json")
+            with self.assertRaisesRegex(RepositoryError, "configValidator"):
+                core._validate_zip(package)
         finally:
             self._remove_tree(root)
 

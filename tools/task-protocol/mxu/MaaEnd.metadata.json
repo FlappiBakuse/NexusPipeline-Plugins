@@ -86,6 +86,7 @@
     "ko-KR": "locales/interface/ko_kr.json"
   },
   "technical": [
+    "__MXU_LAUNCH__",
     "AndroidOpenGame",
     "CloseGame",
     "CloseGamePC",
@@ -257,6 +258,19 @@
   },
   "protocolVersion": "0.1.0",
   "configRules": [
+    {
+      "id": "mxu.launch_owner",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "mxu_launch_owner",
+      "resourceId": "config:mxu-MaaEnd.json",
+      "fallback": "未确认游戏窗口就绪，且当前自动执行实例没有明确的同目标启动动作；请让宿主启动、在上游配置启动，或先运行游戏。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": ["settings", "autoStartInstanceId"]
+      }
+    },
     {
       "id": "mxu.autostart_target",
       "required": true,

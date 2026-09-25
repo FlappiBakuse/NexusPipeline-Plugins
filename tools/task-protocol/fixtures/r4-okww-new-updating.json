@@ -1,0 +1,15 @@
+{
+  "artifact": "OkWutheringWaves",
+  "coverage": "unsupported",
+  "resources": [
+    { "id": "config:DailyTask.json", "format": "json", "text": "{\"Which to Farm\":\"Tacet Suppression\"}" },
+    { "id": "runtime-app", "format": "json", "text": "{\"name\":\"ok-ww\",\"installed\":true,\"current_profile\":\"Global\",\"current_version\":\"v3.6.8\",\"update_state\":\"installing\",\"update_target_version\":\"v3.6.8\",\"update_error\":null,\"running\":false,\"available_versions\":[\"v3.6.8\"]}" },
+    { "id": "runtime-head", "format": "text", "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" },
+    { "id": "runtime-origin", "format": "text", "text": "[remote \"origin\"]\nurl = https://github.com/ok-oldking/ok-wuthering-waves.git\n" }
+  ],
+  "tasks": {},
+  "configChecks": [ { "ruleId": "okscript.distribution", "evaluation": "unknown", "executionEffect": "block" } ],
+  "batches": [],
+  "results": {},
+  "source": { "type": "synthetic", "note": "Official origin does not permit launch while the updater is installing a new version." }
+}

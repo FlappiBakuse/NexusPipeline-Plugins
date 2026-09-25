@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
   "changelog": [
     {
+      "version": "0.3.1",
+      "date": "2026-09-25",
+      "items": [
+        "按官方每日奖励独立开关选择安全重试，并识别关闭游戏和软件动作。"
+      ]
+    },
+    {
       "version": "0.3.0",
       "date": "2026-09-21",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-09-13",
       "items": [
         "将最低宿主版本要求更新为 0.15.11。"
-      ]
-    },
-    {
-      "version": "0.2.8",
-      "date": "2026-09-10",
-      "items": [
-        "修正英文商店历史元数据，运行行为保持不变。"
       ]
     }
   ],
@@ -48,6 +48,12 @@
       ],
       "changelog": [
         {
+          "version": "0.3.1",
+          "items": [
+            "Added guarded daily-reward retry selection and the close-game-and-app action."
+          ]
+        },
+        {
           "version": "0.3.0",
           "items": [
             "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
@@ -57,12 +63,6 @@
           "version": "0.2.10",
           "items": [
             "Updated the minimum host version requirement to 0.15.11."
-          ]
-        },
-        {
-          "version": "0.2.8",
-          "items": [
-            "Corrected the English store history metadata; runtime behavior is unchanged."
           ]
         }
       ]

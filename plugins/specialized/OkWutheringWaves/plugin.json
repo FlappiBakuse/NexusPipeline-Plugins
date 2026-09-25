@@ -5,9 +5,9 @@
   "displayName": "ok-ww 日常",
   "gameName": "鸣潮",
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.9",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "capabilities": [
@@ -43,6 +43,13 @@
         "id": "runtime-tag",
         "source": "root",
         "path": "data/apps/ok-ww/repo/.git/refs/tags/v3.6.7",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "runtime-origin",
+        "source": "root",
+        "path": "data/apps/ok-ww/repo/.git/config",
         "format": "text",
         "required": false
       },

@@ -42,7 +42,7 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 ## discover 配置诊断
 
-`0.1.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`，并且不得同时声明旧的 `configValidator`。没有声明 `taskProtocol` 的旧插件仍可使用原有校验器。
+`0.1.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`。Host v0.16.9 拒绝声明已退役 `configValidator` 的旧包，并提示升级或卸载，用户配置不变。
 
 `configRules` 是插件规则 ID 清单，形如 `{ "id": "example.configuration", "required": true, "criticality": "advisory_or_contextual" }`；`criticality` 只能是 `critical_when_applicable` 或 `advisory_or_contextual`。每次 discover 必须为每条 required 规则返回一次 `satisfied`、`violated`、`unknown` 或 `not_applicable`，不能缺失后默认为通过。
 
@@ -69,6 +69,8 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 `0.1.0` discover 输入附带 Host 生成的 `executionContext`。脚本只能调用 `nexus.inspectDeclaredTarget(id)` 查询 manifest 已声明目标的状态/类型/上下文匹配结果；API 不接受任意路径、不返回原始内容、不读网络、不启动进程。Host 将合法评估聚合为独立的 `currentReadiness`（ready、attention、unknown、blocked），并生成 `checkedAt`、`configRevision`、`contextFingerprint` 和 `assessmentId`。这些可信身份不能由插件伪造，语言变化也不能改变任务行为签名。
 
 配置保存成功后，诊断失败只更新检查状态，不回滚保存。预览是只读的；启动前、前置脚本完成后和 retry 前均须用实际配置重新检查。阻断启动建立 `admissionBlocked` 事实，不创建虚假的游戏 attempt、任务失败日志或成功配额消耗；历史显示“未启动：配置检查未通过”。
+
+系统动作判定按当前绑定和实际队列上下文执行。BetterGI 已保存的“关闭游戏和软件”明确表示关闭游戏并退出上游程序；若后续队列仍需游戏则阻断，单独或末项运行可放行。上游 Loop、关机、睡眠、休眠、重启及注销在 Host 完成配置恢复前可能执行，即使是队列末项也阻断；这些动作需用户在上游配置中调整后重新诊断。静音/取消静音不作为整机阻断。未知动作保留 unknown，不从中文字面猜系统动作。
 
 可选配置文件缺失时仍返回相应检查；`locations` 不得引用本次 `configResources` 中未暴露的配置 ID，可提供绑定编辑器或刷新动作。必需关键规则执行异常返回 `unknown/error/block`，不能因异常降为建议。宿主继续拒绝未授权位置，不扩大配置读取范围。
 
@@ -106,7 +108,7 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 `phase: retry` 输入包含 originalPlan、taskStates、attemptsUsed、maxAttempts、cancelled、budgetExhausted、configResources。输出 `{protocolVersion,type:"retry",decision,reasonCode,includedTaskIds,prerequisiteTaskIds,expandedUnitIds,filePatches}`。decision 为 stop/selective，stop 必须所有动作数组为空。
 
-每个 filePatch 为 `{resourceId,format,expectedRevision,operations}`；每项 operation 为 `{selector,expected,value,purpose}`。revision 是宿主生成的随机不透明令牌，只用于当前快照 CAS，不能缓存到下次调用。宿主另行计算失败与有证据 blocked 的闭包，验证必要前置与重试单位。conditional/unsafe/unknown 风险均停止自动重试，不开启原先关闭的业务任务。提升父任务范围要验证整个范围安全。
+每个 filePatch 为 `{resourceId,format,expectedRevision,operations}`；每项 operation 为 `{selector,expected,value,purpose}`。revision 是宿主生成的随机不透明令牌，只用于当前快照 CAS，不能缓存到下次调用。宿主对每个明确失败或有证据 blocked 的候选独立计算依赖及重试单位闭包；只有整个闭包的风险均为 safe 才纳入同一次选择。不相关的危险失败或 unknown 不否决合格候选；共享重试单位中有 conditional/unsafe/unknown 风险时，该候选仍不能自动重试。不开启原先关闭的业务任务。提升父任务范围要验证整个范围安全。
 
 多文件补丁先全部预检，再通过 staged/committed journal 提交。停止目标进程并确认清理后，仅恢复原始选择，保留实际运行后计数；随后才同步用户快照。第三方改动或恢复冲突时保留现场，拒绝覆盖。宿主崩溃后的任务检查点以 interrupted 历史恢复，已确认事实保留，未终结任务为 unknown。
 

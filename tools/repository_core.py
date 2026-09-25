@@ -528,7 +528,7 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     _safe_relative(plugin, manifest.get("resolve"), f"数据化插件 {name} 的 resolve", ".json")
     judge_path = _safe_relative(plugin, manifest.get("judgeScript"), f"数据化插件 {name} 的 judgeScript")
     _validate_judge_locale_contract(plugin, manifest, judge_path)
-    for field in ("configValidator", "configEditor"):
+    for field in ("configEditor",):
         if field in manifest:
             _safe_relative(plugin, manifest.get(field), f"数据化插件 {name} 的 {field}", ".js")
     resolve_path = _safe_relative(plugin, manifest.get("resolve"), f"数据化插件 {name} 的 resolve", ".json")
@@ -807,7 +807,7 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
         _require(asset.stat().st_size <= 256 * 1024, "task localization asset too large")
         return asset.read_bytes()
     _validate_task_localization(manifest, read_text_asset)
-    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+    for field in ("judgeScript", "configEditor", "discoverScript", "retryScript"):
         if field not in declarations:
             continue
         script = _safe_relative(root, declarations.get(field), f"专项插件 {artifact} 的 {field}")
@@ -974,6 +974,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     manifest = read_json(manifest_path)
     store = read_json(store_path)
     _require(isinstance(manifest, dict), f"plugin.json 必须是对象：{_display(manifest_path)}")
+    _require("configValidator" not in manifest, f"插件 {root.name} 声明已退役的 configValidator；请升级到 taskProtocol 配置诊断")
     _require(isinstance(store, dict), f"store.json 必须是对象：{_display(store_path)}")
     _task_protocol_scripts(manifest)
     _require(manifest.get("schemaVersion") == 2, f"插件 {root.name} 的 plugin.json schemaVersion 必须为 2")
@@ -1018,7 +1019,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
         _require(bool(projects), f"managed-code 插件 {artifact} 缺少 src/*.csproj")
         api_version = manifest.get("apiVersion")
         _require(isinstance(api_version, str) and re.fullmatch(r"\d+\.\d+", api_version), f"managed-code 插件 {artifact} 的 apiVersion 无效")
-    if "configValidator" in manifest or "configEditor" in manifest:
+    if "configEditor" in manifest:
         _require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)
     homepage = store.get("homepage", "")
@@ -1886,6 +1887,7 @@ def _validate_specialized_zip_payload(
     manifest: dict[str, Any],
     package: Path,
     infos: dict[str, zipfile.ZipInfo],
+    allow_legacy_archive: bool = False,
 ) -> None:
     artifact = str(manifest.get("artifactName", package.stem))
     _validate_specialized_manifest_contract(manifest, f"ZIP {_display(package)}")
@@ -1915,7 +1917,8 @@ def _validate_specialized_zip_payload(
         _require(path in infos and infos[path].file_size <= 256 * 1024, "task localization asset missing or too large")
         return archive.read(infos[path])
     _validate_task_localization(manifest, read_text_asset)
-    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+    fields = ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript") if allow_legacy_archive else ("judgeScript", "configEditor", "discoverScript", "retryScript")
+    for field in fields:
         value = declarations.get(field)
         if value is None:
             continue
@@ -1959,12 +1962,14 @@ def _validate_zip(
     expected_artifact: str | None = None,
     expected_version: str | None = None,
     expected_sha256: str | None = None,
+    allow_legacy_archive: bool = False,
 ) -> None:
     try:
         with zipfile.ZipFile(package) as archive:
             infos = archive.infolist()
             info_by_name = _validate_zip_layout(infos, package)
             manifest = _zip_json(archive, "plugin.json", package, info_by_name)
+            _require(allow_legacy_archive or "configValidator" not in manifest, f"ZIP 声明已退役的 configValidator：{_display(package)}")
             _task_protocol_scripts(manifest)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
             _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
@@ -1995,11 +2000,11 @@ def _validate_zip(
                     f"ZIP manifest 与源码不一致：{_display(package)}",
                 )
                 if expected.kind == "data-specialized":
-                    _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
+                    _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name, allow_legacy_archive)
                 else:
                     _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
             elif str(manifest.get("kind", "")).strip().lower() == "data-specialized":
-                _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
+                _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name, allow_legacy_archive)
             elif str(manifest.get("kind", "")).strip().lower() == "managed-code":
                 _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
     except zipfile.BadZipFile as exc:
@@ -2026,7 +2031,7 @@ def audit(root: Path) -> int:
         _require(len(packages) <= MAX_RETAINED_PACKAGES, f"插件发行包超过最近 {MAX_RETAINED_PACKAGES} 个版本：{directory.name}")
         for package in packages:
             _require(_version_from_package(package, directory.name) is not None, f"发行包文件名无效：{_display(package)}")
-            _validate_zip(package)
+            _validate_zip(package, allow_legacy_archive=True)
             checked += 1
     print(f"[repository] Full Audit 通过：检查 {checked} 个 ZIP、{len(plugins)} 个当前 catalog 条目", flush=True)
     return checked

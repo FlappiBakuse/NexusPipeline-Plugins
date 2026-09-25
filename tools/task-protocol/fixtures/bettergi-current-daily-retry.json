@@ -1,0 +1,37 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "source": {
+    "type": "source_derived",
+    "originalArtifact": null,
+    "upstreamCommit": "f29b0828ab4f8f91d9087152dcb487719e80fa16",
+    "scope": "0.65.0 OneDragonTaskItem and GoToAdventurersGuildTask; synthetic failure, not a real account run"
+  },
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskDefinitions\":{\"mail\":\"领取邮件\",\"daily\":\"领取每日奖励\",\"teapot\":\"领取尘歌壶奖励\"},\"TaskOrder\":[\"mail\",\"daily\",\"teapot\"],\"TaskEnabledList\":{\"mail\":true,\"daily\":true,\"teapot\":true},\"NextTaskId\":\"\"}"
+    }
+  ],
+  "tasks": {
+    "mail": { "enabled": true },
+    "daily": { "enabled": true },
+    "teapot": { "enabled": true }
+  },
+  "batches": [
+    {
+      "lines": [
+        "邮件：全部领取",
+        "前往冒险家协会领取奖励执行异常：传送失败",
+        "一条龙和配置组任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "mail": "succeeded",
+    "daily": "failed",
+    "teapot": "unknown"
+  },
+  "boundary": "ended"
+}

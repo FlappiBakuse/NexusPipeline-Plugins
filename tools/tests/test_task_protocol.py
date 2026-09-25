@@ -203,6 +203,13 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
                 'bettergi.finish_action',
             ),
             (
+                'BetterGI',
+                'config:fixture.json',
+                {'TaskEnabledList': {'daily': True}, 'CompletionAction': '关闭游戏和软件'},
+                {},
+                'bettergi.finish_action',
+            ),
+            (
                 'MaaEnd',
                 'config:mxu-MaaEnd.json',
                 {

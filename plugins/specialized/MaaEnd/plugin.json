@@ -5,7 +5,7 @@
   "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.8",
   "capabilities": [
@@ -544,11 +544,28 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" },
-        { "id": "mxu.finish_action", "required": true, "criticality": "critical_when_applicable" }
-      ],
-      "environmentChecks": []
-    }
+    "configRules": [
+      {
+        "id": "mxu.launch_owner",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "mxu.autostart_target",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "mxu.controller_resource",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      },
+      {
+        "id": "mxu.finish_action",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      }
+    ],
+    "environmentChecks": []
   }
+}

@@ -5,7 +5,7 @@
   "displayName": "星塔助手",
   "gameName": "星塔旅人",
   "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.8",
   "capabilities": [
@@ -152,11 +152,28 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "mxu.autostart_target", "required": true, "criticality": "critical_when_applicable" },
-        { "id": "mxu.controller_resource", "required": true, "criticality": "advisory_or_contextual" },
-        { "id": "mxu.finish_action", "required": true, "criticality": "critical_when_applicable" }
-      ],
-      "environmentChecks": []
-    }
+    "configRules": [
+      {
+        "id": "mxu.launch_owner",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "mxu.autostart_target",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
+        "id": "mxu.controller_resource",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      },
+      {
+        "id": "mxu.finish_action",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      }
+    ],
+    "environmentChecks": []
   }
+}

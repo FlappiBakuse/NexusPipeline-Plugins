@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configValidator`、`configEditor`；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider。
+- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configEditor`；已退役的 `configValidator` 会被拒绝；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider。
 
 ## 开发流程
 
@@ -70,23 +70,15 @@ managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotne
 - `resolve.json` 的每个 `require` 条件；
 - 根目录、嵌套目录和 `searchUpward` 场景；
 - 配置路径为文件与目录的场景；
-- 若声明 `configValidator`，覆盖配置编辑完成后的读取、修改、提示和超时行为；
+- taskProtocol 配置诊断覆盖配置编辑和脚本保存后的只读评估、超时与错误反馈；
 - 若声明 `configEditor`，覆盖 fresh/reuse、多文件或目录候选隔离、附加工作副本写入、错误回滚和进程启动门禁；
 - judge 尚未完成、成功、失败、超时和异常输出；
 - `replaceConfigs` 与 `config-restore.json` 的恢复结果。
 - 插件版本升级后，历史专项实例在无需重新保存的情况下能解析到当前 profile；若变更 `configPath` 或文件/目录形态，必须验证新位置存在时按当前配置建立新快照、新位置缺失时阻断运行并保留旧快照，并在变更说明中标注配置影响。
 
-## 配置校验脚本审查
+## 配置诊断审查
 
-`data-specialized` 插件可以在 `plugin.json` 中声明一个可选的 JavaScript 文件：
-
-```json
-"configValidator": "data/config-validator.js"
-```
-
-宿主在用户完成配置编辑并保存后运行该脚本。脚本固定在当前脚本实例用户的配置 store 目录中工作，使用 `nexus.readFile`、`nexus.writeFile`、`nexus.listFiles`、`nexus.exists` 读取和修复配置，并使用 `nexus.toast`、`nexus.notify` 返回本次结果的反馈。脚本输入位于 `nexus.input`，包含稳定的脚本实例、用户和当前文件快照 DTO；不要依赖宿主内部对象或未声明字段。
-
-校验脚本必须是插件目录内的 `.js` 文件，不得使用 Node.js、Python、网络、进程、PowerShell、CLR 或环境变量能力。宿主限制单次执行时长、单文件读写大小、文件列表和反馈数量；脚本应保持幂等、可重复执行，并对缺失或格式异常的文件做安全处理。配置保存结果保持成功，脚本错误通过结果反馈给用户；脚本不提供删除文件或多文件事务 API。
+`data-specialized` 插件使用 taskProtocol 的 `discover.configAssessment` 进行只读配置诊断。检查应覆盖当前绑定、缺失或异常资源、超时与错误分支；未知事实返回 unknown。旧 `configValidator` 已退役，Host v0.16.9 不运行该脚本，声明它的包需要升级或卸载。
 
 配置编辑准备脚本使用同一受限 JavaScript 宿主，manifest 字段为 `configEditor`。候选配置选择由宿主写入用户绑定的 `configInputs`，脚本读取 `nexus.input.mode`、`configInputName`、`configInputValue` 和 `extras`；`@extra<序号>/` 对应编辑期间的附加工作副本，可写入并随保存或取消收尾。主配置根保持受限只读，脚本异常会阻断目标软件启动并触发现场回滚。
 

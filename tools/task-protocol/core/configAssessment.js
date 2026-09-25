@@ -27,6 +27,7 @@ function finalizeAssessment(plan) {
     return ({
       none: 'None', noneoperation: 'None', 无: 'None', 无操作: 'None',
       exit: 'Exit', close: 'Exit', 退出: 'Exit', 退出程序: 'Exit',
+      关闭游戏和软件: 'CloseGameAndExit',
       runscript: 'RunScript', 运行脚本: 'RunScript',
       loop: 'Loop', 循环: 'Loop',
       shutdown: 'Shutdown', 关机: 'Shutdown',
@@ -46,11 +47,22 @@ function finalizeAssessment(plan) {
     const action = normalizedAction(value);
     if (!action) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    if (action === 'CloseGameAndExit') {
+      const following = input.executionContext?.queue?.hasFollowingWork;
+      const explanation = { kind: 'literal', value: '上游完成后将关闭游戏和软件；请确认后续队列是否仍需要游戏。' };
+      if (following === 'yes') return push(rule, 'violated', 'error', 'block', location(rule), explanation,
+        [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+      if (following !== 'no') return push(rule, 'unknown', 'warning', 'warn', location(rule), explanation,
+        [{ kind: 'refresh_plan' }]);
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    }
     if (action === 'RunScript')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     if (['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
       const context = input.executionContext || {}, following = context.queue && context.queue.hasFollowingWork;
-      if (following === 'yes')
+      // The upstream performs these actions before Host can finish restoring
+      // its configuration transaction, including on the last queue item.
+      if (following === 'yes' || ['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff'].includes(action))
         return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
       if (following !== 'no')
         return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
@@ -123,6 +135,44 @@ function finalizeAssessment(plan) {
     const copy = Object.assign({}, rule, { reasonKey: reasonKey || rule.reasonKey });
     return push(copy, 'violated', 'error', 'block', loc, text(copy), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
   };
+  const inspectMxuLaunchOwner = rule => {
+    const context = input.executionContext || {};
+    if (context.mode !== 'pc')
+      return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    if (context.launchOwner === 'host')
+      return typeof context.gameTarget?.value === 'string' && context.gameTarget.value.trim()
+        ? push(rule, 'not_applicable', 'info', 'none', location(rule))
+        : push(rule, 'violated', 'error', 'block', location(rule), text(rule),
+          [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
+    if (context.launchOwner !== 'already_running')
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    if (context.gameTarget?.ready === true)
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    const document = read('config', rule.resourceId);
+    const target = document?.settings?.autoStartInstanceId;
+    const instances = Array.isArray(document?.instances) ? document.instances.filter(i => i && i.id === target) : [];
+    if (instances.length !== 1 || !Array.isArray(instances[0].tasks))
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    const instance = instances[0];
+    const expected = context.gameTarget?.value;
+    const sameProgram = value => typeof value === 'string' && typeof expected === 'string'
+      && value.trim().replace(/\//g, '\\').toLowerCase() === expected.trim().replace(/\//g, '\\').toLowerCase();
+    const actions = Array.isArray(instance.preActions) && instance.preActions.length
+      ? instance.preActions : instance.preAction ? [instance.preAction] : [];
+    const preActionLaunch = actions.some(action => action && action.enabled === true && sameProgram(action.program));
+    const taskLaunch = instance.tasks.some(task => task && task.enabled === true
+      && task.taskName === '__MXU_LAUNCH__'
+      && sameProgram(task.optionValues?.__MXU_LAUNCH_OPTION__?.values?.program));
+    if (preActionLaunch || taskLaunch)
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    const possibleLaunch = actions.some(action => action && action.enabled === true)
+      || instance.tasks.some(task => task && task.enabled === true
+        && (task.taskName === '__MXU_LAUNCH__' || task.taskName.startsWith('__MXU_PRETASK__')));
+    if (context.gameTarget?.ready !== false || possibleLaunch)
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    return push(rule, 'violated', 'error', 'block', location(rule), text(rule),
+      [{ kind: 'open_script_settings' }, { kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+  };
   const inspectLogging = rule => {
     const document = read('resource', rule.resourceId);
     if (!document || typeof document !== 'object')
@@ -193,6 +243,11 @@ function finalizeAssessment(plan) {
   const inspectSingleDaily = rule => {
     const enabled = plan.tasks.filter(task => task.enabled && task.role !== 'technical');
     if (enabled.length === 0) return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    if (enabled.length === 1 && enabled[0].sourceKey === 'runtime_unverified') {
+      const identity = runtimeIdentity(read('resource', 'runtime-app'), read('resource', 'runtime-head'),
+        read('resource', 'runtime-tag'), read('resource', 'runtime-origin'));
+      if (identity.restricted) return push(rule, 'satisfied', 'info', 'none', location(rule));
+    }
     const allowed = new Set(rule.allowedTaskKeys || []);
     if (allowed.size > 0 && enabled.every(task => allowed.has(task.sourceKey)))
       return push(rule, 'satisfied', 'info', 'none', location(rule));
@@ -223,7 +278,10 @@ function finalizeAssessment(plan) {
     const app = read('resource', 'runtime-app');
     const head = read('resource', 'runtime-head');
     const tag = read('resource', 'runtime-tag');
-    const identity = runtimeIdentity(app, head, tag);
+    const origin = read('resource', 'runtime-origin');
+    const identity = runtimeIdentity(app, head, tag, origin);
+    if (identity.restricted) return push(rule, 'unknown', 'warning', 'warn', location(rule), identity.reasonText,
+      [{ kind: 'refresh_plan' }]);
     if (identity.ready) return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'unknown', 'error', 'block', location(rule), identity.reasonText, rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
@@ -231,6 +289,7 @@ function finalizeAssessment(plan) {
     try {
       if (rule.kind === 'target_compare') inspectTarget(rule);
       else if (rule.kind === 'autostart') inspectAutostart(rule);
+      else if (rule.kind === 'mxu_launch_owner') inspectMxuLaunchOwner(rule);
       else if (rule.kind === 'file_logging') inspectLogging(rule);
       else if (rule.kind === 'finish_action') inspectFinishAction(rule);
       else if (rule.kind === 'mxu_finish_action') inspectMxuFinishAction(rule);

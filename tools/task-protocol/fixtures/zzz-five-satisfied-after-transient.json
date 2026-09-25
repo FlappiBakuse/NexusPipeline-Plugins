@@ -1,0 +1,95 @@
+{
+  "resources": [
+    {
+      "text": "{\"app_list\":[{\"app_id\":\"city_fund\",\"enabled\":true},{\"app_id\":\"ridu_weekly\",\"enabled\":true},{\"app_id\":\"daily_signin\",\"enabled\":true},{\"app_id\":\"engagement_reward\",\"enabled\":true},{\"app_id\":\"email\",\"enabled\":true},{\"app_id\":\"random_play\",\"enabled\":false},{\"app_id\":\"coffee\",\"enabled\":false},{\"app_id\":\"charge_plan\",\"enabled\":false},{\"app_id\":\"notorious_hunt\",\"enabled\":false},{\"app_id\":\"lost_void\",\"enabled\":false},{\"app_id\":\"withered_domain\",\"enabled\":false},{\"app_id\":\"shiyu_defense\",\"enabled\":false},{\"app_id\":\"intel_board\",\"enabled\":false},{\"app_id\":\"suibian_temple\",\"enabled\":false},{\"app_id\":\"world_patrol\",\"enabled\":false},{\"app_id\":\"life_on_line\",\"enabled\":false},{\"app_id\":\"drive_disc_dismantle\",\"enabled\":false},{\"app_id\":\"notify\",\"enabled\":false}]}",
+      "id": "config:one_dragon/_group.yml",
+      "format": "yaml"
+    }
+  ],
+  "tasks": {
+    "one_dragon/notorious_hunt": {
+      "enabled": false
+    },
+    "one_dragon/city_fund": {
+      "enabled": true
+    },
+    "one_dragon/shiyu_defense": {
+      "enabled": false
+    },
+    "one_dragon/coffee": {
+      "enabled": false
+    },
+    "one_dragon/charge_plan": {
+      "enabled": false
+    },
+    "one_dragon/engagement_reward": {
+      "enabled": true
+    },
+    "one_dragon/ridu_weekly": {
+      "enabled": true
+    },
+    "one_dragon/drive_disc_dismantle": {
+      "enabled": false
+    },
+    "one_dragon/intel_board": {
+      "enabled": false
+    },
+    "one_dragon/daily_signin": {
+      "enabled": true
+    },
+    "one_dragon/world_patrol": {
+      "enabled": false
+    },
+    "one_dragon/lost_void": {
+      "enabled": false
+    },
+    "one_dragon/random_play": {
+      "enabled": false
+    },
+    "one_dragon/withered_domain": {
+      "enabled": false
+    },
+    "one_dragon/life_on_line": {
+      "enabled": false
+    },
+    "one_dragon/notify": {
+      "enabled": false
+    },
+    "one_dragon/email": {
+      "enabled": true
+    },
+    "one_dragon/suibian_temple": {
+      "enabled": false
+    }
+  },
+  "coverage": "partial",
+  "batches": [
+    {
+      "lines": [
+        "指令[ 执行应用组 one_dragon ] 节点 检测游戏窗口 -> 获取应用组配置 返回状态 成功",
+        "指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 应用未启用 兑换码",
+        "指令[ 执行应用组 one_dragon ] 节点 执行应用 返回状态 应用已完成 丽都城募",
+        "指令[ 执行应用组 one_dragon ] 节点 执行应用 返回状态 应用已完成 丽都周纪 (领奖励)",
+        "指令[ 执行应用组 one_dragon ] 节点 执行应用 返回状态 应用已完成 每日签到",
+        "指令[ 执行应用组 one_dragon ] 节点 执行应用 返回状态 应用已完成 活跃度奖励",
+        "指令[ 执行应用组 one_dragon ] 节点 执行应用 返回状态 应用已完成 邮件",
+        "指令[ 一条龙 ] 执行成功 返回状态 成功"
+      ]
+    }
+  ],
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "boundary": "ended",
+  "results": {
+    "one_dragon/engagement_reward": "skipped",
+    "one_dragon/ridu_weekly": "skipped",
+    "one_dragon/daily_signin": "skipped",
+    "one_dragon/city_fund": "skipped",
+    "one_dragon/email": "skipped"
+  },
+  "source": {
+    "upstreamCommit": "a2789666e6a0175b33969ec61d3c27dce517ff14",
+    "scope": "v2.5.2 transient default prepended before five already-done persisted apps; synthetic reduction, not a real run",
+    "type": "source_derived",
+    "originalArtifact": null
+  }
+}

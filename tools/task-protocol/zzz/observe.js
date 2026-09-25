@@ -8,7 +8,7 @@ function observe(text, tasks, emit, result, line, states) {
   const cursor = result.cursorState;
   if (cursor.source !== line.sourceId || cursor.epoch !== line.epoch) {
     cursor.source = line.sourceId; cursor.epoch = line.epoch;
-    cursor.group = false; cursor.index = 0; cursor.active = null;
+    cursor.group = false; cursor.index = 0; cursor.active = null; cursor.transients = [];
   }
   const pool = input.originalPlan.tasks.slice().sort((a, b) => a.order - b.order);
   const node = text.match(/^指令\[ (.+) \] 节点 (.+) 返回状态(?: (.*))?$/);
@@ -17,9 +17,23 @@ function observe(text, tasks, emit, result, line, states) {
   if (node?.[1] === '执行应用组 one_dragon') {
     const targetNode = node[2].split(' -> ').at(-1), status = node[3] || '';
     if (targetNode === '获取应用组配置' && status === '成功') {
-      cursor.group = true; cursor.index = 0; cursor.active = null; return;
+      cursor.group = true; cursor.index = 0; cursor.active = null;
+      // update_full_app_list prepends missing registered defaults as disabled
+      // runtime items, without persisting them in _group.yml. They are not
+      // business tasks, yet their "应用未启用" lines precede saved apps.
+      const saved = new Set(pool.map(t => t.sourceKey));
+      cursor.transients = ADAPTER.defaultAppIds.filter(id => !saved.has('one_dragon/' + id));
+      return;
     }
     if (!cursor.group || targetNode !== '执行应用') return;
+    if (cursor.index === 0 && !cursor.active && status.startsWith('应用未启用 ')) {
+      const name = status.slice('应用未启用 '.length);
+      const index = cursor.transients.findIndex(id => ADAPTER.apps[id] === name);
+      if (index >= 0 && !pool.some(t => t.name === name)) {
+        cursor.transients = cursor.transients.slice(index + 1);
+        return;
+      }
+    }
     const expected = pool[cursor.index], task = tasks.find(t => t.id === expected?.id && t.detection !== 'unsupported');
     if (status === '下一个') {
       if (!tasks.some(t => t.id === expected?.id)) { cursor.group = false; cursor.active = null; return; }
