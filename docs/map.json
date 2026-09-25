@@ -61,7 +61,7 @@
       "summary": "完成判定、失败判定、超时和配置脚本审查",
       "topics": [
         "judge",
-        "config-validator",
+        "taskProtocol.configAssessment",
         "config-editor",
         "判定"
       ],

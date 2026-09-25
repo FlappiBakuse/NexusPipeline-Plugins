@@ -1,12 +1,26 @@
 using System.Diagnostics;
 using NexusPipeline.Plugin.Abstractions;
 using NexusPipeline.Plugin.EmulatorSupport;
+using NexusPipeline.Plugin.TestKit;
 using Xunit;
 
 namespace NexusPipeline.Plugin.EmulatorSupport.Tests;
 
 public sealed class EmulatorSupportTests
 {
+    [Fact]
+    public async Task Lifecycle_RegistersExactlyOneProviderAndRemovesItOnStop()
+    {
+        var context = new FakePluginHostContext("EmulatorSupport");
+        await using PluginLifecycleHarness harness = await PluginLifecycleHarness.StartAsync(new EntryPoint(), context);
+        Assert.Single(context.EmulatorSupport.Providers);
+        Assert.Equal(0, context.ExecutionEvents.SubscriptionCount);
+
+        await harness.StopAsync();
+        await harness.StopAsync();
+        Assert.Empty(context.EmulatorSupport.Providers);
+    }
+
     [Fact]
     public void ParseLdList2_MapsCandidatePortsAndCanonicalProcessId()
     {
