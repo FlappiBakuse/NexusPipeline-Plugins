@@ -21,7 +21,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -30,7 +30,8 @@
         "source": "root",
         "path": "data/apps/ok-ww/app.json",
         "format": "json",
-        "required": false
+        "required": false,
+        "operationalFields": { "running": "boolean", "last_start": "timestamp" }
       },
       {
         "id": "runtime-head",
@@ -214,6 +215,7 @@
         "criticality": "critical_when_applicable"
       }
     ],
-    "environmentChecks": []
+    "environmentChecks": [],
+    "repairRules": []
   }
 }

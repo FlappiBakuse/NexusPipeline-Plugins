@@ -7,7 +7,7 @@
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
   "version": "0.3.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.9",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -18,7 +18,7 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
@@ -60,6 +60,21 @@
         "relativeBase": "none",
         "networkAccess": false,
         "followReparsePoints": false
+      }
+    ],
+    "repairRules": [
+      {
+        "id": "queue_finish_action",
+        "ruleId": "march7th.finish_action",
+        "resourceId": "config:config.yaml",
+        "selector": ["after_finish"],
+        "source": "user_snapshot",
+        "format": "yaml",
+        "kind": "replace_enum",
+        "fromValues": ["Loop", "循环", "Shutdown", "关机", "Sleep", "睡眠", "Hibernate", "休眠", "Restart", "重启", "Logoff", "注销", "TurnOffDisplay", "关闭显示器"],
+        "toValue": "None",
+        "preconditions": { "snapshotKind": "file", "exclusiveResource": true, "noExtraConfig": true },
+        "explanation": "脚本结束后不再执行此系统动作；其他配置字段保持原值。"
       }
     ]
   }

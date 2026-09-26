@@ -1,4 +1,5 @@
 {
+  "outputEncoding": "utf-8",
   "require": [
     {
       "var": "main",

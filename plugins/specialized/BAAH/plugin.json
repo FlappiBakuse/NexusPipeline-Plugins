@@ -43,6 +43,11 @@
     },
     "configRules": [
       {
+        "id": "baah.finish_flags",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      },
+      {
         "id": "baah.game_target",
         "required": true,
         "criticality": "advisory_or_contextual"

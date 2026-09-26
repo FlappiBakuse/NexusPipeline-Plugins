@@ -2,6 +2,8 @@
   "artifact": "BetterGI",
   "coverage": "partial",
   "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "same",
+  "queueNextLaunchOwner": "already_running",
   "resources": [
     {
       "id": "config:config.json",

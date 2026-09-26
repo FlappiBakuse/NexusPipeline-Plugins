@@ -26,8 +26,9 @@ function finalizeAssessment(plan) {
     const key = raw.toLowerCase().replace(/[ _-]/g, '');
     return ({
       none: 'None', noneoperation: 'None', 无: 'None', 无操作: 'None',
-      exit: 'Exit', close: 'Exit', 退出: 'Exit', 退出程序: 'Exit',
-      关闭游戏和软件: 'CloseGameAndExit',
+      exit: 'Exit', close: 'Exit', 退出: 'Exit', 退出程序: 'Exit', 关闭软件: 'Exit',
+      关闭游戏和软件: 'CloseGameAndExit', 关闭游戏: 'CloseGameAndExit',
+      closegameandexit: 'CloseGameAndExit',
       runscript: 'RunScript', 运行脚本: 'RunScript',
       loop: 'Loop', 循环: 'Loop',
       shutdown: 'Shutdown', 关机: 'Shutdown',
@@ -48,25 +49,30 @@ function finalizeAssessment(plan) {
     if (!action) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     if (['None', 'Exit'].includes(action)) return push(rule, 'satisfied', 'info', 'none', location(rule));
     if (action === 'CloseGameAndExit') {
-      const following = input.executionContext?.queue?.hasFollowingWork;
-      const explanation = { kind: 'literal', value: '上游完成后将关闭游戏和软件；请确认后续队列是否仍需要游戏。' };
-      if (following === 'yes') return push(rule, 'violated', 'error', 'block', location(rule), explanation,
-        [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-      if (following !== 'no') return push(rule, 'unknown', 'warning', 'warn', location(rule), explanation,
+      const queue = input.executionContext?.queue || {};
+      if (queue.hasFollowingWork === 'no' || queue.nextTargetRelation === 'different'
+        || (queue.nextTargetRelation === 'same'
+          && ['host', 'upstream'].includes(queue.nextLaunchOwner)))
+        return push(rule, 'satisfied', 'info', 'none', location(rule));
+      if (queue.hasFollowingWork === 'yes' && queue.nextTargetRelation === 'same'
+        && queue.nextLaunchOwner === 'already_running')
+        return push(rule, 'violated', 'error', 'block', location(rule),
+          { kind: 'literal', value: '下一项依赖同一游戏保持运行，但本项完成动作将关闭游戏。' },
+          [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+      return push(rule, 'unknown', 'warning', 'warn', location(rule),
+        { kind: 'literal', value: '本项完成后将关闭游戏；下一项启动目标或责任尚未确认。' },
         [{ kind: 'refresh_plan' }]);
-      return push(rule, 'satisfied', 'info', 'none', location(rule));
     }
     if (action === 'RunScript')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    if (['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay'].includes(action)) {
-      const context = input.executionContext || {}, following = context.queue && context.queue.hasFollowingWork;
+    if (action === 'TurnOffDisplay')
+      return push(rule, 'unknown', 'warning', 'warn', location(rule),
+        { kind: 'literal', value: '关闭显示器不等同整机关机，但可能影响后续依赖屏幕的任务。' },
+        [{ kind: 'refresh_plan' }]);
+    if (['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff'].includes(action)) {
       // The upstream performs these actions before Host can finish restoring
       // its configuration transaction, including on the last queue item.
-      if (following === 'yes' || ['Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff'].includes(action))
-        return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-      if (following !== 'no')
-        return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
-      return push(rule, 'satisfied', 'info', 'none', location(rule));
+      return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     }
     return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
   };
@@ -193,9 +199,34 @@ function finalizeAssessment(plan) {
     const document = resourceId ? read(rule.readKind === 'resource' ? 'resource' : 'config', resourceId) : undefined;
     if (!document || typeof document !== 'object')
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
-    const value = select(document, rule.selector);
+    const selected = select(document, rule.selector);
+    const value = selected === undefined ? rule.defaultAction : selected;
     if (value === undefined || value === null) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    if (value === '' && rule.emptyAction === 'None') return finishAction(rule, 'None');
     return finishAction(rule, value);
+  };
+  const inspectFinishFlags = rule => {
+    const id = rule.configResource === 'main' ? mainConfigId() : rule.resourceId;
+    const document = read('config', id);
+    if (!document || typeof document !== 'object')
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    const value = key => document[key] === undefined ? false : document[key];
+    const closeGame = value('CLOSE_GAME_FINISH'), closeTarget = value('CLOSE_EMULATOR_FINISH'), closeScript = value('CLOSE_BAAH_FINISH');
+    const postCommand = document.POST_COMMAND === undefined ? '' : document.POST_COMMAND;
+    if (![closeGame, closeTarget, closeScript].every(flag => typeof flag === 'boolean')
+      || typeof postCommand !== 'string' || postCommand.trim())
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    const context = input.executionContext || {};
+    // Upstream BAAH skips CLOSE_GAME_FINISH in PC mode; CLOSE_EMULATOR_FINISH
+    // also closes its PC target. Do not confuse the two similarly named flags.
+    if (context.mode === 'pc') return finishAction(rule, closeTarget ? 'CloseGameAndExit' : closeScript ? 'Exit' : 'None');
+    if (context.mode === 'emulator' && (closeGame || closeTarget)) {
+      if (context.queue?.hasFollowingWork === 'no') return finishAction(rule, 'None');
+      return push(rule, 'unknown', 'warning', 'warn', location(rule),
+        { kind: 'literal', value: '上游将关闭模拟器或其应用；后继是否共享此实例及重新启动责任需要核对。' }, [{ kind: 'refresh_plan' }]);
+    }
+    if (closeGame || closeTarget) return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    return finishAction(rule, closeScript ? 'Exit' : 'None');
   };
   const inspectMxuFinishAction = rule => {
     const document = read('config', rule.resourceId);
@@ -245,7 +276,7 @@ function finalizeAssessment(plan) {
     if (enabled.length === 0) return push(rule, 'not_applicable', 'info', 'none', location(rule));
     if (enabled.length === 1 && enabled[0].sourceKey === 'runtime_unverified') {
       const identity = runtimeIdentity(read('resource', 'runtime-app'), read('resource', 'runtime-head'),
-        read('resource', 'runtime-tag'), read('resource', 'runtime-origin'));
+        read('resource', 'runtime-tag'), read('resource', 'runtime-origin'), input.executionContext?.runtimeActivity);
       if (identity.restricted) return push(rule, 'satisfied', 'info', 'none', location(rule));
     }
     const allowed = new Set(rule.allowedTaskKeys || []);
@@ -279,7 +310,7 @@ function finalizeAssessment(plan) {
     const head = read('resource', 'runtime-head');
     const tag = read('resource', 'runtime-tag');
     const origin = read('resource', 'runtime-origin');
-    const identity = runtimeIdentity(app, head, tag, origin);
+    const identity = runtimeIdentity(app, head, tag, origin, input.executionContext?.runtimeActivity);
     if (identity.restricted) return push(rule, 'unknown', 'warning', 'warn', location(rule), identity.reasonText,
       [{ kind: 'refresh_plan' }]);
     if (identity.ready) return push(rule, 'satisfied', 'info', 'none', location(rule));
@@ -292,6 +323,7 @@ function finalizeAssessment(plan) {
       else if (rule.kind === 'mxu_launch_owner') inspectMxuLaunchOwner(rule);
       else if (rule.kind === 'file_logging') inspectLogging(rule);
       else if (rule.kind === 'finish_action') inspectFinishAction(rule);
+      else if (rule.kind === 'finish_flags') inspectFinishFlags(rule);
       else if (rule.kind === 'mxu_finish_action') inspectMxuFinishAction(rule);
       else if (rule.kind === 'process_exit') inspectProcessExit(rule);
       else if (rule.kind === 'controller_resource') inspectControllerResource(rule);

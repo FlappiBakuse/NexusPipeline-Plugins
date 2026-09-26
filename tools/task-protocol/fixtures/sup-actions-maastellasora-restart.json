@@ -1,0 +1,36 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\"}, \"instances\": [{\"id\": \"other\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"restart\"}}}]}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"restart\"}}}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": []}"
+    }
+  ],
+  "tasks": {
+    "chosen/power": {
+      "enabled": true,
+      "role": "technical"
+    }
+  },
+  "configChecks": [
+    {
+      "ruleId": "mxu.finish_action",
+      "evaluation": "violated",
+      "executionEffect": "block"
+    }
+  ],
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "synthetic",
+    "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
+  }
+}

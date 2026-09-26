@@ -172,6 +172,7 @@
       "required": true,
       "criticality": "critical_when_applicable",
       "kind": "finish_action",
+      "defaultAction": "None",
       "resourceId": "config:config.yaml",
       "selector": [
         "after_finish"

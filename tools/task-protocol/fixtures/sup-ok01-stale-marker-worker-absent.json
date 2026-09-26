@@ -1,0 +1,17 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "partial",
+  "executionContext": { "runtimeActivity": "inactive" },
+  "resources": [
+    { "id": "config:DailyRoutineTask.json", "format": "json", "text": "{\"Routine Items\": []}" },
+    { "id": "runtime-app", "format": "json", "text": "{\"name\":\"ok-nte\",\"installed\":true,\"current_profile\":\"Global\",\"current_version\":\"v1.3.19\",\"update_state\":\"idle\",\"update_target_version\":null,\"update_error\":null,\"running\":true,\"available_versions\":[\"v1.3.19\"]}" },
+    { "id": "runtime-head", "format": "text", "text": "9ac3157afbeeb10758330085e67273cfa460a9e8\n" },
+    { "id": "runtime-tag", "format": "text", "text": "fad77859cc09e2ee475057f29bcb07fe7643d5c8\n" }
+  ],
+  "resourceSets": ["resources/oknte-code-verified.json"],
+  "tasks": { "runtime_unverified": { "enabled": true, "role": "business" } },
+  "configChecks": [ { "ruleId": "okscript.distribution", "evaluation": "unknown", "executionEffect": "warn" } ],
+  "batches": [],
+  "results": { "runtime_unverified": "unknown" },
+  "source": { "type": "synthetic", "note": "Stale persisted marker with absent embedded worker; pinned runtime bytes remain verified." }
+}

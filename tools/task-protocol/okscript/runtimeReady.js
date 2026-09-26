@@ -1,7 +1,7 @@
 function runtimeReady(plan) {
   const optional = id => { try { return nexus.readResource(id).document; } catch { return null; } };
   const identity = runtimeIdentity(optional('runtime-app'), optional('runtime-head'),
-    optional('runtime-tag'), optional('runtime-origin'));
+    optional('runtime-tag'), optional('runtime-origin'), input.executionContext?.runtimeActivity);
   if (!identity.ready) {
     plan.coverage = 'unsupported';
     plan.diagnostics.push({ code: 'okscript.runtime_unqualified',

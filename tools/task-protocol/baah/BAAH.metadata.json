@@ -211,6 +211,7 @@
   ],
   "protocolVersion": "0.1.0",
   "configRules": [
+    { "id": "baah.finish_flags", "required": true, "criticality": "critical_when_applicable", "kind": "finish_flags", "configResource": "main", "fallback": "BAAH 收尾关闭目标或运行后置命令的影响需要核对。", "location": { "source": "context", "field": "completionAction" } },
     {
       "id": "baah.game_target",
       "required": true,

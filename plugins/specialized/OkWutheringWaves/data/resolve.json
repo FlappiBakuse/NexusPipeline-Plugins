@@ -1,4 +1,5 @@
 {
+  "process": { "rootRole": "game_launcher", "writesManagedConfig": false },
   "require": [
     {
       "var": "main",

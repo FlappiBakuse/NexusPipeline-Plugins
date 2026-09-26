@@ -162,7 +162,7 @@ function resource(id) {
 }
 
 // Local metadata plus pinned interpretation files; not complete interpreter attestation.
-function runtimeIdentity(app, head, tag, origin) {
+function runtimeIdentity(app, head, tag, origin, runtimeActivity) {
   const channel = ['China', 'Global'].includes(app?.current_profile) ? app.current_profile : 'unknown';
   const version = typeof app?.current_version === 'string' && /^v[0-9]+\.[0-9]+\.[0-9]+(?:[-.][A-Za-z0-9]+)*$/.test(app.current_version)
     && app.current_version.length <= 48 ? app.current_version : 'unknown';
@@ -172,7 +172,9 @@ function runtimeIdentity(app, head, tag, origin) {
   const release = ADAPTER.runtimeProfiles?.[channel] || (channel === 'Global' ? ADAPTER.runtimeRelease : null);
   if (!app || app.name !== release?.name || app.installed !== true || !release)
     return failure('installation', '无法确认官方安装身份（{channel} / {version}），请初始化受支持的官方渠道。');
-  if (app.update_state !== 'idle' || app.update_target_version || app.update_error || app.running === true)
+  if (app.update_state !== 'idle' || app.update_target_version || app.update_error
+      || runtimeActivity === 'active' || runtimeActivity === 'unknown'
+      || (runtimeActivity === undefined && app.running === true))
     return failure('busy', '更新器或上游程序尚未就绪（{channel} / {version}），请完成更新并关闭后重新检查。');
   if (app.current_version_missing === true || !Array.isArray(app.available_versions)
       || !app.available_versions.includes(app.current_version))
@@ -210,13 +212,18 @@ function runtimeIdentity(app, head, tag, origin) {
   try { verified = Array.isArray(code) && code.length > 0 && code.every(id => nexus.readResource(id).integrity === 'verified'); }
   catch { /* Missing/unreadable bytes are unqualified. */ }
   if (!verified) return failure('code', '关键运行文件缺失或与已验证发行不同（{channel} / {version}），请修复官方安装后重新检查。');
+  if (runtimeActivity === 'inactive' && app.running === true)
+    return { ready: true, restricted: true, reasonText: {
+      kind: 'plugin', key: 'diagnostic.runtime.stale', args: { channel, version },
+      fallback: '运行标记可能是上次退出遗留值（{channel} / {version}）；已确认嵌入式 worker 未运行，本次仅执行基础流程，任务结果保持未核验。'
+    } };
   return { ready: true };
 }
 
 function runtimeReady(plan) {
   const optional = id => { try { return nexus.readResource(id).document; } catch { return null; } };
   const identity = runtimeIdentity(optional('runtime-app'), optional('runtime-head'),
-    optional('runtime-tag'), optional('runtime-origin'));
+    optional('runtime-tag'), optional('runtime-origin'), input.executionContext?.runtimeActivity);
   if (!identity.ready) {
     plan.coverage = 'unsupported';
     plan.diagnostics.push({ code: 'okscript.runtime_unqualified',

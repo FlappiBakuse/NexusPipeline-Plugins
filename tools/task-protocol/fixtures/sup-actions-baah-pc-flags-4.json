@@ -1,0 +1,50 @@
+{
+  "artifact": "BAAH",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TASK_ORDER_GROUP\": {\"ACTIVATE_IND\": 0, \"ALL_PIPELINES\": [{\"TASK_PIPELINE\": [\"每日免费奖励\", \"邮件\", \"商店\"], \"TASK_ONOFF\": [true, true, false]}]}, \"OPEN_GAME_APP_TASK\": false, \"DO_POST_ALL_TASK\": false, \"CLOSE_GAME_FINISH\": false, \"CLOSE_EMULATOR_FINISH\": false, \"CLOSE_BAAH_FINISH\": true}"
+    }
+  ],
+  "tasks": {
+    "0/0/每日免费奖励": {
+      "enabled": true
+    },
+    "0/1/邮件": {
+      "enabled": true
+    },
+    "0/2/商店": {
+      "enabled": false
+    },
+    "automatic-login": {
+      "enabled": false
+    },
+    "automatic-cleanup": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {
+    "0/0/每日免费奖励": "unknown",
+    "0/1/邮件": "unknown"
+  },
+  "executionContext": {
+    "mode": "pc"
+  },
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "different",
+  "queueNextLaunchOwner": "upstream",
+  "configChecks": [
+    {
+      "ruleId": "baah.finish_flags",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "source": {
+    "type": "synthetic",
+    "note": "Controlled scenario; allowed actions/defaults independently qualified by pinned upstream sources in docs/frameworks/COMPLETION_ACTIONS.md."
+  }
+}

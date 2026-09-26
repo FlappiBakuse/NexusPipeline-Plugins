@@ -251,7 +251,7 @@ const vm = require('vm');
 const captured = [];
 const input = {{ phase: 'discover', protocolVersion: '0.1.0',
   configResources: [{{ id: {json.dumps(config_id, ensure_ascii=False)}, format: 'json' }}],
-  executionContext: {{ mode: 'pc', queue: {{ hasFollowingWork: 'yes' }} }} }};
+  executionContext: {{ mode: 'pc', queue: {{ hasFollowingWork: 'yes', nextTargetRelation: 'same', nextLaunchOwner: 'already_running' }} }} }};
 const config = {json.dumps(config, ensure_ascii=False)};
 const resources = {json.dumps(resources, ensure_ascii=False)};
 const nexus = {{
