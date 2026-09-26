@@ -1,12 +1,14 @@
 # 项目状态（Status）
 
-**更新日期**：2026-09-26｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / Required` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
+**更新日期**：2026-09-27｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / Required` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
 
 > 本文件记录尚未完成的开发计划、活跃技术验证和当前未解决问题，不重复已完成事项。当前实现和支持范围以代码、测试及[专项适配器说明](TASK_ADAPTERS.md)为准；发布事实以发行记录为准。本地测试或 develop 推送不代表插件已正式发布。正式版本仅按用户明确指定修改。
 
 ## 当前未完成事项
 
 ### MaaFramework 直驱验证边界与发行资格
+
+- [ ] 排查 Windows 默认临时目录下 Maa 标准 Agent 的 ZeroMQ 原生故障。2026-09-27 干净提交来源的正式 verify 实际结果为 Maa 49 通过、7 失败（worker.SEHException / epoll.cpp:73 Bad file descriptor）；相同源码与锁定原生输入，在新建隔离 TEMP/TMP 下 15 项原生用例全部通过，恢复默认 TEMP 后单例再次失败。临时目录影响已通过对照确认，底层根因未确认，正式 verify 仍记失败；不改系统配置或用定向通过替代正式门禁。
 
 - [ ] 扩展两个锁定官方项目的真实游戏、官方项目 Agent 和其他选项组合抽检。只读 MXU/MaaPiCli 导入、PI 计划对照、v5.14.0／v5.13.0 无游戏 Win32 与受控 ADB、标准 Agent/pretask 已实际执行；这些证据不证明全部游戏业务。
 - [ ] 以固定的干净 Host SDK 提交来源运行正式候选，并在获得发布授权后验证商店发行。本地独立包和 API 1.8 实际拒绝测试不等于已上架。
