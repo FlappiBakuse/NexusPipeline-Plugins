@@ -39,6 +39,7 @@ def _parser() -> argparse.ArgumentParser:
             "check-syntax",
             "test",
             "test-managed",
+            "prepare-maa-integration",
             "release",
             "audit",
             "check-pr",
@@ -125,6 +126,11 @@ def main(argv: list[str] | None = None) -> int:
             managed = test_managed(root, plan, args.full, host_root=args.host_root)
             print(f"[repository] managed-code 测试完成：{managed['builds']} 个构建，"
                   f"{managed['testProjects']} 个测试项目，{managed['testCases']} 个用例", flush=True)
+        elif args.command == "prepare-maa-integration":
+            if args.host_root is None or args.output is None:
+                raise RepositoryError("prepare-maa-integration requires --host-root and fresh --output")
+            from maa_host_integration import prepare
+            prepare(root, args.host_root.resolve(), args.output.absolute())
         elif args.command == "release":
             plan_path = args.plan.resolve() if args.plan else root / ".generated" / "release-plan.json"
             if not plan_path.is_file():

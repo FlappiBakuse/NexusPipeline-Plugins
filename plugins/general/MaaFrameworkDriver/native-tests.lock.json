@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": "v5.14.0",
+  "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.0/MAA-win-x86_64-v5.14.0.zip",
+  "sizeBytes": 73020542,
+  "sha256": "036f827bb59215c20eb304378d391742a7db95da8cc78ca3a88e19321c639d79",
+  "members": {
+    "bin/MaaFramework.dll": "e9a3a22dfecf8749421709c6057528117fa1b6d8f1de40ea37c1b022b91b0072"
+  },
+  "bindingVersion": "5.10.0",
+  "bindingSource": "https://github.com/MaaXYZ/MaaFramework.Binding.CSharp/tree/27c69a5b8ff41b6002ead71f403a16f442a7168e"
+}

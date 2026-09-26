@@ -1,0 +1,9 @@
+{
+  "interface_version": 2,
+  "name": "NexusNativeFixture",
+  "version": "1.0.0",
+  "controller": [{ "name": "PC", "type": "Win32", "display_raw": true,
+    "win32": { "window_regex": "NexusPipeline owned native fixture", "screencap": "PrintWindow", "mouse": "SendMessage", "keyboard": "SendMessage" } }],
+  "resource": [{ "name": "Fixture", "path": ["resource"] }],
+  "task": [{ "name": "Sanity", "entry": "Sanity", "default_check": true }]
+}

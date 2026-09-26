@@ -2,6 +2,36 @@
   "schemaVersion": 1,
   "topics": [
     {
+      "id": "framework.maafw",
+      "path": "MAAFRAMEWORK_DRIVER.md",
+      "summary": "MaaFramework 独立配置、PI 编译、原生 worker、Agent 与发行输入",
+      "topics": [
+        "MaaFramework",
+        "PI",
+        "直驱",
+        "Agent",
+        "pretask"
+      ],
+      "aliases": [
+        "Maa 首版",
+        "MXU 导入",
+        "MaaPiCli 导入"
+      ],
+      "codePaths": [
+        "plugins/general/MaaFrameworkDriver",
+        "tools/maa_native_tests.py"
+      ],
+      "testDomains": [
+        "managed",
+        "frontend-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "maa-framework-driver"
+      ],
+      "status": "current"
+    },
+    {
       "id": "authoring.frontend",
       "path": "FRONTEND_PLUGIN.md",
       "summary": "Frontend API 1.5、公共 nxp-* 元件、slot 和生命周期",
@@ -158,6 +188,248 @@
       ],
       "authorityFor": [
         "task-protocol-authoring"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "framework.mxu",
+      "path": "frameworks/MXU.md",
+      "summary": "MXU 框架或项目适配边界",
+      "topics": [
+        "MXU"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "framework.mxu-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "framework.ok_script",
+      "path": "frameworks/OK_SCRIPT.md",
+      "summary": "OK_SCRIPT 框架或项目适配边界",
+      "topics": [
+        "OK_SCRIPT"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "framework.ok_script-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.bettergi",
+      "path": "projects/BetterGI.md",
+      "summary": "BetterGI 框架或项目适配边界",
+      "topics": [
+        "BetterGI"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.bettergi-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.march7thassistant",
+      "path": "projects/March7thAssistant.md",
+      "summary": "March7thAssistant 框架或项目适配边界",
+      "topics": [
+        "March7thAssistant"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.march7thassistant-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.zenlesszonezeroonedragon",
+      "path": "projects/ZenlessZoneZeroOneDragon.md",
+      "summary": "ZenlessZoneZeroOneDragon 框架或项目适配边界",
+      "topics": [
+        "ZenlessZoneZeroOneDragon"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.zenlesszonezeroonedragon-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.baah",
+      "path": "projects/BAAH.md",
+      "summary": "BAAH 框架或项目适配边界",
+      "topics": [
+        "BAAH"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.baah-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.maaend",
+      "path": "projects/MaaEnd.md",
+      "summary": "MaaEnd 框架或项目适配边界",
+      "topics": [
+        "MaaEnd"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.maaend-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.maastellasora",
+      "path": "projects/MaaStellaSora.md",
+      "summary": "MaaStellaSora 框架或项目适配边界",
+      "topics": [
+        "MaaStellaSora"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.maastellasora-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.oknte",
+      "path": "projects/OkNTE.md",
+      "summary": "OkNTE 框架或项目适配边界",
+      "topics": [
+        "OkNTE"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.oknte-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.okwutheringwaves",
+      "path": "projects/OkWutheringWaves.md",
+      "summary": "OkWutheringWaves 框架或项目适配边界",
+      "topics": [
+        "OkWutheringWaves"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.okwutheringwaves-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "project.readme",
+      "path": "projects/README.md",
+      "summary": "README 框架或项目适配边界",
+      "topics": [
+        "README"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol"
+      ],
+      "testDomains": [
+        "data-contract",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "project.readme-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "framework.completion-actions",
+      "path": "frameworks/COMPLETION_ACTIONS.md",
+      "summary": "八款专项上游默认值、有限动作、CLI 与后继依赖",
+      "topics": [
+        "completion",
+        "完成动作",
+        "后继依赖"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol/core/configAssessment.js",
+        "tools/task-protocol/fixtures"
+      ],
+      "testDomains": [
+        "data-contract"
+      ],
+      "authorityFor": [
+        "finite-completion-actions"
       ],
       "status": "current"
     }

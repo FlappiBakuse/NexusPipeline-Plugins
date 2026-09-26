@@ -24,6 +24,10 @@
 
 `0.1.0` manifest 必须声明 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/i18n/zh-CN.json", "en-US": "data/i18n/en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。旧开发版的 `1.0`、`1.1`、`1.2` 声明均不再加载。
 
+`0.1.1` 是 Host v0.16.9 增加的**包声明**扩展：必须声明 `repairRules` 数组，并把 `minHostVersion` 设为至少 `0.16.9`。三阶段输入和输出的 `protocolVersion` 仍为 `0.1.0`。旧 Host 会拒绝整个 `0.1.1` 包，不能忽略未知修复字段后继续运行。空数组表示没有自动修复能力。
+
+首版修复声明只允许 `config:config.yaml` 的单字段 `after_finish`：`source: user_snapshot`、`format: yaml`、`kind: replace_enum`、`toValue: None`，并列出已识别的 `fromValues`、已有配置诊断 `ruleId`、稳定 `id`、用户可读 `explanation` 及 `preconditions: {"snapshotKind":"file","exclusiveResource":true,"noExtraConfig":true}`。Host 再以自己的已审查系统动作集合限定来源值。March7thAssistant 0.3.1 声明 `queue_finish_action`；其他字段、共享附加配置和未知动作只提示手动编辑。自动修复默认关闭；开启后每次仍需预览、提交预览令牌，并在现役存储事务里复核清单、归属、版本、字节及并发状态。插件脚本不能通过此声明直接写用户配置。
+
 所有阶段使用协商的 `input.protocolVersion`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
 
 ```json
@@ -39,6 +43,8 @@ key 限 160 个 ASCII 字母、数字、点、横线或下划线。args 限 16 �
 Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻译；运行中新出现的原因 key 也只能读取该冻结词典。卸载/更新不影响历史。超出显示预算时保留任务、原名、代码与 fallback，不删任务。语言回退依次为请求 locale、同语言、defaultLocale、fallback、原名/代码。文本不影响任务身份、配置行为签名或安全重试。
 
 `readResources` 最多 128 项，每项为 `{id, source, path, format, required}`。`source` 为 `root` 或 `extraConfig`；前者相对实例根目录，后者路径以附加配置索引开头，例如 `0/settings.json`。格式为 `json`、`yaml` 或 `text`；JSONC 接口可声明为 text 后由适配器解析。路径禁止绝对路径、回退段和重解析点；只读资源永远不可作为补丁目标。
+
+包声明 `0.1.1` 中，`source: root`、`format: json` 的只读资源可声明 `operationalFields`，例如 `{ "running": "boolean", "last_start": "timestamp" }`。最多两项；发行身份、渠道、版本和更新字段不可声明为运行期可变。受限运行仅允许这些字段按类型改变，未声明字段保持原值。OK 的 `running` 是持久线索，Host 另检查安装目录中的嵌入式 worker；活动或不可读会阻断，确认无 worker 且标记遗留才允许基础受限流程。
 
 ## discover 配置诊断
 
@@ -135,7 +141,7 @@ python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <
 
 `--example` 生成完整的合成协议示例。[TaskProtocolExample](../examples/TaskProtocolExample/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-默认生成完整的 `0.1.0` 首发协议、`data/i18n/` 中英文词典、`configRules` 和 `environmentChecks` 骨架。`--protocol-version` 仅接受 `0.1.0`；旧开发协议和 `TaskProtocolLegacy` 示例已废弃。用户自定义名称使用 literal，不按名称猜测词典键。
+默认生成完整的 `0.1.0` 首发协议、`data/i18n/` 中英文词典、`configRules` 和 `environmentChecks` 骨架。`--protocol-version` 接受 `0.1.0` 或 `0.1.1`；后者生成空的 `repairRules` 并要求 Host 0.16.9，实际修复规则须逐项审查后声明。旧开发协议和 `TaskProtocolLegacy` 示例已废弃。用户自定义名称使用 literal，不按名称猜测词典键。
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 

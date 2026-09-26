@@ -9,6 +9,7 @@
 | 查询待办与未验证范围 | [项目状态](STATUS.md) | 专项支持限制、真实环境验证与兼容退役计划 |
 | 编写 Frontend 插件 | [Frontend 插件指南](FRONTEND_PLUGIN.md) | `plugins/general/*/frontend`、`tools/Test-FrontendPlugins.mjs`；宿主 `nxp-*` 公共元件 |
 | 编写 data-specialized 插件 | [数据化插件指南](DATA_SPECIALIZED_PLUGIN.md) | `plugins/specialized/*/data`、`tools/repository.py`；源码与脚本测试 |
+| 使用或开发 MaaFramework 直驱 | [MaaFramework 框架指南](MAAFRAMEWORK_DRIVER.md) | 独立配置、导入、Agent、worker、原生门禁和打包 |
 | 编写 judge 或 config 脚本 | [判断脚本指南](JUDGE_SCRIPT.md) | `judge.js`、`judge.py`、`editor.js`、taskProtocol 三阶段脚本 |
 | 修改插件版本或包 | [发行指南](RELEASING.md) | `plugin.json`、`store.json`、`catalog.json`、`packages/` |
 | 参与仓库开发 | [贡献指南](../CONTRIBUTING.md) | `tools/`、`tools/tests/`；源码校验与增量计划 |
@@ -17,3 +18,7 @@
 机器路由保存在 [map.json](map.json)。Frontend API 的公共 `nxp-*` 元件清单和 `minHostVersion` 规则也记录在 [Frontend 插件指南](FRONTEND_PLUGIN.md)。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
+
+八个专项的默认完成动作、完整枚举、CLI 差异和后继依赖见[完成动作](frameworks/COMPLETION_ACTIONS.md)。
+
+协议负责共同证据和兼容格式；框架页维护 [MXU](frameworks/MXU.md)、[ok-script](frameworks/OK_SCRIPT.md) 和 [MaaFramework](MAAFRAMEWORK_DRIVER.md) 的配置与执行差异；各项目的任务边界和限制见 [项目索引](projects/README.md)。旧 [适配说明](TASK_ADAPTERS.md) 保留导航锚点与共同审查工具。

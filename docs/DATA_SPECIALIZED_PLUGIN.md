@@ -18,7 +18,7 @@ plugins/specialized/Example/
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
-上例是目录示意。专项插件应声明 `taskProtocol` 0.1.0，把任务/原因/诊断词典放在 `data/i18n/`；公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
+上例是目录示意。专项插件通常声明 `taskProtocol` 0.1.0，把任务/原因/诊断词典放在 `data/i18n/`；需要 Host 0.16.9 的有限修复能力时可声明 0.1.1 及 `repairRules`，详见 [任务协议](TASK_PROTOCOL.md)。公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
 
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
@@ -116,6 +116,7 @@ Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例�
 
 ```json
 {
+  "outputEncoding": "utf-8",
   "require": [
     { "var": "launcher", "file": "Example Launcher.exe" },
     { "var": "assistant", "file": "Example Assistant.exe", "searchUpward": true }
@@ -130,6 +131,8 @@ Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例�
 ```
 
 `paths` 中的 `mainExe`、`args`、`configPath`、`logPath` 都应提供明确值。`mainExe` 解析后必须指向真实存在的文件，其他路径由宿主在运行和配置编辑阶段继续解析。`logPath` 允许为空字符串：为空表示目标软件没有专用日志文件，判定日志改由进程标准输出提供。
+
+`outputEncoding`（可选）声明进程 stdout/stderr 的原始字节编码，允许 `utf-8`、`windows-936` 或 `system-default`；缺省保持旧解码行为。声明在字节读取边界生效，跨读取块的多字节字符由流解码器保留状态，正常中文不再二次转码。插件应以对应上游发行或捕获字节验证此值，不能由宿主按产品名称猜测。
 
 `paths.extraConfigPaths`（可选）是附加配置文件/文件夹路径数组（相对脚本根目录，支持 `{input:名称}`）。附加路径与主配置路径一样按用户快照隔离交换（运行前快照覆盖现场、运行后与编辑提交差异入库，首次编辑先生成工作副本，保存时建立快照）；协议诊断只能读取声明的资源，**判定脚本始终不可见**。适用对象是软件级配置（如 BAAH 的 `DATA/CONFIGS/software_config.json`、BetterGI 的 `User/config.json`）；快照缺失宽容，现场也不存在时保持为空。
 

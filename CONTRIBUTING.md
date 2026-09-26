@@ -62,6 +62,8 @@ python tools/repository.py audit --full
 
 managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。仓库工具提供源码校验、宿主 locale 对账、构建、测试、增量打包和发行包校验入口。
 
+MaaFrameworkDriver 的现役 managed 门禁自动准备锁定的官方 x64 原生测试输入，并实际执行自有 Win32/ADB fixture、Agent 和 pretask；详情见 [框架指南](docs/MAAFRAMEWORK_DRIVER.md)。可通过 `NEXUS_MAA_NATIVE_ARCHIVE` 指定官方 ZIP，仍执行完整大小和 SHA256 校验。TRX 保存到 `.generated/test-results/managed/run-*/`，保留每次失败报告；原生输入和事件保存到 `.generated/test-results/maa-native/`。该插件的 package builder 必须包含独立 worker/runtimeconfig、binding 5.10.0 和 LGPL/GPL 许可。
+
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。插件工具负责仓库级源码、构建、测试和发行包校验；插件有效性仍需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 
 建议至少覆盖：

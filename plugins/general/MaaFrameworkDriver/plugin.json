@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 2,
+  "name": "maa-framework",
+  "artifactName": "MaaFrameworkDriver",
+  "displayName": "MaaFramework 框架直驱",
+  "description": "以独立配置直接执行已授权的 Project Interface 项目。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.16.9",
+  "apiVersion": "1.9",
+  "entryAssembly": "NexusPipeline.Plugin.MaaFrameworkDriver.dll",
+  "entryType": "NexusPipeline.Plugin.MaaFrameworkDriver.EntryPoint",
+  "capabilities": ["frontend-module"],
+  "frontend": { "apiVersion": "1.5", "entry": "web/main.js", "styles": ["web/style.css"] }
+}
