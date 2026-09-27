@@ -39,6 +39,13 @@ public sealed class NativeContractTests
     [InlineData(false, "compiled_schema", "Win32")]
     [InlineData(true, "pretask_failure", "Win32")]
     [InlineData(true, "pretask_timeout", "Win32")]
+    [InlineData(true, "pretask_no_option", "Win32")]
+    [InlineData(true, "pretask_sequence", "Win32")]
+    [InlineData(false, "callback_storm", "Win32")]
+    [InlineData(true, "callback_storm_cancel", "Win32")]
+    [InlineData(false, "workspace_link", "Win32")]
+    [InlineData(true, "agent_unresponsive", "Win32")]
+    [InlineData(true, "agent_disconnect", "Win32")]
     [InlineData(false, "native_version", "Win32")]
     [InlineData(false, "window_mismatch", "Win32")]
     [InlineData(false, "expand", "Adb")]
@@ -97,6 +104,7 @@ public sealed class NativeContractTests
                 Copy(Path.Combine(plugin, "tests", "NativeAgent", "bin", configuration, "net8.0-windows", "win-x64"), Path.Combine(root, "fixture-agent"));
                 var pi = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "interface.json")))!.AsObject();
                 pi["agent"] = new JsonObject { ["child_exec"] = "fixture-agent/NexusPipeline.MaaTestAgent.exe", ["child_args"] = new JsonArray() };
+                if (scenario is "agent_unresponsive" or "agent_disconnect") pi["agent"]!["timeout"] = 500;
                 pi["pretask"] = new JsonObject { ["exec"] = "fixture-agent/NexusPipeline.MaaTestAgent.exe", ["args"] = new JsonArray("--pretask"), ["option"] = new JsonArray("Mode") };
                 if (scenario == "pretask_timeout") pi["pretask"]!["timeout"] = 100;
                 if (scenario == "argv")
@@ -105,9 +113,32 @@ public sealed class NativeContractTests
                     pi["pretask"]!["args"] = new JsonArray("--pretask", "{literal}", " { \"key\" : \"secret:literal\" } ", "secret:literal", "", "中文", "a\"b");
                 }
                 pi["option"] = new JsonObject { ["Mode"] = new JsonObject { ["cases"] = new JsonArray(new JsonObject { ["name"] = "fixture" }) } };
+                if (scenario == "pretask_no_option") pi["pretask"]!.AsObject().Remove("option");
+                if (scenario == "pretask_sequence")
+                {
+                    var other = pi["controller"]![0]!.DeepClone().AsObject();
+                    other["name"] = "Other";
+                    pi["controller"]!.AsArray().Add(other);
+                    JsonObject Step(string label, string controller) => new() { ["exec"] = "fixture-agent/NexusPipeline.MaaTestAgent.exe",
+                        ["args"] = new JsonArray("--pretask", label), ["option"] = new JsonArray("Mode"), ["controller"] = new JsonArray(controller) };
+                    pi["pretask"] = new JsonArray(Step("main-first", "PC"), Step("filtered-out", "Other"));
+                    pi["import"] = new JsonArray("extra.json");
+                    await File.WriteAllTextAsync(Path.Combine(root, "extra.json"), new JsonObject { ["pretask"] = new JsonArray(Step("import-first", "PC"), Step("import-second", "PC")) }.ToJsonString());
+                }
                 await File.WriteAllTextAsync(Path.Combine(root, "interface.json"), pi.ToJsonString());
                 await File.WriteAllTextAsync(Path.Combine(root, "resource", "pipeline", "sanity.json"),
                     "{\"Sanity\":{\"recognition\":\"DirectHit\",\"action\":\"Custom\",\"custom_action\":\"FixtureAction\",\"post_delay\":0}}");
+            }
+            if (scenario.StartsWith("callback_storm", StringComparison.Ordinal))
+            {
+                var pipeline = new JsonObject();
+                for (int i = 0; i < 64; i++)
+                {
+                    string node = i == 0 ? "Sanity" : "Noise" + i;
+                    pipeline[node] = new JsonObject { ["recognition"] = "DirectHit", ["action"] = "DoNothing", ["post_delay"] = 0,
+                        ["next"] = i == 63 ? new JsonArray() : new JsonArray("Noise" + (i + 1)) };
+                }
+                await File.WriteAllTextAsync(Path.Combine(root, "resource", "pipeline", "sanity.json"), pipeline.ToJsonString());
             }
             string adbExe = Path.Combine(plugin, "tests", "NativeAdb", "bin", configuration, "net8.0-windows", "NexusPipeline.MaaTestAdb.exe");
             if (controllerType == "Adb")
@@ -158,7 +189,8 @@ public sealed class NativeContractTests
                 await File.WriteAllTextAsync(Path.Combine(root, "interface.json"), pi.ToJsonString());
             }
             bool pretaskFailure = scenario is "pretask_failure" or "pretask_timeout";
-            bool setupFailure = pretaskFailure || scenario is "native_version" or "window_mismatch" or "ambiguous" or "host_lifetime_mismatch" or "cancel_window" or "workspace_collision" or "compiled_schema";
+            bool agentFailure = scenario is "agent_unresponsive" or "agent_disconnect";
+            bool setupFailure = pretaskFailure || agentFailure || scenario is "native_version" or "window_mismatch" or "ambiguous" or "host_lifetime_mismatch" or "cancel_window" or "workspace_collision" or "workspace_link" or "compiled_schema";
             var compiled = new ProjectCompiler(root, "interface.json").Compile(profile);
             if (scenario == "compiled_schema") compiled = compiled with { SchemaVersion = 1 };
             var bootstrap = new PluginWorkerBootstrap("nxp-test-e-" + Guid.NewGuid().ToString("N"), "nxp-test-c-" + Guid.NewGuid().ToString("N"),
@@ -175,7 +207,15 @@ public sealed class NativeContractTests
                     window!.Id, long.Parse(handle), scenario == "host_window" ? window.StartTime.ToUniversalTime() : window.StartTime.ToUniversalTime().AddSeconds(-1)));
             using var events = new NamedPipeServerStream(bootstrap.EventPipe, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             using var control = new NamedPipeServerStream(bootstrap.ControlPipe, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-            var workerInfo = new ProcessStartInfo(Path.Combine(workerRoot, "NexusPipeline.MaaWorker.exe"))
+            string launchRoot = workerRoot;
+            if (scenario == "workspace_link")
+            {
+                launchRoot = Path.Combine(root, "linked-worker");
+                using var link = Process.Start(new ProcessStartInfo(Environment.GetEnvironmentVariable("ComSpec")!)
+                { UseShellExecute = false, CreateNoWindow = true, Arguments = $"/d /c mklink /J \"{launchRoot}\" \"{workerRoot}\"" })!;
+                await link.WaitForExitAsync(); Assert.Equal(0, link.ExitCode);
+            }
+            var workerInfo = new ProcessStartInfo(Path.Combine(launchRoot, "NexusPipeline.MaaWorker.exe"))
             { UseShellExecute = false, CreateNoWindow = true, RedirectStandardInput = true, RedirectStandardOutput = true,
                 RedirectStandardError = true, WorkingDirectory = root };
             workerInfo.Environment["NXP_MAA_FIXTURE"] = "owned-native-contract";
@@ -201,7 +241,7 @@ public sealed class NativeContractTests
                 var fact = await PluginWorkerProtocol.ReadAsync(events, deadline.Token);
                 PluginWorkerProtocol.Validate(fact, bootstrap, "worker_to_host", facts.Count + 2);
                 facts.Add(fact);
-                if (scenario == "cancel" && fact.Kind == "task_event" && fact.Payload["status"]?.GetValue<string>() == "running")
+                if (scenario is "cancel" or "callback_storm_cancel" && fact.Kind == "task_event" && fact.Payload["status"]?.GetValue<string>() == "running")
                     await PluginWorkerProtocol.WriteAsync(control, new(1, bootstrap.ExecutionId, bootstrap.RecordId, 1,
                         bootstrap.SessionId, "host_to_worker", 2, "cancel", new()), deadline.Token);
                 if (scenario == "cancel_window" && fact.Kind == "progress" && fact.Payload["code"]?.GetValue<string>() == "controller.resolve.enter")
@@ -210,19 +250,21 @@ public sealed class NativeContractTests
                 if (fact.Kind is "completed" or "fault") break;
             }
             await worker.WaitForExitAsync(deadline.Token);
-            int expectedExit = scenario.StartsWith("cancel", StringComparison.Ordinal) ? 2 : scenario == "failure" || setupFailure ? 1 : 0;
+            bool taskCancelled = scenario is "cancel" or "callback_storm_cancel";
+            int expectedExit = taskCancelled || scenario == "cancel_window" ? 2 : scenario == "failure" || setupFailure ? 1 : 0;
             Assert.True(worker.ExitCode == expectedExit, "worker exit=" + worker.ExitCode + "\n" + await stderr + "\n" + await stdout
                 + "\n" + JsonSerializer.Serialize(facts));
             Assert.DoesNotContain("fixture-private-echo", await stdout);
             Assert.DoesNotContain("fixture-private-echo", await stderr);
             Assert.DoesNotContain("fixture-private-echo", JsonSerializer.Serialize(facts));
             if (!setupFailure) Assert.Contains(facts, item => item.Kind == "ready" && item.Payload["nativeVersion"]!.GetValue<string>().TrimStart('v') == expectedVersion);
-            else Assert.DoesNotContain(facts, item => item.Kind is "ready" or "task_event");
-            if (scenario != "cancel" && !setupFailure)
+            else if (scenario != "agent_disconnect") Assert.DoesNotContain(facts, item => item.Kind is "ready" or "task_event");
+            if (agentFailure) Assert.DoesNotContain(facts, item => item.Kind == "task_event");
+            if (!taskCancelled && !setupFailure)
                 Assert.Contains(facts, item => item.Kind == "task_event" && item.Payload["taskId"]!.GetValue<string>() == "Sanity"
                     && item.Payload["status"]!.GetValue<string>() == (scenario == "failure" ? "failed" : "succeeded")
                     && item.Payload["nativeTaskId"] is not null);
-            else if (scenario == "cancel")
+            else if (taskCancelled)
             {
                 Assert.Contains(facts, item => item.Kind == "cancel_ack");
                 Assert.DoesNotContain(facts, item => item.Kind == "task_event" && item.Payload["status"]?.GetValue<string>() == "succeeded");
@@ -235,22 +277,40 @@ public sealed class NativeContractTests
                 Assert.Equal("foreign existing bytes must remain", await File.ReadAllTextAsync(Path.Combine(sessionDirectory, "unknown.txt")));
                 Assert.False(File.Exists(Path.Combine(sessionDirectory, ".nxp-owned-session.json")));
             }
+            else if (scenario == "workspace_link")
+            {
+                Assert.Equal("worker.session_path_link", facts[^1].Payload["code"]!.GetValue<string>());
+                Assert.Equal("session.workspace.create", facts[^1].Payload["phase"]!.GetValue<string>());
+                Assert.False(Directory.Exists(sessionDirectory));
+            }
             else Assert.Contains(facts, item => item.Kind == "progress" && item.Payload["code"]?.GetValue<string>() == "session.cleanup.exit");
             if (scenario == "compiled_schema")
                 Assert.Equal("worker.compiled_schema", facts[^1].Payload["code"]!.GetValue<string>());
             if (expectedExit is 0 or 2) Assert.False(Directory.Exists(sessionDirectory));
-            else if (scenario != "workspace_collision")
+            else if (scenario is not ("workspace_collision" or "workspace_link"))
             {
                 Assert.True(File.Exists(Path.Combine(sessionDirectory, ".nxp-owned-session.json")));
                 Assert.True(File.Exists(Path.Combine(sessionDirectory, "failure.json")));
             }
             if (standardAgent)
             {
-                if (scenario != "cancel" && !pretaskFailure) Assert.True(File.Exists(Path.Combine(root, "agent-action-ran.marker")));
+                if (!taskCancelled && !pretaskFailure && !agentFailure && scenario != "callback_storm_cancel") Assert.True(File.Exists(Path.Combine(root, "agent-action-ran.marker")));
                 var pretask = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "pretask-evidence.json")))!;
                 Assert.True(pretask["cwdMatches"]!.GetValue<bool>());
-                Assert.Equal(scenario == "argv" ? 8 : 2, pretask["argumentCount"]!.GetValue<int>());
-                Assert.Equal("fixture", pretask["options"]!["Mode"]!.GetValue<string>());
+                Assert.Equal(scenario == "argv" ? 8 : scenario == "pretask_no_option" ? 1 : scenario == "pretask_sequence" ? 3 : 2, pretask["argumentCount"]!.GetValue<int>());
+                if (scenario == "pretask_no_option")
+                {
+                    Assert.Null(pretask["options"]);
+                    Assert.Equal(new[] { "--pretask" }, pretask["rawArguments"]!.Deserialize<string[]>());
+                }
+                else Assert.Equal("fixture", pretask["options"]!["Mode"]!.GetValue<string>());
+                if (scenario == "pretask_sequence")
+                {
+                    var order = File.ReadAllLines(Path.Combine(root, "pretask-order.jsonl")).Select(line => JsonNode.Parse(line)!["label"]!.GetValue<string>()).ToArray();
+                    Assert.Equal(new[] { "main-first", "import-first", "import-second" }, order);
+                    int controller = facts.FindIndex(item => item.Payload["code"]?.GetValue<string>() == "controller.create.enter");
+                    Assert.Equal(3, facts.Take(controller).Count(item => item.Payload["code"]?.GetValue<string>() == "pretask.process.exit"));
+                }
                 if (!pretaskFailure)
                 {
                     var agent = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "agent-evidence.json")))!;
@@ -263,7 +323,22 @@ public sealed class NativeContractTests
                         Assert.Equal(new[] { "--pretask" }.Concat(raw), pretask["rawArguments"]!.Deserialize<string[]>());
                     }
                     Assert.Equal("v2.10.2", agent["piVersion"]!.GetValue<string>());
-                    Assert.Equal("0", await File.ReadAllTextAsync(Path.Combine(root, "agent-exited.marker")));
+                    if (agentFailure)
+                    {
+                        string code = facts[^1].Payload["code"]!.GetValue<string>();
+                        if (scenario == "agent_disconnect") Assert.Contains(code, new[] { "worker.agent_disconnected", "worker.agent_connection_failed" });
+                        else Assert.Equal("worker.agent_connection_failed", code);
+                        Assert.Equal(code == "worker.agent_disconnected" ? "agent.health" : "agent.connect", facts[^1].Payload["phase"]!.GetValue<string>());
+                        Assert.Equal(code == "worker.agent_disconnected", facts.Any(item => item.Kind == "ready"));
+                        Assert.False(File.Exists(Path.Combine(root, "agent-action-ran.marker")));
+                        try
+                        {
+                            using var stopped = Process.GetProcessById(agent["pid"]!.GetValue<int>());
+                            Assert.True(stopped.HasExited || stopped.StartTime.ToUniversalTime().ToString("O") != agent["startedUtc"]!.GetValue<string>());
+                        }
+                        catch (ArgumentException) { }
+                    }
+                    else Assert.Equal("0", await File.ReadAllTextAsync(Path.Combine(root, "agent-exited.marker")));
                 }
                 else
                 {
@@ -275,6 +350,13 @@ public sealed class NativeContractTests
                     }
                     catch (ArgumentException) { }
                 }
+            }
+            if (scenario == "callback_storm")
+            {
+                var summary = Assert.Single(facts, item => item.Payload["code"]?.GetValue<string>() == "native.callbacks.summary");
+                Assert.True(summary.Payload["received"]!.GetValue<long>() > 256);
+                Assert.True(summary.Payload["published"]!.GetValue<long>() < summary.Payload["received"]!.GetValue<long>());
+                Assert.True(facts.Count < 100);
             }
             if (controllerType == "Adb")
             {
@@ -325,6 +407,7 @@ public sealed class NativeContractTests
                 await File.WriteAllTextAsync(Path.Combine(reports, "native-" + controllerType.ToLowerInvariant() + "-" + scenario + "-" + (standardAgent ? "agent-" : "plain-") + Guid.NewGuid().ToString("N") + ".json"), evidence);
             }
             // Failed native runs retain their owned directory and raw evidence for diagnosis.
+            if (scenario == "workspace_link" && Directory.Exists(Path.Combine(root, "linked-worker"))) Directory.Delete(Path.Combine(root, "linked-worker"));
             if (passed) Directory.Delete(root, true);
         }
     }

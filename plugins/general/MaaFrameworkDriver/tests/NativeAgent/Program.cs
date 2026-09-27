@@ -7,12 +7,15 @@ using MaaFramework.Binding.Custom;
 if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE") != "owned-native-contract") return 90;
 if (args.FirstOrDefault() == "--pretask")
 {
+    bool hasOptions = Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") != "pretask_no_option";
     File.WriteAllText("pretask-evidence.json", JsonSerializer.Serialize(new { pid = Environment.ProcessId,
         startedUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime().ToString("O"), argumentCount = args.Length,
         cwdMatches = Environment.CurrentDirectory == Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_ROOT"),
         piVersion = Environment.GetEnvironmentVariable("PI_INTERFACE_VERSION"),
-        options = args.Length >= 2 ? JsonDocument.Parse(args[^1]).RootElement : (JsonElement?)null,
-        rawArguments = args[..^1] }));
+        options = hasOptions && args.Length >= 2 ? JsonDocument.Parse(args[^1]).RootElement : (JsonElement?)null,
+        rawArguments = hasOptions ? args[..^1] : args }));
+    if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "pretask_sequence")
+        File.AppendAllText("pretask-order.jsonl", JsonSerializer.Serialize(new { label = args[1], pid = Environment.ProcessId }) + "\n");
     if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "pretask_window")
     {
         var info = new ProcessStartInfo(Environment.GetEnvironmentVariable("NXP_MAA_WINDOW_FIXTURE")!)
@@ -31,9 +34,20 @@ File.WriteAllText("agent-evidence.json", JsonSerializer.Serialize(new { pid = En
     cwdMatches = Environment.CurrentDirectory == Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_ROOT"),
     piVersion = Environment.GetEnvironmentVariable("PI_INTERFACE_VERSION"),
     hasIdentifier = args[^1].Length > 0, rawArguments = args[..^1] }));
+if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "agent_unresponsive")
+{
+    await Task.Delay(TimeSpan.FromSeconds(30));
+    return 89;
+}
 var agent = MaaAgentServer.Current.WithNativeLibrary([Environment.GetEnvironmentVariable("MAAFW_BINARY_PATH")!]);
 agent.WithIdentifier(args[^1]).SetStdoutLevel(LoggingLevel.Off).SetLogDirectory("native-agent-logs");
 agent.Register("FixtureAction", new FixtureAction()).StartUp();
+if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "agent_disconnect")
+{
+    agent.ShutDown();
+    File.WriteAllText("agent-exited.marker", "88");
+    return 88;
+}
 // Follow the standard server lifecycle; a watchdog bounds a broken fixture client.
 using var watchdog = new CancellationTokenSource();
 var timer = Task.Run(async () => {

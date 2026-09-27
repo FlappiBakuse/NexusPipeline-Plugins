@@ -21,6 +21,8 @@ internal sealed class NativeSession : IDisposable
     private readonly object _gate = new();
     internal string Phase { get; private set; } = "bootstrap";
     private Func<string, JsonObject, ValueTask>? _send;
+    private long _callbackCount;
+    private long _publishedCallbacks;
 
     private async ValueTask Stage(string phase, string state)
     {
@@ -125,6 +127,7 @@ internal sealed class NativeSession : IDisposable
                 await Task.Delay(250, callbackStop.Token);
                 while (_callbacks.Reader.TryRead(out var latest)) fact = latest;
                 await send("progress", fact);
+                Interlocked.Increment(ref _publishedCallbacks);
             }
         });
         await send("ready", new() { ["nativeVersion"] = version, ["projectVersion"] = project.Version });
@@ -133,7 +136,8 @@ internal sealed class NativeSession : IDisposable
             foreach (var task in project.Tasks)
             {
                 token.ThrowIfCancellationRequested();
-                if (_agents.Any(agent => !agent.IsAlive)) throw new InvalidDataException("agent disconnected");
+                await Stage("agent.health", "enter");
+                if (_agents.Any(agent => !agent.IsAlive)) throw new NativeStartupException("agent_disconnected");
                 var pipeline = ResolveSecrets(task.Override, secrets)!.AsObject();
                 await Stage("task.submit", "enter");
                 var job = _tasker.AppendTask(task.Entry, pipeline.ToJsonString());
@@ -152,25 +156,16 @@ internal sealed class NativeSession : IDisposable
             try { await drain.WaitAsync(TimeSpan.FromSeconds(2)); }
             catch (TimeoutException) { callbackStop.Cancel(); }
             catch (OperationCanceledException) when (callbackStop.IsCancellationRequested) { }
+            await send("progress", new() { ["code"] = "native.callbacks.summary",
+                ["received"] = Interlocked.Read(ref _callbackCount), ["published"] = Interlocked.Read(ref _publishedCallbacks) });
         }
     }
 
     private void OnCallback(object? sender, MaaCallbackEventArgs args)
     {
         // Copy only bounded, non-sensitive diagnostics. Focus/node text is never a task terminal.
-        var fact = new JsonObject { ["message"] = args.Message.Length <= 128 ? args.Message : "diagnostic.message_truncated" };
-        if (args.Details.Length <= 64 * 1024)
-        {
-            try
-            {
-                using var detail = JsonDocument.Parse(args.Details, new JsonDocumentOptions { MaxDepth = 16 });
-                foreach (string key in new[] { "task_id", "node_id", "reco_id", "action_id" })
-                    if (detail.RootElement.TryGetProperty(key, out var value) && value.TryGetInt64(out long id)) fact[key] = id;
-            }
-            catch (JsonException) { fact["code"] = "diagnostic.details_invalid"; }
-        }
-        else fact["code"] = "diagnostic.details_truncated";
-        _callbacks.Writer.TryWrite(fact);
+        Interlocked.Increment(ref _callbackCount);
+        _callbacks.Writer.TryWrite(NativeDiagnosticProjection.Project(args.Message, args.Details));
     }
 
     private static MaaController CreateController(DriverProfile profile, CompiledProject project)
