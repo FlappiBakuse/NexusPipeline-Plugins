@@ -34,6 +34,10 @@ worker 在 native 初始化前建立带本次 session 归属的独立临时目�
 
 English boundaries: Win32 targets are resolved after pretasks on every run and must be unique, observable and constrained by the full executable identity. Fixed argv is preserved; only generated option payloads resolve secrets. Python file entries authorize bounded local code; dynamic `-m`/`-c` entries are rejected. Worker temporary environment changes are process-local. Native success does not prove business success.
 
+会话目录使用紧凑名称保留完整随机身份。启动时先检查 Windows CRT 生成的临时文件名确实位于本次目录；CRT 路径预算不足或缓存了其他目录时，在 `session.workspace.native_temp` 阶段报告 `worker.session_temp_unusable`，保留本次现场，不开始 native／Agent，也不转向未知共享目录。此错误可通过将软件安装在可写的较短普通目录后重新执行解决。
+
+The worker validates the CRT temporary name before native initialization. An unusable or foreign CRT directory produces `worker.session_temp_unusable` at `session.workspace.native_temp`, retains the owned failure record and starts no Agent. Install in a shorter writable ordinary directory to resolve a path-budget failure; no shared-directory fallback is used.
+
 已固定 C# binding 5.10.0（源码 commit `27c69a5b8ff41b6002ead71f403a16f442a7168e`）及官方 MaaFramework v5.14.0 x64 测试输入。MaaEnd v2.30.0 附带 v5.14.0，MaaStellaSora v1.4.4 附带 v5.13.0；两份发行 ZIP、原生成员和来源固定在 [official-projects.lock.json](../plugins/general/MaaFrameworkDriver/official-projects.lock.json)。测试只读编译真实 PI、使用真实任务 ID 对照普通 MXU 导入与有效计划，实际查询版本和通信字节预算，不执行官方项目 Agent 或 GUI。
 
 受控窗口和自有 ADB transport fixture 实际调用上述 v5.14.0／v5.13.0 原生 Win32/ADB controller，不连接用户设备；标准 Agent、pretask、任务成功/失败、取消、控制台输出脱敏及启动故障分别留有原始报告。v5.13.0 新增组合覆盖自有 Win32 与 ADB Agent/pretask。真实账号、真实游戏、真实模拟器和其他 runtime 组合的状态独立报告，不能据此宣称官方项目业务成功或全版本支持。

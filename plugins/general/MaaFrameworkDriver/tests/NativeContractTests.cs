@@ -44,6 +44,8 @@ public sealed class NativeContractTests
     [InlineData(false, "callback_storm", "Win32")]
     [InlineData(true, "callback_storm_cancel", "Win32")]
     [InlineData(false, "workspace_link", "Win32")]
+    [InlineData(true, "worker_long_path", "Win32")]
+    [InlineData(false, "workspace_native_path_limit", "Win32")]
     [InlineData(true, "agent_unresponsive", "Win32")]
     [InlineData(true, "agent_disconnect", "Win32")]
     [InlineData(false, "native_version", "Win32")]
@@ -92,6 +94,7 @@ public sealed class NativeContractTests
         Process? window = null;
         Process? worker = null;
         Process? otherWindow = null;
+        string? copiedWorker = null;
         bool passed = false;
         var facts = new List<PluginWorkerEnvelope>();
         var stopwatch = Stopwatch.StartNew();
@@ -190,13 +193,13 @@ public sealed class NativeContractTests
             }
             bool pretaskFailure = scenario is "pretask_failure" or "pretask_timeout";
             bool agentFailure = scenario is "agent_unresponsive" or "agent_disconnect";
-            bool setupFailure = pretaskFailure || agentFailure || scenario is "native_version" or "window_mismatch" or "ambiguous" or "host_lifetime_mismatch" or "cancel_window" or "workspace_collision" or "workspace_link" or "compiled_schema";
+            bool setupFailure = pretaskFailure || agentFailure || scenario is "native_version" or "window_mismatch" or "ambiguous" or "host_lifetime_mismatch" or "cancel_window" or "workspace_collision" or "workspace_link" or "workspace_native_path_limit" or "compiled_schema";
             var compiled = new ProjectCompiler(root, "interface.json").Compile(profile);
             if (scenario == "compiled_schema") compiled = compiled with { SchemaVersion = 1 };
             var bootstrap = new PluginWorkerBootstrap("nxp-test-e-" + Guid.NewGuid().ToString("N"), "nxp-test-c-" + Guid.NewGuid().ToString("N"),
                 Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)), "execution", "record", 1, Guid.NewGuid().ToString("N"),
                 new JsonObject { ["profile"] = JsonSerializer.SerializeToNode(profile), ["compiled"] = JsonSerializer.SerializeToNode(compiled) });
-            string sessionDirectory = Path.Combine(workerRoot, ".nxp-maa-session-" + bootstrap.SessionId);
+            string sessionDirectory = Path.Combine(workerRoot, ".m-" + bootstrap.SessionId);
             if (scenario == "workspace_collision")
             {
                 Directory.CreateDirectory(sessionDirectory);
@@ -208,6 +211,17 @@ public sealed class NativeContractTests
             using var events = new NamedPipeServerStream(bootstrap.EventPipe, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             using var control = new NamedPipeServerStream(bootstrap.ControlPipe, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             string launchRoot = workerRoot;
+            if (scenario is "worker_long_path" or "workspace_native_path_limit")
+            {
+                int length = scenario == "worker_long_path" ? 190 : 220;
+                string prefix = Path.Combine(fixtureBase, "worker-" + caseId);
+                Assert.True(prefix.Length <= length, "owned fixture root must permit the controlled worker path length");
+                launchRoot = copiedWorker = prefix + new string('p', length - prefix.Length);
+                Directory.CreateDirectory(launchRoot);
+                foreach (string file in Directory.EnumerateFiles(workerRoot))
+                    File.Copy(file, Path.Combine(launchRoot, Path.GetFileName(file)), false);
+                sessionDirectory = Path.Combine(launchRoot, ".m-" + bootstrap.SessionId);
+            }
             if (scenario == "workspace_link")
             {
                 launchRoot = Path.Combine(root, "linked-worker");
@@ -282,6 +296,12 @@ public sealed class NativeContractTests
                 Assert.Equal("worker.session_path_link", facts[^1].Payload["code"]!.GetValue<string>());
                 Assert.Equal("session.workspace.create", facts[^1].Payload["phase"]!.GetValue<string>());
                 Assert.False(Directory.Exists(sessionDirectory));
+            }
+            else if (scenario == "workspace_native_path_limit")
+            {
+                Assert.Equal("worker.session_temp_unusable", facts[^1].Payload["code"]!.GetValue<string>());
+                Assert.Equal("session.workspace.native_temp", facts[^1].Payload["phase"]!.GetValue<string>());
+                Assert.DoesNotContain(facts, item => item.Payload["code"]?.GetValue<string>() == "native.load.enter");
             }
             else Assert.Contains(facts, item => item.Kind == "progress" && item.Payload["code"]?.GetValue<string>() == "session.cleanup.exit");
             if (scenario == "compiled_schema")
@@ -399,6 +419,7 @@ public sealed class NativeContractTests
                 ? await File.ReadAllTextAsync(Path.Combine(root, "adb-commands.jsonl")) : null;
             string evidence = JsonSerializer.Serialize(new { passed, standardAgent, scenario, controllerType, expectedVersion,
                 fixtureRoot = root, processTemp = worker?.StartInfo.Environment["TEMP"], processTmp = worker?.StartInfo.Environment["TMP"],
+                workerRoot = worker?.StartInfo.FileName, copiedWorker,
                 milliseconds = stopwatch.ElapsedMilliseconds, facts, adbCommands }, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(Path.Combine(root, "native-contract-evidence.json"), evidence);
             if (Environment.GetEnvironmentVariable("NEXUS_MAA_REPORT_ROOT") is { Length: > 0 } reports)
@@ -409,6 +430,7 @@ public sealed class NativeContractTests
             // Failed native runs retain their owned directory and raw evidence for diagnosis.
             if (scenario == "workspace_link" && Directory.Exists(Path.Combine(root, "linked-worker"))) Directory.Delete(Path.Combine(root, "linked-worker"));
             if (passed) Directory.Delete(root, true);
+            if (passed && copiedWorker is not null) Directory.Delete(copiedWorker, true);
         }
     }
 

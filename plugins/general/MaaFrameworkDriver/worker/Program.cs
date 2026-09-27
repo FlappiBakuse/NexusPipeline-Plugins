@@ -69,6 +69,7 @@ SessionWorkspace? workspace = null;
 try
 {
     workspace = new SessionWorkspace(bootstrap.SessionId);
+    workspace.ValidateNativeTemporaryDirectory();
     var profile = bootstrap.Input["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
     var compiled = bootstrap.Input["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
     var secrets = bootstrap.Input["secrets"] as JsonObject ?? new();
@@ -84,7 +85,8 @@ catch (Exception ex)
     string code = ex is NativeStartupException native ? "worker." + native.Code
         : ex is OperationCanceledException ? "worker.cancelled" : "worker." + ex.GetType().Name;
     if (workspace is null && ex is UnauthorizedAccessException) code = "worker.session_workspace_unwritable";
-    string failedPhase = workspace is null ? "session.workspace.create" : session.Phase;
+    string failedPhase = workspace is null ? "session.workspace.create"
+        : ex is NativeStartupException { Code: "session_temp_unusable" } ? "session.workspace.native_temp" : session.Phase;
     try
     {
         await session.CloseAsync();

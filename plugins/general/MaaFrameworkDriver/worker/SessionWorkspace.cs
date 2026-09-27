@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text;
+using System.Runtime.InteropServices;
 
 namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
@@ -14,7 +16,7 @@ internal sealed class SessionWorkspace
         for (string? current = parent; current is not null; current = Path.GetDirectoryName(current))
             if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
                 throw new NativeStartupException("session_path_link");
-        DirectoryPath = Path.Combine(parent, ".nxp-maa-session-" + sessionId);
+        DirectoryPath = Path.Combine(parent, ".m-" + sessionId);
         if (Directory.Exists(DirectoryPath) || File.Exists(DirectoryPath))
             throw new NativeStartupException("session_path_exists");
         Directory.CreateDirectory(DirectoryPath);
@@ -27,6 +29,20 @@ internal sealed class SessionWorkspace
         Environment.SetEnvironmentVariable("TEMP", DirectoryPath);
         Environment.SetEnvironmentVariable("TMP", DirectoryPath);
     }
+
+    internal void ValidateNativeTemporaryDirectory()
+    {
+        // The CRT can return success with an empty name near its path limit.
+        // It also caches its directory; validate ownership before native IPC.
+        var name = new StringBuilder(260);
+        int result = NativeTemporaryName(name, (nuint)name.Capacity);
+        if (result != 0 || name.Length == 0
+            || !string.Equals(Path.GetDirectoryName(name.ToString()), DirectoryPath, StringComparison.OrdinalIgnoreCase))
+            throw new NativeStartupException("session_temp_unusable");
+    }
+
+    [DllImport("ucrtbase.dll", EntryPoint = "_wtmpnam_s", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int NativeTemporaryName([Out] StringBuilder name, nuint capacity);
 
     internal void Complete()
     {
