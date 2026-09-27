@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 import hashlib
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -18,6 +19,49 @@ from test_repository_publish import _create_fixture, _git, _remove_tree
 
 
 class StableCandidateContractTests(unittest.TestCase):
+    def test_generated_plan_uses_distribution_state_that_postdates_source_cursor(self) -> None:
+        root = _create_fixture()
+        try:
+            beta = root / "plugins" / "specialized" / "Beta"
+            shutil.copytree(root / "plugins" / "specialized" / "Alpha", beta)
+            manifest = core.read_json(beta / "plugin.json")
+            manifest.update(name="beta", artifactName="Beta")
+            core.write_json(beta / "plugin.json", manifest)
+            _git(root, "add", ".")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "new plugin source")
+            cursor = core.git_head(root)
+            plan_path = root / ".generated" / "initial-plan.json"
+            core.write_json(plan_path, core.build_plan(root))
+            core.release(root, plan_path, root / ".generated" / "initial")
+            core.apply_generated(root, root / ".generated" / "initial")
+            _git(root, "add", "catalog.json", ".release-state.json", "packages")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "published facts")
+            manifest["version"] = "0.2.0"
+            core.write_json(beta / "plugin.json", manifest)
+            store = core.read_json(beta / "store.json")
+            store["changelog"] = [{"version": "0.2.0", "date": "2026-01-02", "items": ["update"]}]
+            core.write_json(beta / "store.json", store)
+            _git(root, "add", "plugins")
+            _git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "next plugin source")
+            workspace = CandidateWorkspace.create(root, "HEAD")
+            try:
+                plan = core.build_plan(root, distribution_root=workspace.distribution_root)
+                self.assertEqual(plan["base"], cursor)
+                self.assertNotIn("new-plugin", plan["reasons"]["Beta"])
+                core.write_json(plan_path, plan)
+                output = root / ".generated" / "next"
+                core.release(root, plan_path, output, distribution_root=workspace.distribution_root)
+                core.validate_generated(root, output, distribution_root=workspace.distribution_root)
+                tampered = core.read_json(output / "release-plan.json")
+                tampered["reasons"]["Beta"].append("new-plugin")
+                core.write_json(output / "release-plan.json", tampered)
+                with self.assertRaisesRegex(core.RepositoryError, "release plan reasons"):
+                    core.validate_generated(root, output, distribution_root=workspace.distribution_root)
+            finally:
+                workspace.cleanup()
+        finally:
+            _remove_tree(root)
+
     def test_candidate_identity_separates_source_from_manual_controller(self) -> None:
         with tempfile.TemporaryDirectory(prefix="nxp-plugin-candidate-identity-") as temporary:
             output = Path(temporary)

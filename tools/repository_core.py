@@ -2590,7 +2590,13 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     state = read_json(generated_root / STATE_FILE)
     plugins = discover_source_plugins(root)
     _require(git_head(root) == plan.get("head"), "生成候选 source HEAD 与 release plan 不一致")
-    expected_plan = build_plan(root, baseline=str(plan.get("base", "")), head=str(plan.get("head", "")), distribution_root=distribution_root)
+    baseline = str(plan.get("base", ""))
+    distribution_state = load_state(distribution_root)
+    # Published facts can postdate their source cursor. Replaying that cursor
+    # must use the frozen distribution state, not its older state at the source commit.
+    if baseline == distribution_state.get("sourceCommit"):
+        baseline = "auto"
+    expected_plan = build_plan(root, baseline=baseline, head=str(plan.get("head", "")), distribution_root=distribution_root)
     for key in (
         "base",
         "head",
