@@ -15,12 +15,12 @@ export function activate(host) {
       nativeDirectory: 'bin', nativeVersion: 'v5.14.0', language: 'zh_cn', selectedTasks: [], options: {}, resourceOptions: {}, controllerOptions: {}, taskOptions: {},
       windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowSelection: 'executable', windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
     const card = document.createElement('nxp-section-card'); card.title = 'MaaFramework';
-    const status = document.createElement('p'); status.setAttribute('role', 'status');
     const fields = document.createElement('div'); fields.dataset.pluginMaaFields = 'true';
     const actions = document.createElement('div'); actions.dataset.pluginMaaActions = 'true';
     const details = document.createElement('pre'); details.dataset.pluginMaaPreview = 'true';
-    card.append(fields, actions, status, details); element.append(card);
-    function fail(error) { if (!disposed && error.name !== 'AbortError') status.textContent = error.message || String(error); }
+    card.append(fields, actions, details); element.append(card);
+    function notify(message, tone = 'info') { if (!disposed) host.ui.toast(message, tone); }
+    function fail(error) { if (error?.name !== 'AbortError') notify(error?.message || String(error), 'error'); }
     function button(label, action) {
       const item = document.createElement('nxp-button'); item.textContent = label; item.type = 'button';
       item.addEventListener('click', () => { Promise.resolve().then(action).catch(fail); }, { signal: abort.signal });
@@ -163,7 +163,7 @@ export function activate(host) {
       const version = draftVersion;
       const result = await host.api.post('inspect', { packageRoot: profile.packageRoot, interfacePath: profile.interfacePath, language: profile.language }, abort.signal);
       requireCurrent(version); schema = result;
-      status.textContent = schema.projectName + ' / ' + schema.projectVersion; draw();
+      notify(schema.projectName + ' / ' + schema.projectVersion); draw();
     });
     button(text('只读执行预览', 'Read-only execution preview'), async () => {
       requireValidDraft();
@@ -171,11 +171,13 @@ export function activate(host) {
       const result = await call('preview'); requireCurrent(version); preview = result;
       details.textContent = JSON.stringify(preview, null, 2);
       previewProfile = JSON.stringify(profile);
+      notify(text('执行预览已生成，请核对下方内容。', 'Execution preview generated; review the details below.'));
     });
     button(text('应用所选预设到草稿', 'Apply selected preset to draft'), async () => {
       requireValidDraft(); const version = draftVersion;
       const result = await call('preset', { presetName }); requireCurrent(version);
       profile = result; draftVersion += 1; preview = null; draw();
+      notify(text('所选预设已应用到草稿。', 'Selected preset applied to the draft.'));
     });
     button(text('载入项目默认勾选任务', 'Load project default task selection'), () => {
       if (!schema) throw new Error(text('请先读取项目。', 'Inspect the project first.'));
@@ -183,6 +185,7 @@ export function activate(host) {
         && (!item.controller || item.controller.includes(profile.controller))
         && (!item.resource || item.resource.includes(profile.resource))).map(item => item.name);
       draftVersion += 1; preview = null; draw();
+      notify(text('项目默认勾选任务已载入。', 'Project default task selection loaded.'));
     });
     button(text('查找并选择 Win32 窗口', 'Find and select Win32 window'), async () => {
       const version = draftVersion;
@@ -195,15 +198,17 @@ export function activate(host) {
         profile.schemaVersion = 2; profile.windowSelection = 'executable';
         draftVersion += 1; preview = null; draw();
       }, { signal: abort.signal }); details.append(choose);
+      notify(result.windows.length ? text('请选择下方匹配的窗口。', 'Select a matching window below.')
+        : text('未找到匹配的窗口。', 'No matching windows found.'));
     });
     button(text('预览显式导入', 'Preview explicit import'), async () => {
       const version = draftVersion;
       const result = await call('import', { sourceKind: importKind, sourcePath: importPath, instanceId: importInstance });
       requireCurrent(version);
       details.textContent = JSON.stringify(result, null, 2);
-      if (!result.profile) { status.textContent = text('请选择列表中的源实例精确 ID 后重新预览。', 'Select an exact source instance ID from this list and preview again.'); return; }
+      if (!result.profile) { notify(text('请选择列表中的源实例精确 ID 后重新预览。', 'Select an exact source instance ID from this list and preview again.')); return; }
       pendingImport = result; importSelection = selectedImport();
-      status.textContent = text('请核对映射，再点击“使用已预览映射”。', 'Review the mapping, then choose “Use reviewed mapping”.');
+      notify(text('请核对映射，再点击“使用已预览映射”。', 'Review the mapping, then choose “Use reviewed mapping”.'));
     });
     button(text('使用已预览映射', 'Use reviewed mapping'), async () => {
       if (!pendingImport || importSelection !== selectedImport())
@@ -211,7 +216,7 @@ export function activate(host) {
       if (!window.confirm(text('确认将此映射载入独立草稿？源配置不会写入。保存前仍须预览和授权。', 'Load this mapping into the independent draft? The source stays unchanged. Preview and authorization are still required before saving.'))) return;
       draftVersion += 1; profile = pendingImport.profile; pendingImport = null; preview = null; validationErrors.clear();
       if (!userId && importMode === 'new') { profile.profileId = crypto.randomUUID().replaceAll('-', ''); profile.revision = ''; }
-      draw(); status.textContent = text('映射已载入草稿；请补齐窗口/ADB 参数并预览。', 'Mapping loaded into draft; complete the window/ADB target and preview.');
+      draw(); notify(text('映射已载入草稿；请补齐窗口/ADB 参数并预览。', 'Mapping loaded into draft; complete the window/ADB target and preview.'));
     });
     button(text('确认授权并保存独立配置', 'Authorize and save independent profile'), async () => {
       requireValidDraft();
@@ -227,7 +232,7 @@ export function activate(host) {
       preview = null; previewProfile = '';
       element.dispatchEvent(new CustomEvent('nxp-provider-configured', { bubbles: true, detail: { providerId: 'maa-framework', profileId: profile.profileId, packageRoot: profile.packageRoot,
         ...(hostLaunch ? { hostLaunchConfiguration: hostLaunch } : {}) } }));
-      status.textContent = text('配置已保存；保存脚本后绑定用户并加入现有队列。', 'Profile saved; save the script, bind a user, and add it to the existing queue.'); draw();
+      notify(text('配置已保存；保存脚本后绑定用户并加入现有队列。', 'Profile saved; save the script, bind a user, and add it to the existing queue.')); draw();
     });
     draw();
     const loadingVersion = draftVersion;
