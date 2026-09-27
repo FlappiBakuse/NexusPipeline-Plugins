@@ -11,18 +11,28 @@ if (args.FirstOrDefault() == "--pretask")
         startedUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime().ToString("O"), argumentCount = args.Length,
         cwdMatches = Environment.CurrentDirectory == Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_ROOT"),
         piVersion = Environment.GetEnvironmentVariable("PI_INTERFACE_VERSION"),
-        options = args.Length == 2 ? JsonDocument.Parse(args[1]).RootElement : (JsonElement?)null }));
+        options = args.Length >= 2 ? JsonDocument.Parse(args[^1]).RootElement : (JsonElement?)null,
+        rawArguments = args[..^1] }));
+    if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "pretask_window")
+    {
+        var info = new ProcessStartInfo(Environment.GetEnvironmentVariable("NXP_MAA_WINDOW_FIXTURE")!)
+            { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true,
+                RedirectStandardError = true, RedirectStandardInput = true };
+        info.ArgumentList.Add("--owned-lifetime"); info.ArgumentList.Add(Environment.CurrentDirectory);
+        using var window = Process.Start(info)!;
+        _ = await window.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(5));
+    }
     if (Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "pretask_timeout") Thread.Sleep(30000);
     return Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_SCENARIO") == "pretask_failure" ? 93 : 0;
 }
-if (args.Length != 1) return 91;
+if (args.Length < 1) return 91;
 File.WriteAllText("agent-evidence.json", JsonSerializer.Serialize(new { pid = Environment.ProcessId,
     startedUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime().ToString("O"),
     cwdMatches = Environment.CurrentDirectory == Environment.GetEnvironmentVariable("NXP_MAA_FIXTURE_ROOT"),
     piVersion = Environment.GetEnvironmentVariable("PI_INTERFACE_VERSION"),
-    hasIdentifier = args[0].Length > 0 }));
+    hasIdentifier = args[^1].Length > 0, rawArguments = args[..^1] }));
 var agent = MaaAgentServer.Current.WithNativeLibrary([Environment.GetEnvironmentVariable("MAAFW_BINARY_PATH")!]);
-agent.WithIdentifier(args[0]).SetStdoutLevel(LoggingLevel.Off).SetLogDirectory("native-agent-logs");
+agent.WithIdentifier(args[^1]).SetStdoutLevel(LoggingLevel.Off).SetLogDirectory("native-agent-logs");
 agent.Register("FixtureAction", new FixtureAction()).StartUp();
 // Follow the standard server lifecycle; a watchdog bounds a broken fixture client.
 using var watchdog = new CancellationTokenSource();

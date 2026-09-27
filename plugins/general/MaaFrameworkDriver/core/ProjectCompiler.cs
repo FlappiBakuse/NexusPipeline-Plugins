@@ -17,9 +17,18 @@ public sealed class ProjectCompiler
     private int _files;
     private readonly JsonObject _pi;
     private readonly JsonObject _translations;
+    private CancellationToken _token;
+    public long BytesRead { get; private set; }
+    public int FilesHashed { get; private set; }
+    public int FilesParsed { get; private set; }
+    public long ParsedBytes { get; private set; }
+    public int EntriesEnumerated { get; private set; }
+    private JsonObject _authorizationManifest = new();
 
-    public ProjectCompiler(string packageRoot, string interfacePath, string language = "zh_cn")
+    public ProjectCompiler(string packageRoot, string interfacePath, string language = "zh_cn", CancellationToken cancellationToken = default)
     {
+        _token = cancellationToken;
+        _token.ThrowIfCancellationRequested();
         _root = Path.GetFullPath(packageRoot).TrimEnd('\\', '/');
         string file = Scope(_root, interfacePath);
         _directory = Path.GetDirectoryName(file)!;
@@ -57,15 +66,26 @@ public sealed class ProjectCompiler
         _ => node?.DeepClone(),
     };
 
-    public CompiledProject Compile(DriverProfile profile)
+    public CompiledProject Compile(DriverProfile profile, CancellationToken cancellationToken = default)
     {
-        if (profile.SchemaVersion != 1 || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
+        if (cancellationToken.CanBeCanceled) _token = cancellationToken;
+        _token.ThrowIfCancellationRequested();
+        BytesRead = 0; FilesHashed = 0; EntriesEnumerated = 0;
+        if (profile.SchemaVersion is not (1 or 2) || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
             throw Error("profile", "root or schema mismatch");
+        if (profile.WindowSelection is not ("exact_process" or "executable")
+            || profile.WindowSelection == "executable" && profile.SchemaVersion != 2
+            || profile.WindowWaitMilliseconds is < 1 or > 30000)
+            throw Error("profile.windowSelection", "unsupported selector or wait bound");
         var controller = Find("controller", profile.Controller);
         var resource = Find("resource", profile.Resource);
         ValidateConfiguredOptions(profile);
         string type = Required(controller, "type");
         if (type is not ("Win32" or "Adb")) throw Error("controller.type", "unsupported " + type);
+        if (type == "Win32" && profile.WindowSelection == "executable"
+            && (!Path.IsPathFullyQualified(profile.WindowExecutable) || !File.Exists(profile.WindowExecutable)
+                || !profile.WindowExecutable.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))
+            throw Error("profile.windowExecutable", "existing full executable identity required");
         string[] displayFields = ["display_raw", "display_short_side", "display_long_side", "display_expand"];
         if (displayFields.Count(controller.ContainsKey) > 1) throw Error("controller.display", "mutually exclusive fields");
         foreach (string side in new[] { "display_short_side", "display_long_side" })
@@ -87,6 +107,7 @@ public sealed class ProjectCompiler
             throw Error("selectedTasks", "duplicate identity");
         foreach (string name in profile.SelectedTasks)
         {
+            _token.ThrowIfCancellationRequested();
             var task = Find("task", name);
             if (!Active(task, profile)) throw Error("task." + name, "not applicable to selected controller/resource");
             var pipeline = task["pipeline_override"]?.DeepClone().AsObject() ?? new();
@@ -108,7 +129,7 @@ public sealed class ProjectCompiler
         var fingerprint = ExecutionFingerprint(profile, controller, resource, paths, pretasks, agents);
         return new(Required(_pi, "name"), Text(_pi, "version"), _directory,
             Display(controller)!.AsObject(), Display(resource)!.AsObject(), paths, baseCount,
-            Strings(resource["hash"]), tasks.ToArray(), pretasks, agents, fingerprint, Inspect());
+            Strings(resource["hash"]), tasks.ToArray(), pretasks, agents, fingerprint, Inspect(), 2, _authorizationManifest);
     }
 
     public DriverProfile ApplyPreset(DriverProfile profile, string presetName)
@@ -132,17 +153,18 @@ public sealed class ProjectCompiler
             if (!agent && !Active(entry, profile)) continue;
             string executable = ResolveExecutable(Required(entry, agent ? "child_exec" : "exec"));
             var arguments = Strings(entry[agent ? "child_args" : "args"]).ToList();
+            JsonObject? generatedOptions = null;
             if (!agent && Strings(entry["option"]).Length > 0)
             {
                 var effective = new JsonObject();
                 ApplyOptions(Strings(entry["option"]), profile, profile.Options, new(), effective, new());
-                arguments.Add(effective.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
+                generatedOptions = effective;
             }
             long timeout = entry["timeout"]?.GetValue<long>() ?? 10000;
             if (timeout is < 1 or > 120000 && !(agent && timeout == -1))
                 throw Error(agent ? "agent.timeout" : "pretask.timeout", "outside 1..120000 milliseconds (Agent also permits -1)");
             list.Add(new(Text(entry, "name", Path.GetFileName(executable)), executable, arguments.ToArray(),
-                agent ? Text(entry, "identifier") : null, timeout));
+                agent ? Text(entry, "identifier") : null, timeout, generatedOptions));
         }
         return list.ToArray();
     }
@@ -358,10 +380,25 @@ public sealed class ProjectCompiler
         // MaaEnd v2.30.0 has a 2.2 MB declaration import. Keep an explicit
         // bounded parser budget that includes the locked official projects.
         if (size > 8 * 1024 * 1024 || (_bytes += size) > 32 * 1024 * 1024) throw Error("import", "byte budget");
-        byte[] bytes = File.ReadAllBytes(file);
+        _token.ThrowIfCancellationRequested();
+        using var stream = File.OpenRead(file);
+        using var content = new MemoryStream();
+        byte[] block = new byte[64 * 1024];
+        while (true)
+        {
+            _token.ThrowIfCancellationRequested();
+            int count = stream.Read(block);
+            if (count == 0) break;
+            if (content.Length + count > 8 * 1024 * 1024) throw Error("import", "byte budget");
+            content.Write(block, 0, count);
+            ParsedBytes += count;
+        }
+        _token.ThrowIfCancellationRequested();
+        byte[] bytes = content.ToArray();
         var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true, MaxDepth = 64 };
         using var document = JsonDocument.Parse(bytes.AsMemory(bytes.AsSpan().StartsWith(new byte[] { 239, 187, 191 }) ? 3 : 0), options);
         CheckDuplicates(document.RootElement);
+        FilesParsed++;
         return JsonNode.Parse(document.RootElement.GetRawText(), documentOptions: options)?.AsObject() ?? throw Error("interface", "object required");
     }
 
@@ -384,21 +421,34 @@ public sealed class ProjectCompiler
             basis = _directory;
             relative = relative[14..];
         }
+        return ResolveScopedPath(_root, basis, relative);
+    }
+
+    public static string ResolveScopedPath(string packageRoot, string basis, string relative)
+    {
+        string root = Path.GetFullPath(packageRoot).TrimEnd('\\', '/');
         if (Path.IsPathRooted(relative)) throw Error("path", "absolute declaration");
         string path = Path.GetFullPath(Path.Combine(basis, relative));
-        if (!path.Equals(_root, StringComparison.OrdinalIgnoreCase)
-            && !path.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw Error("path", "outside approved root");
+        if (!path.Equals(root, StringComparison.OrdinalIgnoreCase)
+            && !path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) throw Error("path", "outside approved root");
         for (string? current = path; current is not null; current = Path.GetDirectoryName(current))
         {
             if (File.Exists(current) || Directory.Exists(current))
                 if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) throw Error("path", "link rejected");
-            if (current.Equals(_root, StringComparison.OrdinalIgnoreCase)) break;
+            if (current.Equals(root, StringComparison.OrdinalIgnoreCase)) break;
         }
         return path;
     }
 
     private string ResolveExecutable(string declaration)
     {
+        if (Path.IsPathFullyQualified(declaration))
+        {
+            if (!Regex.IsMatch(Path.GetFileNameWithoutExtension(declaration), "^python(?:w|[0-9.]*)?$",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || !declaration.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                throw Error("exec", "absolute program must be an explicit Python interpreter");
+            return File.Exists(declaration) ? Path.GetFullPath(declaration) : throw Error("exec", "interpreter missing");
+        }
         if (declaration.Contains('/') || declaration.Contains('\\'))
         {
             string path = Scope(_directory, declaration);
@@ -418,14 +468,16 @@ public sealed class ProjectCompiler
         CompiledProgram[] pretasks, CompiledProgram[] agents)
     {
         string native = Scope(_root, profile.NativeDirectory);
+        var programs = new JsonArray();
         var identity = new StringBuilder();
-        identity.Append(_root).Append('\n').Append(profile.InterfacePath).Append('\n').Append(profile.NativeVersion);
-        identity.Append(profile.HostLaunchRequired).Append(profile.HostLaunchConfiguration.ToJsonString());
-        identity.Append(controller["type"]).Append(controller["win32"]?.ToJsonString()).Append(resource["path"]?.ToJsonString());
+        identity.Append(JsonSerializer.Serialize(new { root = _root, interfacePath = Scope(_root, profile.InterfacePath), profile.NativeVersion }));
+        identity.Append(JsonSerializer.Serialize(new { profile.HostLaunchRequired, profile.HostLaunchConfiguration,
+            profile.WindowSelection, profile.WindowExecutable, profile.WindowWaitMilliseconds }));
+        identity.Append(JsonSerializer.Serialize(new { type = controller["type"], win32 = controller["win32"], path = resource["path"] }));
         // Execution declarations are authorized as code; translated display-only
         // metadata does not invalidate that authorization.
-        foreach (string field in new[] { "controller", "resource", "task", "option", "pretask", "agent", "global_option", "preset" })
-            identity.Append(field).Append(ExecutionDeclaration(_pi[field])?.ToJsonString());
+        foreach (string field in new[] { "controller", "resource", "task", "option", "global_option", "preset" })
+            identity.Append(JsonSerializer.Serialize(new { field, value = ExecutionDeclaration(_pi[field]) }));
         if (!Directory.Exists(native)) throw Error("nativeDirectory", "missing");
         var files = Directory.EnumerateFiles(native, "*.dll").Order(StringComparer.OrdinalIgnoreCase).ToList();
         foreach (string path in resourcePaths) files.AddRange(ScopedTree(path));
@@ -433,56 +485,102 @@ public sealed class ProjectCompiler
         {
             files.Add(program.Executable);
             // Hash declarations, not expanded user values or secrets.
-            identity.Append(program.Executable).Append(program.Identifier);
-            foreach (string arg in program.Arguments.Where(arg => !arg.StartsWith('{')))
+            var authorizedArguments = program.Arguments.ToArray();
+            string interpreter = Path.GetFileNameWithoutExtension(program.Executable);
+            if (Regex.IsMatch(interpreter, "^python(?:w|[0-9.]*)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
             {
-                identity.Append(arg);
-                if (arg.StartsWith("./", StringComparison.Ordinal) || arg.StartsWith(".\\", StringComparison.Ordinal))
+                int index = 0;
+                while (index < authorizedArguments.Length && authorizedArguments[index].StartsWith('-'))
                 {
-                    string path = Scope(_directory, arg);
-                    if (File.Exists(path))
-                    {
-                        files.Add(path);
-                        if (path.EndsWith(".py", StringComparison.OrdinalIgnoreCase))
-                            files.AddRange(ScopedTree(Path.GetDirectoryName(path)!).Where(file => file.EndsWith(".py", StringComparison.OrdinalIgnoreCase)));
-                    }
+                    string option = authorizedArguments[index++];
+                    if (option is "--") break;
+                    if (option is "-W" or "-X")
+                    { if (index >= authorizedArguments.Length) throw Error("exec.args", "missing interpreter option value"); index++; }
+                    else if (option is "-m" or "-c" || option.StartsWith("-m", StringComparison.Ordinal) || option.StartsWith("-c", StringComparison.Ordinal))
+                        throw Error("exec.args", "dynamic -m/-c entry unsupported; use an explicit project script file");
+                    else if (option is not ("-u" or "-B" or "-E" or "-I" or "-O" or "-OO" or "-s" or "-S" or "-q")
+                        && !option.StartsWith("-W", StringComparison.Ordinal) && !option.StartsWith("-X", StringComparison.Ordinal))
+                        throw Error("exec.args", "unsupported interpreter option");
                 }
+                if (index >= authorizedArguments.Length) throw Error("exec.args", "explicit project script entry required");
+                string entry = Scope(_directory, authorizedArguments[index]);
+                if (!File.Exists(entry) || !entry.EndsWith(".py", StringComparison.OrdinalIgnoreCase))
+                    throw Error("exec.args", "explicit .py entry missing");
+                authorizedArguments[index] = entry;
+                files.Add(entry);
+                // Python's local imports can extend beyond the entry's directory.
+                // Authorize the package's bounded local Python code, never the interpreter installation.
+                files.AddRange(ScopedTree(_root).Where(IsLocalCode));
             }
+            else if (program.Executable.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                files.AddRange(ScopedTree(Path.GetDirectoryName(program.Executable)!).Where(IsLocalCode));
+            var authorizedProgram = JsonSerializer.SerializeToNode(new { program.Executable, program.Identifier, program.TimeoutMilliseconds,
+                arguments = authorizedArguments, generatedOptions = program.GeneratedOptionPayload is not null })!;
+            programs.Add(authorizedProgram); identity.Append(authorizedProgram.ToJsonString());
         }
         if (!string.IsNullOrWhiteSpace(profile.AdbPath)) files.Add(profile.AdbPath);
         if (!string.IsNullOrWhiteSpace(profile.WindowExecutable)) files.Add(profile.WindowExecutable);
         long totalBytes = 0;
         var unique = files.Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
         if (unique.Length > 50000) throw Error("fingerprint", "file count limit");
+        byte[] hashBlock = new byte[64 * 1024];
         foreach (string file in unique)
         {
+            _token.ThrowIfCancellationRequested();
             if (file.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 Scope(_root, Path.GetRelativePath(_root, file));
-            else if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0)
-                throw Error("exec", "linked interpreter");
+            else
+                for (string? current = file; current is not null; current = Path.GetDirectoryName(current))
+                    if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+                        throw Error("exec", "linked interpreter or target");
             if ((totalBytes += new FileInfo(file).Length) > 4L * 1024 * 1024 * 1024)
                 throw Error("fingerprint", "byte limit");
             using var stream = File.OpenRead(file);
-            identity.Append(file).Append(Convert.ToHexString(SHA256.HashData(stream)));
+            using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            while (true)
+            {
+                _token.ThrowIfCancellationRequested();
+                int count = stream.Read(hashBlock);
+                if (count == 0) break;
+                hash.AppendData(hashBlock, 0, count); BytesRead += count;
+            }
+            _token.ThrowIfCancellationRequested(); FilesHashed++;
+            identity.Append(JsonSerializer.Serialize(new { file, sha256 = Convert.ToHexString(hash.GetHashAndReset()) }));
         }
         foreach (var declaration in Objects(_pi["agent"]).Concat(Objects(_pi["pretask"])))
-            foreach (string key in new[] { "child_exec", "child_args", "identifier", "exec", "args", "option", "controller", "resource" })
-                identity.Append(key).Append(declaration[key]?.ToJsonString());
-        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity.ToString()))).ToLowerInvariant();
+            foreach (string key in new[] { "option", "controller", "resource" })
+                identity.Append(JsonSerializer.Serialize(new { key, value = declaration[key] }));
+        string fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity.ToString()))).ToLowerInvariant();
+        _authorizationManifest = new() { ["schemaVersion"] = 1, ["packageRoot"] = _root, ["nativeRoot"] = native,
+            ["programs"] = programs, ["resourceRoots"] = new JsonArray(resourcePaths.Select(path => (JsonNode?)JsonValue.Create(path)).ToArray()),
+            ["localCodeScope"] = "Bounded package-local code for Python; bounded executable-directory code and runtime metadata for direct EXE",
+            ["fileCount"] = unique.Length, ["contentFingerprint"] = fingerprint,
+            ["windowSelection"] = profile.WindowSelection, ["windowExecutable"] = profile.WindowExecutable };
+        return fingerprint;
     }
+
+    private static bool IsLocalCode(string path) => Path.GetExtension(path).ToLowerInvariant() is ".py" or ".pyd" or ".dll" or ".exe"
+        || path.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase)
+        || path.EndsWith(".runtimeconfig.json", StringComparison.OrdinalIgnoreCase);
 
     private IEnumerable<string> ScopedTree(string directory)
     {
         var pending = new Stack<string>(); pending.Push(directory);
         int entries = 0;
         while (pending.TryPop(out string? current))
-            foreach (string path in Directory.EnumerateFileSystemEntries(current).Order(StringComparer.OrdinalIgnoreCase))
+        {
+            _token.ThrowIfCancellationRequested();
+            foreach (string path in Directory.EnumerateFileSystemEntries(current).Select(path =>
+                { _token.ThrowIfCancellationRequested(); return path; }).Order(StringComparer.OrdinalIgnoreCase))
             {
+                _token.ThrowIfCancellationRequested();
+                EntriesEnumerated++;
                 if (++entries > 50000) throw Error("resource", "file count limit");
                 Scope(_root, Path.GetRelativePath(_root, path));
                 if (Directory.Exists(path)) pending.Push(path);
                 else yield return path;
             }
+        }
     }
 
     private static JsonNode? ExecutionDeclaration(JsonNode? node)

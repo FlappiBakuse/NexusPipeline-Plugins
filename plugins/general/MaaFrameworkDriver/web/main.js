@@ -10,10 +10,10 @@ export function activate(host) {
     const validationErrors = new Map();
     const userId = context.mode === 'binding' ? context.secondaryId || '' : '';
     let importPath = '', importKind = 'mxu', importInstance = '', importMode = 'new', presetName = '';
-    let profile = { schemaVersion: 1, profileId: context.executionProviderConfigId || crypto.randomUUID().replaceAll('-', ''),
+    let profile = { schemaVersion: 2, profileId: context.executionProviderConfigId || crypto.randomUUID().replaceAll('-', ''),
       revision: '', packageRoot: context.packageRoot || '', interfacePath: 'interface.json', controller: '', resource: '',
       nativeDirectory: 'bin', nativeVersion: 'v5.14.0', language: 'zh_cn', selectedTasks: [], options: {}, resourceOptions: {}, controllerOptions: {}, taskOptions: {},
-      windowHandle: 0, windowProcessId: 0, windowExecutable: '', adbPath: '', adbSerial: '' };
+      windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowSelection: 'executable', windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
     const card = document.createElement('nxp-section-card'); card.title = 'MaaFramework';
     const status = document.createElement('p'); status.setAttribute('role', 'status');
     const fields = document.createElement('div'); fields.dataset.pluginMaaFields = 'true';
@@ -73,8 +73,16 @@ export function activate(host) {
       });
       const controller = schema.controller.find(item => item.name === profile.controller);
       if (controller?.type === 'Win32') {
-        field('HWND', 'nxp-text-input', String(profile.windowHandle || ''), v => profile.windowHandle = Number(v));
-        field('PID', 'nxp-text-input', String(profile.windowProcessId || ''), v => profile.windowProcessId = Number(v));
+        field(text('运行时窗口选择', 'Runtime window selection'), 'nxp-select', profile.windowSelection || 'exact_process', v => {
+          profile.windowSelection = v; profile.schemaVersion = 2;
+        }, { options: [
+          { value: 'executable', label: text('每次按完整路径和项目窗口规则重新发现', 'Rediscover by full path and project window filters each run') },
+          { value: 'exact_process', label: text('只使用已选进程生命期（旧配置）', 'Use the selected process lifetime only (legacy)') },
+        ] });
+        field(text('窗口等待上限（毫秒）', 'Window wait limit (milliseconds)'), 'nxp-text-input', String(profile.windowWaitMilliseconds || 10000), v => {
+          const value = Number(v); if (!Number.isInteger(value) || value < 1 || value > 30000) throw new Error(text('等待上限须为 1–30000 毫秒', 'Wait limit must be 1–30000 milliseconds'));
+          profile.windowWaitMilliseconds = value;
+        });
         field(text('窗口进程完整路径（运行时复核身份）', 'Window executable path (identity checked at runtime)'), 'nxp-text-input', profile.windowExecutable, v => profile.windowExecutable = v);
       } else if (controller?.type === 'Adb') {
         field('ADB.exe', 'nxp-text-input', profile.adbPath, v => profile.adbPath = v);
@@ -184,6 +192,7 @@ export function activate(host) {
       choose.addEventListener('update:modelValue', event => {
         choose.modelValue = event.detail[0]; const target = result.windows.find(item => String(item.handle) === choose.modelValue);
         if (!target) return; profile.windowHandle = target.handle; profile.windowProcessId = target.pid; profile.windowExecutable = target.executable; profile.windowStartedAtUtc = target.startedAtUtc;
+        profile.schemaVersion = 2; profile.windowSelection = 'executable';
         draftVersion += 1; preview = null; draw();
       }, { signal: abort.signal }); details.append(choose);
     });

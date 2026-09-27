@@ -65,20 +65,39 @@ Task controls = Task.Run(async () =>
     }
     catch (Exception ex) when (ex is IOException or ObjectDisposedException) { cancelled.Cancel(); session.RequestStop(); }
 });
+SessionWorkspace? workspace = null;
 try
 {
+    workspace = new SessionWorkspace(bootstrap.SessionId);
     var profile = bootstrap.Input["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
     var compiled = bootstrap.Input["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
     var secrets = bootstrap.Input["secrets"] as JsonObject ?? new();
-    await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token);
+    var target = bootstrap.Input["hostLaunchTarget"]?.Deserialize<PluginProviderLaunchTarget>(DriverJson.Options);
+    await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target);
+    await session.CloseAsync();
+    workspace.Complete();
     await Send("completed", new() { ["status"] = cancelled.IsCancellationRequested ? "cancelled" : "succeeded" });
     return cancelled.IsCancellationRequested ? 2 : 0;
 }
 catch (Exception ex)
 {
+    string code = ex is NativeStartupException native ? "worker." + native.Code
+        : ex is OperationCanceledException ? "worker.cancelled" : "worker." + ex.GetType().Name;
+    if (workspace is null && ex is UnauthorizedAccessException) code = "worker.session_workspace_unwritable";
+    string failedPhase = workspace is null ? "session.workspace.create" : session.Phase;
+    try
+    {
+        await session.CloseAsync();
+        if (cancelled.IsCancellationRequested) workspace?.Complete();
+        else workspace?.RetainFailure(code, failedPhase);
+    }
+    catch (Exception cleanup)
+    {
+        code = "worker.cleanup_" + cleanup.GetType().Name;
+        workspace?.RetainFailure(code, session.Phase);
+    }
     // Project values, native details and command lines can contain secrets.
-    await Send("fault", new() { ["status"] = "failed", ["code"] = ex is NativeStartupException native ? "worker." + native.Code
-        : ex is OperationCanceledException ? "worker.cancelled" : "worker." + ex.GetType().Name });
+    await Send("fault", new() { ["status"] = "failed", ["code"] = code, ["phase"] = failedPhase });
     return cancelled.IsCancellationRequested ? 2 : 1;
 }
 finally

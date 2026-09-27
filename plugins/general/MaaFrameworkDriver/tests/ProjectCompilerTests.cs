@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Xunit;
 
@@ -5,6 +6,179 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
 
 public sealed class ProjectCompilerTests
 {
+    [Fact]
+    public void PathInterpreterReplacementInvalidatesAuthorization()
+    {
+        using var fixture = new Fixture();
+        string executable = Path.Combine(fixture.Root, "python159753.exe");
+        File.WriteAllText(executable, "original owned interpreter; never executed");
+        File.WriteAllText(Path.Combine(fixture.Root, "main.py"), "print(1)");
+        fixture.Write("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"python159753","child_args":["main.py"]}}
+        """);
+        string? originalPath = Environment.GetEnvironmentVariable("PATH");
+        try
+        {
+            Environment.SetEnvironmentVariable("PATH", fixture.Root + Path.PathSeparator + originalPath);
+            var first = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile);
+            Assert.Equal(executable, Assert.Single(first.Agents).Executable);
+            File.WriteAllText(executable, "replaced owned interpreter; never executed");
+            Assert.NotEqual(first.ExecutionFingerprint,
+                new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint);
+        }
+        finally { Environment.SetEnvironmentVariable("PATH", originalPath); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void LinkedInterpreterAndLocalDependencyAreRejectedWithoutReadingOutside(bool interpreter)
+    {
+        using var fixture = new Fixture();
+        using var outside = new Fixture();
+        string link = Path.Combine(fixture.Root, "linked");
+        File.WriteAllText(Path.Combine(outside.Root, "python.exe"), "outside owned interpreter; never executed");
+        File.WriteAllText(Path.Combine(outside.Root, "helper.py"), "outside owned dependency");
+        File.WriteAllText(Path.Combine(fixture.Root, "python.exe"), "inside owned interpreter; never executed");
+        File.WriteAllText(Path.Combine(fixture.Root, "main.py"), "print(1)");
+        var start = new System.Diagnostics.ProcessStartInfo("cmd.exe") { UseShellExecute = false,
+            CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
+        foreach (string argument in new[] { "/c", "mklink", "/J", link, outside.Root }) start.ArgumentList.Add(argument);
+        using var process = System.Diagnostics.Process.Start(start)!;
+        string output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+        process.WaitForExit(); Assert.True(process.ExitCode == 0, output);
+        try
+        {
+            var pi = JsonNode.Parse("""
+            {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+             "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"./python.exe","child_args":["main.py"]}}
+            """)!;
+            if (interpreter) pi["agent"]!["child_exec"] = Path.Combine(link, "python.exe");
+            fixture.Write(pi.ToJsonString());
+            var error = Assert.Throws<InvalidDataException>(() =>
+                new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile));
+            Assert.Contains("link", error.Message);
+            Assert.Equal("outside owned dependency", File.ReadAllText(Path.Combine(outside.Root, "helper.py")));
+        }
+        finally { Directory.Delete(link); }
+    }
+
+    [Fact]
+    public void AuthorizationKeepsArgumentBoundariesAndAbsentPayloadExplicit()
+    {
+        using var fixture = new Fixture();
+        File.WriteAllText(Path.Combine(fixture.Root, "agent.exe"), "inert identity fixture");
+        var pi = JsonNode.Parse("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"task":[],
+         "agent":{"child_exec":"./agent.exe","child_args":["ab","c"]},
+         "pretask":{"exec":"./agent.exe","args":["{literal}"]}}
+        """)!;
+        fixture.Write(pi.ToJsonString());
+        var first = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile);
+        Assert.Null(Assert.Single(first.Pretasks).GeneratedOptionPayload);
+        Assert.Equal(new[] { "{literal}" }, Assert.Single(first.Pretasks).Arguments);
+        pi["agent"]!["child_args"] = new JsonArray("a", "bc");
+        fixture.Write(pi.ToJsonString());
+        var second = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile);
+        Assert.NotEqual(first.ExecutionFingerprint, second.ExecutionFingerprint);
+        Assert.Equal(new[] { "a", "bc" }, Assert.Single(second.Agents).Arguments);
+    }
+
+    [Fact]
+    public void OversizedInterfaceFailsWithLocatedBudgetBeforeParsing()
+    {
+        using var fixture = new Fixture();
+        using (var bytes = File.Create(Path.Combine(fixture.Root, "interface.json"))) bytes.SetLength(8L * 1024 * 1024 + 1);
+        var error = Assert.Throws<InvalidDataException>(() => new ProjectCompiler(fixture.Root, "interface.json"));
+        Assert.Contains("import", error.Message); Assert.Contains("byte budget", error.Message);
+    }
+
+    [Theory]
+    [InlineData("agent.dll")]
+    [InlineData("agent.deps.json")]
+    [InlineData("agent.runtimeconfig.json")]
+    [InlineData("helper.pyd")]
+    public void DirectExecutableSidecarCodeChangesRequireAuthorization(string dependency)
+    {
+        using var fixture = new Fixture();
+        Directory.CreateDirectory(Path.Combine(fixture.Root, "agent"));
+        File.WriteAllText(Path.Combine(fixture.Root, "agent", "agent.exe"), "inert owned identity fixture");
+        string sidecar = Path.Combine(fixture.Root, "agent", dependency);
+        File.WriteAllText(sidecar, "original");
+        fixture.Write("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"agent/agent.exe"}}
+        """);
+        string before = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint;
+        File.WriteAllText(sidecar, "modified");
+        Assert.NotEqual(before, new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint);
+    }
+    [Fact]
+    public void RawArgumentsStaySeparateFromGeneratedOptionPayload()
+    {
+        using var fixture = new Fixture();
+        File.WriteAllText(Path.Combine(fixture.Root, "pretask.exe"), "non-executed code identity fixture");
+        string[] arguments = ["", "{literal}", " { \"key\" : \"secret:literal\" } ", "secret:literal", "中文", "a\"b"];
+        var pi = JsonNode.Parse("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"task":[],
+         "pretask":{"exec":"./pretask.exe","option":["Mode"]},
+         "option":{"Mode":{"cases":[{"name":"Selected"}]}}}
+        """)!;
+        pi["pretask"]!["args"] = new JsonArray(arguments.Select(a => (JsonNode?)JsonValue.Create(a)).ToArray());
+        fixture.Write(pi.ToJsonString());
+        var program = Assert.Single(new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).Pretasks);
+        Assert.Equal(arguments, program.Arguments);
+        var serialized = JsonSerializer.SerializeToNode(program)!;
+        Assert.Equal("Selected", serialized["GeneratedOptionPayload"]!["Mode"]!.GetValue<string>());
+    }
+
+    [Theory]
+    [InlineData("agent/main.py")]
+    [InlineData("./agent/main.py")]
+    [InlineData("agent\\main.py")]
+    public void ScriptEntryAndLocalDependencyContentInvalidateAuthorization(string entry)
+    {
+        using var fixture = new Fixture();
+        Directory.CreateDirectory(Path.Combine(fixture.Root, "agent"));
+        string script = Path.Combine(fixture.Root, "agent", "main.py");
+        string dependency = Path.Combine(fixture.Root, "helper.py");
+        File.WriteAllText(script, "import helper\n"); File.WriteAllText(dependency, "value = 1\n");
+        File.WriteAllText(Path.Combine(fixture.Root, "python.exe"), "non-executed interpreter identity fixture");
+        var pi = JsonNode.Parse("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"./python.exe"}}
+        """)!;
+        pi["agent"]!["child_args"] = new JsonArray("-u", entry); fixture.Write(pi.ToJsonString());
+        string first = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint;
+        File.WriteAllText(script, "import helper\nprint(1)\n");
+        string second = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint;
+        Assert.NotEqual(first, second);
+        File.WriteAllText(dependency, "value = 2\n");
+        Assert.NotEqual(second, new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint);
+        pi["agent"]!["child_args"] = new JsonArray("-u", "./agent/main.py"); fixture.Write(pi.ToJsonString());
+        string canonical = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint;
+        pi["agent"]!["child_args"] = new JsonArray("-u", "agent/main.py"); fixture.Write(pi.ToJsonString());
+        Assert.Equal(canonical, new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).ExecutionFingerprint);
+    }
+
+    [Theory]
+    [InlineData("-m")]
+    [InlineData("-c")]
+    public void DynamicPythonEntryIsRejectedBeforeExecution(string option)
+    {
+        using var fixture = new Fixture();
+        File.WriteAllText(Path.Combine(fixture.Root, "python.exe"), "non-executed interpreter identity fixture");
+        var pi = JsonNode.Parse("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"./python.exe"}}
+        """)!;
+        pi["agent"]!["child_args"] = new JsonArray(option, "dynamic-code"); fixture.Write(pi.ToJsonString());
+        Assert.Contains("exec.args", Assert.Throws<InvalidDataException>(() => new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile)).Message);
+    }
+
     [Theory]
     [InlineData("options")]
     [InlineData("controllerOptions")]

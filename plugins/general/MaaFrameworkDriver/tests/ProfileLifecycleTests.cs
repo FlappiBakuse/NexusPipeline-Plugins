@@ -8,6 +8,43 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
 public sealed class ProfileLifecycleTests
 {
     [Fact]
+    public async Task LegacyWindowIdentityIsReadOnlyUntilExplicitStableSelectionSave()
+    {
+        using var fixture = new Fixture();
+        string executable = Path.Combine(fixture.Root, "target.exe");
+        File.WriteAllText(executable, "inert target identity fixture");
+        var saved = await fixture.Authorize(fixture.Profile with
+        {
+            WindowHandle = 42, WindowProcessId = 123, WindowExecutable = executable,
+            WindowStartedAtUtc = DateTime.UtcNow,
+        });
+        string original = Assert.Single(fixture.Host.Data.Values).Value!.ToJsonString();
+        var loaded = (await fixture.Call("profile", saved)).JsonBody!.Deserialize<DriverProfile>(DriverJson.Options)!;
+        Assert.Equal(1, loaded.SchemaVersion); Assert.Equal("exact_process", loaded.WindowSelection);
+        Assert.Equal(saved.WindowHandle, loaded.WindowHandle); Assert.Equal(saved.WindowStartedAtUtc, loaded.WindowStartedAtUtc);
+        Assert.Equal(original, Assert.Single(fixture.Host.Data.Values).Value!.ToJsonString());
+        var upgraded = await fixture.Authorize(loaded with { SchemaVersion = 2, WindowSelection = "executable", WindowHandle = 0, WindowProcessId = 0, WindowStartedAtUtc = null });
+        Assert.Equal(2, upgraded.SchemaVersion); Assert.Equal("executable", upgraded.WindowSelection);
+        Assert.Equal(executable, upgraded.WindowExecutable);
+    }
+
+    [Fact]
+    public async Task LiteralSecretArgumentNeverReadsTheSecretStore()
+    {
+        using var fixture = new Fixture();
+        File.WriteAllText(Path.Combine(fixture.Root, "agent.exe"), "inert compiler fixture");
+        File.WriteAllText(Path.Combine(fixture.Root, "interface.json"), """
+        {"interface_version":2,"name":"Fixture","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"task":[{"name":"T","entry":"Entry"}],
+         "agent":{"child_exec":"./agent.exe","child_args":["secret:literal","{literal}"]}}
+        """);
+        await fixture.Authorize(fixture.Profile with { Options = new() });
+        var plan = await fixture.Plugin.PrepareAsync(fixture.Request(""), default);
+        var worker = new Worker();
+        await fixture.Plugin.RunAsync(new("execution", "record", 1, "", "script", plan, worker, _ => ValueTask.CompletedTask), default);
+        Assert.True(worker.Started); Assert.Equal(0, fixture.Host.Secret.ReadCount);
+    }
+    [Fact]
     public async Task SharedAndUserProfilesRequireCasAuthorizationAndCurrentParent()
     {
         using var fixture = new Fixture();

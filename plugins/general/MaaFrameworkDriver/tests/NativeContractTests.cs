@@ -9,12 +9,34 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
 
 public sealed class NativeContractTests
 {
+    [Fact]
+    [Trait("Category", "Native")]
+    public Task StandardAgentAtFixedDiagnosticPath() =>
+        OfficialNativeControllerRunsOnlyInAuthenticatedWorker(true, "success", "Win32");
+
+    [Fact]
+    [Trait("Category", "Native")]
+    public async Task AgentCancellationAndFailureAllowFreshSessions()
+    {
+        foreach (string scenario in new[] { "cancel", "success", "success", "failure", "success" })
+            await OfficialNativeControllerRunsOnlyInAuthenticatedWorker(true, scenario, "Win32");
+    }
+
     [Theory]
     [InlineData(false, "success", "Win32")]
     [InlineData(true, "success", "Win32")]
     [InlineData(true, "failure", "Win32")]
     [InlineData(true, "cancel", "Win32")]
     [InlineData(true, "secret", "Win32")]
+    [InlineData(true, "argv", "Win32")]
+    [InlineData(false, "rediscover", "Win32")]
+    [InlineData(true, "pretask_window", "Win32")]
+    [InlineData(false, "ambiguous", "Win32")]
+    [InlineData(false, "host_window", "Win32")]
+    [InlineData(false, "host_lifetime_mismatch", "Win32")]
+    [InlineData(false, "cancel_window", "Win32")]
+    [InlineData(false, "workspace_collision", "Win32")]
+    [InlineData(false, "compiled_schema", "Win32")]
     [InlineData(true, "pretask_failure", "Win32")]
     [InlineData(true, "pretask_timeout", "Win32")]
     [InlineData(false, "native_version", "Win32")]
@@ -46,11 +68,23 @@ public sealed class NativeContractTests
         string plugin = FindPlugin();
         string configuration = AppContext.BaseDirectory.Split(Path.DirectorySeparatorChar)
             .Last(part => part is "Debug" or "Release");
-        string root = Path.Combine(Path.GetTempPath(), "nxp-native-contract-" + Guid.NewGuid().ToString("N"));
+        string fixtureBase = Environment.GetEnvironmentVariable("NEXUS_MAA_FIXTURE_ROOT") ?? Path.GetTempPath();
+        if (!Path.IsPathFullyQualified(fixtureBase) || !Directory.Exists(fixtureBase)
+            || (File.GetAttributes(fixtureBase) & FileAttributes.ReparsePoint) != 0)
+            throw new InvalidDataException("native fixture root must be an existing absolute ordinary directory");
+        if (Environment.GetEnvironmentVariable("NEXUS_MAA_FIXTURE_ROOT") is not null
+            && !File.Exists(Path.Combine(fixtureBase, ".nxp-native-fixture-root")))
+            throw new InvalidDataException("native fixture root ownership missing");
+        string caseId = Environment.GetEnvironmentVariable("NEXUS_MAA_CASE_ID") ?? Guid.NewGuid().ToString("N");
+        if (caseId.Length is < 1 or > 64 || caseId.Any(c => !char.IsAsciiLetterOrDigit(c) && c is not '-' and not '_'))
+            throw new InvalidDataException("native case identity invalid");
+        string root = Path.Combine(fixtureBase, "nxp-native-contract-" + caseId);
+        if (Directory.Exists(root)) throw new InvalidDataException("native case directory already exists");
         Directory.CreateDirectory(root);
         await File.WriteAllTextAsync(Path.Combine(root, ".nxp-native-fixture"), "owned-native-contract");
         Process? window = null;
         Process? worker = null;
+        Process? otherWindow = null;
         bool passed = false;
         var facts = new List<PluginWorkerEnvelope>();
         var stopwatch = Stopwatch.StartNew();
@@ -65,6 +99,11 @@ public sealed class NativeContractTests
                 pi["agent"] = new JsonObject { ["child_exec"] = "fixture-agent/NexusPipeline.MaaTestAgent.exe", ["child_args"] = new JsonArray() };
                 pi["pretask"] = new JsonObject { ["exec"] = "fixture-agent/NexusPipeline.MaaTestAgent.exe", ["args"] = new JsonArray("--pretask"), ["option"] = new JsonArray("Mode") };
                 if (scenario == "pretask_timeout") pi["pretask"]!["timeout"] = 100;
+                if (scenario == "argv")
+                {
+                    pi["agent"]!["child_args"] = new JsonArray("{literal}", " { \"key\" : \"secret:literal\" } ", "secret:literal", "", "中文", "a\"b");
+                    pi["pretask"]!["args"] = new JsonArray("--pretask", "{literal}", " { \"key\" : \"secret:literal\" } ", "secret:literal", "", "中文", "a\"b");
+                }
                 pi["option"] = new JsonObject { ["Mode"] = new JsonObject { ["cases"] = new JsonArray(new JsonObject { ["name"] = "fixture" }) } };
                 await File.WriteAllTextAsync(Path.Combine(root, "interface.json"), pi.ToJsonString());
                 await File.WriteAllTextAsync(Path.Combine(root, "resource", "pipeline", "sanity.json"),
@@ -82,13 +121,28 @@ public sealed class NativeContractTests
                         "{\"Sanity\":{\"recognition\":\"DirectHit\",\"action\":\"ClickKey\",\"key\":66,\"post_delay\":0}}");
             }
             string windowExe = Path.Combine(plugin, "tests", "NativeWindow", "bin", configuration, "net8.0-windows", "NexusPipeline.MaaTestWindow.exe");
-            window = Process.Start(new ProcessStartInfo(windowExe) { UseShellExecute = false, CreateNoWindow = true,
-                RedirectStandardOutput = true, RedirectStandardInput = true, WorkingDirectory = root })!;
-            string? handle = await window.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            async Task<(Process Process, string Handle)> OpenWindow()
+            {
+                var opened = Process.Start(new ProcessStartInfo(windowExe) { UseShellExecute = false, CreateNoWindow = true,
+                    RedirectStandardOutput = true, RedirectStandardInput = true, WorkingDirectory = root })!;
+                return (opened, (await opened.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(10)))!);
+            }
+            string handle = "0";
+            if (scenario is not ("pretask_window" or "cancel_window")) (window, handle) = await OpenWindow();
             var profile = new DriverProfile { ProfileId = "native", Revision = "1", PackageRoot = root,
                 Controller = "PC", Resource = "Fixture", NativeDirectory = "native", NativeVersion = "v" + expectedVersion,
-                WindowHandle = long.Parse(handle!), WindowProcessId = window.Id, WindowExecutable = windowExe, WindowStartedAtUtc = window.StartTime.ToUniversalTime(),
+                WindowHandle = long.Parse(handle), WindowProcessId = window?.Id ?? 0, WindowExecutable = windowExe, WindowStartedAtUtc = window?.StartTime.ToUniversalTime(),
                 SelectedTasks = ["Sanity"], AdbPath = controllerType == "Adb" ? adbExe : "", AdbSerial = "nxp-owned-fixture" };
+            if (scenario is "rediscover" or "pretask_window" or "ambiguous" or "host_window" or "host_lifetime_mismatch" or "cancel_window")
+                profile = profile with { SchemaVersion = 2, WindowSelection = "executable", WindowWaitMilliseconds = 1500 };
+            if (scenario == "rediscover")
+            {
+                await window!.StandardInput.WriteLineAsync("close"); window.StandardInput.Close(); await window.WaitForExitAsync(); window.Dispose();
+                (window, _) = await OpenWindow();
+                Assert.NotEqual(profile.WindowProcessId, window.Id);
+            }
+            if (scenario is "ambiguous" or "host_window") (otherWindow, _) = await OpenWindow();
+            if (scenario == "pretask_window") await File.WriteAllTextAsync(Path.Combine(root, ".nxp-maa-project-owned"), "owned-native-contract");
             if (scenario == "native_version") profile = profile with { NativeVersion = "v5.13.0" };
             if (scenario == "window_mismatch")
             {
@@ -103,12 +157,22 @@ public sealed class NativeContractTests
                 pi["controller"]![0]!["display_expand"] = new JsonArray(800, 600);
                 await File.WriteAllTextAsync(Path.Combine(root, "interface.json"), pi.ToJsonString());
             }
-            bool pretaskFailure = scenario.StartsWith("pretask_", StringComparison.Ordinal);
-            bool setupFailure = pretaskFailure || scenario is "native_version" or "window_mismatch";
+            bool pretaskFailure = scenario is "pretask_failure" or "pretask_timeout";
+            bool setupFailure = pretaskFailure || scenario is "native_version" or "window_mismatch" or "ambiguous" or "host_lifetime_mismatch" or "cancel_window" or "workspace_collision" or "compiled_schema";
             var compiled = new ProjectCompiler(root, "interface.json").Compile(profile);
+            if (scenario == "compiled_schema") compiled = compiled with { SchemaVersion = 1 };
             var bootstrap = new PluginWorkerBootstrap("nxp-test-e-" + Guid.NewGuid().ToString("N"), "nxp-test-c-" + Guid.NewGuid().ToString("N"),
                 Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(32)), "execution", "record", 1, Guid.NewGuid().ToString("N"),
                 new JsonObject { ["profile"] = JsonSerializer.SerializeToNode(profile), ["compiled"] = JsonSerializer.SerializeToNode(compiled) });
+            string sessionDirectory = Path.Combine(workerRoot, ".nxp-maa-session-" + bootstrap.SessionId);
+            if (scenario == "workspace_collision")
+            {
+                Directory.CreateDirectory(sessionDirectory);
+                await File.WriteAllTextAsync(Path.Combine(sessionDirectory, "unknown.txt"), "foreign existing bytes must remain");
+            }
+            if (scenario is "host_window" or "host_lifetime_mismatch")
+                bootstrap.Input["hostLaunchTarget"] = JsonSerializer.SerializeToNode(new PluginProviderLaunchTarget("win32", windowExe,
+                    window!.Id, long.Parse(handle), scenario == "host_window" ? window.StartTime.ToUniversalTime() : window.StartTime.ToUniversalTime().AddSeconds(-1)));
             using var events = new NamedPipeServerStream(bootstrap.EventPipe, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             using var control = new NamedPipeServerStream(bootstrap.ControlPipe, PipeDirection.Out, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             var workerInfo = new ProcessStartInfo(Path.Combine(workerRoot, "NexusPipeline.MaaWorker.exe"))
@@ -117,6 +181,10 @@ public sealed class NativeContractTests
             workerInfo.Environment["NXP_MAA_FIXTURE"] = "owned-native-contract";
             workerInfo.Environment["NXP_MAA_FIXTURE_ROOT"] = root;
             workerInfo.Environment["NXP_MAA_FIXTURE_SCENARIO"] = scenario;
+            workerInfo.Environment["NXP_MAA_WINDOW_FIXTURE"] = windowExe;
+            foreach (string variable in new[] { "TEMP", "TMP" })
+                if (Environment.GetEnvironmentVariable("NEXUS_MAA_CHILD_" + variable) is { } value)
+                    workerInfo.Environment[variable] = value;
             worker = Process.Start(workerInfo)!;
             Task<string> stderr = worker.StandardError.ReadToEndAsync();
             Task<string> stdout = worker.StandardOutput.ReadToEndAsync();
@@ -136,10 +204,13 @@ public sealed class NativeContractTests
                 if (scenario == "cancel" && fact.Kind == "task_event" && fact.Payload["status"]?.GetValue<string>() == "running")
                     await PluginWorkerProtocol.WriteAsync(control, new(1, bootstrap.ExecutionId, bootstrap.RecordId, 1,
                         bootstrap.SessionId, "host_to_worker", 2, "cancel", new()), deadline.Token);
+                if (scenario == "cancel_window" && fact.Kind == "progress" && fact.Payload["code"]?.GetValue<string>() == "controller.resolve.enter")
+                    await PluginWorkerProtocol.WriteAsync(control, new(1, bootstrap.ExecutionId, bootstrap.RecordId, 1,
+                        bootstrap.SessionId, "host_to_worker", 2, "cancel", new()), deadline.Token);
                 if (fact.Kind is "completed" or "fault") break;
             }
             await worker.WaitForExitAsync(deadline.Token);
-            int expectedExit = scenario == "cancel" ? 2 : scenario == "failure" || setupFailure ? 1 : 0;
+            int expectedExit = scenario.StartsWith("cancel", StringComparison.Ordinal) ? 2 : scenario == "failure" || setupFailure ? 1 : 0;
             Assert.True(worker.ExitCode == expectedExit, "worker exit=" + worker.ExitCode + "\n" + await stderr + "\n" + await stdout
                 + "\n" + JsonSerializer.Serialize(facts));
             Assert.DoesNotContain("fixture-private-echo", await stdout);
@@ -157,18 +228,40 @@ public sealed class NativeContractTests
                 Assert.DoesNotContain(facts, item => item.Kind == "task_event" && item.Payload["status"]?.GetValue<string>() == "succeeded");
             }
             Assert.Equal(expectedExit == 0 ? "completed" : "fault", facts[^1].Kind);
+            if (scenario == "workspace_collision")
+            {
+                Assert.Equal("worker.session_path_exists", facts[^1].Payload["code"]!.GetValue<string>());
+                Assert.Equal("session.workspace.create", facts[^1].Payload["phase"]!.GetValue<string>());
+                Assert.Equal("foreign existing bytes must remain", await File.ReadAllTextAsync(Path.Combine(sessionDirectory, "unknown.txt")));
+                Assert.False(File.Exists(Path.Combine(sessionDirectory, ".nxp-owned-session.json")));
+            }
+            else Assert.Contains(facts, item => item.Kind == "progress" && item.Payload["code"]?.GetValue<string>() == "session.cleanup.exit");
+            if (scenario == "compiled_schema")
+                Assert.Equal("worker.compiled_schema", facts[^1].Payload["code"]!.GetValue<string>());
+            if (expectedExit is 0 or 2) Assert.False(Directory.Exists(sessionDirectory));
+            else if (scenario != "workspace_collision")
+            {
+                Assert.True(File.Exists(Path.Combine(sessionDirectory, ".nxp-owned-session.json")));
+                Assert.True(File.Exists(Path.Combine(sessionDirectory, "failure.json")));
+            }
             if (standardAgent)
             {
                 if (scenario != "cancel" && !pretaskFailure) Assert.True(File.Exists(Path.Combine(root, "agent-action-ran.marker")));
                 var pretask = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "pretask-evidence.json")))!;
                 Assert.True(pretask["cwdMatches"]!.GetValue<bool>());
-                Assert.Equal(2, pretask["argumentCount"]!.GetValue<int>());
+                Assert.Equal(scenario == "argv" ? 8 : 2, pretask["argumentCount"]!.GetValue<int>());
                 Assert.Equal("fixture", pretask["options"]!["Mode"]!.GetValue<string>());
                 if (!pretaskFailure)
                 {
                     var agent = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "agent-evidence.json")))!;
                     Assert.True(agent["cwdMatches"]!.GetValue<bool>());
                     Assert.True(agent["hasIdentifier"]!.GetValue<bool>());
+                    if (scenario == "argv")
+                    {
+                        string[] raw = ["{literal}", " { \"key\" : \"secret:literal\" } ", "secret:literal", "", "中文", "a\"b"];
+                        Assert.Equal(raw, agent["rawArguments"]!.Deserialize<string[]>());
+                        Assert.Equal(new[] { "--pretask" }.Concat(raw), pretask["rawArguments"]!.Deserialize<string[]>());
+                    }
                     Assert.Equal("v2.10.2", agent["piVersion"]!.GetValue<string>());
                     Assert.Equal("0", await File.ReadAllTextAsync(Path.Combine(root, "agent-exited.marker")));
                 }
@@ -203,9 +296,28 @@ public sealed class NativeContractTests
                 catch (TimeoutException) { window.Kill(); await window.WaitForExitAsync(); }
             }
             window?.Dispose();
+            if (otherWindow is { HasExited: false }) { await otherWindow.StandardInput.WriteLineAsync("close"); otherWindow.StandardInput.Close(); await otherWindow.WaitForExitAsync(); }
+            otherWindow?.Dispose();
+            if (scenario == "pretask_window" && File.Exists(Path.Combine(root, "window-identity.json")))
+            {
+                var owned = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(root, "window-identity.json")))!;
+                try
+                {
+                    using var created = Process.GetProcessById(owned["pid"]!.GetValue<int>());
+                    string expectedImage = Path.Combine(plugin, "tests", "NativeWindow", "bin", configuration, "net8.0-windows", "NexusPipeline.MaaTestWindow.exe");
+                    if (created.StartTime.ToUniversalTime().ToString("O") != owned["startedAtUtc"]!.GetValue<string>()
+                        || !string.Equals(created.MainModule?.FileName, expectedImage, StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException("pretask fixture process ownership changed");
+                    await File.WriteAllTextAsync(Path.Combine(root, "stop-window"), "owned test finished");
+                    await created.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch (ArgumentException) { }
+            }
             string? adbCommands = File.Exists(Path.Combine(root, "adb-commands.jsonl"))
                 ? await File.ReadAllTextAsync(Path.Combine(root, "adb-commands.jsonl")) : null;
-            string evidence = JsonSerializer.Serialize(new { passed, standardAgent, scenario, controllerType, expectedVersion, milliseconds = stopwatch.ElapsedMilliseconds, facts, adbCommands }, new JsonSerializerOptions { WriteIndented = true });
+            string evidence = JsonSerializer.Serialize(new { passed, standardAgent, scenario, controllerType, expectedVersion,
+                fixtureRoot = root, processTemp = worker?.StartInfo.Environment["TEMP"], processTmp = worker?.StartInfo.Environment["TMP"],
+                milliseconds = stopwatch.ElapsedMilliseconds, facts, adbCommands }, new JsonSerializerOptions { WriteIndented = true });
             await File.WriteAllTextAsync(Path.Combine(root, "native-contract-evidence.json"), evidence);
             if (Environment.GetEnvironmentVariable("NEXUS_MAA_REPORT_ROOT") is { Length: > 0 } reports)
             {

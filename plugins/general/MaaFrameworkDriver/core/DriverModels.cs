@@ -22,6 +22,8 @@ public sealed record DriverProfile
     public bool HostLaunchRequired { get; init; }
     public JsonObject HostLaunchConfiguration { get; init; } = new();
     public DateTime? WindowStartedAtUtc { get; init; }
+    public string WindowSelection { get; init; } = "exact_process";
+    public int WindowWaitMilliseconds { get; init; } = 10000;
     public string Language { get; init; } = "zh_cn";
     public string[] SelectedTasks { get; init; } = [];
     public JsonObject Options { get; init; } = new();
@@ -34,8 +36,9 @@ public sealed record DriverProfile
 }
 
 public sealed record CompiledTask(string Name, string Label, string Entry, JsonObject Override);
-public sealed record CompiledProgram(string Name, string Executable, string[] Arguments, string? Identifier, long TimeoutMilliseconds = 10000);
+public sealed record CompiledProgram(string Name, string Executable, string[] Arguments, string? Identifier,
+    long TimeoutMilliseconds = 10000, JsonObject? GeneratedOptionPayload = null);
 public sealed record CompiledProject(string Name, string Version, string InterfaceDirectory,
     JsonObject Controller, JsonObject Resource, string[] ResourcePaths, int BaseResourceCount, string[] ResourceHashes,
     CompiledTask[] Tasks, CompiledProgram[] Pretasks, CompiledProgram[] Agents,
-    string ExecutionFingerprint, JsonObject PublicSchema);
+    string ExecutionFingerprint, JsonObject PublicSchema, int SchemaVersion = 2, JsonObject? AuthorizationManifest = null);

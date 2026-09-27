@@ -6,7 +6,7 @@
 
 安装并启用插件后重启 Host。在脚本编辑器选择 `maa-framework`，指定项目根目录，然后在插件区域读取项目。选择 Controller、Resource、任务及顺序；可显式应用 PI preset 或项目默认任务，group 负责分组展示。参数可在公共层填写，也可分别设置资源、控制器和逐任务 JSON 覆盖。
 
-Win32 使用“查找并选择 Win32 窗口”，保存 HWND、PID、完整 EXE 路径和启动时间。执行时再次核验这四项身份。ADB 填写实际 adb.exe 和精确 serial/address；控制器由官方 MaaToolkit 枚举并连接。目录、程序和资源变化需要重新预览、授权。
+新 Win32 配置保存完整 EXE 路径与 PI 窗口条件，每次在 pretasks 完成后有界等待并重新解析唯一窗口，再冻结 HWND、PID、完整 EXE 路径和启动时间。可先“查找并选择 Win32 窗口”填写 EXE 约束；保存的旧 HWND/PID 不替代下次解析。多个匹配窗口或观测不完整会阻断，取消立即停止等待。若使用 Host 启动，候选还须匹配 Host 的进程及启动时间。旧 schema 1 配置继续核验原精确进程，在界面明确选择每次解析并重新授权后才转为 schema 2。ADB 填写实际 adb.exe 和精确 serial/address；控制器由官方 MaaToolkit 枚举并连接。目录、程序和资源变化需要重新预览、授权。
 
 依次执行“只读执行预览”与“确认授权并保存独立配置”，最后保存 Host 脚本。用户绑定页可以设置独立参数，绑定必须对应当前共享配置 revision；共享配置更新后重新读取并明确授权绑定。加入既有队列后使用原有开始、取消和历史入口。
 
@@ -27,6 +27,12 @@ Agent / pretask 是项目代码，授权摘要包含执行声明、资源和程�
 每次执行使用独立 x64 worker，仅从明确选择的原生目录加载 DLL。版本必须与配置声明一致；ABI 缺失、架构错配和握手失败拒绝执行。上游 resource hash 不一致显示警告。原生任务成功只证明引擎完成，没有项目业务证据时仍显示“流程已结束 · 有未核验项”。结构化事件通过 Host 历史模型保存，既有 taskProtocol 日志证据格式保持兼容。
 
 ## 当前原生验证范围
+
+固定 argv（包括花括号、JSON 外观、空字符串、引号、Unicode 与 `secret:` 字面值）原样传给程序；仅显式生成的 pretask 选项载荷展开秘密。Python 支持显式项目内 `.py` 文件入口及常规解释器选项；入口路径归一后连同项目内有界代码依赖、实际解释器、资源和 native 字节纳入授权。直接 EXE 同时校验其目录内有界代码与 `.deps.json`／`.runtimeconfig.json`。`-m`、`-c`、未知解释器选项、路径逃逸及链接拒绝。包外动态加载代码不属于已证明的支持范围。展示文案不改变执行授权，代码改变须重新授权。
+
+worker 在 native 初始化前建立带本次 session 归属的独立临时目录，仅修改该 worker 的 TEMP/TMP，Agent 继承；Host、机器环境与输入锁不变。成功或已确认取消后清理本次目录，失败保留归属与不含项目输出的阶段诊断，后续 session 使用新目录。进程退出与输出管道 EOF 分别观察，pretask 拉起窗口不因窗口继续持有输出句柄而冒充 pretask 未退出。恢复隔离仅阻断相关项，人工取消停止整队；未知业务结果仍未核验。
+
+English boundaries: Win32 targets are resolved after pretasks on every run and must be unique, observable and constrained by the full executable identity. Fixed argv is preserved; only generated option payloads resolve secrets. Python file entries authorize bounded local code; dynamic `-m`/`-c` entries are rejected. Worker temporary environment changes are process-local. Native success does not prove business success.
 
 已固定 C# binding 5.10.0（源码 commit `27c69a5b8ff41b6002ead71f403a16f442a7168e`）及官方 MaaFramework v5.14.0 x64 测试输入。MaaEnd v2.30.0 附带 v5.14.0，MaaStellaSora v1.4.4 附带 v5.13.0；两份发行 ZIP、原生成员和来源固定在 [official-projects.lock.json](../plugins/general/MaaFrameworkDriver/official-projects.lock.json)。测试只读编译真实 PI、使用真实任务 ID 对照普通 MXU 导入与有效计划，实际查询版本和通信字节预算，不执行官方项目 Agent 或 GUI。
 

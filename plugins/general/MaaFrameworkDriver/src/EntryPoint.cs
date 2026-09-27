@@ -29,7 +29,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
     public ValueTask<PluginProviderInspection> InspectAsync(PluginProviderInspectRequest request, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var schema = new ProjectCompiler(request.PackageRoot, request.InterfaceRelativePath).Inspect();
+        var schema = new ProjectCompiler(request.PackageRoot, request.InterfaceRelativePath, cancellationToken: cancellationToken).Inspect();
         return ValueTask.FromResult(new PluginProviderInspection(schema["projectName"]!.GetValue<string>(),
             schema["projectVersion"]!.GetValue<string>(), [], schema));
     }
@@ -46,7 +46,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
         if (!ReferenceEquals(profile, shared)) ValidateBinding(profile, shared);
         if (!Path.GetFullPath(request.PackageRoot).Equals(Path.GetFullPath(profile.PackageRoot), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("driver.package_root_changed");
-        var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language).Compile(profile);
+        var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (compiled.Tasks.Length == 0) throw new InvalidDataException("driver.task_selection_required");
         var resources = new List<PluginProviderResource> { new("writable_root", profile.PackageRoot) };
         if (compiled.Controller["type"]!.GetValue<string>() == "Win32") resources.Add(new("desktop_input", "current_session"));
@@ -70,7 +70,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
             : await host.ScopedData.ReadAsync<DriverProfile>(UserScope(context.UserId, context.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
         if (shared is null || saved is null || shared.Revision + ":" + saved.Revision != context.Plan.ConfigRevision)
             throw new InvalidDataException("driver.profile_revision_changed");
-        var fresh = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language).Compile(profile);
+        var fresh = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (fresh.ExecutionFingerprint != context.Plan.AuthorizationFingerprint
             || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.authorization_required");
         var input = context.Plan.PrivatePlan.DeepClone().AsObject();
@@ -86,22 +86,14 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
                 // Host readiness can see another visible window of the same process.
                 // Resolve PI title/class within that exact process lifetime, never by
                 // basename or by a window from another installation.
-                var matching = WindowDiscovery.Find(fresh.Controller).OfType<JsonObject>().Where(window =>
-                    window["pid"]!.GetValue<int>() == target.ProcessId
-                    && window["executable"]!.GetValue<string>().Equals(target.Identity, StringComparison.OrdinalIgnoreCase)
-                    && DateTime.Parse(window["startedAtUtc"]!.GetValue<string>(), System.Globalization.CultureInfo.InvariantCulture,
-                        System.Globalization.DateTimeStyles.RoundtripKind) == target.StartedAtUtc).ToArray();
-                var selected = matching.SingleOrDefault(window => window["handle"]!.GetValue<long>() == target.WindowHandle)
-                    ?? (matching.Length == 1 ? matching[0] : null)
-                    ?? throw new InvalidDataException("driver.host_launch_window_ambiguous");
-                input["profile"] = JsonSerializer.SerializeToNode(profile with { WindowHandle = selected["handle"]!.GetValue<long>(),
-                    WindowProcessId = target.ProcessId, WindowStartedAtUtc = target.StartedAtUtc }, DriverJson.Options);
+                input["hostLaunchTarget"] = JsonSerializer.SerializeToNode(target, DriverJson.Options);
             }
             else if (type != "Adb" || target.Kind != "adb" || profile.AdbSerial != target.Identity)
                 throw new InvalidDataException("driver.host_launch_target_mismatch");
         }
         var secrets = new JsonObject();
-        foreach (string reference in SecretReferences(input).Distinct(StringComparer.Ordinal))
+        foreach (string reference in fresh.Tasks.SelectMany(task => SecretReferences(task.Override))
+            .Concat(fresh.Pretasks.SelectMany(program => SecretReferences(program.GeneratedOptionPayload))).Distinct(StringComparer.Ordinal))
         {
             string sharedPrefix = "secret:" + SecretPrefix(profile.ProfileId, "", "");
             string userPrefix = "secret:" + SecretPrefix(profile.ProfileId, context.UserId, context.ScriptInstanceId);
@@ -129,7 +121,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
             var body = JsonNode.Parse(request.JsonBody ?? "{}")!.AsObject();
             if (route == "inspect")
             {
-                var inspection = new ProjectCompiler(body["packageRoot"]!.GetValue<string>(), body["interfacePath"]?.GetValue<string>() ?? "interface.json", body["language"]?.GetValue<string>() ?? "zh_cn");
+                var inspection = new ProjectCompiler(body["packageRoot"]!.GetValue<string>(), body["interfacePath"]?.GetValue<string>() ?? "interface.json", body["language"]?.GetValue<string>() ?? "zh_cn", token);
                 return new(200, inspection.Inspect());
             }
             string script = body["scriptId"]!.GetValue<string>();
@@ -155,7 +147,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
                 ?? (string.IsNullOrWhiteSpace(user) ? null : await host.ScopedData.ReadAsync<DriverProfile>(Scope("", profileId), token).ConfigureAwait(false))
                 ?? throw new InvalidDataException("profile required");
             if (profile.ProfileId != profileId) throw new InvalidDataException("profile identity mismatch");
-            var compiler = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language);
+            var compiler = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token);
             if (route == "preset")
                 return new(200, JsonSerializer.SerializeToNode(compiler.ApplyPreset(profile,
                     body["presetName"]!.GetValue<string>()) with { AuthorizedFingerprint = "" }, DriverJson.Options));
