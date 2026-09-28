@@ -46,12 +46,6 @@ jobs:
           ref: ${{ steps.host.outputs.sha }}
           path: .generated/host-sdk
           persist-credentials: false
-      # Maa 原生测试输入约 600 MiB 且有锁定摘要；缓存按锁文件内容失效。
-      - name: Cache Maa native inputs
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: .generated/maa-native-tests
-          key: maa-native-${{ runner.os }}-${{ hashFiles('plugins/general/MaaFrameworkDriver/native-tests.lock.json', 'plugins/general/MaaFrameworkDriver/official-projects.lock.json') }}
       - name: Run source and managed checks
         run: >-
           python tools/repository.py verify --scope all

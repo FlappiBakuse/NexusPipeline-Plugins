@@ -38,9 +38,9 @@ English boundaries: Win32 targets are resolved after pretasks on every run and m
 
 The worker validates the CRT temporary name before native initialization. An unusable or foreign CRT directory produces `worker.session_temp_unusable` at `session.workspace.native_temp`, retains the owned failure record and starts no Agent. Install in a shorter writable ordinary directory to resolve a path-budget failure; no shared-directory fallback is used.
 
-已固定 C# binding 5.10.0（源码 commit `27c69a5b8ff41b6002ead71f403a16f442a7168e`）及官方 MaaFramework v5.14.0 x64 测试输入。MaaEnd v2.30.0 附带 v5.14.0，MaaStellaSora v1.4.4 附带 v5.13.0；两份发行 ZIP、原生成员和来源固定在 [official-projects.lock.json](../plugins/general/MaaFrameworkDriver/official-projects.lock.json)。测试只读编译真实 PI、使用真实任务 ID 对照普通 MXU 导入与有效计划，实际查询版本和通信字节预算，不执行官方项目 Agent 或 GUI。
+已固定 C# binding 5.10.0（源码 commit `27c69a5b8ff41b6002ead71f403a16f442a7168e`）及官方 MaaFramework v5.14.0 x64 运行输入。MaaEnd v2.30.0 附带 v5.14.0，MaaStellaSora v1.4.4 附带 v5.13.0。测试只读编译真实 PI、使用真实任务 ID 对照普通 MXU 导入与有效计划，不执行官方项目 Agent 或 GUI。
 
-受控窗口和自有 ADB transport fixture 实际调用上述 v5.14.0／v5.13.0 原生 Win32/ADB controller，不连接用户设备；标准 Agent、pretask、任务成功/失败、取消、控制台输出脱敏及启动故障分别留有原始报告。v5.13.0 新增组合覆盖自有 Win32 与 ADB Agent/pretask。真实账号、真实游戏、真实模拟器和其他 runtime 组合的状态独立报告，不能据此宣称官方项目业务成功或全版本支持。
+现有 fixture 只覆盖可控的编译与授权输入；原生 Win32／ADB controller、标准 Agent、pretask、任务成功/失败、取消和控制台脱敏须在真实环境人工验收。真实账号、真实游戏、真实模拟器和其他 runtime 组合的状态独立报告，不能据此宣称官方项目业务成功或全版本支持。
 
 ## 构建和门禁
 
@@ -52,6 +52,6 @@ npm run build:frontend
 python tools/repository.py test-managed --full --host-root '<隔离 Host checkout>'
 ```
 
-Maa 原生测试准备从 [native-tests.lock.json](../plugins/general/MaaFrameworkDriver/native-tests.lock.json) 和项目锁下载并核验官方 ZIP；可分别读取 `NEXUS_MAA_NATIVE_ARCHIVE` 指定的 ZIP、`NEXUS_MAA_PROJECT_ARCHIVES` 指定目录内的锁定项目 ZIP。每次都从验证过的归档解压到新的自有目录，不信任既有解压缓存。输入清单和原生事件位于 `.generated/test-results/maa-native/`，TRX 位于 `.generated/test-results/managed/run-*/`。缺依赖、零用例和 skip 都不算通过。
+门禁覆盖 PI 编译、授权、导入与配置评估等可离线判定的驱动逻辑；TRX 位于 `.generated/test-results/managed/run-*/`，缺依赖、零用例和失败都不算通过。真实账号、真实游戏、真实模拟器和真实设备须另行人工验收，其状态独立报告。
 
 现役 package builder 发布独立 worker，并验证 apphost、runtimeconfig、锁定 binding 版本及 LGPL/GPL 许可。包内没有项目 native、游戏、测试 EXE 或用户配置。构建输入与 SDK source 由验证/候选任务固定；本地 dirty 源码诊断包不等于发行候选或商店已上架。

@@ -18,8 +18,7 @@
         "MaaPiCli 导入"
       ],
       "codePaths": [
-        "plugins/general/MaaFrameworkDriver",
-        "tools/maa_native_tests.py"
+        "plugins/general/MaaFrameworkDriver"
       ],
       "testDomains": [
         "managed",

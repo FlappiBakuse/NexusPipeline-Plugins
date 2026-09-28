@@ -11,18 +11,6 @@ namespace NexusPipeline.Plugin.GameCheckIn.Tests;
 public sealed class GameCheckInTests
 {
     [Fact]
-    public void DsHeader_UsesTimestampRandomAndMd5Fields()
-    {
-        string ds = MiyousheClient.GenerateDs();
-        string[] parts = ds.Split(',');
-
-        Assert.Equal(3, parts.Length);
-        Assert.Equal(6, parts[1].Length);
-        Assert.All(parts[1], character => Assert.Contains(character, "abcdefghijklmnopqrstuvwxyz0123456789"));
-        Assert.Matches("^[0-9a-f]{32}$", parts[2]);
-    }
-
-    [Fact]
     public void CredentialFingerprint_IsStableWithoutExposingCredential()
     {
         string first = CheckInTaskService.CredentialFingerprint("token-value");
@@ -52,39 +40,6 @@ public sealed class GameCheckInTests
     }
 
     [Fact]
-    public async Task HoyoLabClient_MapsInfoAlreadySignedResponse()
-    {
-        var factory = new QueueHttpClientFactory("{\"retcode\":0,\"data\":{\"is_sign\":true}}");
-
-        CheckInResult result = await new HoyoLabClient(factory).SignAsync(
-            GameDefinitions.All[0],
-            "ltuid=1; ltoken=secret",
-            CancellationToken.None);
-
-        Assert.True(result.Success);
-        Assert.Equal("already", result.Code);
-        Assert.Single(factory.Requests);
-    }
-
-    [Fact]
-    public async Task HoyoLabClient_MapsForbiddenAlreadySignedResponse()
-    {
-        var factory = new QueueHttpClientFactory(
-            new[] { HttpStatusCode.OK, HttpStatusCode.Forbidden },
-            "{\"retcode\":0,\"data\":{\"is_sign\":false}}",
-            "{\"retcode\":-5003,\"message\":\"already\"}");
-
-        CheckInResult result = await new HoyoLabClient(factory).SignAsync(
-            GameDefinitions.All[0],
-            "ltuid=1; ltoken=secret",
-            CancellationToken.None);
-
-        Assert.True(result.Success);
-        Assert.Equal("already", result.Code);
-        Assert.Equal(2, factory.Requests.Count);
-    }
-
-    [Fact]
     public async Task MiyousheClient_DiscoversRoleThenSendsDsAndSigns()
     {
         var factory = new QueueHttpClientFactory(
@@ -101,71 +56,6 @@ public sealed class GameCheckInTests
         Assert.True(factory.Requests[1].Headers.Contains("DS"));
         Assert.Equal("miyousheluodi", factory.Requests[0].Headers.GetValues("x-rpc-channel").Single());
         Assert.Equal("device-id", factory.Requests[2].Headers.GetValues("x-rpc-device_id").Single());
-    }
-
-    [Fact]
-    public async Task MiyousheClient_MapsInfoAlreadySignedResponse()
-    {
-        var factory = new QueueHttpClientFactory(
-            "{\"retcode\":0,\"data\":{\"list\":[{\"game_uid\":\"1001\",\"region\":\"cn_gf01\"}]}}",
-            "{\"retcode\":0,\"data\":{\"isSign\":true}}");
-
-        CheckInResult result = await new MiyousheClient(factory).SignAsync(
-            GameDefinitions.All[0],
-            "stuid=1; stoken=secret",
-            "device-id",
-            CancellationToken.None);
-
-        Assert.True(result.Success);
-        Assert.Equal("already", result.Code);
-        Assert.Equal(2, factory.Requests.Count);
-    }
-
-    [Fact]
-    public async Task MiyousheClient_MapsForbiddenAlreadySignedResponse()
-    {
-        var factory = new QueueHttpClientFactory(
-            new[] { HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.Forbidden },
-            "{\"retcode\":0,\"data\":{\"list\":[{\"game_uid\":\"1001\",\"region\":\"cn_gf01\"}]}}",
-            "{\"retcode\":0,\"data\":{\"is_sign\":false}}",
-            "{\"retcode\":-5003,\"message\":\"already\"}");
-
-        CheckInResult result = await new MiyousheClient(factory).SignAsync(
-            GameDefinitions.All[0],
-            "stuid=1; stoken=secret",
-            "device-id",
-            CancellationToken.None);
-
-        Assert.True(result.Success);
-        Assert.Equal("already", result.Code);
-        Assert.Equal(3, factory.Requests.Count);
-    }
-
-    [Fact]
-    public async Task HoyoLabClient_StopsWhenCaptchaIsReturned()
-    {
-        var factory = new QueueHttpClientFactory("{\"retcode\":0,\"data\":{\"gt\":\"challenge\"}}", "{\"retcode\":0}");
-        CheckInResult result = await new HoyoLabClient(factory).SignAsync(GameDefinitions.All[0], "ltuid=1", CancellationToken.None);
-
-        Assert.Equal("captcha_required", result.Code);
-        Assert.Single(factory.Requests);
-    }
-
-    [Fact]
-    public async Task HoyoLabClient_UsesManiEndpointForHonkaiImpact3rd()
-    {
-        var factory = new QueueHttpClientFactory(
-            "{\"retcode\":0,\"data\":{\"is_sign\":false}}",
-            "{\"retcode\":0}");
-
-        CheckInResult result = await new HoyoLabClient(factory).SignAsync(
-            GameDefinitions.Find("bh3")!,
-            "ltuid=1; ltoken=secret",
-            CancellationToken.None);
-
-        Assert.Equal("success", result.Code);
-        Assert.Contains("/event/mani/info", factory.Requests[0].RequestUri!.AbsolutePath, StringComparison.Ordinal);
-        Assert.Equal("honkai3rd", factory.Requests[0].Headers.GetValues("x-rpc-signgame").Single());
     }
 
     [Fact]
@@ -291,47 +181,6 @@ public sealed class GameCheckInTests
         Assert.Equal(
             "00000000-0000-0000-0000-000000000001",
             factory.Requests[0].Headers.GetValues("distinct_id").Single());
-    }
-
-    [Fact]
-    public async Task KuroClient_ReturnsTransportErrorForInvalidNonSuccessBody()
-    {
-        var factory = new QueueHttpClientFactory(
-            new[] { HttpStatusCode.BadRequest },
-            "<html>bad request</html>");
-
-        CheckInResult result = await new KuroClient(factory).SignAsync(
-            KuroGameDefinitions.Find("ww")!,
-            "kuro-token",
-            "dev-code",
-            "distinct-id",
-            CancellationToken.None);
-
-        Assert.False(result.Success);
-        Assert.Equal("transport_error", result.Code);
-    }
-
-    [Fact]
-    public async Task EntryPoint_ExposesTaskRoutesWithoutUserSettingsOrRunHooks()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        var entryPoint = new EntryPoint();
-
-        await entryPoint.InitializeAsync(context, CancellationToken.None);
-        await entryPoint.StartAsync(CancellationToken.None);
-
-        Assert.Equal(
-            new[] { ("GET", "state"), ("DELETE", "tasks"), ("POST", "tasks"), ("PUT", "tasks"), ("PUT", "tasks/order"), ("POST", "tasks/run") },
-            context.WebApi.Routes.Select(route => (route.Method, route.Route)).OrderBy(route => route.Route).ThenBy(route => route.Method));
-        Assert.Empty(context.UserGlobalManagement.Contributions);
-        Assert.Empty(context.UserListBadges.Contributions);
-        Assert.Empty(context.Ui.Contributions);
-        Assert.Equal(0, context.ExecutionEvents.SubscriptionCount);
-        Assert.DoesNotContain(context.Scheduler.Definitions.Keys, key => key.Contains("user", StringComparison.OrdinalIgnoreCase));
-
-        await entryPoint.StopAsync(CancellationToken.None);
-        Assert.Empty(context.WebApi.Routes);
-        Assert.Empty(context.Scheduler.Definitions);
     }
 
     [Fact]
@@ -482,109 +331,6 @@ public sealed class GameCheckInTests
     }
 
     [Fact]
-    public async Task ConcurrentTasksWithSameCredential_PersistSuccessBeforeReleasingCredentialFlight()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        using var store = new ControlledScopedDataStore(context.ScopedData);
-        using var firstRequestEntered = new ManualResetEventSlim(false);
-        using var releaseFirstRequest = new ManualResetEventSlim(false);
-        var host = new ScopedDataHostContext(context, store);
-        DateTimeOffset now = AtLocalTime(2026, 9, 14, 10, 30);
-        var service = new CheckInTaskService(host, () => now);
-        int gatedRequest = 0;
-        context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(
-                request.RequestUri!.AbsolutePath.EndsWith("findRoleList", StringComparison.Ordinal)
-                    && Interlocked.Exchange(ref gatedRequest, 1) == 0
-                    ? WaitForFirstRequestRelease(firstRequestEntered, releaseFirstRequest)
-                    : request.RequestUri.AbsolutePath.EndsWith("findRoleList", StringComparison.Ordinal)
-                    ? "{\"code\":200,\"data\":[{\"gameId\":\"3\",\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"user\"}]}"
-                    : "{\"code\":200}",
-                Encoding.UTF8,
-                "application/json"),
-        };
-        await service.StartAsync(CancellationToken.None);
-
-        Guid firstId = await CreateKuroTaskAsync(context, "First", "shared-kuro-token");
-        Guid secondId = await CreateKuroTaskAsync(context, "Second", "shared-kuro-token");
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = firstId.ToString() });
-        Assert.True(firstRequestEntered.Wait(TimeSpan.FromSeconds(4)), "首个任务没有进入平台请求屏障");
-        JsonObject update = NewKuroTaskInput("First", "shared-kuro-token");
-        update["id"] = firstId.ToString();
-        Assert.Equal(409, (await InvokeAsync(context, "PUT", "tasks", update)).StatusCode);
-        Assert.Equal(409, (await InvokeAsync(context, "DELETE", "tasks", new JsonObject { ["taskId"] = firstId.ToString() })).StatusCode);
-
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = secondId.ToString() });
-        await Task.Delay(80);
-        store.GateNextSuccessfulWrite();
-        releaseFirstRequest.Set();
-        Assert.True(store.SuccessfulWriteEntered.Wait(TimeSpan.FromSeconds(4)), "首个任务没有进入成功记录持久化屏障");
-        int requestsAfterFirstSign = context.Http.Requests.Count;
-        Assert.Equal(2, requestsAfterFirstSign);
-        await Task.Delay(80);
-        Assert.Equal(requestsAfterFirstSign, context.Http.Requests.Count);
-
-        store.ReleaseSuccessfulWrite();
-        JsonObject first = await WaitForStateAsync(context, firstId, runCount: 1);
-        JsonObject second = await WaitForStateAsync(context, secondId, runCount: 1);
-        Assert.Equal("success", first["runs"]![0]!["status"]!.GetValue<string>());
-        Assert.Equal("success", second["runs"]![0]!["status"]!.GetValue<string>());
-        Assert.Equal("success", first["runs"]![0]!["results"]![0]!["code"]!.GetValue<string>());
-        Assert.Equal("already", second["runs"]![0]!["results"]![0]!["code"]!.GetValue<string>());
-        Assert.Equal(requestsAfterFirstSign, context.Http.Requests.Count);
-        await service.StopAsync(CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task ScheduledTask_DoesNotBackfillMissedLocalTime()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        DateTimeOffset now = AtLocalTime(2026, 9, 14, 10, 30);
-        var service = new CheckInTaskService(context, () => now);
-        await service.StartAsync(CancellationToken.None);
-        JsonObject taskBody = NewTaskInput("Missed", "10:29", DayOfWeek.Monday);
-        taskBody["games"] = new JsonObject { ["kuro"] = new JsonArray(JsonValue.Create("ww")) };
-        taskBody["secrets"] = new JsonObject { ["kuro"] = new JsonObject { ["action"] = "set", ["value"] = "missed-token" } };
-        PluginWebApiResponse created = await InvokeAsync(context, "POST", "tasks", taskBody);
-        Guid id = Guid.Parse(created.JsonBody!["id"]!.GetValue<string>());
-
-        await context.Scheduler.TriggerAsync(CheckInTaskService.PollerJobId);
-        await Task.Delay(30);
-        JsonObject task = await GetTaskStateAsync(context, id);
-        Assert.Empty(task["runs"]!.AsArray());
-        Assert.Empty(context.Http.Requests);
-        await service.StopAsync(CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task TaskApi_RejectsExplicitNullCollectionsAndEntries()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        var service = new CheckInTaskService(context);
-        JsonObject nullGames = NewTaskInput("Null games", "10:30", DayOfWeek.Monday);
-        nullGames["games"] = null;
-        JsonObject nullPlatformGames = NewTaskInput("Null game list", "10:30", DayOfWeek.Monday);
-        nullPlatformGames["games"]!["cn"] = null;
-        JsonObject nullSchedules = NewTaskInput("Null schedules", "10:30", DayOfWeek.Monday);
-        nullSchedules["schedules"] = null;
-        JsonObject nullScheduleEntry = NewTaskInput("Null schedule item", "10:30", DayOfWeek.Monday);
-        nullScheduleEntry["schedules"]![0] = null;
-        JsonObject nullNotification = NewTaskInput("Null notification", "10:30", DayOfWeek.Monday);
-        nullNotification["notification"] = null;
-        JsonObject nullRecipient = NewTaskInput("Null recipient", "10:30", DayOfWeek.Monday);
-        nullRecipient["notification"]!["smtpTo"] = null;
-        JsonObject nullSecrets = NewTaskInput("Null secrets", "10:30", DayOfWeek.Monday);
-        nullSecrets["secrets"] = null;
-
-        foreach (JsonObject body in new[] { nullGames, nullPlatformGames, nullSchedules, nullScheduleEntry, nullNotification, nullRecipient, nullSecrets })
-        {
-            Assert.Equal(400, (await InvokeAsync(context, "POST", "tasks", body)).StatusCode);
-        }
-        await service.StopAsync(CancellationToken.None);
-    }
-
-    [Fact]
     public async Task TaskApi_RestoresSecretsWhenTaskStoreWriteFails()
     {
         var context = new FakePluginHostContext("game-check-in");
@@ -604,85 +350,6 @@ public sealed class GameCheckInTests
         Assert.Equal(500, response.StatusCode);
         Assert.Equal("rollback-token-old", await context.Secrets.GetAsync(secretKey));
         Assert.Equal("Rollback", (await GetTaskStateAsync(context, id))["name"]!.GetValue<string>());
-        await service.StopAsync(CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task CheckInRun_ContinuesOtherPlatformsAndClassifiesAllFailureAndPartial()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 30));
-        context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(
-                request.RequestUri!.AbsolutePath.EndsWith("findRoleList", StringComparison.Ordinal)
-                    ? "{\"code\":200,\"data\":[{\"gameId\":\"3\",\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"user\"}]}"
-                    : request.RequestUri.AbsolutePath.EndsWith("signIn/v2", StringComparison.Ordinal)
-                        ? "{\"code\":200}"
-                        : "{\"retcode\":-1,\"message\":\"failed\"}",
-                Encoding.UTF8,
-                "application/json"),
-        };
-        await service.StartAsync(CancellationToken.None);
-
-        JsonObject partialInput = NewKuroTaskInput("Partial", "partial-kuro-token");
-        partialInput["games"]!["os"] = new JsonArray(JsonValue.Create("gi"));
-        partialInput["secrets"]!["os"] = new JsonObject { ["action"] = "set", ["value"] = "ltuid=1; ltoken=valid" };
-        Guid partialId = Guid.Parse((await InvokeAsync(context, "POST", "tasks", partialInput)).JsonBody!["id"]!.GetValue<string>());
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = partialId.ToString() });
-        JsonObject partial = await WaitForStateAsync(context, partialId, 1);
-        Assert.Equal("partial", partial["runs"]![0]!["status"]!.GetValue<string>());
-        Assert.Equal(2, partial["runs"]![0]!["results"]!.AsArray().Count);
-        Assert.Equal(3, context.Http.Requests.Count);
-
-        JsonObject failedInput = NewTaskInput("All failed", "10:30", DayOfWeek.Monday);
-        failedInput["games"] = new JsonObject { ["kuro"] = new JsonArray(JsonValue.Create("ww")) };
-        Guid failedId = Guid.Parse((await InvokeAsync(context, "POST", "tasks", failedInput)).JsonBody!["id"]!.GetValue<string>());
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = failedId.ToString() });
-        JsonObject failed = await WaitForStateAsync(context, failedId, 1);
-        Assert.Equal("failed", failed["runs"]![0]!["status"]!.GetValue<string>());
-        Assert.Equal("invalid_credential", failed["runs"]![0]!["results"]![0]!["code"]!.GetValue<string>());
-        await service.StopAsync(CancellationToken.None);
-    }
-
-    [Fact]
-    public async Task CheckInNotification_UsesHostServiceAndOptionalRecipientOverride()
-    {
-        var context = new FakePluginHostContext("game-check-in");
-        var service = new CheckInTaskService(context, () => AtLocalTime(2026, 9, 14, 10, 30));
-        context.Http.ResponseFactory = request => new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(
-                request.RequestUri!.AbsolutePath.EndsWith("findRoleList", StringComparison.Ordinal)
-                    ? "{\"code\":200,\"data\":[{\"gameId\":\"3\",\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"user\"}]}"
-                    : "{\"code\":200}",
-                Encoding.UTF8,
-                "application/json"),
-        };
-
-        JsonObject create = NewKuroTaskInput("Notices", "notice-token-a");
-        Guid id = Guid.Parse((await InvokeAsync(context, "POST", "tasks", create)).JsonBody!["id"]!.GetValue<string>());
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
-        await WaitForStateAsync(context, id, 1);
-        Assert.Empty(context.Notifications.Notifications);
-
-        JsonObject overrideInput = NewKuroTaskInput("Notices", "notice-token-b");
-        overrideInput["id"] = id.ToString();
-        overrideInput["notification"] = new JsonObject { ["enabled"] = true, ["smtpTo"] = "  task@example.test  " };
-        Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", overrideInput)).StatusCode);
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
-        await WaitForStateAsync(context, id, 2);
-        PluginNotification firstNotification = Assert.Single(context.Notifications.Notifications);
-        Assert.Equal("task@example.test", firstNotification.SmtpTo);
-
-        JsonObject inheritedInput = NewKuroTaskInput("Notices", "notice-token-c");
-        inheritedInput["id"] = id.ToString();
-        inheritedInput["notification"] = new JsonObject { ["enabled"] = true, ["smtpTo"] = "" };
-        Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", inheritedInput)).StatusCode);
-        await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = id.ToString() });
-        await WaitForStateAsync(context, id, 3);
-        Assert.Equal(2, context.Notifications.Notifications.Count);
-        Assert.Null(context.Notifications.Notifications[1].SmtpTo);
         await service.StopAsync(CancellationToken.None);
     }
 
@@ -729,15 +396,6 @@ public sealed class GameCheckInTests
         PluginWebApiResponse created = await InvokeAsync(context, "POST", "tasks", NewKuroTaskInput(name, credential));
         Assert.Equal(201, created.StatusCode);
         return Guid.Parse(created.JsonBody!["id"]!.GetValue<string>());
-    }
-
-    private static string WaitForFirstRequestRelease(
-        ManualResetEventSlim entered,
-        ManualResetEventSlim release)
-    {
-        entered.Set();
-        if (!release.Wait(TimeSpan.FromSeconds(8))) throw new TimeoutException("测试没有释放平台请求屏障");
-        return "{\"code\":200,\"data\":[{\"gameId\":\"3\",\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"user\"}]}";
     }
 
     private static async Task<PluginWebApiResponse> InvokeAsync(

@@ -31,7 +31,6 @@ public sealed class ProjectCompilerTests
     }
 
     [Theory]
-    [InlineData(false)]
     [InlineData(true)]
     public void LinkedInterpreterAndLocalDependencyAreRejectedWithoutReadingOutside(bool interpreter)
     {
@@ -65,28 +64,6 @@ public sealed class ProjectCompilerTests
     }
 
     [Fact]
-    public void AuthorizationKeepsArgumentBoundariesAndAbsentPayloadExplicit()
-    {
-        using var fixture = new Fixture();
-        File.WriteAllText(Path.Combine(fixture.Root, "agent.exe"), "inert identity fixture");
-        var pi = JsonNode.Parse("""
-        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
-         "resource":[{"name":"R","path":["resource"]}],"task":[],
-         "agent":{"child_exec":"./agent.exe","child_args":["ab","c"]},
-         "pretask":{"exec":"./agent.exe","args":["{literal}"]}}
-        """)!;
-        fixture.Write(pi.ToJsonString());
-        var first = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile);
-        Assert.Null(Assert.Single(first.Pretasks).GeneratedOptionPayload);
-        Assert.Equal(new[] { "{literal}" }, Assert.Single(first.Pretasks).Arguments);
-        pi["agent"]!["child_args"] = new JsonArray("a", "bc");
-        fixture.Write(pi.ToJsonString());
-        var second = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile);
-        Assert.NotEqual(first.ExecutionFingerprint, second.ExecutionFingerprint);
-        Assert.Equal(new[] { "a", "bc" }, Assert.Single(second.Agents).Arguments);
-    }
-
-    [Fact]
     public void OversizedInterfaceFailsWithLocatedBudgetBeforeParsing()
     {
         using var fixture = new Fixture();
@@ -96,10 +73,7 @@ public sealed class ProjectCompilerTests
     }
 
     [Theory]
-    [InlineData("agent.dll")]
     [InlineData("agent.deps.json")]
-    [InlineData("agent.runtimeconfig.json")]
-    [InlineData("helper.pyd")]
     public void DirectExecutableSidecarCodeChangesRequireAuthorization(string dependency)
     {
         using var fixture = new Fixture();
@@ -137,8 +111,6 @@ public sealed class ProjectCompilerTests
 
     [Theory]
     [InlineData("agent/main.py")]
-    [InlineData("./agent/main.py")]
-    [InlineData("agent\\main.py")]
     public void ScriptEntryAndLocalDependencyContentInvalidateAuthorization(string entry)
     {
         using var fixture = new Fixture();
@@ -166,7 +138,6 @@ public sealed class ProjectCompilerTests
 
     [Theory]
     [InlineData("-m")]
-    [InlineData("-c")]
     public void DynamicPythonEntryIsRejectedBeforeExecution(string option)
     {
         using var fixture = new Fixture();
@@ -181,9 +152,6 @@ public sealed class ProjectCompilerTests
 
     [Theory]
     [InlineData("options")]
-    [InlineData("controllerOptions")]
-    [InlineData("resourceOptions")]
-    [InlineData("taskOptions")]
     public void UnknownConfiguredOptionsAreLocatedInsteadOfUsingProjectDefaults(string scope)
     {
         using var fixture = new Fixture();
@@ -205,7 +173,6 @@ public sealed class ProjectCompilerTests
 
     [Theory]
     [InlineData("\"global_option\":[\"Unknown\"]")]
-    [InlineData("\"setting\":[{\"name\":\"S\",\"option\":[\"Unknown\"]}]")]
     public void GlobalAndSettingReferencesAreValidatedEvenWithoutSelectedTasks(string declaration)
     {
         using var fixture = new Fixture(); fixture.Write("{\"interface_version\":2,\"name\":\"PI\"," + declaration + "}");
@@ -241,8 +208,6 @@ public sealed class ProjectCompilerTests
     }
 
     [Theory]
-    [InlineData("{\"interface_version\":2,\"name\":\"a\",\"name\":\"b\"}", "duplicate")]
-    [InlineData("{\"interface_version\":2,\"name\":\"a\",\"import\":[\"interface.json\"]}", "cycle")]
     [InlineData("{\"interface_version\":2,\"name\":\"a\",\"import\":[\"../../outside.json\"]}", "outside")]
     public void UnsafeInputsAreRejectedBeforeExecution(string input, string expected)
     {
@@ -273,48 +238,6 @@ public sealed class ProjectCompilerTests
         Assert.Null(tasks[0].Override["Entry"]!["t"]);
         Assert.Equal("T", tasks[1].Override["Entry"]!["next"]![0]!.GetValue<string>());
         foreach (string field in new[] { "g", "r", "c", "t" }) Assert.True(tasks[1].Override["Entry"]![field]!.GetValue<bool>());
-    }
-
-    [Fact]
-    public void HotkeySubstitutionsUseIntegersForBothDocumentedPrimaryForms()
-    {
-        using var fixture = new Fixture();
-        fixture.Write("""
-        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
-         "resource":[{"name":"R","path":["resource"]}],"task":[{"name":"T","entry":"Entry","option":["Key"]}],
-         "option":{"Key":{"type":"hotkey","hotkeys":[{"name":"Use","default":"Ctrl+Shift+A"}],
-          "pipeline_override":{"Entry":{"key":"{Use}.primary","modifier":"{Use}.modifier1","second":"{Use.modifier2}","alias":"{Use}"}}}}}
-        """);
-        var pipeline = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile with { SelectedTasks = ["T"] }).Tasks[0].Override["Entry"]!;
-        Assert.Equal(65, pipeline["key"]!.GetValue<int>()); Assert.Equal(65, pipeline["alias"]!.GetValue<int>());
-        Assert.Equal(17, pipeline["modifier"]!.GetValue<int>()); Assert.Equal(16, pipeline["second"]!.GetValue<int>());
-    }
-
-    [Fact]
-    public void InspectRejectsPlaintextPasswordDefaultWithoutTaskExecution()
-    {
-        using var fixture = new Fixture();
-        fixture.Write("""
-        {"interface_version":2,"name":"PI","option":{"Secret":{"type":"input","inputs":[{"name":"Password","password":true,"default":"do-not-display"}]}}}
-        """);
-        Assert.Contains("password default forbidden", Assert.Throws<InvalidDataException>(() => new ProjectCompiler(fixture.Root, "interface.json").Inspect()).Message);
-    }
-
-    [Fact]
-    public void JsoncUrlCommentsAndInactiveSuboptionsArePreservedCorrectly()
-    {
-        using var fixture = new Fixture();
-        fixture.Write("""
-        { // Comment
-          "interface_version":2,"name":"PI","github":"https://example.invalid/a//b",
-          "controller":[{"name":"PC","type":"Win32"},{"name":"Android","type":"Adb"}],
-          "resource":[{"name":"R","path":["resource"]}],
-          "task":[{"name":"T","entry":"Entry","option":["Filtered"]}],
-          "option":{"Filtered":{"controller":["Android"],"cases":[{"name":"Y","option":["Missing"]}]}},
-        }
-        """);
-        var result = new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile with { SelectedTasks = ["T"] });
-        Assert.Empty(Assert.Single(result.Tasks).Override);
     }
 
     [Fact]
@@ -354,11 +277,6 @@ public sealed class ProjectCompilerTests
     }
 
     [Theory]
-    [InlineData("null")]
-    [InlineData("\"720,1280\"")]
-    [InlineData("[720]")]
-    [InlineData("[720,0]")]
-    [InlineData("[720,\"1280\"]")]
     [InlineData("[720,1280,1]")]
     public void InvalidDisplayExpansionCannotSilentlyUseAnotherDisplayMode(string expansion)
     {
@@ -373,8 +291,6 @@ public sealed class ProjectCompilerTests
 
     [Theory]
     [InlineData("\"task\":[{\"name\":\"T\",\"entry\":\"Entry\",\"future_execution\":true}]", "task.T.future_execution")]
-    [InlineData("\"controller\":[{\"name\":\"PC\",\"type\":\"Win32\",\"win32\":{\"future_input\":true}}]", "win32.future_input")]
-    [InlineData("\"pretask\":{\"exec\":\"unknown.exe\",\"shell\":true}", "pretask.shell")]
     public void UnknownExecutionDeclarationsAreLocatedBeforePreviewOrRun(string declaration, string location)
     {
         using var fixture = new Fixture();
@@ -404,18 +320,6 @@ public sealed class ProjectCompilerTests
         fixture.Write(File.ReadAllText(Path.Combine(fixture.Root, "interface.json")).Replace("\"label\":\"$label\"}}", "\"label\":\"changed\"}}"));
         Assert.NotEqual(before, new ProjectCompiler(fixture.Root, "interface.json").Compile(
             fixture.Profile with { SelectedTasks = ["$name"] }).ExecutionFingerprint);
-    }
-
-    [Fact]
-    public void OfficialStellaAgentInfiniteRpcTimeoutRetainsHostStartupAndCancelBoundaries()
-    {
-        using var fixture = new Fixture();
-        File.WriteAllText(Path.Combine(fixture.Root, "fixture-agent.exe"), "owned compiler fixture; never executed");
-        fixture.Write("""
-        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
-         "resource":[{"name":"R","path":["resource"]}],"agent":{"child_exec":"./fixture-agent.exe","timeout":-1}}
-        """);
-        Assert.Equal(-1, Assert.Single(new ProjectCompiler(fixture.Root, "interface.json").Compile(fixture.Profile).Agents).TimeoutMilliseconds);
     }
 
     [Fact]

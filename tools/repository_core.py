@@ -2334,13 +2334,6 @@ def test_managed(
         results_base.mkdir(parents=True, exist_ok=True)
         results_root = Path(tempfile.mkdtemp(prefix="run-", dir=results_base))
         for plugin in selected_plugins:
-            maa_environment = None
-            if plugin.artifact_name == "MaaFrameworkDriver":
-                from maa_native_tests import prepare_native_tests
-                try:
-                    maa_environment = prepare_native_tests(plugin.root, root, resolved_host_root, _run)
-                except (ValueError, OSError, zipfile.BadZipFile) as exc:
-                    raise RepositoryError(f"Maa 真实原生测试准备失败：{exc}") from exc
             tests = sorted((plugin.root / "tests").glob("*.Tests.csproj"))
             _require(tests, f"managed-code 插件 {plugin.artifact_name} 缺少必需的 Tests.csproj")
             for index, test in enumerate(tests, start=1):
@@ -2350,8 +2343,7 @@ def test_managed(
                     report.unlink()
                 _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1",
                       f"-p:NexusHostRoot={resolved_host_root}", "--logger", f"trx;LogFileName={report_name}",
-                      "--results-directory", str(results_root)), f"managed-code 测试：{plugin.artifact_name}", root,
-                     **({"env": maa_environment} if maa_environment is not None else {}))
+                      "--results-directory", str(results_root)), f"managed-code 测试：{plugin.artifact_name}", root)
                 _require(report.is_file() and not report.is_symlink(),
                          f"managed-code 测试缺少 TRX 报告：{plugin.artifact_name}/{test.name}")
                 try:

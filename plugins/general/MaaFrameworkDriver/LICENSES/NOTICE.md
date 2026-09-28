@@ -14,5 +14,4 @@ the worker from worker/NexusPipeline.MaaWorker.csproj with an explicit NexusHost
 The SDK input is separately pinned by the repository verification/candidate runner.
 
 Project native engines are supplied by the explicitly selected project; the plugin
-package does not redistribute a project or its native engine. Native test assets are
-downloaded only by the repository verification runner according to native-tests.lock.json.
+package does not redistribute a project or its native engine.
