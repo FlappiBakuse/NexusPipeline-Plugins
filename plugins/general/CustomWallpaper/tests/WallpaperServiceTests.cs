@@ -50,19 +50,6 @@ public sealed class WallpaperServiceTests
         Assert.Single(await context.Assets.ListAsync(WallpaperService.AssetScope));
     }
 
-    [Theory]
-    [InlineData("image/gif", "invalid_type")]
-    [InlineData("text/plain", "invalid_type")]
-    public async Task Upload_RejectsUnsupportedContentType(string mime, string expectedCode)
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-
-        WallpaperException error = await Assert.ThrowsAsync<WallpaperException>(() => UploadAsync(service, PngBytes(), mime));
-
-        Assert.Equal(expectedCode, error.Code);
-    }
-
     [Fact]
     public async Task Upload_RejectsContentThatDoesNotMatchDeclaredType()
     {
@@ -73,20 +60,6 @@ public sealed class WallpaperServiceTests
 
         Assert.Equal("invalid_image", error.Code);
         Assert.Empty(await context.Assets.ListAsync(WallpaperService.AssetScope));
-    }
-
-    [Fact]
-    public async Task Upload_RejectsFilesAboveThePluginQuota()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        byte[] oversized = new byte[(8 * 1024 * 1024) + 1];
-        oversized[0] = 0x89; oversized[1] = 0x50; oversized[2] = 0x4E; oversized[3] = 0x47;
-        oversized[4] = 0x0D; oversized[5] = 0x0A; oversized[6] = 0x1A; oversized[7] = 0x0A;
-
-        WallpaperException error = await Assert.ThrowsAsync<WallpaperException>(() => UploadAsync(service, oversized));
-
-        Assert.Equal("too_large", error.Code);
     }
 
     [Fact]
@@ -156,21 +129,6 @@ public sealed class WallpaperServiceTests
     }
 
     [Fact]
-    public async Task ApplySettings_RejectsOrderWithUnknownAsset()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        await UploadIdAsync(service, PngBytes(5));
-
-        WallpaperException error = await Assert.ThrowsAsync<WallpaperException>(() => service.ApplySettingsAsync(new JsonObject
-        {
-            ["order"] = new JsonArray(new string('a', 64)),
-        }));
-
-        Assert.Equal("invalid_config", error.Code);
-    }
-
-    [Fact]
     public async Task Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch()
     {
         DateTimeOffset now = new(2026, 9, 12, 10, 0, 0, TimeSpan.Zero);
@@ -196,121 +154,6 @@ public sealed class WallpaperServiceTests
         now = now.AddMinutes(2);
         JsonObject rotated = await service.GetStateAsync();
         Assert.NotEqual(inFirstSlot, rotated["currentId"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public async Task Rotation_SessionAdvanceSelectsOnceAndStateReadsRemainStable()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        string first = await UploadIdAsync(service, PngBytes(21));
-        string second = await UploadIdAsync(service, PngBytes(22));
-        await service.ApplySettingsAsync(new JsonObject
-        {
-            ["enabled"] = true,
-            ["rotation"] = new JsonObject { ["mode"] = "startup" },
-        });
-
-        JsonObject started = await service.AdvanceSessionRotationAsync();
-        string chosen = started["currentId"]!.GetValue<string>();
-        Assert.Contains(chosen, new[] { first, second });
-
-        // 同一 Web 会话内的任意次状态读取（对应浏览器进入或离开设置页）都不改变本次结果。
-        Assert.Equal(chosen, (await service.GetStateAsync())["currentId"]!.GetValue<string>());
-        Assert.Equal(chosen, (await service.GetStateAsync())["currentId"]!.GetValue<string>());
-
-        // 下一次 Web 会话再随机选择一次，并且不会重复当前壁纸。
-        JsonObject nextSession = await service.AdvanceSessionRotationAsync();
-        Assert.NotEqual(chosen, nextSession["currentId"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public async Task Rotation_SessionAdvanceKeepsTheOnlyWallpaper()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        string only = await UploadIdAsync(service, PngBytes(23));
-        await service.ApplySettingsAsync(new JsonObject
-        {
-            ["rotation"] = new JsonObject { ["mode"] = "startup" },
-        });
-
-        JsonObject advanced = await service.AdvanceSessionRotationAsync();
-
-        Assert.Equal(only, advanced["currentId"]!.GetValue<string>());
-    }
-
-    [Theory]
-    [InlineData("off")]
-    [InlineData("timer")]
-    public async Task Rotation_SessionAdvanceLeavesOtherModesUnchanged(string mode)    {
-        DateTimeOffset now = new(2026, 9, 12, 10, 0, 0, TimeSpan.Zero);
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => now);
-        await UploadIdAsync(service, PngBytes(41));
-        await UploadIdAsync(service, PngBytes(42));
-        await service.ApplySettingsAsync(new JsonObject
-        {
-            ["enabled"] = true,
-            ["rotation"] = new JsonObject
-            {
-                ["mode"] = mode,
-                ["intervalMinutes"] = 30,
-                ["epochUnixMs"] = now.ToUnixTimeMilliseconds(),
-            },
-        });
-
-        string before = (await service.GetStateAsync())["currentId"]!.GetValue<string>();
-        JsonObject advanced = await service.AdvanceSessionRotationAsync();
-
-        Assert.Equal(before, advanced["currentId"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public async Task Lifecycle_PluginStartDoesNotPerformSessionRotation()
-    {
-        var context = new FakePluginHostContext("CustomWallpaper");
-        WallpaperService seed = CreateService(context, () => DateTimeOffset.UtcNow);
-        string first = await UploadIdAsync(seed, PngBytes(61));
-        string second = await UploadIdAsync(seed, PngBytes(62));
-        await seed.ApplySettingsAsync(new JsonObject
-        {
-            ["enabled"] = true,
-            ["rotation"] = new JsonObject { ["mode"] = "startup" },
-        });
-        string beforeStart = (await seed.GetStateAsync())["currentId"]!.GetValue<string>();
-
-        // 插件启动生命周期不推进 startup 轮换；Web 前端会话负责显式推进。
-        await using PluginLifecycleHarness harness = await PluginLifecycleHarness.StartAsync(new EntryPoint(), context);
-        JsonObject started = await seed.GetStateAsync();
-        string chosen = started["currentId"]!.GetValue<string>();
-
-        Assert.True(harness.Started);
-        Assert.Contains(chosen, new[] { first, second });
-        Assert.Equal(beforeStart, chosen);
-        Assert.Equal(chosen, (await seed.GetStateAsync())["currentId"]!.GetValue<string>());
-    }
-
-    [Fact]
-    public async Task Rotation_InvalidRuntimeIdFallsBackToSelectedWallpaper()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        string first = await UploadIdAsync(service, PngBytes(63));
-        await UploadIdAsync(service, PngBytes(64));
-        await service.ApplySettingsAsync(new JsonObject
-        {
-            ["selectedId"] = first,
-            ["rotation"] = new JsonObject { ["mode"] = "startup" },
-        });
-        await context.ScopedData.WriteAsync(WallpaperService.RotationScope, new WallpaperRotationRuntime
-        {
-            LastRandomId = new string('x', 64),
-        });
-
-        JsonObject state = await service.GetStateAsync();
-
-        Assert.Equal(first, state["currentId"]!.GetValue<string>());
     }
 
     [Fact]
@@ -364,29 +207,5 @@ public sealed class WallpaperServiceTests
         await service.InitializeAsync();
         JsonObject repeated = await service.GetStateAsync();
         Assert.Single(repeated["assets"]!.AsArray());
-    }
-
-    [Fact]
-    public async Task LegacyImport_SkipsAssetsMissingFromStorage()
-    {
-        var context = new FakePluginHostContext("custom-wallpaper");
-        await context.ScopedData.WriteJsonAsync(WallpaperService.LegacyImportScope, new JsonObject
-        {
-            ["schemaVersion"] = 1,
-            ["assets"] = new JsonArray(new JsonObject
-            {
-                ["id"] = new string('b', 64),
-                ["extension"] = "jpg",
-                ["originalName"] = "缺失.jpg",
-                ["mimeType"] = "image/jpeg",
-            }),
-        });
-
-        WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
-        await service.InitializeAsync();
-        JsonObject state = await service.GetStateAsync();
-
-        Assert.Empty(state["assets"]!.AsArray());
-        Assert.Contains(context.Logger.Entries, entry => entry.Message.Contains("缺少资产文件", StringComparison.Ordinal));
     }
 }

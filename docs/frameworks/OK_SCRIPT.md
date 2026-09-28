@@ -14,15 +14,9 @@ PyAppify 的版本身份异常分支会在手动模式下强制更新；实测�
 
 身份准入只覆盖检查时的本地状态，不能消除启动器之后远端 tag 变化或外部更新的竞争。Host 在运行观察和结束阶段复核冻结资源，变化后拒绝后续证据及重试。固定文件校验不验证完整解释器/依赖，也不能证明瞬时替换未发生；完整发行资格仍须执行。`-e` 的框架完成通知不证明业务成功，LauncherTask 完成也不能关闭异环日常范围。
 
-可复现的上游对照工具（所有输出使用仓库外新路径，游戏与 GUI 不会启动）：
+上游对照结论的来源（在仓库外新路径执行，游戏与 GUI 不会启动）：
 
-```text
-python tools/Probe-OkFramework.py --wheel-root <锁定wheel目录> --output <新报告.json>
-python tools/Probe-OkNteNormalization.py --source <锁定DailyRoutineTask.py> --output <新报告.json>
-python tools/Probe-OkNteBranches.py --source <锁定DailyRoutineTask.py> --output <新报告.json>
-```
-
-框架工具直接从 SHA256 校验后的 `ok_script-2.0.4` 和 `2.0.7b1` wheel 执行原 CLI 解析、任务索引选择、队列和执行方法，设备和任务结果由隔离测试端口控制。规范化工具比较原 `normalize_items` 与适配器纯函数，覆盖空列表、重复、互斥、Python 真值及显式选择后的默认补项。分支工具执行日常原方法与原 `_DailyTaskConfig`，验证 False/None、异常、语言跳过、重复入队以及子配置临时切换恢复；进度回调是明确标注的受控输入，不冒称真实战斗或真实 shift 算法。这些工具不导入游戏模块，也不替代实际发行运行验证。
+对照直接从 SHA256 校验后的 `ok_script-2.0.4` 和 `2.0.7b1` wheel 执行原 CLI 解析、任务索引选择、队列和执行方法，设备和任务结果由隔离测试端口控制。规范化对照比较原 `normalize_items` 与适配器纯函数，覆盖空列表、重复、互斥、Python 真值及显式选择后的默认补项。分支对照执行日常原方法与原 `_DailyTaskConfig`，验证 False/None、异常、语言跳过、重复入队以及子配置临时切换恢复；进度回调是明确标注的受控输入，不冒称真实战斗或真实 shift 算法。对照不导入游戏模块，也不替代实际发行运行验证。
 
 
 China 与 Global 使用独立的 commit/tag 身份，关键 working 文件逐字节一致。China 隔离官方 EXE 的参数转发测试同样通过；两款启动后的版本和业务入口保持原身份。`fixtures/resources/` 中的共享文件明确标注 synthetic，仅测试真实 Host 的哈希机制，不能用作官方包的来源证据。

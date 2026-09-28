@@ -4,5 +4,8 @@
   "authors": [{ "name": "FlappiBakuse", "url": "https://github.com/FlappiBakuse" }],
   "tags": ["框架直驱", "Win32", "ADB"],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
-  "changelog": [{ "version": "0.1.0", "date": "2026-09-26", "items": ["首版独立 MaaFramework 项目执行 provider。"] }]
+  "changelog": [
+    { "version": "0.1.1", "date": "2026-09-29", "items": ["包内许可说明不再引用已移除的原生测试锁定文件。"] },
+    { "version": "0.1.0", "date": "2026-09-26", "items": ["首版独立 MaaFramework 项目执行 provider。"] }
+  ]
 }

@@ -14,7 +14,7 @@
 
 `Task.run` 即使 on_run 返回 False/None 也可能打印执行结束。post_condition 失败后返回主页只关闭控制范围，不补业务成功。致命后置异常由 `BAAH_main` 捕获并可能自动重跑，因此先记录失败和事件，只有实际错误自动关闭或 Host 确认进程退出才结束失败范围并标记后续 blocked；取消/卡顿不替代进程退出证据。后续同任务需新的 pipeline 启动、执行 ordinal 及独立业务成功证据才能恢复，原异常仍留在历史。
 
-可用 `python tools/Probe-BaahBranches.py --source-root <锁定源码> --output <新的报告.json>` 运行原 Task 包装器、返回主页、AllTask 顺序/续跑及 BAAH_main 内置重跑分支。探针对源码验 SHA，导航识别、任务实例和外部动作均受控；不启动游戏。
+在哈希锁定的上游源码上对照运行原 Task 包装器、返回主页、AllTask 顺序/续跑及 BAAH_main 内置重跑分支。探针对源码验 SHA，导航识别、任务实例和外部动作均受控；不启动游戏。
 
 顶层一般异常按仍打开的外层 pipeline 任务归属，嵌套子任务的异常不误认作另一顶层任务。缺少范围时保留未归属异常；即使随后确认退出，也不能凭异常文本推断哪些任务尚未运行。标记后续 blocked 还要求该来源下的 pipeline 顺序已确认且未丢失。
 
