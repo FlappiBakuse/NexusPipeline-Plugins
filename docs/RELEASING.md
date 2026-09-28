@@ -199,7 +199,7 @@ python tools/repository.py publish-preview --generated-root .generated/preview -
 ## 校验层级
 
 ```text
-python tools/repository.py validate
+python tools/repository.py validate-source
 ```
 
 校验源码、manifest、store、data-specialized 引用、catalog 集合和包路径元数据。它不会为未变更插件重新计算 ZIP SHA256。
@@ -214,6 +214,6 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 
 ## 校验工作流
 
-`Plugins / Required` 使用 PR merge checkout，按完整变更范围选择文档、源码、适用 managed 检查；未知共享输入保守扩大。managed build、测试项目和 TRX 用例分别计数；适用项目缺 Tests.csproj、缺报告、零用例、失败或 skip 均失败，明确无 managed 影响才报告 N/A。Python unittest 同样拒绝零发现和 skip。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行 Host Jint、实际生产打包与包验收，不重复 PR 的完整 managed 单测。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
+`Plugins / Required` 使用 PR merge checkout，在单个 Windows job 中依次运行源码契约、脚本语法、正式判分脚本检查、Host locale registry 同步、Task 生成一致性、Python unittest，以及变更 managed 插件的构建与测试；共享输入变化不再扩大为全部插件。managed build、测试项目和 TRX 用例分别计数；适用项目缺 Tests.csproj、缺报告、零用例或失败均失败，明确无 managed 影响才报告 N/A。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行 Host Jint、实际生产打包与包验收，不重复 PR 的完整 managed 单测。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。

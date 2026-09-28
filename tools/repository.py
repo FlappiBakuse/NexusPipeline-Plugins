@@ -9,10 +9,7 @@ from sdk_source import SdkSourceError
 
 from repository_core import (
     RepositoryError,
-    STATE_FILE,
-    apply_generated,
     audit,
-    bootstrap_state,
     build_plan,
     check_pr,
     check_syntax,
@@ -23,7 +20,6 @@ from repository_core import (
     validate_generated,
     validate_host_locale_registry,
     validate_sources,
-    validate_source_and_catalog,
     write_json,
 )
 
@@ -33,8 +29,6 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "command",
         choices=(
-            "plan",
-            "validate",
             "validate-source",
             "check-syntax",
             "test",
@@ -54,11 +48,8 @@ def _parser() -> argparse.ArgumentParser:
             "inspect-preview",
             "publish-candidate",
             "verify",
-            "scope",
             "publish-develop",
             "publish-preview",
-            "apply",
-            "bootstrap-state",
         ),
     )
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -102,26 +93,12 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.root.resolve()
     try:
-        if args.command == "validate":
-            count, json_count = validate_source_and_catalog(root)
-            print(f"[repository] 源码与 catalog 校验通过：{count} 个插件，{json_count} 个 JSON 文件", flush=True)
-        elif args.command == "validate-source":
+        if args.command == "validate-source":
             count, json_count = validate_sources(root)
             print(f"[repository] 源码契约校验通过：{count} 个插件，{json_count} 个 JSON 文件", flush=True)
         elif args.command == "check-syntax":
             print(f"[repository] 脚本语法校验通过：{check_syntax(root)} 个文件", flush=True)
-        elif args.command == "plan":
-            plan = build_plan(root, args.baseline, args.head, distribution_root=args.distribution_root)
-            output = args.output.resolve() if args.output else root / ".generated" / "release-plan.json"
-            write_json(output, plan)
-            print(
-                f"[repository] {plan['mode']} release plan："
-                f"{len(plan['requiresPackage'])} 个插件待打包，"
-                f"{len(plan['deleted'])} 个插件待删除，"
-                f"{len(plan['globalChanges'])} 个全局变更",
-                flush=True,
-            )
-        elif args.command in {"test", "test-managed"}:
+        elif args.command == "test" or args.command == "test-managed":
             plan = _load_plan(args.plan) if args.plan else None
             managed = test_managed(root, plan, args.full, host_root=args.host_root)
             print(f"[repository] managed-code 测试完成：{managed['builds']} 个构建，"
@@ -264,25 +241,11 @@ def main(argv: list[str] | None = None) -> int:
                 run_id=int(args.run_id), run_attempt=int(args.run_attempt),
                 workflow_sha=args.workflow_sha)
             print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
-        elif args.command == "scope":
-            from verification import fast_scope
-
-            if not args.base:
-                raise RepositoryError("scope 必须指定 --base")
-            selected = fast_scope(root, args.base)
-            line = f"docs_only={'true' if selected['docsOnly'] else 'false'}"
-            if args.github_output:
-                with args.github_output.open("a", encoding="utf-8") as stream:
-                    stream.write(line + "\n")
-            print(line, flush=True)
         elif args.command == "verify":
-            from verification import managed_selection, preflight, run_docs_gate, run_managed_gate, run_source_gate
+            from verification import managed_selection, preflight, run_managed_gate, run_source_gate
 
             if not args.base:
                 raise RepositoryError("verify 必须指定 --base")
-            if args.scope == "docs":
-                print(json.dumps({"scope": "docs", "docs": run_docs_gate(root, args.base)}, ensure_ascii=False, indent=2), flush=True)
-                return 0
             selection: list[str] = []
             reason = "source-only"
             if args.scope in {"managed", "all"}:
@@ -336,15 +299,6 @@ def main(argv: list[str] | None = None) -> int:
                 token=os.environ.get(args.token_env),
                 source_root=args.source_root.resolve() if args.source_root else None,
             )
-        elif args.command == "apply":
-            generated = args.generated_root or args.output
-            if generated is None:
-                raise RepositoryError("apply 必须指定 --generated-root")
-            apply_generated(root, generated.resolve())
-        elif args.command == "bootstrap-state":
-            output = args.output.resolve() if args.output else root / STATE_FILE
-            write_json(output, bootstrap_state(root, args.head))
-            print(f"[repository] 已生成发行状态：{output}", flush=True)
         return 0
     except (RepositoryError, SdkSourceError) as exc:
         print(f"[repository] 错误：{exc}", file=sys.stderr, flush=True)
