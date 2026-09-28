@@ -231,7 +231,7 @@ jobs:
           ARTIFACT_DIGEST: ${{ steps.original.outputs.artifact_digest }}
         run: |
           mkdir -p .generated
-          curl -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/octet-stream' \
+          curl -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $GITHUB_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' \
             --output .generated/preview-artifact.zip \
             "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$ARTIFACT_ID/zip"
           python tools/repository.py extract-preview --artifact-zip .generated/preview-artifact.zip \
