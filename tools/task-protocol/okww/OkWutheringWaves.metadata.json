@@ -101,6 +101,7 @@
     "Forgery Challenge": "task.stamina_forgery",
     "Simulation Challenge": "task.stamina_simulation"
   },
+  "runtimeOfficialRepository": "ok-oldking/ok-wuthering-waves",
   "runtimeProfiles": {
     "Global": {
       "name": "ok-ww",

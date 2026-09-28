@@ -528,7 +528,7 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     _safe_relative(plugin, manifest.get("resolve"), f"数据化插件 {name} 的 resolve", ".json")
     judge_path = _safe_relative(plugin, manifest.get("judgeScript"), f"数据化插件 {name} 的 judgeScript")
     _validate_judge_locale_contract(plugin, manifest, judge_path)
-    for field in ("configValidator", "configEditor"):
+    for field in ("configEditor",):
         if field in manifest:
             _safe_relative(plugin, manifest.get(field), f"数据化插件 {name} 的 {field}", ".js")
     resolve_path = _safe_relative(plugin, manifest.get("resolve"), f"数据化插件 {name} 的 resolve", ".json")
@@ -538,6 +538,17 @@ def _validate_data_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     paths = resolve.get("paths")
     _require(isinstance(requirements, list) and 1 <= len(requirements) <= 32, f"数据化插件 {name} 的 require 数量无效")
     _require(isinstance(paths, dict), f"数据化插件 {name} 的 resolve.json 缺少 paths")
+    output_encoding = resolve.get("outputEncoding")
+    if output_encoding is not None:
+        _require(output_encoding in ("utf-8", "windows-936", "system-default"),
+                 f"数据化插件 {name} 的 outputEncoding 无效")
+    process_contract = resolve.get("process")
+    if process_contract is not None:
+        _require(isinstance(process_contract, dict), f"数据化插件 {name} 的 process 必须是对象")
+        _require(set(process_contract) == {"rootRole", "writesManagedConfig"}, f"数据化插件 {name} 的 process 字段无效")
+        _require(process_contract["rootRole"] == "game_launcher", f"数据化插件 {name} 的 rootRole 无效")
+        _require(process_contract["writesManagedConfig"] is False, f"数据化插件 {name} 的启动器不能声明为配置写入者")
+        _require(isinstance(manifest.get("taskProtocol"), dict), f"数据化插件 {name} 的启动器角色需要任务终态协议")
     for item in requirements:
         _require(isinstance(item, dict), f"数据化插件 {name} 的 require 条目无效")
         _require(isinstance(item.get("var"), str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", item["var"]), f"数据化插件 {name} 的 require 变量无效")
@@ -691,16 +702,45 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
                          and isinstance(check[field], str) and 0 < len(check[field]) <= 512, "taskProtocol target default invalid")
 
 
+def _validate_task_protocol_repair_rules(value: Any, config_rules: list[dict[str, Any]]) -> None:
+    _require(isinstance(value, list) and len(value) <= 8, "taskProtocol.repairRules invalid")
+    declared = {rule["id"] for rule in config_rules}
+    identifiers: set[str] = set()
+    required = {"id", "ruleId", "resourceId", "selector", "source", "format", "kind",
+                "fromValues", "toValue", "preconditions", "explanation"}
+    for rule in value:
+        _require(isinstance(rule, dict) and set(rule) == required, "repair rule fields invalid")
+        identifier = rule["id"]
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier)
+                 and identifier not in identifiers and rule["ruleId"] in declared, "repair rule id invalid")
+        identifiers.add(identifier)
+        _require(rule["resourceId"] == "config:config.yaml" and rule["selector"] == ["after_finish"]
+                 and rule["source"] == "user_snapshot" and rule["format"] == "yaml"
+                 and rule["kind"] == "replace_enum" and rule["toValue"] == "None",
+                 "repair rule exceeds supported finish-action scope")
+        _require(rule["preconditions"] == {"snapshotKind": "file", "exclusiveResource": True,
+                                           "noExtraConfig": True}, "repair preconditions invalid")
+        values = rule["fromValues"]
+        _require(isinstance(values, list) and 0 < len(values) <= 16
+                 and all(isinstance(item, str) and 0 < len(item) <= 64 and item != "None" for item in values)
+                 and len(set(values)) == len(values), "repair source values invalid")
+        _require(isinstance(rule["explanation"], str) and 0 < len(rule["explanation"]) <= 512,
+                 "repair explanation invalid")
+
+
 def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     if "taskProtocol" not in manifest:
         return {}
     protocol = manifest["taskProtocol"]
     _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    _require(isinstance(protocol, dict) and protocol.get("version") == "0.1.0", "unsupported taskProtocol.version")
+    _require(isinstance(protocol, dict) and protocol.get("version") in {"0.1.0", "0.1.1"}, "unsupported taskProtocol.version")
     fields = {"version", "discoverScript", "retryScript", "readResources", "localization", "configRules", "environmentChecks"}
+    if protocol["version"] == "0.1.1":
+        fields.add("repairRules")
     _require("configValidator" not in manifest, "taskProtocol 0.1.0 cannot declare configValidator")
     _require(set(protocol) == fields, "taskProtocol fields invalid")
-    _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver("0.16.8"), "taskProtocol requires minHostVersion >= 0.16.8")
+    required_host = "0.16.9" if protocol["version"] == "0.1.1" else "0.16.8"
+    _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver(required_host), f"taskProtocol requires minHostVersion >= {required_host}")
 
     def safe_path(value: Any) -> bool:
         return isinstance(value, str) and 0 < len(value) <= 512 and not any(c in value for c in "\\:*?\0") and all(p not in {"", ".", ".."} for p in value.split("/"))
@@ -715,6 +755,8 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         _require(safe_path(path) and path.startswith("data/i18n/") and path.endswith(".json"), "task localization requires safe data/i18n/*.json")
     _validate_task_protocol_config_rules(protocol["configRules"])
     _validate_task_protocol_environment_checks(protocol["environmentChecks"])
+    if protocol["version"] == "0.1.1":
+        _validate_task_protocol_repair_rules(protocol["repairRules"], protocol["configRules"])
 
     scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
     for value in [*scripts.values(), manifest.get("judgeScript")]:
@@ -729,6 +771,18 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
             fields.add("sha256")
             _require(isinstance(resource["sha256"], str) and re.fullmatch(r"[0-9a-f]{64}", resource["sha256"]) is not None
                      and resource.get("source") == "root" and resource.get("format") == "text", "taskProtocol resource.sha256 invalid")
+        if "operationalFields" in resource:
+            fields.add("operationalFields")
+            operational = resource["operationalFields"]
+            reserved = {"name", "installed", "current_profile", "current_version", "current_version_missing",
+                        "available_versions", "update_state", "update_target_version", "update_error"}
+            _require(protocol["version"] == "0.1.1" and resource.get("source") == "root"
+                     and resource.get("format") == "json" and isinstance(operational, dict)
+                     and 0 < len(operational) <= 2, "taskProtocol operationalFields invalid")
+            for field_name, field_type in operational.items():
+                _require(re.fullmatch(r"[a-z][a-z0-9_]{0,39}", field_name) is not None
+                         and field_name not in reserved and field_type in {"boolean", "timestamp"},
+                         "taskProtocol operational field invalid")
         _require(set(resource) == fields, "taskProtocol resource fields invalid")
         identity = resource["id"]
         _require(isinstance(identity, str) and 0 < len(identity) <= 512 and not identity.startswith("config:") and identity not in ids, "taskProtocol resource id invalid")
@@ -807,7 +861,7 @@ def _specialized_script_closure(root: Path, manifest: dict[str, Any]) -> set[Pat
         _require(asset.stat().st_size <= 256 * 1024, "task localization asset too large")
         return asset.read_bytes()
     _validate_task_localization(manifest, read_text_asset)
-    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+    for field in ("judgeScript", "configEditor", "discoverScript", "retryScript"):
         if field not in declarations:
             continue
         script = _safe_relative(root, declarations.get(field), f"专项插件 {artifact} 的 {field}")
@@ -974,6 +1028,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
     manifest = read_json(manifest_path)
     store = read_json(store_path)
     _require(isinstance(manifest, dict), f"plugin.json 必须是对象：{_display(manifest_path)}")
+    _require("configValidator" not in manifest, f"插件 {root.name} 声明已退役的 configValidator；请升级到 taskProtocol 配置诊断")
     _require(isinstance(store, dict), f"store.json 必须是对象：{_display(store_path)}")
     _task_protocol_scripts(manifest)
     _require(manifest.get("schemaVersion") == 2, f"插件 {root.name} 的 plugin.json schemaVersion 必须为 2")
@@ -1018,7 +1073,7 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
         _require(bool(projects), f"managed-code 插件 {artifact} 缺少 src/*.csproj")
         api_version = manifest.get("apiVersion")
         _require(isinstance(api_version, str) and re.fullmatch(r"\d+\.\d+", api_version), f"managed-code 插件 {artifact} 的 apiVersion 无效")
-    if "configValidator" in manifest or "configEditor" in manifest:
+    if "configEditor" in manifest:
         _require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)
     homepage = store.get("homepage", "")
@@ -1534,11 +1589,44 @@ def _build_managed(plugin: SourcePlugin, output: Path, root: Path, host_root: Pa
         f"-p:NexusHostRoot={resolved_host_root}",
     )
     _run(("dotnet", "build", str(projects[0]), "--configuration", "Release", "--nologo", "--output", str(output), *properties), f"构建插件：{plugin.artifact_name} v{plugin.version}", root)
+    if plugin.artifact_name == "MaaFrameworkDriver":
+        worker = plugin.root / "worker" / "NexusPipeline.MaaWorker.csproj"
+        _require(worker.is_file(), "MaaFrameworkDriver 缺少独立 worker")
+        _run(("dotnet", "publish", str(worker), "--configuration", "Release", "--nologo",
+              "--output", str(output / "worker"), "-p:RestoreLockedMode=true",
+              *properties), "构建 MaaFramework 独立 worker", root)
 
 
 def _copy_tree(source: Path, destination: Path) -> None:
     _require(source.is_dir(), f"缺少目录：{_display(source)}")
     shutil.copytree(source, destination, dirs_exist_ok=True)
+
+
+def validate_maa_worker_payload(payload: Path) -> None:
+    worker = payload / "worker"
+    required = ("NexusPipeline.MaaWorker.exe", "NexusPipeline.MaaWorker.dll",
+                "NexusPipeline.MaaWorker.deps.json", "NexusPipeline.MaaWorker.runtimeconfig.json",
+                "MaaFramework.Binding.dll", "MaaFramework.Binding.Native.dll",
+                "NexusPipeline.Plugin.Abstractions.dll")
+    for name in required:
+        path = worker / name
+        _require(path.is_file() and not path.is_symlink(), f"Maa 插件包缺少 worker 依赖：{name}")
+    _require((worker / required[0]).read_bytes()[:2] == b"MZ", "Maa worker 必须是实际 Windows apphost")
+    runtime = read_json(worker / "NexusPipeline.MaaWorker.runtimeconfig.json").get("runtimeOptions", {})
+    _require(runtime.get("tfm") == "net8.0"
+             and runtime.get("framework", {}).get("name") == "Microsoft.NETCore.App",
+             "Maa worker 必须使用共享 .NET 8 运行时")
+    dependencies = read_json(worker / "NexusPipeline.MaaWorker.deps.json")
+    libraries = dependencies.get("libraries", {})
+    _require("Maa.Framework.Binding/5.10.0" in libraries
+             and "Maa.Framework.Binding.Native/5.10.0" in libraries,
+             "Maa worker 绑定版本与锁定输入不一致")
+    for name in ("NOTICE.md", "MaaFramework.Binding.LGPL-3.0.md", "GPL-3.0.txt"):
+        _require((payload / "LICENSES" / name).is_file(), f"Maa 插件包缺少许可：{name}")
+    _require(not any(path.suffix.casefold() == ".pdb"
+                     or path.suffix.casefold() == ".exe" and path.name != required[0]
+                     for path in payload.rglob("*") if path.is_file()),
+             "Maa 插件包混入测试程序或调试产物")
 
 
 def build_plugin_package(
@@ -1571,6 +1659,12 @@ def build_plugin_package(
                     shutil.copyfile(file, payload / file.name)
                     copied += 1
             _require(copied > 0, f"managed-code 插件没有可打包构建输出：{plugin.artifact_name}")
+            if plugin.artifact_name == "MaaFrameworkDriver":
+                worker_output = build_output / "worker"
+                _require((worker_output / "NexusPipeline.MaaWorker.exe").is_file(), "Maa 插件包缺少实际 worker")
+                _copy_tree(worker_output, payload / "worker")
+                _copy_tree(plugin.root / "LICENSES", payload / "LICENSES")
+                validate_maa_worker_payload(payload)
         if plugin.manifest.get("frontend") is not None:
             _require(plugin.kind == "managed-code", f"专项插件 {plugin.artifact_name} 禁止构建 frontend")
             _build_frontend(plugin, root)
@@ -1886,6 +1980,7 @@ def _validate_specialized_zip_payload(
     manifest: dict[str, Any],
     package: Path,
     infos: dict[str, zipfile.ZipInfo],
+    allow_legacy_archive: bool = False,
 ) -> None:
     artifact = str(manifest.get("artifactName", package.stem))
     _validate_specialized_manifest_contract(manifest, f"ZIP {_display(package)}")
@@ -1915,7 +2010,8 @@ def _validate_specialized_zip_payload(
         _require(path in infos and infos[path].file_size <= 256 * 1024, "task localization asset missing or too large")
         return archive.read(infos[path])
     _validate_task_localization(manifest, read_text_asset)
-    for field in ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript"):
+    fields = ("judgeScript", "configValidator", "configEditor", "discoverScript", "retryScript") if allow_legacy_archive else ("judgeScript", "configEditor", "discoverScript", "retryScript")
+    for field in fields:
         value = declarations.get(field)
         if value is None:
             continue
@@ -1959,12 +2055,14 @@ def _validate_zip(
     expected_artifact: str | None = None,
     expected_version: str | None = None,
     expected_sha256: str | None = None,
+    allow_legacy_archive: bool = False,
 ) -> None:
     try:
         with zipfile.ZipFile(package) as archive:
             infos = archive.infolist()
             info_by_name = _validate_zip_layout(infos, package)
             manifest = _zip_json(archive, "plugin.json", package, info_by_name)
+            _require(allow_legacy_archive or "configValidator" not in manifest, f"ZIP 声明已退役的 configValidator：{_display(package)}")
             _task_protocol_scripts(manifest)
             _require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{_display(package)}")
             _require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
@@ -1995,11 +2093,11 @@ def _validate_zip(
                     f"ZIP manifest 与源码不一致：{_display(package)}",
                 )
                 if expected.kind == "data-specialized":
-                    _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
+                    _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name, allow_legacy_archive)
                 else:
                     _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
             elif str(manifest.get("kind", "")).strip().lower() == "data-specialized":
-                _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name)
+                _validate_specialized_zip_payload(archive, names, manifest, package, info_by_name, allow_legacy_archive)
             elif str(manifest.get("kind", "")).strip().lower() == "managed-code":
                 _require(any(name.lower().endswith(".dll") for name in names), f"managed-code ZIP 缺少 DLL：{_display(package)}")
     except zipfile.BadZipFile as exc:
@@ -2026,7 +2124,7 @@ def audit(root: Path) -> int:
         _require(len(packages) <= MAX_RETAINED_PACKAGES, f"插件发行包超过最近 {MAX_RETAINED_PACKAGES} 个版本：{directory.name}")
         for package in packages:
             _require(_version_from_package(package, directory.name) is not None, f"发行包文件名无效：{_display(package)}")
-            _validate_zip(package)
+            _validate_zip(package, allow_legacy_archive=True)
             checked += 1
     print(f"[repository] Full Audit 通过：检查 {checked} 个 ZIP、{len(plugins)} 个当前 catalog 条目", flush=True)
     return checked
@@ -2232,9 +2330,17 @@ def test_managed(
             build_count += 1
         selected_plugins = [plugin for plugin in plugins
                             if plugin.kind == "managed-code" and plugin.artifact_name in artifacts]
-        results_root = root / ".generated" / "test-results" / "managed"
-        results_root.mkdir(parents=True, exist_ok=True)
+        results_base = root / ".generated" / "test-results" / "managed"
+        results_base.mkdir(parents=True, exist_ok=True)
+        results_root = Path(tempfile.mkdtemp(prefix="run-", dir=results_base))
         for plugin in selected_plugins:
+            maa_environment = None
+            if plugin.artifact_name == "MaaFrameworkDriver":
+                from maa_native_tests import prepare_native_tests
+                try:
+                    maa_environment = prepare_native_tests(plugin.root, root, resolved_host_root, _run)
+                except (ValueError, OSError, zipfile.BadZipFile) as exc:
+                    raise RepositoryError(f"Maa 真实原生测试准备失败：{exc}") from exc
             tests = sorted((plugin.root / "tests").glob("*.Tests.csproj"))
             _require(tests, f"managed-code 插件 {plugin.artifact_name} 缺少必需的 Tests.csproj")
             for index, test in enumerate(tests, start=1):
@@ -2244,7 +2350,8 @@ def test_managed(
                     report.unlink()
                 _run(("dotnet", "test", str(test), "--configuration", "Release", "--nologo", "-m:1",
                       f"-p:NexusHostRoot={resolved_host_root}", "--logger", f"trx;LogFileName={report_name}",
-                      "--results-directory", str(results_root)), f"managed-code 测试：{plugin.artifact_name}", root)
+                      "--results-directory", str(results_root)), f"managed-code 测试：{plugin.artifact_name}", root,
+                     **({"env": maa_environment} if maa_environment is not None else {}))
                 _require(report.is_file() and not report.is_symlink(),
                          f"managed-code 测试缺少 TRX 报告：{plugin.artifact_name}/{test.name}")
                 try:
@@ -2483,7 +2590,13 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     state = read_json(generated_root / STATE_FILE)
     plugins = discover_source_plugins(root)
     _require(git_head(root) == plan.get("head"), "生成候选 source HEAD 与 release plan 不一致")
-    expected_plan = build_plan(root, baseline=str(plan.get("base", "")), head=str(plan.get("head", "")), distribution_root=distribution_root)
+    baseline = str(plan.get("base", ""))
+    distribution_state = load_state(distribution_root)
+    # Published facts can postdate their source cursor. Replaying that cursor
+    # must use the frozen distribution state, not its older state at the source commit.
+    if baseline == distribution_state.get("sourceCommit"):
+        baseline = "auto"
+    expected_plan = build_plan(root, baseline=baseline, head=str(plan.get("head", "")), distribution_root=distribution_root)
     for key in (
         "base",
         "head",

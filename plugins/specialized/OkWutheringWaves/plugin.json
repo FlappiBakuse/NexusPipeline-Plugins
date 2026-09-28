@@ -5,9 +5,9 @@
   "displayName": "ok-ww 日常",
   "gameName": "鸣潮",
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.9",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "capabilities": [
@@ -21,7 +21,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -30,7 +30,8 @@
         "source": "root",
         "path": "data/apps/ok-ww/app.json",
         "format": "json",
-        "required": false
+        "required": false,
+        "operationalFields": { "running": "boolean", "last_start": "timestamp" }
       },
       {
         "id": "runtime-head",
@@ -43,6 +44,13 @@
         "id": "runtime-tag",
         "source": "root",
         "path": "data/apps/ok-ww/repo/.git/refs/tags/v3.6.7",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "runtime-origin",
+        "source": "root",
+        "path": "data/apps/ok-ww/repo/.git/config",
         "format": "text",
         "required": false
       },
@@ -207,6 +215,7 @@
         "criticality": "critical_when_applicable"
       }
     ],
-    "environmentChecks": []
+    "environmentChecks": [],
+    "repairRules": []
   }
 }

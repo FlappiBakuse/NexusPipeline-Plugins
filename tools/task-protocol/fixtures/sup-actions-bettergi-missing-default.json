@@ -1,0 +1,34 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "different",
+  "queueNextLaunchOwner": "already_running",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskEnabledList\": {\"mail\": true}, \"TaskDefinitions\": {\"mail\": \"\\u9886\\u53d6\\u90ae\\u4ef6\"}, \"TaskOrder\": [\"mail\"], \"NextTaskId\": \"\"}"
+    }
+  ],
+  "tasks": {
+    "mail": {
+      "enabled": true
+    }
+  },
+  "configChecks": [
+    {
+      "ruleId": "bettergi.finish_action",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "batches": [],
+  "results": {
+    "mail": "unknown"
+  },
+  "source": {
+    "type": "synthetic",
+    "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
+  }
+}

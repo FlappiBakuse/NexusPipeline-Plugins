@@ -5,7 +5,7 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.8",
   "resolve": "data/resolve.json",
@@ -38,12 +38,35 @@
         "en-US": "data/i18n/en-US.json"
       }
     },
-      "configRules": [
-        { "id": "bettergi.game_target", "required": true, "criticality": "advisory_or_contextual" },
-        { "id": "bettergi.finish_action", "required": true, "criticality": "critical_when_applicable" }
-      ],
-      "environmentChecks": [
-        { "id": "bettergi-game-target", "source": { "kind": "resource", "resourceId": "extra-user-config", "selector": ["genshinStartConfig", "installPath"] }, "expectedKind": "file_or_directory", "relativeBase": "none", "comparison": "path_or_executable_parent", "networkAccess": false, "followReparsePoints": false }
-      ]
-    }
+    "configRules": [
+      {
+        "id": "bettergi.game_target",
+        "required": true,
+        "criticality": "advisory_or_contextual"
+      },
+      {
+        "id": "bettergi.finish_action",
+        "required": true,
+        "criticality": "critical_when_applicable"
+      }
+    ],
+    "environmentChecks": [
+      {
+        "id": "bettergi-game-target",
+        "source": {
+          "kind": "resource",
+          "resourceId": "extra-user-config",
+          "selector": [
+            "genshinStartConfig",
+            "installPath"
+          ]
+        },
+        "expectedKind": "file_or_directory",
+        "relativeBase": "none",
+        "comparison": "path_or_executable_parent",
+        "networkAccess": false,
+        "followReparsePoints": false
+      }
+    ]
   }
+}

@@ -109,7 +109,7 @@ function Assert-DataSpecializedContract($pluginDirectory, $manifest) {
     }
 
     if ($manifest.PSObject.Properties.Name -contains "configValidator") {
-        Assert-SafePluginRelativeFile $pluginDirectory.FullName ([string]$manifest.configValidator) "configValidator" ".js"
+        throw "configValidator 已退役，请升级到 taskProtocol 配置诊断：$($manifest.name)"
     }
     if ($manifest.PSObject.Properties.Name -contains "configEditor") {
         Assert-SafePluginRelativeFile $pluginDirectory.FullName ([string]$manifest.configEditor) "configEditor" ".js"
@@ -232,8 +232,8 @@ function Assert-ManifestsAndDataContracts {
             }
         }
         $kind = ([string]$manifest.kind).Trim().ToLowerInvariant()
-        if ($manifest.PSObject.Properties.Name -contains "configValidator" -and $kind -ne "data-specialized") {
-            throw "configValidator 仅支持 data-specialized 插件：$($manifest.name)"
+        if ($manifest.PSObject.Properties.Name -contains "configValidator") {
+            throw "configValidator 已退役，请升级到 taskProtocol 配置诊断：$($manifest.name)"
         }
         if ($manifest.PSObject.Properties.Name -contains "configEditor" -and $kind -ne "data-specialized") {
             throw "configEditor 仅支持 data-specialized 插件：$($manifest.name)"

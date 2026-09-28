@@ -44,7 +44,7 @@ class ManagedSelectionTests(unittest.TestCase):
         managed.assert_not_called()
 
     def test_managed_without_frontend_runs_only_selected_dotnet_projects(self):
-        plugin = SimpleNamespace(root=self.root / "plugins/general/EmulatorSupport", artifact_name="EmulatorSupport", kind="managed-code")
+        plugin = SimpleNamespace(root=self.root / "plugins/general/EmulatorSupport", artifact_name="EmulatorSupport", kind="managed-code", manifest={})
         with patch.object(verification.core, "discover_source_plugins", return_value=[plugin]), \
              patch.object(verification.core, "_run") as run, \
              patch.object(verification.core, "test_managed", return_value={"builds": 1, "testProjects": 1, "testCases": 7}) as managed:

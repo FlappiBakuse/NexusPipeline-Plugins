@@ -1,0 +1,16 @@
+{
+  "artifact": "OkWutheringWaves",
+  "coverage": "partial",
+  "resources": [
+    { "id": "config:DailyTask.json", "format": "json", "text": "{\"Which to Farm\":\"Tacet Suppression\"}" },
+    { "id": "runtime-app", "format": "json", "text": "{\"name\":\"ok-ww\",\"installed\":true,\"current_profile\":\"Global\",\"current_version\":\"v3.6.8\",\"update_state\":\"idle\",\"update_target_version\":null,\"update_error\":null,\"running\":false,\"available_versions\":[\"v3.6.8\"]}" },
+    { "id": "runtime-head", "format": "text", "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" },
+    { "id": "runtime-origin", "format": "text", "text": "[remote \"origin\"]\nurl = https://github.com/ok-oldking/ok-wuthering-waves.git\n" }
+  ],
+  "resourceSets": ["resources/okww-code-changed.json"],
+  "tasks": { "runtime_unverified": { "enabled": true, "role": "business" } },
+  "configChecks": [ { "ruleId": "okscript.distribution", "evaluation": "unknown", "executionEffect": "warn" } ],
+  "batches": [],
+  "results": { "runtime_unverified": "unknown" },
+  "source": { "type": "synthetic", "note": "New official version metadata and origin with old advanced code hashes changed; base-only plan is unverified." }
+}

@@ -24,6 +24,10 @@
 
 `0.1.0` manifest 必须声明 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/i18n/zh-CN.json", "en-US": "data/i18n/en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。旧开发版的 `1.0`、`1.1`、`1.2` 声明均不再加载。
 
+`0.1.1` 是 Host v0.16.9 增加的**包声明**扩展：必须声明 `repairRules` 数组，并把 `minHostVersion` 设为至少 `0.16.9`。三阶段输入和输出的 `protocolVersion` 仍为 `0.1.0`。旧 Host 会拒绝整个 `0.1.1` 包，不能忽略未知修复字段后继续运行。空数组表示没有自动修复能力。
+
+首版修复声明只允许 `config:config.yaml` 的单字段 `after_finish`：`source: user_snapshot`、`format: yaml`、`kind: replace_enum`、`toValue: None`，并列出已识别的 `fromValues`、已有配置诊断 `ruleId`、稳定 `id`、用户可读 `explanation` 及 `preconditions: {"snapshotKind":"file","exclusiveResource":true,"noExtraConfig":true}`。Host 再以自己的已审查系统动作集合限定来源值。March7thAssistant 0.3.1 声明 `queue_finish_action`；其他字段、共享附加配置和未知动作只提示手动编辑。自动修复默认关闭；开启后每次仍需预览、提交预览令牌，并在现役存储事务里复核清单、归属、版本、字节及并发状态。插件脚本不能通过此声明直接写用户配置。
+
 所有阶段使用协商的 `input.protocolVersion`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
 
 ```json
@@ -40,9 +44,11 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 `readResources` 最多 128 项，每项为 `{id, source, path, format, required}`。`source` 为 `root` 或 `extraConfig`；前者相对实例根目录，后者路径以附加配置索引开头，例如 `0/settings.json`。格式为 `json`、`yaml` 或 `text`；JSONC 接口可声明为 text 后由适配器解析。路径禁止绝对路径、回退段和重解析点；只读资源永远不可作为补丁目标。
 
+包声明 `0.1.1` 中，`source: root`、`format: json` 的只读资源可声明 `operationalFields`，例如 `{ "running": "boolean", "last_start": "timestamp" }`。最多两项；发行身份、渠道、版本和更新字段不可声明为运行期可变。受限运行仅允许这些字段按类型改变，未声明字段保持原值。OK 的 `running` 是持久线索，Host 另检查安装目录中的嵌入式 worker；活动或不可读会阻断，确认无 worker 且标记遗留才允许基础受限流程。
+
 ## discover 配置诊断
 
-`0.1.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`，并且不得同时声明旧的 `configValidator`。没有声明 `taskProtocol` 的旧插件仍可使用原有校验器。
+`0.1.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`。Host v0.16.9 拒绝声明已退役 `configValidator` 的旧包，并提示升级或卸载，用户配置不变。
 
 `configRules` 是插件规则 ID 清单，形如 `{ "id": "example.configuration", "required": true, "criticality": "advisory_or_contextual" }`；`criticality` 只能是 `critical_when_applicable` 或 `advisory_or_contextual`。每次 discover 必须为每条 required 规则返回一次 `satisfied`、`violated`、`unknown` 或 `not_applicable`，不能缺失后默认为通过。
 
@@ -69,6 +75,8 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 `0.1.0` discover 输入附带 Host 生成的 `executionContext`。脚本只能调用 `nexus.inspectDeclaredTarget(id)` 查询 manifest 已声明目标的状态/类型/上下文匹配结果；API 不接受任意路径、不返回原始内容、不读网络、不启动进程。Host 将合法评估聚合为独立的 `currentReadiness`（ready、attention、unknown、blocked），并生成 `checkedAt`、`configRevision`、`contextFingerprint` 和 `assessmentId`。这些可信身份不能由插件伪造，语言变化也不能改变任务行为签名。
 
 配置保存成功后，诊断失败只更新检查状态，不回滚保存。预览是只读的；启动前、前置脚本完成后和 retry 前均须用实际配置重新检查。阻断启动建立 `admissionBlocked` 事实，不创建虚假的游戏 attempt、任务失败日志或成功配额消耗；历史显示“未启动：配置检查未通过”。
+
+系统动作判定按当前绑定和实际队列上下文执行。BetterGI 已保存的“关闭游戏和软件”明确表示关闭游戏并退出上游程序；若后续队列仍需游戏则阻断，单独或末项运行可放行。上游 Loop、关机、睡眠、休眠、重启及注销在 Host 完成配置恢复前可能执行，即使是队列末项也阻断；这些动作需用户在上游配置中调整后重新诊断。静音/取消静音不作为整机阻断。未知动作保留 unknown，不从中文字面猜系统动作。
 
 可选配置文件缺失时仍返回相应检查；`locations` 不得引用本次 `configResources` 中未暴露的配置 ID，可提供绑定编辑器或刷新动作。必需关键规则执行异常返回 `unknown/error/block`，不能因异常降为建议。宿主继续拒绝未授权位置，不扩大配置读取范围。
 
@@ -106,7 +114,7 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 `phase: retry` 输入包含 originalPlan、taskStates、attemptsUsed、maxAttempts、cancelled、budgetExhausted、configResources。输出 `{protocolVersion,type:"retry",decision,reasonCode,includedTaskIds,prerequisiteTaskIds,expandedUnitIds,filePatches}`。decision 为 stop/selective，stop 必须所有动作数组为空。
 
-每个 filePatch 为 `{resourceId,format,expectedRevision,operations}`；每项 operation 为 `{selector,expected,value,purpose}`。revision 是宿主生成的随机不透明令牌，只用于当前快照 CAS，不能缓存到下次调用。宿主另行计算失败与有证据 blocked 的闭包，验证必要前置与重试单位。conditional/unsafe/unknown 风险均停止自动重试，不开启原先关闭的业务任务。提升父任务范围要验证整个范围安全。
+每个 filePatch 为 `{resourceId,format,expectedRevision,operations}`；每项 operation 为 `{selector,expected,value,purpose}`。revision 是宿主生成的随机不透明令牌，只用于当前快照 CAS，不能缓存到下次调用。宿主对每个明确失败或有证据 blocked 的候选独立计算依赖及重试单位闭包；只有整个闭包的风险均为 safe 才纳入同一次选择。不相关的危险失败或 unknown 不否决合格候选；共享重试单位中有 conditional/unsafe/unknown 风险时，该候选仍不能自动重试。不开启原先关闭的业务任务。提升父任务范围要验证整个范围安全。
 
 多文件补丁先全部预检，再通过 staged/committed journal 提交。停止目标进程并确认清理后，仅恢复原始选择，保留实际运行后计数；随后才同步用户快照。第三方改动或恢复冲突时保留现场，拒绝覆盖。宿主崩溃后的任务检查点以 interrupted 历史恢复，已确认事实保留，未终结任务为 unknown。
 
@@ -133,7 +141,7 @@ python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <
 
 `--example` 生成完整的合成协议示例。[TaskProtocolExample](../examples/TaskProtocolExample/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-默认生成完整的 `0.1.0` 首发协议、`data/i18n/` 中英文词典、`configRules` 和 `environmentChecks` 骨架。`--protocol-version` 仅接受 `0.1.0`；旧开发协议和 `TaskProtocolLegacy` 示例已废弃。用户自定义名称使用 literal，不按名称猜测词典键。
+默认生成完整的 `0.1.0` 首发协议、`data/i18n/` 中英文词典、`configRules` 和 `environmentChecks` 骨架。`--protocol-version` 接受 `0.1.0` 或 `0.1.1`；后者生成空的 `repairRules` 并要求 Host 0.16.9，实际修复规则须逐项审查后声明。旧开发协议和 `TaskProtocolLegacy` 示例已废弃。用户自定义名称使用 literal，不按名称猜测词典键。
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 

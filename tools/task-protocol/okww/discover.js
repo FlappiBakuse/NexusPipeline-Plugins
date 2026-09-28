@@ -3,6 +3,11 @@ function discover() {
   if (!runtimeReady(plan)) return plan;
   const config = configOne(r => r.id === 'config:DailyTask.json');
   requireValue(object(config.document));
+  if (plan.runtimeRestricted) {
+    addTask(plan, config.id, 'runtime_unverified', '本次基础流程（任务未核验）', true, null, 'unsafe', 'unsupported');
+    delete plan.runtimeRestricted;
+    return plan;
+  }
   const d = config.document;
   const farm = d['Which to Farm'] === undefined ? 'Tacet Suppression' : d['Which to Farm'];
   requireValue(['Tacet Suppression', 'Forgery Challenge', 'Simulation Challenge'].includes(farm));

@@ -17,6 +17,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-09-25",
+      "items": [
+        "收紧平行任务与错误退出后的重试判定，保留静默业务未核验。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-09-21",
       "items": [
@@ -28,13 +35,6 @@
       "date": "2026-09-13",
       "items": [
         "将最低宿主版本要求更新为 0.15.11。"
-      ]
-    },
-    {
-      "version": "0.1.3",
-      "date": "2026-09-10",
-      "items": [
-        "新增中英文商店元数据与配置输入本地化键，完善多语言展示。"
       ]
     }
   ],
@@ -51,6 +51,12 @@
       ],
       "changelog": [
         {
+          "version": "0.2.1",
+          "items": [
+            "Narrowed parallel-task and post-exit retry decisions; silent business steps remain unverified."
+          ]
+        },
+        {
           "version": "0.2.0",
           "items": [
             "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
@@ -60,12 +66,6 @@
           "version": "0.1.5",
           "items": [
             "Updated the minimum host version requirement to 0.15.11."
-          ]
-        },
-        {
-          "version": "0.1.3",
-          "items": [
-            "Added English store metadata and localized configuration-input labels and descriptions."
           ]
         }
       ]

@@ -20,6 +20,8 @@
   "task.stamina_tacet": "Daily stamina: Tacet Suppression",
   "diagnostic.runtime.installation": "Cannot confirm the official installation ({channel} / {version}). Initialize a supported official channel.",
   "diagnostic.runtime.version": "This release has not been qualified ({channel} / {version}). Check the installed version.",
+  "diagnostic.runtime.restricted": "The newer official release {channel} / {version} has not qualified for advanced task interpretation. Only the base run is available; task results remain unverified.",
+  "diagnostic.runtime.base_unqualified": "Cannot confirm the official origin or base entry for this newer release ({channel} / {version}). Finish updating or repair the installation.",
   "diagnostic.runtime.busy": "The updater or application is not ready ({channel} / {version}). Finish updating and close it before checking again.",
   "diagnostic.runtime.repository": "Local HEAD/tag differs from the qualified release ({channel} / {version}). Check the official installation.",
   "diagnostic.runtime.code": "Required runtime files are missing or differ from the qualified release ({channel} / {version}). Repair the official installation and check again."

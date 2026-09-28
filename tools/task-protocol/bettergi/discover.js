@@ -13,8 +13,9 @@ function discover() {
     const name = modern ? d.TaskDefinitions[key] || key : key;
     const declared = typeof d.TaskEnabledList[key] === 'boolean';
     const task = addTask(plan, config.id, key, name, declared && d.TaskEnabledList[key] && activeKeys.includes(key) && (start < 0 || activeKeys.indexOf(key) >= start),
-      declared ? ['TaskEnabledList', key] : null, name === '领取邮件' && !d.NextTaskId ? 'safe' : 'unknown',
-      name === '领取邮件' ? 'supported' : 'limited');
+      declared ? ['TaskEnabledList', key] : null,
+      (name === '领取邮件' || name === '领取每日奖励') && !d.NextTaskId ? 'safe' : 'unknown',
+      name === '领取邮件' || name === '领取每日奖励' ? 'supported' : 'limited');
     if (modern) task.nameText = { kind: 'literal', value: name };
   });
   if (d.NextTaskId) plan.diagnostics.push({ code: 'retry.cursor_not_verified', message: 'A one-shot start cursor narrows this run; automatic retry is disabled.' });

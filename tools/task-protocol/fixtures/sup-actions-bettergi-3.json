@@ -1,0 +1,34 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "different",
+  "queueNextLaunchOwner": "already_running",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskEnabledList\": {\"mail\": true}, \"TaskDefinitions\": {\"mail\": \"领取邮件\"}, \"TaskOrder\": [\"mail\"], \"NextTaskId\": \"\", \"CompletionAction\": \"关闭游戏\"}"
+    }
+  ],
+  "tasks": {
+    "mail": {
+      "enabled": true
+    }
+  },
+  "configChecks": [
+    {
+      "ruleId": "bettergi.finish_action",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "batches": [],
+  "results": {
+    "mail": "unknown"
+  },
+  "source": {
+    "type": "synthetic",
+    "note": "Controlled scenario; allowed actions/defaults independently qualified by pinned upstream sources in docs/frameworks/COMPLETION_ACTIONS.md."
+  }
+}

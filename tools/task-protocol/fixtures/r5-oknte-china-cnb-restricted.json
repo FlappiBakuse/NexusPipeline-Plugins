@@ -1,0 +1,19 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "partial",
+  "resources": [
+    { "id": "config:DailyRoutineTask.json", "format": "json", "text": "{\"Routine Items\":[]}" },
+    { "id": "runtime-app", "format": "json", "text": "{\"name\":\"ok-nte\",\"installed\":true,\"current_profile\":\"China\",\"current_version\":\"v1.4.2\",\"update_state\":\"idle\",\"update_target_version\":null,\"update_error\":null,\"running\":false,\"available_versions\":[\"v1.4.2\"]}" },
+    { "id": "runtime-head", "format": "text", "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" },
+    { "id": "runtime-origin", "format": "text", "text": "[remote \"origin\"]\nurl = https://cnb.cool/BnanZ0/ok-nte-update.git\n" }
+  ],
+  "resourceSets": ["resources/oknte-code-changed.json"],
+  "tasks": { "runtime_unverified": { "enabled": true, "role": "business" } },
+  "configChecks": [
+    { "ruleId": "okscript.distribution", "evaluation": "unknown", "executionEffect": "warn" },
+    { "ruleId": "okscript.single_daily", "evaluation": "satisfied", "executionEffect": "none" }
+  ],
+  "batches": [],
+  "results": { "runtime_unverified": "unknown" },
+  "source": { "type": "synthetic", "note": "Exact official China CNB update origin enters base-only restricted mode; advanced result stays unknown." }
+}

@@ -60,7 +60,7 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 以及可选旧 configValidator/configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.1.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，并禁止 configValidator；公开 configEditor 字段不变但官方资产使用 `data/editor.js`；
+- data-specialized 插件的 resolve、judgeScript 以及可选 configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.1.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，禁止已退役的 configValidator；公开 configEditor 字段不变，官方资产使用 `data/editor.js`；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 

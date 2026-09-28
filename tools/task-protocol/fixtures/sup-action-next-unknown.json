@@ -1,0 +1,14 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "resources": [{
+    "id": "config:config.json", "format": "json",
+    "text": "{\"TaskEnabledList\":{\"mail\":true},\"TaskDefinitions\":{\"mail\":\"领取邮件\"},\"TaskOrder\":[\"mail\"],\"NextTaskId\":\"\",\"CompletionAction\":\"关闭游戏和软件\"}"
+  }],
+  "tasks": { "mail": { "enabled": true } },
+  "configChecks": [{ "ruleId": "bettergi.finish_action", "evaluation": "unknown", "executionEffect": "warn" }],
+  "batches": [],
+  "results": { "mail": "unknown" },
+  "source": { "type": "synthetic", "note": "Unknown next game and owner are warnings, not a proven conflict." }
+}

@@ -125,6 +125,10 @@
     "oknte.item.unhandled_exception": "当前任务因未处理异常中断",
     "oknte.routine.aborted_before_item": "日常流程中断，此任务尚未执行"
   },
+  "runtimeOfficialRepository": "BnanZ0/ok-nte",
+  "runtimeOfficialOriginsByChannel": {
+    "China": ["https://cnb.cool/BnanZ0/ok-nte-update.git"]
+  },
   "runtimeProfiles": {
     "Global": {
       "name": "ok-nte",

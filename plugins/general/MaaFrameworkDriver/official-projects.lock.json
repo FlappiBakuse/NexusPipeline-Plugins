@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "projects": [
+    {
+      "name": "MaaEnd", "version": "v2.30.0",
+      "url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-win-x86_64-v2.30.0.zip",
+      "asset": "MaaEnd-win-x86_64-v2.30.0.zip", "sizeBytes": 306830947,
+      "sha256": "ac5745bd689df1831e7a07c73ce5afed1f2fbacb9908f90fc2cbb183d6625a47",
+      "nativeDirectory": "maafw",
+      "nativeSha256": "e9a3a22dfecf8749421709c6057528117fa1b6d8f1de40ea37c1b022b91b0072"
+    },
+    {
+      "name": "MaaStellaSora", "version": "v1.4.4",
+      "url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-win-x86_64-v1.4.4.zip",
+      "asset": "MaaStellaSora-win-x86_64-v1.4.4.zip", "sizeBytes": 232169070,
+      "sha256": "18128cedee93e2e92b825808d4c5fc402a7e161b510a6a123bd6f6cb159c2831",
+      "nativeDirectory": "runtimes/win-x64/native",
+      "nativeSha256": "d4503d525561a7be46d7b2a5e64f3288f5b3ba7aaefaf36ab44f7ce4c04cffae"
+    }
+  ]
+}

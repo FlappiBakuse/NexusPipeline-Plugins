@@ -14,6 +14,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
   "changelog": [
     {
+      "version": "0.1.1",
+      "date": "2026-09-25",
+      "items": [
+        "新官方稳定发行在基础身份可确认时受限运行，不重试未知体力步骤。"
+      ]
+    },
+    {
       "version": "0.1.0",
       "date": "2026-09-21",
       "items": [
@@ -31,6 +38,12 @@
         "Specialized plugin"
       ],
       "changelog": [
+        {
+          "version": "0.1.1",
+          "items": [
+            "Allows restricted runs for newer official stable builds without retrying unverified stamina steps."
+          ]
+        },
         {
           "version": "0.1.0",
           "items": [

@@ -112,8 +112,8 @@
   "configChecks": [
     {
       "ruleId": "march7th.finish_action",
-      "evaluation": "unknown",
-      "executionEffect": "warn"
+      "evaluation": "violated",
+      "executionEffect": "block"
     }
   ],
   "source": {

@@ -1,0 +1,3 @@
+[data-plugin-maa-fields] { display:grid; gap:12px; min-width:0; }
+[data-plugin-maa-actions] { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+[data-plugin-maa-preview] { white-space:pre-wrap; overflow-wrap:anywhere; max-height:360px; overflow:auto; font-size:12px; }

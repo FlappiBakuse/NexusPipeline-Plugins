@@ -1,0 +1,31 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskDefinitions\":{\"mail\":\"领取邮件\",\"resin\":\"合成树脂\"},\"TaskOrder\":[\"mail\",\"resin\"],\"TaskEnabledList\":{\"mail\":true,\"resin\":true},\"NextTaskId\":\"\"}"
+    }
+  ],
+  "tasks": {
+    "mail": { "enabled": true },
+    "resin": { "enabled": true }
+  },
+  "batches": [
+    {
+      "lines": [
+        "领取邮件奖励异常: synthetic",
+        "合成树脂执行异常: synthetic"
+      ]
+    }
+  ],
+  "results": {
+    "mail": "failed",
+    "resin": "failed"
+  },
+  "source": {
+    "type": "synthetic",
+    "note": "Independent safe mail failure and unverified resin failure; only mail may be selected for retry."
+  }
+}

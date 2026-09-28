@@ -1,0 +1,14 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "partial",
+  "executionContext": { "mode": "pc", "launchOwner": "already_running", "gameTarget": "C:\\Games\\game.exe", "ready": false },
+  "resources": [
+    { "id": "config:mxu-MaaStellaSora.json", "format": "json", "text": "{\"settings\":{\"autoStartInstanceId\":\"chosen\"},\"instances\":[{\"id\":\"chosen\",\"controllerName\":\"Win32\",\"resourceName\":\"Official\",\"tasks\":[]}] }" },
+    { "id": "interface", "format": "text", "text": "{\"name\":\"MaaStellaSora\",\"task\":[]}" }
+  ],
+  "tasks": {},
+  "configChecks": [{ "ruleId": "mxu.launch_owner", "evaluation": "violated", "executionEffect": "block" }],
+  "batches": [],
+  "results": {},
+  "source": { "type": "synthetic", "note": "Shared MXU protocol with independent MaaStellaSora identity; no real game executed." }
+}

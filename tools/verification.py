@@ -165,7 +165,10 @@ def run_managed_gate(
         core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
                    "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
     by_artifact = {plugin.artifact_name: plugin for plugin in core.discover_source_plugins(root)}
-    needs_frontend = selected is None or any((by_artifact[artifact].root / "frontend").is_dir() for artifact in selected)
+    needs_frontend = selected is None or any(
+        (by_artifact[artifact].root / "frontend").is_dir()
+        or bool(by_artifact[artifact].manifest.get("frontend"))
+        for artifact in selected)
     if needs_frontend:
         if (root / "package-lock.json").is_file():
             core._run((core._npm_executable(), "ci", "--no-audit", "--no-fund"), "Plugins 根 workspace npm ci", root)

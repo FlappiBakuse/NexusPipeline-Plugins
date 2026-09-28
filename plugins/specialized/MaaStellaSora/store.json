@@ -16,6 +16,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-09-25",
+      "items": [
+        "增加独立 PC 启动责任准入，保持原有机器身份。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-09-21",
       "items": [
@@ -27,13 +34,6 @@
       "date": "2026-09-12",
       "items": [
         "机器标识由 maastellasora 更新为 maas，并要求宿主执行对应配置迁移。"
-      ]
-    },
-    {
-      "version": "0.1.2",
-      "date": "2026-09-10",
-      "items": [
-        "新增中英文商店元数据，完善多语言展示。"
       ]
     }
   ],
@@ -49,6 +49,12 @@
       ],
       "changelog": [
         {
+          "version": "0.2.1",
+          "items": [
+            "Added independent PC launch-owner admission while preserving the existing machine identity."
+          ]
+        },
+        {
           "version": "0.2.0",
           "items": [
             "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
@@ -58,12 +64,6 @@
           "version": "0.1.3",
           "items": [
             "Renamed the machine identifier from maastellasora to maas and requires the host migration for existing settings."
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "items": [
-            "Added English store metadata for the official plugin catalog."
           ]
         }
       ]

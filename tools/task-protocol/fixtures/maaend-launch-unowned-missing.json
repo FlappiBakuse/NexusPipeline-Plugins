@@ -1,0 +1,14 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "executionContext": { "mode": "pc", "launchOwner": "already_running", "gameTarget": "C:\\Games\\game.exe", "ready": false },
+  "resources": [
+    { "id": "config:mxu-MaaEnd.json", "format": "json", "text": "{\"settings\":{\"autoStartInstanceId\":\"chosen\"},\"instances\":[{\"id\":\"chosen\",\"controllerName\":\"Win32\",\"resourceName\":\"Official\",\"tasks\":[]}] }" },
+    { "id": "interface", "format": "text", "text": "{\"name\":\"MaaEnd\",\"task\":[]}" }
+  ],
+  "tasks": {},
+  "configChecks": [{ "ruleId": "mxu.launch_owner", "evaluation": "violated", "executionEffect": "block" }],
+  "batches": [],
+  "results": {},
+  "source": { "type": "source_derived_control_flow", "upstreamCommit": "a7fdd0b32bfadc1df1bf8c6293bf2395676542b8", "note": "MXU v2.6.1 startup owner matrix; synthetic config and absent visible target." }
+}

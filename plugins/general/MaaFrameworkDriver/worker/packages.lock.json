@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net8.0-windows7.0": {
+      "Maa.Framework.Binding.Native": {
+        "type": "Direct",
+        "requested": "[5.10.0, )",
+        "resolved": "5.10.0",
+        "contentHash": "uCFZ1Vk/HffwKVU5uJACztbeobKegfOQTJmEip1fDPlW+4zXtGUCNee5j/e2G2+SVNZv4GOldruXBwuq0Tqd0g==",
+        "dependencies": {
+          "Maa.Framework.Binding": "5.10.0"
+        }
+      },
+      "Maa.Framework.Binding": {
+        "type": "Transitive",
+        "resolved": "5.10.0",
+        "contentHash": "wJaYtH6ujslj6gL1W3RQRpkrbEwDexbUU+rSUk2Cr5mJ57R6M+db90oVgBZobAb7EvCCMNiZe3ec5dtDoCV73g=="
+      },
+      "nexuspipeline.plugin.abstractions": {
+        "type": "Project"
+      }
+    },
+    "net8.0-windows7.0/win-x64": {}
+  }
+}

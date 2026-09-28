@@ -14,8 +14,10 @@ function discover() {
   requireValue(Array.isArray(instances[0].tasks));
   const instance = instances[0], pi = resource('interface');
   behavior(plan, { id: config.id, document: instance }, ['controllerName', 'resourceName'], ['instances', { by: 'id', value: instance.id }]);
-  requireValue(pi.name === ADAPTER.project && Array.isArray(pi.task));
-  const definitions = pi.task.slice();
+  // Current MXU interfaces may define every task in imports and omit top-level task.
+  requireValue(pi.name === ADAPTER.project &&
+    (Array.isArray(pi.task) || (pi.task === undefined && Array.isArray(pi.import) && pi.import.length > 0)));
+  const definitions = Array.isArray(pi.task) ? pi.task.slice() : [];
   let options = object(pi.option) ? { ...pi.option } : {};
   let importsComplete = true;
   for (const path of pi.import || []) {

@@ -1,0 +1,16 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "same",
+  "queueNextLaunchOwner": "host",
+  "resources": [{
+    "id": "config:config.json", "format": "json",
+    "text": "{\"TaskEnabledList\":{\"mail\":true},\"TaskDefinitions\":{\"mail\":\"领取邮件\"},\"TaskOrder\":[\"mail\"],\"NextTaskId\":\"\",\"CompletionAction\":\"关闭游戏和软件\"}"
+  }],
+  "tasks": { "mail": { "enabled": true } },
+  "configChecks": [{ "ruleId": "bettergi.finish_action", "evaluation": "satisfied", "executionEffect": "none" }],
+  "batches": [],
+  "results": { "mail": "unknown" },
+  "source": { "type": "synthetic", "note": "The next item explicitly starts the same game through Host." }
+}

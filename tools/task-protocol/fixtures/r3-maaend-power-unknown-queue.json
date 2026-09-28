@@ -23,8 +23,8 @@
   "configChecks": [
     {
       "ruleId": "mxu.finish_action",
-      "evaluation": "unknown",
-      "executionEffect": "warn"
+      "evaluation": "violated",
+      "executionEffect": "block"
     }
   ],
   "batches": [],

@@ -1,0 +1,15 @@
+{
+  "artifact": "OkNTE",
+  "coverage": "unsupported",
+  "resources": [
+    { "id": "config:DailyRoutineTask.json", "format": "json", "text": "{\"Routine Items\":[]}" },
+    { "id": "runtime-app", "format": "json", "text": "{\"name\":\"ok-nte\",\"installed\":true,\"current_profile\":\"Global\",\"current_version\":\"v1.3.20\",\"update_state\":\"idle\",\"update_target_version\":null,\"update_error\":null,\"running\":false,\"available_versions\":[\"v1.3.20\"]}" },
+    { "id": "runtime-head", "format": "text", "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" },
+    { "id": "runtime-origin", "format": "text", "text": "[remote \"origin\"]\nurl = https://example.invalid/untrusted/ok-nte.git\n" }
+  ],
+  "tasks": {},
+  "configChecks": [ { "ruleId": "okscript.distribution", "evaluation": "unknown", "executionEffect": "block" } ],
+  "batches": [],
+  "results": {},
+  "source": { "type": "synthetic", "note": "New version metadata with a third-party origin must not enter restricted mode." }
+}
