@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "800220d0671ccd8db3d5c49354f8426e01643a5b",
+  "sourceCommit": "83e0c2df102b3f3a966c31fe3f0932e9ff9d136e",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -61,10 +61,10 @@
     "MaaFrameworkDriver": {
       "name": "maa-framework",
       "artifactName": "MaaFrameworkDriver",
-      "version": "0.1.0",
-      "sha256": "1abdb15fbe452283c41793e15ed15cfb8eaa6fb7b38d0317dff32a4fa35c520e",
-      "sizeBytes": 930923,
-      "sourceTree": "b13a96287774f82a1a83f48506a7dceffe9eb599"
+      "version": "0.1.1",
+      "sha256": "bd30a0f470cad7d8198835c0ad70e5d01cb60de1ac5a81cae404026b79218718",
+      "sizeBytes": 930951,
+      "sourceTree": "9e6757e0678fbcfe344b5c9430bad64c9e95e3f8"
     },
     "MaaStellaSora": {
       "name": "maas",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-28T15:41:25Z",
+  "generatedAt": "2026-09-28T17:40:06Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -325,19 +325,26 @@
         "ADB"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
-      "updatedAt": "2026-09-26",
+      "updatedAt": "2026-09-29",
       "hasReadme": true,
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "managed-code",
       "apiVersion": "1.9",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.16.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.1.0.zip",
-      "sha256": "1abdb15fbe452283c41793e15ed15cfb8eaa6fb7b38d0317dff32a4fa35c520e",
-      "sizeBytes": 930923,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.1.1.zip",
+      "sha256": "bd30a0f470cad7d8198835c0ad70e5d01cb60de1ac5a81cae404026b79218718",
+      "sizeBytes": 930951,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-09-29",
+          "items": [
+            "包内许可说明不再引用已移除的原生测试锁定文件。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-09-26",
