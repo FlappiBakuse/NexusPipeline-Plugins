@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "c1fabfe5882f7d68f9b99303ad466c33e86b4c56",
+  "sourceCommit": "800220d0671ccd8db3d5c49354f8426e01643a5b",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.2.0",
-      "sha256": "e584e136d509f04900b02c512b4466dbeec5cac07cb201d53061ef4df2613c74",
-      "sizeBytes": 85220,
-      "sourceTree": "1f9dba7c02fe2fb8ab6929b141304c6ce5f44fb5"
+      "version": "0.2.1",
+      "sha256": "8d77a7af4235eb2d94a4948b0f7800a21c3672f605f9028ca17772fffc522d38",
+      "sizeBytes": 95965,
+      "sourceTree": "90434cbc53a421060e899c3f7ecaa592bc5a7431"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.3.0",
-      "sha256": "96a3e73b76f6b87296cd3439171f6c7028f74d5c10a38f26111348496967f5da",
-      "sizeBytes": 53276,
-      "sourceTree": "3cd2e777dd8aca048956c2dc49bd4df8f06a1a5a"
+      "version": "0.3.1",
+      "sha256": "9a4433980559bae39247fd80da2665072f96136436f95fac6f723147bf831cb0",
+      "sizeBytes": 63384,
+      "sourceTree": "6587b60e471f93c6f53ae5f4d87c4f8d11877353"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
@@ -53,50 +53,58 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.3.0",
-      "sha256": "5fa2ec19081fe14313e34da1ecf3076e099924faa45dcfa751246f8ae385cdbe",
-      "sizeBytes": 112651,
-      "sourceTree": "9558485373845507ac9039b7909a09c1bd1256ba"
+      "version": "0.3.1",
+      "sha256": "9e5a89dc7c3eb1a1f7026295e4e5566217794e34b74c00b5c3668d49f1882669",
+      "sizeBytes": 124311,
+      "sourceTree": "518c09e48de06a740fa6116c133b0817398766d7"
+    },
+    "MaaFrameworkDriver": {
+      "name": "maa-framework",
+      "artifactName": "MaaFrameworkDriver",
+      "version": "0.1.0",
+      "sha256": "1abdb15fbe452283c41793e15ed15cfb8eaa6fb7b38d0317dff32a4fa35c520e",
+      "sizeBytes": 930923,
+      "sourceTree": "b13a96287774f82a1a83f48506a7dceffe9eb599"
     },
     "MaaStellaSora": {
       "name": "maas",
       "artifactName": "MaaStellaSora",
-      "version": "0.2.0",
-      "sha256": "ce9db4547380b5a3dfd9248f3746999280b276b393e320141c6c02aa44eea5e8",
-      "sizeBytes": 75310,
-      "sourceTree": "6aed5bdbd2debf3c4b097b9da329b4ed8f92edb1"
+      "version": "0.2.1",
+      "sha256": "32ecd5ffdd8aa7d8172b23c93d37fd0d2135c4718702b0a38539cada65e1c65b",
+      "sizeBytes": 87017,
+      "sourceTree": "a8e510eb2984bfc21f11cc6bd430888a5126c523"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.3.0",
-      "sha256": "38a4f1ad0ca1de6a50856c66a59e780b2b883861f02cc9d327134368691a95ef",
-      "sizeBytes": 96318,
-      "sourceTree": "222d0f7a36944ae9d8df250035eaafd496ac0be7"
+      "version": "0.3.1",
+      "sha256": "61e4f2d0b2dceb01cd4824586ce82e37d2237af45e5af2ab94db6415abb3c5d4",
+      "sizeBytes": 106941,
+      "sourceTree": "b3956a65b35a600ad761ed20af3c5958b3c37734"
     },
     "OkNTE": {
       "name": "oknte",
       "artifactName": "OkNTE",
-      "version": "0.1.0",
-      "sha256": "7bca3ef780d28e730acbf4d05e944e702bb26212f5c90cf01236c988716dcdf6",
-      "sizeBytes": 72070,
-      "sourceTree": "50b947186d2514a714bdccfeecb919c95e62c25a"
+      "version": "0.1.1",
+      "sha256": "fd369bb9a6b375e374709ec6267ad21e7e134f93c63fd5e1bc7d59d5fc427be2",
+      "sizeBytes": 87056,
+      "sourceTree": "db5dc92a3691b275cd4fdf7260a0ea4dd3c4b68b"
     },
     "OkWutheringWaves": {
       "name": "okww",
       "artifactName": "OkWutheringWaves",
-      "version": "0.1.0",
-      "sha256": "21013c6c4b021488e1c1c615cc6d8fe340810bb885e28004052c7e00caee4972",
-      "sizeBytes": 74946,
-      "sourceTree": "0abc100341e8c1c7f722fec71750cfb1e50eb1fd"
+      "version": "0.1.1",
+      "sha256": "dc5eefd6c9487bb10eaef1cc8b8c40fb9ef0c790d706e8402f0f38ead63ba3af",
+      "sizeBytes": 89584,
+      "sourceTree": "0a70f8c99abfdae7ea8a3c1bc2da914431739de5"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.3.0",
-      "sha256": "3b848f2ffb81282f78038e32908788eccd4c765481ea158716eca81d32423625",
-      "sizeBytes": 74425,
-      "sourceTree": "fb4d0c5a2cb5da21e49939b899e11a07e22c7a10"
+      "version": "0.3.1",
+      "sha256": "f92b370fd02c7cb556429a58ef6ab17bd8f736e335f017f8fce0f0a2dcb63dc0",
+      "sizeBytes": 85103,
+      "sourceTree": "855f9f8d6f2d2124a6beb794ed09e607ff67c6a2"
     }
   }
 }
