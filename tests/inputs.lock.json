@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "repository": "FlappiBakuse/NexusPipeline",
+    "commitSha": "e6ff62b0f7ae32d83c0452229744f3ee55823657",
+    "purpose": "SDK, finite TaskProtocol runner and asInvoker HTTP fixture Host",
+    "status": "merged Host implementation commit"
+  },
+  "maaFramework": {
+    "version": "5.14.0",
+    "bindingVersion": "5.10.0",
+    "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.0/MAA-win-x86_64-v5.14.0.zip",
+    "sha256": "036f827bb59215c20eb304378d391742a7db95da8cc78ca3a88e19321c639d79",
+    "sizeBytes": 73020542
+  },
+  "fixtures": {
+    "origin": "synthetic repository fixtures",
+    "accounts": "none",
+    "currentBytes": "recorded by staged Plugins source fingerprint"
+  }
+}
