@@ -3,10 +3,12 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 export const runtime = await import(pathToFileURL(path.join(process.env.NEXUS_HOST_ROOT, "tests/system/runtime-helper.mjs")));
+const { readProcessIdentity } = await import(pathToFileURL(path.join(process.env.NEXUS_HOST_ROOT, "tests/support/windows-process.mjs")));
 export async function preparePlugin() {
   const source = process.env.NEXUS_PLUGIN_SOURCE;
   const manifest = JSON.parse(fs.readFileSync(path.join(source, "plugin.json")));
   await runtime.prepareRuntime();
+  if (!readProcessIdentity(process.pid)?.startTime) throw new Error("Test process identity is unavailable");
   const target = path.join(runtime.runtimeDir, "plugins", manifest.artifactName); fs.mkdirSync(target, { recursive: true });
   for (const name of ["plugin.json", "i18n", "web"])
     if (fs.existsSync(path.join(source, name))) fs.cpSync(path.join(source, name), path.join(target, name), { recursive: true });
