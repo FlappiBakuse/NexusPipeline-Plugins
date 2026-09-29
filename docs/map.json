@@ -2,6 +2,17 @@
   "schemaVersion": 1,
   "topics": [
     {
+      "id": "testing.core",
+      "path": "TESTING.md",
+      "summary": "十三插件有限能力轨迹、累计预算、固定输入和 CI 汇总",
+      "topics": ["测试", "预算", "CI", "固定输入"],
+      "aliases": ["日常验证"],
+      "codePaths": ["tests/run.mjs", "tests/policy.json", "tests/ci-gate.py"],
+      "testDomains": ["managed", "repository-tools"],
+      "authorityFor": ["core-testing"],
+      "status": "current"
+    },
+    {
       "id": "framework.maafw",
       "path": "MAAFRAMEWORK_DRIVER.md",
       "summary": "MaaFramework 独立配置、PI 编译、原生 worker、Agent 与发行输入",

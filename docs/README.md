@@ -6,6 +6,7 @@
 
 | 任务 | 当前规范 | 代码与验证方向 |
 |---|---|---|
+| 验证当前插件核心能力 | [核心测试](TESTING.md) | `tests/run.mjs`、固定输入、累计预算和报告 |
 | 查询待办与未验证范围 | [项目状态](STATUS.md) | 专项支持限制、真实环境验证与兼容退役计划 |
 | 编写 Frontend 插件 | [Frontend 插件指南](FRONTEND_PLUGIN.md) | `plugins/general/*/frontend`、`tools/Test-FrontendPlugins.mjs`；宿主 `nxp-*` 公共元件 |
 | 编写 data-specialized 插件 | [数据化插件指南](DATA_SPECIALIZED_PLUGIN.md) | `plugins/specialized/*/data`、`tools/repository.py`；源码与脚本测试 |

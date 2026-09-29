@@ -214,6 +214,6 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 
 ## 校验工作流
 
-`Plugins / Required` 使用 PR merge checkout，在单个 Windows job 中依次运行源码契约、脚本语法、正式判分脚本检查、Host locale registry 同步、Task 生成一致性、Python unittest，以及变更 managed 插件的构建与测试；共享输入变化不再扩大为全部插件。managed build、测试项目和 TRX 用例分别计数；适用项目缺 Tests.csproj、缺报告、零用例或失败均失败，明确无 managed 影响才报告 N/A。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，运行 Host Jint、实际生产打包与包验收，不重复 PR 的完整 managed 单测。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
+`scope` job 根据完整变更确定适用插件；每个选中插件在独立 Windows 矩阵 job 中运行三分钟内的生产能力测试并提交原生报告。纯文档变更明确为 N/A；未知共享输入保守选择全部。`Plugins / Required` 汇总核对本次 run/attempt、源码与 Host 锁、原生用例及场景、清理、插件预算和 Actions 完整 job 时长，失败、取消、意外跳过或 API 不可达均失败。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，执行实际生产打包与包验收；功能测试在合并前的适用日常核心门禁执行，候选阶段不重复运行。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
