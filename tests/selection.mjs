@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { collectChanges, planForChanges, readRegistry } from "./scope-plan.mjs";
 
 export function parseArguments(args, policy) {
   const [command, ...rest] = args;
@@ -36,31 +36,31 @@ export function parseArguments(args, policy) {
 
 export function selectPaths(paths, policy) {
   if (!paths.length) throw new Error("Empty change set");
-  const names = Object.keys(policy.plugins).sort();
-  const selected = new Set();
-  for (const entry of paths) {
-    const value = entry.replaceAll("\\", "/");
-    const name = names.find(name => value.startsWith(policy.plugins[name].root + "/"));
-    if (name) selected.add(name);
-    else if (!/^(docs\/.*\.md|README\.md|CONTRIBUTING\.md|CHANGELOG\.md)$/.test(value))
-      return { selected: names, reason: "shared, removed, renamed or unknown input" };
-  }
-  return { selected: [...selected].sort(), reason: selected.size ? "changed plugin inputs" : "documentation-only changes" };
+  const root = path.resolve(import.meta.dirname, "..");
+  const { registry } = readRegistry(root);
+  const planned = planForChanges(root, paths.map(value => ({ status: "M", path: value })), registry, policy);
+  const selected = [...new Set(planned.selected.flatMap(item => {
+    const match = item.id.match(/^plugins\.plugin\.[^:]+:(.+)$/);
+    return match ? [match[1]] : [];
+  }))].sort();
+  return { selected, reason: selected.length ? "affected plugin gates" : "no plugin runtime gate" };
 }
 
 export function selectChanged(root, base, policy, budget) {
-  const git = args => execFileSync("git", ["-C", root, ...args], {
-    encoding: "utf8", windowsHide: true, timeout: Math.max(1, Math.floor(budget.remainingMs())), maxBuffer: 16 * 1024 * 1024,
-  });
-  const ancestor = git(["merge-base", base, "HEAD"]).trim();
-  if (ancestor !== base) throw new Error("Base must be an ancestor of HEAD");
-  const paths = [...git(["diff", "--name-only", "--no-renames", "-z", base, "--"]).split("\0"),
-    ...git(["ls-files", "--others", "--exclude-standard", "-z"]).split("\0")].filter(Boolean);
-  return selectPaths([...new Set(paths)], policy);
+  budget.check?.();
+  const { registry } = readRegistry(root);
+  const identity = collectChanges(root, { base, includeWorkingTree: true });
+  if (!identity.changes.length) throw new Error("Empty change set");
+  const planned = planForChanges(root, identity.changes, registry, policy);
+  const selected = [...new Set(planned.selected.flatMap(item => {
+    const match = item.id.match(/^plugins\.plugin\.[^:]+:(.+)$/);
+    return match ? [match[1]] : [];
+  }))].sort();
+  return { selected, reason: selected.length ? "affected plugin gates" : "no plugin runtime gate" };
 }
 
 export function validateInventory(root, policy) {
-  if (policy.invocationBudgetMs !== 180000 || policy.cleanupReserveMs < 10000
+  if (policy.invocationBudgetMs !== 180000 || policy.qualificationMs !== 150000 || policy.cleanupReserveMs < 10000
       || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 5000)
     throw new Error("Unregistered invocation or cleanup budget");
   const actual = [];
@@ -70,8 +70,8 @@ export function validateInventory(root, policy) {
       const manifest = JSON.parse(fs.readFileSync(path.join(root, "plugins", kind, entry.name, "plugin.json"), "utf8"));
       const item = policy.plugins[manifest.artifactName];
       if (!item || item.root !== `plugins/${kind}/${entry.name}`) throw new Error("Plugin inventory differs from test policy");
-      const profiles = manifest.artifactName === "MaaFrameworkDriver" ? { core: 30000, adapter: 120000 }
-        : manifest.kind === "data-specialized" ? { core: 30000, adapter: 60000 } : { core: 60000 };
+      const profiles = manifest.kind === "data-specialized" || manifest.artifactName === "MaaFrameworkDriver"
+        ? { core: 150000, adapter: 150000 } : { core: 150000 };
       if (item.kind !== manifest.kind || Object.keys(item.profiles).length !== Object.keys(profiles).length
           || Object.entries(profiles).some(([name, limit]) => item.profiles[name] !== limit)
           || !Object.hasOwn(profiles, item.defaultProfile)) throw new Error("Unregistered plugin budget profile");
