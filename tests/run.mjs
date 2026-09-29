@@ -118,6 +118,7 @@ try {
         const frontendWork = (async () => {
           if (!fs.existsSync(frontend)) return;
           await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
+          await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
           await run("frontend build", npm, ["run", "build"], { cwd: frontend });
         })();
         const componentWork = run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),

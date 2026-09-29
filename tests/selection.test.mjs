@@ -21,13 +21,13 @@ test("CLI rejects malformed selection and unregistered budget profiles", () => {
 });
 test("policy exactly matches current plugin inventory", () => {
   validateInventory(new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"), policy);
-  assert.equal(policy.plugins.EmulatorSupport.profiles.core, 30000);
+  assert.equal(policy.plugins.EmulatorSupport.profiles.core, 60000);
   assert.equal(policy.plugins.MaaFrameworkDriver.profiles.adapter, 120000);
 });
 test("policy cannot silently increase budgets or accept zero cases", () => {
   const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
   for (const mutate of [value => value.invocationBudgetMs = 180001,
-    value => value.plugins.GameCheckIn.profiles.core = 60000,
+    value => value.plugins.GameCheckIn.profiles.core = 60001,
     value => value.plugins.BAAH.fixtureIds = [],
     value => value.plugins.MaaFrameworkDriver.profiles.adapter = 180000]) {
     const invalid = structuredClone(policy); mutate(invalid);

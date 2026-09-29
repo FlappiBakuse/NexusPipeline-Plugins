@@ -61,7 +61,7 @@ export function selectChanged(root, base, policy, budget) {
 
 export function validateInventory(root, policy) {
   if (policy.invocationBudgetMs !== 180000 || policy.cleanupReserveMs < 10000
-      || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 2000)
+      || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 5000)
     throw new Error("Unregistered invocation or cleanup budget");
   const actual = [];
   for (const kind of ["general", "specialized"])
@@ -71,7 +71,7 @@ export function validateInventory(root, policy) {
       const item = policy.plugins[manifest.artifactName];
       if (!item || item.root !== `plugins/${kind}/${entry.name}`) throw new Error("Plugin inventory differs from test policy");
       const profiles = manifest.artifactName === "MaaFrameworkDriver" ? { core: 30000, adapter: 120000 }
-        : manifest.kind === "data-specialized" ? { core: 30000, adapter: 60000 } : { core: 30000 };
+        : manifest.kind === "data-specialized" ? { core: 30000, adapter: 60000 } : { core: 60000 };
       if (item.kind !== manifest.kind || Object.keys(item.profiles).length !== Object.keys(profiles).length
           || Object.entries(profiles).some(([name, limit]) => item.profiles[name] !== limit)
           || !Object.hasOwn(profiles, item.defaultProfile)) throw new Error("Unregistered plugin budget profile");

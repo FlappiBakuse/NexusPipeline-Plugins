@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "invocationBudgetMs": 180000,
   "cleanupReserveMs": 10000,
-  "pluginCleanupReserveMs": 2000,
+  "pluginCleanupReserveMs": 5000,
   "plugins": {
     "CustomWallpaper": {
       "root": "plugins/general/CustomWallpaper",
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 30000
+        "core": 60000
       },
       "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
       "expectedMethods": [
@@ -32,7 +32,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 30000
+        "core": 60000
       },
       "testProject": "plugins/general/EmulatorSupport/tests/NexusPipeline.Plugin.EmulatorSupport.Tests.csproj",
       "expectedMethods": [
@@ -50,7 +50,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 30000
+        "core": 60000
       },
       "testProject": "plugins/general/GameCheckIn/tests/NexusPipeline.Plugin.GameCheckIn.Tests.csproj",
       "expectedMethods": [
@@ -75,7 +75,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 30000
+        "core": 60000
       },
       "testProject": "plugins/general/LiveScreenshot/tests/NexusPipeline.Plugin.LiveScreenshot.Tests.csproj",
       "expectedMethods": [
