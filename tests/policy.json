@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "invocationBudgetMs": 180000,
   "cleanupReserveMs": 10000,
-  "pluginCleanupReserveMs": 3000,
+  "pluginCleanupReserveMs": 2000,
   "plugins": {
     "CustomWallpaper": {
       "root": "plugins/general/CustomWallpaper",

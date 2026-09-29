@@ -61,7 +61,7 @@ export function selectChanged(root, base, policy, budget) {
 
 export function validateInventory(root, policy) {
   if (policy.invocationBudgetMs !== 180000 || policy.cleanupReserveMs < 10000
-      || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 3000)
+      || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 2000)
     throw new Error("Unregistered invocation or cleanup budget");
   const actual = [];
   for (const kind of ["general", "specialized"])

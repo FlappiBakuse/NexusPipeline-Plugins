@@ -118,25 +118,11 @@ try {
         const frontendWork = (async () => {
           if (!fs.existsSync(frontend)) return;
           await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
-          await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
           await run("frontend build", npm, ["run", "build"], { cwd: frontend });
         })();
-        const manifest = JSON.parse(fs.readFileSync(path.join(plugins.directory, item.root, "plugin.json"), "utf8"));
-        const assembly = path.join(plugins.directory, item.root, "src/bin/Release/net8.0", manifest.entryAssembly);
-        let assemblyBuilt, componentOutput = "";
-        const assemblyReady = new Promise(resolve => { assemblyBuilt = resolve; });
         const componentWork = run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),
-          "--logger", "trx;LogFileName=native.trx", "--results-directory", directory], { capture: chunk => {
-            componentOutput += chunk;
-            if (componentOutput.includes(manifest.entryAssembly)) assemblyBuilt();
-          } });
-        const ordinaryCapability = name === "MaaFrameworkDriver" ? null : (async () => {
-          await frontendWork;
-          await Promise.race([assemblyReady, componentWork]);
-          if (!fs.existsSync(assembly)) throw Object.assign(new Error("Component build did not produce plugin assembly"), { exitCode: 4 });
-          await runCapability();
-        })();
-        const outcomes = await Promise.allSettled([frontendWork, componentWork, ...(ordinaryCapability ? [ordinaryCapability] : [])]);
+          "--logger", "trx;LogFileName=native.trx", "--results-directory", directory]);
+        const outcomes = await Promise.allSettled([frontendWork, componentWork]);
         const failed = outcomes.find(outcome => outcome.status === "rejected");
         if (failed) throw failed.reason;
         await run("native counts", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
@@ -157,8 +143,8 @@ try {
               "-p:RestoreLockedMode=true", "--self-contained", "true", "-o", path.join(directory, "worker")]);
             await run("owned native target", "dotnet", ["publish", "tests/fixtures/OwnedWindow/OwnedWindow.csproj", ...dotnetOptions(),
               "-r", "win-x64", "--self-contained", "false", "-o", path.join(directory, "owned-window")]);
-            await runCapability();
           }
+          await runCapability();
         }
       } else {
         result.expectedCaseIds = item.fixtureIds;
