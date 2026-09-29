@@ -39,13 +39,13 @@
 
 当前专项能力为 `emulator`、`self-managed-pc-launch`、`no-fresh-config`；`resolve.inputs` 使用 Host 的声明式输入表单。新增能力必须先实现宿主语义、双仓契约及测试。未知能力应清楚报告插件和字段，不静默启用。专项源码、ZIP、Host install/load/serve 都执行相同边界验证。
 
-纯数据插件不启动 dotnet、managed tests 或前端构建；仍执行语法/配置脚本契约并生成 deterministic ZIP 与 SHA256。managed 插件执行真实构建和测试。ZIP 禁止路径穿越、绝对路径、重复/大小写冲突、符号链接和超限解压。稳定包保留现行最近三个版本策略，不清除已发布资产来绕过不可变性。
+纯数据插件打包不启动 dotnet、managed tests 或前端构建；其适配测试使用一次共享 Host Jint 工具构建；仍执行语法/配置脚本契约并生成 deterministic ZIP 与 SHA256。managed 插件执行真实构建和测试。ZIP 禁止路径穿越、绝对路径、重复/大小写冲突、符号链接和超限解压。稳定包保留现行最近三个版本策略，不清除已发布资产来绕过不可变性。
 
 ## 4. 测试与 SDK
 
 自动化测试从当前终端直接运行并继承权限。普通或管理员终端均可，不主动 UAC、降权或按权限跳过。Windows managed/宿主运行测试仍需要 Windows；平台缺失写明 NOT_RUN，不冒称普通权限导致无法测试。Host 功能联调使用其 asInvoker Test Host，正式发行 EXE 的管理员要求保持。
 
-主要入口如下；准确参数、准备依赖及 SDK 路径见 `CONTRIBUTING.md` 和 `docs/RELEASING.md`：
+日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证全部十三插件。累计预算、真实能力边界、原生输入和报告见 `docs/TESTING.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/RELEASING.md`：
 
 ```text
 python tools/repository.py validate-source

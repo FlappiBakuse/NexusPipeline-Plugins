@@ -46,7 +46,7 @@ def run_python_unit_gate(root: Path) -> dict[str, int]:
     unexpected_successes = len(result.unexpectedSuccesses)
     if tests_run <= 0:
         raise core.RepositoryError("Plugins Python 单元测试发现零用例")
-    if not result.wasSuccessful():
+    if not result.wasSuccessful() or skipped:
         raise core.RepositoryError(
             "Plugins Python 单元测试失败："
             f"testsRun={tests_run} failures={failures} errors={errors} skipped={skipped} "
@@ -56,20 +56,27 @@ def run_python_unit_gate(root: Path) -> dict[str, int]:
 
 
 def managed_selection(root: Path, base: str) -> tuple[list[str], str]:
-    """按 PR diff 选择受影响的 managed-code 插件，包括改名端点；共享输入不再扩大为全部插件。"""
+    """按完整 diff 选择 managed 插件；未知共享输入保守扩大。"""
     records = core.changed_paths(root, core.git_commit(root, base), core.git_head(root))
     if not records:
         raise core.RepositoryError("verify 变更范围为空；不能把零选择当作验证通过")
     plugins = core.discover_source_plugins(root)
     by_root = {plugin.root.relative_to(root).as_posix(): plugin for plugin in plugins}
     selected: set[str] = set()
+    all_managed = sorted(plugin.artifact_name for plugin in plugins if plugin.kind == "managed-code")
     for _status, paths in records:
         for path in paths:
             normalized = path.replace("\\", "/")
             plugin_root = core.plugin_root_from_path(normalized)
             if plugin_root is None:
-                continue
+                if normalized.startswith("docs/") and normalized.endswith(".md"):
+                    continue
+                if normalized in {"README.md", "CONTRIBUTING.md", "CHANGELOG.md"}:
+                    continue
+                return all_managed, "shared-or-unknown-input"
             plugin = by_root.get(plugin_root)
+            if plugin is None:
+                return all_managed, "removed-or-renamed-plugin"
             if plugin is not None and plugin.kind == "managed-code":
                 selected.add(plugin.artifact_name)
     if selected:

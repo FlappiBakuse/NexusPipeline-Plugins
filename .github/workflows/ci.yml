@@ -4,51 +4,115 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-
 permissions:
   contents: read
-
+  actions: read
 concurrency:
   group: plugins-ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
-
 jobs:
-  required:
-    name: Plugins / Required
-    runs-on: windows-latest
-    timeout-minutes: 25
+  scope_contract:
+    name: Plugins / 范围与装配契约
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    outputs:
+      matrix: ${{ steps.scope.outputs.matrix }}
+      count: ${{ steps.scope.outputs.count }}
+      hostSha: ${{ steps.scope.outputs.hostSha }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出本次源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 选择受影响插件并验证锁定输入
+        id: scope
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SCOPE_RESULT: ${{ runner.temp }}/scope.json
+        run: node tests/ci-scope.mjs
+      - name: 保存选择计划
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          python-version: "3.13"
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+          name: scope
+          path: ${{ runner.temp }}/scope.json
+          if-no-files-found: error
+          retention-days: 7
+  plugin_core:
+    name: Plugins / 核心功能 · ${{ matrix.plugin }}
+    needs: scope_contract
+    if: needs.scope_contract.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.scope_contract.outputs.matrix) }}
+    runs-on: windows-latest
+    timeout-minutes: 3
+    env:
+      NEXUS_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.plugin }}
+    steps:
+      - name: 检出本次源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          node-version: "24"
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
-        with:
-          dotnet-version: "8.0.x"
-      - name: Resolve Host SDK source
-        id: host
-        shell: pwsh
-        run: |
-          $line = @(git ls-remote https://github.com/FlappiBakuse/NexusPipeline.git refs/heads/main)
-          if ($LASTEXITCODE -ne 0 -or $line.Count -ne 1) { throw 'Cannot resolve official Host main' }
-          $sha = ($line[0] -split '\s+')[0]
-          if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid official Host SHA' }
-          "sha=$sha" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+          path: Plugins
+          persist-credentials: false
+      - name: 检出固定 Host 测试输入
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: ${{ steps.host.outputs.sha }}
-          path: .generated/host-sdk
+          ref: ${{ needs.scope_contract.outputs.hostSha }}
+          path: Host
           persist-credentials: false
-      - name: Run source and managed checks
-        run: >-
-          python tools/repository.py verify --scope all
-          --base '${{ github.event.pull_request.base.sha }}'
-          --host-root '.generated/host-sdk'
-          --sdk-sha '${{ steps.host.outputs.sha }}'
+      - name: 准备 Node 工具链
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+      - name: 准备 Python 工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: 准备 .NET 工具链
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: '8.0.x'
+      - name: 准备锁定原生运行库
+        if: matrix.plugin == 'MaaFrameworkDriver'
+        working-directory: Plugins
+        env:
+          NEXUS_MAA_NATIVE_ROOT: ${{ runner.temp }}/maa-native
+        run: python tests/bootstrap-native.py --output "$env:NEXUS_MAA_NATIVE_ROOT"
+      - name: 验证当前插件核心轨迹
+        working-directory: Plugins
+        env:
+          NEXUS_MAA_NATIVE_ROOT: ${{ runner.temp }}/maa-native
+        run: node tests/run.mjs plugin --plugin '${{ matrix.plugin }}' --host-root ../Host
+      - name: 保存计数预算与实际能力报告
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.plugin }}
+          path: |
+            ${{ runner.temp }}/NexusPipeline.Tests/runs/${{ env.NEXUS_TEST_RUN_ID }}/summary.json
+            ${{ runner.temp }}/NexusPipeline.Tests/runs/${{ env.NEXUS_TEST_RUN_ID }}/${{ matrix.plugin }}/*.json
+            ${{ runner.temp }}/NexusPipeline.Tests/runs/${{ env.NEXUS_TEST_RUN_ID }}/${{ matrix.plugin }}/*.trx
+          if-no-files-found: error
+          retention-days: 7
+  required:
+    name: Plugins / Required
+    needs: [scope_contract, plugin_core]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: 检出汇总策略
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: 读取本次计划和报告
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: ${{ runner.temp }}/reports
+      - name: 汇总结果与实际 job 耗时
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CI_NEEDS: ${{ toJSON(needs) }}
+        run: python tests/ci-gate.py . '${{ runner.temp }}/reports' plugins
