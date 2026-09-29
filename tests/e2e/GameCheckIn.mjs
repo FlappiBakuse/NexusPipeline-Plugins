@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { prepareProcessIdentity } from "./owned-host.mjs";
 
 const host = process.env.NEXUS_HOST_ROOT;
 const source = process.env.NEXUS_PLUGIN_SOURCE;
@@ -57,6 +58,7 @@ try {
   fs.writeFileSync(settingsPath, JSON.stringify(settings));
   const plan = path.join(runtime.runtimeDir, "http-plan.json");
   fs.writeFileSync(plan, JSON.stringify({ runId: runtime.runId, exchanges }));
+  prepareProcessIdentity();
   runtime.startRuntime(["service"], { NEXUS_TEST_HTTP_PLAN: plan }); await runtime.waitForService(null, 5000);
   const tasks = [];
   for (const [index, game, credential] of [[0, "gi", 0], [1, "gi", 1], [2, "hsr", 0], [3, "zzz", 1]]) {
@@ -95,6 +97,7 @@ try {
   assert.equal(repeated.tasks.find(task => task.id === edited.id).runs.length, 2);
   await browser.close(); browser = null;
   await runtime.stopRuntime();
+  prepareProcessIdentity();
   runtime.startRuntime(["service"], { NEXUS_TEST_HTTP_PLAN: plan }); await runtime.waitForService(null, 5000);
   const persisted = await request("GET", "state");
   assert.equal(persisted.tasks.length, 4);
