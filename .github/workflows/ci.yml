@@ -56,7 +56,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.scope.outputs.matrix) }}
-    runs-on: windows-latest
+    runs-on: windows-2025
     timeout-minutes: 3
     env:
       NEXUS_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.key }}
@@ -73,10 +73,10 @@ jobs:
           ref: ${{ needs.scope.outputs.hostSha }}
           path: Host
           persist-credentials: false
-      - name: 准备 Node 工具链
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: "24"
+      - name: 验证预装 Node 版本
+        shell: pwsh
+        run: |
+          node -e 'const [major, minor] = process.versions.node.split(".").map(Number); if (major < 22 || (major === 22 && minor < 12)) process.exit(1);'
       - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
