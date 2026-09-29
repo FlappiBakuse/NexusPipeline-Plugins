@@ -1,14 +1,19 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 export const runtime = await import(pathToFileURL(path.join(process.env.NEXUS_HOST_ROOT, "tests/system/runtime-helper.mjs")));
-const { readProcessIdentity } = await import(pathToFileURL(path.join(process.env.NEXUS_HOST_ROOT, "tests/support/windows-process.mjs")));
 export async function preparePlugin() {
   const source = process.env.NEXUS_PLUGIN_SOURCE;
   const manifest = JSON.parse(fs.readFileSync(path.join(source, "plugin.json")));
   await runtime.prepareRuntime();
-  readProcessIdentity(process.pid);
+  if (process.platform === "win32") {
+    const probe = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
+      `$null = Get-CimInstance Win32_Process -Filter 'ProcessId = ${process.pid}' -ErrorAction Stop`],
+      { encoding: "utf8", windowsHide: true, timeout: 10000 });
+    if (probe.status !== 0) throw new Error(`Windows process identity preparation failed: ${probe.error?.message || probe.stderr}`);
+  }
   const target = path.join(runtime.runtimeDir, "plugins", manifest.artifactName); fs.mkdirSync(target, { recursive: true });
   for (const name of ["plugin.json", "i18n", "web"])
     if (fs.existsSync(path.join(source, name))) fs.cpSync(path.join(source, name), path.join(target, name), { recursive: true });
