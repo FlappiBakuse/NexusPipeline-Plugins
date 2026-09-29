@@ -213,7 +213,7 @@ export function planForChanges(root, changes, registry, policy, lockChanges = nu
       (owner === "host" ? classifyHost : classifyPlugins)(normalize(name), change.status);
   }
   add(`${owner}.scope`, "always"); add(`${owner}.required`, "always");
-  const declared = new Set(registry.gates.filter(gate => !gate.id.includes("${artifact}")).map(gate => gate.id));
+  const declared = new Set(registry.gates.filter(gate => gate.kind !== "matrix-template").map(gate => gate.id));
   if (owner === "plugins") for (const gate of registry.gates.filter(gate => gate.kind === "matrix-template"))
     for (const artifact of names) declared.add(`${gate.id}:${artifact}`);
   for (const id of selected.keys()) if (!declared.has(id)) throw new Error(`Undeclared gate: ${id}`);

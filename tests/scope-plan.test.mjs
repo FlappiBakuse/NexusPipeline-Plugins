@@ -39,6 +39,15 @@ test("publisher outputs select only release contract", () => {
   assert.deepEqual(selected, ["plugins.release-contract", "plugins.required", "plugins.scope"]);
 });
 
+test("scope disposition contains only executable gates", () => {
+  const plan = planForChanges(root, change("docs/TESTING.md"), registry, policy);
+  const actual = new Set([...plan.selected, ...plan.notApplicable].map(item => item.id));
+  const expected = new Set(registry.gates.filter(gate => gate.kind !== "matrix-template").map(gate => gate.id));
+  for (const gate of registry.gates.filter(gate => gate.kind === "matrix-template"))
+    for (const artifact of Object.keys(policy.plugins)) expected.add(`${gate.id}:${artifact}`);
+  assert.deepEqual(actual, expected);
+});
+
 test("locked native input selects only Maa adapter while Host identity reaches its consumers", () => {
   const changed = change("tests/inputs.lock.json");
   const native = planForChanges(root, changed, registry, policy,
