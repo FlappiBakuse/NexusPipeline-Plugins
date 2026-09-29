@@ -101,17 +101,42 @@ try {
       if (item.kind === "managed-code") {
         const frontend = path.join(plugins.directory, item.root, "frontend");
         const raw = path.join(directory, "native.trx"), normalized = path.join(directory, "native.json");
-        const work = [
-          (async () => {
-            if (!fs.existsSync(frontend)) return;
-            await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
-            await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
-            await run("frontend build", npm, ["run", "build"], { cwd: frontend });
-          })(),
-          run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),
-            "--logger", "trx;LogFileName=native.trx", "--results-directory", directory])
-        ];
-        const outcomes = await Promise.allSettled(work);
+        const runCapability = async () => {
+          const scenario = path.join(plugins.directory, "tests/e2e", `${name}.mjs`);
+          if (!fs.existsSync(scenario)) throw Object.assign(new Error(`Real capability scenario is not implemented: ${item.realScenario}`), { exitCode: 7 });
+          await run("real Host capability", process.execPath, [scenario], { extraEnv: {
+            NEXUS_HOST_ROOT: host.directory, NEXUS_PLUGIN_SOURCE: path.join(plugins.directory, item.root),
+            NEXUS_TEST_HOST_DIR: hostBuild, NEXUS_TEST_RUN_ID: `${runId}-${name}`, NEXUS_TEST_MODE: "test-host", NEXUS_TEST_HOST: "1",
+            NEXUS_TEST_ARTIFACT_ROOT: artifact, NEXUS_SYSTEM_RUNTIME_NAME: "runtime", NEXUS_SYSTEM_WEB_PORT: String(await findAvailablePort()),
+            NEXUS_PLUGIN_RESULT: path.join(directory, "capability.json"),
+            NEXUS_PLUGIN_WORKER: path.join(directory, "worker"), NEXUS_OWNED_WINDOW: path.join(directory, "owned-window/OwnedWindow.exe") } });
+          const capability = JSON.parse(fs.readFileSync(path.join(directory, "capability.json"), "utf8"));
+          if (capability.scenarioId !== item.realScenario || capability.status !== "PASS" || capability.cleanup !== "complete") throw Object.assign(new Error("Invalid capability evidence"), { exitCode: 4 });
+          result.completedScenarioIds = [item.realScenario]; result.artifacts.push(path.join(directory, "capability.json"));
+          result.boundaries.real.push(...capability.real); result.boundaries.substituted.push(...capability.substituted);
+        };
+        const frontendWork = (async () => {
+          if (!fs.existsSync(frontend)) return;
+          await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
+          await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
+          await run("frontend build", npm, ["run", "build"], { cwd: frontend });
+        })();
+        const manifest = JSON.parse(fs.readFileSync(path.join(plugins.directory, item.root, "plugin.json"), "utf8"));
+        const assembly = path.join(plugins.directory, item.root, "src/bin/Release/net8.0", manifest.entryAssembly);
+        let assemblyBuilt, componentOutput = "";
+        const assemblyReady = new Promise(resolve => { assemblyBuilt = resolve; });
+        const componentWork = run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),
+          "--logger", "trx;LogFileName=native.trx", "--results-directory", directory], { capture: chunk => {
+            componentOutput += chunk;
+            if (componentOutput.includes(manifest.entryAssembly)) assemblyBuilt();
+          } });
+        const ordinaryCapability = name === "MaaFrameworkDriver" ? null : (async () => {
+          await frontendWork;
+          await Promise.race([assemblyReady, componentWork]);
+          if (!fs.existsSync(assembly)) throw Object.assign(new Error("Component build did not produce plugin assembly"), { exitCode: 4 });
+          await runCapability();
+        })();
+        const outcomes = await Promise.allSettled([frontendWork, componentWork, ...(ordinaryCapability ? [ordinaryCapability] : [])]);
         const failed = outcomes.find(outcome => outcome.status === "rejected");
         if (failed) throw failed.reason;
         await run("native counts", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
@@ -132,19 +157,8 @@ try {
               "-p:RestoreLockedMode=true", "--self-contained", "true", "-o", path.join(directory, "worker")]);
             await run("owned native target", "dotnet", ["publish", "tests/fixtures/OwnedWindow/OwnedWindow.csproj", ...dotnetOptions(),
               "-r", "win-x64", "--self-contained", "false", "-o", path.join(directory, "owned-window")]);
+            await runCapability();
           }
-          const scenario = path.join(plugins.directory, "tests/e2e", `${name}.mjs`);
-          if (!fs.existsSync(scenario)) throw Object.assign(new Error(`Real capability scenario is not implemented: ${item.realScenario}`), { exitCode: 7 });
-          await run("real Host capability", process.execPath, [scenario], { extraEnv: {
-            NEXUS_HOST_ROOT: host.directory, NEXUS_PLUGIN_SOURCE: path.join(plugins.directory, item.root),
-            NEXUS_TEST_HOST_DIR: hostBuild, NEXUS_TEST_RUN_ID: `${runId}-${name}`, NEXUS_TEST_MODE: "test-host", NEXUS_TEST_HOST: "1",
-            NEXUS_TEST_ARTIFACT_ROOT: artifact, NEXUS_SYSTEM_RUNTIME_NAME: "runtime", NEXUS_SYSTEM_WEB_PORT: String(await findAvailablePort()),
-            NEXUS_PLUGIN_RESULT: path.join(directory, "capability.json"),
-            NEXUS_PLUGIN_WORKER: path.join(directory, "worker"), NEXUS_OWNED_WINDOW: path.join(directory, "owned-window/OwnedWindow.exe") } });
-          const capability = JSON.parse(fs.readFileSync(path.join(directory, "capability.json"), "utf8"));
-          if (capability.scenarioId !== item.realScenario || capability.status !== "PASS" || capability.cleanup !== "complete") throw Object.assign(new Error("Invalid capability evidence"), { exitCode: 4 });
-          result.completedScenarioIds = [item.realScenario]; result.artifacts.push(path.join(directory, "capability.json"));
-          result.boundaries.real.push(...capability.real); result.boundaries.substituted.push(...capability.substituted);
         }
       } else {
         result.expectedCaseIds = item.fixtureIds;
