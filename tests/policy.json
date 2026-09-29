@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "invocationBudgetMs": 180000,
+  "cleanupReserveMs": 10000,
+  "pluginCleanupReserveMs": 5000,
+  "plugins": {
+    "CustomWallpaper": {
+      "root": "plugins/general/CustomWallpaper",
+      "kind": "managed-code",
+      "defaultProfile": "core",
+      "profiles": {
+        "core": 30000
+      },
+      "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
+      "expectedMethods": [
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.CustomWallpaperConformanceTests.Lifecycle_RegistersWebApiAndStopIsIdempotent",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.CustomWallpaperConformanceTests.Lifecycle_RequiresThePluginAssetPort",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_StoresContentAddressedAssetAndProjectsState",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_RejectsContentThatDoesNotMatchDeclaredType",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_DeduplicatesIdenticalContent",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_EnforcesAssetCountQuota",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Delete_RemovesAssetFromConfigAndStorage",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.SavePalette_ValidatesTokensAndBumpsRevision",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.LegacyImport_MovesPayloadIntoSettingsAndRemovesMigrationScope"
+      ],
+      "fixtureIds": [],
+      "realScenario": "P-G02"
+    },
+    "EmulatorSupport": {
+      "root": "plugins/general/EmulatorSupport",
+      "kind": "managed-code",
+      "defaultProfile": "core",
+      "profiles": {
+        "core": 30000
+      },
+      "testProject": "plugins/general/EmulatorSupport/tests/NexusPipeline.Plugin.EmulatorSupport.Tests.csproj",
+      "expectedMethods": [
+        "NexusPipeline.Plugin.EmulatorSupport.Tests.EmulatorSupportTests.Lifecycle_RegistersExactlyOneProviderAndRemovesItOnStop",
+        "NexusPipeline.Plugin.EmulatorSupport.Tests.EmulatorSupportTests.ParseLdList2_MapsCandidatePortsAndCanonicalProcessId",
+        "NexusPipeline.Plugin.EmulatorSupport.Tests.EmulatorSupportTests.ParseNoxConsoleListSeparatesVmIdentityAndControlSelector",
+        "NexusPipeline.Plugin.EmulatorSupport.Tests.EmulatorSupportTests.VendorParsersUsePathIdentityAndPreferStatusPort",
+        "NexusPipeline.Plugin.EmulatorSupport.Tests.EmulatorSupportTests.VendorTargetCarriesFrozenInstanceIdentityAndDriverDisplayName"
+      ],
+      "fixtureIds": [],
+      "realScenario": "P-G04"
+    },
+    "GameCheckIn": {
+      "root": "plugins/general/GameCheckIn",
+      "kind": "managed-code",
+      "defaultProfile": "core",
+      "profiles": {
+        "core": 30000
+      },
+      "testProject": "plugins/general/GameCheckIn/tests/NexusPipeline.Plugin.GameCheckIn.Tests.csproj",
+      "expectedMethods": [
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.CredentialFingerprint_IsStableWithoutExposingCredential",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.HoyoLabClient_QueriesInfoBeforeSigning",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.MiyousheClient_DiscoversRoleThenSendsDsAndSigns",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SklandSigner_MatchesKnownBodyAndHeaderVector",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SklandDeviceFingerprint_UsesNumberSmFieldMapping",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SkportClient_UsesIndependentAuthAndEndfieldProfile",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SklandClient_MapsForbiddenAlreadySignedResponse",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.KuroClient_SubmitsFormEncodedGameSignAndMapsAlready",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_SavesPlatformSecretsMaskedAndDeletesItsV2Scope",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReordersTasksOnlyForACompleteUniquePermutation",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.ScheduledTask_ClaimsOneLocalOccurrenceAndCredentialChangeResetsDailyDeduplication",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_RestoresSecretsWhenTaskStoreWriteFails"
+      ],
+      "fixtureIds": [],
+      "realScenario": "P-G01"
+    },
+    "LiveScreenshot": {
+      "root": "plugins/general/LiveScreenshot",
+      "kind": "managed-code",
+      "defaultProfile": "core",
+      "profiles": {
+        "core": 30000
+      },
+      "testProject": "plugins/general/LiveScreenshot/tests/NexusPipeline.Plugin.LiveScreenshot.Tests.csproj",
+      "expectedMethods": [
+        "NexusPipeline.Plugin.LiveScreenshot.Tests.LiveScreenshotConformanceTests.Lifecycle_IsStartableAndStopIsIdempotent"
+      ],
+      "fixtureIds": [],
+      "realScenario": "P-G03"
+    },
+    "MaaFrameworkDriver": {
+      "root": "plugins/general/MaaFrameworkDriver",
+      "kind": "managed-code",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 120000
+      },
+      "testProject": "plugins/general/MaaFrameworkDriver/tests/NexusPipeline.Plugin.MaaFrameworkDriver.Tests.csproj",
+      "expectedMethods": [
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PathInterpreterReplacementInvalidatesAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.LinkedInterpreterAndLocalDependencyAreRejectedWithoutReadingOutside",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.OversizedInterfaceFailsWithLocatedBudgetBeforeParsing",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DirectExecutableSidecarCodeChangesRequireAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.RawArgumentsStaySeparateFromGeneratedOptionPayload",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.ScriptEntryAndLocalDependencyContentInvalidateAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DynamicPythonEntryIsRejectedBeforeExecution",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.UnknownConfiguredOptionsAreLocatedInsteadOfUsingProjectDefaults",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.GlobalAndSettingReferencesAreValidatedEvenWithoutSelectedTasks",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.OrderedImportsCasesAndOverrideLevelsPreserveTaskIdentity",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.UnsafeInputsAreRejectedBeforeExecution",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.SameOptionAtFourLevelsKeepsIndependentValuesAndDefinitionOrder",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DisplayChangesDoNotAlterNativeAuthorizationButExecutableChangesDo",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.EmptyPasswordDefaultCanBeInspectedButExecutionRequiresProtectedReference",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.InvalidDisplayExpansionCannotSilentlyUseAnotherDisplayMode",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.UnknownExecutionDeclarationsAreLocatedBeforePreviewOrRun",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DisplayTranslationCannotRenameTasksCasesOrRewritePipelineValues",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PresetUsesDeclaredTaskOrderDisabledTasksAndPerTaskOverrides"
+      ],
+      "fixtureIds": [],
+      "realScenario": "P-X01"
+    },
+    "BAAH": {
+      "root": "plugins/specialized/BAAH",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "baah-confirmed-reward",
+        "baah-reward-safe-retry",
+        "baah-gap-isolation",
+        "sup-actions-baah-pc-flags-0"
+      ],
+      "realScenario": "P-S-BAAH"
+    },
+    "BetterGI": {
+      "root": "plugins/specialized/BetterGI",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "bettergi-current-daily-retry",
+        "bettergi-independent-safe-and-unsafe-failures",
+        "bettergi-no-inferred-success"
+      ],
+      "realScenario": "P-S-BetterGI"
+    },
+    "MaaEnd": {
+      "root": "plugins/specialized/MaaEnd",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "maaend-callbacks",
+        "maaend-gap-isolation",
+        "maaend-unpaired-terminal",
+        "maaend-launch-unowned-missing"
+      ],
+      "realScenario": "P-S-MaaEnd"
+    },
+    "MaaStellaSora": {
+      "root": "plugins/specialized/MaaStellaSora",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "maastellasora-callbacks",
+        "maastellasora-gap-isolation",
+        "maastellasora-unpaired-terminal"
+      ],
+      "realScenario": "P-S-MaaStellaSora"
+    },
+    "March7thAssistant": {
+      "root": "plugins/specialized/March7thAssistant",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "march7th-completed-reward",
+        "march7th-main-exception",
+        "march7th-no-score-proof"
+      ],
+      "realScenario": "P-S-March7thAssistant"
+    },
+    "OkNTE": {
+      "root": "plugins/specialized/OkNTE",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "r2-oknte-partial-failure-chunk3",
+        "r2-oknte-gap-breaks-pair",
+        "r2-oknte-default-missing"
+      ],
+      "realScenario": "P-S-OkNTE"
+    },
+    "OkWutheringWaves": {
+      "root": "plugins/specialized/OkWutheringWaves",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "r2-okww-garden-satisfied",
+        "r2-okww-caught-failures-chunk3",
+        "r2-okww-outer-completion-not-success"
+      ],
+      "realScenario": "P-S-OkWutheringWaves"
+    },
+    "ZenlessZoneZeroOneDragon": {
+      "root": "plugins/specialized/ZenlessZoneZeroOneDragon",
+      "kind": "data-specialized",
+      "defaultProfile": "adapter",
+      "profiles": {
+        "core": 30000,
+        "adapter": 60000
+      },
+      "testProject": null,
+      "expectedMethods": [],
+      "fixtureIds": [
+        "zzz-outer-terminal",
+        "zzz-run-failed",
+        "zzz-group-is-not-run-end",
+        "r2-zzz-modern-empty-default"
+      ],
+      "realScenario": "P-S-ZenlessZoneZeroOneDragon"
+    }
+  }
+}
