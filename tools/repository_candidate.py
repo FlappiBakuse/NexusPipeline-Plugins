@@ -29,9 +29,10 @@ def _builder_fingerprint() -> str:
              if path.is_file() and not path.is_symlink()
              and path.suffix.lower() in {".py", ".mjs", ".js", ".ps1"}
              and "__pycache__" not in path.parts]
-    workflow = repository / WORKFLOW_PATH
-    if workflow.is_file():
-        paths.append(workflow)
+    for workflow_name in (WORKFLOW_PATH, PREVIEW_WORKFLOW_PATH):
+        workflow = repository / workflow_name
+        if workflow.is_file():
+            paths.append(workflow)
     digest = hashlib.sha256()
     for path in sorted(paths):
         digest.update(path.relative_to(repository).as_posix().encode("utf-8") + b"\0")
@@ -245,6 +246,219 @@ def stable_candidate_scope(root: Path) -> dict[str, Any]:
                 "distributionSha": workspace.base_sha}
     finally:
         workspace.cleanup()
+
+
+def plan_stable_candidate(root: Path, host_root: Path, output: Path, *, sdk_sha: str) -> dict[str, Any]:
+    root, host_root, output = root.resolve(), host_root.resolve(), output.resolve()
+    core._require(not output.exists(), "候选计划输出已存在")
+    core._require(not core._git(root, ["status", "--porcelain=v1", "--untracked-files=all"],
+                                "检查候选工作树"), "候选源码工作树不干净")
+    workspace = CandidateWorkspace.create(root, "HEAD")
+    try:
+        core.validate_candidate_against_base(root, workspace.state_source_sha,
+                                             head=workspace.source_sha,
+                                             distribution_root=workspace.distribution_root)
+        plan = core.build_plan(root, "auto", workspace.source_sha,
+                               distribution_root=workspace.distribution_root)
+        needs_build = bool(plan["requiresPackage"] or plan["deleted"] or plan["relocated"])
+        if needs_build:
+            sdk = preflight(root, host_root, sdk_sha)
+            core.validate_sources(root)
+            core.check_syntax(root)
+            core.validate_host_locale_registry(root, host_root)
+            partner_sha = sdk["sdkSourceSha"]
+        else:
+            partner_sha = sdk_sha
+        result = {"schemaVersion": 1, "sourceSha": workspace.source_sha,
+                  "sourceTreeSha": core._git(root, ["rev-parse", f"{workspace.source_sha}^{{tree}}"],
+                                             "读取 source tree"),
+                  "distributionSha": workspace.base_sha, "partnerSha": partner_sha,
+                  "plan": plan, "packageInputs": package_input_identities(root, plan, partner_sha)}
+        output.parent.mkdir(parents=True, exist_ok=True)
+        core.write_json(output, result)
+        return result
+    finally:
+        workspace.cleanup()
+
+
+def assemble_stable_candidate(root: Path, host_root: Path, plan_phase: Path,
+                              package_phases: Path, output: Path, *, sdk_sha: str,
+                              workflow_sha: str, run_id: int, run_attempt: int) -> dict[str, Any]:
+    root, host_root, output = root.resolve(), host_root.resolve(), output.resolve()
+    phase = core.read_json(plan_phase.resolve())
+    core._require(isinstance(phase, dict) and set(phase) == {
+        "schemaVersion", "sourceSha", "sourceTreeSha", "distributionSha", "partnerSha",
+        "plan", "packageInputs"} and phase["schemaVersion"] == 1,
+        "候选计划阶段清单无效")
+    core._require(not output.exists() and core.git_head(root) == phase["sourceSha"]
+                  and not core._git(root, ["status", "--porcelain=v1", "--untracked-files=all"],
+                                    "检查候选工作树"), "候选装配源码不干净或身份不符")
+    workspace = CandidateWorkspace.create(root, "HEAD")
+    try:
+        plan = core.build_plan(root, "auto", workspace.source_sha,
+                               distribution_root=workspace.distribution_root)
+        core._require(phase["plan"] == plan and phase["distributionSha"] == workspace.base_sha
+                      and phase["sourceTreeSha"] == core._git(
+                          root, ["rev-parse", f"{workspace.source_sha}^{{tree}}"], "读取 source tree")
+                      and phase["partnerSha"] == sdk_sha, "候选计划阶段输入已变化")
+        sdk = preflight(root, host_root, sdk_sha)
+        core._require(phase["partnerSha"] == sdk["sdkSourceSha"]
+                      and phase["packageInputs"] == package_input_identities(
+                          root, plan, sdk_sha), "候选 package input identity 不符")
+        required = set(plan["requiresPackage"])
+        core._require(required or plan["deleted"] or plan["relocated"], "无增量发行内容")
+        package_phases = package_phases.resolve()
+        actual = {item.name for item in package_phases.iterdir()} if package_phases.is_dir() else set()
+        core._require(actual == required, "插件构建阶段集合与计划不符")
+        plugins = {item.artifact_name: item for item in core.discover_source_plugins(root)}
+        packages = {}
+        for artifact in sorted(required):
+            directory = package_phases / artifact
+            report = core.read_json(directory / "report.json")
+            plugin = plugins[artifact]
+            core._require(isinstance(report, dict) and report.get("schemaVersion") == 2
+                          and report.get("artifactName") == artifact
+                          and report.get("version") == plugin.version
+                          and report.get("sourceSha") == workspace.source_sha
+                          and report.get("partnerSha") == sdk_sha
+                          and report.get("inputSha") == phase["packageInputs"][artifact]
+                          and report.get("status") == "PASS", f"插件构建阶段身份无效：{artifact}")
+            name = report.get("fileName")
+            core._require(isinstance(name, str) and re.fullmatch(
+                rf"{re.escape(artifact)}-{re.escape(plugin.version)}-[0-9a-f]{{64}}\.zip", name)
+                is not None, f"插件构建阶段文件名无效：{artifact}")
+            package = directory / name
+            core._require(package.is_file() and not package.is_symlink()
+                          and _sha_file(package) == report.get("sha256")
+                          and package.stat().st_size == report.get("sizeBytes")
+                          and {item.name for item in directory.iterdir()} == {"report.json", name},
+                          f"插件构建阶段字节无效：{artifact}")
+            packages[artifact] = package
+        plan_path = output.parent / f"{output.name}-plan.json"
+        core.write_json(plan_path, plan)
+        core.release(root, plan_path, output, host_root=host_root,
+                     distribution_root=workspace.distribution_root,
+                     reuse_packages=packages)
+        core.validate_generated(root, output, distribution_root=workspace.distribution_root)
+        core.verify_unchanged_stable(root, output, workspace.distribution_root)
+        candidate = write_candidate_manifest(root, output, workspace.distribution_root,
+                                             source_sha=workspace.source_sha,
+                                             distribution_sha=workspace.base_sha,
+                                             partner_sha=sdk_sha, workflow_sha=workflow_sha,
+                                             run_id=run_id, run_attempt=run_attempt)
+        return {"status": "VALIDATED", "sourceSha": workspace.source_sha,
+                "distributionSha": workspace.base_sha, "candidate": str(output),
+                "files": len(candidate["files"])}
+    finally:
+        workspace.cleanup()
+
+
+def plan_preview_candidate(root: Path, host_root: Path, output: Path, *, sdk_sha: str) -> dict[str, Any]:
+    root, host_root, output = root.resolve(), host_root.resolve(), output.resolve()
+    core._require(not output.exists() and not core._git(
+        root, ["status", "--porcelain=v1", "--untracked-files=all"], "检查 preview 工作树"),
+        "preview 源码工作树不干净或计划已存在")
+    sdk = preflight(root, host_root, sdk_sha)
+    core.validate_sources(root)
+    core.check_syntax(root)
+    core.validate_host_locale_registry(root, host_root)
+    plugins = core.discover_source_plugins(root)
+    head = core.git_head(root)
+    plan = {"requiresPackage": sorted(plugin.artifact_name for plugin in plugins),
+            "managed": sorted(plugin.artifact_name for plugin in plugins
+                              if plugin.kind == "managed-code")}
+    result = {"schemaVersion": 1, "channel": "preview", "sourceSha": head,
+              "sourceTreeSha": core._git(root, ["rev-parse", f"{head}^{{tree}}"],
+                                          "读取 preview source tree"),
+              "partnerSha": sdk["sdkSourceSha"], "plan": plan,
+              "packageInputs": package_input_identities(root, plan, sdk_sha)}
+    output.parent.mkdir(parents=True, exist_ok=True)
+    core.write_json(output, result)
+    return result
+
+
+def assemble_preview_candidate(root: Path, host_root: Path, plan_phase: Path,
+                               package_phases: Path, output: Path, producer_output: Path, *,
+                               sdk_sha: str, workflow_sha: str,
+                               run_id: int, run_attempt: int) -> dict[str, Any]:
+    root, host_root, output = root.resolve(), host_root.resolve(), output.resolve()
+    phase = core.read_json(plan_phase.resolve())
+    core._require(isinstance(phase, dict) and set(phase) == {
+        "schemaVersion", "channel", "sourceSha", "sourceTreeSha", "partnerSha",
+        "plan", "packageInputs"} and phase["schemaVersion"] == 1
+        and phase["channel"] == "preview", "preview 计划阶段清单无效")
+    core._require(not output.exists() and core.git_head(root) == phase["sourceSha"]
+                  and phase["sourceTreeSha"] == core._git(
+                      root, ["rev-parse", f"{phase['sourceSha']}^{{tree}}"],
+                      "读取 preview source tree")
+                  and not core._git(root, ["status", "--porcelain=v1", "--untracked-files=all"],
+                                    "检查 preview 工作树"), "preview 装配源码身份不符")
+    sdk = preflight(root, host_root, sdk_sha)
+    core._require(phase["partnerSha"] == sdk["sdkSourceSha"]
+                  and phase["packageInputs"] == package_input_identities(
+                      root, phase["plan"], sdk_sha), "preview package input identity 不符")
+    plugins = {plugin.artifact_name: plugin for plugin in core.discover_source_plugins(root)}
+    required = set(plugins)
+    core._require(set(phase["plan"]["requiresPackage"]) == required, "preview 包计划不完整")
+    package_phases = package_phases.resolve()
+    core._require(package_phases.is_dir()
+                  and {item.name for item in package_phases.iterdir()} == required,
+                  "preview 构建阶段集合不符")
+    output.mkdir(parents=True)
+    packages_root = output / "packages"
+    packages_root.mkdir()
+    entries = []
+    metadata = {}
+    for artifact in sorted(required):
+        directory = package_phases / artifact
+        report = core.read_json(directory / "report.json")
+        plugin = plugins[artifact]
+        name = report.get("fileName") if isinstance(report, dict) else None
+        core._require(isinstance(report, dict) and report.get("schemaVersion") == 2
+                      and report.get("artifactName") == artifact
+                      and report.get("version") == plugin.version
+                      and report.get("sourceSha") == phase["sourceSha"]
+                      and report.get("partnerSha") == sdk_sha
+                      and report.get("inputSha") == phase["packageInputs"][artifact]
+                      and report.get("status") == "PASS"
+                      and isinstance(name, str) and re.fullmatch(
+                          rf"{re.escape(artifact)}-{re.escape(plugin.version)}-[0-9a-f]{{64}}\.zip",
+                          name) is not None, f"preview 构建阶段身份无效：{artifact}")
+        source = directory / name
+        core._require(source.is_file() and not source.is_symlink()
+                      and _sha_file(source) == report["sha256"]
+                      and source.stat().st_size == report["sizeBytes"]
+                      and {item.name for item in directory.iterdir()} == {"report.json", name},
+                      f"preview 构建阶段字节无效：{artifact}")
+        destination = packages_root / name
+        core._require(not destination.exists(), "preview 包文件名冲突")
+        shutil.copy2(source, destination)
+        package_metadata = core.PackageMetadata(destination, report["sha256"], report["sizeBytes"])
+        entries.append(core.preview_catalog_entry(plugin, destination, phase["sourceSha"],
+                                                  package_metadata))
+        metadata[artifact] = {"path": destination.relative_to(output).as_posix(),
+                              "sha256": report["sha256"], "sizeBytes": report["sizeBytes"]}
+    from datetime import datetime, timezone
+    catalog = {"schemaVersion": 2, "repository": core.REPOSITORY,
+               "channel": "develop", "sourceCommit": phase["sourceSha"],
+               "generatedAt": datetime.now(timezone.utc).replace(microsecond=0)
+               .isoformat().replace("+00:00", "Z"),
+               "plugins": core._catalog_order(entries)}
+    core.write_json(output / "catalog.json", catalog)
+    core.write_json(output / "preview-plan.json",
+                    {"schemaVersion": 1, "channel": "develop",
+                     "sourceCommit": phase["sourceSha"], "packageMetadata": metadata})
+    core.validate_preview_candidate(output, expected_source_sha=phase["sourceSha"])
+    producer_output = producer_output.resolve()
+    core._require(output not in producer_output.parents and not producer_output.exists(),
+                  "preview producer sidecar 必须位于候选目录之外")
+    core.write_json(producer_output, {"schemaVersion": 1, "sourceSha": phase["sourceSha"],
+                                      "runId": run_id, "runAttempt": run_attempt,
+                                      "workflowSha": workflow_sha})
+    write_preview_manifest(root, output, partner_sha=sdk_sha, workflow_sha=workflow_sha,
+                           run_id=run_id, run_attempt=run_attempt)
+    return {"status": "VALIDATED", "sourceSha": phase["sourceSha"],
+            "packages": len(required), "candidate": str(output)}
 
 
 def validate_inventory(root: Path, output: Path, *, expected_source_sha: str,

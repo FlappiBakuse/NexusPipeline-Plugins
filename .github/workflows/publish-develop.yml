@@ -34,60 +34,53 @@ permissions:
   contents: read
 
 jobs:
-  build-preview:
-    name: preview-build
+  preview-plan:
+    name: Plugins / 预览输入
     if: inputs.operation == 'candidate'
     runs-on: windows-latest
-    concurrency:
-      group: plugin-develop-preview-build
-      cancel-in-progress: true
+    timeout-minutes: 3
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
     outputs:
-      source_sha: ${{ steps.source.outputs.sha }}
-      workflow_sha: ${{ steps.source.outputs.workflow_sha }}
+      source_sha: ${{ steps.plan.outputs.source_sha }}
+      partner_sha: ${{ steps.plan.outputs.partner_sha }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      managed: ${{ steps.plan.outputs.managed }}
     steps:
-      - name: Require controlled develop source
+      - name: 校验受控develop来源
+        id: develop
         working-directory: ${{ github.workspace }}
-        shell: bash
+        shell: pwsh
         env:
           SOURCE_REF: ${{ inputs.source_ref }}
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
           CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
-          PUBLISH: ${{ inputs.publish }}
-          REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}.git
         run: |
-          test "$GITHUB_REF" = 'refs/heads/main'
-          test "$SOURCE_REF" = develop
-          test -z "$CANDIDATE_RUN_ID"
-          test -z "$CANDIDATE_ARTIFACT_ID"
-          if ! git ls-remote --exit-code "$REPOSITORY_URL" refs/heads/develop >/dev/null 2>&1; then
-            echo '::error title=SOURCE_UNAVAILABLE::Remote develop is required to build a preview candidate.'
-            exit 1
-          fi
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+          if ($env:GITHUB_REF -ne 'refs/heads/main' -or $env:SOURCE_REF -ne 'develop') { throw 'Preview requires main control and develop source' }
+          if ($env:CANDIDATE_RUN_ID -or $env:CANDIDATE_ARTIFACT_ID) { throw 'New preview does not accept recovery inputs' }
+          $line = @(git ls-remote https://github.com/FlappiBakuse/NexusPipeline-Plugins.git refs/heads/develop)
+          if ($LASTEXITCODE -ne 0 -or $line.Count -ne 1) { throw 'Remote develop is unavailable' }
+          $sha = ($line[0] -split '\s+')[0]
+          if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid develop SHA' }
+          "sha=$sha" >> $env:GITHUB_OUTPUT
+      - name: 检出预览控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
-          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出固定develop源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.source_ref }}
+          ref: ${{ steps.develop.outputs.sha }}
           path: NexusPipeline-Plugins-Source
-          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: "24"
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
-        with:
-          dotnet-version: "8.0.424"
-      - name: Resolve fixed official Host SDK
+      - name: 固定官方宿主SDK
         id: host
         shell: pwsh
         run: |
@@ -96,30 +89,153 @@ jobs:
           $sha = ($line[0] -split '\s+')[0]
           if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
           "sha=$sha" >> $env:GITHUB_OUTPUT
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
           ref: ${{ steps.host.outputs.sha }}
           path: NexusPipeline
-          fetch-depth: 1
           persist-credentials: false
-      - name: Resolve immutable source identity
-        id: source
+      - name: 生成全插件预览计划
+        id: plan
         shell: pwsh
-        env:
-          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: >-
+          python tools/repository.py preview-plan
+          --root ../NexusPipeline-Plugins-Source
+          --host-root ../NexusPipeline
+          --sdk-sha '${{ steps.host.outputs.sha }}'
+          --output .generated/preview-plan-phase.json
+          --github-output $env:GITHUB_OUTPUT
+      - name: 上传固定预览计划
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugins-preview-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/preview-plan-phase.json
+          if-no-files-found: error
+
+  preview-package:
+    name: Plugins / 预览插件 · ${{ matrix.artifact }}
+    needs: preview-plan
+    if: inputs.operation == 'candidate' && needs.preview-plan.result == 'success'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.preview-plan.outputs.matrix) }}
+    runs-on: windows-latest
+    timeout-minutes: 3
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - name: 检出预览控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          persist-credentials: false
+      - name: 检出固定develop源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.preview-plan.outputs.source_sha }}
+          path: NexusPipeline-Plugins-Source
+          persist-credentials: false
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.preview-plan.outputs.partner_sha }}
+          path: NexusPipeline
+          persist-credentials: false
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: 准备受影响插件Node工具链
+        if: contains(fromJSON(needs.preview-plan.outputs.managed), matrix.artifact)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+      - name: 准备受影响插件.NET工具链
+        if: contains(fromJSON(needs.preview-plan.outputs.managed), matrix.artifact)
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: "8.0.424"
+      - name: 下载固定预览计划
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: plugins-preview-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/preview-plan-phase
+      - name: 构建并验证单插件预览包
+        shell: pwsh
+        run: >-
+          python tests/package-one.py
+          --root ../NexusPipeline-Plugins-Source --host-root ../NexusPipeline
+          --artifact '${{ matrix.artifact }}'
+          --sdk-sha '${{ needs.preview-plan.outputs.partner_sha }}'
+          --plan-phase .generated/preview-plan-phase/preview-plan-phase.json
+          --output '.generated/preview-package-phase/${{ matrix.artifact }}'
+          --report '.generated/preview-package-phase/${{ matrix.artifact }}/report.json'
+      - name: 上传单插件预览包
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugin-preview-package-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.artifact }}
+          path: NexusPipeline-Plugins/.generated/preview-package-phase/
+          if-no-files-found: error
+          retention-days: 14
+
+  build-preview:
+    name: Plugins / 预览构建
+    needs: [preview-plan, preview-package]
+    runs-on: windows-latest
+    timeout-minutes: 3
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    outputs:
+      source_sha: ${{ needs.preview-plan.outputs.source_sha }}
+      workflow_sha: ${{ github.workflow_sha }}
+    steps:
+      - name: 检出预览控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: NexusPipeline-Plugins
+          persist-credentials: false
+      - name: 检出固定develop源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.preview-plan.outputs.source_sha }}
+          path: NexusPipeline-Plugins-Source
+          persist-credentials: false
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.preview-plan.outputs.partner_sha }}
+          path: NexusPipeline
+          persist-credentials: false
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: 下载固定预览计划
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: plugins-preview-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/preview-plan-phase
+      - name: 下载逐插件预览包
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: plugin-preview-package-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: NexusPipeline-Plugins/.generated/preview-package-phases
+          merge-multiple: true
+      - name: 装配并核验全插件预览候选
+        shell: pwsh
         run: |
-          $ErrorActionPreference = "Stop"
-          $sha = (git -C ../NexusPipeline-Plugins-Source rev-parse HEAD).Trim()
-          if ($sha -notmatch '^[0-9a-f]{40}$') { throw "source ref 未解析为完整 SHA" }
-          "sha=$sha" >> $env:GITHUB_OUTPUT
-          "workflow_sha=$env:WORKFLOW_SHA" >> $env:GITHUB_OUTPUT
-      - name: Build and validate preview candidate
-        env:
-          SOURCE_SHA: ${{ steps.source.outputs.sha }}
-          WORKFLOW_SHA: ${{ github.workflow_sha }}
-        run: python tools/repository.py publish-develop --root ..\NexusPipeline-Plugins-Source --source-ref "$env:SOURCE_SHA" --output .generated\preview --producer-output .generated\preview-producer.json --host-root ..\NexusPipeline --run-id "$env:GITHUB_RUN_ID" --run-attempt "$env:GITHUB_RUN_ATTEMPT" --workflow-sha "$env:WORKFLOW_SHA"
-      - name: Upload immutable local candidate for separately authorized promotion
+          python tools/repository.py preview-assemble --root ../NexusPipeline-Plugins-Source --host-root ../NexusPipeline --plan-phase .generated/preview-plan-phase/preview-plan-phase.json --package-phases .generated/preview-package-phases --sdk-sha '${{ needs.preview-plan.outputs.partner_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}' --output .generated/preview --producer-output .generated/preview-producer.json
+          if ($LASTEXITCODE -ne 0) { throw 'Preview assembly failed' }
+          python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root ../NexusPipeline-Plugins-Source --source-sha '${{ needs.preview-plan.outputs.source_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
+          if ($LASTEXITCODE -ne 0) { throw 'Preview candidate failed validation' }
+      - name: 上传不可变预览候选
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: plugins-develop-preview-${{ github.run_id }}-${{ github.run_attempt }}
@@ -130,10 +246,11 @@ jobs:
           retention-days: 14
 
   promote-preview:
-    name: preview-publish
+    name: Plugins / 预览提升
     needs: build-preview
     if: inputs.operation == 'candidate' && inputs.publish
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     environment: plugin-preview-publish
     concurrency:
       group: plugin-develop-preview-publish
@@ -142,22 +259,26 @@ jobs:
       run:
         working-directory: NexusPipeline-Plugins
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出发布控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ needs.build-preview.outputs.workflow_sha }}
           path: NexusPipeline-Plugins
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出原始预览源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ needs.build-preview.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+      - name: 下载原始预览候选
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           name: plugins-develop-preview-${{ github.run_id }}-${{ github.run_attempt }}
           path: NexusPipeline-Plugins/.generated
@@ -178,9 +299,10 @@ jobs:
         run: python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root ../NexusPipeline-Plugins-Source --source-sha "$SOURCE_SHA" --run-id "${{ github.run_id }}" --run-attempt "${{ github.run_attempt }}" --workflow-sha "$WORKFLOW_SHA" --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
 
   restore-preview:
-    name: Restore original preview candidate
+    name: Plugins / 预览恢复
     if: inputs.operation == 'restore'
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     environment: plugin-preview-publish
     concurrency:
       group: plugin-develop-preview-publish
@@ -204,13 +326,15 @@ jobs:
           test -n "$CANDIDATE_RUN_ID"
           test "$SOURCE_REF" = develop
           test "$PUBLISH" = true
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出恢复控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
       - name: Resolve original successful producer and artifact
@@ -246,7 +370,8 @@ jobs:
           --run-id '${{ steps.original.outputs.run_id }}'
           --run-attempt '${{ steps.original.outputs.run_attempt }}'
           --github-output "$GITHUB_OUTPUT"
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出原始预览源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ steps.source.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source
