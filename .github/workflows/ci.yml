@@ -60,7 +60,6 @@ jobs:
     timeout-minutes: 3
     env:
       NEXUS_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.key }}
-      NEXUS_MAA_NATIVE_ROOT: ${{ runner.temp }}/maa-native
     steps:
       - name: 检出本次插件源码
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -90,10 +89,14 @@ jobs:
         if: contains(matrix.id, 'MaaFrameworkDriver') && (contains(matrix.id, '.adapter:') || contains(matrix.id, '.capability:'))
         working-directory: Plugins
         shell: pwsh
+        env:
+          NEXUS_MAA_NATIVE_ROOT: ${{ runner.temp }}/maa-native
         run: python tests/bootstrap-native.py --output "$env:NEXUS_MAA_NATIVE_ROOT"
       - name: 验证独立插件门禁
         working-directory: Plugins
         shell: pwsh
+        env:
+          NEXUS_MAA_NATIVE_ROOT: ${{ runner.temp }}/maa-native
         run: node tests/run.mjs gate --id '${{ matrix.id }}' --host-root "$env:GITHUB_WORKSPACE/Host"
       - name: 保存原生报告与门禁结果
         if: ${{ !cancelled() }}
