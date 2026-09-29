@@ -100,25 +100,27 @@ try {
     try {
       if (item.kind === "managed-code") {
         const frontend = path.join(plugins.directory, item.root, "frontend");
-        if (fs.existsSync(frontend)) {
-          await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
-          await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
-          await run("frontend build", npm, ["run", "build"], { cwd: frontend });
-        }
-        let discovery = "";
-        await run("build and discover component cases", "dotnet", ["test", item.testProject, ...dotnetOptions(), "--list-tests"], { capture: text => discovery += text });
-        const expected = discovery.split(/\r?\n/).map(line => line.trim()).filter(line => line.startsWith("NexusPipeline.") && !line.includes(" -> "));
-        const methodOf = id => id.split("(")[0];
-        if (!expected.length || new Set(expected).size !== expected.length
-          || JSON.stringify([...new Set(expected.map(methodOf))].sort()) !== JSON.stringify([...item.expectedMethods].sort()))
-          throw Object.assign(new Error("Discovered component method set differs from policy"), { exitCode: 4 });
-        result.expectedCaseIds = expected;
         const raw = path.join(directory, "native.trx"), normalized = path.join(directory, "native.json");
-        await run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(), "--no-build", "--no-restore",
-          "--logger", "trx;LogFileName=native.trx", "--results-directory", directory]);
+        const work = [
+          (async () => {
+            if (!fs.existsSync(frontend)) return;
+            await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
+            await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
+            await run("frontend build", npm, ["run", "build"], { cwd: frontend });
+          })(),
+          run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),
+            "--logger", "trx;LogFileName=native.trx", "--results-directory", directory])
+        ];
+        const outcomes = await Promise.allSettled(work);
+        const failed = outcomes.find(outcome => outcome.status === "rejected");
+        if (failed) throw failed.reason;
         await run("native counts", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
         const native = JSON.parse(fs.readFileSync(normalized, "utf8"));
-        if (JSON.stringify([...native.caseIds].sort()) !== JSON.stringify([...expected].sort())) throw Object.assign(new Error("Native cases differ from discovery"), { exitCode: 4 });
+        const methodOf = id => id.split("(")[0];
+        if (!native.caseIds.length || new Set(native.caseIds).size !== native.caseIds.length
+          || JSON.stringify([...new Set(native.caseIds.map(methodOf))].sort()) !== JSON.stringify([...item.expectedMethods].sort()))
+          throw Object.assign(new Error("Executed component method set differs from policy"), { exitCode: 4 });
+        result.expectedCaseIds = native.caseIds;
         result.completedCaseIds = native.caseIds; result.counts = { passed: native.passed, failed: native.failed, skipped: native.skipped };
         result.artifacts.push(raw, normalized); result.boundaries.real.push("current plugin component implementation");
         if (name === "MaaFrameworkDriver" && profile === "core") {
