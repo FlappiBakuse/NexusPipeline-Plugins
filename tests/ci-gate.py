@@ -9,7 +9,7 @@ from datetime import datetime
 
 root, reports = Path(sys.argv[1]), Path(sys.argv[2])
 kind = sys.argv[3]
-policy_bytes = (root / "tests/policy.json").read_bytes()
+policy_bytes = (root / "tests/policy.json").read_bytes().replace(b"\r\n", b"\n")
 policy = json.loads(policy_bytes)
 attempt = os.environ["GITHUB_RUN_ATTEMPT"]
 run = os.environ["GITHUB_RUN_ID"]

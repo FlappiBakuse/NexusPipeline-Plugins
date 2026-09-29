@@ -210,7 +210,7 @@ finally {
   if (budget.remainingMs({ cleanup: true }) <= 0) code ||= 5;
   if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
-    runId, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes), selection,
+    runId, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",
     exitCode: code, failure, budgetMs: policy.invocationBudgetMs, elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup }, null, 2));
   fs.closeSync(log); process.removeListener("SIGINT", abort); process.removeListener("SIGTERM", abort);
