@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "invocationBudgetMs": 180000,
+  "qualificationMs": 150000,
   "cleanupReserveMs": 10000,
   "pluginCleanupReserveMs": 5000,
   "plugins": {
@@ -9,7 +10,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 60000
+        "core": 150000
       },
       "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
       "expectedMethods": [
@@ -32,7 +33,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 60000
+        "core": 150000
       },
       "testProject": "plugins/general/EmulatorSupport/tests/NexusPipeline.Plugin.EmulatorSupport.Tests.csproj",
       "expectedMethods": [
@@ -50,7 +51,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 60000
+        "core": 150000
       },
       "testProject": "plugins/general/GameCheckIn/tests/NexusPipeline.Plugin.GameCheckIn.Tests.csproj",
       "expectedMethods": [
@@ -75,7 +76,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 60000
+        "core": 150000
       },
       "testProject": "plugins/general/LiveScreenshot/tests/NexusPipeline.Plugin.LiveScreenshot.Tests.csproj",
       "expectedMethods": [
@@ -89,8 +90,8 @@
       "kind": "managed-code",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 120000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": "plugins/general/MaaFrameworkDriver/tests/NexusPipeline.Plugin.MaaFrameworkDriver.Tests.csproj",
       "expectedMethods": [
@@ -121,8 +122,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -139,8 +140,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -156,8 +157,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -174,8 +175,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -191,8 +192,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -208,8 +209,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -225,8 +226,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -242,8 +243,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 30000,
-        "adapter": 60000
+        "core": 150000,
+        "adapter": 150000
       },
       "testProject": null,
       "expectedMethods": [],

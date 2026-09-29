@@ -44,109 +44,60 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  candidate:
-    name: Build and validate Plugins candidate
+  source-plan:
+    name: Plugins / 候选输入
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'candidate')
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 3
     permissions:
       actions: read
       contents: read
     outputs:
-      status: ${{ steps.build.outputs.status || steps.scope.outputs.status }}
-      source_sha: ${{ steps.build.outputs.source_sha || steps.scope.outputs.source_sha }}
+      source_sha: ${{ steps.plan.outputs.source_sha }}
+      partner_sha: ${{ steps.plan.outputs.partner_sha }}
+      needs_build: ${{ steps.plan.outputs.needs_build }}
+      package_count: ${{ steps.plan.outputs.package_count }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      managed: ${{ steps.plan.outputs.managed }}
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
     steps:
-      - name: Validate candidate operation before checkout
+      - name: 校验候选操作参数
         working-directory: ${{ github.workspace }}
         shell: pwsh
         env:
           SOURCE_REF: ${{ inputs.source_ref || github.sha }}
           CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
           CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
-          REUSE_RUN_ID: ${{ inputs.reuse_candidate_run_id }}
-          REUSE_ARTIFACT_ID: ${{ inputs.reuse_candidate_artifact_id }}
         run: |
-          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Candidate controller must run from main' }
-          if (-not $env:SOURCE_REF) { throw 'candidate requires source_ref' }
-          if ($env:CANDIDATE_RUN_ID -or $env:CANDIDATE_ARTIFACT_ID) { throw 'candidate mode does not accept publish-only inputs' }
-          if ($env:REUSE_ARTIFACT_ID -and -not $env:REUSE_RUN_ID) { throw 'reuse artifact requires reuse_candidate_run_id' }
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+          if ($env:GITHUB_REF -ne 'refs/heads/main' -or -not $env:SOURCE_REF) { throw 'Invalid candidate source' }
+          if ($env:CANDIDATE_RUN_ID -or $env:CANDIDATE_ARTIFACT_ID) { throw 'Candidate mode does not accept publish inputs' }
+      - name: 检出候选控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
-          path: NexusPipeline-Plugins-Control
-          fetch-depth: 1
+          path: Plugins-Control
           persist-credentials: false
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出候选源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event_name == 'push' && github.sha || inputs.source_ref }}
           path: NexusPipeline-Plugins
           fetch-depth: 0
           persist-credentials: false
-      - name: Require source reachable from protected main
-        working-directory: NexusPipeline-Plugins
+      - name: 固定受保护源码
         shell: pwsh
         run: |
           git fetch origin main --no-tags
           if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve protected main' }
           git merge-base --is-ancestor HEAD origin/main
           if ($LASTEXITCODE -ne 0) { throw 'Candidate source is not reachable from main' }
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: Classify cumulative stable delta
-        id: scope
-        shell: pwsh
-        run: python ../NexusPipeline-Plugins-Control/tools/repository.py candidate-scope --root . --github-output $env:GITHUB_OUTPUT
-      - name: Resolve reusable original candidate
-        if: steps.scope.outputs.needs_build == 'true' && inputs.reuse_candidate_run_id != ''
-        id: reuse
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          REUSE_RUN_ID: ${{ inputs.reuse_candidate_run_id }}
-          REUSE_ARTIFACT_ID: ${{ inputs.reuse_candidate_artifact_id }}
-        run: |
-          $arguments = @('--candidate-run-id', $env:REUSE_RUN_ID, '--current-run-id', $env:GITHUB_RUN_ID, '--github-output', $env:GITHUB_OUTPUT)
-          if ($env:REUSE_ARTIFACT_ID) { $arguments += @('--artifact-id', $env:REUSE_ARTIFACT_ID) }
-          python ../NexusPipeline-Plugins-Control/tools/repository_candidate_source.py @arguments
-          if ($LASTEXITCODE -ne 0) { throw 'Reusable candidate source was not verifiable' }
-      - name: Download byte-verified reusable candidate
-        if: steps.reuse.outputs.artifact_id != ''
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.reuse.outputs.artifact_id }}
-          ARTIFACT_DIGEST: ${{ steps.reuse.outputs.artifact_digest }}
-        run: |
-          New-Item -ItemType Directory -Path '.generated' -Force | Out-Null
-          $uri = "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$env:ARTIFACT_ID/zip"
-          curl.exe -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $env:GITHUB_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' --output '.generated/reuse-candidate.zip' $uri
-          if ($LASTEXITCODE -ne 0) { throw 'Reusable candidate download failed' }
-          python ../NexusPipeline-Plugins-Control/tools/repository.py extract-candidate --artifact-zip '.generated/reuse-candidate.zip' --expected-digest $env:ARTIFACT_DIGEST --output '.generated/reuse-candidate'
-          if ($LASTEXITCODE -ne 0) { throw 'Reusable candidate artifact failed validation' }
-      - name: Bind reusable candidate to its original trusted producer
-        if: steps.reuse.outputs.artifact_id != ''
-        shell: pwsh
-        run: >-
-          python ../NexusPipeline-Plugins-Control/tools/repository.py inspect-candidate
-          --generated-root .generated/reuse-candidate
-          --workflow-sha '${{ steps.reuse.outputs.workflow_sha }}'
-          --run-id '${{ steps.reuse.outputs.run_id }}'
-          --run-attempt '${{ steps.reuse.outputs.run_attempt }}'
-          --github-output $env:GITHUB_OUTPUT
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: steps.scope.outputs.needs_build == 'true'
-        with:
-          node-version: "24"
-      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
-        if: steps.scope.outputs.needs_build == 'true'
-        with:
-          dotnet-version: "8.0.424"
-      - name: Resolve fixed official Host SDK
-        if: steps.scope.outputs.needs_build == 'true'
+      - name: 固定官方宿主SDK
         id: host
         shell: pwsh
         run: |
@@ -155,40 +106,228 @@ jobs:
           $sha = ($line[0] -split '\s+')[0]
           if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
           "sha=$sha" >> $env:GITHUB_OUTPUT
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        if: steps.scope.outputs.needs_build == 'true'
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
           ref: ${{ steps.host.outputs.sha }}
           path: NexusPipeline
           persist-credentials: false
-      - name: Build and verify cumulative candidate
-        if: steps.scope.outputs.needs_build == 'true'
+      - name: 生成累计发行计划
+        id: plan
+        shell: pwsh
+        run: >-
+          python ../Plugins-Control/tools/repository.py candidate-plan --root .
+          --host-root ../NexusPipeline --sdk-sha '${{ steps.host.outputs.sha }}'
+          --output .generated/plan-phase.json --github-output $env:GITHUB_OUTPUT
+      - name: 上传固定发行计划
+        if: steps.plan.outputs.needs_build == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/plan-phase.json
+          if-no-files-found: error
+
+  build-package:
+    name: Plugins / 插件构建 · ${{ matrix.artifact }}
+    needs: source-plan
+    if: needs.source-plan.outputs.needs_build == 'true' && needs.source-plan.outputs.package_count != '0'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.source-plan.outputs.matrix) }}
+    runs-on: windows-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - name: 检出候选控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: Plugins-Control
+          persist-credentials: false
+      - name: 检出固定插件源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.source-plan.outputs.source_sha }}
+          path: NexusPipeline-Plugins
+          persist-credentials: false
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.source-plan.outputs.partner_sha }}
+          path: NexusPipeline
+          persist-credentials: false
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: 准备受影响插件Node工具链
+        if: contains(fromJSON(needs.source-plan.outputs.managed), matrix.artifact)
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "24"
+      - name: 准备受影响插件.NET工具链
+        if: contains(fromJSON(needs.source-plan.outputs.managed), matrix.artifact)
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: "8.0.424"
+      - name: 下载固定发行计划
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/plan-phase
+      - name: 构建并验证单插件包
+        shell: pwsh
+        run: >-
+          python ../Plugins-Control/tests/package-one.py --root . --host-root ../NexusPipeline
+          --artifact '${{ matrix.artifact }}'
+          --sdk-sha '${{ needs.source-plan.outputs.partner_sha }}'
+          --plan-phase .generated/plan-phase/plan-phase.json
+          --output '.generated/package-phase/${{ matrix.artifact }}'
+          --report '.generated/package-phase/${{ matrix.artifact }}/report.json'
+      - name: 上传单插件包
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugin-package-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.artifact }}
+          path: NexusPipeline-Plugins/.generated/package-phase/
+          if-no-files-found: error
+          retention-days: 14
+
+  catalog-assembly:
+    name: Plugins / 发行装配
+    needs: [source-plan, build-package]
+    if: always() && needs.source-plan.result == 'success' && needs.source-plan.outputs.needs_build == 'true' && (needs.build-package.result == 'success' || (needs.build-package.result == 'skipped' && needs.source-plan.outputs.package_count == '0'))
+    runs-on: windows-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: read
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - name: 检出候选控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: Plugins-Control
+          persist-credentials: false
+      - name: 检出固定插件源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.source-plan.outputs.source_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 检出固定宿主SDK
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: FlappiBakuse/NexusPipeline
+          ref: ${{ needs.source-plan.outputs.partner_sha }}
+          path: NexusPipeline
+          persist-credentials: false
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: 下载固定发行计划
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/plan-phase
+      - name: 下载逐插件包
+        if: needs.source-plan.outputs.package_count != '0'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: plugin-package-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: NexusPipeline-Plugins/.generated/package-phases
+          merge-multiple: true
+      - name: 核验输入并装配稳定候选
         id: build
         shell: pwsh
+        run: >-
+          python ../Plugins-Control/tools/repository.py candidate-assemble --root .
+          --host-root ../NexusPipeline
+          --plan-phase .generated/plan-phase/plan-phase.json
+          --package-phases .generated/package-phases
+          --sdk-sha '${{ needs.source-plan.outputs.partner_sha }}'
+          --workflow-sha '${{ github.workflow_sha }}'
+          --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
+          --output .generated/stable-candidate --github-output $env:GITHUB_OUTPUT
+      - name: 上传装配候选供独立校验
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: plugins-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/stable-candidate/
+          include-hidden-files: true
+          if-no-files-found: error
+
+  candidate:
+    name: Plugins / 候选校验
+    needs: [source-plan, catalog-assembly]
+    if: needs.catalog-assembly.result == 'success'
+    runs-on: windows-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      status: ${{ steps.verify.outputs.status }}
+      source_sha: ${{ needs.source-plan.outputs.source_sha }}
+    defaults:
+      run:
+        working-directory: NexusPipeline-Plugins
+    steps:
+      - name: 检出候选控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          path: Plugins-Control
+          persist-credentials: false
+      - name: 检出固定插件源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ needs.source-plan.outputs.source_sha }}
+          path: NexusPipeline-Plugins
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - name: 下载装配候选
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: plugins-assembled-${{ github.run_id }}-${{ github.run_attempt }}
+          path: NexusPipeline-Plugins/.generated/stable-candidate
+      - name: 核验候选源码与包字节
+        id: verify
+        shell: pwsh
         run: |
-          $arguments = @('candidate', '--root', '.', '--host-root', '../NexusPipeline',
-            '--sdk-sha', '${{ steps.host.outputs.sha }}', '--workflow-sha', '${{ github.workflow_sha }}',
-            '--run-id', '${{ github.run_id }}', '--run-attempt', '${{ github.run_attempt }}',
-            '--output', '.generated/stable-candidate', '--github-output', $env:GITHUB_OUTPUT)
-          if (Test-Path -LiteralPath '.generated/reuse-candidate') { $arguments += @('--reuse-candidate', '.generated/reuse-candidate') }
-          python ../NexusPipeline-Plugins-Control/tools/repository.py @arguments
-          if ($LASTEXITCODE -ne 0) { throw 'Stable candidate build failed' }
-      - name: Upload validated candidate
-        if: steps.build.outputs.status == 'VALIDATED'
+          python ../Plugins-Control/tools/repository.py validate-candidate --root . --generated-root .generated/stable-candidate --source-sha '${{ needs.source-plan.outputs.source_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
+          if ($LASTEXITCODE -ne 0) { throw 'Stable candidate validation failed' }
+          "status=VALIDATED" >> $env:GITHUB_OUTPUT
+      - name: 上传原始候选
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: plugins-stable-candidate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/stable-candidate
+          path: NexusPipeline-Plugins/.generated/stable-candidate/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
   publish-only:
-    name: Publish original Plugins candidate
+    name: Plugins / 原包发布
     needs: candidate
     if: always() && ((github.event_name == 'push' && needs.candidate.result == 'success' && needs.candidate.outputs.status == 'VALIDATED') || (github.event_name == 'workflow_dispatch' && inputs.operation == 'publish-only'))
     runs-on: windows-latest
+    timeout-minutes: 3
     environment: plugin-stable-publish
     permissions:
       actions: read
@@ -197,13 +336,15 @@ jobs:
       run:
         working-directory: NexusPipeline-Plugins
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出发布控制源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - name: 准备Python工具链
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
       - name: Resolve original successful producer and artifact
@@ -243,7 +384,8 @@ jobs:
           --run-id '${{ steps.source.outputs.run_id }}'
           --run-attempt '${{ steps.source.outputs.run_attempt }}'
           --github-output $env:GITHUB_OUTPUT
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: 检出原始候选源码
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ steps.candidate.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source

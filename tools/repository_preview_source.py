@@ -8,6 +8,7 @@ failure must not invalidate an earlier successful candidate job.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import json
 import os
 import re
@@ -22,6 +23,10 @@ from typing import Any
 REPOSITORY = "FlappiBakuse/NexusPipeline-Plugins"
 WORKFLOW_PATH = ".github/workflows/publish-develop.yml"
 JOB_NAME = "preview-build"
+LEGACY_CONTROL_SHAS = {"4c695eede3e1dcb0232de8e13a94ea938bbfcaea"}
+NEW_JOB_NAME = "Plugins / 预览构建"
+NEW_REQUIRED_JOBS = ("Plugins / 预览输入", NEW_JOB_NAME)
+BUILD_JOB_PREFIX = "Plugins / 预览插件 · "
 
 
 class CandidateSourceError(ValueError):
@@ -42,6 +47,35 @@ def full_sha(value: Any, label: str) -> str:
     require(isinstance(value, str) and re.fullmatch(r"[0-9a-f]{40}", value) is not None,
             f"{label} 必须是完整 SHA")
     return value
+
+
+def completed_job(entries: list[dict[str, Any]], name: str, *, qualified: bool) -> None:
+    matches = [job for job in entries if job.get("name") == name]
+    require(len(matches) == 1 and matches[0].get("status") == "completed"
+            and matches[0].get("conclusion") == "success",
+            f"原 attempt {name} job 未真实成功")
+    if qualified:
+        try:
+            started = datetime.fromisoformat(matches[0]["started_at"].replace("Z", "+00:00"))
+            completed = datetime.fromisoformat(matches[0]["completed_at"].replace("Z", "+00:00"))
+            elapsed = (completed - started).total_seconds()
+        except (KeyError, AttributeError, TypeError, ValueError) as exc:
+            raise CandidateSourceError(f"{name} 缺少完整服务端时间") from exc
+        require(0 <= elapsed <= 150, f"{name} 完整耗时超过 150 秒")
+
+
+def list_attempt_jobs(fetch: Callable[[str], dict[str, Any]], prefix: str,
+                      run_id: int, attempt: int) -> list[dict[str, Any]]:
+    entries = []
+    for page in range(1, 101):
+        response = fetch(f"{prefix}/runs/{run_id}/attempts/{attempt}/jobs?per_page=100&page={page}")
+        batch = response.get("jobs")
+        require(isinstance(batch, list) and all(isinstance(job, dict) for job in batch),
+                "原 attempt jobs 列表无效")
+        entries.extend(batch)
+        if len(batch) < 100:
+            return entries
+    raise CandidateSourceError("原 attempt jobs 超过有界分页上限")
 
 
 def resolve_candidate(
@@ -90,6 +124,7 @@ def resolve_candidate(
             matches.append((item, int(match.group(1))))
     require(len(matches) == 1, "IDENTITY_UNVERIFIABLE：candidate artifact 不唯一或不存在；请指定 artifact ID")
     artifact, attempt = matches[0]
+    require(original.get("run_attempt", attempt) == attempt, "preview artifact 属于过期 attempt")
     require(type(artifact.get("id")) is int and artifact["id"] > 0
             and artifact.get("expired") is False
             and type(artifact.get("size_in_bytes")) is int and artifact["size_in_bytes"] > 0
@@ -98,13 +133,19 @@ def resolve_candidate(
     digest = artifact.get("digest")
     require(isinstance(digest, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is not None,
             "candidate artifact 缺少服务端 SHA256")
-    jobs = fetch(f"{prefix}/runs/{candidate_run_id}/attempts/{attempt}/jobs?per_page=100")
-    entries = jobs.get("jobs")
-    require(isinstance(entries, list), "原 attempt jobs 列表无效")
-    candidate_jobs = [job for job in entries if isinstance(job, dict) and job.get("name") == JOB_NAME]
-    require(len(candidate_jobs) == 1 and candidate_jobs[0].get("conclusion") == "success"
-            and candidate_jobs[0].get("status") == "completed",
-            "原 attempt candidate job 未真实成功")
+    entries = list_attempt_jobs(fetch, prefix, candidate_run_id, attempt)
+    names = {job.get("name") for job in entries}
+    if NEW_JOB_NAME in names:
+        require(JOB_NAME not in names, "preview producer schema 混用")
+        for name in NEW_REQUIRED_JOBS:
+            completed_job(entries, name, qualified=True)
+        builds = [name for name in names if isinstance(name, str) and name.startswith(BUILD_JOB_PREFIX)]
+        require(len(builds) > 0, "preview 缺少插件构建阶段")
+        for name in builds:
+            completed_job(entries, name, qualified=True)
+    else:
+        require(workflow_sha in LEGACY_CONTROL_SHAS, "legacy preview controller 未在受控来源范围")
+        completed_job(entries, JOB_NAME, qualified=False)
     return {
         "workflowSha": workflow_sha,
         "runId": candidate_run_id,

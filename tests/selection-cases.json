@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "SC09",
+      "repository": "Plugins",
+      "changes": [
+        "plugins/specialized/BetterGI/data/editor.js"
+      ],
+      "mustInclude": [
+        "plugins.plugin.contract:BetterGI",
+        "plugins.plugin.adapter:BetterGI"
+      ],
+      "mustExclude": [
+        "plugins.plugin.*:GameCheckIn",
+        "plugins.plugin.*:ZenlessZoneZeroOneDragon"
+      ],
+      "reason": "单专项仅自身"
+    },
+    {
+      "id": "SC10",
+      "repository": "Plugins",
+      "changes": [
+        "plugins/general/GameCheckIn/tests/ChangedTests.cs"
+      ],
+      "mustInclude": [
+        "plugins.plugin.component:GameCheckIn"
+      ],
+      "mustExclude": [
+        "plugins.plugin.*:BetterGI"
+      ],
+      "reason": "测试本身修改必须触发"
+    },
+    {
+      "id": "SC11",
+      "repository": "Plugins",
+      "changes": [
+        "plugins/general/GameCheckIn/README.md"
+      ],
+      "mustInclude": [
+        "plugins.docs",
+        "plugins.plugin.package:GameCheckIn"
+      ],
+      "mustExclude": [
+        "plugins.plugin.component:*",
+        "plugins.plugin.capability:*"
+      ],
+      "reason": "README打包字节与功能验证分离"
+    },
+    {
+      "id": "SC12",
+      "repository": "Plugins",
+      "changes": [
+        "plugins/specialized/BetterGI/store.json"
+      ],
+      "mustInclude": [
+        "plugins.plugin.contract:BetterGI",
+        "plugins.plugin.package:BetterGI"
+      ],
+      "mustExclude": [
+        "plugins.plugin.adapter:*"
+      ],
+      "reason": "只改变展示元数据，不更改任务行为"
+    },
+    {
+      "id": "SC13",
+      "repository": "Plugins",
+      "changes": [
+        "host.lock.json"
+      ],
+      "mustInclude": [
+        "plugins.inventory"
+      ],
+      "mustExclude": [],
+      "reason": "受改兼容字段的全部消费者；不是总是空选择"
+    },
+    {
+      "id": "SC14",
+      "repository": "Plugins",
+      "changes": [
+        "tests/inputs.lock.json"
+      ],
+      "mustInclude": [
+        "plugins.ci-policy"
+      ],
+      "mustExclude": [],
+      "reason": "只改Maa native字段扩至Maa；只改Host SHA扩至实际Host消费者"
+    },
+    {
+      "id": "SC16",
+      "repository": "Plugins",
+      "changes": [
+        {
+          "status": "R",
+          "old": "plugins/specialized/BetterGI/data/a.js",
+          "new": "plugins/specialized/BAAH/data/a.js"
+        }
+      ],
+      "mustInclude": [
+        "plugins.plugin.adapter:BetterGI",
+        "plugins.plugin.adapter:BAAH"
+      ],
+      "mustExclude": [],
+      "reason": "重命名两端都需要"
+    },
+    {
+      "id": "SC17",
+      "repository": "Plugins",
+      "changes": [
+        {
+          "status": "D",
+          "path": "plugins/specialized/BetterGI/plugin.json"
+        }
+      ],
+      "mustInclude": [
+        "plugins.inventory",
+        "plugins.release-contract"
+      ],
+      "mustExclude": [],
+      "reason": "删除目录不能漏；按旧登记验证移除"
+    },
+    {
+      "id": "SC20",
+      "repository": "Plugins",
+      "changes": [
+        "catalog.json",
+        ".release-state.json",
+        "packages/BetterGI/example.zip"
+      ],
+      "mustInclude": [
+        "plugins.release-contract"
+      ],
+      "mustExclude": [
+        "plugins.plugin.capability:*"
+      ],
+      "reason": "只有通过publisher父链/路径验证才按生成物处理；否则失败"
+    }
+  ]
+}

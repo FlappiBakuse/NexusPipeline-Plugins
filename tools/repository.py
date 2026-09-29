@@ -40,6 +40,10 @@ def _parser() -> argparse.ArgumentParser:
             "validate-host-locales",
             "candidate",
             "candidate-scope",
+            "candidate-plan",
+            "candidate-assemble",
+            "preview-plan",
+            "preview-assemble",
             "inspect-candidate",
             "validate-candidate",
             "extract-candidate",
@@ -77,6 +81,8 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--producer-output", type=Path, help="preview producer sidecar 输出路径（必须位于候选目录之外）")
     parser.add_argument("--producer", type=Path, help="preview producer sidecar 输入路径")
     parser.add_argument("--reuse-candidate", type=Path, help="已验证旧 stable candidate；仅复用相同输入包")
+    parser.add_argument("--plan-phase", type=Path, help="候选计划阶段清单")
+    parser.add_argument("--package-phases", type=Path, help="逐插件构建阶段目录")
     return parser
 
 
@@ -159,6 +165,75 @@ def main(argv: list[str] | None = None) -> int:
                     stream.write(f"needs_build={'true' if result['needsBuild'] else 'false'}\n")
                     stream.write(f"source_sha={result['sourceSha']}\n")
             print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+        elif args.command == "candidate-plan":
+            from repository_candidate import plan_stable_candidate
+
+            if args.host_root is None or args.output is None or not args.sdk_sha:
+                raise RepositoryError("candidate-plan 必须指定固定 Host SHA、检出和输出")
+            result = plan_stable_candidate(root, args.host_root, args.output, sdk_sha=args.sdk_sha)
+            plan = result["plan"]
+            needs_build = bool(plan["requiresPackage"] or plan["deleted"] or plan["relocated"])
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+                    stream.write(f"partner_sha={result['partnerSha']}\n")
+                    stream.write(f"needs_build={'true' if needs_build else 'false'}\n")
+                    stream.write(f"package_count={len(plan['requiresPackage'])}\n")
+                    stream.write("managed=" + json.dumps(plan["managed"], separators=(",", ":")) + "\n")
+                    stream.write("matrix=" + json.dumps(
+                        {"include": [{"artifact": artifact} for artifact in plan["requiresPackage"]]},
+                        separators=(",", ":")) + "\n")
+            print(json.dumps({"status": "BUILD_REQUIRED" if needs_build else "NO_CHANGES",
+                              "sourceSha": result["sourceSha"],
+                              "requiresPackage": plan["requiresPackage"]}, ensure_ascii=False), flush=True)
+        elif args.command == "candidate-assemble":
+            from repository_candidate import assemble_stable_candidate
+
+            if (args.host_root is None or args.output is None or args.plan_phase is None
+                    or args.package_phases is None or not args.sdk_sha or not args.workflow_sha
+                    or not args.run_id or not args.run_attempt):
+                raise RepositoryError("candidate-assemble 缺少固定计划、包阶段或 producer 身份")
+            result = assemble_stable_candidate(
+                root, args.host_root, args.plan_phase, args.package_phases, args.output,
+                sdk_sha=args.sdk_sha, workflow_sha=args.workflow_sha,
+                run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"status={result['status']}\n")
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+            print(json.dumps(result, ensure_ascii=False), flush=True)
+        elif args.command == "preview-plan":
+            from repository_candidate import plan_preview_candidate
+
+            if args.host_root is None or args.output is None or not args.sdk_sha:
+                raise RepositoryError("preview-plan 必须指定固定 Host SHA、检出和输出")
+            result = plan_preview_candidate(root, args.host_root, args.output, sdk_sha=args.sdk_sha)
+            if args.github_output:
+                with args.github_output.open("a", encoding="utf-8") as stream:
+                    stream.write(f"source_sha={result['sourceSha']}\n")
+                    stream.write(f"partner_sha={result['partnerSha']}\n")
+                    stream.write("matrix=" + json.dumps(
+                        {"include": [{"artifact": artifact}
+                                     for artifact in result["plan"]["requiresPackage"]]},
+                        separators=(",", ":")) + "\n")
+                    stream.write("managed=" + json.dumps(result["plan"]["managed"],
+                                                         separators=(",", ":")) + "\n")
+            print(json.dumps({"sourceSha": result["sourceSha"],
+                              "packages": result["plan"]["requiresPackage"]}, ensure_ascii=False), flush=True)
+        elif args.command == "preview-assemble":
+            from repository_candidate import assemble_preview_candidate
+
+            if (args.host_root is None or args.output is None or args.plan_phase is None
+                    or args.package_phases is None or args.producer_output is None
+                    or not args.sdk_sha or not args.workflow_sha
+                    or not args.run_id or not args.run_attempt):
+                raise RepositoryError("preview-assemble 缺少固定计划、包阶段或 producer 身份")
+            result = assemble_preview_candidate(
+                root, args.host_root, args.plan_phase, args.package_phases,
+                args.output, args.producer_output, sdk_sha=args.sdk_sha,
+                workflow_sha=args.workflow_sha,
+                run_id=int(args.run_id), run_attempt=int(args.run_attempt))
+            print(json.dumps(result, ensure_ascii=False), flush=True)
         elif args.command == "extract-candidate":
             from repository_candidate import extract_candidate_artifact
 

@@ -3,8 +3,20 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArguments, selectChanged, validateInventory } from "./selection.mjs";
+import { runScopeCommand } from "./scope-cli.mjs";
+import { runPluginGate } from "./gate-runner.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
+if (process.argv[2] === "plan") {
+  try { runScopeCommand(root, process.argv.slice(3)); process.exit(0); }
+  catch (error) { console.error(error.stack || error.message); process.exit(2); }
+}
+if (process.argv[2] === "gate") {
+  if (process.argv.length !== 7 || process.argv[3] !== "--id" || process.argv[5] !== "--host-root")
+    throw new Error("Usage: node tests/run.mjs gate --id <gateId> --host-root <fixed Host checkout>");
+  try { process.exit(await runPluginGate(process.argv[4], path.resolve(process.argv[6]))); }
+  catch (error) { console.error(error.stack || error.message); process.exit(1); }
+}
 const policyBytes = fs.readFileSync(path.join(root, "tests/policy.json"));
 const policy = JSON.parse(policyBytes);
 let input;
@@ -21,7 +33,8 @@ try {
   ({ sha256 } = await support("report.mjs"));
   ({ findAvailablePort } = await support("test-runtime.mjs"));
 } catch (error) { console.error(`Host test input is missing required runner capabilities: ${error.message}`); process.exit(7); }
-const budget = new Budget("Plugins invocation", policy.invocationBudgetMs, { reserveMs: policy.cleanupReserveMs });
+const budget = new Budget("Plugins invocation", policy.invocationBudgetMs,
+  { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs });
 const artifact = path.resolve(process.env.NEXUS_TEST_ARTIFACT_ROOT || path.join(process.env.RUNNER_TEMP || os.tmpdir(), "NexusPipeline.Tests"));
 const marker = path.join(artifact, ".nxp-test-artifact-root.json");
 if (!fs.existsSync(artifact)) {
@@ -207,12 +220,15 @@ finally {
     }
   }
   const cleanup = getProcessRunnerState(); if (!cleanup.cleanupComplete) code ||= 6;
+  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
   if (budget.remainingMs({ cleanup: true }) <= 0) code ||= 5;
   if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
+  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
     runId, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",
-    exitCode: code, failure, budgetMs: policy.invocationBudgetMs, elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup }, null, 2));
+    exitCode: code, failure, budgetMs: policy.invocationBudgetMs, qualificationMs: policy.qualificationMs,
+    elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup }, null, 2));
   fs.closeSync(log); process.removeListener("SIGINT", abort); process.removeListener("SIGTERM", abort);
 }
 process.exitCode = code;

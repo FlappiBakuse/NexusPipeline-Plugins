@@ -53,7 +53,7 @@ try {
   fs.copyFileSync(path.join(source, "src/bin/Release/net8.0", dll), path.join(payload, dll));
   const settingsPath = path.join(runtime.runtimeDir, "config/settings.json");
   const settings = JSON.parse(fs.readFileSync(settingsPath));
-  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, BrowserAutoOpen: false,
+  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, AutoOpenBrowser: false,
     PluginPreferences: { "game-checkin": { Enabled: true } } });
   fs.writeFileSync(settingsPath, JSON.stringify(settings));
   const plan = path.join(runtime.runtimeDir, "http-plan.json");
