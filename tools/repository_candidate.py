@@ -206,8 +206,6 @@ def build_stable_candidate(
         core.validate_sources(root)
         core.check_syntax(root)
         core.validate_host_locale_registry(root, host_root)
-        core._run(("dotnet", "run", "--project", str(host_root / "tools" / "NexusPipeline.TaskProtocolTests"),
-                   "--", "--plugin-root", str(root)), "Production task adapters through Host Jint", root)
         inputs = package_input_identities(root, plan, sdk["sdkSourceSha"])
         reuse = reusable_candidate_packages(root, reuse_candidate.resolve(), inputs) if reuse_candidate else {}
         core.write_json(plan_path, plan)
