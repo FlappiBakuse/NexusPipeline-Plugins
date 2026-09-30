@@ -1,6 +1,7 @@
 import argparse
 import importlib.util
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -13,14 +14,14 @@ from repository_candidate import package_input_identities
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument("--host-root", type=Path, required=True)
+    parser.add_argument("--host-root", type=Path)
     parser.add_argument("--artifact", required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--plan-phase", type=Path)
     parser.add_argument("--sdk-sha")
     args = parser.parse_args()
-    root, host = args.root.resolve(), args.host_root.resolve()
+    root, host = args.root.resolve(), args.host_root.resolve() if args.host_root else None
     phase = read_json(args.plan_phase) if args.plan_phase else None
     if phase is not None:
         if (not isinstance(phase, dict) or phase.get("schemaVersion") != 1
@@ -35,11 +36,16 @@ def main():
                    if item.artifact_name == args.artifact), None)
     if plugin is None or args.output.exists():
         raise ValueError("Unknown plugin or existing package output")
+    if plugin.kind == "managed-code" and host is None:
+        raise ValueError("Managed package requires an explicit Host SDK input")
     args.output.mkdir(parents=True)
-    temporary = args.output.resolve() / "package.build.zip"
+    output = args.output.resolve()
+    if os.name == "nt":
+        output = Path("\\\\?\\" + str(output))
+    temporary = output / "package.build.zip"
     build_plugin_package(plugin, temporary, root, host_root=host)
     preliminary = package_metadata(temporary)
-    package = args.output.resolve() / f"{plugin.artifact_name}-{plugin.version}-{preliminary.sha256}.zip"
+    package = output / f"{plugin.artifact_name}-{plugin.version}-{preliminary.sha256}.zip"
     temporary.rename(package)
     metadata = package_metadata(package)
     _validate_zip(package, mode="preview", expected_artifact=plugin.artifact_name,

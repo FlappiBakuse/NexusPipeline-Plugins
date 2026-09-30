@@ -23,6 +23,10 @@ try {
     'if "%~4"=="am" (', "echo Success", "exit /b 0", ")", "exit /b 18"].join("\r\n"));
   runtime.startRuntime(["service"], { NEXUS_LD_CONSOLE_EXE: consolePath, NEXUS_ADB_EXE: adb, NEXUS_MUMU_MANAGER_EXE: mumu });
   await runtime.waitForService(null, 5000);
+  if (process.env.NEXUS_TEST_HOST_UI === "false") {
+    assert.ok(!fs.existsSync(path.join(runtime.runtimeDir, "wwwroot/index.html")));
+    assert.equal((await runtime.api("GET", "index.html")).status, 404);
+  }
   for (let index = 0; index < 2; index++) {
     if (fs.existsSync(path.join(owned, "offline"))) fs.unlinkSync(path.join(owned, "offline"));
     const fixture = runtime.makeFixture(`emulator-${index}`);

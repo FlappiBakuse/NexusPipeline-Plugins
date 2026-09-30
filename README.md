@@ -124,3 +124,5 @@ NexusPipeline-Plugins/
 - [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。
+
+测试源码固定输入位于 `tests/inputs.lock.json`，与 `host.lock.json` 的 API/locale 兼容元数据分离。升级测试 Host 锁时先取得含所需支持工具的真实已合入 Host SHA，再迁移 Plugins 生产者；本地未提交指纹不能填入正式锁。PR 的逻辑义务按最多五批执行，入口与完整预算见 [核心测试](docs/TESTING.md)。

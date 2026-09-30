@@ -60,6 +60,8 @@ export function selectChanged(root, base, policy, budget) {
 }
 
 export function validateInventory(root, policy) {
+  if(new Set(Object.keys(policy.plugins).map(name=>name.toLowerCase())).size!==Object.keys(policy.plugins).length)
+    throw new Error("Case-colliding plugin policy identities");
   if (policy.invocationBudgetMs !== 180000 || policy.qualificationMs !== 150000 || policy.cleanupReserveMs < 10000
       || policy.cleanupReserveMs > 20000 || policy.pluginCleanupReserveMs !== 5000)
     throw new Error("Unregistered invocation or cleanup budget");
@@ -80,5 +82,5 @@ export function validateInventory(root, policy) {
         throw new Error("Empty or duplicate case policy");
       actual.push(manifest.artifactName);
     }
-  if (actual.length !== Object.keys(policy.plugins).length || new Set(actual).size !== actual.length) throw new Error("Incomplete plugin inventory");
+  if (actual.length !== Object.keys(policy.plugins).length || new Set(actual.map(name=>name.toLowerCase())).size !== actual.length) throw new Error("Incomplete plugin inventory");
 }

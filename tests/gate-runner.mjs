@@ -6,6 +6,8 @@ import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { readRegistry } from "./scope-plan.mjs";
 import { validateInventory } from "./selection.mjs";
+import {coreUnits} from "./core-plan.mjs";
+import {runPluginCore} from "./plugin-core.mjs";
 
 const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
 const root = path.resolve(import.meta.dirname, "..");
@@ -23,6 +25,17 @@ export async function runPluginGate(id, hostRoot) {
   const hostDirty = Boolean(execFileSync("git", ["-C", hostRoot, "status", "--porcelain"], { encoding: "utf8" }).trim());
   const lock = JSON.parse(fs.readFileSync(path.join(root, "tests/inputs.lock.json"), "utf8")).host;
   if (hostSha !== lock.commitSha) throw new Error("Host test input differs from lock");
+  if(artifact&&["frontend","component","adapter","capability"].includes(templateId.split(".").at(-1))) {
+    const units=coreUnits([{id}],registry,policy);
+    const bytes=fs.readFileSync(path.join(root,"tests/policy.json"));
+    const outcome=await runPluginCore({root,policyBytes:bytes,input:{command:"plugin",options:{"--plugin":artifact,"--host-root":hostRoot,
+      ...(artifact==="MaaFrameworkDriver"?{"--profile":"adapter"}:{})}},batch:{batch:{units}}});
+    const item=outcome.reports[0];
+    fs.writeFileSync(path.join(outcome.runRoot,"gate-report.json"),JSON.stringify({schemaVersion:1,scope:"LOCAL_GATE",gateId:id,kind:gate.kind,
+      source:outcome.plugins?.source,partner:outcome.host?.source,policyDigest:digest,status:outcome.code?"FAIL":"PASS",exitCode:outcome.code,
+      selectedCases:item?.expectedCaseIds??[],completedCases:item?.completedCaseIds??[],scenarios:item?.completedScenarioIds??[],counts:item?.counts??null,cleanup:outcome.cleanup},null,2));
+    return outcome.code;
+  }
   const support = name => import(pathToFileURL(path.join(hostRoot, "tests/support", name)).href);
   const { Budget } = await support("budget.mjs");
   const { runProcess, getProcessRunnerState } = await support("process-runner.mjs");
@@ -51,7 +64,7 @@ export async function runPluginGate(id, hostRoot) {
   const sourceSha = execFileSync("git", ["-C", root, "rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   const sourceDirty = Boolean(execFileSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8" }).trim());
   let plugins = null, host = null, exitCode = 0, failure = null;
-  let cases = null, counts = null, scenarios = null;
+  let cases = null, expectedCases = null, counts = null, scenarios = null;
   const artifacts = [];
   async function run(label, command, args, cwd = plugins?.directory || root, extraEnv = {}) {
     budget.check();
@@ -82,6 +95,7 @@ export async function runPluginGate(id, hostRoot) {
       stagePlugins();
       if (!["README.md", "docs"].every(name => fs.existsSync(path.join(plugins.directory, name))))
         throw new Error("Required plugin documentation is missing");
+      await run("核验文档相对链接与片段",process.execPath,["tools/check-doc-links.mjs"]);
     } else if (artifact) {
       const item = policy.plugins[artifact];
       const dimension = templateId.replace(/^plugins\.plugin\./, "");
@@ -108,59 +122,6 @@ export async function runPluginGate(id, hostRoot) {
               || built.sha256 !== sha256(fs.readFileSync(archive))) throw new Error("Built package identity mismatch");
           artifacts.push(archive, packageReport);
         }
-      } else if (dimension === "frontend") {
-        stagePlugins();
-        const directory = path.join(plugins.directory, item.root, "frontend");
-        if (!fs.existsSync(path.join(directory, "package.json"))) throw new Error("Selected frontend is missing");
-        await run("准备锁定前端依赖", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
-        await run("检查插件前端类型", npm, ["run", "typecheck"], directory);
-        await run("构建插件前端", npm, ["run", "build"], directory);
-        const output = path.join(plugins.directory, item.root, "web", "main.js");
-        if (!fs.existsSync(output)) throw new Error("Plugin frontend build output is missing");
-        const saved = path.join(runRoot, "frontend-main.js");
-        fs.copyFileSync(output, saved); artifacts.push(saved);
-      } else if (dimension === "component" && item.kind === "managed-code") {
-        stagePlugins(); stageHost();
-        const raw = path.join(runRoot, "native.trx"), normalized = path.join(runRoot, "native.json");
-        await run("运行组件验证", "dotnet", ["test", item.testProject, "-c", "Release",
-          `-p:NexusHostRoot=${host.directory}`, "-p:UseSharedCompilation=false", "--disable-build-servers", "--nologo",
-          "--logger", "trx;LogFileName=native.trx", "--results-directory", runRoot]);
-        await run("读取原生用例", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
-        const native = JSON.parse(fs.readFileSync(normalized, "utf8"));
-        const methods = [...new Set(native.caseIds.map(value => value.split("(")[0]))].sort();
-        if (!native.caseIds.length || native.failed || native.skipped
-            || JSON.stringify(methods) !== JSON.stringify([...item.expectedMethods].sort()))
-          throw new Error("Component native case set differs from policy");
-        cases = native.caseIds; counts = { passed: native.passed, failed: native.failed, skipped: native.skipped };
-        artifacts.push(raw, normalized);
-      } else if (dimension === "adapter" || dimension === "capability") {
-        const innerId = `${runId}-inner`;
-        const profile = artifact === "MaaFrameworkDriver" && dimension === "adapter" ? ["--profile", "adapter"] : [];
-        await run("验证实际插件能力", process.execPath, ["tests/run.mjs", "plugin", "--plugin", artifact,
-          ...profile, "--host-root", hostRoot], root, { NEXUS_TEST_RUN_ID: innerId });
-        const inner = path.join(artifactRoot, "runs", innerId);
-        const summary = JSON.parse(fs.readFileSync(path.join(inner, "summary.json"), "utf8"));
-        if (summary.status !== "PASS" || summary.exitCode !== 0 || !summary.cleanup.cleanupComplete
-            || summary.plugins.length !== 1 || summary.plugins[0].plugin !== artifact)
-          throw new Error("Inner capability evidence failed");
-        const result = summary.plugins[0];
-        if (result.status !== "PASS" || result.counts.failed || result.counts.skipped)
-          throw new Error("Capability did not pass");
-        if (dimension === "capability" && JSON.stringify(result.completedScenarioIds) !== JSON.stringify([item.realScenario]))
-          throw new Error("Real capability scenario is missing");
-        cases = result.completedCaseIds; counts = result.counts; scenarios = result.completedScenarioIds;
-        const copied = path.join(runRoot, "native"); fs.mkdirSync(copied);
-        for (const file of [path.join(inner, "summary.json"), path.join(inner, artifact, "summary.json"),
-          path.join(inner, artifact, "native.trx"), path.join(inner, artifact, "native.json"),
-          path.join(inner, artifact, "capability.json"),
-          ...fs.readdirSync(path.join(inner, artifact)).filter(name => name.endsWith(".json")
-            && !["summary.json", "native.json", "capability.json"].includes(name))
-            .map(name => path.join(inner, artifact, name))]) {
-          if (fs.existsSync(file)) {
-            const target = path.join(copied, path.basename(path.dirname(file)) + "-" + path.basename(file));
-            fs.copyFileSync(file, target); artifacts.push(target);
-          }
-        }
       } else throw new Error(`Unsupported plugin gate dimension: ${id}`);
     } else throw new Error(`Gate has no execution contract: ${id}`);
   } catch (error) {
@@ -175,7 +136,7 @@ export async function runPluginGate(id, hostRoot) {
       source: plugins?.source ?? { commitSha: sourceSha, workingTreeDirty: sourceDirty },
       partner: gate.partnerRequired ? host?.source ?? { commitSha: hostSha, workingTreeDirty: hostDirty } : null,
       policyDigest: digest,
-      digestFormat: "utf8-lf-v1", selectedCases: cases, completedCases: cases, counts, scenarios,
+      digestFormat: "utf8-lf-v1", selectedCases: expectedCases, completedCases: cases, counts, scenarios,
       status: exitCode ? "FAIL" : "PASS", exitCode, failure,
       timing: { qualificationMs: 150000, hardTimeoutMs: 180000, localElapsedMs: budget.elapsedMs, actualJobMs: null },
       cleanup, artifacts: artifacts.map(file => ({ file: path.relative(runRoot, file).replaceAll("\\", "/"),

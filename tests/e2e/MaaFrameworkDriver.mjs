@@ -35,6 +35,10 @@ try {
   fs.writeFileSync(path.join(project, "interface.json"), JSON.stringify(pi));
   fs.writeFileSync(path.join(project, "resource/pipeline/main.json"), JSON.stringify({ Entry: { recognition: "DirectHit", action: "DoNothing" } }));
   runtime.startRuntime(["service"]); await runtime.waitForService(null, 5000);
+  if (process.env.NEXUS_TEST_HOST_UI === "false") {
+    assert.ok(!fs.existsSync(path.join(runtime.runtimeDir, "wwwroot/index.html")));
+    assert.equal((await runtime.api("GET", "index.html")).status, 404);
+  }
   const invoke = async (route, body, status = 200) => {
     const response = await runtime.api("POST", `api/plugin-api/${manifest.name}/${route}`, body);
     const value = await response.json(); assert.equal(response.status, status, JSON.stringify(value)); return value;
