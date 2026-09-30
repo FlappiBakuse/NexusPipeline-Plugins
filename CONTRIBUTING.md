@@ -52,7 +52,7 @@ python tools/repository.py verify --scope all --base origin/main --host-root ..\
 # 合并后本地候选诊断：合成 run ID 不能用于远端发布
 python tools/repository.py candidate --host-root ..\NexusPipeline --sdk-sha <Host_SHA> --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
 
-# Actions 手动只读候选；publish-only 必须另传原 candidate run ID
+# 获明确远端执行授权后的候选；publish-only 另传原 candidate run ID
 gh workflow run publish-stable.yml --ref main -f operation=candidate -f source_ref=main
 
 # develop preview：只写新的本地 .generated/preview，不写 stable 文件
@@ -121,3 +121,7 @@ Pull Request 应包含：
 插件行为变化时提高插件自身版本，并在 PR 中说明对已有脚本实例 profile、用户配置和判断脚本的影响。宿主 API 变化时同步检查 `minHostVersion`，避免插件索引允许安装到不支持所需契约的宿主版本。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。
+
+测试政策登记清单是当前核心能力的事实来源；新增插件同时登记实际组件实例、场景和生产包义务，清单不固定为十三。批次 CI、测试 Host source 锁与完整时长规则见 [核心测试](docs/TESTING.md)。
+
+仓库根目录的 `global.json` 固定 .NET 8 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 8。

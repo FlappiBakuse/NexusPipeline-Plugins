@@ -18,6 +18,10 @@ stable 发行物由受信 Publisher App 写入 `main`；develop preview 使用�
 | `maastellasora` | `MaaStellaSora` |
 | `march7th` | `March7thAssistant` |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` |
+| `emulator-support` | `EmulatorSupport` |
+| `maa-framework` | `MaaFrameworkDriver` |
+| `okww` | `OkWutheringWaves` |
+| `oknte` | `OkNTE` |
 | `game-checkin` | `GameCheckIn` |
 | `custom-wallpaper` | `CustomWallpaper` |
 | `live-screenshot` | `LiveScreenshot` |
@@ -36,6 +40,10 @@ packages/
 ├── MaaEnd/MaaEnd-<version>.zip
 ├── MaaStellaSora/MaaStellaSora-<version>.zip
 ├── March7thAssistant/March7thAssistant-<version>.zip
+├── EmulatorSupport/EmulatorSupport-<version>.zip
+├── MaaFrameworkDriver/MaaFrameworkDriver-<version>.zip
+├── OkWutheringWaves/OkWutheringWaves-<version>.zip
+├── OkNTE/OkNTE-<version>.zip
 └── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-<version>.zip
 ```
 
@@ -214,6 +222,6 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 
 ## 校验工作流
 
-`scope` job 根据完整变更确定适用插件；每个选中插件在独立 Windows 矩阵 job 中运行三分钟内的生产能力测试并提交原生报告。纯文档变更明确为 N/A；未知共享输入保守选择全部。`Plugins / Required` 汇总核对本次 run/attempt、源码与 Host 锁、原生用例及场景、清理、插件预算和 Actions 完整 job 时长，失败、取消、意外跳过或 API 不可达均失败。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，执行实际生产打包与包验收；功能测试在合并前的适用日常核心门禁执行，候选阶段不重复运行。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
+`scope` 根据完整变更与固定测试 Host 输入规划逻辑义务；可选 control 和最多五个 Windows batch 按同输入准备图运行原生能力与独立生产 ZIP 验证。每个物理 job 三分钟硬停止；Required 与可信 main 的 Final Budget 两项检查均须成功，完整预算及启用状态见 [核心测试](TESTING.md) 和 [STATUS](STATUS.md)。纯文档变更明确为 N/A；未知共享输入保守选择全部。`Plugins / Required` 汇总核对本次 run/attempt、源码与 Host 锁、原生用例及场景、清理、插件预算和 Actions 完整 job 时长，失败、取消、意外跳过或 API 不可达均失败。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，执行实际生产打包与包验收；功能测试在合并前的适用日常核心门禁执行，候选阶段不重复运行。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
