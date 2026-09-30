@@ -1,10 +1,10 @@
-name: Build develop preview candidate
+name: Plugins 预览发布
 
 on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Build/promote a new preview candidate or restore an original candidate
+        description: 构建并提升新预览候选或恢复原始候选
         required: true
         default: candidate
         type: choice
@@ -12,21 +12,21 @@ on:
           - candidate
           - restore
       publish:
-        description: Promote the validated candidate with the protected Publisher App
+        description: 通过受保护的发布 App 提升已核验候选
         required: true
         default: false
         type: boolean
       source_ref:
-        description: Source ref to build (normally develop)
+        description: 构建源码引用（通常为 develop）
         required: true
         default: develop
         type: string
       candidate_run_id:
-        description: Original preview candidate run ID for publish-only recovery
+        description: 仅发布恢复使用的原始预览候选运行 ID
         required: false
         type: string
       candidate_artifact_id:
-        description: Artifact ID when the original run has multiple successful candidates
+        description: 原始运行包含多个成功候选时使用的产物 ID
         required: false
         type: string
 
@@ -48,7 +48,7 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       managed: ${{ steps.plan.outputs.managed }}
     steps:
-      - name: 校验受控develop来源
+      - name: 校验受控 develop来源
         id: develop
         working-directory: ${{ github.workspace }}
         shell: pwsh
@@ -70,17 +70,17 @@ jobs:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
           persist-credentials: false
-      - name: 检出固定develop源码
+      - name: 检出固定 develop源码
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ steps.develop.outputs.sha }}
           path: NexusPipeline-Plugins-Source
           persist-credentials: false
-      - name: 准备Python工具链
+      - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: 固定官方宿主SDK
+      - name: 固定官方宿主 SDK
         id: host
         shell: pwsh
         run: |
@@ -89,7 +89,7 @@ jobs:
           $sha = ($line[0] -split '\s+')[0]
           if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
           "sha=$sha" >> $env:GITHUB_OUTPUT
-      - name: 检出固定宿主SDK
+      - name: 检出固定宿主 SDK
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
@@ -132,29 +132,29 @@ jobs:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
           persist-credentials: false
-      - name: 检出固定develop源码
+      - name: 检出固定 develop源码
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ needs.preview-plan.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source
           persist-credentials: false
-      - name: 检出固定宿主SDK
+      - name: 检出固定宿主 SDK
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
           ref: ${{ needs.preview-plan.outputs.partner_sha }}
           path: NexusPipeline
           persist-credentials: false
-      - name: 准备Python工具链
+      - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: 准备受影响插件Node工具链
+      - name: 准备受影响插件 Node 工具链
         if: contains(fromJSON(needs.preview-plan.outputs.managed), matrix.artifact)
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "24"
-      - name: 准备受影响插件.NET工具链
+      - name: 准备受影响插件 .NET 工具链
         if: contains(fromJSON(needs.preview-plan.outputs.managed), matrix.artifact)
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
@@ -200,20 +200,20 @@ jobs:
           ref: ${{ github.workflow_sha }}
           path: NexusPipeline-Plugins
           persist-credentials: false
-      - name: 检出固定develop源码
+      - name: 检出固定 develop源码
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ needs.preview-plan.outputs.source_sha }}
           path: NexusPipeline-Plugins-Source
           persist-credentials: false
-      - name: 检出固定宿主SDK
+      - name: 检出固定宿主 SDK
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
           ref: ${{ needs.preview-plan.outputs.partner_sha }}
           path: NexusPipeline
           persist-credentials: false
-      - name: 准备Python工具链
+      - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
@@ -273,7 +273,7 @@ jobs:
           path: NexusPipeline-Plugins-Source
           fetch-depth: 1
           persist-credentials: false
-      - name: 准备Python工具链
+      - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
@@ -282,7 +282,7 @@ jobs:
         with:
           name: plugins-develop-preview-${{ github.run_id }}-${{ github.run_attempt }}
           path: NexusPipeline-Plugins/.generated
-      - name: Create publisher App token
+      - name: 创建发布 App 令牌
         id: app-token
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
         with:
@@ -291,7 +291,7 @@ jobs:
           owner: FlappiBakuse
           repositories: NexusPipeline-Plugins
           permission-contents: write
-      - name: Publish immutable preview transaction
+      - name: 发布不可变预览事务
         env:
           PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
           SOURCE_SHA: ${{ needs.build-preview.outputs.source_sha }}
@@ -314,7 +314,7 @@ jobs:
       run:
         working-directory: NexusPipeline-Plugins
     steps:
-      - name: Require main-controlled restore inputs
+      - name: 核验 main 控制的恢复输入
         working-directory: ${{ github.workspace }}
         shell: bash
         env:
@@ -333,11 +333,11 @@ jobs:
           path: NexusPipeline-Plugins
           fetch-depth: 1
           persist-credentials: false
-      - name: 准备Python工具链
+      - name: 准备 Python 工具链
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: Resolve original successful producer and artifact
+      - name: 定位原始成功构建与候选产物
         id: original
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -348,7 +348,7 @@ jobs:
           args=(--candidate-run-id "$CANDIDATE_RUN_ID" --current-run-id "$GITHUB_RUN_ID" --github-output "$GITHUB_OUTPUT")
           if [[ -n "$CANDIDATE_ARTIFACT_ID" ]]; then args+=(--artifact-id "$CANDIDATE_ARTIFACT_ID"); fi
           python tools/repository_preview_source.py "${args[@]}"
-      - name: Download exact original artifact
+      - name: 下载原始候选产物
         env:
           GITHUB_TOKEN: ${{ github.token }}
           ARTIFACT_ID: ${{ steps.original.outputs.artifact_id }}
@@ -360,7 +360,7 @@ jobs:
             "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$ARTIFACT_ID/zip"
           python tools/repository.py extract-preview --artifact-zip .generated/preview-artifact.zip \
             --expected-digest "$ARTIFACT_DIGEST" --output .generated/preview-restore
-      - name: Inspect candidate source before checkout
+      - name: 核验候选源码身份
         id: source
         run: >-
           python tools/repository.py inspect-preview
@@ -377,7 +377,7 @@ jobs:
           path: NexusPipeline-Plugins-Source
           fetch-depth: 1
           persist-credentials: false
-      - name: Validate original source tree, candidate and producer
+      - name: 核验原始源码、候选与构建
         run: >-
           python tools/repository.py publish-preview
           --generated-root .generated/preview-restore/preview
@@ -387,7 +387,7 @@ jobs:
           --workflow-sha '${{ steps.original.outputs.workflow_sha }}'
           --run-id '${{ steps.original.outputs.run_id }}'
           --run-attempt '${{ steps.original.outputs.run_attempt }}'
-      - name: Create publisher App token
+      - name: 创建发布 App 令牌
         id: app-token
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
         with:
@@ -396,7 +396,7 @@ jobs:
           owner: FlappiBakuse
           repositories: NexusPipeline-Plugins
           permission-contents: write
-      - name: Publish original preview bytes without rebuilding
+      - name: 发布已核验的原始预览包
         env:
           PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
         run: >-
