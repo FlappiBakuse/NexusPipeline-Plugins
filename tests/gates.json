@@ -51,7 +51,7 @@
     {
       "id": "plugins.required",
       "repository": "Plugins",
-      "name": "Plugins / Required",
+      "name": "Plugins / 必需汇总",
       "kind": "aggregate",
       "hardTimeoutMs": 180000,
       "qualificationMs": 150000,

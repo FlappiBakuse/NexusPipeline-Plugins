@@ -25,7 +25,10 @@ try {
   const page = await browser.newPage({ locale: "zh-CN" }); page.setDefaultTimeout(3000);
   await page.goto(runtime.serviceUrl() + "#/settings");
   const card = page.getByTestId("custom-wallpaper-card");
-  await card.getByRole("button", { name: /自定义壁纸/ }).click();
+  const toggle = card.getByRole("button", { name: /自定义壁纸/ });
+  // 插件模块在导航完成后异步挂载；就绪等待仍受父 runner 预算约束。
+  await toggle.waitFor({ state: "visible", timeout: 10000 });
+  await toggle.click();
   await card.getByText("owned-0.png", { exact: true }).waitFor();
   const enabled = card.getByRole("button", { name: "启用自定义壁纸", exact: true });
   await Promise.all([page.waitForResponse(response => response.url().endsWith(base + "settings") && response.request().method() === "PUT"), enabled.click()]);
