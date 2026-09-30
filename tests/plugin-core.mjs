@@ -45,6 +45,7 @@ const env = { ...process.env, TEMP: temporary, TMP: temporary,
   npm_config_cache: process.env.npm_config_cache || path.join(artifact, "cache/npm"),
   DOTNET_CLI_HOME: process.env.DOTNET_CLI_HOME || path.join(artifact, "cache/dotnet"),
   DOTNET_GENERATE_ASPNET_CERTIFICATE: "false", DOTNET_CLI_USE_MSBUILD_SERVER: "0", DOTNET_CLI_UI_LANGUAGE: "en",
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1", DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE: "true", DOTNET_NOLOGO: "1",
   PYTHONDONTWRITEBYTECODE: "1", PYTHONUTF8: "1" };
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const python = process.platform === "win32" ? "python" : "python3";
@@ -79,20 +80,54 @@ try {
     && !["EmulatorSupport", "MaaFrameworkDriver"].includes(name));
   const specialized = selection.selected.some(name => policy.plugins[name].kind === "data-specialized");
   const hostBuild = path.join(runRoot, "test-host");
-  if (managed) {
-    const frontend = path.join(host.directory, "frontend");
-    if (withUi) {
-    if (!fs.existsSync(path.join(frontend, "node_modules/.package-lock.json"))) await step("Host frontend dependencies", npm, ["ci", "--no-audit", "--no-fund"], { cwd: frontend });
-    await step("Host frontend build", npm, ["run", "build"], { cwd: frontend });
-    }
-    await step("shared Test Host", "dotnet", ["publish", "src/NexusPipeline.csproj", ...dotnetOptions(), "-r", "win-x64",
-      "--self-contained", "false", "-p:NexusTestHost=true", "-p:PublishSingleFile=true", "-p:DebugType=none", "-p:DebugSymbols=false", "-o", hostBuild], { cwd: host.directory });
-    await step("Test Host manifest", python, ["tools/pe_manifest.py", "--exe", path.join(hostBuild, "nexus-pipeline.exe"), "--expected-level", "asInvoker"], { cwd: host.directory });
-    if (withUi) fs.cpSync(path.join(frontend, "dist"), path.join(hostBuild, "wwwroot"), { recursive: true });
-    else fs.mkdirSync(path.join(hostBuild, "wwwroot"));
-    const browser = path.join(host.directory, "tests/e2e");
-    if (withUi && !fs.existsSync(path.join(browser, "node_modules/playwright/package.json"))) await step("shared browser bindings", npm, ["ci", "--no-audit", "--no-fund"], { cwd: browser });
-  }
+  const managedNames = selection.selected.filter(name => policy.plugins[name].kind === "managed-code");
+  const frontendNames = managedNames.filter(name => (!batch || wants(name,"frontend") || wants(name,"capability"))
+    && fs.existsSync(path.join(plugins.directory,policy.plugins[name].root,"frontend")));
+  const componentNames = managedNames.filter(name => !batch || wants(name,"component") || capability(name));
+  const preparation = await Promise.allSettled([
+    (async () => {
+      if (!managed) return;
+      const frontend = path.join(host.directory,"frontend");
+      const hostSteps = await Promise.allSettled([
+        (async () => {
+          if (!withUi) return;
+          if (!fs.existsSync(path.join(frontend,"node_modules/.package-lock.json")))
+            await step("Host frontend dependencies",npm,["ci","--no-audit","--no-fund"],{cwd:frontend});
+          await step("Host frontend build",npm,["run","build"],{cwd:frontend});
+          const browser = path.join(host.directory,"tests/e2e");
+          if (!fs.existsSync(path.join(browser,"node_modules/playwright/package.json")))
+            await step("shared browser bindings",npm,["ci","--no-audit","--no-fund"],{cwd:browser});
+        })(),
+        (async () => {
+          await step("shared Test Host","dotnet",["publish","src/NexusPipeline.csproj",...dotnetOptions(),"-r","win-x64",
+            "--self-contained","false","-p:NexusTestHost=true","-p:PublishSingleFile=true","-p:DebugType=none","-p:DebugSymbols=false","-o",hostBuild],{cwd:host.directory});
+          await step("Test Host manifest",python,["tools/pe_manifest.py","--exe",path.join(hostBuild,"nexus-pipeline.exe"),"--expected-level","asInvoker"],{cwd:host.directory});
+        })(),
+      ]);
+      const failed = hostSteps.find(outcome => outcome.status === "rejected");
+      if (failed) throw failed.reason;
+      if (withUi) fs.cpSync(path.join(frontend,"dist"),path.join(hostBuild,"wwwroot"),{recursive:true});
+      else fs.mkdirSync(path.join(hostBuild,"wwwroot"));
+    })(),
+    (async () => {
+      if (!frontendNames.length) return;
+      await step("shared plugin frontend dependencies",npm,["ci",...frontendNames.map(name=>`--workspace=${policy.plugins[name].root}/frontend`),
+        "--include-workspace-root","--no-audit","--no-fund"]);
+      for (const name of frontendNames) {
+        const frontend = path.join(plugins.directory,policy.plugins[name].root,"frontend");
+        await step(`${name}: frontend typecheck`,npm,["run","typecheck"],{cwd:frontend});
+        await step(`${name}: frontend build`,npm,["run","build"],{cwd:frontend});
+      }
+    })(),
+    (async () => {
+      // Component projects share their production SDK/TestKit graph; build them serially.
+      // Test Host uses its separate restore/output graph and can prepare concurrently.
+      for (const name of componentNames)
+        await step(`${name}: component build`,"dotnet",["build",policy.plugins[name].testProject,...dotnetOptions()]);
+    })(),
+  ]);
+  const preparationFailure = preparation.find(outcome => outcome.status === "rejected");
+  if (preparationFailure) throw preparationFailure.reason;
   if (specialized) await step("shared Jint test engine", "dotnet", ["build", "tools/NexusPipeline.TaskProtocolTests", ...dotnetOptions(), "-p:NexusTestHost=true"], { cwd: host.directory });
   for (const name of selection.selected) {
     const item = policy.plugins[name];
@@ -123,15 +158,8 @@ try {
           result.completedScenarioIds = [item.realScenario]; result.artifacts.push(path.join(directory, "capability.json"));
           result.boundaries.real.push(...capability.real); result.boundaries.substituted.push(...capability.substituted);
         };
-        const frontendWork = (async () => {
-          if (!fs.existsSync(frontend) || batch&&!wants(name,"frontend")&&!wants(name,"capability")) return;
-          await run("frontend dependencies", npm, ["ci", "--workspace", `${item.root}/frontend`, "--include-workspace-root", "--no-audit", "--no-fund"]);
-          await run("frontend typecheck", npm, ["run", "typecheck"], { cwd: frontend });
-          await run("frontend build", npm, ["run", "build"], { cwd: frontend });
-        })();
         const componentWork = (async()=>{
           if(batch&&!wants(name,"component")&&!capability(name)) return;
-          await run("component build", "dotnet", ["build", item.testProject,...dotnetOptions()]);
           let listing="";
           await run("component discovery", "dotnet", ["test",item.testProject,...dotnetOptions(),"--no-build","--no-restore","--list-tests"],{capture:text=>{listing+=text;}});
           const expected=discoverCases(listing,item.expectedMethods);
@@ -141,9 +169,7 @@ try {
           await run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),"--no-build","--no-restore",
             "--logger", "trx;LogFileName=native.trx", "--results-directory", directory]);
         })();
-        const outcomes = await Promise.allSettled([frontendWork, componentWork]);
-        const failed = outcomes.find(outcome => outcome.status === "rejected");
-        if (failed) throw failed.reason;
+        await componentWork;
         if(!batch||wants(name,"component")||capability(name)) {
         await run("native counts", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
         const native = JSON.parse(fs.readFileSync(normalized, "utf8"));

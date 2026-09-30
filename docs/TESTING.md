@@ -29,6 +29,8 @@ node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 | 八专项 | 生产 Jint discover/observe/retry、12 次观察及新 run 隔离、固定日志轨迹；BetterGI/ZZZ 生产编辑脚本 | 合成配置、日志和账号 |
 | MaaFrameworkDriver | 18 项编译/授权规则、6 次预览、2 次实际 native worker 与拥有窗口 | 最小 DirectHit/DoNothing PI，不证明真实游戏任务 |
 
+Host Test Host 与插件组件使用独立的恢复和输出图，可以并行准备；共享生产 SDK/TestKit 的组件工程仍串行构建。选中的插件前端共用一次 npm workspace 依赖安装，类型检查与构建逐插件执行。组件发现、原生测试、真实 Host 能力、包构建和清理继续逐项记录，并共享同一个父预算。
+
 Maa native 输入单独准备并验证官方压缩包及文件 hash：
 
 ```text
