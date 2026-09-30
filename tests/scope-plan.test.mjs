@@ -12,6 +12,23 @@ const policy = JSON.parse(fs.readFileSync(path.join(root, "tests/policy.json"), 
 const ids = changes => planForChanges(root, changes, registry, policy).selected.map(item => item.id);
 const change = name => [{ status: "M", path: name }];
 
+test("removed plugin paths retain inventory without scheduling absent runtime", () => {
+  const reduced = structuredClone(policy);
+  reduced.retiredPlugins = { BetterGI: reduced.plugins.BetterGI };
+  delete reduced.plugins.BetterGI;
+  const selected = planForChanges(root, [{ status: "D", path: "plugins/specialized/BetterGI/plugin.json" }], registry, reduced).selected.map(item=>item.id);
+  assert.ok(selected.includes("plugins.inventory") && selected.includes("plugins.release-contract"));
+  assert.ok(!selected.some(id=>id.endsWith(":BetterGI")));
+});
+
+test("a policy registered fourteenth plugin participates in complete core", () => {
+  const expanded=structuredClone(policy);
+  expanded.plugins.Additional={...expanded.plugins.BetterGI,root:"plugins/specialized/Additional"};
+  const selected=planForChanges(root, [], registry, expanded).selected.map(item=>item.id);
+  for(const dimension of ["contract","package","adapter"])
+    assert.ok(selected.includes(`plugins.plugin.${dimension}:Additional`));
+});
+
 test("plugin scope separates specialized behavior, package text and metadata", () => {
   const specialized = ids(change("plugins/specialized/BetterGI/data/editor.js"));
   assert.ok(specialized.includes("plugins.plugin.contract:BetterGI"));
