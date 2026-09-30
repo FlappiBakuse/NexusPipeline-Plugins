@@ -45,6 +45,8 @@ CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全�
 
 正式完整资格为每物理 job 150 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + Required + begin + finalize 最多十个 job。Required 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
 
+Required 只等待仍在排队或运行中的可信 main begin 登记，最多 100 秒，并受自身 130 秒工作截止约束；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
+
 ### 同 SHA 完整重跑
 
 首次 CI 由 `requested` 事件登记一次可信 begin。完整重跑不产生该事件，须由已审核 `main` 显式登记新的 attempt；新 Required 只接受本次 PR/head/run/attempt 身份，未登记时失败。先重跑整个生产者，读取新的 attempt，再执行：
