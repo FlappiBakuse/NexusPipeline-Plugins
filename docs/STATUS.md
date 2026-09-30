@@ -1,6 +1,6 @@
 # 项目状态（Status）
 
-**更新日期**：2026-09-30｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / Required`、`Plugins / Final Budget` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
+**更新日期**：2026-09-30｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / 必需汇总`、`Plugins / 完整预算` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
 
 > 本文件记录尚未完成的开发计划、活跃技术验证和当前未解决问题，不重复已完成事项。当前实现和支持范围以代码、测试及[专项适配器说明](TASK_ADAPTERS.md)为准；发布事实以发行记录为准。本地测试或 develop 推送不代表插件已正式发布。正式版本仅按用户明确指定修改。
 
