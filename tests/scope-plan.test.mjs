@@ -12,6 +12,11 @@ const policy = JSON.parse(fs.readFileSync(path.join(root, "tests/policy.json"), 
 const ids = changes => planForChanges(root, changes, registry, policy).selected.map(item => item.id);
 const change = name => [{ status: "M", path: name }];
 
+test("producer naming and report matching inputs select the CI policy owner", () => {
+  for (const file of ["tests/ci-names.json", "tests/ci-names.mjs", "tests/batch-required.py", "tests/test_batch_required.py"])
+    assert.deepEqual(ids(change(file)), ["plugins.ci-policy", "plugins.required", "plugins.scope"]);
+});
+
 test("removed plugin paths retain inventory without scheduling absent runtime", () => {
   const reduced = structuredClone(policy);
   reduced.retiredPlugins = { BetterGI: reduced.plugins.BetterGI };
