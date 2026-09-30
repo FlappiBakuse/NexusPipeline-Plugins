@@ -139,6 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - run: echo "NEXUS_TEST_JOB_STARTED_AT_MS=$(date +%s%3N)" >> "$GITHUB_ENV"
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           path: Plugins
