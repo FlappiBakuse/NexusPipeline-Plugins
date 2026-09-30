@@ -61,7 +61,7 @@ async function step(label, command, args, { cwd = plugins?.directory || root, ac
   phases.push({ label, elapsedMs: budget.elapsedMs - started, exitCode });
   if (exitCode) throw Object.assign(new Error(`${label}: exit ${exitCode}`), { exitCode });
 }
-const dotnetOptions = () => ["-c", "Release", "-p:UseSharedCompilation=false", "--disable-build-servers", "--nologo",
+const dotnetOptions = () => ["-c", "Release", "-p:UseSharedCompilation=false", "--disable-build-servers", "--nologo", "-m:1",
   `-p:NexusHostRoot=${host.directory}`];
 try {
   selection = batch ? {selected:units.map(unit=>unit.artifact),reason:"planned runtime units"} : input.command === "plugin" ? { selected: [input.options["--plugin"]], reason: "explicit plugin" }

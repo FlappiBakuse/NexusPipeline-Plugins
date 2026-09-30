@@ -1580,6 +1580,7 @@ def _build_managed(plugin: SourcePlugin, output: Path, root: Path, host_root: Pa
     _require(bool(projects), f"managed-code 插件缺少 csproj：{plugin.artifact_name}")
     resolved_host_root = _find_host_root(root, host_root)
     properties = (
+        "-p:UseSharedCompilation=false",
         "-p:DebugType=None",
         "-p:DebugSymbols=false",
         "-p:ContinuousIntegrationBuild=true",
@@ -1588,11 +1589,11 @@ def _build_managed(plugin: SourcePlugin, output: Path, root: Path, host_root: Pa
         "-p:SuppressImplicitGitSourceLink=true",
         f"-p:NexusHostRoot={resolved_host_root}",
     )
-    _run(("dotnet", "build", str(projects[0]), "--configuration", "Release", "--nologo", "--output", str(output), *properties), f"构建插件：{plugin.artifact_name} v{plugin.version}", root)
+    _run(("dotnet", "build", str(projects[0]), "--configuration", "Release", "--nologo", "-m:1", "--disable-build-servers", "--output", str(output), *properties), f"构建插件：{plugin.artifact_name} v{plugin.version}", root)
     if plugin.artifact_name == "MaaFrameworkDriver":
         worker = plugin.root / "worker" / "NexusPipeline.MaaWorker.csproj"
         _require(worker.is_file(), "MaaFrameworkDriver 缺少独立 worker")
-        _run(("dotnet", "publish", str(worker), "--configuration", "Release", "--nologo",
+        _run(("dotnet", "publish", str(worker), "--configuration", "Release", "--nologo", "-m:1", "--disable-build-servers",
               "--output", str(output / "worker"), "-p:RestoreLockedMode=true",
               *properties), "构建 MaaFramework 独立 worker", root)
 
