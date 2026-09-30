@@ -43,17 +43,17 @@ python tests/bootstrap-native.py --output <新的外部目录> [--archive <已�
 
 随后设置进程环境 `NEXUS_MAA_NATIVE_ROOT` 指向该目录。版本、URL、大小和 SHA256 在 `tests/inputs.lock.json`；测试不自动下载或忽略未知版本。受控 WinForms 窗口必须实际可见，以供 Win32 controller 绑定；场景结束必须退出。
 
-CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全清单与架构合同在 control 执行一次，数据、managed 与 native 按准备图分层，生产包与 Test Host key 分离。每物理 job 三分钟硬停止，Required 汇总独立核验本次报告和 Actions API 完整前序 job 时长。完成后以 `python tests/audit-jobs.py --run-id <ID> --attempt <N>` 只读检查包括 Required 在内的最终时长；可信 main 的 begin 控制器先登记同 PR/head/run/attempt 身份，finalize 在 CI 完成后审计所有物理 job，写入 `Plugins / Final Budget` 检查；该检查须与 `Plugins / Required` 一同绑定到 main 规则。回写检查不存在或失败时不得合并。测试专用 Host SHA 只写入 `tests/inputs.lock.json`，不改变兼容元数据 `host.lock.json`。当前锁要求填写真实合入且包含工具的 Host 提交；缺失时明确失败，不追随浮动 main。本地开发树可带已确认改动，但报告标明源码指纹，不充当正式资格。
+CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全清单与架构合同在 control 执行一次，数据、managed 与 native 按准备图分层，生产包与 Test Host key 分离。每物理 job 三分钟硬停止，必需汇总 汇总独立核验本次报告和 Actions API 完整前序 job 时长。完成后以 `python tests/audit-jobs.py --run-id <ID> --attempt <N>` 只读检查包括 必需汇总 在内的最终时长；可信 main 的 begin 控制器先登记同 PR/head/run/attempt 身份，finalize 在 CI 完成后审计所有物理 job，写入 `Plugins / 完整预算` 检查；该检查须与 `Plugins / 必需汇总` 一同绑定到 main 规则。回写检查不存在或失败时不得合并。测试专用 Host SHA 只写入 `tests/inputs.lock.json`，不改变兼容元数据 `host.lock.json`。当前锁要求填写真实合入且包含工具的 Host 提交；缺失时明确失败，不追随浮动 main。本地开发树可带已确认改动，但报告标明源码指纹，不充当正式资格。
 
 `python tools/repository.py verify`、全部历史 TaskProtocol fixture 和前端模拟 Host 工具保留为显式诊断；其边界不替代上述实际能力证据。生产打包、来源、hash 和 publisher 校验继续由现役发行工具维护。
 
-正式完整资格为每物理 job 150 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + Required + begin + finalize 最多十个 job。Required 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
+正式完整资格为每物理 job 150 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + 必需汇总 + begin + finalize 最多十个 job。必需汇总 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
 
-Required 只等待仍在排队或运行中的可信 main begin 登记，最多 100 秒，并受自身 130 秒工作截止约束；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
+必需汇总 只等待仍在排队或运行中的可信 main begin 登记，最多 100 秒，并受自身 130 秒工作截止约束；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
 
 ### 同 SHA 完整重跑
 
-首次 CI 由 `requested` 事件登记一次可信 begin。完整重跑不产生该事件，须由已审核 `main` 显式登记新的 attempt；新 Required 只接受本次 PR/head/run/attempt 身份，未登记时失败。先重跑整个生产者，读取新的 attempt，再执行：
+首次 CI 由 `requested` 事件登记一次可信 begin。完整重跑不产生该事件，须由已审核 `main` 显式登记新的 attempt；新 必需汇总 只接受本次 PR/head/run/attempt 身份，未登记时失败。先重跑整个生产者，读取新的 attempt，再执行：
 
 ```text
 gh run rerun <producer-run-id> --repo FlappiBakuse/NexusPipeline-Plugins
