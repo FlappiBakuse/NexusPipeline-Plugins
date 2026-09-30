@@ -2,7 +2,7 @@ name: Plugins Final Budget
 
 on:
   workflow_run:
-    workflows: [Plugins CI]
+    workflows: [Plugins CI, Plugins 持续集成]
     types: [requested, completed]
   workflow_dispatch:
     inputs:
