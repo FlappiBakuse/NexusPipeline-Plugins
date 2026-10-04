@@ -98,7 +98,7 @@ export function planForChanges(root, changes, registry, policy, lockChanges = nu
     if (/^(tools\/repository|tools\/.*release|\.github\/workflows\/(?:stable|develop|release))/.test(name)) {
       add("plugins.release-contract", reason); add("plugins.ci-policy", reason); return;
     }
-    if (/^(tests\/(?:core-plan|batch-plan|scope-plan|scope-cli|selection|selection-cases|ci-scope|ci-names|batch-required|test_batch_required|gate-runner|gate-required|test_gate_required|policy|gates|run|ci-gate|audit-jobs|test_audit_jobs|final-budget|test_final_budget|inputs\.lock)|\.github\/workflows\/(?:ci|final-budget)\.yml)/.test(name)) {
+    if (/^(tests\/(?:ci-inputs|ci_inputs|test_ci_inputs|core-plan|batch-plan|scope-plan|scope-cli|selection|selection-cases|ci-scope|ci-names|batch-required|test_batch_required|gate-runner|gate-required|test_gate_required|policy|gates|run|ci-gate|audit-jobs|test_audit_jobs|final-budget|test_final_budget|inputs\.lock)|\.github\/workflows\/(?:ci|final-budget)\.yml)/.test(name)) {
       add("plugins.ci-policy", reason);
       if (name === "tests/inputs.lock.json") {
         add("plugins.inventory", reason);
@@ -205,9 +205,9 @@ export function createScopePlan(root, options = {}) {
   }
   const routing = planForChanges(root, identity.changes, registry, policy, lockChanges);
   const controlManifest=readControlManifest(root);
-  const batchIdentity = {...identity, partnerSha:options.partnerSha ?? null, controlManifest};
+  const batchIdentity = {...identity, partnerSha:options.partnerSha ?? null, ...(options.inputPair ? {inputPair:options.inputPair} : {}), controlManifest};
   const allocation = allocateUnits(coreUnits(routing.selected,registry,policy),batchIdentity,policy.ciBatchPolicy);
   return { schemaVersion: 2, repository: registry.repository, policyDigest: hash(JSON.stringify(controlManifest)), digestFormat: "utf8-lf-v1",
     ...identity, partnerSha: options.partnerSha ?? null, runId: options.runId ?? null, attempt: options.attempt ?? null,
-    prNumber: options.prNumber ?? null, sourceFingerprint:sourceFingerprint(root), controlManifest, ...routing, ...allocation };
+    inputMode: options.inputPair ? "paired" : "default", inputPair: options.inputPair ?? null, prNumber: options.prNumber ?? null, sourceFingerprint:sourceFingerprint(root), controlManifest, ...routing, ...allocation };
 }
