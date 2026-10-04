@@ -51,3 +51,14 @@ test("production and test input identities cannot share prepare keys",()=>{
   const b=allocateUnits([unit],{mode:"test",sdk:"a"});
   assert.notEqual(a.units[0].prepareKey,b.units[0].prepareKey);
 });
+
+test("browser capability batches reserve preparation without losing package obligations",()=>{
+  const selected=planForChanges(root,[{status:"M",path:"unknown.extension"}],registry,policy).selected;
+  const plan=allocateUnits(coreUnits(selected,registry,policy),{},policy.ciBatchPolicy);
+  assert.equal(plan.capacityStatus,"PLANNED");
+  assert.ok(plan.batches.length<=5);
+  assert.deepEqual(plan.batches.flatMap(batch=>batch.units.flatMap(unit=>unit.provides)).concat(plan.control.units.flatMap(unit=>unit.provides)).sort(),plan.requiredObligations);
+  for(const batch of plan.batches.filter(batch=>batch.units.some(unit=>unit.preparations.includes("host.browser")))) {
+    assert.ok(!batch.units.some(unit=>unit.preparations.some(preparation=>preparation.startsWith("plugin.production-package:"))));
+  }
+});

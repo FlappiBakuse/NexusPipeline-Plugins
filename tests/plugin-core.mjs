@@ -72,7 +72,7 @@ try {
   if (process.env.CI && host.source.workingTreeDirty) throw Object.assign(new Error("CI requires a clean fixed Host test input"), { exitCode: 7 });
   if (process.env.CI) {
     const locked = JSON.parse(fs.readFileSync(path.join(root, "tests/inputs.lock.json"))).host;
-    if (locked.repository !== "FlappiBakuse/NexusPipeline" || host.source.commitSha !== locked.commitSha)
+    if (locked.repository !== "FlappiBakuse/NexusPipeline" || host.source.commitSha !== (batch?.plan.inputPair?.sources[0].testedSha ?? locked.commitSha))
       throw Object.assign(new Error("Host input differs from the test lock"), { exitCode: 7 });
   }
   const managed = selection.selected.some(name => policy.plugins[name].kind === "managed-code" && capability(name));
@@ -260,7 +260,7 @@ finally {
   if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
   if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
-    runId, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
+    runId, inputPair:batch?.plan.inputPair??null, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",
     exitCode: code, failure, budgetMs: policy.invocationBudgetMs, qualificationMs: policy.qualificationMs,
     elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup }, null, 2));

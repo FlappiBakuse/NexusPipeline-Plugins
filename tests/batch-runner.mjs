@@ -1,4 +1,5 @@
 import {controlManifest as readControlManifest,sourceFingerprint} from "./control-inputs.mjs";
+import {validatePairCheckout} from "./ci-inputs.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import {execFileSync} from "node:child_process";
@@ -34,13 +35,14 @@ export function loadBatch(root,args) {
   const actualManifest=readControlManifest(root);
   if(digest(actualManifest)!==digest(plan.controlManifest)||hash(JSON.stringify(actualManifest))!==plan.policyDigest) throw new Error("Control input fingerprint differs from plan");
   const partnerRoot=options["--host-root"] ? path.resolve(options["--host-root"]) : process.env.NEXUS_HOST_ROOT;
+  validatePairCheckout(root,file,plan,partnerRoot);
   const partnerPolicy=null;
   const basePolicy=JSON.parse(execFileSync("git",["-C",root,"show",`${plan.baseSha}:tests/policy.json`],{encoding:"utf8"}));
   policy.retiredPlugins=Object.fromEntries(Object.entries(basePolicy.plugins).filter(([name])=>!Object.hasOwn(policy.plugins,name)));
-  const routing=plan.diagnosticSelection?planForChanges(root,plan.changes,registry,policy):createScopePlan(root,{base:plan.baseSha,head:plan.headSha,partnerSha:plan.partnerSha,includeWorkingTree:!process.env.CI});
+  const routing=plan.diagnosticSelection?planForChanges(root,plan.changes,registry,policy):createScopePlan(root,{base:plan.baseSha,head:plan.headSha,inputPair:plan.inputPair,partnerSha:plan.partnerSha,includeWorkingTree:!process.env.CI});
   if(!same(routing.selected.map(item=>item.id),plan.selected.map(item=>item.id))) throw new Error("Selected obligations differ from semantic plan");
   const identity={baseSha:plan.baseSha,headSha:plan.headSha,mergeBase:plan.mergeBase,testedSha:plan.testedSha,dirty:plan.dirty,changes:plan.changes,
-    partnerSha:plan.partnerSha,controlManifest:plan.controlManifest};
+    partnerSha:plan.partnerSha,...(plan.inputPair ? {inputPair:plan.inputPair} : {}),controlManifest:plan.controlManifest};
   const expected=allocateUnits(coreUnits(plan.selected,registry,policy,partnerPolicy),identity,policy.ciBatchPolicy);
   for(const field of ["units","batches","control","requiredObligations","capacityStatus","estimatedTotalJobs"])
     if(digest(expected[field])!==digest(plan[field])) throw new Error(`Altered batch plan: ${field}`);
@@ -51,14 +53,14 @@ export function loadBatch(root,args) {
   if(process.env.CI) {
     if(plan.diagnosticSelection) throw new Error("Diagnostic selection cannot qualify Actions");
     if(plan.dirty||String(plan.runId)!==process.env.GITHUB_RUN_ID||String(plan.attempt)!==process.env.GITHUB_RUN_ATTEMPT) throw new Error("CI run/attempt/clean identity mismatch");
-    const current=createScopePlan(root,{base:plan.baseSha,head:plan.headSha,partnerSha:plan.partnerSha,partnerRoot});
+    const current=createScopePlan(root,{base:plan.baseSha,head:plan.headSha,inputPair:plan.inputPair,partnerSha:plan.partnerSha,partnerRoot});
     if(digest(current.changes)!==digest(plan.changes)) throw new Error("CI source diff differs from plan");
   }
   const batch=options["--batch"]==="control"?plan.control:plan.batches.find(item=>item.id===options["--batch"]);
   if(!batch?.units.length) throw new Error("Unknown or empty batch");
   if(batch.units.some(unit=>unit.kind==="partner-jint"&&!unit.partnerPlugins.length)) throw new Error("Missing fixed partner native obligations");
   if(batch.units.some(unit=>unit.kind==="plugin"&&(unit.pluginKind==="data-specialized"||unit.expectedMethodIds.length||unit.expectedScenarioIds.length)||unit.id.startsWith("plugins.plugin.package:")&&unit.pluginKind==="managed-code")&&!partnerRoot) throw new Error("Runtime/managed package requires --host-root");
-  if(process.env.CI&&partnerRoot&&execFileSync("git",["-C",partnerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim()!==JSON.parse(fs.readFileSync(path.join(root,"tests/inputs.lock.json"))).host.commitSha) throw new Error("CI Host differs from fixed lock");
+  if(process.env.CI&&!plan.inputPair&&partnerRoot&&execFileSync("git",["-C",partnerRoot,"rev-parse","HEAD"],{encoding:"utf8"}).trim()!==JSON.parse(fs.readFileSync(path.join(root,"tests/inputs.lock.json"))).host.commitSha) throw new Error("CI Host differs from fixed lock");
   return {plan,batch,partnerRoot,planDigest:hash(bytes)};
 }
 
@@ -79,7 +81,7 @@ export function saveBatch(context,runRoot,workspace,units,exitCode,elapsedMs,cle
   const report={schemaVersion:2,scope:"LOCAL_BATCH_RESULT",qualification:process.env.CI?"CI_PRODUCER_PENDING_AUDIT":"LOCAL_DIAGNOSTIC",
     batchId:context.batch.id,identity:{repository:"FlappiBakuse/NexusPipeline-Plugins",prNumber:context.plan.prNumber,baseSha:context.plan.baseSha,
       headSha:context.plan.headSha,mergeBaseSha:context.plan.mergeBase,testedSha:context.plan.testedSha,runId:context.plan.runId,attempt:context.plan.attempt,
-      partnerSha:context.plan.partnerSha,partner:context.partnerSource??null,partnerFingerprint:context.partnerFingerprint??null,source:workspace?.source??null,sourceFingerprint:workspace?.sourceFingerprint??null,
+      inputMode:context.plan.inputMode??"default",inputPair:context.plan.inputPair??null,partnerSha:context.plan.partnerSha,partner:context.partnerSource??null,partnerFingerprint:context.partnerFingerprint??null,source:workspace?.source??null,sourceFingerprint:workspace?.sourceFingerprint??null,
       workingTreeDirty:workspace?.source.workingTreeDirty??null,toolchain:{...workspace?.toolchain,platform:process.platform,arch:process.arch,rid:"win-x64",buildModes:["production","test-host"]},
       toolchainFingerprint:hash(JSON.stringify({...workspace?.toolchain,platform:process.platform,arch:process.arch,rid:"win-x64",buildModes:["production","test-host"]}))},policyDigest:context.plan.policyDigest,planDigest:context.planDigest,
     status:exitCode?"FAIL":"PASS",exitCode,timing:{qualificationMs:150000,hardTimeoutMs:180000,processElapsedMs:elapsedMs,preparationElapsedMs:context.setupElapsedMs??0,completeJobMs:null},
