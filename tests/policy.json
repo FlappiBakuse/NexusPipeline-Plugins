@@ -171,6 +171,7 @@
       "realScenario": "P-S-MaaEnd"
     },
     "MaaStellaSora": {
+      "editorCaseIds": ["MaaStellaSora.editor-select-and-preserve", "MaaStellaSora.editor-repeat"],
       "root": "plugins/specialized/MaaStellaSora",
       "kind": "data-specialized",
       "defaultProfile": "adapter",
