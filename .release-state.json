@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "83e0c2df102b3f3a966c31fe3f0932e9ff9d136e",
+  "sourceCommit": "a7b7170ba6d9104aaf3d73db93eeb72fbaf16557",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.2.1",
-      "sha256": "8d77a7af4235eb2d94a4948b0f7800a21c3672f605f9028ca17772fffc522d38",
-      "sizeBytes": 95965,
-      "sourceTree": "90434cbc53a421060e899c3f7ecaa592bc5a7431"
+      "version": "0.2.2",
+      "sha256": "5b868d8b63564724a31907615c7628c36bbd1976d4671773d8cf9f73dc0b7615",
+      "sizeBytes": 111579,
+      "sourceTree": "04567beafb4de73aeca7ee5ef9961bda576a11a4"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.3.1",
-      "sha256": "9a4433980559bae39247fd80da2665072f96136436f95fac6f723147bf831cb0",
-      "sizeBytes": 63384,
-      "sourceTree": "6587b60e471f93c6f53ae5f4d87c4f8d11877353"
+      "version": "0.3.2",
+      "sha256": "7f711a0f72ed9f1c3e3855678843b38fa4375b5052a31f17c9a81e46b93ca510",
+      "sizeBytes": 78818,
+      "sourceTree": "f089b91a90da23a2201370e8a0d99ea8b327e043"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
@@ -53,10 +53,10 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.3.1",
-      "sha256": "9e5a89dc7c3eb1a1f7026295e4e5566217794e34b74c00b5c3668d49f1882669",
-      "sizeBytes": 124311,
-      "sourceTree": "518c09e48de06a740fa6116c133b0817398766d7"
+      "version": "0.3.2",
+      "sha256": "060145731bf0e7b7af7f483660da33f0b645c41647cb4c27c7bf8d367f7b00e4",
+      "sizeBytes": 155058,
+      "sourceTree": "dd786daabef9bedf164ee3e9ab53f5c4c5f404b7"
     },
     "MaaFrameworkDriver": {
       "name": "maa-framework",
@@ -69,42 +69,42 @@
     "MaaStellaSora": {
       "name": "maas",
       "artifactName": "MaaStellaSora",
-      "version": "0.2.1",
-      "sha256": "32ecd5ffdd8aa7d8172b23c93d37fd0d2135c4718702b0a38539cada65e1c65b",
-      "sizeBytes": 87017,
-      "sourceTree": "a8e510eb2984bfc21f11cc6bd430888a5126c523"
+      "version": "0.2.2",
+      "sha256": "05f5735265713aca97373314fb87e3a18f4083f9b18375a299f6a4c937012e18",
+      "sizeBytes": 112153,
+      "sourceTree": "acd853e7408ea275ad15018ac3c9ab6f6bd9d97f"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.3.1",
-      "sha256": "61e4f2d0b2dceb01cd4824586ce82e37d2237af45e5af2ab94db6415abb3c5d4",
-      "sizeBytes": 106941,
-      "sourceTree": "b3956a65b35a600ad761ed20af3c5958b3c37734"
+      "version": "0.3.2",
+      "sha256": "3cf132e577d1e38853514f6cc3bc3b63f1a4075efca1ad8acd5575705f35d0f0",
+      "sizeBytes": 130543,
+      "sourceTree": "6fede3ee021b2196b3789cfea21857083ef86b91"
     },
     "OkNTE": {
       "name": "oknte",
       "artifactName": "OkNTE",
-      "version": "0.1.1",
-      "sha256": "fd369bb9a6b375e374709ec6267ad21e7e134f93c63fd5e1bc7d59d5fc427be2",
-      "sizeBytes": 87056,
-      "sourceTree": "db5dc92a3691b275cd4fdf7260a0ea4dd3c4b68b"
+      "version": "0.1.2",
+      "sha256": "276cc396f409001ffe4e0f0ac7074881e63a2e74c5f74e6fb59b8ac7db1dcdb7",
+      "sizeBytes": 93890,
+      "sourceTree": "9870fa0819531a1a8a9056eb1795978b3479e3bc"
     },
     "OkWutheringWaves": {
       "name": "okww",
       "artifactName": "OkWutheringWaves",
-      "version": "0.1.1",
-      "sha256": "dc5eefd6c9487bb10eaef1cc8b8c40fb9ef0c790d706e8402f0f38ead63ba3af",
-      "sizeBytes": 89584,
-      "sourceTree": "0a70f8c99abfdae7ea8a3c1bc2da914431739de5"
+      "version": "0.1.2",
+      "sha256": "d5dd4128adc85692ba53c0f29514166c12b84580524f9366e6e32c8adf1a90a4",
+      "sizeBytes": 98907,
+      "sourceTree": "1607fa2813a10d96bc72a7b5a40170f076678bb8"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.3.1",
-      "sha256": "f92b370fd02c7cb556429a58ef6ab17bd8f736e335f017f8fce0f0a2dcb63dc0",
-      "sizeBytes": 85103,
-      "sourceTree": "855f9f8d6f2d2124a6beb794ed09e607ff67c6a2"
+      "version": "0.3.2",
+      "sha256": "d149dabb8dd8e0fd2cb19b4ee31c680e25a349fd3e3db55611773f4b698169dc",
+      "sizeBytes": 99133,
+      "sourceTree": "178bac1efa56fd7f1ee6901e5b67f5df084f8990"
     }
   }
 }

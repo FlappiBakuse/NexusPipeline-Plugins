@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-09-28T17:40:06Z",
+  "generatedAt": "2026-10-04T10:37:59Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -374,20 +374,28 @@
         "BAAH"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator",
         "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.16.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.2.1.zip",
-      "sha256": "8d77a7af4235eb2d94a4948b0f7800a21c3672f605f9028ca17772fffc522d38",
-      "sizeBytes": 95965,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.2.2.zip",
+      "sha256": "5b868d8b63564724a31907615c7628c36bbd1976d4671773d8cf9f73dc0b7615",
+      "sizeBytes": 111579,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-09-25",
@@ -400,13 +408,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.1.5",
-          "date": "2026-09-13",
-          "items": [
-            "将最低宿主版本要求更新为 0.15.11。"
           ]
         }
       ],
@@ -423,6 +424,13 @@
           ],
           "changelog": [
             {
+              "version": "0.2.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
+            {
               "version": "0.2.1",
               "items": [
                 "Narrowed parallel-task and post-exit retry decisions; silent business steps remain unverified."
@@ -432,12 +440,6 @@
               "version": "0.2.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.1.5",
-              "items": [
-                "Updated the minimum host version requirement to 0.15.11."
               ]
             }
           ]
@@ -462,17 +464,25 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.16.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.3.1.zip",
-      "sha256": "9a4433980559bae39247fd80da2665072f96136436f95fac6f723147bf831cb0",
-      "sizeBytes": 63384,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.3.2.zip",
+      "sha256": "7f711a0f72ed9f1c3e3855678843b38fa4375b5052a31f17c9a81e46b93ca510",
+      "sizeBytes": 78818,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-09-25",
@@ -485,13 +495,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.2.10",
-          "date": "2026-09-13",
-          "items": [
-            "将最低宿主版本要求更新为 0.15.11。"
           ]
         }
       ],
@@ -507,6 +510,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
+            {
               "version": "0.3.1",
               "items": [
                 "Added guarded daily-reward retry selection and the close-game-and-app action."
@@ -516,12 +526,6 @@
               "version": "0.3.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.2.10",
-              "items": [
-                "Updated the minimum host version requirement to 0.15.11."
               ]
             }
           ]
@@ -546,19 +550,27 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.16.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.3.1.zip",
-      "sha256": "9e5a89dc7c3eb1a1f7026295e4e5566217794e34b74c00b5c3668d49f1882669",
-      "sizeBytes": 124311,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.3.2.zip",
+      "sha256": "060145731bf0e7b7af7f483660da33f0b645c41647cb4c27c7bf8d367f7b00e4",
+      "sizeBytes": 155058,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-09-25",
@@ -571,13 +583,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.2.5",
-          "date": "2026-09-13",
-          "items": [
-            "将最低宿主版本要求更新为 0.15.11。"
           ]
         }
       ],
@@ -593,6 +598,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
+            {
               "version": "0.3.1",
               "items": [
                 "Added PC launch-owner admission when neither side starts the game and no visible target exists."
@@ -602,12 +614,6 @@
               "version": "0.3.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.2.5",
-              "items": [
-                "Updated the minimum host version requirement to 0.15.11."
               ]
             }
           ]
@@ -619,7 +625,7 @@
       "artifactName": "MaaStellaSora",
       "displayName": "星塔助手",
       "gameName": "星塔旅人",
-      "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
+      "description": "MaaStellaSora 专项：MFAAvalonia 稳定实例绑定、日常任务观察与失败重试；旧 MXU 配置备份清空后重新设置。",
       "authors": [
         {
           "name": "FlappiBakuse",
@@ -633,19 +639,29 @@
         "MaaFramework"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
-        "emulator"
+        "emulator",
+        "no-fresh-config"
       ],
-      "minHostVersion": "0.16.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.2.1.zip",
-      "sha256": "32ecd5ffdd8aa7d8172b23c93d37fd0d2135c4718702b0a38539cada65e1c65b",
-      "sizeBytes": 87017,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.2.2.zip",
+      "sha256": "05f5735265713aca97373314fb87e3a18f4083f9b18375a299f6a4c937012e18",
+      "sizeBytes": 112153,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。",
+            "使用 MFAAvalonia 稳定实例；旧 MXU 配置在 Host 启动恢复后备份清空，由用户重新设置。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-09-25",
@@ -658,13 +674,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.1.3",
-          "date": "2026-09-12",
-          "items": [
-            "机器标识由 maastellasora 更新为 maas，并要求宿主执行对应配置迁移。"
           ]
         }
       ],
@@ -680,6 +689,14 @@
           ],
           "changelog": [
             {
+              "version": "0.2.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery.",
+                "Uses stable MFAAvalonia instances; Host archives and clears legacy MXU configuration after startup recovery so users can configure it again."
+              ]
+            },
+            {
               "version": "0.2.1",
               "items": [
                 "Added independent PC launch-owner admission while preserving the existing machine identity."
@@ -689,12 +706,6 @@
               "version": "0.2.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.1.3",
-              "items": [
-                "Renamed the machine identifier from maastellasora to maas and requires the host migration for existing settings."
               ]
             }
           ]
@@ -719,17 +730,25 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [],
-      "minHostVersion": "0.16.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.3.1.zip",
-      "sha256": "61e4f2d0b2dceb01cd4824586ce82e37d2237af45e5af2ab94db6415abb3c5d4",
-      "sizeBytes": 106941,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.3.2.zip",
+      "sha256": "3cf132e577d1e38853514f6cc3bc3b63f1a4075efca1ad8acd5575705f35d0f0",
+      "sizeBytes": 130543,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-09-25",
@@ -742,13 +761,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.2.6",
-          "date": "2026-09-13",
-          "items": [
-            "将最低宿主版本要求更新为 0.15.11。"
           ]
         }
       ],
@@ -764,6 +776,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
+            {
               "version": "0.3.1",
               "items": [
                 "Clarified hazardous finish-action admission and preserved parent-child unknown states."
@@ -773,12 +792,6 @@
               "version": "0.3.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.2.6",
-              "items": [
-                "Updated the minimum host version requirement to 0.15.11."
               ]
             }
           ]
@@ -802,19 +815,28 @@
         "专项插件"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkNTE",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": true,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
-        "no-fresh-config"
+        "no-fresh-config",
+        "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.16.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkNTE/OkNTE-0.1.1.zip",
-      "sha256": "fd369bb9a6b375e374709ec6267ad21e7e134f93c63fd5e1bc7d59d5fc427be2",
-      "sizeBytes": 87056,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkNTE/OkNTE-0.1.2.zip",
+      "sha256": "276cc396f409001ffe4e0f0ac7074881e63a2e74c5f74e6fb59b8ac7db1dcdb7",
+      "sizeBytes": 93890,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-09-25",
@@ -840,6 +862,13 @@
             "Specialized plugin"
           ],
           "changelog": [
+            {
+              "version": "0.1.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
             {
               "version": "0.1.1",
               "items": [
@@ -873,19 +902,27 @@
         "专项插件"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": true,
-      "version": "0.1.1",
+      "version": "0.1.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.16.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkWutheringWaves/OkWutheringWaves-0.1.1.zip",
-      "sha256": "dc5eefd6c9487bb10eaef1cc8b8c40fb9ef0c790d706e8402f0f38ead63ba3af",
-      "sizeBytes": 89584,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkWutheringWaves/OkWutheringWaves-0.1.2.zip",
+      "sha256": "d5dd4128adc85692ba53c0f29514166c12b84580524f9366e6e32c8adf1a90a4",
+      "sizeBytes": 98907,
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-09-25",
@@ -911,6 +948,13 @@
             "Specialized plugin"
           ],
           "changelog": [
+            {
+              "version": "0.1.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
             {
               "version": "0.1.1",
               "items": [
@@ -945,19 +989,27 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-09-25",
+      "updatedAt": "2026-10-03",
       "hasReadme": false,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "data-specialized",
       "apiVersion": "",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.16.8",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.3.1.zip",
-      "sha256": "f92b370fd02c7cb556429a58ef6ab17bd8f736e335f017f8fce0f0a2dcb63dc0",
-      "sizeBytes": 85103,
+      "minHostVersion": "0.16.14",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.3.2.zip",
+      "sha256": "d149dabb8dd8e0fd2cb19b4ee31c680e25a349fd3e3db55611773f4b698169dc",
+      "sizeBytes": 99133,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-03",
+          "items": [
+            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
+            "更新任务兼容说明和上游发行发现。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-09-25",
@@ -970,13 +1022,6 @@
           "date": "2026-09-21",
           "items": [
             "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
-          ]
-        },
-        {
-          "version": "0.2.10",
-          "date": "2026-09-13",
-          "items": [
-            "将最低宿主版本要求更新为 0.15.11。"
           ]
         }
       ],
@@ -992,6 +1037,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "items": [
+                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
+                "Updated task compatibility and upstream release discovery."
+              ]
+            },
+            {
               "version": "0.3.1",
               "items": [
                 "Corrected unsaved app ordering and satisfied-skip attribution in application groups."
@@ -1001,12 +1053,6 @@
               "version": "0.3.0",
               "items": [
                 "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
-              ]
-            },
-            {
-              "version": "0.2.10",
-              "items": [
-                "Updated the minimum host version requirement to 0.15.11."
               ]
             }
           ]
