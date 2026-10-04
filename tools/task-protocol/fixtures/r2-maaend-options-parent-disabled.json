@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",
@@ -25,34 +25,15 @@
   "results": {},
   "diagnostics": [
     {
-      "code": "mxu.option.DailyEmailRewards.enabled",
+      "code": "mxu.options.DailyRewards",
       "task": "chosen/one",
-      "zh-CN": "邮件奖励：已开启（配置选项，无独立完成证据）",
-      "en-US": "Mail rewards: enabled (configuration only; no independent completion evidence)"
-    },
-    {
-      "code": "mxu.option.DailyTaskRewards.enabled",
-      "task": "chosen/one",
-      "zh-CN": "每日任务奖励：已开启（配置选项，无独立完成证据）",
-      "en-US": "Daily task rewards: enabled (configuration only; no independent completion evidence)"
-    },
-    {
-      "code": "mxu.option.DailyClaimDeliveryJobsRewards.enabled",
-      "task": "chosen/one",
-      "zh-CN": "委托奖励：已开启（配置选项，无独立完成证据）",
-      "en-US": "Delivery rewards: enabled (configuration only; no independent completion evidence)"
-    },
-    {
-      "code": "mxu.option.DailyEventRewards.enabled",
-      "task": "chosen/one",
-      "zh-CN": "活动奖励：已开启（配置选项，无独立完成证据）",
-      "en-US": "Event rewards: enabled (configuration only; no independent completion evidence)"
-    },
-    {
-      "code": "mxu.option.DailyProtocolPassRewards.enabled",
-      "task": "chosen/one",
-      "zh-CN": "通行证奖励：已开启（配置选项，无独立完成证据）",
-      "en-US": "Protocol pass rewards: enabled (configuration only; no independent completion evidence)"
+      "zh-CN": "日常奖励领取选项：5 项开启、0 项关闭、0 项待确认，仅随整项任务判断完成。",
+      "en-US": "Daily reward options: 5 enabled, 0 disabled, 0 unconfirmed; completion is assessed for the whole task."
     }
+  ],
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
   ]
 }

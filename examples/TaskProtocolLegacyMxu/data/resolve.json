@@ -1,0 +1,15 @@
+{
+  "outputEncoding": "utf-8",
+  "require": [
+    {
+      "var": "main",
+      "file": "mxu.exe"
+    }
+  ],
+  "paths": {
+    "mainExe": "{main}",
+    "args": "--autostart --quit-after-run",
+    "configPath": "config",
+    "logPath": ""
+  }
+}

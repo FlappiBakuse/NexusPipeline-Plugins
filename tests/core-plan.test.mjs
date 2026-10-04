@@ -28,7 +28,7 @@ test("all applicable obligations have exactly one predeclared native provider", 
         assert.deepEqual(unit.expectedCaseIds, [...plugin.fixtureIds].sort());
         assert.equal(unit.observeCount, 12); assert.equal(unit.isolatedRunRequired, true);
         assert.equal(unit.observationFixtureId, plugin.fixtureIds[0]);
-        assert.equal(unit.expectedEditorCaseIds.length, ["BetterGI", "ZenlessZoneZeroOneDragon"].includes(name) ? 2 : 0);
+        assert.equal(unit.expectedEditorCaseIds.length, ["BetterGI", "ZenlessZoneZeroOneDragon", "MaaStellaSora"].includes(name) ? 2 : 0);
       } else assert.deepEqual(unit.expectedMethodIds, [...plugin.expectedMethods].sort());
     }
   }

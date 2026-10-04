@@ -39,5 +39,10 @@
   ],
   "resourceSets": [
     "resources/oknte-code-missing.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

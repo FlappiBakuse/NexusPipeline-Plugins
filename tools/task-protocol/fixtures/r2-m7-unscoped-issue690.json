@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -110,11 +110,12 @@
     {
       "lines": [
         "2025-09-12 07:05:34,340 | INFO | 清体力未完成 未找到指定副本"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "power_enable": "unknown"
+    "power_enable": "failed"
   },
   "incidents": [
     {
@@ -141,5 +142,10 @@
     "reportedVersion": "v2025.9.10",
     "binaryIdentityVerified": false,
     "excerptSha256": "1ac01b6965c144ff38e9eef396ee7a71daa1180dcd3d62845c5d442fc995039e"
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

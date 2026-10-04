@@ -197,7 +197,7 @@ try {
         }
       } else {
         result.expectedCaseIds = item.fixtureIds;
-        result.expectedEditorCaseIds = ["BetterGI", "ZenlessZoneZeroOneDragon"].includes(name)
+        result.expectedEditorCaseIds = ["BetterGI", "ZenlessZoneZeroOneDragon", "MaaStellaSora"].includes(name)
           ? [`${name}.editor-select-and-preserve`, `${name}.editor-repeat`] : [];
         result.completedEditorCaseIds = [];
         for (const [index, fixture] of item.fixtureIds.entries()) {

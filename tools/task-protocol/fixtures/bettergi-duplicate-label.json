@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -27,8 +27,13 @@
     }
   ],
   "results": {
-    "mail": "unknown",
-    "closed": "unknown",
-    "custom": "unknown"
-  }
+    "mail": "failed",
+    "closed": "failed",
+    "custom": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

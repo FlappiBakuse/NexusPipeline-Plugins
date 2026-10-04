@@ -1,4 +1,4 @@
-function observe(text, tasks, emit, result, line) {
+function observe(text, tasks, emit, result, line, states) {
   const log = parseOkLog(text);
   if (!log || log.thread !== 'TaskExecutor') return;
   const scopes = result.cursorState.dailyScopes || (result.cursorState.dailyScopes = {});
@@ -6,10 +6,20 @@ function observe(text, tasks, emit, result, line) {
   if (log.owner === 'DailyTask' && log.level === 'INFO' && log.message === 'open_daily') {
     if (Object.keys(scopes).length >= 16 && !scopes[key]) return;
     scopes[key] = { active: true };
+    if (ADAPTER.protocolVersion === '0.2.0')
+      for (const task of tasks.filter(t => t.enabled)) emit(task,'running','okww.step.started');
     return;
   }
   const scope = scopes[key];
-  if (!scope || !scope.active || log.owner !== 'DailyTask') return;
+  if (!scope || !scope.active) return;
+  if (ADAPTER.protocolVersion === '0.2.0' && log.level === 'ERROR' && log.owner === 'TaskExecutor'
+      && /exception stopped/.test(log.message)) {
+    const parent = tasks.find(t => t.sourceKey === 'daily');
+    if (parent) emit(parent,'failed','okww.daily.failed');
+    endRun(result,line,'okww.daily.aborted',true); scope.active = false;
+    return;
+  }
+  if (log.owner !== 'DailyTask') return;
   const task = key => tasks.find(t => t.sourceKey === key && t.enabled);
   const send = (key, status, reason, skipKind) => { const found = task(key); if (found) emit(found, status, reason, skipKind); };
   if (log.level === 'INFO') {
@@ -18,6 +28,11 @@ function observe(text, tasks, emit, result, line) {
     if (starts[log.message]) send(starts[log.message], 'running', 'okww.step.started');
     if (log.message === 'weekly garden already completed') send('garden', 'skipped', 'okww.garden.already_done', 'satisfied');
     if (log.message === 'Daily Task Completed') {
+      if (ADAPTER.protocolVersion === '0.2.0') {
+        for (const child of tasks.filter(t => t.enabled && t.parentId && states[t.id]?.status === 'running'))
+          emit(child,'succeeded','okww.step.completed');
+        send('daily','succeeded','okww.daily.completed');
+      }
       scope.active = false;
       endRun(result, line, 'okww.daily.ended', false);
     }

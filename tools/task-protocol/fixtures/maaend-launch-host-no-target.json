@@ -1,14 +1,40 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
-  "executionContext": { "mode": "pc", "launchOwner": "host", "ready": false },
+  "coverage": "complete",
+  "executionContext": {
+    "mode": "pc",
+    "launchOwner": "host",
+    "ready": false
+  },
   "resources": [
-    { "id": "config:mxu-MaaEnd.json", "format": "json", "text": "{\"settings\":{\"autoStartInstanceId\":\"chosen\"},\"instances\":[{\"id\":\"chosen\",\"tasks\":[]}] }" },
-    { "id": "interface", "format": "text", "text": "{\"name\":\"MaaEnd\",\"task\":[]}" }
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\":{\"autoStartInstanceId\":\"chosen\"},\"instances\":[{\"id\":\"chosen\",\"tasks\":[]}] }"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\":\"MaaEnd\",\"task\":[]}"
+    }
   ],
   "tasks": {},
-  "configChecks": [{ "ruleId": "mxu.launch_owner", "evaluation": "violated", "executionEffect": "block" }],
+  "configChecks": [
+    {
+      "ruleId": "mxu.launch_owner",
+      "evaluation": "violated",
+      "executionEffect": "block"
+    }
+  ],
   "batches": [],
   "results": {},
-  "source": { "type": "synthetic", "note": "Host launch requested without target path; GameLaunchController would skip." }
+  "source": {
+    "type": "synthetic",
+    "note": "Host launch requested without target path; GameLaunchController would skip."
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

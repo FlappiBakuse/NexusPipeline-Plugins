@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -23,42 +23,56 @@
     {
       "lines": [
         "指令[ 执行应用组 one_dragon ] 节点 检测游戏窗口 -> 获取应用组配置 返回状态 成功"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 邮件 ] 节点 检测游戏窗口 返回状态 成功"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 邮件 ] 节点 检测游戏窗口 返回状态 成功"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 邮件 ] 执行失败 返回状态 child failure"
       ],
-      "gap": true
+      "gap": true,
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 邮件 ] 节点 打开邮件 -> 全部领取 返回状态 全部领取"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 邮件 ] 执行成功 返回状态 大世界-普通"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 下一个"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "one_dragon/email": "unknown",
-    "one_dragon/future": "unknown"
-  }
+    "one_dragon/email": "failed",
+    "one_dragon/future": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ],
+  "admissionError": "protocol_error: daily task needs observable boundaries",
+  "observableScopeCase": "daily-r2-zzz-scope-gap.json"
 }

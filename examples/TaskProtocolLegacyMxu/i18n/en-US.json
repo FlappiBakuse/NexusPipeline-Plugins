@@ -1,0 +1,5 @@
+{
+  "judge.success": "All tasks completed successfully",
+  "judge.unknown": "Unrecognized failed tasks: {tasks}; retry configuration was left unchanged",
+  "judge.failed": "Failed tasks: {tasks}; retry configuration was limited to the failed tasks"
+}

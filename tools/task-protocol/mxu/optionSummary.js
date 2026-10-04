@@ -1,6 +1,7 @@
 function optionSummary(plan, task, configured, definition, options) {
   const declared = ADAPTER.optionSummaries?.[configured.taskName];
   if (!declared || !Array.isArray(definition?.option)) return;
+  const summaries = [];
   for (const item of declared) {
     if (!definition.option.includes(item.id)) continue;
     const option = options[item.id];
@@ -15,9 +16,13 @@ function optionSummary(plan, task, configured, definition, options) {
         : ['Yes', 'yes', 'Y', 'y'].includes(option.default_case || option.cases[0]?.name || 'Yes');
       if (typeof value === 'boolean') state = value ? 'enabled' : 'disabled';
     }
-    plan.diagnostics.push({ code: 'mxu.option.' + item.id + '.' + state, taskId: task.id,
-      message: item.id + ': ' + state + ' (configuration only; no independent outcome evidence)',
-      reasonText: { kind: 'plugin', key: item.text + '.' + state, args: {},
-        fallback: item.id + ': ' + state + ' (configuration only)' } });
+    summaries.push({item, state});
+  }
+  if (summaries.length) {
+    const args = {enabled:summaries.filter(s => s.state === 'enabled').length, disabled:summaries.filter(s => s.state === 'disabled').length, unknown:summaries.filter(s => s.state === 'unknown').length};
+    plan.diagnostics.push({code:'mxu.options.' + configured.taskName, taskId:task.id,
+      message: '日常奖励领取选项：' + summaries.map(({item,state}) => item.id + '=' + state).join('、') + '；配置选项无独立完成证据。',
+      reasonText:{kind:'plugin',key:'option.summary.' + configured.taskName,args,
+        fallback:'日常奖励领取包含多个配置选项，无独立完成证据。'}});
   }
 }

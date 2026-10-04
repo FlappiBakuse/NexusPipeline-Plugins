@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -27,11 +27,19 @@
         "指令[ 邮件 ] 节点 检测游戏窗口 返回状态 成功",
         "指令[ 邮件 ] 执行成功 返回状态 完成",
         "指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 下一个"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "one_dragon/email": "unknown",
-    "one_dragon/future": "unknown"
-  }
+    "one_dragon/email": "failed",
+    "one_dragon/future": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ],
+  "admissionError": "protocol_error: daily task needs observable boundaries",
+  "observableScopeCase": "daily-r2-zzz-scope-wrong-skip-name.json"
 }

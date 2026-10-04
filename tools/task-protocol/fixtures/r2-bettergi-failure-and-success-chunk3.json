@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "source": {
     "type": "source_derived",
     "originalArtifact": null,
@@ -34,7 +34,12 @@
   ],
   "results": {
     "自动地脉花": "failed",
-    "领取邮件": "succeeded"
+    "领取邮件": "failed"
   },
-  "boundary": "ended"
+  "boundary": "open",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "queueFollowingWork": "unknown",
   "resources": [
     {
@@ -33,5 +33,10 @@
     "type": "source_derived_control_flow",
     "upstreamCommit": "b9de7becb57d98125edbfc2036a050e8ee04b828",
     "note": "MXU specialTasks.ts power options/default and enabled selection; synthetic configuration, no game or power action executed."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

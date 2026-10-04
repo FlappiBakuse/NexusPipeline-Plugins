@@ -52,5 +52,7 @@
   "reason.baah.task.no_unread": "Checked: no unread conversations",
   "reason.baah.task.price_unreadable": "Could not recognize the purchase price",
   "reason.baah.task.price_limit": "Price exceeds the configured limit; no purchase made",
-  "diagnostic.baah.adb_serial_unverified": "The configuration uses an ADB serial number; its identity cannot be confirmed against the bound network endpoint."
+  "diagnostic.baah.adb_serial_unverified": "The configuration uses an ADB serial number; its identity cannot be confirmed against the bound network endpoint.",
+  "diagnostic.baah.finish_flags": "Review Close game, Close emulator and post-run commands in BAAH completion settings.",
+  "diagnostic.baah.file_logging": "Enable log output to /DATA/LOGS/ in BAAH software settings."
 }

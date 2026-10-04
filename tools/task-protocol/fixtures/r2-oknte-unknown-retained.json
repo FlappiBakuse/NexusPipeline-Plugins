@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -55,7 +55,8 @@
   },
   "batches": [
     {
-      "lines": []
+      "lines": [],
+      "source": "file"
     }
   ],
   "results": {},
@@ -67,5 +68,10 @@
   },
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

@@ -1,13 +1,12 @@
-// Local metadata plus pinned interpretation files; not complete interpreter attestation.
-function runtimeIdentity(app, head, tag, origin, runtimeActivity) {
+// Installation identity and structural contracts do not attest the complete interpreter.
+function runtimeIdentity(app, head, origin, runtimeActivity) {
   const channel = ['China', 'Global'].includes(app?.current_profile) ? app.current_profile : 'unknown';
   const version = typeof app?.current_version === 'string' && /^v[0-9]+\.[0-9]+\.[0-9]+(?:[-.][A-Za-z0-9]+)*$/.test(app.current_version)
     && app.current_version.length <= 48 ? app.current_version : 'unknown';
   const failure = (reason, fallback) => ({ ready: false, reasonText: {
     kind: 'plugin', key: 'diagnostic.runtime.' + reason, args: { channel, version }, fallback
   } });
-  const release = ADAPTER.runtimeProfiles?.[channel] || (channel === 'Global' ? ADAPTER.runtimeRelease : null);
-  if (!app || app.name !== release?.name || app.installed !== true || !release)
+  if (!app || app.name !== ADAPTER.runtimeName || app.installed !== true || channel === 'unknown')
     return failure('installation', '无法确认官方安装身份（{channel} / {version}），请初始化受支持的官方渠道。');
   if (app.update_state !== 'idle' || app.update_target_version || app.update_error
       || runtimeActivity === 'active' || runtimeActivity === 'unknown'
@@ -16,43 +15,20 @@ function runtimeIdentity(app, head, tag, origin, runtimeActivity) {
   if (app.current_version_missing === true || !Array.isArray(app.available_versions)
       || !app.available_versions.includes(app.current_version))
     return failure('version', '当前发行版本尚未通过适配验证（{channel} / {version}），请检查安装版本。');
-  if (app.current_version !== release.version) {
-    const current = /^v(\d+)\.(\d+)\.(\d+)$/.exec(version);
-    const known = /^v(\d+)\.(\d+)\.(\d+)$/.exec(release.version);
-    const newer = current && known && Number(current[1]) === Number(known[1])
-      && ([1, 2, 3].map(i => Number(current[i]) - Number(known[i])).find(n => n !== 0) || 0) > 0;
-    let originUrl = null, inOrigin = false;
-    if (typeof origin === 'string' && origin.length <= 65536) for (const line of origin.split(/\r?\n/)) {
-      const section = /^\s*\[([^\]]+)\]\s*$/.exec(line);
-      if (section) { inOrigin = section[1] === 'remote "origin"'; continue; }
-      const url = /^\s*url\s*=\s*(\S+)\s*$/.exec(line);
-      if (inOrigin && url) { if (originUrl !== null) originUrl = ''; else originUrl = url[1]; }
-    }
-    const official = ADAPTER.runtimeOfficialRepository;
-    const channelOrigins = ADAPTER.runtimeOfficialOriginsByChannel?.[channel];
-    const officialOrigin = official && (originUrl === 'https://github.com/' + official + '.git'
-      || originUrl === 'https://github.com/' + official
-      || originUrl === 'git@github.com:' + official + '.git'
-      || (Array.isArray(channelOrigins) && channelOrigins.includes(originUrl)));
-    if (!newer || !officialOrigin || typeof head !== 'string' || !/^[a-f0-9]{40}\s*$/.test(head)
-        || head.trim() === release.commit)
-      return failure('base_unqualified', '新发行的官方身份或基础入口无法确认（{channel} / {version}），请完成更新或修复安装。');
-    return { ready: true, restricted: true, reasonText: {
-      kind: 'plugin', key: 'diagnostic.runtime.restricted', args: { channel, version },
-      fallback: '官方新发行 {channel} / {version} 尚未验证高级任务判定；本次仅运行基础流程，任务结果保持未核验。'
-    } };
-  }
-  if (typeof head !== 'string' || head.trim() !== release.commit || typeof tag !== 'string' || tag.trim() !== release.tagObject)
-    return failure('repository', '本地 HEAD/tag 与受支持发行不一致（{channel} / {version}），请核对官方安装。');
-  const code = ADAPTER.runtimeCodeResources;
-  let verified = false;
-  try { verified = Array.isArray(code) && code.length > 0 && code.every(id => nexus.readResource(id).integrity === 'verified'); }
-  catch { /* Missing/unreadable bytes are unqualified. */ }
-  if (!verified) return failure('code', '关键运行文件缺失或与已验证发行不同（{channel} / {version}），请修复官方安装后重新检查。');
-  if (runtimeActivity === 'inactive' && app.running === true)
-    return { ready: true, restricted: true, reasonText: {
-      kind: 'plugin', key: 'diagnostic.runtime.stale', args: { channel, version },
-      fallback: '运行标记可能是上次退出遗留值（{channel} / {version}）；已确认嵌入式 worker 未运行，本次仅执行基础流程，任务结果保持未核验。'
-    } };
-  return { ready: true };
+  const matches = typeof origin === 'string' ? Array.from(origin.matchAll(/\[remote "origin"\]([^\[]*)/g)) : [];
+  const url = matches.length === 1 ? matches[0][1].match(/^\s*url\s*=\s*(\S+)\s*$/m)?.[1] : null;
+  const official = ADAPTER.runtimeOfficialRepository;
+  const allowed = ['https://github.com/' + official, 'https://github.com/' + official + '.git', 'git@github.com:' + official + '.git']
+    .concat(ADAPTER.runtimeOfficialOriginsByChannel?.[channel] || []);
+  if (!allowed.includes(url) || typeof head !== 'string' || !/^[a-f0-9]{40}\s*$/.test(head) || /^0{40}\s*$/.test(head))
+    return failure('repository', '无法确认当前工作副本的官方来源与提交身份，请修复安装。');
+  try {
+    const contracts = ADAPTER.runtimeStructuralContracts;
+    if (!Array.isArray(contracts) || !contracts.length || !contracts.every(contract => {
+      const source = nexus.readResource(contract.id).document;
+      return typeof source === 'string' && source.length <= 2097152
+        && contract.patterns.every(pattern => new RegExp(pattern, 'm').test(source));
+    })) return failure('code', '当前运行入口、日常任务或执行器结构不兼容，请检查安装。');
+  } catch { return failure('code', '关键运行文件缺失或无法读取，请修复安装。'); }
+  return {ready:true};
 }

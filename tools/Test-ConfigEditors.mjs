@@ -6,12 +6,13 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-function runEditor(relativePath, inputValue, filePath, source) {
+function runEditor(relativePath, inputValue, filePath, source, trigger = "config-edit-preparation") {
   const code = fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
   let output = null;
   const context = {
     nexus: {
       input: {
+        trigger,
         configInputValue: inputValue,
         extras: [{ files: [{ path: filePath }] }],
       },
@@ -85,3 +86,15 @@ assert.throws(() => runEditor("plugins/specialized/ZenlessZoneZeroOneDragon/data
 assert.throws(() => runEditor("plugins/specialized/ZenlessZoneZeroOneDragon/data/editor.js", "01,02", "one_dragon.yml", zzzModeSource), /两位数字/u);
 
 console.log("配置编辑脚本行为验证通过：BetterGI、ZZZ 单实例与多实例 YAML");
+
+const mfaEditor = "plugins/specialized/MaaStellaSora/data/editor.js";
+const mfaSource = JSON.stringify({ NoAutoStart: "False", GlobalStartEnabled: "True", Other: "42" });
+const mfaOutput = runEditor(mfaEditor, "chosen", "appsettings.json", mfaSource);
+assert.deepEqual(JSON.parse(mfaOutput), { NoAutoStart: "True", GlobalStartEnabled: "True", Other: "42" });
+assert.equal(runEditor(mfaEditor, "chosen", "appsettings.json", mfaOutput), mfaOutput);
+assert.deepEqual(JSON.parse(runEditor(mfaEditor, "chosen", "appsettings.json", mfaOutput, "config-edit-commit")),
+  { NoAutoStart: "False", GlobalStartEnabled: "True", Other: "42" });
+assert.throws(() => runEditor(mfaEditor, "chosen", "appsettings.json", "[]"));
+assert.throws(() => runEditor(mfaEditor, "chosen", "appsettings.json", "invalid json"));
+
+console.log("MFA 编辑准备：禁止自动启动、保留字符串配置、重复执行及无效 JSON 检查通过");

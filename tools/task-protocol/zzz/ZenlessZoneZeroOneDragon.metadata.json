@@ -54,10 +54,45 @@
     "drive_disc_dismantle",
     "notify"
   ],
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
   "configRules": [
-    { "id": "zzz.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionId": "zzz-game-target", "reasonKey": "diagnostic.config.path_mismatch", "fallback": "绝区零一条龙当前账号中的游戏路径与绑定目标不一致。", "location": { "source": "config", "resourceId": "config:game_account.yml", "selector": ["game_path"] } },
-    { "id": "zzz.finish_action", "required": true, "criticality": "critical_when_applicable", "kind": "finish_action", "resourceId": "zzz-extra-config", "readKind": "resource", "selector": ["after_done"], "defaultAction": "无", "reasonKey": "diagnostic.zzz.finish_action", "fallback": "绝区零一条龙完成后的系统动作可能影响队列后续工作。", "location": { "source": "resource", "resourceId": "zzz-extra-config", "selector": ["after_done"] } }
+    {
+      "id": "zzz.game_target",
+      "required": true,
+      "criticality": "advisory_or_contextual",
+      "kind": "target_compare",
+      "inspectionId": "zzz-game-target",
+      "reasonKey": "diagnostic.config.path_mismatch",
+      "fallback": "绝区零一条龙当前账号中的游戏路径与绑定目标不一致。",
+      "location": {
+        "source": "config",
+        "resourceId": "config:game_account.yml",
+        "selector": [
+          "game_path"
+        ]
+      }
+    },
+    {
+      "id": "zzz.finish_action",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "finish_action",
+      "resourceId": "zzz-extra-config",
+      "readKind": "resource",
+      "selector": [
+        "after_done"
+      ],
+      "defaultAction": "无",
+      "reasonKey": "diagnostic.zzz.finish_action",
+      "fallback": "绝区零一条龙完成后的系统动作可能影响队列后续工作。",
+      "location": {
+        "source": "resource",
+        "resourceId": "zzz-extra-config",
+        "selector": [
+          "after_done"
+        ]
+      }
+    }
   ],
   "taskTextKeys": {
     "one_dragon/charge_plan": "task.charge_plan",
@@ -96,6 +131,65 @@
     "zzz.charge.abandoned": "上游已跳过失败的体力计划，其他计划成功不能抵消",
     "zzz.application.start": "已确认应用组中当前应用开始执行",
     "zzz.application.terminal": "应用执行已结束",
-    "zzz.application.already_done": "应用报告本次已完成"
+    "zzz.application.already_done": "应用报告本次已完成",
+    "zzz.application.succeeded": "应用执行完成",
+    "zzz.application.failed": "应用执行失败",
+    "zzz.charge.child_start": "副本挑战开始",
+    "zzz.charge.failed": "副本挑战失败后上游继续执行",
+    "zzz.charge.succeeded": "副本挑战完成",
+    "zzz.charge.not_entered": "本次应用未进入副本挑战"
+  },
+  "dailyPolicy": {
+    "completionPolicy": "authoritative",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "zzz.daily.v1",
+      "sources": [
+        "file"
+      ],
+      "rules": [
+        {
+          "id": "zzz.application.start",
+          "kind": "scope_started"
+        },
+        {
+          "id": "zzz.application.succeeded",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "zzz.application.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "zzz.application.outer_return",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "zzz.application.already_done",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "zzz.charge.child_start",
+          "kind": "scope_started"
+        },
+        {
+          "id": "zzz.charge.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "zzz.charge.succeeded",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "zzz.charge.not_entered",
+          "kind": "normal_skip"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "native_resume",
+      "resourceConsumption": true,
+      "limitRefs": []
+    }
   }
 }

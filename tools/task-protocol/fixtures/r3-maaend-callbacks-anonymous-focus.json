@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",
@@ -30,10 +30,15 @@
     }
   ],
   "results": {
-    "chosen/one": "unknown"
+    "chosen/one": "failed"
   },
   "source": {
     "type": "source_derived_control_flow",
     "note": "Synthetic anonymous focus after current start; no task ID, cannot assign failure or completion. Original async dispatch is exercised separately."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

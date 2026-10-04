@@ -39,5 +39,10 @@
       "evaluation": "unknown",
       "executionEffect": "block"
     }
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

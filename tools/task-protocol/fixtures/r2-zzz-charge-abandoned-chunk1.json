@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -11,13 +11,17 @@
   "tasks": {
     "one_dragon/charge_plan": {
       "enabled": true
+    },
+    "one_dragon/charge_plan/challenges": {
+      "enabled": true
     }
   },
   "batches": [
     {
       "lines": [
         "指令[ 执行应用组 one_dragon ] 节点 检测游戏窗口 -> 获取应用组配置 返回状态 成功"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
@@ -25,7 +29,8 @@
       ],
       "states": {
         "one_dragon/charge_plan": "running"
-      }
+      },
+      "source": "file"
     },
     {
       "lines": [
@@ -33,7 +38,8 @@
       ],
       "states": {
         "one_dragon/charge_plan": "running"
-      }
+      },
+      "source": "file"
     },
     {
       "lines": [
@@ -41,7 +47,8 @@
       ],
       "states": {
         "one_dragon/charge_plan": "running"
-      }
+      },
+      "source": "file"
     },
     {
       "lines": [
@@ -50,7 +57,8 @@
       "states": {
         "one_dragon/charge_plan": "running"
       },
-      "incidentCount": 1
+      "incidentCount": 1,
+      "source": "file"
     },
     {
       "lines": [
@@ -58,7 +66,8 @@
       ],
       "states": {
         "one_dragon/charge_plan": "running"
-      }
+      },
+      "source": "file"
     },
     {
       "lines": [
@@ -66,7 +75,8 @@
       ],
       "states": {
         "one_dragon/charge_plan": "running"
-      }
+      },
+      "source": "file"
     },
     {
       "lines": [
@@ -75,27 +85,30 @@
       "states": {
         "one_dragon/charge_plan": "running"
       },
-      "incidentCount": 2
+      "incidentCount": 2,
+      "source": "file"
     },
     {
       "lines": [
         "指令[ 执行应用组 one_dragon ] 节点 获取应用组配置 -> 执行应用 返回状态 下一个"
       ],
       "states": {
-        "one_dragon/charge_plan": "failed"
-      }
+        "one_dragon/charge_plan": "partial"
+      },
+      "source": "file"
     }
   ],
   "results": {
-    "one_dragon/charge_plan": "failed"
+    "one_dragon/charge_plan": "partial",
+    "one_dragon/charge_plan/challenges": "failed"
   },
   "incidents": [
     {
-      "task": "one_dragon/charge_plan",
+      "task": "one_dragon/charge_plan/challenges",
       "resolution": "open"
     },
     {
-      "task": "one_dragon/charge_plan",
+      "task": "one_dragon/charge_plan/challenges",
       "resolution": "terminal"
     }
   ],
@@ -103,5 +116,12 @@
     "type": "source_derived_control_flow",
     "upstreamCommit": "a91a606b4726a335af1556dd47f54e9249f9ea2a",
     "note": "Canonical native logger syntax derived from pinned source; not normalized OCR issue text or a complete real-game log."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D03",
+    "D07",
+    "D11",
+    "D17"
+  ]
 }

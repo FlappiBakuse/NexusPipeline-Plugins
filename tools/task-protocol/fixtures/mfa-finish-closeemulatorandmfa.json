@@ -1,0 +1,69 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "complete",
+  "executionContext": {
+    "configInputName": "instance",
+    "configInputValue": "chosen",
+    "mode": "pc"
+  },
+  "resources": [
+    {
+      "id": "config:instances/chosen.json",
+      "format": "json",
+      "text": "{\"TaskItems\": [{\"name\": \"\\u9886\\u53d6\\u90ae\\u7bb1\\u5956\\u52b1\", \"entry\": \"Mail\", \"default_check\": true}, {\"name\": \"\\u9886\\u53d6\\u6bcf\\u65e5\\u5956\\u52b1\", \"entry\": \"Daily\", \"default_check\": true}], \"CurrentTasks\": [\"\\u9886\\u53d6\\u90ae\\u7bb1\\u5956\\u52b1<|||>Mail\", \"\\u9886\\u53d6\\u6bcf\\u65e5\\u5956\\u52b1<|||>Daily\"], \"AfterTask\": \"CloseEmulatorAndMFA\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\"}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\"}]}"
+    },
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{}"
+    },
+    {
+      "id": "mfa-settings",
+      "format": "json",
+      "text": "{\"DefaultConfig\":\"Default\"}"
+    }
+  ],
+  "tasks": {
+    "chosen/Mail/0": {
+      "enabled": true
+    },
+    "chosen/Daily/1": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "source": "file",
+      "lines": [
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：领取邮箱奖励",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：领取每日奖励",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 任务已全部完成！"
+      ]
+    },
+    {
+      "source": "file",
+      "lines": [],
+      "final": true
+    }
+  ],
+  "results": {
+    "chosen/Mail/0": "succeeded",
+    "chosen/Daily/1": "succeeded"
+  },
+  "boundary": "ended",
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "same",
+  "queueNextLaunchOwner": "already_running",
+  "configChecks": [
+    {
+      "ruleId": "mfa.finish_action",
+      "evaluation": "violated",
+      "executionEffect": "block"
+    }
+  ]
+}

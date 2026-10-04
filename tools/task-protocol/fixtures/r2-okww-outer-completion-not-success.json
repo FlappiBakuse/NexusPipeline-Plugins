@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -24,6 +24,9 @@
     }
   ],
   "tasks": {
+    "daily": {
+      "enabled": true
+    },
     "nightmare": {
       "enabled": true
     },
@@ -54,26 +57,33 @@
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:open_daily",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:Daily Task Completed"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "stamina": "unknown",
-    "daily_reward": "unknown",
-    "mail": "unknown",
-    "battle_pass": "unknown",
-    "garden": "unknown",
-    "nightmare": "unknown",
-    "merge": "unknown"
+    "stamina": "succeeded",
+    "daily_reward": "succeeded",
+    "mail": "succeeded",
+    "battle_pass": "succeeded",
+    "garden": "succeeded",
+    "nightmare": "succeeded",
+    "merge": "succeeded",
+    "daily": "succeeded"
   },
   "source": {
     "type": "source_derived_control_flow",
     "split": "development",
     "upstreamCommit": "016c19e807fcc16800c42c89fdb3b01ea6947ee9",
-    "note": "Reviewed source branches and separately labeled fault mutations; not a captured game run."
+    "note": "Pinned DailyTask returns normally through enabled daily scopes; synthetic paired flow without business failure, D02. No native game run."
   },
   "boundary": "ended",
   "resourceSets": [
     "resources/okww-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

@@ -4,12 +4,13 @@
   "artifactName": "MaaStellaSora",
   "displayName": "星塔助手",
   "gameName": "星塔旅人",
-  "description": "MaaStellaSora（星塔助手）专项脚本实例配置接管：自动推导 MXU 主程序、自启动参数、配置与日志路径，支持仅重试失败任务",
-  "version": "0.2.1",
+  "description": "MaaStellaSora 专项：MFAAvalonia 稳定实例绑定、日常任务观察与失败重试；旧 MXU 配置备份清空后重新设置。",
+  "version": "0.2.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.14",
   "capabilities": [
-    "emulator"
+    "emulator",
+    "no-fresh-config"
   ],
   "localization": {
     "defaultLocale": "zh-CN",
@@ -20,8 +21,9 @@
   },
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
+  "configEditor": "data/editor.js",
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -143,6 +145,146 @@
         "path": "resource/tasks/task.json",
         "format": "text",
         "required": false
+      },
+      {
+        "id": "mfa-settings",
+        "source": "extraConfig",
+        "path": "0",
+        "format": "json",
+        "required": true
+      },
+      {
+        "id": "interface-part-16",
+        "source": "root",
+        "path": "interface/tasks/login.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-17",
+        "source": "root",
+        "path": "interface/tasks/shop.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-18",
+        "source": "root",
+        "path": "interface/tasks/talk.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-19",
+        "source": "root",
+        "path": "interface/tasks/invite.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-20",
+        "source": "root",
+        "path": "interface/tasks/invite_select_cn.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-21",
+        "source": "root",
+        "path": "interface/tasks/activity.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-22",
+        "source": "root",
+        "path": "interface/tasks/activity_challenge.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-23",
+        "source": "root",
+        "path": "interface/tasks/fight.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-24",
+        "source": "root",
+        "path": "interface/tasks/quest.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-25",
+        "source": "root",
+        "path": "interface/tasks/friend.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-26",
+        "source": "root",
+        "path": "interface/tasks/task.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-27",
+        "source": "root",
+        "path": "interface/tasks/mail.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-28",
+        "source": "root",
+        "path": "interface/tasks/grant.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-29",
+        "source": "root",
+        "path": "interface/tasks/operation.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-30",
+        "source": "root",
+        "path": "interface/tasks/proving_grounds.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-31",
+        "source": "root",
+        "path": "interface/tasks/climb_tower.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-32",
+        "source": "root",
+        "path": "interface/tasks/climb_tower_shop.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-33",
+        "source": "root",
+        "path": "interface/tasks/climb_tower_shop_enhance.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-34",
+        "source": "root",
+        "path": "interface/tasks/climb_tower_target.json",
+        "format": "text",
+        "required": false
       }
     ],
     "localization": {
@@ -154,26 +296,107 @@
     },
     "configRules": [
       {
-        "id": "mxu.launch_owner",
+        "id": "mfa.instance",
         "required": true,
         "criticality": "critical_when_applicable"
       },
       {
-        "id": "mxu.autostart_target",
+        "id": "mfa.launch_owner",
         "required": true,
         "criticality": "critical_when_applicable"
       },
       {
-        "id": "mxu.controller_resource",
-        "required": true,
-        "criticality": "advisory_or_contextual"
-      },
-      {
-        "id": "mxu.finish_action",
+        "id": "mfa.finish_action",
         "required": true,
         "criticality": "critical_when_applicable"
       }
     ],
-    "environmentChecks": []
-  }
+    "environmentChecks": [],
+    "repairRules": [
+      {
+        "id": "startup_path",
+        "ruleId": "mfa.launch_owner",
+        "resourceId": "config:instances/{instance}.json",
+        "selector": [
+          "SoftwarePath"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "bind_game_path",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "将当前实例启动设置中的软件路径设为项目游戏路径；共享配置只生成当前实例覆盖，应用前备份当前用户快照。"
+      },
+      {
+        "id": "startup_action",
+        "ruleId": "mfa.launch_owner",
+        "resourceId": "config:instances/{instance}.json",
+        "selector": [
+          "BeforeTask"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "normalize_enum",
+        "fromValues": [
+          "StartupSoftwareAndScript"
+        ],
+        "toValue": "StartupSoftwareAndScript",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "将当前实例启动后操作设置为启动软件并运行脚本；配置编辑时由原生一次性禁止自动启动开关屏蔽该操作，其他账号及共享配置不变。"
+      },
+      {
+        "id": "native_tasks",
+        "ruleId": "mfa.finish_action",
+        "resourceId": "config:instances/{instance}.json",
+        "selector": [
+          "TaskItems"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "mfa_tasks",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "关闭当前实例的系统动作任务，保留日常与自定义程序的顺序、参数、进度和额度；应用前备份当前用户快照。"
+      },
+      {
+        "id": "finish_action",
+        "ruleId": "mfa.finish_action",
+        "resourceId": "config:instances/{instance}.json",
+        "selector": [
+          "AfterTask"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "normalize_enum",
+        "fromValues": [
+          "None",
+          "CloseMFA",
+          "CloseEmulator",
+          "CloseEmulatorAndMFA"
+        ],
+        "toValue": "None",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      }
+    ]
+  },
+  "configurationRevision": "mfa-avalonia.instances.v1"
 }

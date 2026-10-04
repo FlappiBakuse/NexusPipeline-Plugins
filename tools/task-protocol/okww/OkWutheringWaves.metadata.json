@@ -1,7 +1,7 @@
 {
   "id": "okww",
   "implementation": "okww",
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
   "configRules": [
     {
       "id": "okscript.distribution",
@@ -24,6 +24,7 @@
       "criticality": "critical_when_applicable",
       "kind": "single_daily",
       "allowedTaskKeys": [
+        "daily",
         "nightmare",
         "stamina",
         "daily_reward",
@@ -56,6 +57,14 @@
           "Teleport to Boss"
         ]
       }
+    },
+    {
+      "id": "okscript.game_target",
+      "required": true,
+      "criticality": "advisory_or_contextual",
+      "kind": "target_compare",
+      "inspectionId": "okscript-game-target",
+      "fallback": "脚本中的游戏路径与项目绑定目标不一致。"
     }
   ],
   "configDependencies": [
@@ -94,7 +103,10 @@
     "okww.garden.already_done": "每周花园已经完成",
     "okww.nightmare.started": "梦魇任务已开始",
     "okww.step.caught_failure": "该步骤捕获异常后继续；后续完成不覆盖此失败",
-    "okww.battle_pass.not_found": "未找到通行证入口，奖励领取未确认"
+    "okww.battle_pass.not_found": "未找到通行证入口，奖励领取未确认",
+    "okww.daily.completed": "日常任务完成",
+    "okww.daily.failed": "日常任务失败",
+    "okww.step.completed": "日常子流程结束"
   },
   "staminaTextKeys": {
     "Tacet Suppression": "task.stamina_tacet",
@@ -102,43 +114,85 @@
     "Simulation Challenge": "task.stamina_simulation"
   },
   "runtimeOfficialRepository": "ok-oldking/ok-wuthering-waves",
-  "runtimeProfiles": {
-    "Global": {
-      "name": "ok-ww",
-      "version": "v3.6.7",
-      "commit": "6d3ce9df9f35f2c7b4c72bd00bc55449eeed4396",
-      "tagObject": "2eaacbf8d5dc6eb323c0f73d1d145d33c22f7eaa"
+  "runtimeStructuralContracts": [
+    {
+      "id": "runtime-code-8",
+      "patterns": [
+        "^class DailyTask\\(",
+        "^    def run\\(self\\):",
+        "self\\.claim_daily\\(\\)",
+        "self\\.claim_mail\\(\\)",
+        "self\\.log_info\\('Daily Task Completed'"
+      ]
     },
-    "China": {
-      "name": "ok-ww",
-      "version": "v3.6.7",
-      "commit": "2376cc98fcb69e6cc513dac5d705468793231fd5",
-      "tagObject": "cbbf3b44ac8325936b79386a3e68eeb571d80ed2"
+    {
+      "id": "runtime-code-1",
+      "patterns": [
+        "OK\\(config\\)",
+        "\\.start\\(\\)"
+      ]
+    },
+    {
+      "id": "runtime-code-3",
+      "patterns": [
+        "^class TaskExecutor\\b",
+        "^    def ",
+        "TaskDisabledException"
+      ]
+    }
+  ],
+  "dailyPolicy": {
+    "completionPolicy": "authoritative",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "okww.daily.v1",
+      "sources": [
+        "file"
+      ],
+      "rules": [
+        {
+          "id": "okww.step.started",
+          "kind": "scope_started"
+        },
+        {
+          "id": "okww.nightmare.started",
+          "kind": "scope_started"
+        },
+        {
+          "id": "okww.garden.already_done",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "okww.daily.completed",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "okww.daily.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "okww.step.caught_failure",
+          "kind": "business_failed"
+        },
+        {
+          "id": "okww.battle_pass.not_found",
+          "kind": "business_failed"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "selective_config",
+      "resourceConsumption": true,
+      "limitRefs": []
     }
   },
-  "runtimeRelease": {
-    "name": "ok-ww",
-    "version": "v3.6.7",
-    "commit": "6d3ce9df9f35f2c7b4c72bd00bc55449eeed4396",
-    "tagObject": "2eaacbf8d5dc6eb323c0f73d1d145d33c22f7eaa"
+  "runtimeOfficialOriginsByChannel": {
+    "Global": [
+      "https://github.com/ok-oldking/ok-ww-update.git"
+    ],
+    "China": [
+      "https://cnb.cool/ok-oldking/ok-ww-update2.git"
+    ]
   },
-  "runtimeCodeResources": [
-    "runtime-code-0",
-    "runtime-code-1",
-    "runtime-code-2",
-    "runtime-code-3",
-    "runtime-code-4",
-    "runtime-code-5",
-    "runtime-code-6",
-    "runtime-code-7",
-    "runtime-code-8",
-    "runtime-code-9",
-    "runtime-code-10",
-    "runtime-code-11",
-    "runtime-code-12",
-    "runtime-code-13",
-    "runtime-code-14",
-    "runtime-code-15",
-    "runtime-code-16"
-  ]
+  "runtimeName": "ok-ww"
 }

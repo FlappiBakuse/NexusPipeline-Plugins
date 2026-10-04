@@ -5,9 +5,9 @@
   "displayName": "三月七小助手",
   "gameName": "崩坏：星穹铁道",
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.9",
+  "minHostVersion": "0.16.14",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -18,7 +18,7 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "0.1.1",
+    "version": "0.2.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
@@ -64,18 +64,57 @@
     ],
     "repairRules": [
       {
+        "id": "game_path",
+        "ruleId": "march7th.game_target",
+        "resourceId": "config:config.yaml",
+        "selector": [
+          "game_path"
+        ],
+        "source": "user_snapshot",
+        "format": "yaml",
+        "kind": "bind_game_path",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。",
+        "skipWhen": {
+          "selector": [
+            "cloud_game_enable"
+          ],
+          "equals": true
+        }
+      },
+      {
         "id": "queue_finish_action",
         "ruleId": "march7th.finish_action",
         "resourceId": "config:config.yaml",
-        "selector": ["after_finish"],
+        "selector": [
+          "after_finish"
+        ],
         "source": "user_snapshot",
         "format": "yaml",
-        "kind": "replace_enum",
-        "fromValues": ["Loop", "循环", "Shutdown", "关机", "Sleep", "睡眠", "Hibernate", "休眠", "Restart", "重启", "Logoff", "注销", "TurnOffDisplay", "关闭显示器"],
+        "kind": "normalize_enum",
+        "fromValues": [
+          "None",
+          "Exit",
+          "无",
+          "退出程序",
+          "关闭游戏",
+          "关闭软件"
+        ],
         "toValue": "None",
-        "preconditions": { "snapshotKind": "file", "exclusiveResource": true, "noExtraConfig": true },
-        "explanation": "脚本结束后不再执行此系统动作；其他配置字段保持原值。"
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
       }
     ]
-  }
+  },
+  "configEditor": "data/editor.js"
 }

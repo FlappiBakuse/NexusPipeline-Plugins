@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "queueFollowingWork": "yes",
   "resources": [
     {
@@ -32,5 +32,10 @@
   "source": {
     "type": "synthetic",
     "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

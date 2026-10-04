@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -120,5 +120,10 @@
     "type": "source_derived_control_flow",
     "upstreamCommit": "7423dea64552f71332cc71f3c02481695aaec151",
     "note": "tasks/game/__init__.py start cloud/local branch and stop detect_loop; synthetic input, no game/system action."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -34,6 +34,7 @@ console.log('PASS critical and advisory rule exceptions');
     def test_missing_config_location_does_not_erase_the_check(self):
         root = Path(__file__).resolve().parents[2]
         fixture = json.loads((root / 'tools/task-protocol/fixtures/r2-okww-4c-missing.json').read_text(encoding='utf-8'))
+        fixture['protocolVersion'] = json.loads((root / 'plugins/specialized/OkWutheringWaves/plugin.json').read_text(encoding='utf-8'))['taskProtocol']['version']
         for resource_set in fixture.get('resourceSets', []):
             fixture['resources'].extend(json.loads((root / 'tools/task-protocol/fixtures' / resource_set).read_text(encoding='utf-8'))['resources'])
         script = r'''
@@ -44,7 +45,7 @@ const data = Object.fromEntries(fixture.resources.map(r => [r.id,
     integrity: r.sha256 ? (require('crypto').createHash('sha256').update(r.text).digest('hex') === r.sha256 ? 'verified' : 'mismatch') : undefined }]));
 let result;
 vm.runInNewContext(fs.readFileSync(process.argv[1], 'utf8'), {
-  input: { phase: 'discover', protocolVersion: '0.1.0', configResources: fixture.resources.filter(r => r.id.startsWith('config:')) },
+  input: { phase: 'discover', protocolVersion: fixture.protocolVersion, configResources: fixture.resources.filter(r => r.id.startsWith('config:')) },
   nexus: { readConfig: id => data[id], readResource: id => data[id] },
   console: { log: value => { result = value; } }
 });

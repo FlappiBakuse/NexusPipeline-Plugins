@@ -4,6 +4,11 @@ function addTask(plan, resourceId, key, name, enabled, selector, risk, detection
   const task = { id, sourceKey: key, name, parentId: parentId || null, role: role || 'business', enabled,
     order: plan.tasks.length, countsAsUnit: !parentId && (!role || role === 'business'), requiredForParent: true,
     retryUnitId: parentId || id, retryRisk: risk || 'unknown', dependencies: [], detection: detection || 'limited', configRef: resourceId };
+  if (ADAPTER.protocolVersion === '0.2.0') {
+    requireValue(ADAPTER.dailyPolicy);
+    Object.assign(task, JSON.parse(JSON.stringify(ADAPTER.dailyPolicy)));
+    if (role && role !== 'business') task.workflowRole = 'technical';
+  }
   const textKey = ADAPTER.taskTextKeys?.[key];
   task.nameText = textKey
     ? { kind: 'plugin', key: textKey, args: {}, fallback: name } : { kind: 'literal', value: name };

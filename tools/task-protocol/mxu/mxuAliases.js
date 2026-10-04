@@ -16,6 +16,8 @@ function mxuAliases(tasks) {
     const selected = document.instances.flatMap(instance => (instance.tasks || []).filter(t => instance.id + '/' + t.id === task.sourceKey));
     const names = [task.name];
     if (selected.length === 1 && !selected[0].customName && document.settings.language === 'system') {
+      const special = ADAPTER.specialTasks?.[selected[0].taskName];
+      if (special) names.push(...Object.values(special.labels));
       if (!locales.length) for (const id of Object.values(ADAPTER.locales)) { try { locales.push(resource(id)); } catch { /* optional language */ } }
       const defs = definitions.filter(d => d.name === selected[0].taskName);
       if (defs.length === 1 && typeof defs[0].label === 'string' && defs[0].label.startsWith('$'))

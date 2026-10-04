@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",
@@ -35,7 +35,15 @@
   "displayNames": {
     "en-US": {
       "chosen/one": "📅 Claim Daily Rewards",
-      "chosen/custom": "User name"
+      "chosen/custom": "📅 Claim Daily Rewards (“User name”)"
+    },
+    "zh-CN": {
+      "chosen/custom": "📅日常奖励领取（“User name”）"
     }
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

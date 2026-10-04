@@ -1,7 +1,9 @@
-function observeCharge(text, node, terminal, task, active, result, line, states) {
+function observeCharge(text, node, terminal, task, active, result, line, states, emit) {
   if (task.sourceKey !== 'one_dragon/charge_plan') return;
   const evidence = ruleId => ({ sourceId: line.sourceId, epoch: line.epoch, sequence: line.sequence, ruleId });
   active.chargeIssues ||= [];
+  const businessChild = input.originalPlan.tasks.find(t => t.parentId === task.id);
+  const owner = businessChild || task;
   const parentNode = node?.[1] === task.name ? node[2].split(' -> ').at(-1) : null;
   if (parentNode === '识别副本分类') {
     active.category = ['区域巡防', '实战模拟室', '专业挑战室', '恶名狩猎'].includes(node[3]) ? node[3] : null;
@@ -12,6 +14,8 @@ function observeCharge(text, node, terminal, task, active, result, line, states)
     // Each concrete call owns its errors. A later mission, even with the same label,
     // cannot recover an earlier abandoned plan.
     active.child = { name: node[1], started: evidence('zzz.charge.child_start'), ids: [], returned: null, parentReturn: null };
+    if (!active.chargeStarted && businessChild) emit(businessChild, 'running', 'zzz.charge.child_start');
+    active.chargeStarted = true;
     return;
   }
   const child = active.child;
@@ -28,7 +32,7 @@ function observeCharge(text, node, terminal, task, active, result, line, states)
     if (active.chargeIssues.length >= 64) throw new Error('resource_limit');
     const ordinal = states[task.id]?.executionOrdinal || 1;
     const issue = { id: 'zzz.charge:' + line.sourceId + ':' + line.epoch + ':' + line.sequence,
-      taskId: task.id, scopeId: 'zzz.charge:' + line.sourceId + ':' + line.epoch + ':' + child.started.sequence,
+      taskId: owner.id, scopeId: 'zzz.charge:' + line.sourceId + ':' + line.epoch + ':' + child.started.sequence,
       executionOrdinal: ordinal, kind: 'business_error', resolution: 'open', reasonCode: 'zzz.charge.child_error',
       reasonText: { kind: 'plugin', key: 'reason.zzz.charge.child_error', args: {}, fallback: ADAPTER.reasonTexts['zzz.charge.child_error'] },
       evidence: [child.started, evidence('zzz.charge.child_error')] };

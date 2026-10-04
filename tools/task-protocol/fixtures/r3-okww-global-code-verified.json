@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -24,6 +24,9 @@
     }
   ],
   "tasks": {
+    "daily": {
+      "enabled": true
+    },
     "nightmare": {
       "enabled": false
     },
@@ -64,5 +67,10 @@
       "evaluation": "satisfied",
       "executionEffect": "none"
     }
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

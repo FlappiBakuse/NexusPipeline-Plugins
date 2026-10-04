@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon_app.yml",
@@ -65,12 +65,15 @@
     },
     "one_dragon/notify": {
       "enabled": false
+    },
+    "one_dragon/charge_plan/challenges": {
+      "enabled": false
     }
   },
   "batches": [],
   "results": {
-    "one_dragon/email": "unknown",
-    "one_dragon/coffee": "unknown"
+    "one_dragon/email": "failed",
+    "one_dragon/coffee": "failed"
   },
   "source": {
     "type": "source_derived_migration",
@@ -80,5 +83,10 @@
       "src/one_dragon/base/config/one_dragon_app_config.py",
       "src/one_dragon/base/operation/application/application_group_manager.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

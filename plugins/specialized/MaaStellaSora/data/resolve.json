@@ -1,15 +1,30 @@
 {
   "outputEncoding": "utf-8",
+  "requireExclusiveProcess": true,
+  "configSelectionPath": "config/instances/{input:instance}.json",
+  "inputs": [
+    {
+      "name": "instance",
+      "label": "MFA 稳定实例 ID",
+      "description": "填写 config/instances 中的文件名（不含 .json）；不会回退到活动页或同名实例。",
+      "required": false,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    }
+  ],
   "require": [
     {
       "var": "main",
-      "file": "mxu.exe"
+      "file": "MFAAvalonia.exe"
     }
   ],
   "paths": {
     "mainExe": "{main}",
-    "args": "--autostart --quit-after-run",
+    "args": "--instance {input:instance}",
     "configPath": "config",
-    "logPath": ""
-  }
+    "extraConfigPaths": [
+      "appsettings.json"
+    ],
+    "logPath": "logs/log-*.log"
+  },
+  "configContractId": "mfa-avalonia.instances.v1"
 }

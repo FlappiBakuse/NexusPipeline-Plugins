@@ -1,9 +1,29 @@
 function retryPlan(discover) {
-  const stop = reason => ({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'stop', reasonCode: reason,
+  const daily = ADAPTER.protocolVersion === '0.2.0';
+  let candidates = [];
+  const finish = value => {
+    if (daily) {
+      value.targetTaskIds = candidates.filter(t => value.includedTaskIds.includes(t.id)).map(t => t.id);
+      value.launchScopeTaskIds = value.includedTaskIds.slice();
+    }
+    return value;
+  };
+  const stop = reason => finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'stop', reasonCode: reason,
     includedTaskIds: [], prerequisiteTaskIds: [], expandedUnitIds: [], filePatches: [] });
   if (input.cancelled || input.budgetExhausted || input.attemptsUsed >= input.maxAttempts) return stop('retry.budget_exhausted');
-  const tasks = input.originalPlan.tasks, candidates = tasks.filter(t => t.enabled && ['failed', 'blocked'].includes(input.taskStates[t.id]));
+  const tasks = input.originalPlan.tasks;
+  const protectedScope = id => {
+    for (let t = tasks.find(t => t.id === id); t; t = tasks.find(p => p.id === t.parentId))
+      if (input.taskStates[t.id] === 'partial') return true;
+    return false;
+  };
+  candidates = tasks.filter(t => t.enabled && ['failed', 'blocked'].includes(input.taskStates[t.id]) && (!daily || !protectedScope(t.id)));
   if (!candidates.length) return stop('retry.no_verified_candidate');
+  if (daily && tasks.filter(t => t.enabled).every(t => t.retryPolicy.mode === 'native_resume')) {
+    if (tasks.some(t => t.enabled && protectedScope(t.id))) return stop('retry.protected_scope');
+    return finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'native_resume', reasonCode: 'retry.unfinished',
+      includedTaskIds: tasks.filter(t => t.enabled).map(t => t.id), prerequisiteTaskIds: [], expandedUnitIds: [], filePatches: [] });
+  }
   const selected = new Set();
   const prerequisites = new Set(), expanded = new Set();
   for (const candidate of candidates) {
@@ -19,7 +39,7 @@ function retryPlan(discover) {
       }
       changed = unitSelection.size !== count;
     }
-    if (tasks.some(t => unitSelection.has(t.id) && (t.retryRisk !== 'safe' || (!t.enabled && t.role === 'business')))
+    if (tasks.some(t => unitSelection.has(t.id) && ((daily ? protectedScope(t.id) || !['daily','technical'].includes(t.workflowRole) : t.retryRisk !== 'safe') || (!t.enabled && t.role === 'business')))
         || Array.from(unitSelection).some(id => !tasks.some(t => t.id === id))) continue;
     unitSelection.forEach(id => selected.add(id));
     unitPrerequisites.forEach(id => prerequisites.add(id));
@@ -34,8 +54,8 @@ function retryPlan(discover) {
   const current = discover(), patches = {};
   if (typeof customRetryPatches === 'function') {
     const custom = customRetryPatches(current, selected);
-    return { protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
-      prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: custom };
+    return finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
+      prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: custom });
   }
   for (const task of tasks) {
     const slot = current.slots[task.id];
@@ -47,6 +67,6 @@ function retryPlan(discover) {
     if (!patches[slot.resourceId]) patches[slot.resourceId] = { resourceId: slot.resourceId, format: r.format, expectedRevision: r.revision, operations: [] };
     patches[slot.resourceId].operations.push({ selector: slot.selector, expected, value, purpose: 'selection' });
   }
-  return { protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
-    prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: Object.values(patches) };
+  return finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'selective', reasonCode: 'retry.unfinished', includedTaskIds: included,
+    prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: Object.values(patches) });
 }

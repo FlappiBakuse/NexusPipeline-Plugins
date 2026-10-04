@@ -1,6 +1,6 @@
 {
   "artifact": "BAAH",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -34,5 +34,10 @@
   "results": {
     "0/0/悬赏通缉": "skipped"
   },
-  "incidents": []
+  "incidents": [],
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -1,25 +1,30 @@
 # NexusPipeline-Plugins 文档门户
 
-本目录按插件作者任务提供当前契约、代码入口和验证方向。宿主的公共 UI、Frontend API 和 managed Plugin API 以相邻 [NexusPipeline 文档门户](https://github.com/FlappiBakuse/NexusPipeline/tree/main/docs) 为准；本仓库文档补充插件源码、前端构建、数据化脚本和发行流程。
+文档按责任分类。当前源码行为以本仓库契约和测试为准；正式发行以 catalog 和发行记录为准；真实游戏资格单独记录。机器导航见 [map.json](map.json)。
 
-## 按任务进入
+## 插件作者：author/
 
-| 任务 | 当前规范 | 代码与验证方向 |
-|---|---|---|
-| 验证当前插件核心能力 | [核心测试](TESTING.md) | `tests/run.mjs`、固定输入、累计预算和报告 |
-| 查询待办与未验证范围 | [项目状态](STATUS.md) | 专项支持限制、真实环境验证与兼容退役计划 |
-| 编写 Frontend 插件 | [Frontend 插件指南](FRONTEND_PLUGIN.md) | `plugins/general/*/frontend`、`tools/Test-FrontendPlugins.mjs`；宿主 `nxp-*` 公共元件 |
-| 编写 data-specialized 插件 | [数据化插件指南](DATA_SPECIALIZED_PLUGIN.md) | `plugins/specialized/*/data`、`tools/repository.py`；源码与脚本测试 |
-| 使用或开发 MaaFramework 直驱 | [MaaFramework 框架指南](MAAFRAMEWORK_DRIVER.md) | 独立配置、导入、Agent、worker、原生门禁和打包 |
-| 编写 judge 或 config 脚本 | [判断脚本指南](JUDGE_SCRIPT.md) | `judge.js`、`judge.py`、`editor.js`、taskProtocol 三阶段脚本 |
-| 修改插件版本或包 | [发行指南](RELEASING.md) | `plugin.json`、`store.json`、`catalog.json`、`packages/` |
-| 参与仓库开发 | [贡献指南](../CONTRIBUTING.md) | `tools/`、`tools/tests/`；源码校验与增量计划 |
-| 查询宿主接口 | [宿主 Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) | `src/NexusPipeline.Plugin.Abstractions` 与宿主公开注册表 |
+| 任务 | 权威文档 |
+|---|---|
+| manifest、能力、resolve、快照和破坏性修订 | [数据化专项](author/DATA_SPECIALIZED_PLUGIN.md) |
+| 任务发现、只读诊断、日志观察、重试和报告 | [任务协议](author/TASK_PROTOCOL.md) |
+| editor 准备、修复提案、生成及写入权限 | [配置编辑](author/CONFIG_EDITOR.md) |
+| 上游源码审查、模块生成、夹具和 Jint 验证 | [适配开发](author/TASK_ADAPTERS.md) |
+| 未声明 taskProtocol 的旧式 judge | [旧式判断接口](author/JUDGE_SCRIPT.md) |
+| managed 浏览器扩展、公共元素和 Frontend API | [前端插件](author/FRONTEND_PLUGIN.md) |
 
-机器路由保存在 [map.json](map.json)。Frontend API 的公共 `nxp-*` 元件清单和 `minHostVersion` 规则也记录在 [Frontend 插件指南](FRONTEND_PLUGIN.md)。
+## 框架：frameworks/
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
+[MXU](frameworks/MXU.md)、[MFAAvalonia](frameworks/MFA_AVALONIA.md)、[ok-script](frameworks/OK_SCRIPT.md) 分别维护原生配置和执行差异。[MaaFrameworkDriver](frameworks/MAAFRAMEWORK_DRIVER.md) 是独立 managed 直驱能力，不替换专项 GUI。
 
-八个专项的默认完成动作、完整枚举、CLI 差异和后继依赖见[完成动作](frameworks/COMPLETION_ACTIONS.md)。
+[完成动作与修复覆盖](frameworks/COMPLETION_ACTIONS.md) 汇总八专项字段及安全边界，项目页维护任务级细节。
 
-协议负责共同证据和兼容格式；框架页维护 [MXU](frameworks/MXU.md)、[ok-script](frameworks/OK_SCRIPT.md) 和 [MaaFramework](MAAFRAMEWORK_DRIVER.md) 的配置与执行差异；各项目的任务边界和限制见 [项目索引](projects/README.md)。旧 [适配说明](TASK_ADAPTERS.md) 保留导航锚点与共同审查工具。
+## 项目：projects/
+
+[项目索引](projects/README.md) 提供固定日期的上游稳定发行发现与全部已知任务清单。每页区分任务登记、终态证据、重试和真实游戏 NOT_RUN；共同识别口径仅在索引维护，避免八份重复定义漂移。
+
+## 开发与发行
+
+[贡献指南](../CONTRIBUTING.md) 说明源码和开发流程；[核心测试](TESTING.md) 说明现役 runner、固定输入、预算及原生报告；[发行指南](RELEASING.md) 维护候选、preview/stable 和发布验证；[状态](STATUS.md) 只记录尚未完成或未验证事项。
+
+宿主公开接口见 [Host Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)。Plugin API 1.9、Frontend API 1.5、taskProtocol 0.2.0 和各插件版本独立管理。

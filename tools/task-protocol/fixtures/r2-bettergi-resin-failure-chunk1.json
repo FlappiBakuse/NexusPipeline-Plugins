@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "source": {
     "type": "source_derived",
     "originalArtifact": null,
@@ -35,5 +35,10 @@
   "results": {
     "合成树脂": "failed"
   },
-  "boundary": "ended"
+  "boundary": "open",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -46,7 +46,7 @@ export function coreUnits(selected, registry, policy) {
         item.observationFixtureId = plugin.fixtureIds[0];
         item.expectedScenarioIds.push(plugin.realScenario);
         item.preparations.push("host.jint.test-build");
-        if (["BetterGI", "ZenlessZoneZeroOneDragon"].includes(artifact))
+        if (["BetterGI", "ZenlessZoneZeroOneDragon", "MaaStellaSora"].includes(artifact))
           item.expectedEditorCaseIds.push(`${artifact}.editor-select-and-preserve`, `${artifact}.editor-repeat`);
         item.observeCount = 12;
         item.isolatedRunRequired = true;

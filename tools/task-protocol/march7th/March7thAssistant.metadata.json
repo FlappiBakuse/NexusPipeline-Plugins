@@ -119,7 +119,11 @@
     "notify_meow_enable": false,
     "notify_webhook_enable": false,
     "notify_custom_enable": false,
-    "telemetry_enable": true
+    "telemetry_enable": true,
+    "weekly_relic_smart_discard_enable": false,
+    "divergent_auto_save_enable": false,
+    "fight_reward_enable": false,
+    "notify_qmsg_enable": false
   },
   "names": {
     "echo_of_war_enable": "历战余响",
@@ -142,7 +146,7 @@
     "activity_planarfissure_enable": "位面分裂",
     "activity_journey_highlights_notification_enable": "旅途拾忆通知"
   },
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
   "configRules": [
     {
       "id": "march7th.game_target",
@@ -279,6 +283,103 @@
     "march7th.weekly.incomplete": "多轮尝试后积分奖励仍未完成",
     "march7th.activity.exception": "活动处理失败",
     "march7th.echo.not_due": "未到配置的历战余响执行日",
-    "march7th.not_due": "当前周期尚未刷新"
+    "march7th.not_due": "当前周期尚未刷新",
+    "march7th.flow.failed": "日常流程执行失败",
+    "march7th.flow.ended": "日常流程已结束",
+    "march7th.resources.inapplicable": "本轮没有适用的资源任务",
+    "march7th.resources.completed": "资源任务已完成"
+  },
+  "dailyPolicy": {
+    "completionPolicy": "flow",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "march7th.daily.v1",
+      "sources": [
+        "file"
+      ],
+      "rules": [
+        {
+          "id": "march7th.resources.inapplicable",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "march7th.resources.completed",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.scope.started",
+          "kind": "scope_started"
+        },
+        {
+          "id": "march7th.echo.not_due",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "march7th.not_due",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "march7th.universe.satisfied",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "march7th.universe.zero",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "march7th.activity.exception",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.flow.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.instance.abandoned",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.instance.exhausted",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.universe.incomplete",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.weekly.incomplete",
+          "kind": "business_failed"
+        },
+        {
+          "id": "march7th.dispatch.in_progress",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.flow.ended",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.mail.claimed",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.reward.completed",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.reward.not_available",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "march7th.universe.complete",
+          "kind": "flow_ended"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "native_resume",
+      "resourceConsumption": true,
+      "limitRefs": []
+    }
   }
 }

@@ -39,5 +39,10 @@
   ],
   "resourceSets": [
     "resources/oknte-code-changed.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

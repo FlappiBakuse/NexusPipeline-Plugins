@@ -61,3 +61,5 @@ gh workflow run final-budget.yml --repo FlappiBakuse/NexusPipeline-Plugins --ref
 ```
 
 不要只重跑失败 job 来替代完整资格。CI 完成后自动触发 finalize；检查成功后仍须读取生产者与两个控制器的完整服务端作业记录，包括 post-action。
+
+配置编辑生成一致性使用 `python tools/generate_config_editors.py --check`；准备行为使用 `node tools/Test-ConfigEditors.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。

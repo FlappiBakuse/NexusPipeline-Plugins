@@ -702,7 +702,7 @@ def _validate_task_protocol_environment_checks(value: Any) -> None:
                          and isinstance(check[field], str) and 0 < len(check[field]) <= 512, "taskProtocol target default invalid")
 
 
-def _validate_task_protocol_repair_rules(value: Any, config_rules: list[dict[str, Any]]) -> None:
+def _validate_legacy_task_protocol_repair_rules(value: Any, config_rules: list[dict[str, Any]]) -> None:
     _require(isinstance(value, list) and len(value) <= 8, "taskProtocol.repairRules invalid")
     declared = {rule["id"] for rule in config_rules}
     identifiers: set[str] = set()
@@ -728,18 +728,57 @@ def _validate_task_protocol_repair_rules(value: Any, config_rules: list[dict[str
                  "repair explanation invalid")
 
 
+def _validate_task_protocol_repair_rules(value: Any, config_rules: list[dict[str, Any]]) -> None:
+    _require(isinstance(value, list) and len(value) <= 8, "taskProtocol.repairRules invalid")
+    declared = {rule["id"] for rule in config_rules}
+    identifiers: set[str] = set()
+    required = {"id", "ruleId", "resourceId", "selector", "source", "format", "kind",
+                "fromValues", "toValue", "preconditions", "explanation"}
+    for rule in value:
+        _require(isinstance(rule, dict) and required <= set(rule) <= required | {"skipWhen"}, "repair rule fields invalid")
+        identifier = rule["id"]
+        _require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier)
+                 and identifier not in identifiers and rule["ruleId"] in declared, "repair rule id invalid")
+        identifiers.add(identifier)
+        resource = rule["resourceId"]
+        _require(isinstance(resource, str) and (resource in ("config:$main", "extra:0") or re.fullmatch(r"config:[A-Za-z0-9_.{}/-]+", resource))
+                 and ".." not in resource and "\\" not in resource
+                 and rule["source"] == "user_snapshot" and rule["format"] in ("json", "yaml")
+                 and rule["kind"] in ("replace_enum", "normalize_enum", "bind_game_path", "mxu_tasks", "mxu_preactions", "mfa_tasks", "enable_boolean")
+                 and isinstance(rule["selector"], list) and 0 < len(rule["selector"]) <= 8
+                 and all(isinstance(s, str) and s.strip() for s in rule["selector"])
+                 and isinstance(rule["toValue"], str) and len(rule["toValue"]) <= 512, "invalid repair scope")
+        if rule["kind"] in ("mxu_tasks", "mxu_preactions", "mfa_tasks"):
+            _require(rule["format"] == "json" and rule["selector"] == (["TaskItems"] if rule["kind"] == "mfa_tasks" else ["instances"]), "invalid framework repair scope")
+        pre = rule["preconditions"]
+        _require(isinstance(pre, dict) and set(pre) == {"snapshotKind", "exclusiveResource", "noExtraConfig"}
+                 and pre["snapshotKind"] in ("file", "any") and pre["exclusiveResource"] is True
+                 and isinstance(pre["noExtraConfig"], bool), "repair preconditions invalid")
+        if "skipWhen" in rule:
+            skip = rule["skipWhen"]
+            _require(isinstance(skip, dict) and set(skip) == {"selector", "equals"}
+                     and isinstance(skip["selector"], list) and len(skip["selector"]) == 1
+                     and isinstance(skip["selector"][0], str) and isinstance(skip["equals"], bool), "invalid repair skip condition")
+        values = rule["fromValues"]
+        _require(isinstance(values, list) and len(values) <= 32
+                 and all(isinstance(item, str) and len(item) <= 64 for item in values)
+                 and len(set(values)) == len(values), "repair source values invalid")
+        _require(isinstance(rule["explanation"], str) and 0 < len(rule["explanation"]) <= 512,
+                 "repair explanation invalid")
+
+
 def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     if "taskProtocol" not in manifest:
         return {}
     protocol = manifest["taskProtocol"]
     _require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    _require(isinstance(protocol, dict) and protocol.get("version") in {"0.1.0", "0.1.1"}, "unsupported taskProtocol.version")
+    _require(isinstance(protocol, dict) and protocol.get("version") in {"0.1.0", "0.1.1", "0.2.0"}, "unsupported taskProtocol.version")
     fields = {"version", "discoverScript", "retryScript", "readResources", "localization", "configRules", "environmentChecks"}
-    if protocol["version"] == "0.1.1":
+    if protocol["version"] in {"0.1.1", "0.2.0"}:
         fields.add("repairRules")
     _require("configValidator" not in manifest, "taskProtocol 0.1.0 cannot declare configValidator")
     _require(set(protocol) == fields, "taskProtocol fields invalid")
-    required_host = "0.16.9" if protocol["version"] == "0.1.1" else "0.16.8"
+    required_host = "0.16.14" if protocol["version"] == "0.2.0" else "0.16.9" if protocol["version"] == "0.1.1" else "0.16.8"
     _require(is_semver(manifest.get("minHostVersion", "")) and parse_semver(manifest["minHostVersion"]) >= parse_semver(required_host), f"taskProtocol requires minHostVersion >= {required_host}")
 
     def safe_path(value: Any) -> bool:
@@ -755,8 +794,9 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         _require(safe_path(path) and path.startswith("data/i18n/") and path.endswith(".json"), "task localization requires safe data/i18n/*.json")
     _validate_task_protocol_config_rules(protocol["configRules"])
     _validate_task_protocol_environment_checks(protocol["environmentChecks"])
-    if protocol["version"] == "0.1.1":
-        _validate_task_protocol_repair_rules(protocol["repairRules"], protocol["configRules"])
+    if protocol["version"] in {"0.1.1", "0.2.0"}:
+        validator = _validate_legacy_task_protocol_repair_rules if protocol["version"] == "0.1.1" else _validate_task_protocol_repair_rules
+        validator(protocol["repairRules"], protocol["configRules"])
 
     scripts = {key: protocol[key] for key in ("discoverScript", "retryScript")}
     for value in [*scripts.values(), manifest.get("judgeScript")]:
@@ -776,7 +816,7 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
             operational = resource["operationalFields"]
             reserved = {"name", "installed", "current_profile", "current_version", "current_version_missing",
                         "available_versions", "update_state", "update_target_version", "update_error"}
-            _require(protocol["version"] == "0.1.1" and resource.get("source") == "root"
+            _require(protocol["version"] in {"0.1.1", "0.2.0"} and resource.get("source") == "root"
                      and resource.get("format") == "json" and isinstance(operational, dict)
                      and 0 < len(operational) <= 2, "taskProtocol operationalFields invalid")
             for field_name, field_type in operational.items():
@@ -1065,6 +1105,13 @@ def validate_source_plugin(root: Path) -> SourcePlugin:
                 f"插件能力要求的最低宿主版本未满足：{name} -> {capability}",
             )
     _validate_localization_contract(root, manifest)
+    if "configurationRevision" in manifest:
+        revision = manifest["configurationRevision"]
+        _require(kind == "data-specialized" and isinstance(revision, str)
+                 and re.fullmatch(r"[A-Za-z0-9._-]{1,96}", revision),
+                 f"插件 {artifact} 的 configurationRevision 必须是专项插件的稳定配置修订标识")
+        _require(host_version >= parse_semver("0.16.14", "配置修订最低宿主版本"),
+                 f"插件 {artifact} 的 configurationRevision 要求 Host 0.16.14")
     if kind == "data-specialized":
         validate_specialized_contract(root, manifest)
         _validate_data_contract(root, manifest)

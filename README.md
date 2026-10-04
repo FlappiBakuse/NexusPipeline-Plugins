@@ -2,7 +2,22 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.9）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.9）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/author/FRONTEND_PLUGIN.md)。
+
+## 上游最新稳定发行发现
+
+核对日期：2026-10-04。完整任务兼容情况及三版 SHA/资产见[项目索引](docs/projects/README.md)。发现不代表真实游戏实测通过。
+
+| 脚本 | 最新稳定发行 |
+|---|---|
+| BAAH | [BAAH2.4.13](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.13) |
+| BetterGI | [0.66.0](https://github.com/babalae/better-genshin-impact/releases/tag/0.66.0) |
+| MaaEnd | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) |
+| MaaStellaSora | [v1.5.1](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.1) |
+| March7thAssistant | [v2026.10.3](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.10.3) |
+| OkNTE | [v1.4.7](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7) |
+| OkWutheringWaves | [v3.7.3](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.3) |
+| ZenlessZoneZeroOneDragon | [v2.5.2](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.2) |
 
 ## 当前插件
 
@@ -11,11 +26,11 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator`, `self-managed-pc-launch` |
 | `bettergi` | `BetterGI` | 原神 | `data-specialized` | — |
 | `maaend` | `MaaEnd` | 明日方舟：终末地 | `data-specialized` | `emulator` |
-| `maastellasora` | `MaaStellaSora` | 星塔旅人 | `data-specialized` | `emulator` |
+| `maas` | `MaaStellaSora` | 星塔旅人（MFAAvalonia 稳定实例） | `data-specialized` | `emulator` |
 | `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
 | `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
 | `okww` | `OkWutheringWaves` | 鸣潮（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
-| `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
+| `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config`, `self-managed-pc-launch` |
 | `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
 | `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API v1.7 provider |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
@@ -59,7 +74,7 @@ NexusPipeline-Plugins/
 │       ├── data/                         # data-specialized 插件资源
 │       │   ├── resolve.json              # 脚本根目录推导规则
 │       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
-│       │   └── config-editor.js          # 可选配置编辑准备脚本
+│       │   └── editor.js                 # 生成的编辑准备与修复提案脚本
 │       └── i18n/                         # 可选 zh-CN/en-US 插件词典
 ├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
 │   └── <ArtifactName>-<version>.zip
@@ -71,17 +86,16 @@ NexusPipeline-Plugins/
 │   ├── repository_candidate.py          # 稳定/预览候选清单与来源校验
 │   ├── sdk_source.py                    # 官方 Host SDK SHA 与 checkout 校验
 │   ├── repository_publish.py            # 本地候选生成与稳定 writer 边界
-│   ├── Test-ConfigEditors.mjs           # 配置编辑器前端契约门禁
+│   ├── Test-ConfigEditors.mjs           # 后端编辑准备脚本行为验证
 │   ├── Test-FrontendPlugins.mjs         # Frontend API 入口与元素门禁
 │   └── tests/                           # 仓库工具单元测试
 └── docs/
-    ├── README.md                       # 插件作者任务入口与文档地图
-    ├── STATUS.md                       # 当前待办与未验证范围
-    ├── map.json                        # 机器可读主题路由
-    ├── DATA_SPECIALIZED_PLUGIN.md      # 数据化专项插件开发指南
-    ├── FRONTEND_PLUGIN.md              # 前端插件开发指南
-    ├── JUDGE_SCRIPT.md                  # 判断脚本开发指南
-    └── RELEASING.md                     # 打包、catalog 与包校验流程
+    ├── README.md、map.json              # 分类导航与机器路由
+    ├── TESTING.md、RELEASING.md         # 验证与发行
+    ├── STATUS.md                       # 未完成/未验证事项
+    ├── author/                         # 插件、任务协议、editor 与前端契约
+    ├── frameworks/                     # 原生框架与完成动作
+    └── projects/                       # 八专项全部已知任务及固定发行窗口
 ```
 
 发行 ZIP 的根目录直接对应运行时插件目录内容。`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明；禁止 `frontend`、`web`、浏览器载荷及 .NET 程序集。`managed-code` 包含 `plugin.json`、`store.json`、入口 DLL 及其依赖 DLL；带前端的 managed 插件额外包含 manifest 声明的 `web/` 资源和 `README.md`。源码目录中的测试草稿和个人配置不应进入发行包。
@@ -93,7 +107,7 @@ NexusPipeline-Plugins/
 1. `data-specialized` 插件在 `plugins/specialized/<ArtifactName>/` 创建 `plugin.json`、`store.json`、`data/resolve.json` 和判断脚本；`managed-code` 插件在 `plugins/general/<ArtifactName>/` 创建 `src/` 项目并引用宿主 Plugin API。
 2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
 3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
-4. 按 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
+4. 按 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/author/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
 5. 发行 payload 变化时更新插件自身版本和 `store.json`，在源码阶段按[核心测试](docs/TESTING.md)运行单插件或变化选择验证；合并后稳定候选根据已发布游标计算累计变化，工具与文档改动不强制版本提升。仓库根目录 `host.lock.json` 的兼容元数据记录 API 与 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；stable publisher 根据验收通过的原候选生成受影响插件的包、catalog 与状态文件。develop 预览使用 `publish-develop`，不改写 stable 文件。
 
 ## 重要运行语义
@@ -111,18 +125,18 @@ NexusPipeline-Plugins/
 
 ## 数据与安全
 
-仓库中的 JSON、脚本和其他公开资源必须使用公开的默认值，禁止提交账号、Token、Cookie、真实路径、用户日志或运行数据。JavaScript 判断脚本使用宿主提供的受控 Jint API；Python 判断脚本以系统 `python.exe` 子进程运行；managed-code 插件构建产物只应在发行包校验通过后进入 `packages/`。插件前端与发行包内容应在发布前完成代码审查，详见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)。
+仓库中的 JSON、脚本和其他公开资源必须使用公开的默认值，禁止提交账号、Token、Cookie、真实路径、用户日志或运行数据。JavaScript 判断脚本使用宿主提供的受控 Jint API；Python 判断脚本以系统 `python.exe` 子进程运行；managed-code 插件构建产物只应在发行包校验通过后进入 `packages/`。插件前端与发行包内容应在发布前完成代码审查，详见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)。
 
 ## 贡献入口
 
 - [项目状态与待办](docs/STATUS.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md)
-- [DATA_SPECIALIZED_PLUGIN.md](docs/DATA_SPECIALIZED_PLUGIN.md)
-- [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)
+- [DATA_SPECIALIZED_PLUGIN.md](docs/author/DATA_SPECIALIZED_PLUGIN.md)
+- [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)
 - [RELEASING.md](docs/RELEASING.md)
-- [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)
+- [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)
 - [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/author/TASK_PROTOCOL.md)。
 
 测试源码固定输入位于 `tests/inputs.lock.json`，与 `host.lock.json` 的 API/locale 兼容元数据分离。升级测试 Host 锁时先取得含所需支持工具的真实已合入 Host SHA，再迁移 Plugins 生产者；本地未提交指纹不能填入正式锁。PR 的逻辑义务按最多五批执行，入口与完整预算见 [核心测试](docs/TESTING.md)。

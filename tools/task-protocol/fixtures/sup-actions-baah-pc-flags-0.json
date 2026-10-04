@@ -1,6 +1,6 @@
 {
   "artifact": "BAAH",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -27,8 +27,8 @@
   },
   "batches": [],
   "results": {
-    "0/0/每日免费奖励": "unknown",
-    "0/1/邮件": "unknown"
+    "0/0/每日免费奖励": "failed",
+    "0/1/邮件": "failed"
   },
   "executionContext": {
     "mode": "pc"

@@ -27,10 +27,13 @@ function discover() {
     const known = modern.length || ADAPTER.defaultAppIds.includes(app.app_id) ? ADAPTER.apps[app.app_id] : undefined;
     behavior(plan, { id: config.id, document: app }, Object.keys(app).filter(k => !['app_id', 'enabled'].includes(k)),
       ['app_list', { by: 'app_id', value: app.app_id }]);
-    addTask(plan, config.id, 'one_dragon/' + app.app_id, known || app.app_id, enabled,
+    const task = addTask(plan, config.id, 'one_dragon/' + app.app_id, known || app.app_id, enabled,
       modern.length && app.enabled !== undefined ? ['app_list', { by: 'app_id', value: app.app_id }, 'enabled'] : null,
-      modern.length && app.app_id === 'email' ? 'safe' : 'unknown', known ? 'limited' : 'unsupported');
+      modern.length && app.app_id === 'email' ? 'safe' : 'unknown', known ? (ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited') : 'unsupported');
+    if (ADAPTER.protocolVersion === '0.2.0' && app.app_id === 'charge_plan')
+      addTask(plan, config.id, 'one_dragon/charge_plan/challenges', '副本挑战', enabled, null, 'unknown', 'supported', 'business', task.id);
   }
-  plan.diagnostics.push({ code: 'coverage_limited', message: 'Only exact registered outer application names are mapped. Group completion and nested operation failures do not imply application outcomes.' });
+  if (ADAPTER.protocolVersion === '0.2.0') plan.coverage = 'complete';
+  else plan.diagnostics.push({ code: 'coverage_limited', message: 'Only exact registered outer application names are mapped. Group completion and nested operation failures do not imply application outcomes.' });
   return plan;
 }

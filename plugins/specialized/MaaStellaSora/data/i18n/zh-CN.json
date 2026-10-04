@@ -19,5 +19,22 @@
   "task.invitation": "邀约",
   "task.log_in": "登录游戏",
   "task.serious_challenge": "真格挑战",
-  "task.tower_climb": "新版爬塔"
+  "task.tower_climb": "新版爬塔",
+  "diagnostic.mfa.launch_owner": "请在脚本设置 → 启动设置中填写游戏启动器路径，并选择启动软件并运行脚本；项目已启动游戏时可选择仅运行脚本。普通自定义程序任务无法在连接窗口前启动游戏。",
+  "diagnostic.mfa.finish_action": "请检查 MFA 启动设置中的任务后动作；关机、重启或关闭后继依赖的目标会中断配置恢复或队列。",
+  "task.bond_gifts.custom_name": "心链送礼（“{nickname}”）",
+  "task.bounty_trial_quick_battle.custom_name": "悬赏试炼快速战斗（“{nickname}”）",
+  "task.tower_climb.custom_name": "新版爬塔（“{nickname}”）",
+  "task.event_quick_battle.custom_name": "活动快速战斗（“{nickname}”）",
+  "task.event_challenge_auto_battle.custom_name": "活动挑战关卡自动战斗（“{nickname}”）",
+  "task.encircling_hunt.custom_name": "猎影合围（“{nickname}”）",
+  "task.log_in.custom_name": "登录游戏（“{nickname}”）",
+  "task.serious_challenge.custom_name": "真格挑战（“{nickname}”）",
+  "task.invitation.custom_name": "邀约（“{nickname}”）",
+  "task.claim_and_send_stamina.custom_name": "领取与赠送干劲（“{nickname}”）",
+  "task.claim_mission_rewards.custom_name": "领取任务奖励（“{nickname}”）",
+  "task.claim_fund_rewards.custom_name": "领取基金奖励（“{nickname}”）",
+  "task.claim_and_dispatch_commissions.custom_name": "领取并重新派遣委托（“{nickname}”）",
+  "task.claim_daily_rewards.custom_name": "领取每日奖励（“{nickname}”）",
+  "task.claim_mailbox_rewards.custom_name": "领取邮箱奖励（“{nickname}”）"
 }

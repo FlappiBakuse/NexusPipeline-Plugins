@@ -5,9 +5,9 @@
   "displayName": "蔚蓝档案爱丽丝助手",
   "gameName": "蔚蓝档案",
   "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.14",
   "capabilities": [
     "emulator",
     "self-managed-pc-launch"
@@ -22,7 +22,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -92,6 +92,68 @@
         "defaultValue": "127.0.0.1",
         "secondaryDefaultValue": "5555"
       }
+    ],
+    "repairRules": [
+      {
+        "id": "game_path",
+        "ruleId": "baah.game_target",
+        "resourceId": "config:$main",
+        "selector": [
+          "TARGET_EMULATOR_PATH"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "bind_game_path",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      },
+      {
+        "id": "finish_command",
+        "ruleId": "baah.finish_flags",
+        "resourceId": "config:$main",
+        "selector": [
+          "POST_COMMAND"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "normalize_enum",
+        "fromValues": [
+          ""
+        ],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      },
+      {
+        "id": "file_logging",
+        "ruleId": "baah.file_logging",
+        "resourceId": "extra:0",
+        "selector": [
+          "SAVE_LOG_TO_FILE"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "enable_boolean",
+        "fromValues": [],
+        "toValue": "true",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "开启软件设置中的日志文件输出；仅修改当前用户软件设置快照，应用前保留备份。"
+      }
     ]
-  }
+  },
+  "configEditor": "data/editor.js"
 }

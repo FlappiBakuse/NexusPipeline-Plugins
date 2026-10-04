@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "unsupported",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -23,7 +23,32 @@
       "text": "0000000000000000000000000000000000000000\n"
     }
   ],
-  "tasks": {},
+  "tasks": {
+    "daily_anomaly": {
+      "enabled": false
+    },
+    "daily_anomaly_hunter": {
+      "enabled": true
+    },
+    "coffee": {
+      "enabled": false
+    },
+    "daily_claim": {
+      "enabled": true
+    },
+    "cinema_date": {
+      "enabled": false
+    },
+    "fountain": {
+      "enabled": false
+    },
+    "furniture": {
+      "enabled": false
+    },
+    "gift": {
+      "enabled": false
+    }
+  },
   "batches": [],
   "results": {},
   "source": {
@@ -35,11 +60,16 @@
   "configChecks": [
     {
       "ruleId": "okscript.distribution",
-      "evaluation": "unknown",
-      "executionEffect": "block"
+      "evaluation": "satisfied",
+      "executionEffect": "none"
     }
   ],
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

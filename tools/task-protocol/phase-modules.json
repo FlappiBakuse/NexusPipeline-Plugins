@@ -127,7 +127,8 @@
         "observeRules"
       ],
       "requires": [
-        "core/clean"
+        "core/clean",
+        "core/requireValue"
       ]
     },
     "bettergi/discover": {
@@ -146,12 +147,33 @@
         "core/addTask"
       ]
     },
+    "core/logEnvelope": {
+      "file": "core/logEnvelope.js",
+      "provides": [
+        "logEnvelope"
+      ],
+      "requires": [
+        "core/clean"
+      ]
+    },
+    "bettergi/observeDaily": {
+      "file": "bettergi/observeDaily.js",
+      "provides": [
+        "observeDaily"
+      ],
+      "requires": [
+        "core/logEnvelope",
+        "core/endRun"
+      ]
+    },
     "bettergi/observe": {
       "file": "bettergi/observe.js",
       "provides": [
         "observe"
       ],
-      "requires": []
+      "requires": [
+        "bettergi/observeDaily"
+      ]
     },
     "march7th/discover": {
       "file": "march7th/discover.js",
@@ -174,7 +196,9 @@
       ],
       "requires": [
         "core/endRun",
-        "march7th/powerScope"
+        "march7th/powerScope",
+        "march7th/observeDaily",
+        "march7th/observeResources"
       ]
     },
     "baah/discover": {
@@ -435,6 +459,76 @@
         "runtimeIdentity"
       ],
       "requires": []
+    },
+    "mfa/discover": {
+      "file": "mfa/discover.js",
+      "provides": [
+        "discover"
+      ],
+      "requires": [
+        "core/createPlan",
+        "core/configOne",
+        "core/resource",
+        "core/addTask",
+        "core/behavior",
+        "mfa/instanceConfig"
+      ]
+    },
+    "mfa/observe": {
+      "file": "mfa/observe.js",
+      "provides": [
+        "observe",
+        "finalizeObserve"
+      ],
+      "requires": [
+        "core/endRun"
+      ]
+    },
+    "mfa/customRetryPatches": {
+      "file": "mfa/customRetryPatches.js",
+      "provides": [
+        "customRetryPatches"
+      ],
+      "requires": [
+        "core/select"
+      ]
+    },
+    "march7th/observeResources": {
+      "file": "march7th/observeResources.js",
+      "provides": ["observeResources"],
+      "requires": []
+    },
+    "march7th/observeDaily": {
+      "file": "march7th/observeDaily.js",
+      "provides": [
+        "observeDaily"
+      ],
+      "requires": [
+        "core/endRun",
+        "core/requireValue"
+      ]
+    },
+    "mfa/instanceConfig": {
+      "file": "mfa/instanceConfig.js",
+      "provides": [
+        "instanceConfig"
+      ],
+      "requires": [
+        "core/configOne",
+        "core/resource",
+        "core/object",
+        "core/requireValue"
+      ]
+    },
+    "mxu/customRetryPatches": {
+      "file": "mxu/customRetryPatches.js",
+      "provides": [
+        "customRetryPatches"
+      ],
+      "requires": [
+        "core/select",
+        "core/requireValue"
+      ]
     }
   },
   "entries": {
@@ -507,7 +601,8 @@
       ],
       "retry": [
         "core/retryPlan",
-        "mxu/discover"
+        "mxu/discover",
+        "mxu/customRetryPatches"
       ]
     },
     "example": {
@@ -551,6 +646,21 @@
       "retry": [
         "core/retryPlan",
         "okww/discover"
+      ]
+    },
+    "mfa": {
+      "discover": [
+        "mfa/discover",
+        "core/configAssessment"
+      ],
+      "observe": [
+        "core/observeRules",
+        "mfa/observe"
+      ],
+      "retry": [
+        "core/retryPlan",
+        "mfa/discover",
+        "mfa/customRetryPatches"
       ]
     }
   }

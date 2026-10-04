@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "queueFollowingWork": "yes",
   "queueNextTargetRelation": "different",
   "queueNextLaunchOwner": "already_running",
@@ -25,10 +25,15 @@
   ],
   "batches": [],
   "results": {
-    "mail": "unknown"
+    "mail": "failed"
   },
   "source": {
     "type": "synthetic",
     "note": "Controlled scenario; allowed actions/defaults independently qualified by pinned upstream sources in docs/frameworks/COMPLETION_ACTIONS.md."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

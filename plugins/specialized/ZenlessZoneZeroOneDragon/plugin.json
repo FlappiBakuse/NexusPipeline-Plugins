@@ -5,9 +5,9 @@
   "displayName": "绝区零一条龙",
   "gameName": "绝区零",
   "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.14",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configEditor": "data/editor.js",
@@ -22,7 +22,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -67,6 +67,49 @@
         "relativeBase": "none",
         "networkAccess": false,
         "followReparsePoints": false
+      }
+    ],
+    "repairRules": [
+      {
+        "id": "game_path",
+        "ruleId": "zzz.game_target",
+        "resourceId": "config:game_account.yml",
+        "selector": [
+          "game_path"
+        ],
+        "source": "user_snapshot",
+        "format": "yaml",
+        "kind": "bind_game_path",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      },
+      {
+        "id": "finish_action",
+        "ruleId": "zzz.finish_action",
+        "resourceId": "extra:0",
+        "selector": [
+          "after_done"
+        ],
+        "source": "user_snapshot",
+        "format": "yaml",
+        "kind": "normalize_enum",
+        "fromValues": [
+          "无",
+          "关闭游戏"
+        ],
+        "toValue": "无",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
       }
     ]
   }

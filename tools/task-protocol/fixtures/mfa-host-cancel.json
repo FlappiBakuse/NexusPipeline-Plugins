@@ -1,0 +1,51 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "complete",
+  "executionContext": {
+    "configInputName": "instance",
+    "configInputValue": "chosen"
+  },
+  "resources": [
+    {
+      "id": "config:instances/chosen.json",
+      "format": "json",
+      "text": "{\"TaskItems\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\", \"default_check\": true}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\", \"default_check\": true}], \"CurrentTasks\": [\"领取邮箱奖励<|||>Mail\", \"领取每日奖励<|||>Daily\"], \"AfterTask\": \"None\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\"}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\"}]}"
+    },
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{}"
+    },
+    {
+      "id": "mfa-settings",
+      "format": "json",
+      "text": "{\"DefaultConfig\":\"Default\"}"
+    }
+  ],
+  "tasks": {
+    "chosen/Mail/0": {
+      "enabled": true
+    },
+    "chosen/Daily/1": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "source": "file",
+      "lines": [
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：领取邮箱奖励"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/Mail/0": "cancelled",
+    "chosen/Daily/1": "cancelled"
+  },
+  "lifecycle": "cancelled"
+}

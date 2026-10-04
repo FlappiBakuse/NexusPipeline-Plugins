@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -21,9 +21,17 @@
       "id": "runtime-tag",
       "format": "text",
       "text": "cbbf3b44ac8325936b79386a3e68eeb571d80ed2\n"
+    },
+    {
+      "id": "runtime-origin",
+      "format": "text",
+      "text": "[remote \"origin\"]\nurl = https://cnb.cool/ok-oldking/ok-ww-update2.git\n"
     }
   ],
   "tasks": {
+    "daily": {
+      "enabled": true
+    },
     "nightmare": {
       "enabled": false
     },
@@ -64,5 +72,10 @@
       "evaluation": "satisfied",
       "executionEffect": "none"
     }
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

@@ -69,7 +69,9 @@
     "tasks/preset/RealtimeAssist.json": "interface-part-63",
     "tasks/pretasks/GameSetting.json": "interface-part-64",
     "tasks/setting/Keymap.json": "interface-part-65",
-    "tasks/setting/Zipline.json": "interface-part-66"
+    "tasks/setting/Zipline.json": "interface-part-66",
+    "tasks/DecomposeWeaponEssence.json": "interface-part-67",
+    "tasks/SharedZiplineDelete.json": "interface-part-68"
   },
   "locales": {
     "zh-CN": "locale-zh-CN",
@@ -92,7 +94,12 @@
     "CloseGamePC",
     "登录游戏",
     "关闭游戏",
-    "__MXU_POWER__"
+    "__MXU_POWER__",
+    "__MXU_SLEEP__",
+    "__MXU_WAITUNTIL__",
+    "__MXU_NOTIFY__",
+    "__MXU_WEBHOOK__",
+    "__MXU_KILLPROC__"
   ],
   "safe": [],
   "importTasks": {
@@ -254,9 +261,44 @@
     "tasks/preset/RealtimeAssist.json": [],
     "tasks/pretasks/GameSetting.json": [],
     "tasks/setting/Keymap.json": [],
-    "tasks/setting/Zipline.json": []
+    "tasks/setting/Zipline.json": [],
+    "tasks/DecomposeWeaponEssence.json": [
+      "DecomposeWeaponEssence"
+    ],
+    "tasks/SharedZiplineDelete.json": [
+      "SharedZiplineDelete"
+    ]
   },
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
+  "dailyPolicy": {
+    "completionPolicy": "authoritative",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "maaend.mxu.daily.v1",
+      "sources": [
+        "stdout"
+      ],
+      "rules": [
+        {
+          "id": "mxu.task.running",
+          "kind": "scope_started"
+        },
+        {
+          "id": "mxu.task.succeeded",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "mxu.task.failed",
+          "kind": "business_failed"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "selective_config",
+      "resourceConsumption": true,
+      "limitRefs": []
+    }
+  },
   "configRules": [
     {
       "id": "mxu.launch_owner",
@@ -264,12 +306,16 @@
       "criticality": "critical_when_applicable",
       "kind": "mxu_launch_owner",
       "resourceId": "config:mxu-MaaEnd.json",
-      "fallback": "未确认游戏窗口就绪，且当前自动执行实例没有明确的同目标启动动作；请让宿主启动、在上游配置启动，或先运行游戏。",
+      "fallback": "请将首项前置程序设置为游戏启动器并关闭等待退出，或在项目游戏联动中启用启动游戏；普通自定义程序任务在连接窗口后执行。",
       "location": {
         "source": "config",
         "resourceId": "config:mxu-MaaEnd.json",
-        "selector": ["settings", "autoStartInstanceId"]
-      }
+        "selector": [
+          "settings",
+          "autoStartInstanceId"
+        ]
+      },
+      "reasonKey": "diagnostic.mxu.launch_owner"
     },
     {
       "id": "mxu.autostart_target",
@@ -370,7 +416,14 @@
     "VisitFriends": "task.VisitFriends.label",
     "WeaponUpgrade": "task.WeaponUpgrade.label",
     "WebEvent202605": "task.WebEvent202605.label",
-    "ZiplineImport": "task.ZiplineImport.label"
+    "ZiplineImport": "task.ZiplineImport.label",
+    "__MXU_SLEEP__": "task.special.sleep",
+    "__MXU_WAITUNTIL__": "task.special.waitUntil",
+    "__MXU_LAUNCH__": "task.special.launch",
+    "__MXU_NOTIFY__": "task.special.notify",
+    "__MXU_WEBHOOK__": "task.special.webhook",
+    "__MXU_KILLPROC__": "task.special.killProc",
+    "__MXU_POWER__": "task.special.power"
   },
   "reasonTexts": {
     "mxu.task.running": "外层任务已开始",
@@ -400,5 +453,70 @@
         "text": "option.DailyProtocolPassRewards"
       }
     ]
+  },
+  "specialTasks": {
+    "__MXU_SLEEP__": {
+      "labels": {
+        "zh-CN": "⏳ 倒计时",
+        "en-US": "⏳ Countdown",
+        "zh-TW": "⏳ 倒數計時",
+        "ja-JP": "⏳ カウントダウン",
+        "ko-KR": "⏳ 카운트다운"
+      }
+    },
+    "__MXU_WAITUNTIL__": {
+      "labels": {
+        "zh-CN": "⏰ 定时等待",
+        "en-US": "⏰ Wait Until",
+        "zh-TW": "⏰ 定時等待",
+        "ja-JP": "⏰ 時刻まで待機",
+        "ko-KR": "⏰ 시간까지 대기"
+      }
+    },
+    "__MXU_LAUNCH__": {
+      "labels": {
+        "zh-CN": "▶️ 自定义程序",
+        "en-US": "▶️ Custom Program",
+        "zh-TW": "▶️ 自定義程式",
+        "ja-JP": "▶️ カスタムプログラム",
+        "ko-KR": "▶️ 사용자 지정 프로그램"
+      }
+    },
+    "__MXU_NOTIFY__": {
+      "labels": {
+        "zh-CN": "💬 系统通知",
+        "en-US": "💬 System Notification",
+        "zh-TW": "💬 系統通知",
+        "ja-JP": "💬 システム通知",
+        "ko-KR": "💬 시스템 알림"
+      }
+    },
+    "__MXU_WEBHOOK__": {
+      "labels": {
+        "zh-CN": "🔔 Webhook",
+        "en-US": "🔔 Webhook",
+        "zh-TW": "🔔 Webhook",
+        "ja-JP": "🔔 Webhook",
+        "ko-KR": "🔔 Webhook"
+      }
+    },
+    "__MXU_KILLPROC__": {
+      "labels": {
+        "zh-CN": "⛔ 结束进程",
+        "en-US": "⛔ Kill Process",
+        "zh-TW": "⛔ 結束程序",
+        "ja-JP": "⛔ プロセス終了",
+        "ko-KR": "⛔ 프로세스 종료"
+      }
+    },
+    "__MXU_POWER__": {
+      "labels": {
+        "zh-CN": "⚡ 电脑操作",
+        "en-US": "⚡ Power Action",
+        "zh-TW": "⚡ 電腦操作",
+        "ja-JP": "⚡ PC操作",
+        "ko-KR": "⚡ PC 작업"
+      }
+    }
   }
 }

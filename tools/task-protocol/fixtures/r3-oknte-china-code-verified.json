@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -21,6 +21,11 @@
       "id": "runtime-tag",
       "format": "text",
       "text": "942ffdb71eda0996979dcd8959f938a12b01adb9\n"
+    },
+    {
+      "id": "runtime-origin",
+      "format": "text",
+      "text": "[remote \"origin\"]\nurl = https://cnb.cool/BnanZ0/ok-nte-update.git\n"
     }
   ],
   "tasks": {
@@ -64,5 +69,10 @@
   ],
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

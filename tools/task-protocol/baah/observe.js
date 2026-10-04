@@ -53,7 +53,8 @@ function observe(text, tasks, emit, result, line, states) {
     const reason = /^任务[^\s]+执行后条件不成立或超时，且无法正确返回主页，程序退出$/.test(rootError[1])
       ? 'baah.task.fatal_postcondition' : 'baah.task.unhandled_exception';
     if (task) emit(task, 'failed', reason);
-    recordFailure(task, reason);
+    if (!task || !cursor.failureEvents.some(i => i.taskId === task.id && i.resolution === 'open'
+        && i.reasonCode === 'baah.task.postcondition_failed')) recordFailure(task, reason);
     cursor.pendingAbort = { taskId: task?.id || null, order: cursor.ordered ? task?.order ?? null : null,
       line: { sourceId: line.sourceId, epoch: line.epoch, sequence: line.sequence } };
     cursor.stack = []; cursor.owners = []; cursor.postPending = null;
@@ -91,7 +92,16 @@ function observe(text, tasks, emit, result, line, states) {
   }
   const pop = () => { cursor.stack.pop(); cursor.owners.pop(); cursor.postPending = null; };
   const skip = text.match(/^(?:任务([^\s]+)执行前条件不成立或超时，跳过此任务|The condition before the task ([^\s]+) is not met or timed out, skip this task)$/);
-  if (skip) { if (cursor.stack.at(-1) === (skip[1] || skip[2])) pop(); return; }
+  if (skip) {
+    if (cursor.stack.at(-1) === (skip[1] || skip[2])) {
+      const owner = tasks.find(t => t.id === cursor.owners[0]);
+      if (ADAPTER.protocolVersion === '0.2.0' && owner && states[owner.id]?.status !== 'skipped') {
+        emit(owner, 'failed', 'baah.task.precondition_failed'); recordFailure(owner, 'baah.task.precondition_failed');
+      }
+      pop();
+    }
+    return;
+  }
   if (cursor.stack.length === 1) {
     const active = tasks.filter(t => t.id === cursor.owners[0]);
     if (active.length === 1) {
@@ -103,7 +113,7 @@ function observe(text, tasks, emit, result, line, states) {
           if (outcome.status === 'failed') recordFailure(task, outcome.reason);
           if (outcome.status === 'succeeded' || outcome.skipKind === 'satisfied') resolveFailures(task, 'recovered');
         }
-        if (classOf(task) === 'InFreeAward' && /^(?:免费奖励领取成功|Free award collection succeeded)$/.test(text)) {
+        if (ADAPTER.protocolVersion !== '0.2.0' && classOf(task) === 'InFreeAward' && /^(?:免费奖励领取成功|Free award collection succeeded)$/.test(text)) {
           emit(task, 'succeeded', 'baah.free_reward.confirmed'); resolveFailures(task, 'recovered');
         }
         if (classOf(task) === 'InFreeAward' && /^(?:免费奖励领取失败\(|Free award collection failed \()/.test(text)) {
@@ -117,13 +127,17 @@ function observe(text, tasks, emit, result, line, states) {
   }
   const post = text.match(/^(?:任务([^\s]+)执行后条件不成立或超时|The condition after the task ([^\s]+) is not met or timed out)$/);
   if (post && cursor.stack.at(-1) === (post[1] || post[2])) {
+    const owner = tasks.find(t => t.id === cursor.owners[0]);
+    if (ADAPTER.protocolVersion === '0.2.0' && owner) {
+      emit(owner, 'failed', 'baah.task.postcondition_failed'); recordFailure(owner, 'baah.task.postcondition_failed');
+    }
     cursor.postPending = cursor.stack.length;
     return;
   }
   if (/^(?:返回主页成功|Successfully returned to the home page)$/.test(text)
       && cursor.postPending === cursor.stack.length) {
     const task = cursor.stack.length === 1 ? tasks.find(t => t.id === cursor.owners[0]) : null;
-    if (task && states[task.id]?.status === 'running') emit(task, 'unknown', 'baah.task.postcondition_unverified');
+    if (ADAPTER.protocolVersion !== '0.2.0' && task && states[task.id]?.status === 'running') emit(task, 'unknown', 'baah.task.postcondition_unverified');
     pop(); return;
   }
   const pattern = /^(?:执行任务([^\s]+)|Run task ([^\s]+)|任务([^\s]+)执行结束|Task ([^\s]+) execution completed|(?:运行出错: |Error occurred: )?任务([^\s]+)执行后条件不成立或超时，且无法正确返回主页，程序退出)$/;
@@ -149,9 +163,9 @@ function observe(text, tasks, emit, result, line, states) {
     // BAAH_main can catch this and rerun. Keep the attempt open until explicit error-close or process exit.
     cursor.pendingAbort = { taskId: task.id, order: cursor.ordered ? task.order : null,
       line: { sourceId: line.sourceId, epoch: line.epoch, sequence: line.sequence } };
+  } else if (ADAPTER.protocolVersion === '0.2.0' && states[task.id]?.status === 'running') {
+    emit(task, 'succeeded', 'baah.task.end'); resolveFailures(task, 'recovered');
   } else if (task.role === 'technical' && states[task.id]?.status === 'running') {
     emit(task, 'succeeded', 'baah.technical.end'); resolveFailures(task, 'recovered');
   }
-  // Task.run only proves that post_condition returned home. Many on_run methods return early silently.
-  // Business success therefore requires a task-specific confirmation above, never the generic end line.
 }

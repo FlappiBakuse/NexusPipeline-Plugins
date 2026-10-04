@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",
@@ -38,7 +38,13 @@
     }
   ],
   "results": {
-    "chosen/one": "unknown",
-    "chosen/unknown": "unknown"
-  }
+    "chosen/one": "failed",
+    "chosen/unknown": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ],
+  "admissionError": "protocol_error: daily task needs observable boundaries"
 }

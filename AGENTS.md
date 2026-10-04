@@ -12,9 +12,9 @@
 |---|---|
 | 插件分组、使用与源码目录 | `README.md` |
 | 作者开发与验证 | `CONTRIBUTING.md` |
-| data-specialized 数据/能力/脚本 | `docs/DATA_SPECIALIZED_PLUGIN.md` |
-| managed 浏览器扩展与公共元素 | `docs/FRONTEND_PLUGIN.md` |
-| 判断脚本 | `docs/JUDGE_SCRIPT.md` |
+| data-specialized 数据/能力/脚本 | `docs/author/DATA_SPECIALIZED_PLUGIN.md` |
+| managed 浏览器扩展与公共元素 | `docs/author/FRONTEND_PLUGIN.md` |
+| 判断脚本 | `docs/author/JUDGE_SCRIPT.md` |
 | Preview、stable 候选与发布 | `docs/RELEASING.md` |
 | 文档导航 | `docs/README.md`、`docs/map.json` |
 

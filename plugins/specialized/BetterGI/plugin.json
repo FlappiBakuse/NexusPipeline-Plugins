@@ -5,9 +5,9 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.14",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configEditor": "data/editor.js",
@@ -19,7 +19,54 @@
     }
   },
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
+    "repairRules": [
+      {
+        "id": "game_path",
+        "ruleId": "bettergi.game_target",
+        "resourceId": "extra:0",
+        "selector": [
+          "genshinStartConfig",
+          "installPath"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "bind_game_path",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      },
+      {
+        "id": "finish_action",
+        "ruleId": "bettergi.finish_action",
+        "resourceId": "config:$main",
+        "selector": [
+          "CompletionAction"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "normalize_enum",
+        "fromValues": [
+          "",
+          "无",
+          "关闭游戏",
+          "关闭软件",
+          "关闭游戏和软件"
+        ],
+        "toValue": "无",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "仅修改当前用户快照的这一项；应用前备份原字节，其他账号及脚本现场保持不变。若还有修复项，请继续预览。"
+      }
+    ],
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [

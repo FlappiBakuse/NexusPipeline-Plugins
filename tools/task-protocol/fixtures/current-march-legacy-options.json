@@ -1,0 +1,129 @@
+{
+  "artifact": "March7thAssistant",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:config.yaml",
+      "format": "yaml",
+      "text": "activity_dailycheckin_enable: true\nactivity_enable: true\nactivity_gardenofplenty_enable: false\nactivity_journey_highlights_notification_enable: false\nactivity_planarfissure_enable: false\nactivity_realmofthestrange_enable: false\napocalyptic_enable: false\nasset_ember_regular_pass_enable: false\nasset_ember_special_pass_enable: false\nasset_ember_tracks_of_destiny_enable: false\nasset_lc3_star_superimpose_enable: false\nasset_manager_enable: false\nasset_self_molding_resin_enable: false\nauto_battle_detect_enable: true\nauto_set_game_path_enable: true\nauto_set_resolution_enable: true\nauto_update: true\nautoplot_battle_detect_enable: true\nautoplot_click_enable: true\nautoplot_phone_detect_enable: true\nautoplot_skip_enable: true\nborrow_character_enable: false\nborrow_enable: true\nbreak_down_level_four_relicset: false\nbrowser_download_use_mirror: true\nbrowser_dump_cookies_enable: false\nbrowser_headless_enable: false\nbrowser_headless_restart_on_not_logged_in: true\nbrowser_persistent_enable: true\nbuild_target_enable: false\nbuild_target_use_user_instance_when_only_erosion_and_ornament: false\ncheck_update: true\ncloud_game_enable: false\ncloud_game_fullscreen_enable: true\ncloud_game_use_paid_time: false\ncurrencywars_bonus_enable: false\ncurrencywars_enable: false\ncurrencywars_fast_mode: true\ncurrencywars_strategy_restart_on_special_tags: true\ndaily_enable: true\ndaily_himeko_try_enable: false\ndaily_material_enable: true\ndaily_memory_one_enable: false\ndebug_mode_enable: false\ndivergent_auto_save_enable: true\ndivergent_station_priority_enable: false\necho_of_war_enable: false\nexit_after_failure: false\nfight_enable: false\nfight_requirements: false\nfight_reward_enable: false\nfight_team_enable: false\nforgottenhall_enable: false\ngenshin_starRail_fps_unlocker_allow: false\nhotkey_toggle_autoplot_enable: false\ninstance_team_enable: false\nlog_overlay_enable: true\nmerge_immersifier: false\nnotification_enable: true\nnotify_bark_enable: false\nnotify_custom_enable: false\nnotify_dingtalk_enable: false\nnotify_discord_enable: false\nnotify_gocqhttp_enable: false\nnotify_gotify_enable: false\nnotify_kook_enable: false\nnotify_lark_enable: false\nnotify_lark_imageenable: false\nnotify_matrix_enable: false\nnotify_matrix_separately_text_media: true\nnotify_meow_enable: false\nnotify_merge: false\nnotify_onebot_enable: false\nnotify_pushdeer_enable: false\nnotify_pushplus_enable: false\nnotify_qmsg_enable: false\nnotify_send_images: true\nnotify_serverchan3_enable: false\nnotify_serverchanturbo_enable: false\nnotify_smtp_enable: false\nnotify_smtp_plain_text: false\nnotify_smtp_ssl: true\nnotify_smtp_ssl_unverified: false\nnotify_smtp_starttls: false\nnotify_telegram_enable: false\nnotify_webhook_enable: false\nnotify_wechatworkapp_enable: false\nnotify_wechatworkbot_enable: false\nnotify_winotify_enable: true\npause_after_success: true\nplay_audio: false\npower_enable: false\npower_plan_keep: false\npurefiction_enable: false\nreward_achievement_enable: false\nreward_assist_enable: false\nreward_dispatch_enable: false\nreward_enable: true\nreward_mail_enable: false\nreward_message_enable: false\nreward_quest_enable: true\nreward_redemption_code_enable: false\nreward_srpass_enable: true\nscheduled_chain_continue_on_failure: true\nscheduled_run_enable: false\ntelemetry_enable: false\ntp_before_instance: false\nuniverse_bonus_enable: false\nuniverse_enable: false\nuniverse_enable_gpu: false\nuniverse_requirements: false\nupdate_full_enable: true\nupdate_prerelease_enable: false\nupdate_via_launcher: false\nuse_background_screenshot: true\nuse_fuel: false\nuse_reserved_trailblaze_power: false\nweekly_divergent_bonus_enable: false\nweekly_divergent_enable: false\nweekly_divergent_stable_mode: false\nweekly_relic_smart_discard_enable: false\nwindow_maximized: false\n"
+    }
+  ],
+  "tasks": {
+    "daily_enable": {
+      "enabled": true
+    },
+    "power_enable": {
+      "enabled": false
+    },
+    "universe_enable": {
+      "enabled": false
+    },
+    "weekly_divergent_enable": {
+      "enabled": false
+    },
+    "currencywars_enable": {
+      "enabled": false
+    },
+    "fight_enable": {
+      "enabled": false
+    },
+    "forgottenhall_enable": {
+      "enabled": false
+    },
+    "purefiction_enable": {
+      "enabled": false
+    },
+    "apocalyptic_enable": {
+      "enabled": false
+    },
+    "asset_manager_enable": {
+      "enabled": false
+    },
+    "reward_enable": {
+      "enabled": true
+    },
+    "activity_enable": {
+      "enabled": true
+    },
+    "build_target_enable": {
+      "enabled": false
+    },
+    "echo_of_war_enable": {
+      "enabled": false
+    },
+    "reward_assist_enable": {
+      "enabled": false
+    },
+    "reward_mail_enable": {
+      "enabled": false
+    },
+    "reward_dispatch_enable": {
+      "enabled": false
+    },
+    "reward_quest_enable": {
+      "enabled": true
+    },
+    "reward_srpass_enable": {
+      "enabled": true
+    },
+    "reward_achievement_enable": {
+      "enabled": false
+    },
+    "reward_message_enable": {
+      "enabled": false
+    },
+    "reward_redemption_code_enable": {
+      "enabled": false
+    },
+    "asset_self_molding_resin_enable": {
+      "enabled": false
+    },
+    "asset_lc3_star_superimpose_enable": {
+      "enabled": false
+    },
+    "asset_ember_special_pass_enable": {
+      "enabled": false
+    },
+    "asset_ember_regular_pass_enable": {
+      "enabled": false
+    },
+    "asset_ember_tracks_of_destiny_enable": {
+      "enabled": false
+    },
+    "activity_dailycheckin_enable": {
+      "enabled": true
+    },
+    "activity_gardenofplenty_enable": {
+      "enabled": false
+    },
+    "activity_realmofthestrange_enable": {
+      "enabled": false
+    },
+    "activity_planarfissure_enable": {
+      "enabled": false
+    },
+    "activity_journey_highlights_notification_enable": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {},
+  "queueFollowingWork": "yes",
+  "configChecks": [
+    {
+      "ruleId": "march7th.finish_action",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "source": {
+    "type": "sanitized_config_structure",
+    "note": "Only boolean switches from a legacy configuration; no account, path, notification credential or native execution."
+  },
+  "contractDecisions": [
+    "D01",
+    "D02",
+    "D07",
+    "D17"
+  ]
+}

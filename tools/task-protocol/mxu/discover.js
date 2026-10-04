@@ -13,7 +13,7 @@ function discover() {
   }
   requireValue(Array.isArray(instances[0].tasks));
   const instance = instances[0], pi = resource('interface');
-  behavior(plan, { id: config.id, document: instance }, ['controllerName', 'resourceName'], ['instances', { by: 'id', value: instance.id }]);
+  behavior(plan, { id: config.id, document: instance }, ['controllerName', 'resourceName', 'preActions', 'preAction'], ['instances', { by: 'id', value: instance.id }]);
   // Current MXU interfaces may define every task in imports and omit top-level task.
   requireValue(pi.name === ADAPTER.project &&
     (Array.isArray(pi.task) || (pi.task === undefined && Array.isArray(pi.import) && pi.import.length > 0)));
@@ -43,7 +43,11 @@ function discover() {
   requireValue(unique(instance.tasks.map(t => t.id)));
   for (const task of instance.tasks) {
     requireValue(typeof task.id === 'string' && typeof task.taskName === 'string' && typeof task.enabled === 'boolean');
-    const defs = definitions.filter(t => t.name === task.taskName), def = defs.length === 1 ? defs[0] : null;
+    const special = ADAPTER.specialTasks?.[task.taskName];
+    const defs = definitions.filter(t => t.name === task.taskName), def = special
+      ? {name:task.taskName, label:special.labels[language] || special.labels['zh-CN']}
+      : defs.length === 1 ? defs[0]
+      : ADAPTER.technical.includes(task.taskName) ? {name:task.taskName} : null;
     let label = def?.label || task.taskName;
     if (label.startsWith('$')) label = translations[label.slice(1)] || label.slice(1);
     const name = task.customName || label;
@@ -57,11 +61,26 @@ function discover() {
     const technical = ADAPTER.technical.includes(task.taskName);
     const safe = ADAPTER.safe.includes(task.taskName) && (!object(task.enabledByController) || cached === undefined);
     const created = addTask(plan, config.id, instance.id + '/' + task.id, name, enabled, selector,
-      safe ? 'safe' : 'unknown', def && importsComplete ? 'limited' : 'unsupported', technical ? 'technical' : 'business');
-    if (def && !task.customName && ADAPTER.taskNameTextKeys?.[task.taskName])
+      safe ? 'safe' : 'unknown', def && importsComplete ? (ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited') : 'unsupported', technical ? 'technical' : 'business');
+    if (ADAPTER.protocolVersion === '0.2.0' && created.role === 'business')
+      created.dependencies = plan.tasks.filter(t => t.enabled && t.role === 'technical'
+        && instance.tasks.find(saved => instance.id + '/' + saved.id === t.sourceKey)?.taskName === '__MXU_LAUNCH__').map(t => t.id);
+    if (ADAPTER.protocolVersion === '0.2.0' && typeof cached === 'boolean') {
+      const field = {resourceId:config.id, selector:selector.slice(0,-1).concat('enabledByController',controller), purpose:'selection'};
+      plan.selectionFields.push(field);
+      plan.slots[created.id + ':controller'] = field;
+    }
+    if (task.customName) {
+      const key = ADAPTER.taskNameTextKeys?.[task.taskName];
+      created.nameText = key && task.customName.length <= 256
+        ? { kind: 'plugin', key: key + '.custom_name', args: { nickname: task.customName }, fallback: label + '（“{nickname}”）' }
+        : { kind: 'literal', value: label + '（“' + task.customName + '”）' };
+    }
+    else if (def && ADAPTER.taskNameTextKeys?.[task.taskName])
       created.nameText = { kind: 'plugin', key: ADAPTER.taskNameTextKeys[task.taskName], args: {}, fallback: name };
     optionSummary(plan, created, task, def, options);
   }
-  plan.diagnostics.push({ code: 'coverage_limited', message: 'MXU task callbacks cover outer tasks only. Duplicate labels, unsupported resources and silent inner branches remain unknown.' });
+  if (ADAPTER.protocolVersion === '0.2.0') plan.coverage = 'complete';
+  else plan.diagnostics.push({ code: 'coverage_limited', message: 'MXU task callbacks cover outer tasks only. Duplicate labels, unsupported resources and silent inner branches remain unknown.' });
   return plan;
 }

@@ -10,7 +10,7 @@ function observe(text, tasks, emit, result, line, states) {
     cursor.source = line.sourceId; cursor.epoch = line.epoch;
     cursor.group = false; cursor.index = 0; cursor.active = null; cursor.transients = [];
   }
-  const pool = input.originalPlan.tasks.slice().sort((a, b) => a.order - b.order);
+  const pool = input.originalPlan.tasks.filter(t => !t.parentId).sort((a, b) => a.order - b.order);
   const node = text.match(/^指令\[ (.+) \] 节点 (.+) 返回状态(?: (.*))?$/);
   const terminal = text.match(/^指令\[ (.+) \] 执行(成功|失败) 返回状态(?: (.*))?$/);
   const proof = ruleId => ({ sourceId: line.sourceId, epoch: line.epoch, sequence: line.sequence, ruleId });
@@ -41,13 +41,26 @@ function observe(text, tasks, emit, result, line, states) {
       // GroupApplication.run_app logs this only after app.execute has returned.
       // Defer the candidate terminal until this boundary so a same-name child cannot win.
       if (task && active?.taskId === task.id && active.terminal) {
+        const child = tasks.find(t => t.parentId === task.id);
+        if (child && !active.unscopedChargeError && !active.child && !active.chargeIssues?.some(i => i.resolution === 'open')) {
+          emit(child, active.abandoned ? 'failed' : active.chargeStarted ? 'succeeded' : 'skipped',
+            active.abandoned ? 'zzz.charge.failed' : active.chargeStarted ? 'zzz.charge.succeeded' : 'zzz.charge.not_entered',
+            active.chargeStarted ? undefined : 'inapplicable');
+          result.observations.at(-1).evidence.push(active.started, active.terminal.proof);
+        }
         const unresolved = active.unscopedChargeError || active.chargeIssues?.some(i => i.resolution !== 'recovered');
-        const status = active.abandoned ? 'failed' : unresolved && active.terminal.status === 'succeeded' ? 'unknown' : active.terminal.status;
-        emit(task, status, active.abandoned ? 'zzz.charge.abandoned' : 'zzz.application.terminal');
+        const status = child ? (active.unscopedChargeError ? 'failed' : active.terminal.status) : active.abandoned ? 'failed' : unresolved && active.terminal.status === 'succeeded'
+          ? (ADAPTER.protocolVersion === '0.2.0' ? 'failed' : 'unknown') : active.terminal.status;
+        emit(task, status, ADAPTER.protocolVersion === '0.2.0' ? 'zzz.application.' + status
+          : active.abandoned ? 'zzz.charge.abandoned' : 'zzz.application.terminal');
         result.observations.at(-1).evidence.push(active.started, active.terminal.proof);
       }
     } else if (expected && status === '应用已完成 ' + expected.name) {
-      if (task) emit(task, 'skipped', 'zzz.application.already_done', 'satisfied');
+      if (task) {
+        emit(task, 'skipped', 'zzz.application.already_done', 'satisfied');
+        for (const child of tasks.filter(t => t.parentId === task.id))
+          emit(child, 'skipped', 'zzz.application.already_done', 'satisfied');
+      }
     } else if (!expected || status !== '应用未启用 ' + expected.name) {
       cursor.group = false; cursor.active = null; return;
     }
@@ -65,7 +78,7 @@ function observe(text, tasks, emit, result, line, states) {
     emit(task, 'running', 'zzz.application.start');
   }
   if (!cursor.active || cursor.active.taskId !== task.id) return;
-  observeCharge(text, node, terminal, task, cursor.active, result, line, states);
+  observeCharge(text, node, terminal, task, cursor.active, result, line, states, emit);
   if (terminal?.[1] === task.name)
     cursor.active.terminal = { status: terminal[2] === '成功' ? 'succeeded' : 'failed', proof: proof('zzz.application.outer_return') };
 }

@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -114,11 +114,12 @@
         "2026-09-21 00:10:00,000 | INFO | 清体力未完成 未找到指定副本",
         "2026-09-21 00:10:00,000 | ERROR | 检测到该次副本未正常运行，重试：3/3",
         "| 停止运行 |"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "power_enable": "unknown"
+    "power_enable": "failed"
   },
   "incidents": [
     {
@@ -140,5 +141,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -1,6 +1,6 @@
 {
   "artifact": "BAAH",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -97,5 +97,10 @@
     "automatic-login": "succeeded",
     "0/0/每日免费奖励": "failed",
     "0/1/每日免费奖励": "succeeded"
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

@@ -52,5 +52,7 @@
   "reason.baah.task.no_unread": "已检查，没有未读对话",
   "reason.baah.task.price_unreadable": "无法识别购买单价",
   "reason.baah.task.price_limit": "单价超过配置上限，未购买",
-  "diagnostic.baah.adb_serial_unverified": "当前配置直接使用 ADB 序列号，无法与绑定的网络端点确认一致。"
+  "diagnostic.baah.adb_serial_unverified": "当前配置直接使用 ADB 序列号，无法与绑定的网络端点确认一致。",
+  "diagnostic.baah.finish_flags": "请核对 BAAH 收尾设置中的关闭游戏、关闭模拟器和后置命令。",
+  "diagnostic.baah.file_logging": "请在 BAAH 软件设置中开启“是否输出日志到 /DATA/LOGS/ 目录”。"
 }

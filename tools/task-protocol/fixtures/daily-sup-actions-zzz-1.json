@@ -1,0 +1,56 @@
+{
+  "artifact": "ZenlessZoneZeroOneDragon",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:one_dragon/_group.yml",
+      "format": "yaml",
+      "text": "{\"app_list\": [{\"app_id\": \"email\", \"enabled\": true}, {\"app_id\": \"future\", \"enabled\": false}, {\"app_id\": \"coffee\", \"enabled\": false}]}"
+    },
+    {
+      "id": "zzz-extra-config",
+      "format": "yaml",
+      "text": "{\"after_done\": \"无\"}"
+    }
+  ],
+  "tasks": {
+    "one_dragon/email": {
+      "enabled": true
+    },
+    "one_dragon/future": {
+      "enabled": false
+    },
+    "one_dragon/coffee": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {
+    "one_dragon/email": "failed"
+  },
+  "displayNames": {
+    "en-US": {
+      "one_dragon/email": "Mail",
+      "one_dragon/future": "future"
+    }
+  },
+  "queueFollowingWork": "yes",
+  "queueNextTargetRelation": "different",
+  "queueNextLaunchOwner": "upstream",
+  "configChecks": [
+    {
+      "ruleId": "zzz.finish_action",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "source": {
+    "type": "synthetic",
+    "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
+}

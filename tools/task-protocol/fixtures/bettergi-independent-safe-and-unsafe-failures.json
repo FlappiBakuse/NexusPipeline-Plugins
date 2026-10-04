@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -14,9 +14,20 @@
   },
   "batches": [
     {
+      "source": "file",
       "lines": [
+        "[13:20:00.000] [INF] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel",
+        "一条龙任务执行: 1/2",
+        "[13:20:01.000] [ERR] BetterGenshinImpact.GameTask.TaskRunner",
         "领取邮件奖励异常: synthetic",
-        "合成树脂执行异常: synthetic"
+        "[13:20:02.000] [INF] BetterGenshinImpact.GameTask.TaskRunner",
+        "→ 任务结束",
+        "[13:20:03.000] [INF] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel",
+        "一条龙任务执行: 2/2",
+        "[13:20:04.000] [ERR] BetterGenshinImpact.GameTask.TaskRunner",
+        "合成树脂执行异常: synthetic",
+        "[13:20:05.000] [INF] BetterGenshinImpact.GameTask.TaskRunner",
+        "→ 任务结束"
       ]
     }
   ],
@@ -26,6 +37,6 @@
   },
   "source": {
     "type": "synthetic",
-    "note": "Independent safe mail failure and unverified resin failure; only mail may be selected for retry."
+    "note": "Independent mail and resource-consuming resin failures both enter finite daily retry without changing their original risk metadata."
   }
 }

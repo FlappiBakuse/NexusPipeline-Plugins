@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -110,10 +110,18 @@
     {
       "lines": [
         "实训分数已达标"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "daily_enable": "succeeded"
-  }
+    "daily_enable": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D02",
+    "D06",
+    "D07",
+    "D17"
+  ]
 }

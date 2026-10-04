@@ -1,6 +1,5 @@
 {
   "artifact": "MaaStellaSora",
-  "coverage": "partial",
   "resources": [
     {
       "id": "config:mxu-MaaStellaSora.json",
@@ -13,23 +12,25 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"$missing.runtime.label\"}, {\"name\": \"Other\"}]}"
     }
   ],
-  "tasks": {
-    "chosen/one": {
-      "enabled": true
-    },
-    "chosen/closed": {
-      "enabled": false
-    }
-  },
-  "batches": [
+  "coverage": "unsupported",
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
     {
-      "lines": [
-        "任务开始: missing.runtime.label",
-        "任务完成: missing.runtime.label"
-      ]
+      "code": "mfa.migration_required"
     }
   ],
-  "results": {
-    "chosen/one": "succeeded"
-  }
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ],
+  "legacyCompatibilityCase": "legacy-r2-maastellasora-missing-translation-key.json"
 }

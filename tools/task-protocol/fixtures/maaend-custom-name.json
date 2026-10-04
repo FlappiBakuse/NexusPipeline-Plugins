@@ -1,0 +1,47 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"DailyRewards\", \"enabled\": true, \"customName\": \"自定义昵称\"}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"DailyRewards\", \"label\": \"📅日常奖励领取\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 自定义昵称"
+      ]
+    },
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务完成: 自定义昵称"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded"
+  },
+  "displayNames": {
+    "zh-CN": {
+      "chosen/one": "📅日常奖励领取（“自定义昵称”）"
+    },
+    "en-US": {
+      "chosen/one": "📅 Claim Daily Rewards (“自定义昵称”)"
+    }
+  }
+}

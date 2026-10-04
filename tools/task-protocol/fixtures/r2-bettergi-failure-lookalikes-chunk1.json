@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "source": {
     "type": "source_derived",
     "originalArtifact": null,
@@ -41,8 +41,13 @@
     }
   ],
   "results": {
-    "自动地脉花": "unknown",
-    "领取每日奖励": "unknown"
+    "自动地脉花": "failed",
+    "领取每日奖励": "failed"
   },
-  "boundary": "ended"
+  "boundary": "open",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

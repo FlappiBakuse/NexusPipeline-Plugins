@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -55,12 +55,13 @@
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始执行日常任务",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:任务不支持当前语言，跳过: daily_claim",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:结束执行日常任务"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
     "daily_claim": "skipped",
-    "gift": "unknown"
+    "gift": "failed"
   },
   "source": {
     "type": "source_derived_control_flow",
@@ -71,5 +72,10 @@
   "boundary": "ended",
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

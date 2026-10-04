@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -113,11 +113,12 @@
         "2026-09-21 00:10:00,000 | ERROR | 活动处理过程中发生错误: synthetic controlled failure",
         "| 开始清体力 |",
         "| 停止运行 |"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "power_enable": "unknown",
+    "power_enable": "failed",
     "activity_enable": "failed"
   },
   "incidents": [],
@@ -135,5 +136,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

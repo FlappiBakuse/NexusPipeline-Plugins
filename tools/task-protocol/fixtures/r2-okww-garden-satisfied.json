@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -24,6 +24,9 @@
     }
   ],
   "tasks": {
+    "daily": {
+      "enabled": true
+    },
     "nightmare": {
       "enabled": true
     },
@@ -56,7 +59,8 @@
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:check weekly garden",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:weekly garden already completed",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:Daily Task Completed"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
@@ -71,5 +75,10 @@
   "boundary": "ended",
   "resourceSets": [
     "resources/okww-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

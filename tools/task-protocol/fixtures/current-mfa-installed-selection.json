@@ -1,0 +1,178 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "complete",
+  "executionContext": {
+    "configInputName": "instance",
+    "configInputValue": "chosen"
+  },
+  "resources": [
+    {
+      "id": "config:instances/chosen.json",
+      "format": "json",
+      "text": "{\"Resource\": \"台服\", \"CurrentControllerName\": \"桌面端\", \"CurrentController\": 1, \"TaskItems\": [{\"name\": \"登录游戏\", \"entry\": \"登录_登录\", \"default_check\": true}, {\"name\": \"领取每日奖励\", \"entry\": \"采购_入口\", \"default_check\": true}, {\"name\": \"心链送礼\", \"entry\": \"心链_入口\", \"default_check\": false}, {\"name\": \"邀约\", \"entry\": \"邀约_入口\", \"default_check\": false}, {\"name\": \"活动快速战斗\", \"entry\": \"活动快速战斗_入口\", \"default_check\": false}, {\"name\": \"活动挑战关卡自动战斗\", \"entry\": \"活动挑战_入口\", \"default_check\": false}, {\"name\": \"悬赏试炼快速战斗\", \"entry\": \"战斗_入口\", \"default_check\": false}, {\"name\": \"领取并重新派遣委托\", \"entry\": \"委托_入口\", \"default_check\": false}, {\"name\": \"领取与赠送干劲\", \"entry\": \"好友_入口\", \"default_check\": false}, {\"name\": \"领取任务奖励\", \"entry\": \"任务_入口\", \"default_check\": false}, {\"name\": \"领取邮箱奖励\", \"entry\": \"邮箱_入口\", \"default_check\": true}, {\"name\": \"领取基金奖励\", \"entry\": \"基金_入口\", \"default_check\": true}, {\"name\": \"猎影合围\", \"entry\": \"猎影合围_入口\", \"default_check\": true}, {\"name\": \"真格挑战\", \"entry\": \"真格挑战_入口\", \"default_check\": false}, {\"name\": \"新版爬塔\", \"entry\": \"星塔_入口_agent\", \"default_check\": false}], \"CurrentTasks\": [\"登录游戏<|||>登录_登录\", \"领取每日奖励<|||>采购_入口\", \"心链送礼<|||>心链_入口\", \"邀约<|||>邀约_入口\", \"活动快速战斗<|||>活动快速战斗_入口\", \"活动挑战关卡自动战斗<|||>活动挑战_入口\", \"悬赏试炼快速战斗<|||>战斗_入口\", \"领取并重新派遣委托<|||>委托_入口\", \"领取与赠送干劲<|||>好友_入口\", \"领取任务奖励<|||>任务_入口\", \"领取邮箱奖励<|||>邮箱_入口\", \"领取基金奖励<|||>基金_入口\", \"猎影合围<|||>猎影合围_入口\", \"真格挑战<|||>真格挑战_入口\", \"新版爬塔<|||>星塔_入口_agent\"]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"controller\": [{\"name\": \"桌面端\", \"type\": \"Win32\"}, {\"name\": \"安卓端\", \"type\": \"Adb\"}, {\"name\": \"PlayCover\", \"type\": \"PlayCover\"}], \"resource\": [{\"name\": \"官服\"}, {\"name\": \"台服\"}, {\"name\": \"国际服\"}, {\"name\": \"日服\"}], \"name\": \"MaaStellaSora\", \"import\": [\"interface/tasks/login.json\", \"interface/tasks/shop.json\", \"interface/tasks/talk.json\", \"interface/tasks/invite.json\", \"interface/tasks/invite_select_cn.json\", \"interface/tasks/activity.json\", \"interface/tasks/activity_challenge.json\", \"interface/tasks/fight.json\", \"interface/tasks/quest.json\", \"interface/tasks/friend.json\", \"interface/tasks/task.json\", \"interface/tasks/mail.json\", \"interface/tasks/grant.json\", \"interface/tasks/operation.json\", \"interface/tasks/proving_grounds.json\", \"interface/tasks/climb_tower.json\", \"interface/tasks/climb_tower_shop.json\", \"interface/tasks/climb_tower_shop_enhance.json\", \"interface/tasks/climb_tower_target.json\"]}"
+    },
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{}"
+    },
+    {
+      "id": "mfa-settings",
+      "format": "json",
+      "text": "{\"DefaultConfig\": \"Default\"}"
+    },
+    {
+      "id": "interface-part-16",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"登录游戏\", \"entry\": \"登录_登录\"}]}"
+    },
+    {
+      "id": "interface-part-17",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取每日奖励\", \"entry\": \"采购_入口\"}]}"
+    },
+    {
+      "id": "interface-part-18",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"心链送礼\", \"entry\": \"心链_入口\"}]}"
+    },
+    {
+      "id": "interface-part-19",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"邀约\", \"entry\": \"邀约_入口\"}]}"
+    },
+    {
+      "id": "interface-part-20",
+      "format": "text",
+      "text": "{}"
+    },
+    {
+      "id": "interface-part-21",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"活动快速战斗\", \"entry\": \"活动快速战斗_入口\"}]}"
+    },
+    {
+      "id": "interface-part-22",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"活动挑战关卡自动战斗\", \"entry\": \"活动挑战_入口\"}]}"
+    },
+    {
+      "id": "interface-part-23",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"悬赏试炼快速战斗\", \"entry\": \"战斗_入口\"}]}"
+    },
+    {
+      "id": "interface-part-24",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取并重新派遣委托\", \"entry\": \"委托_入口\"}]}"
+    },
+    {
+      "id": "interface-part-25",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取与赠送干劲\", \"entry\": \"好友_入口\"}]}"
+    },
+    {
+      "id": "interface-part-26",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取任务奖励\", \"entry\": \"任务_入口\"}]}"
+    },
+    {
+      "id": "interface-part-27",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"邮箱_入口\"}]}"
+    },
+    {
+      "id": "interface-part-28",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取基金奖励\", \"entry\": \"基金_入口\"}]}"
+    },
+    {
+      "id": "interface-part-29",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"猎影合围\", \"entry\": \"猎影合围_入口\"}]}"
+    },
+    {
+      "id": "interface-part-30",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"真格挑战\", \"entry\": \"真格挑战_入口\"}]}"
+    },
+    {
+      "id": "interface-part-31",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"新版爬塔\", \"entry\": \"星塔_入口_agent\"}]}"
+    },
+    {
+      "id": "interface-part-32",
+      "format": "text",
+      "text": "{}"
+    },
+    {
+      "id": "interface-part-33",
+      "format": "text",
+      "text": "{}"
+    },
+    {
+      "id": "interface-part-34",
+      "format": "text",
+      "text": "{}"
+    }
+  ],
+  "tasks": {
+    "chosen/登录_登录/0": {
+      "enabled": true
+    },
+    "chosen/采购_入口/1": {
+      "enabled": true
+    },
+    "chosen/心链_入口/2": {
+      "enabled": false
+    },
+    "chosen/邀约_入口/3": {
+      "enabled": false
+    },
+    "chosen/活动快速战斗_入口/4": {
+      "enabled": false
+    },
+    "chosen/活动挑战_入口/5": {
+      "enabled": false
+    },
+    "chosen/战斗_入口/6": {
+      "enabled": false
+    },
+    "chosen/委托_入口/7": {
+      "enabled": false
+    },
+    "chosen/好友_入口/8": {
+      "enabled": false
+    },
+    "chosen/任务_入口/9": {
+      "enabled": false
+    },
+    "chosen/邮箱_入口/10": {
+      "enabled": true
+    },
+    "chosen/基金_入口/11": {
+      "enabled": true
+    },
+    "chosen/猎影合围_入口/12": {
+      "enabled": true
+    },
+    "chosen/真格挑战_入口/13": {
+      "enabled": false
+    },
+    "chosen/星塔_入口_agent/14": {
+      "enabled": false
+    }
+  },
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "sanitized_config_structure",
+    "note": "Public task identities and boolean selection only; no device, account, options or native execution."
+  }
+}

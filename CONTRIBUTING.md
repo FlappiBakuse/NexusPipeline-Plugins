@@ -20,7 +20,7 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 发行 payload 变化时提升插件版本并更新 `store.json`；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
+7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -29,10 +29,10 @@
 - 提交按功能边界拆分，每个提交保持可独立验证、审查和回退；提交操作需要维护者明确授权。
 - 持久化 UI 测试只覆盖功能结果、ARIA、焦点、状态、提交、路由、API 效果和生命周期。
 - 不建立截图外观基线或布局回归。截图数据能力可用两帧合成内容核对实际解码值；正式维护的功能 E2E 留在 tests，运行产物与一次性人工验证脚本放外部临时目录。
-- 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/FRONTEND_PLUGIN.md) 的当前清单为准。
+- 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/author/FRONTEND_PLUGIN.md) 的当前清单为准。
 - 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
-详细字段约定见 [数据化专项插件开发指南](docs/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。
+详细字段约定见 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。
 
 ## 发行包规则
 
@@ -97,7 +97,7 @@ MaaFrameworkDriver 的现役 managed 门禁覆盖 PI 编译、授权、导入与
 - 选择性重试同时设计配置替换和最终恢复；
 - stdout 不输出 Token、密码、完整配置或敏感日志。
 
-Python judge 具备系统解释器权限，必须按受信任代码进行审查。详见 [JUDGE_SCRIPT.md](docs/JUDGE_SCRIPT.md)。
+Python judge 具备系统解释器权限，必须按受信任代码进行审查。详见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)。
 
 ## 提交内容清单
 
@@ -120,8 +120,10 @@ Pull Request 应包含：
 
 插件行为变化时提高插件自身版本，并在 PR 中说明对已有脚本实例 profile、用户配置和判断脚本的影响。宿主 API 变化时同步检查 `minHostVersion`，避免插件索引允许安装到不支持所需契约的宿主版本。
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/TASK_PROTOCOL.md)。
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/author/TASK_PROTOCOL.md)。
 
 测试政策登记清单是当前核心能力的事实来源；新增插件同时登记实际组件实例、场景和生产包义务，清单不固定为十三。批次 CI、测试 Host source 锁与完整时长规则见 [核心测试](docs/TESTING.md)。
 
 仓库根目录的 `global.json` 固定 .NET 8 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 8。
+
+专项编辑代码在 `tools/config-editor/` 维护，运行 `python tools/generate_config_editors.py` 后提交生成的八个 `data/editor.js`。不要手改 bundle；`--check` 与 source gate 校验一致性。修复不能进入 discover，诊断不能写配置。完整接口见 [配置编辑](docs/author/CONFIG_EDITOR.md)。

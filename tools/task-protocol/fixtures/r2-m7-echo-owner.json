@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -114,7 +114,8 @@
         "2026-09-21 00:10:00,000 | INFO | 清体力未完成 未找到指定副本",
         "| 开始清体力 |",
         "| 停止运行 |"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
@@ -145,5 +146,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }
