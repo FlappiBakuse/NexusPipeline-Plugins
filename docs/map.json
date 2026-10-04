@@ -5,16 +5,32 @@
       "id": "testing.core",
       "path": "TESTING.md",
       "summary": "十三插件有限能力轨迹、累计预算、固定输入和 CI 汇总",
-      "topics": ["测试", "预算", "CI", "固定输入"],
-      "aliases": ["日常验证"],
-      "codePaths": ["tests/run.mjs", "tests/policy.json", "tests/ci-gate.py"],
-      "testDomains": ["managed", "repository-tools"],
-      "authorityFor": ["core-testing"],
+      "topics": [
+        "测试",
+        "预算",
+        "CI",
+        "固定输入"
+      ],
+      "aliases": [
+        "日常验证"
+      ],
+      "codePaths": [
+        "tests/run.mjs",
+        "tests/policy.json",
+        "tests/ci-gate.py"
+      ],
+      "testDomains": [
+        "managed",
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "core-testing"
+      ],
       "status": "current"
     },
     {
       "id": "framework.maafw",
-      "path": "MAAFRAMEWORK_DRIVER.md",
+      "path": "frameworks/MAAFRAMEWORK_DRIVER.md",
       "summary": "MaaFramework 独立配置、PI 编译、原生 worker、Agent 与发行输入",
       "topics": [
         "MaaFramework",
@@ -43,7 +59,7 @@
     },
     {
       "id": "authoring.frontend",
-      "path": "FRONTEND_PLUGIN.md",
+      "path": "author/FRONTEND_PLUGIN.md",
       "summary": "Frontend API 1.5、公共 nxp-* 元件、slot 和生命周期",
       "topics": [
         "frontend",
@@ -71,7 +87,7 @@
     },
     {
       "id": "authoring.data-specialized",
-      "path": "DATA_SPECIALIZED_PLUGIN.md",
+      "path": "author/DATA_SPECIALIZED_PLUGIN.md",
       "summary": "数据化插件 manifest、resolve、配置和脚本边界",
       "topics": [
         "data-specialized",
@@ -97,7 +113,7 @@
     },
     {
       "id": "authoring.judge",
-      "path": "JUDGE_SCRIPT.md",
+      "path": "author/JUDGE_SCRIPT.md",
       "summary": "完成判定、失败判定、超时和配置脚本审查",
       "topics": [
         "judge",
@@ -177,7 +193,7 @@
     },
     {
       "id": "authoring.task-protocol",
-      "path": "TASK_PROTOCOL.md",
+      "path": "author/TASK_PROTOCOL.md",
       "summary": "专项任务协议、只读发现、日志事实和安全选择补丁",
       "topics": [
         "taskProtocol",
@@ -190,7 +206,8 @@
       "codePaths": [
         "tools/task-protocol",
         "contracts/task-protocol.schema.json",
-        "tools/create_task_plugin.py"
+        "tools/create_task_plugin.py",
+        "contracts/config-repair.schema.json"
       ],
       "testDomains": [
         "data-contract",
@@ -440,6 +457,53 @@
       ],
       "authorityFor": [
         "finite-completion-actions"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "framework.mfa-avalonia",
+      "path": "frameworks/MFA_AVALONIA.md",
+      "summary": "MFA稳定实例、配置契约迁移、原生日志与重试边界",
+      "topics": [
+        "MFAAvalonia",
+        "迁移",
+        "maas"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/task-protocol/mfa",
+        "tools/task-protocol/upstream-window.json"
+      ],
+      "testDomains": [
+        "data-contract"
+      ],
+      "authorityFor": [
+        "mfa-avalonia-adaptation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "author.config-editor",
+      "path": "author/CONFIG_EDITOR.md",
+      "summary": "编辑准备、受限修复提案、生成源与账号事务边界",
+      "topics": [
+        "配置编辑",
+        "修复",
+        "生成"
+      ],
+      "aliases": [
+        "editor"
+      ],
+      "codePaths": [
+        "tools/generate_config_editors.py",
+        "tools/config-editor",
+        "tools/Test-ConfigEditors.mjs"
+      ],
+      "testDomains": [
+        "repository-tools"
+      ],
+      "authorityFor": [
+        "configuration-editing"
       ],
       "status": "current"
     }
