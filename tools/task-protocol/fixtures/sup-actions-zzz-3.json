@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -26,8 +26,8 @@
   },
   "batches": [],
   "results": {
-    "one_dragon/email": "unknown",
-    "one_dragon/future": "unknown"
+    "one_dragon/email": "failed",
+    "one_dragon/future": "failed"
   },
   "displayNames": {
     "en-US": {
@@ -48,5 +48,12 @@
   "source": {
     "type": "synthetic",
     "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ],
+  "admissionError": "protocol_error: daily task needs observable boundaries",
+  "observableScopeCase": "daily-sup-actions-zzz-3.json"
 }

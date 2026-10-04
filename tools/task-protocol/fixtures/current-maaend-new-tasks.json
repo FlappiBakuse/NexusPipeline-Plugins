@@ -1,0 +1,36 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"chosen\", \"tasks\": [{\"id\": \"item0\", \"taskName\": \"DecomposeWeaponEssence\", \"enabled\": true}, {\"id\": \"item1\", \"taskName\": \"SharedZiplineDelete\", \"enabled\": true}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"import\": [\"tasks/DecomposeWeaponEssence.json\", \"tasks/SharedZiplineDelete.json\"]}"
+    },
+    {
+      "id": "interface-part-67",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"DecomposeWeaponEssence\", \"entry\": \"DecomposeWeaponEssenceStart\", \"controller\": [\"ADB\", \"Linux-Gamescope\", \"Linux-ScreenCast\", \"Linux-Wlroots\", \"MacOS-Background\", \"MacOS-Front\", \"PlayCover\", \"Win32-Front\"]}]}"
+    },
+    {
+      "id": "interface-part-68",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"SharedZiplineDelete\", \"entry\": \"SharedZiplineDeleteMain\", \"controller\": [\"Linux-Gamescope\", \"Linux-ScreenCast\", \"Linux-Wlroots\", \"Win32-Front\"]}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/item0": {
+      "enabled": true
+    },
+    "chosen/item1": {
+      "enabled": true
+    }
+  },
+  "batches": [],
+  "results": {}
+}

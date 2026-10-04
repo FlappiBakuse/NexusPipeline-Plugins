@@ -1,4 +1,5 @@
 function observe(text, tasks, emit, result, line) {
+  if (ADAPTER.protocolVersion === '0.2.0') return observeDaily(text, tasks, emit, result, line, arguments[5]);
   // Reviewed bfe5f868: LeyLine throws after this log; Guild retries exactly once.
   // Match a message boundary, not quoted user text or a stack-frame mention.
   const message = text.replace(/^(?:\[\d{2}:\d{2}:\d{2}(?:\.\d+)?\]\s*)?\[(?:ERR|DBG|INF|ERROR|DEBUG|INFO)\]\s*/, '');

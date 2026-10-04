@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -122,7 +122,7 @@
     }
   ],
   "results": {
-    "power_enable": "unknown"
+    "power_enable": "failed"
   },
   "incidents": [
     {
@@ -144,5 +144,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

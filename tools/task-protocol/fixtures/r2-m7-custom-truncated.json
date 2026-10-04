@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -112,11 +112,12 @@
         "| 开始清体力 |",
         "-------- 开始刷拟造花萼（赤） - 目标甲，总计2轮，每轮包含1次 --------",
         "2026-09-21 00:10:00,000 | INFO | 副本未完成"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "power_enable": "unknown"
+    "power_enable": "failed"
   },
   "incidents": [],
   "source": {
@@ -133,5 +134,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

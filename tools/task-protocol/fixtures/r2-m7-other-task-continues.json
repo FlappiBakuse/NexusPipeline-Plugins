@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -122,12 +122,13 @@
         "| 开始日常任务 |",
         "2026-09-21 00:10:00,000 | INFO | 实训分数已达标",
         "| 停止运行 |"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
     "power_enable": "failed",
-    "daily_enable": "succeeded"
+    "daily_enable": "failed"
   },
   "incidents": [
     {
@@ -169,5 +170,12 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D02",
+    "D06",
+    "D07",
+    "D17"
+  ]
 }

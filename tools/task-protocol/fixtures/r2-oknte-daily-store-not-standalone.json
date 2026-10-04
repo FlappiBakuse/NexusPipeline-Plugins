@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -63,47 +63,56 @@
     {
       "lines": [
         "2026-09-21 12:00:00,001 DEBUG TaskExecutor TaskExecutor:end running onetime_task Start Game"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始执行日常任务"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始任务: 日常领取"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:任务失败: 日常领取"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始任务: 羁遇赠礼"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:任务完成: 羁遇赠礼"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:success: ['羁遇赠礼']"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:结束执行日常任务"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor TaskExecutor:Successfully Executed Task, Exiting Game and App!"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
@@ -165,5 +174,10 @@
   ],
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

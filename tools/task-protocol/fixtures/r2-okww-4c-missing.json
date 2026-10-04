@@ -31,33 +31,7 @@
       "text": "2eaacbf8d5dc6eb323c0f73d1d145d33c22f7eaa\n"
     }
   ],
-  "tasks": {
-    "nightmare": {
-      "enabled": false
-    },
-    "stamina": {
-      "enabled": true
-    },
-    "daily_reward": {
-      "enabled": true
-    },
-    "mail": {
-      "enabled": true
-    },
-    "battle_pass": {
-      "enabled": true
-    },
-    "garden": {
-      "enabled": false
-    },
-    "merge": {
-      "enabled": false
-    },
-    "farm_4c": {
-      "enabled": true,
-      "detection": "unsupported"
-    }
-  },
+  "tasks": {},
   "batches": [],
   "results": {},
   "source": {
@@ -68,5 +42,10 @@
   },
   "resourceSets": [
     "resources/okww-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

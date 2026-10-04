@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",
@@ -33,7 +33,12 @@
     }
   ],
   "results": {
-    "chosen/one": "unknown",
-    "chosen/two": "unknown"
-  }
+    "chosen/one": "failed",
+    "chosen/two": "failed"
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

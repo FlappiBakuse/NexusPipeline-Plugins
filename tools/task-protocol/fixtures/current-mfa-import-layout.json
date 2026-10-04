@@ -1,0 +1,154 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "complete",
+  "executionContext": {
+    "configInputName": "instance",
+    "configInputValue": "chosen"
+  },
+  "resources": [
+    {
+      "id": "config:instances/chosen.json",
+      "format": "json",
+      "text": "{\"TaskItems\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\", \"default_check\": true}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\", \"default_check\": true}], \"CurrentTasks\": [\"领取邮箱奖励<|||>Mail\", \"领取每日奖励<|||>Daily\"], \"AfterTask\": \"None\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"import\": [\"interface/tasks/login.json\", \"interface/tasks/shop.json\", \"interface/tasks/talk.json\", \"interface/tasks/invite.json\", \"interface/tasks/invite_select_cn.json\", \"interface/tasks/activity.json\", \"interface/tasks/activity_challenge.json\", \"interface/tasks/fight.json\", \"interface/tasks/quest.json\", \"interface/tasks/friend.json\", \"interface/tasks/task.json\", \"interface/tasks/mail.json\", \"interface/tasks/grant.json\", \"interface/tasks/operation.json\", \"interface/tasks/proving_grounds.json\", \"interface/tasks/climb_tower.json\", \"interface/tasks/climb_tower_shop.json\", \"interface/tasks/climb_tower_shop_enhance.json\", \"interface/tasks/climb_tower_target.json\"]}"
+    },
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{}"
+    },
+    {
+      "id": "mfa-settings",
+      "format": "json",
+      "text": "{\"DefaultConfig\":\"Default\"}"
+    },
+    {
+      "id": "interface-part-16",
+      "format": "text",
+      "text": "{\"task\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\"}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\"}]}"
+    },
+    {
+      "id": "interface-part-17",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-18",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-19",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-20",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-21",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-22",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-23",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-24",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-25",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-26",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-27",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-28",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-29",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-30",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-31",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-32",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-33",
+      "format": "text",
+      "text": "{\"task\": []}"
+    },
+    {
+      "id": "interface-part-34",
+      "format": "text",
+      "text": "{\"task\": []}"
+    }
+  ],
+  "tasks": {
+    "chosen/Mail/0": {
+      "enabled": true
+    },
+    "chosen/Daily/1": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "source": "file",
+      "lines": [
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：领取邮箱奖励",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：领取每日奖励",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 任务失败：领取每日奖励",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 任务已全部完成！"
+      ]
+    },
+    {
+      "source": "file",
+      "lines": [],
+      "final": true
+    }
+  ],
+  "results": {
+    "chosen/Mail/0": "succeeded",
+    "chosen/Daily/1": "failed"
+  },
+  "boundary": "ended"
+}

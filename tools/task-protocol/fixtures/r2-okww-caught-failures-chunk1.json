@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -24,6 +24,9 @@
     }
   ],
   "tasks": {
+    "daily": {
+      "enabled": true
+    },
     "nightmare": {
       "enabled": true
     },
@@ -53,42 +56,50 @@
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:open_daily"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 DEBUG TaskExecutor DailyTask:Auto Farm all Nightmare Nest"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 ERROR TaskExecutor DailyTask:NightmareNestTask Failed Traceback (most recent call last):"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:check weekly garden"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 ERROR TaskExecutor DailyTask:GardenTask Failed Traceback (most recent call last):"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:check discarded echo"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 ERROR TaskExecutor DailyTask:MergeEchoTask Failed Traceback (most recent call last):"
-      ]
+      ],
+      "source": "file"
     },
     {
       "lines": [
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyTask:Daily Task Completed"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
@@ -105,5 +116,10 @@
   "boundary": "ended",
   "resourceSets": [
     "resources/okww-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

@@ -1,0 +1,7 @@
+{
+  "artifact":"BAAH","coverage":"complete",
+  "resources":[{"id":"config:config.json","format":"json","text":"{\"TASK_ORDER_GROUP\":{\"ACTIVATE_IND\":0,\"ALL_PIPELINES\":[{\"TASK_PIPELINE\":[\"购买AP\",\"邮件\"],\"TASK_ONOFF\":[true,true]}]},\"OPEN_GAME_APP_TASK\":true,\"DO_POST_ALL_TASK\":false}"}],
+  "tasks":{"automatic-login":{"enabled":true},"0/0/购买AP":{"enabled":true},"0/1/邮件":{"enabled":true},"automatic-cleanup":{"enabled":false}},
+  "batches":[{"source":"file","lines":["当前激活: pipeline 1","判断任务EnterGame是否可以执行","执行任务EnterGame","任务EnterGame执行结束","判断任务BuyAP是否可以执行","执行任务BuyAP","任务BuyAP执行后条件不成立或超时","返回主页成功","判断任务CollectMails是否可以执行","执行任务CollectMails","任务CollectMails执行结束","所有任务结束"]}],
+  "results":{"automatic-login":"succeeded","0/0/购买AP":"failed","0/1/邮件":"succeeded"},"boundary":"ended"
+}

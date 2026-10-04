@@ -10,6 +10,11 @@ function observeRules(rule, finish) {
     if (status === 'running' && old.executionOrdinal > 0 && !['running', 'pending'].includes(old.status)) ordinal++;
     const observation = { id: [line.sourceId, line.epoch, line.sequence, task.id, status].join(':'), taskId: task.id,
       executionOrdinal: ordinal, status, reasonCode: ruleId, evidence: [{ sourceId: line.sourceId, epoch: line.epoch, sequence: line.sequence, ruleId }] };
+    if (ADAPTER.protocolVersion === '0.2.0') {
+      const declared = task.observationContract.rules.find(rule => rule.id === ruleId);
+      requireValue(declared);
+      observation.factKind = declared.kind;
+    }
     if (ADAPTER.reasonTexts && ADAPTER.reasonTexts[ruleId])
       observation.reasonText = { kind: 'plugin', key: 'reason.' + ruleId, args: {}, fallback: ADAPTER.reasonTexts[ruleId] };
     if (skipKind) observation.skipKind = skipKind;

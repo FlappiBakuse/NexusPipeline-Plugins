@@ -1,0 +1,73 @@
+{
+  "artifact": "MaaStellaSora",
+  "coverage": "complete",
+  "executionContext": {
+    "configInputName": "instance",
+    "configInputValue": "chosen"
+  },
+  "resources": [
+    {
+      "id": "config:instances/chosen.json",
+      "format": "json",
+      "text": "{\"TaskItems\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\", \"default_check\": true, \"display_name_override\": \"旧邮箱昵称\", \"remark\": \"邮箱备注\"}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\", \"default_check\": true, \"display_name_override\": \"旧每日昵称\", \"remark\": \"每日备注\"}], \"CurrentTasks\": [\"领取邮箱奖励<|||>Mail\", \"领取每日奖励<|||>Daily\"], \"AfterTask\": \"None\"}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取邮箱奖励\", \"entry\": \"Mail\"}, {\"name\": \"领取每日奖励\", \"entry\": \"Daily\"}]}"
+    },
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{}"
+    },
+    {
+      "id": "mfa-settings",
+      "format": "json",
+      "text": "{\"DefaultConfig\":\"Default\"}"
+    }
+  ],
+  "tasks": {
+    "chosen/Mail/0": {
+      "enabled": true
+    },
+    "chosen/Daily/1": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "source": "file",
+      "lines": [
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：邮箱备注",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 开始任务：每日备注",
+        "[2026-10-03 10:00:00.001][INF] [cfg=Default][inst=测试/chosen][src=MonitorLog][op=Monitor] 任务已全部完成！"
+      ]
+    },
+    {
+      "source": "file",
+      "lines": [],
+      "final": true
+    }
+  ],
+  "results": {
+    "chosen/Mail/0": "succeeded",
+    "chosen/Daily/1": "succeeded"
+  },
+  "boundary": "ended",
+  "source": {
+    "type": "source_derived_control_flow",
+    "upstreamCommit": "1080d3e1500f3439ac896ab2eca9aeb8e885f1f4",
+    "note": "Pinned MFA TaskLoader/MFATask source semantics, synthetic config and MonitorLog, no native game run."
+  },
+  "displayNames": {
+    "zh-CN": {
+      "chosen/Mail/0": "领取邮箱奖励（“邮箱备注”）",
+      "chosen/Daily/1": "领取每日奖励（“每日备注”）"
+    },
+    "en-US": {
+      "chosen/Mail/0": "Claim mailbox rewards (“邮箱备注”)",
+      "chosen/Daily/1": "Claim daily rewards (“每日备注”)"
+    }
+  }
+}

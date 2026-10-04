@@ -1,6 +1,5 @@
 {
   "artifact": "MaaStellaSora",
-  "coverage": "unsupported",
   "resources": [
     {
       "id": "config:mxu-MaaStellaSora.json",
@@ -13,7 +12,25 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
     }
   ],
+  "coverage": "unsupported",
   "tasks": {},
   "batches": [],
-  "results": {}
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mfa.migration_required"
+    }
+  ],
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ],
+  "legacyCompatibilityCase": "legacy-maastellasora-missing-active.json"
 }

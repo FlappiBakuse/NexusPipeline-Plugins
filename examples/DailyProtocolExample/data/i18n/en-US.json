@@ -1,0 +1,6 @@
+{
+  "task.daily_reward": "Daily rewards",
+  "reason.example.task.start": "Example task started",
+  "reason.example.task.ok": "Example task completed",
+  "reason.example.task.fail": "Example task reported failure"
+}

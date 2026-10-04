@@ -1,5 +1,15 @@
 function observe(text, tasks, emit, result, line, states) {
+  if (ADAPTER.protocolVersion === '0.2.0' && line.sourceId !== 'file') return;
+  if (ADAPTER.protocolVersion === '0.2.0') observeDaily(text, tasks, emit, result, line, states);
+  const report = (task, status, rule, skip) => {
+    if (ADAPTER.protocolVersion === '0.2.0' && status === 'succeeded' && (!states[task.id] || states[task.id].status === 'pending'))
+      emit(task, 'running', 'march7th.scope.started');
+    if (ADAPTER.protocolVersion === '0.2.0' && states[task.id]?.status === 'failed' && status === 'succeeded') return;
+    emit(task,status,rule,skip);
+  };
   powerScope(text, tasks, emit, result, line, states);
+  if (ADAPTER.protocolVersion === '0.2.0')
+    observeResources(text.replace(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \| (?:INFO|ERROR|WARNING) \| /, ''), tasks, emit, result, line, states);
   // tasks/game.stop logs this top-level header before optional game shutdown and pause/loop.
   // The generic dashed "完成" banner also ends startup and nested modules, so it is never a run boundary.
   if (/^\|\s*停止运行\s*\|$/.test(text)) endRun(result, line, 'march7th.run.stop');
@@ -10,13 +20,13 @@ function observe(text, tasks, emit, result, line, states) {
     每日实训: 'reward_quest_enable', 无名勋礼: 'reward_srpass_enable', 成就: 'reward_achievement_enable', 短信: 'reward_message_enable' };
   if (absent) {
     const task = tasks.find(t => t.sourceKey === rewards[absent[1]]);
-    if (task) emit(task, 'succeeded', 'march7th.reward.not_available');
+    if (task) report(task, 'succeeded', 'march7th.reward.not_available');
   }
   // RewardTemplate emits a named completion even when nothing is available to claim.
   const complete = text.match(/^(?:[-─━]+\s*)?(邮件|支援|委托|每日实训|无名勋礼|成就|短信)奖励完成(?:\s*[-─━]+)?$/);
   if (complete) {
     const task = tasks.find(t => t.sourceKey === rewards[complete[1]]);
-    if (task) emit(task, 'succeeded', 'march7th.reward.completed');
+    if (task) report(task, 'succeeded', 'march7th.reward.completed');
   }
   const rules = [
     ['reward_mail_enable', /邮件奖励已领取\s*$/, 'succeeded', 'mail.claimed'],
@@ -35,12 +45,13 @@ function observe(text, tasks, emit, result, line, states) {
   for (const task of tasks) {
     if (refresh[task.sourceKey] && text.endsWith(refresh[task.sourceKey] + '尚未刷新')) emit(task, 'skipped', 'march7th.not_due', 'satisfied');
     for (const [key, pattern, status, rule] of rules)
-      if (task.sourceKey === key && pattern.test(text)) emit(task, status, 'march7th.' + rule, status === 'skipped' ? 'satisfied' : undefined);
+      if (task.sourceKey === key && pattern.test(text) && !(ADAPTER.protocolVersion === '0.2.0' && rule === 'daily.target'))
+        report(task, status, 'march7th.' + rule, status === 'skipped' ? 'satisfied' : undefined);
   }
   // Only aggregate this reviewed reward wrapper; unrelated parents may have their own work.
   const parent = tasks.find(t => t.sourceKey === 'reward_enable');
   const children = parent ? tasks.filter(t => t.parentId === parent.id && t.requiredForParent) : [];
-  if (parent && children.length && children.every(t => ['succeeded', 'skipped'].includes(states[t.id]?.status))
+  if (ADAPTER.protocolVersion !== '0.2.0' && parent && children.length && children.every(t => ['succeeded', 'skipped'].includes(states[t.id]?.status))
       && !['succeeded', 'failed'].includes(states[parent.id]?.status))
     emit(parent, 'succeeded', 'march7th.reward.children_completed');
 

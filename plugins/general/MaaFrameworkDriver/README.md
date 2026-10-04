@@ -2,7 +2,7 @@
 
 这是独立安装的 managed 插件，需 Host v0.16.9 / Plugin API 1.9。原有 MaaEnd、MaaStellaSora 专项和用户配置不会自动迁移。插件使用自己的 profile，经现有 Host 队列、用户绑定、历史和恢复流程执行。
 
-配置、显式导入、支持范围和现役验证入口见 [MaaFramework 框架指南](../../../docs/MAAFRAMEWORK_DRIVER.md)。仓库文档不随商店 ZIP 打包，包内保留本说明与 `LICENSES/`。
+配置、显式导入、支持范围和现役验证入口见 [MaaFramework 框架指南](../../../docs/frameworks/MAAFRAMEWORK_DRIVER.md)。仓库文档不随商店 ZIP 打包，包内保留本说明与 `LICENSES/`。
 
 ## 配置和信任
 

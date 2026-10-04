@@ -1,7 +1,22 @@
 {
   "id": "bettergi",
   "implementation": "bettergi",
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
+  "builtInNames": ["领取邮件", "合成树脂", "自动秘境", "自动首领讨伐", "自动幽境危战", "自动地脉花", "领取每日奖励", "领取尘歌壶奖励"],
+  "dailyPolicy": {
+    "completionPolicy": "flow", "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "bettergi.daily.v1", "sources": ["file"],
+      "rules": [
+        {"id": "bettergi.scope.start", "kind": "scope_started"},
+        {"id": "bettergi.scope.end", "kind": "flow_ended"},
+        {"id": "bettergi.scope.failed", "kind": "business_failed"},
+        {"id": "bettergi.scope.cancelled", "kind": "upstream_cancelled"},
+        {"id": "bettergi.scope.not_executed", "kind": "not_executed"}
+      ]
+    },
+    "retryPolicy": {"mode": "selective_config", "resourceConsumption": true, "limitRefs": []}
+  },
   "configRules": [
     { "id": "bettergi.game_target", "required": true, "criticality": "advisory_or_contextual", "kind": "target_compare", "inspectionId": "bettergi-game-target", "reasonKey": "diagnostic.config.path_mismatch", "fallback": "BetterGI 配置中的游戏路径与绑定目标不一致。", "location": { "source": "resource", "resourceId": "extra-user-config", "selector": ["genshinStartConfig", "installPath"] } },
     { "id": "bettergi.finish_action", "required": true, "criticality": "critical_when_applicable", "kind": "finish_action", "configResource": "main", "selector": ["CompletionAction"], "defaultAction": "", "emptyAction": "None", "reasonKey": "diagnostic.bettergi.finish_action", "fallback": "BetterGI 一条龙完成后的系统动作可能影响队列后续工作。", "location": { "source": "context", "field": "completionAction" } }

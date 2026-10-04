@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "unsupported",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyTask.json",
@@ -23,7 +23,35 @@
       "text": "0000000000000000000000000000000000000000\n"
     }
   ],
-  "tasks": {},
+  "tasks": {
+    "daily": {
+      "enabled": true
+    },
+    "nightmare": {
+      "enabled": false
+    },
+    "stamina": {
+      "enabled": true
+    },
+    "daily_reward": {
+      "enabled": true
+    },
+    "mail": {
+      "enabled": true
+    },
+    "battle_pass": {
+      "enabled": true
+    },
+    "garden": {
+      "enabled": true
+    },
+    "merge": {
+      "enabled": false
+    },
+    "farm_4c": {
+      "enabled": false
+    }
+  },
   "batches": [],
   "results": {},
   "source": {
@@ -35,11 +63,16 @@
   "configChecks": [
     {
       "ruleId": "okscript.distribution",
-      "evaluation": "unknown",
-      "executionEffect": "block"
+      "evaluation": "satisfied",
+      "executionEffect": "none"
     }
   ],
   "resourceSets": [
     "resources/okww-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

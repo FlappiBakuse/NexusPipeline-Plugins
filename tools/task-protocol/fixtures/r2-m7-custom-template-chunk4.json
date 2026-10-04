@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -113,11 +113,12 @@
         "-------- 开始刷拟造花萼（赤） - 目标甲，总计2轮，每轮包含1次 --------",
         "2026-09-21 00:10:00,000 | INFO | 副本失败：未找到指定副本。",
         "2026-09-21 00:10:00,000 | ERROR | 检测到该次副本未正常运行，重试：1/3"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "power_enable": "unknown"
+    "power_enable": "failed"
   },
   "incidents": [
     {
@@ -140,5 +141,10 @@
       "assets/config/config.example.yaml",
       "tasks/weekly/echoofwar.py"
     ]
-  }
+  },
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

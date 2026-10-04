@@ -1,6 +1,6 @@
 {
   "artifact": "BAAH",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -35,5 +35,10 @@
     }
   ],
   "results": {},
-  "boundary": "ended"
+  "boundary": "ended",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

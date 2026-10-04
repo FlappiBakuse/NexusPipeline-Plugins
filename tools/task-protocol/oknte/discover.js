@@ -3,18 +3,13 @@ function discover() {
   if (!runtimeReady(plan)) return plan;
   const config = configOne(r => r.id === 'config:DailyRoutineTask.json');
   requireValue(object(config.document));
-  if (plan.runtimeRestricted) {
-    requireValue(Array.isArray(config.document['Routine Items']));
-    addTask(plan, config.id, 'runtime_unverified', '本次基础流程（任务未核验）', true, null, 'unsafe', 'unsupported');
-    delete plan.runtimeRestricted;
-    return plan;
-  }
+
   const normalized = normalizeItems(config.document['Routine Items'], ADAPTER.entries);
   for (const item of normalized.items) {
     const entry = ADAPTER.entries.find(e => e.id === item.id);
     addTask(plan, config.id, item.id, entry.name, item.enabled,
       normalized.canPatchSelection ? ['Routine Items', { by: 'id', value: item.id }, 'enabled'] : null,
-      normalized.canPatchSelection && item.id === 'daily_claim' ? 'safe' : 'unknown', 'limited');
+      normalized.canPatchSelection && item.id === 'daily_claim' ? 'safe' : 'unknown', ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited');
   }
   for (const diagnostic of normalized.diagnostics) {
     plan.diagnostics.push({ code: diagnostic.code, message: 'Unrecognized routine item: ' + String(diagnostic.id) });
@@ -35,5 +30,12 @@ function discover() {
     message: 'Discovery includes upstream defaults. Selective retry requires every known item exactly once with an explicit boolean selection.' });
   plan.diagnostics.push({ code: 'oknte.business_evidence',
     message: 'Item results require an active daily scope and paired item logs. Launcher completion, framework completion and summary text are not item success.' });
+  if (ADAPTER.protocolVersion === '0.2.0') {
+    plan.coverage = 'complete';
+    if (!normalized.canPatchSelection) {
+      const unit = plan.tasks.find(t => t.enabled)?.id;
+      for (const task of plan.tasks.filter(t => t.enabled)) task.retryUnitId = unit;
+    }
+  }
   return plan;
 }

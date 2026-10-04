@@ -22,5 +22,7 @@ function discover() {
         created.nameText = { kind: 'literal', value: created.name };
     }
   }
+  if (ADAPTER.protocolVersion === '0.2.0')
+    plan.tasks.forEach(task => { task.retryRisk = 'unsafe'; });
   plan.coverage = 'complete'; return plan;
 }

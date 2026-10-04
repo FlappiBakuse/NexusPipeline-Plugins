@@ -1,7 +1,7 @@
 {
   "id": "oknte",
   "implementation": "oknte",
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
   "configRules": [
     {
       "id": "okscript.distribution",
@@ -55,6 +55,14 @@
           "Routine Items"
         ]
       }
+    },
+    {
+      "id": "okscript.game_target",
+      "required": true,
+      "criticality": "advisory_or_contextual",
+      "kind": "target_compare",
+      "inspectionId": "okscript-game-target",
+      "fallback": "脚本中的游戏路径与项目绑定目标不一致。"
     }
   ],
   "entries": [
@@ -127,45 +135,80 @@
   },
   "runtimeOfficialRepository": "BnanZ0/ok-nte",
   "runtimeOfficialOriginsByChannel": {
-    "China": ["https://cnb.cool/BnanZ0/ok-nte-update.git"]
+    "China": [
+      "https://cnb.cool/BnanZ0/ok-nte-update.git"
+    ],
+    "Global": [
+      "https://github.com/BnanZ0/ok-nte-update.git"
+    ]
   },
-  "runtimeProfiles": {
-    "Global": {
-      "name": "ok-nte",
-      "version": "v1.3.19",
-      "commit": "9ac3157afbeeb10758330085e67273cfa460a9e8",
-      "tagObject": "fad77859cc09e2ee475057f29bcb07fe7643d5c8"
+  "runtimeStructuralContracts": [
+    {
+      "id": "runtime-code-13",
+      "patterns": [
+        "^class DailyRoutineTask\\(",
+        "^    def normalize_items\\(",
+        "^    def _execute_routine_item\\(",
+        "self\\.log_info\\(f\"任务完成:",
+        "self\\.log_info\\(f\"任务失败:"
+      ]
     },
-    "China": {
-      "name": "ok-nte",
-      "version": "v1.3.19",
-      "commit": "8d92e1007c564970003db1de01c77a278ceb4581",
-      "tagObject": "942ffdb71eda0996979dcd8959f938a12b01adb9"
+    {
+      "id": "runtime-code-0",
+      "patterns": [
+        "OK\\(config\\)",
+        "\\.start\\(\\)"
+      ]
+    },
+    {
+      "id": "runtime-code-2",
+      "patterns": [
+        "^class TaskExecutor\\b",
+        "^    def ",
+        "TaskDisabledException"
+      ]
+    }
+  ],
+  "dailyPolicy": {
+    "completionPolicy": "authoritative",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "oknte.daily.v1",
+      "sources": [
+        "file"
+      ],
+      "rules": [
+        {
+          "id": "oknte.item.started",
+          "kind": "scope_started"
+        },
+        {
+          "id": "oknte.item.completed",
+          "kind": "business_succeeded"
+        },
+        {
+          "id": "oknte.item.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "oknte.item.unhandled_exception",
+          "kind": "business_failed"
+        },
+        {
+          "id": "oknte.item.language_unsupported",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "oknte.routine.aborted_before_item",
+          "kind": "not_executed"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "selective_config",
+      "resourceConsumption": true,
+      "limitRefs": []
     }
   },
-  "runtimeRelease": {
-    "name": "ok-nte",
-    "version": "v1.3.19",
-    "commit": "9ac3157afbeeb10758330085e67273cfa460a9e8",
-    "tagObject": "fad77859cc09e2ee475057f29bcb07fe7643d5c8"
-  },
-  "runtimeCodeResources": [
-    "runtime-code-0",
-    "runtime-code-1",
-    "runtime-code-2",
-    "runtime-code-3",
-    "runtime-code-4",
-    "runtime-code-5",
-    "runtime-code-6",
-    "runtime-code-7",
-    "runtime-code-8",
-    "runtime-code-9",
-    "runtime-code-10",
-    "runtime-code-11",
-    "runtime-code-12",
-    "runtime-code-13",
-    "runtime-code-14",
-    "runtime-code-15",
-    "runtime-code-16"
-  ]
+  "runtimeName": "ok-nte"
 }

@@ -209,9 +209,21 @@
     "长期签到",
     "每日免费奖励"
   ],
-  "protocolVersion": "0.1.0",
+  "protocolVersion": "0.2.0",
   "configRules": [
-    { "id": "baah.finish_flags", "required": true, "criticality": "critical_when_applicable", "kind": "finish_flags", "configResource": "main", "fallback": "BAAH 收尾关闭目标或运行后置命令的影响需要核对。", "location": { "source": "context", "field": "completionAction" } },
+    {
+      "id": "baah.finish_flags",
+      "required": true,
+      "criticality": "critical_when_applicable",
+      "kind": "finish_flags",
+      "configResource": "main",
+      "fallback": "BAAH 收尾关闭目标或运行后置命令的影响需要核对。",
+      "location": {
+        "source": "context",
+        "field": "completionAction"
+      },
+      "reasonKey": "diagnostic.baah.finish_flags"
+    },
     {
       "id": "baah.game_target",
       "required": true,
@@ -298,6 +310,9 @@
     "自定义任务": "task.custom_task"
   },
   "reasonTexts": {
+    "baah.task.precondition_failed": "任务前置条件失败或超时",
+    "baah.task.postcondition_failed": "任务后置条件失败或超时",
+    "baah.task.end": "任务流程已完成",
     "baah.task.entry_failed": "未能进入任务所需页面或找到操作入口",
     "baah.task.empty_round": "当前配置轮次没有待执行关卡",
     "baah.task.event_condition": "配置要求的活动条件未满足",
@@ -315,5 +330,91 @@
     "baah.run.aborted_before_task": "运行中止，任务尚未开始",
     "baah.technical.end": "技术步骤已结束",
     "baah.task.postcondition_unverified": "后置条件未通过；返回主页不证明业务完成"
+  },
+  "dailyPolicy": {
+    "completionPolicy": "flow",
+    "workflowRole": "daily",
+    "observationContract": {
+      "ruleSetId": "baah.daily.v1",
+      "sources": [
+        "stdout",
+        "file"
+      ],
+      "rules": [
+        {
+          "id": "baah.task.entry_failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.empty_round",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "baah.task.event_condition",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "baah.task.child_failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.no_unread",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "baah.task.price_unreadable",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.price_limit",
+          "kind": "normal_skip"
+        },
+        {
+          "id": "baah.task.start",
+          "kind": "scope_started"
+        },
+        {
+          "id": "baah.task.end",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "baah.technical.end",
+          "kind": "flow_ended"
+        },
+        {
+          "id": "baah.task.precondition_failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.postcondition_failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.fatal_postcondition",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.task.unhandled_exception",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.free_reward.failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.attendance.enter_failed",
+          "kind": "business_failed"
+        },
+        {
+          "id": "baah.run.aborted_before_task",
+          "kind": "not_executed"
+        }
+      ]
+    },
+    "retryPolicy": {
+      "mode": "selective_config",
+      "resourceConsumption": true,
+      "limitRefs": []
+    }
   }
 }

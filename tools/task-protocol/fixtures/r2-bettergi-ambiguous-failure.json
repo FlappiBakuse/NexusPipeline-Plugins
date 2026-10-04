@@ -1,6 +1,6 @@
 {
   "artifact": "BetterGI",
-  "coverage": "partial",
+  "coverage": "complete",
   "source": {
     "type": "source_derived",
     "originalArtifact": null,
@@ -31,8 +31,13 @@
     }
   ],
   "results": {
-    "a": "unknown",
-    "b": "unknown"
+    "a": "failed",
+    "b": "failed"
   },
-  "boundary": "ended"
+  "boundary": "open",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

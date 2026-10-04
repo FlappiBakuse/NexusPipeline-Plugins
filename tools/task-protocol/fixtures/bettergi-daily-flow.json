@@ -1,0 +1,11 @@
+{
+  "artifact": "BetterGI", "coverage": "complete",
+  "resources": [{"id":"config:config.json","format":"json","text":"{\"TaskDefinitions\":{\"boss\":\"自动首领讨伐\",\"mail\":\"领取邮件\"},\"TaskOrder\":[\"boss\",\"mail\"],\"TaskEnabledList\":{\"boss\":true,\"mail\":true},\"NextTaskId\":\"\"}"}],
+  "tasks": {"boss":{"enabled":true},"mail":{"enabled":true}},
+  "batches": [
+    {"source":"file","lines":["[13:22:26.442] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel"]},
+    {"source":"file","lines":["一条龙任务执行: 1/2","[13:22:26.443] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.GameTask.TaskRunner","→ \"任务启动！\"","[13:27:30.891] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.GameTask.AutoBoss.AutoBossTask","\"自动首领讨伐\"：原粹树脂不足或补充失败，结束任务","[13:27:31.899] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.GameTask.TaskRunner","→ \"任务结束\""],"states":{"boss":"succeeded"}},
+    {"source":"file","lines":["[13:27:31.900] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel","一条龙任务执行: 2/2","[13:27:32.001] [ERR] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.GameTask.TaskRunner","领取邮件奖励异常: synthetic","[13:27:33.001] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.GameTask.TaskRunner","→ \"任务结束\"","[13:27:34.001] [INF] [Primary:S2:P6024:T1790832088789] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel","一条龙和配置组任务结束"],"boundary":"ended"}
+  ],
+  "results":{"boss":"succeeded","mail":"failed"}, "boundary":"ended"
+}

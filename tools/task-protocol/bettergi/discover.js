@@ -15,10 +15,13 @@ function discover() {
     const task = addTask(plan, config.id, key, name, declared && d.TaskEnabledList[key] && activeKeys.includes(key) && (start < 0 || activeKeys.indexOf(key) >= start),
       declared ? ['TaskEnabledList', key] : null,
       (name === '领取邮件' || name === '领取每日奖励') && !d.NextTaskId ? 'safe' : 'unknown',
-      name === '领取邮件' || name === '领取每日奖励' ? 'supported' : 'limited');
+      ADAPTER.protocolVersion === '0.2.0' || name === '领取邮件' || name === '领取每日奖励' ? 'supported' : 'limited');
     if (modern) task.nameText = { kind: 'literal', value: name };
   });
-  if (d.NextTaskId) plan.diagnostics.push({ code: 'retry.cursor_not_verified', message: 'A one-shot start cursor narrows this run; automatic retry is disabled.' });
-  plan.diagnostics.push({ code: 'coverage_limited', message: 'Outer completion does not prove custom scripts, resource consumption or nested actions succeeded.' });
+  if (ADAPTER.protocolVersion === '0.2.0') plan.coverage = 'complete';
+  else {
+    if (d.NextTaskId) plan.diagnostics.push({ code: 'retry.cursor_not_verified', message: 'A one-shot start cursor narrows this run; automatic retry is disabled.' });
+    plan.diagnostics.push({ code: 'coverage_limited', message: 'Outer completion does not prove custom scripts, resource consumption or nested actions succeeded.' });
+  }
   return plan;
 }

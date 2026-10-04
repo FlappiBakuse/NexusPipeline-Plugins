@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -23,9 +23,17 @@
     {
       "lines": [
         "指令[ 一条龙 ] 执行失败 返回状态 登录失败"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {},
-  "boundary": "aborted"
+  "boundary": "aborted",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ],
+  "admissionError": "protocol_error: daily task needs observable boundaries",
+  "observableScopeCase": "daily-zzz-run-failed.json"
 }

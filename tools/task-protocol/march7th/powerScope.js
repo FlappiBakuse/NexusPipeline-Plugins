@@ -54,7 +54,8 @@ function powerScope(text, tasks, emit, result, line, states) {
     context.root = task ? { key, taskId: task.id, id: 'm7.scope:' + line.sourceId + ':' + line.epoch + ':' + line.sequence,
       evidence: evidence('march7th.scope.started'), current: null, activityKey: null } : null;
     context.block = [];
-    if (task && (!states[task.id] || ['pending', 'running'].includes(states[task.id].status))) emit(task, 'running', 'march7th.scope.started');
+    if (task && (!states[task.id] || (ADAPTER.protocolVersion === '0.2.0' ? states[task.id].status === 'pending'
+        : ['pending', 'running'].includes(states[task.id].status)))) emit(task, 'running', 'march7th.scope.started');
     return;
   }
   const root = context.root;

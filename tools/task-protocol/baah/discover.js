@@ -13,18 +13,19 @@ function discover() {
   requireValue(object(pipeline) && Array.isArray(pipeline.TASK_PIPELINE) && Array.isArray(pipeline.TASK_ONOFF)
     && pipeline.TASK_PIPELINE.length === pipeline.TASK_ONOFF.length);
   const login = typeof d.OPEN_GAME_APP_TASK === 'boolean'
-    ? addTask(plan, config.id, 'automatic-login', '自动登录', d.OPEN_GAME_APP_TASK, ['OPEN_GAME_APP_TASK'], 'safe', 'limited', 'technical') : null;
+    ? addTask(plan, config.id, 'automatic-login', '自动登录', d.OPEN_GAME_APP_TASK, ['OPEN_GAME_APP_TASK'], 'safe', ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited', 'technical') : null;
   pipeline.TASK_PIPELINE.forEach((name, i) => {
     requireValue(typeof name === 'string' && typeof pipeline.TASK_ONOFF[i] === 'boolean');
     const task = addTask(plan, config.id, index + '/' + i + '/' + name, name, pipeline.TASK_ONOFF[i], null,
-      ADAPTER.safe.includes(name) ? 'safe' : 'unknown', ADAPTER.classes[name] ? 'limited' : 'unsupported', name === '登录游戏' ? 'technical' : 'business');
+      ADAPTER.safe.includes(name) ? 'safe' : 'unknown', ADAPTER.classes[name] ? (ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited') : 'unsupported', name === '登录游戏' ? 'technical' : 'business');
     if (ADAPTER.taskNameTextKeys?.[name])
       task.nameText = { kind: 'plugin', key: ADAPTER.taskNameTextKeys[name], args: {}, fallback: name };
   });
   if (login?.enabled) plan.tasks.filter(t => t.role === 'business').forEach(t => t.dependencies.push(login.id));
-  if (typeof d.DO_POST_ALL_TASK === 'boolean') addTask(plan, config.id, 'automatic-cleanup', '运行收尾', d.DO_POST_ALL_TASK, ['DO_POST_ALL_TASK'], 'unknown', 'limited', 'cleanup');
+  if (typeof d.DO_POST_ALL_TASK === 'boolean') addTask(plan, config.id, 'automatic-cleanup', '运行收尾', d.DO_POST_ALL_TASK, ['DO_POST_ALL_TASK'], 'unknown', ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited', 'cleanup');
   plan.selectionFields.push({ resourceId: config.id, purpose: 'selection', selector: ['TASK_ORDER_GROUP', 'ALL_PIPELINES',
     { index, guardKey: 'TASK_PIPELINE', guardValue: pipeline.TASK_PIPELINE }, 'TASK_ONOFF'] });
-  plan.diagnostics.push({ code: 'retry.risk_not_verified', message: 'Class aliases, resume cursors and nested Task.run calls require verified identity. Ambiguous precondition skips are unknown, not success.' });
+  if (ADAPTER.protocolVersion === '0.2.0') plan.coverage = 'complete';
+  else plan.diagnostics.push({ code: 'retry.risk_not_verified', message: 'Class aliases, resume cursors and nested Task.run calls require verified identity. Ambiguous precondition skips are unknown, not success.' });
   return plan;
 }

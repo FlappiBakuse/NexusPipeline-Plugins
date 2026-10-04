@@ -1,0 +1,92 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"system\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"special-0\", \"taskName\": \"__MXU_SLEEP__\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"special-1\", \"taskName\": \"__MXU_WAITUNTIL__\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"special-2\", \"taskName\": \"__MXU_LAUNCH__\", \"enabled\": true, \"optionValues\": {}, \"customName\": \"程序备注\"}, {\"id\": \"special-3\", \"taskName\": \"__MXU_NOTIFY__\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"special-4\", \"taskName\": \"__MXU_WEBHOOK__\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"special-5\", \"taskName\": \"__MXU_KILLPROC__\", \"enabled\": true, \"optionValues\": {}}, {\"id\": \"special-6\", \"taskName\": \"__MXU_POWER__\", \"enabled\": false, \"optionValues\": {}}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\":\"MaaEnd\",\"task\":[]}"
+    }
+  ],
+  "tasks": {
+    "chosen/special-0": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-1": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-2": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-3": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-4": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-5": {
+      "enabled": true,
+      "role": "technical"
+    },
+    "chosen/special-6": {
+      "enabled": false,
+      "role": "technical"
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: ⏳ Countdown",
+        "[2026-09-21 10:00:00.123] 任务完成: ⏳ Countdown",
+        "[2026-09-21 10:00:00.123] 任务开始: ⏰ Wait Until",
+        "[2026-09-21 10:00:00.123] 任务完成: ⏰ Wait Until",
+        "[2026-09-21 10:00:00.123] 任务开始: 程序备注",
+        "[2026-09-21 10:00:00.123] 任务完成: 程序备注",
+        "[2026-09-21 10:00:00.123] 任务开始: 💬 System Notification",
+        "[2026-09-21 10:00:00.123] 任务完成: 💬 System Notification",
+        "[2026-09-21 10:00:00.123] 任务开始: 🔔 Webhook",
+        "[2026-09-21 10:00:00.123] 任务完成: 🔔 Webhook",
+        "[2026-09-21 10:00:00.123] 任务开始: ⛔ Kill Process",
+        "[2026-09-21 10:00:00.123] 任务完成: ⛔ Kill Process"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/special-0": "succeeded",
+    "chosen/special-1": "succeeded",
+    "chosen/special-2": "succeeded",
+    "chosen/special-3": "succeeded",
+    "chosen/special-4": "succeeded",
+    "chosen/special-5": "succeeded"
+  },
+  "displayNames": {
+    "zh-CN": {
+      "chosen/special-0": "⏳ 倒计时",
+      "chosen/special-1": "⏰ 定时等待",
+      "chosen/special-2": "▶️ 自定义程序（“程序备注”）",
+      "chosen/special-3": "💬 系统通知",
+      "chosen/special-4": "🔔 Webhook",
+      "chosen/special-5": "⛔ 结束进程",
+      "chosen/special-6": "⚡ 电脑操作"
+    },
+    "en-US": {
+      "chosen/special-0": "⏳ Countdown",
+      "chosen/special-1": "⏰ Wait Until",
+      "chosen/special-2": "▶️ Custom Program (“程序备注”)",
+      "chosen/special-3": "💬 System Notification",
+      "chosen/special-4": "🔔 Webhook",
+      "chosen/special-5": "⛔ Kill Process",
+      "chosen/special-6": "⚡ Power Action"
+    }
+  }
+}

@@ -66,8 +66,32 @@ defs['retry']=obj({'protocolVersion':{'const':'0.1.0'},'type':{'const':'retry'},
     'reasonCode':text,'reasonText':ref('textRef'),'includedTaskIds':arr(text,1024),
     'prerequisiteTaskIds':arr(text,1024),'expandedUnitIds':arr(text,1024),
     'filePatches':arr(ref('patch'),32)},['reasonText'])
-schema={'$schema':'https://json-schema.org/draft/2020-12/schema','$id':'urn:nxp:task-protocol:0.1.0',
-    'title':'NexusPipeline task protocol 0.1.0 outputs','oneOf':[ref('discovery'),ref('observation'),ref('retry')],'$defs':defs}
+import copy
+defs['dailyTask'] = copy.deepcopy(defs['task'])
+daily_fields = {
+    'completionPolicy':enum('flow','authoritative'), 'workflowRole':enum('daily','technical','manual_only'),
+    'observationContract':obj({'ruleSetId':text,'sources':{**arr(text,8),'minItems':1,'uniqueItems':True},
+        'rules':{**arr(obj({'id':text,'kind':enum('scope_started','flow_ended','business_succeeded','business_failed','upstream_cancelled','normal_skip','not_executed')}),64),'minItems':1}}),
+    'retryPolicy':obj({'mode':enum('selective_config','native_resume'),'resourceConsumption':boolean,'limitRefs':{**arr(text,32),'uniqueItems':True}}),
+}
+defs['dailyTask']['properties'].update(daily_fields)
+defs['dailyTask']['required'] += list(daily_fields)
+defs['dailyObservationItem'] = copy.deepcopy(defs['observationItem'])
+defs['dailyObservationItem']['properties']['factKind'] = enum('scope_started','flow_ended','business_succeeded','business_failed','upstream_cancelled','normal_skip','not_executed')
+defs['dailyObservationItem']['properties']['status'] = enum('running','succeeded','failed','skipped','blocked')
+defs['dailyObservationItem']['required'].append('factKind')
+for phase in ['discovery','observation','retry']:
+    defs['daily'+phase.title()] = copy.deepcopy(defs[phase])
+    defs['daily'+phase.title()]['properties']['protocolVersion'] = {'const':'0.2.0'}
+defs['dailyDiscovery']['properties']['tasks'] = arr(ref('dailyTask'),1024)
+defs['dailyObservation']['properties']['observations'] = arr(ref('dailyObservationItem'))
+defs['dailyRetry']['properties']['decision'] = enum('stop','selective','native_resume')
+for field in ['targetTaskIds','launchScopeTaskIds']:
+    defs['dailyRetry']['properties'][field] = {**arr(text,1024),'uniqueItems':True}
+    defs['dailyRetry']['required'].append(field)
+schema={'$schema':'https://json-schema.org/draft/2020-12/schema','$id':'urn:nxp:task-protocol',
+    'title':'NexusPipeline versioned task protocol outputs',
+    'oneOf':[ref(name) for name in ['discovery','observation','retry','dailyDiscovery','dailyObservation','dailyRetry']],'$defs':defs}
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--check',action='store_true');args=parser.parse_args()

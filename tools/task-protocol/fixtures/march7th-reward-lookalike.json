@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -112,12 +112,18 @@
         "无名勋礼奖励完成失败",
         "| 停止运行 |"
       ],
-      "boundary": "ended"
+      "boundary": "ended",
+      "source": "file"
     }
   ],
   "results": {
-    "reward_enable": "unknown",
-    "reward_srpass_enable": "unknown"
+    "reward_enable": "failed",
+    "reward_srpass_enable": "failed"
   },
-  "boundary": "ended"
+  "boundary": "ended",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

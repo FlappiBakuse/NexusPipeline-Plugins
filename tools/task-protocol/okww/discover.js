@@ -3,11 +3,7 @@ function discover() {
   if (!runtimeReady(plan)) return plan;
   const config = configOne(r => r.id === 'config:DailyTask.json');
   requireValue(object(config.document));
-  if (plan.runtimeRestricted) {
-    addTask(plan, config.id, 'runtime_unverified', '本次基础流程（任务未核验）', true, null, 'unsafe', 'unsupported');
-    delete plan.runtimeRestricted;
-    return plan;
-  }
+
   const d = config.document;
   const farm = d['Which to Farm'] === undefined ? 'Tacet Suppression' : d['Which to Farm'];
   requireValue(['Tacet Suppression', 'Forgery Challenge', 'Simulation Challenge'].includes(farm));
@@ -16,8 +12,18 @@ function discover() {
   const echo = d['Farm Nightmare Nest for Daily Echo'] === undefined ? true : d['Farm Nightmare Nest for Daily Echo'];
   requireValue(Array.isArray(extras) && unique(extras) && extras.every(v => typeof v === 'string') && typeof echo === 'boolean');
   const allNightmares = extras.includes('Auto Farm all Nightmare Nest');
-  const add = (key, name, enabled = true, detection = 'limited') =>
-    addTask(plan, config.id, key, name, enabled, null, 'unknown', detection);
+  const daily = ADAPTER.protocolVersion === '0.2.0'
+    ? addTask(plan, config.id, 'daily', '日常任务', true, null, 'safe', 'supported') : null;
+  const add = (key, name, enabled = true, detection = 'limited') => {
+    const task = addTask(plan, config.id, key, name, enabled, null, 'unknown',
+      daily && detection === 'limited' ? 'supported' : detection, undefined, daily?.id);
+    if (daily) {
+      task.completionPolicy = 'flow';
+      task.observationContract.rules = task.observationContract.rules.filter(r => r.kind !== 'business_succeeded');
+      task.observationContract.rules.push({id:'okww.step.completed',kind:'flow_ended'});
+    }
+    return task;
+  };
   // Actual call order: conditional nightmare work precedes stamina, despite the option label.
   const nightmare = add('nightmare', allNightmares ? '全部梦魇附加任务' : '日常所需梦魇', allNightmares || echo && farm !== 'Tacet Suppression');
   nightmare.nameText = { kind: 'plugin', key: allNightmares ? 'task.nightmare_all' : 'task.nightmare_daily', args: {}, fallback: nightmare.name };
@@ -62,6 +68,10 @@ function discover() {
     }
   }
   plan.diagnostics.push({ code: 'okww.conditional_steps', message: 'Stamina and nightmare execution depend on current daily progress. Click-only reward paths have no verified positive terminal evidence.' });
-  plan.diagnostics.push({ code: 'okww.retry_coupled', message: 'DailyTask has implicit steps without individual switches. Restarting it may repeat resource-consuming work; automatic retry is not qualified.' });
+  if (daily && plan.coverage !== 'unsupported') plan.coverage = 'complete';
+  if (daily && plan.coverage === 'unsupported') {
+    plan.tasks = []; plan.selectionFields = []; plan.slots = {};
+  }
+  if (!daily) plan.diagnostics.push({ code: 'okww.retry_coupled', message: 'DailyTask has implicit steps without individual switches. Restarting it may repeat resource-consuming work; automatic retry is not qualified.' });
   return plan;
 }

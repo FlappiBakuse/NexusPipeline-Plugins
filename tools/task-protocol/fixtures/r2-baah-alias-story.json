@@ -1,6 +1,6 @@
 {
   "artifact": "BAAH",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.json",
@@ -139,5 +139,10 @@
       "task": "0/1/支线剧情",
       "resolution": "open"
     }
+  ],
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
   ]
 }

@@ -1,0 +1,6 @@
+{
+  "task.daily_reward": "每日奖励",
+  "reason.example.task.start": "示例任务已开始",
+  "reason.example.task.ok": "示例任务已完成",
+  "reason.example.task.fail": "示例任务报告失败"
+}

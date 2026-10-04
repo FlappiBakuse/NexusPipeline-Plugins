@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -53,12 +53,13 @@
     {
       "lines": [
         "2026-09-21 12:00:00,001 DEBUG TaskExecutor TaskExecutor:end running onetime_task Start Game"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
-    "daily_claim": "unknown",
-    "gift": "unknown"
+    "daily_claim": "failed",
+    "gift": "failed"
   },
   "source": {
     "type": "source_derived_control_flow",
@@ -68,5 +69,10 @@
   },
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

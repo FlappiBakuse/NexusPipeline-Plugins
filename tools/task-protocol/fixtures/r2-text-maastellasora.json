@@ -1,6 +1,5 @@
 {
   "artifact": "MaaStellaSora",
-  "coverage": "partial",
   "resources": [
     {
       "id": "config:mxu-MaaStellaSora.json",
@@ -13,29 +12,25 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取每日奖励\", \"label\": \"领取每日奖励\"}]}"
     }
   ],
-  "tasks": {
-    "chosen/one": {
-      "enabled": true
-    },
-    "chosen/custom": {
-      "enabled": false
-    }
-  },
-  "batches": [
+  "coverage": "unsupported",
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
     {
-      "lines": [
-        "[2026-09-21 10:00:00.123] 任务开始: 领取每日奖励",
-        "[2026-09-21 10:00:00.124] 任务完成: 领取每日奖励"
-      ]
+      "code": "mfa.migration_required"
     }
   ],
-  "results": {
-    "chosen/one": "succeeded"
-  },
-  "displayNames": {
-    "en-US": {
-      "chosen/one": "Claim daily rewards",
-      "chosen/custom": "User name"
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
     }
-  }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ],
+  "legacyCompatibilityCase": "legacy-r2-text-maastellasora.json"
 }

@@ -16,19 +16,22 @@ function discover() {
   for (const [key, name] of roots) {
     requireValue(typeof value(key) === 'boolean');
     const task = addTask(plan, config.id, key, name, value(key), typeof d[key] === 'boolean' ? [key] : null,
-      'unknown', 'limited', key === 'build_target_enable' ? 'technical' : 'business');
+      'unknown', ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited', key === 'build_target_enable' ? 'technical' : 'business');
     const childKeys = key === 'power_enable' ? ['echo_of_war_enable']
       : key === 'reward_enable' ? ['reward_assist_enable', 'reward_mail_enable', 'reward_dispatch_enable', 'reward_quest_enable', 'reward_srpass_enable', 'reward_achievement_enable', 'reward_message_enable', 'reward_redemption_code_enable']
       : key === 'asset_manager_enable' ? ['asset_self_molding_resin_enable', 'asset_lc3_star_superimpose_enable', 'asset_ember_special_pass_enable', 'asset_ember_regular_pass_enable', 'asset_ember_tracks_of_destiny_enable']
       : key === 'activity_enable' ? ['activity_dailycheckin_enable', 'activity_gardenofplenty_enable', 'activity_realmofthestrange_enable', 'activity_planarfissure_enable', 'activity_journey_highlights_notification_enable'] : [];
     for (const child of childKeys) {
       if (typeof value(child) !== 'boolean') continue;
-      addTask(plan, config.id, child, ADAPTER.names[child] || child, task.enabled && value(child),
-        typeof d[child] === 'boolean' ? [child] : null, 'unknown', 'limited', undefined, task.id);
+      const childTask = addTask(plan, config.id, child, ADAPTER.names[child] || child, task.enabled && value(child),
+        typeof d[child] === 'boolean' ? [child] : null, 'unknown', ADAPTER.protocolVersion === '0.2.0' ? 'supported' : 'limited',
+        child === 'activity_journey_highlights_notification_enable' ? 'technical' : undefined, task.id);
+      if (childTask.role === 'technical') childTask.requiredForParent = false;
     }
   }
   for (const key of Object.keys(d).filter(k => k.endsWith('_enable') && !Object.prototype.hasOwnProperty.call(defaults, k)))
     if (!plan.tasks.some(t => t.sourceKey === key)) addTask(plan, config.id, key, key, d[key] === true, null, 'unknown', 'unsupported');
-  plan.diagnostics.push({ code: 'coverage_limited', message: 'Reward wrapper completion and timestamps are not success evidence. Internal randomized daily tasks do not expand the frozen plan.' });
+  if (ADAPTER.protocolVersion === '0.2.0') plan.coverage = 'complete';
+  else plan.diagnostics.push({ code: 'coverage_limited', message: 'Reward wrapper completion and timestamps are not success evidence. Internal randomized daily tasks do not expand the frozen plan.' });
   return plan;
 }

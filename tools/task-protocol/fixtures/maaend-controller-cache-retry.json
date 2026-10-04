@@ -1,0 +1,83 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "complete",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": [{\"id\": \"other-account\", \"taskName\": \"Daily\", \"enabled\": true}]}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true, \"enabledByController\": {\"Adb\": true, \"Win32\": true}}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": true, \"enabledByController\": {\"Adb\": true, \"Win32\": true}}], \"controllerName\": \"Adb\", \"resourceName\": \"Default\"}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}], \"controller\": [{\"name\": \"Adb\"}], \"resource\": [{\"name\": \"Default\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": true
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 每日任务",
+        "[2026-09-21 10:00:00.124] 任务完成: 每日任务",
+        "[2026-09-21 10:00:00.125] 任务开始: Other",
+        "[2026-09-21 10:00:00.126] 任务失败: Other"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "succeeded",
+    "chosen/closed": "failed"
+  },
+  "retryDocuments": {
+    "config:mxu-MaaEnd.json": {
+      "settings": {
+        "autoStartInstanceId": "chosen",
+        "language": "zh-CN"
+      },
+      "instances": [
+        {
+          "id": "other",
+          "tasks": [
+            {
+              "id": "other-account",
+              "taskName": "Daily",
+              "enabled": true
+            }
+          ]
+        },
+        {
+          "id": "chosen",
+          "tasks": [
+            {
+              "id": "one",
+              "taskName": "Daily",
+              "enabled": false,
+              "enabledByController": {
+                "Adb": false,
+                "Win32": true
+              }
+            },
+            {
+              "id": "closed",
+              "taskName": "Other",
+              "enabled": true,
+              "enabledByController": {
+                "Adb": true,
+                "Win32": true
+              }
+            }
+          ],
+          "controllerName": "Adb",
+          "resourceName": "Default"
+        }
+      ]
+    }
+  }
+}

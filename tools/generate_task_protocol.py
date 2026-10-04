@@ -45,7 +45,7 @@ def load_adapters(source=None):
 
 def validate_adapter_metadata(adapter, artifact):
     """Validate metadata facts consumed by generated configuration diagnostics."""
-    if adapter.get('protocolVersion') != '0.1.0':
+    if adapter.get('protocolVersion') not in ('0.1.0', '0.2.0'):
         raise ValueError(f'{artifact}: unsupported task protocol version')
     if 'dailyTaskKeys' in adapter:
         raise ValueError(f'{artifact}: dailyTaskKeys is not an authoritative field')
@@ -176,6 +176,24 @@ def generate(check: bool) -> None:
             path = ROOT / 'plugins' / 'specialized' / artifact / 'data' / name
             if check:
                 if not path.exists() or path.read_text(encoding='utf-8') != content: failures.append(str(path.relative_to(ROOT)))
+            else: path.write_text(content, encoding='utf-8', newline='\n')
+    for artifact, adapter in metadata.items():
+        if adapter['implementation'] not in ('mxu', 'mfa'):
+            continue
+        plugin = ROOT / 'plugins' / 'specialized' / artifact
+        manifest = json.loads((plugin / 'plugin.json').read_text(encoding='utf-8'))
+        for locale, relative in manifest['taskProtocol']['localization']['messages'].items():
+            path = plugin / relative
+            original = path.read_text(encoding='utf-8')
+            messages = json.loads(original)
+            for key in adapter.get('taskNameTextKeys', {}).values():
+                if key not in messages:
+                    raise ValueError(f'{artifact}: missing task label {key} in {locale}')
+                suffix = '（“{nickname}”）' if locale.startswith('zh') else ' (“{nickname}”)'
+                messages[key + '.custom_name'] = messages[key] + suffix
+            content = json.dumps(messages, ensure_ascii=False, indent=2) + '\n'
+            if check:
+                if original != content: failures.append(str(path.relative_to(ROOT)))
             else: path.write_text(content, encoding='utf-8', newline='\n')
     if failures: raise SystemExit('Generated task adapters differ: ' + ', '.join(failures))
     print(('Checked' if check else 'Generated') + f' {len(metadata) * 3} backend scripts for {len(metadata)} task adapters')

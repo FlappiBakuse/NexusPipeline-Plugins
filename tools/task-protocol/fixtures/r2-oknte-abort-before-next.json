@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -55,7 +55,8 @@
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始执行日常任务",
         "2026-09-21 12:00:00,001 INFO TaskExecutor DailyRoutineTask:开始任务: 日常领取",
         "2026-09-21 12:00:00,001 ERROR TaskExecutor DailyRoutineTask:DailyRoutineTask error Traceback (most recent call last):"
-      ]
+      ],
+      "source": "file"
     }
   ],
   "results": {
@@ -71,5 +72,10 @@
   "boundary": "aborted",
   "resourceSets": [
     "resources/oknte-code-verified.json"
+  ],
+  "contractDecisions": [
+    "D07",
+    "D14",
+    "D16"
   ]
 }

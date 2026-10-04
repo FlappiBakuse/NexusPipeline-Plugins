@@ -160,21 +160,13 @@ function finalizeAssessment(plan) {
     if (instances.length !== 1 || !Array.isArray(instances[0].tasks))
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
     const instance = instances[0];
-    const expected = context.gameTarget?.value;
-    const sameProgram = value => typeof value === 'string' && typeof expected === 'string'
-      && value.trim().replace(/\//g, '\\').toLowerCase() === expected.trim().replace(/\//g, '\\').toLowerCase();
+    const configuredProgram = value => typeof value === 'string' && value.trim().length > 0;
     const actions = Array.isArray(instance.preActions) && instance.preActions.length
       ? instance.preActions : instance.preAction ? [instance.preAction] : [];
-    const preActionLaunch = actions.some(action => action && action.enabled === true && sameProgram(action.program));
-    const taskLaunch = instance.tasks.some(task => task && task.enabled === true
-      && task.taskName === '__MXU_LAUNCH__'
-      && sameProgram(task.optionValues?.__MXU_LAUNCH_OPTION__?.values?.program));
-    if (preActionLaunch || taskLaunch)
+    const first = actions[0];
+    if (first?.enabled === true && configuredProgram(first.program) && first.waitForExit === false)
       return push(rule, 'satisfied', 'info', 'none', location(rule));
-    const possibleLaunch = actions.some(action => action && action.enabled === true)
-      || instance.tasks.some(task => task && task.enabled === true
-        && (task.taskName === '__MXU_LAUNCH__' || task.taskName.startsWith('__MXU_PRETASK__')));
-    if (context.gameTarget?.ready !== false || possibleLaunch)
+    if (context.gameTarget?.ready !== false)
       return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     return push(rule, 'violated', 'error', 'block', location(rule), text(rule),
       [{ kind: 'open_script_settings' }, { kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
@@ -186,13 +178,49 @@ function finalizeAssessment(plan) {
     const value = Object.prototype.hasOwnProperty.call(document, 'SAVE_LOG_TO_FILE') ? document.SAVE_LOG_TO_FILE : false;
     if (value === true) return push(rule, 'satisfied', 'info', 'none', location(rule));
     if (value === false) {
-      const context = input.executionContext || {};
-      const source = context.logSource || {};
-      if (source.kind === 'stdout' && source.available === true)
-        return push(rule, 'satisfied', 'info', 'none', location(rule));
       return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
     }
     return push(rule, 'unknown', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+  };
+  const inspectMfaLaunch = rule => {
+    const config = instanceConfig(input.executionContext?.configInputValue).document;
+    const context = input.executionContext || {};
+    if (context.mode !== 'pc') return push(rule, 'not_applicable', 'info', 'none', location(rule));
+    if ((context.launchOwner === 'host' && typeof context.gameTarget?.value === 'string' && context.gameTarget.value.trim()
+      || context.gameTarget?.ready === true) && config.BeforeTask === 'StartupScriptOnly')
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    if (config.BeforeTask === 'StartupSoftwareAndScript' && typeof config.SoftwarePath === 'string' && config.SoftwarePath.trim())
+      return push(rule, 'satisfied', 'info', 'none', location(rule));
+    if (config.BeforeTask !== undefined && !['None','StartupSoftware','StartupSoftwareAndScript','StartupScriptOnly'].includes(config.BeforeTask))
+      return push(rule, 'unknown', 'error', 'block', location(rule), text(rule));
+    if (config.SoftwarePath !== undefined && typeof config.SoftwarePath !== 'string')
+      return push(rule, 'unknown', 'error', 'block', location(rule), text(rule));
+    if (context.launchOwner === 'host' || context.gameTarget?.ready !== undefined)
+      return push(rule, 'violated', 'error', 'block', location(rule), text(rule));
+    return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule));
+  };
+  const inspectMfaFinish = rule => {
+    const config = instanceConfig(input.executionContext?.configInputValue).document;
+    for (const task of config.TaskItems || []) {
+      if (task.default_check === false || task.entry !== 'ComputerOperationAction') continue;
+      const node = task.pipeline_override?.ComputerOperationAction;
+      const operation = node?.custom_action_param?.operation ?? 'shutdown';
+      if (node?.action !== 'Custom' || node.custom_action !== 'ComputerOperationAction')
+        return push(rule, 'unknown', 'error', 'block', location(rule), text(rule));
+      if (['shutdown', 'restart', 'sleep', 'hibernate'].includes(operation))
+        return finishAction(rule, operation);
+      return push(rule, 'unknown', 'error', 'block', location(rule), text(rule));
+    }
+    const value = config.AfterTask ?? 'None';
+    const action = { None: 'None', CloseMFA: 'Exit', ShutDown: 'Shutdown', ShutDownOnce: 'Shutdown',
+      RestartPC: 'Restart', CloseEmulator: 'CloseGameAndExit', CloseEmulatorAndMFA: 'CloseGameAndExit' }[value];
+    if (value === 'CloseEmulatorAndRestartMFA')
+      return push(rule, 'violated', 'error', 'block', location(rule), text(rule));
+    if (action === 'CloseGameAndExit' && input.executionContext?.mode !== 'pc') {
+      if (input.executionContext?.queue?.hasFollowingWork === 'no') return finishAction(rule, 'None');
+      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule));
+    }
+    return finishAction(rule, action);
   };
   const inspectFinishAction = rule => {
     const resourceId = rule.configResource === 'main' ? mainConfigId() : rule.resourceId;
@@ -274,18 +302,19 @@ function finalizeAssessment(plan) {
   const inspectSingleDaily = rule => {
     const enabled = plan.tasks.filter(task => task.enabled && task.role !== 'technical');
     if (enabled.length === 0) return push(rule, 'not_applicable', 'info', 'none', location(rule));
-    if (enabled.length === 1 && enabled[0].sourceKey === 'runtime_unverified') {
-      const identity = runtimeIdentity(read('resource', 'runtime-app'), read('resource', 'runtime-head'),
-        read('resource', 'runtime-tag'), read('resource', 'runtime-origin'), input.executionContext?.runtimeActivity);
-      if (identity.restricted) return push(rule, 'satisfied', 'info', 'none', location(rule));
-    }
+
     const allowed = new Set(rule.allowedTaskKeys || []);
-    if (allowed.size > 0 && enabled.every(task => allowed.has(task.sourceKey)))
+    const daily = enabled.filter(task => task.sourceKey === 'daily');
+    const owned = !allowed.has('daily') || daily.length === 1 && !daily[0].parentId
+      && enabled.every(task => task === daily[0] || task.parentId === daily[0].id);
+    if (owned && allowed.size > 0 && enabled.every(task => allowed.has(task.sourceKey)))
       return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'violated', 'error', 'block', location(rule), text(rule), rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
   const inspectFinite = rule => {
-    const enabled = plan.tasks.some(t => t.sourceKey === rule.taskKey && t.enabled);
+    const dailyExtras = read('config', 'config:DailyTask.json')?.['Additional Tasks to Run After Daily Task'];
+    const enabled = plan.tasks.some(t => t.sourceKey === rule.taskKey && t.enabled)
+      || (rule.taskKey === 'farm_4c' && Array.isArray(dailyExtras) && dailyExtras.includes('Teleport and Farm 4C Echo'));
     if (!enabled) return push(rule, 'not_applicable', 'info', 'none', location(rule));
     const document = read('config', rule.resourceId);
     if (!document || typeof document !== 'object')
@@ -308,17 +337,25 @@ function finalizeAssessment(plan) {
   const inspectRuntime = rule => {
     const app = read('resource', 'runtime-app');
     const head = read('resource', 'runtime-head');
-    const tag = read('resource', 'runtime-tag');
     const origin = read('resource', 'runtime-origin');
-    const identity = runtimeIdentity(app, head, tag, origin, input.executionContext?.runtimeActivity);
-    if (identity.restricted) return push(rule, 'unknown', 'warning', 'warn', location(rule), identity.reasonText,
-      [{ kind: 'refresh_plan' }]);
+    const identity = runtimeIdentity(app, head, origin, input.executionContext?.runtimeActivity);
     if (identity.ready) return push(rule, 'satisfied', 'info', 'none', location(rule));
     return push(rule, 'unknown', 'error', 'block', location(rule), identity.reasonText, rule.actions || [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
   };
   for (const rule of ADAPTER.configRules || []) {
     try {
-      if (rule.kind === 'target_compare') inspectTarget(rule);
+      if (rule.kind === 'mfa_instance') {
+        const id = input.executionContext?.configInputValue;
+        const effective = instanceConfig(id);
+        const config = effective.document;
+        const invalid = !config || !Array.isArray(config.TaskItems) || plan.coverage === 'unsupported'
+          || plan.diagnostics.some(d => d.code === 'mfa.invalid_repeat');
+        if (invalid) push(rule, 'violated', 'error', 'block', [], text(rule), [{kind:'open_binding_editor'}]);
+        else push(rule, 'satisfied', 'info', 'none', []);
+      }
+      else if (rule.kind === 'mfa_launch') inspectMfaLaunch(rule);
+      else if (rule.kind === 'mfa_finish') inspectMfaFinish(rule);
+      else if (rule.kind === 'target_compare') inspectTarget(rule);
       else if (rule.kind === 'autostart') inspectAutostart(rule);
       else if (rule.kind === 'mxu_launch_owner') inspectMxuLaunchOwner(rule);
       else if (rule.kind === 'file_logging') inspectLogging(rule);

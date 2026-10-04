@@ -1,6 +1,6 @@
 {
   "artifact": "March7thAssistant",
-  "coverage": "partial",
+  "coverage": "complete",
   "resources": [
     {
       "id": "config:config.yaml",
@@ -115,7 +115,12 @@
     }
   ],
   "results": {
-    "daily_enable": "unknown"
+    "daily_enable": "failed"
   },
-  "boundary": "aborted"
+  "boundary": "aborted",
+  "contractDecisions": [
+    "D01",
+    "D07",
+    "D17"
+  ]
 }

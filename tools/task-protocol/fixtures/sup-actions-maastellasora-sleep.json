@@ -1,7 +1,5 @@
 {
   "artifact": "MaaStellaSora",
-  "coverage": "partial",
-  "queueFollowingWork": "yes",
   "resources": [
     {
       "id": "config:mxu-MaaStellaSora.json",
@@ -14,23 +12,29 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": []}"
     }
   ],
-  "tasks": {
-    "chosen/power": {
-      "enabled": true,
-      "role": "technical"
-    }
-  },
-  "configChecks": [
-    {
-      "ruleId": "mxu.finish_action",
-      "evaluation": "violated",
-      "executionEffect": "block"
-    }
-  ],
-  "batches": [],
-  "results": {},
   "source": {
     "type": "synthetic",
     "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
-  }
+  },
+  "coverage": "unsupported",
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mfa.migration_required"
+    }
+  ],
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ],
+  "legacyCompatibilityCase": "legacy-sup-actions-maastellasora-sleep.json"
 }

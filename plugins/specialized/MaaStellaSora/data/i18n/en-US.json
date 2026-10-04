@@ -19,5 +19,22 @@
   "task.invitation": "Invitation",
   "task.log_in": "Log in",
   "task.serious_challenge": "Serious Challenge",
-  "task.tower_climb": "Tower climb"
+  "task.tower_climb": "Tower climb",
+  "diagnostic.mfa.launch_owner": "In Script Settings → Startup Settings, set the game launcher path and select Start software and script. If the project starts the game, select Start script only. Custom Program tasks cannot launch the game before window connection.",
+  "diagnostic.mfa.finish_action": "Review the after-task action in MFA startup settings. Shutdown, restart or closing a required target can interrupt restoration or subsequent work.",
+  "task.bond_gifts.custom_name": "Bond gifts (“{nickname}”)",
+  "task.bounty_trial_quick_battle.custom_name": "Bounty trial quick battle (“{nickname}”)",
+  "task.tower_climb.custom_name": "Tower climb (“{nickname}”)",
+  "task.event_quick_battle.custom_name": "Event quick battle (“{nickname}”)",
+  "task.event_challenge_auto_battle.custom_name": "Event challenge auto battle (“{nickname}”)",
+  "task.encircling_hunt.custom_name": "Encircling Hunt (“{nickname}”)",
+  "task.log_in.custom_name": "Log in (“{nickname}”)",
+  "task.serious_challenge.custom_name": "Serious Challenge (“{nickname}”)",
+  "task.invitation.custom_name": "Invitation (“{nickname}”)",
+  "task.claim_and_send_stamina.custom_name": "Claim and send stamina (“{nickname}”)",
+  "task.claim_mission_rewards.custom_name": "Claim mission rewards (“{nickname}”)",
+  "task.claim_fund_rewards.custom_name": "Claim fund rewards (“{nickname}”)",
+  "task.claim_and_dispatch_commissions.custom_name": "Claim and dispatch commissions (“{nickname}”)",
+  "task.claim_daily_rewards.custom_name": "Claim daily rewards (“{nickname}”)",
+  "task.claim_mailbox_rewards.custom_name": "Claim mailbox rewards (“{nickname}”)"
 }

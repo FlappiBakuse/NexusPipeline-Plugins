@@ -28,6 +28,7 @@ def run_source_gate(root: Path, host_root: Path, base: str) -> dict[str, Any]:
     syntax = core.check_syntax(root)
     core._run((sys.executable, str(root / "tools" / "generate_task_protocol.py"), "--check"), "Task adapter generation", root)
     core._run((sys.executable, str(root / "tools" / "generate_task_schema.py"), "--check"), "Task protocol schema", root)
+    core._run((sys.executable, str(root / "tools" / "generate_config_editors.py"), "--check"), "Config editor generation", root)
     core._run(("node", str(root / "tools" / "Test-ConfigEditors.mjs")), "Test-ConfigEditors", root)
     python_tests = run_python_unit_gate(root)
     changed = core.check_pr(root, base)

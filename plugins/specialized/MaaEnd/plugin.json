@@ -5,9 +5,9 @@
   "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.14",
   "capabilities": [
     "emulator"
   ],
@@ -21,7 +21,47 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
+    "repairRules": [
+      {
+        "id": "startup_program",
+        "ruleId": "mxu.launch_owner",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": [
+          "instances"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "mxu_preactions",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "将当前自动执行实例的首项前置程序设为项目游戏路径，启用并关闭等待退出；保留参数及其余前置程序，应用前备份当前用户快照。"
+      },
+      {
+        "id": "native_tasks",
+        "ruleId": "mxu.finish_action",
+        "resourceId": "config:mxu-MaaEnd.json",
+        "selector": [
+          "instances"
+        ],
+        "source": "user_snapshot",
+        "format": "json",
+        "kind": "mxu_tasks",
+        "fromValues": [],
+        "toValue": "",
+        "preconditions": {
+          "snapshotKind": "any",
+          "exclusiveResource": true,
+          "noExtraConfig": false
+        },
+        "explanation": "关闭当前实例的系统动作任务，保留日常与自定义程序的顺序、参数、进度和额度；应用前备份当前用户快照。"
+      }
+    ],
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -535,6 +575,20 @@
         "path": "locales/interface/ko_kr.json",
         "format": "text",
         "required": false
+      },
+      {
+        "id": "interface-part-67",
+        "source": "root",
+        "path": "tasks/DecomposeWeaponEssence.json",
+        "format": "text",
+        "required": false
+      },
+      {
+        "id": "interface-part-68",
+        "source": "root",
+        "path": "tasks/SharedZiplineDelete.json",
+        "format": "text",
+        "required": false
       }
     ],
     "localization": {
@@ -567,5 +621,6 @@
       }
     ],
     "environmentChecks": []
-  }
+  },
+  "configEditor": "data/editor.js"
 }

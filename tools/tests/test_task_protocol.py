@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
 import unittest
 from pathlib import Path
 
@@ -12,6 +13,16 @@ import create_task_plugin as author
 import json
 import io
 import zipfile
+
+
+@contextmanager
+def retained_fixture_directory(prefix):
+    directory = tempfile.mkdtemp(prefix=prefix)
+    try:
+        yield directory
+    except BaseException:
+        print('Failed fixture retained: ' + directory, file=sys.stderr)
+        raise
 
 
 class TaskProtocolTests(unittest.TestCase):
@@ -61,6 +72,24 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
         self.assertIn('data/i18n/zh-CN.json', current)
         self.assertNotIn('configValidator', json.loads(current['plugin.json']))
         core._task_protocol_scripts(json.loads(current['plugin.json']))
+
+    def test_daily_repairs_are_declared_finite_and_legacy_scope_is_retained(self):
+        root = Path(__file__).resolve().parents[2]
+        artifacts = ['BAAH', 'BetterGI', 'March7thAssistant', 'ZenlessZoneZeroOneDragon',
+                     'MaaEnd', 'MaaStellaSora', 'OkNTE', 'OkWutheringWaves']
+        for artifact in artifacts:
+            manifest = json.loads((root / 'plugins/specialized' / artifact / 'plugin.json').read_text(encoding='utf-8'))
+            self.assertTrue(manifest['taskProtocol']['repairRules'])
+            core._task_protocol_scripts(manifest)
+            for field, value in [('resourceId', 'config:../outside.json'), ('kind', 'execute_script'),
+                                 ('source', 'live'), ('skipWhen', 'invalid'), ('selector', [])]:
+                changed = json.loads(json.dumps(manifest))
+                changed['taskProtocol']['repairRules'][0][field] = value
+                with self.subTest(artifact=artifact, field=field), self.assertRaises(core.RepositoryError):
+                    core._task_protocol_scripts(changed)
+            manifest['taskProtocol']['version'] = '0.1.1'
+            with self.assertRaises(core.RepositoryError):
+                core._task_protocol_scripts(manifest)
 
     def manifest(self):
         return {
@@ -128,7 +157,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
         manifest = json.loads(files['plugin.json'])
         manifest['taskProtocol']['localization'] = {'defaultLocale':'en-US', 'messages':{'en-US':'data/i18n/missing.json'}}
         files['plugin.json'] = json.dumps(manifest)
-        with tempfile.TemporaryDirectory(prefix='nxp-text-assets-') as temporary:
+        with retained_fixture_directory(prefix='nxp-text-assets-') as temporary:
             root = Path(temporary)
             for name, content in files.items():
                 path = root / name
@@ -163,7 +192,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
                 core._task_protocol_scripts(manifest)
 
     def test_declared_scripts_are_in_real_source_closure(self):
-        with tempfile.TemporaryDirectory(prefix="nxp-task-protocol-") as temporary:
+        with retained_fixture_directory(prefix="nxp-task-protocol-") as temporary:
             root = Path(temporary)
             (root / "data").mkdir()
             (root / "data" / "i18n").mkdir()
@@ -178,7 +207,7 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
 
     def test_unfinished_scaffold_is_not_packagable_but_generated_example_is(self):
         for complete in (False, True):
-            with self.subTest(complete=complete), tempfile.TemporaryDirectory(prefix="nxp-author-") as temporary:
+            with self.subTest(complete=complete), retained_fixture_directory(prefix="nxp-author-") as temporary:
                 root = Path(temporary)
                 files = author.generate("ExampleTask", "example-task", complete)
                 for name, content in files.items():
@@ -245,11 +274,13 @@ const vm=require('node:vm');let source='';process.stdin.on('data',chunk=>source+
         for artifact, config_id, config, resources, rule_id in cases:
             with self.subTest(artifact=artifact):
                 script_path = Path(__file__).resolve().parents[2] / 'plugins' / 'specialized' / artifact / 'data' / 'discover.js'
+                manifest = json.loads((script_path.parent.parent / 'plugin.json').read_text(encoding='utf-8'))
+                wire_version = '0.2.0' if manifest['taskProtocol']['version'] == '0.2.0' else '0.1.0'
                 js = f"""
 const fs = require('fs');
 const vm = require('vm');
 const captured = [];
-const input = {{ phase: 'discover', protocolVersion: '0.1.0',
+const input = {{ phase: 'discover', protocolVersion: {json.dumps(wire_version)},
   configResources: [{{ id: {json.dumps(config_id, ensure_ascii=False)}, format: 'json' }}],
   executionContext: {{ mode: 'pc', queue: {{ hasFollowingWork: 'yes', nextTargetRelation: 'same', nextLaunchOwner: 'already_running' }} }} }};
 const config = {json.dumps(config, ensure_ascii=False)};
