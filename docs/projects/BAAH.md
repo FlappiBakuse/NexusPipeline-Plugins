@@ -1,6 +1,6 @@
 # BAAH 项目适配
 
-公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0 / daily-flow-v1，最低 Host 0.16.14。
+公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0 / daily-flow-v1，最低 Host 0.16.15。
 
 发现以活动流水线、任务序号和名称作身份，TASK_ONOFF 平行数组以完整 TASK_PIPELINE 为 guard。自动登录和收尾独立建模，不进入业务分母。选择重试映射只取流水线任务，不能把自动登录的数组位置误用于 TASK_ONOFF。
 
@@ -12,11 +12,11 @@ Task.run 的前置、执行、后置和结束日志构成嵌套范围。当前 p
 
 TARGET_EMULATOR_PATH、TARGET_IP_PATH、TARGET_PORT 从当前绑定用户主配置解析；software-config 仅提供 SAVE_LOG_TO_FILE。缺省 IP/port 为 127.0.0.1/5555，显式错误类型不当成缺省。直接 ADB 序列号不能证明与 Host 网络端点相同，仍保留诊断。关闭文件日志时阻断，不以 stdout 可用代替。
 
-生产源位于 tools/task-protocol/baah。
+生产源位于 adapters/task-protocol/baah。
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.2.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.3.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -24,7 +24,7 @@ TARGET_EMULATOR_PATH、TARGET_IP_PATH、TARGET_PORT 从当前绑定用户主配�
 | [BAAH2.4.11](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.11) | `1f3a5102dbf56bdae6083bbadeb0d38d473c33b9` |
 | [BAAH2.4.10](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.10) | `76d4cc7c80e7a363d90b56bcb320315222343df9` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -67,7 +67,7 @@ TARGET_EMULATOR_PATH、TARGET_IP_PATH、TARGET_PORT 从当前绑定用户主配�
 | 挑战任务 | SolveChallenge | 已知流水线外层；前置→执行→后置闭环；不解析手工/自定义内部行为 | 前后置失败/超时保留；选择重试 |
 | 自定义任务 | UserTask | 已知流水线外层；前置→执行→后置闭环；不解析手工/自定义内部行为 | 前后置失败/超时保留；选择重试 |
 
-自动 OPEN_GAME_APP_TASK 与 DO_POST_ALL_TASK 分别建为自动登录和运行收尾，不冒充流水线中的普通任务。类名相同的任务以流水线顺序与序号区分；不能按 class 合并“咖啡馆/只摸头”或多个 InQuest。没有 classes 映射的启用任务会阻断准入。[源码与规则](../../tools/task-protocol/baah)。
+自动 OPEN_GAME_APP_TASK 与 DO_POST_ALL_TASK 分别建为自动登录和运行收尾，不冒充流水线中的普通任务。类名相同的任务以流水线顺序与序号区分；不能按 class 合并“咖啡馆/只摸头”或多个 InQuest。没有 classes 映射的启用任务会阻断准入。[源码与规则](../../adapters/task-protocol/baah)。
 
 ## 启动与日志配置门禁
 

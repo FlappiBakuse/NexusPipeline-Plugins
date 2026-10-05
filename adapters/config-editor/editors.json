@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "repair": "repair.js",
+  "editors": {
+    "BAAH": {
+      "preparation": null,
+      "commit": null
+    },
+    "BetterGI": {
+      "preparation": "BetterGI.js",
+      "commit": null
+    },
+    "MaaEnd": {
+      "preparation": null,
+      "commit": null
+    },
+    "MaaStellaSora": {
+      "preparation": "MaaStellaSora.js",
+      "commit": "MaaStellaSora.commit.js"
+    },
+    "March7thAssistant": {
+      "preparation": null,
+      "commit": null
+    },
+    "OkNTE": {
+      "preparation": null,
+      "commit": null
+    },
+    "OkWutheringWaves": {
+      "preparation": null,
+      "commit": null
+    },
+    "ZenlessZoneZeroOneDragon": {
+      "preparation": "ZenlessZoneZeroOneDragon.js",
+      "commit": null
+    }
+  }
+}

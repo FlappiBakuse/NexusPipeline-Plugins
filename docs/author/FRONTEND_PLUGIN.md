@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；宿主当前版本为 v1.8，既有插件仍可声明其实际依赖的较早 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.0，不接受较早或未声明的未来 minor。Frontend API 1.5 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -105,7 +105,7 @@ export function activate(host) {
 
 ### 公共复合元件
 
-公共复合元件包括 `nxp-action-group`、`nxp-date-range-picker`、`nxp-drag-handle`、`nxp-entity-row`、`nxp-sortable-list`、`nxp-tabs`、`nxp-confirm-dialog`、`nxp-dialog-popover` 和 `nxp-page-header`。属性、事件和插槽以宿主 [公共 UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md) 为准。公开清单来自实际宿主检出的 `frontend/src/ui/register.ts`；插件构建产物由 `Test-FrontendPlugins.mjs` 校验，宿主 `node tests/run.mjs contract` 注册真实公共元素验证装配与清理。
+公共复合元件包括 `nxp-action-group`、`nxp-date-range-picker`、`nxp-drag-handle`、`nxp-entity-row`、`nxp-sortable-list`、`nxp-tabs`、`nxp-confirm-dialog`、`nxp-dialog-popover` 和 `nxp-page-header`。属性、事件和插槽以宿主 [公共 UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md) 为准。公开清单来自实际宿主检出的 `frontend/src/ui/register.ts`；插件构建产物由 `tests/frontend/run.mjs` 校验，宿主 `npm exec -- vitest run --config vitest.contract.config.ts`（在 frontend 目录并设置 NEXUS_OFFICIAL_PLUGINS_ROOT） 注册真实公共元素验证装配与清理。
 
 使用这些元件的插件在 manifest 中将 `minHostVersion` 设置为 `0.16.6`。宿主只保证当前注册表中声明的元素和公开属性/事件，插件应通过公开 `nxp-*` Native Custom Elements 接入，不依赖宿主私有 Vue 组件或内部 class。
 
@@ -134,7 +134,7 @@ export function activate(host) {
 | `host.executionPreview.capture(runId, signal)` | 读取宿主绑定的当前 PC 游戏客户区或模拟器画面；返回 360p JPEG 或等待状态 |
 | `host.i18n` | 读取当前插件的 locale、defaultLocale 和词典，使用 `t(key, args, fallback)` 以及日期/时间/数字格式化 |
 
-`renderer({ element, context })` 可以使用 DOM API 或在 `element` 上挂载 Vue Custom Element；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。宿主公共控件通过公开 `nxp-*` Native Custom Elements 提供，注册表为宿主 `frontend/src/ui/register.ts` 的 `NEXUS_PUBLIC_ELEMENTS`，`Test-FrontendPlugins.mjs` 按该集合校验插件产物；元素位置之外的 `nxp-*` 名称（例如自定义事件名）不属于元素使用。
+`renderer({ element, context })` 可以使用 DOM API 或在 `element` 上挂载 Vue Custom Element；渲染器返回的函数会在 slot 重绘前调用。插件页面可以使用同源 DOM，但应为自己创建的元素添加明确的 `data-plugin-*` 标记，并在释放时移除事件与节点。宿主公共控件通过公开 `nxp-*` Native Custom Elements 提供，注册表为宿主 `frontend/src/ui/register.ts` 的 `NEXUS_PUBLIC_ELEMENTS`，`tests/frontend/run.mjs` 按该集合校验插件产物；元素位置之外的 `nxp-*` 名称（例如自定义事件名）不属于元素使用。
 
 公开元素在 light DOM 下渲染，元素标签自身不产生额外布局盒（结构卡片与 `nxp-switch-list` 内的开关都是如此），因此插件卡片与宿主卡片共享同一套栅格与展开置顶规则。把多个 `nxp-switch-setting` 放进 `nxp-switch-list` 即可得到与设置页一致的开关列表外观。文本类元素（`nxp-button`、`nxp-badge`）用 `label` 属性传文案：属性写法不产生插槽子节点，父级重渲染不会影响元素自身的 DOM 与交互。
 
@@ -159,11 +159,11 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API v1.6 / v1.7 / v1.8 配合方式
+## Plugin API 2.0 配合方式
 
-Plugin API v1.8 在 `PluginNotification` 上增加可选 SMTP 收件人 `SmtpTo`。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。需要该能力的插件检查 `IPluginHostContextV1_8`。
+`PluginNotification.SmtpTo` 指定可选 SMTP 收件人。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。插件通过 `IPluginHostContext.Notifications` 发送通知。
 
-managed-code 插件在初始化时检查 `context is IPluginHostContextV1_6`，再按需使用：
+managed-code 插件初始化接收唯一的 `IPluginHostContext`，按需使用：
 
 - `context.Ui.Register`：注册 Form、Badge、Card 贡献。字段类型包括 text、textarea、secret、switch、select、multi-select、status、number、color、range、url；secret 读取只返回 configured 标记，保存使用 keep/set/clear 动作对象；
 - `context.ScopedData`：使用 `global`、`user/<id>`、`script/<id>`、`queue/<id>`、`user-script/<userId>/<scriptId>` 等 scope 保存 JSON；
@@ -172,7 +172,7 @@ managed-code 插件在初始化时检查 `context is IPluginHostContextV1_6`，�
 - `context.History.Register`：在运行历史落盘前生成徽章和字段快照。
 - `context.I18n`：读取插件 manifest 声明的 `i18n/` 资源，使用 `T(key, fallback, args)` 和本地化日期、时间、数字格式化。
 
-只需本地化能力的插件检查 `context is IPluginHostContextV1_4` 即可，该接口名称在 v1.6 中保持不变。
+`IPluginHostContext` 的全部端口由当前宿主提供，无需检查旧接口继承链。
 
 宿主 UI 投影端点为：
 
@@ -213,7 +213,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件 API 版本与宿主当前 Plugin API v1.9 兼容；只需本地化端口的插件继续检查 `IPluginHostContextV1_4`，需要资产端口的插件检查 `IPluginHostContextV1_6`，模拟器 provider 检查 `IPluginHostContextV1_7`，通知收件人覆盖检查 `IPluginHostContextV1_8`；`custom-wallpaper` 使用 Plugin API v1.6、`EmulatorSupport` 使用 v1.7、`game-checkin` 使用 v1.8，前端均继续使用 Frontend API 1.5；`live-screenshot` 继续使用 Plugin API v1.5；
+- managed-code 插件声明精确 Plugin API 2.0，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.5；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；

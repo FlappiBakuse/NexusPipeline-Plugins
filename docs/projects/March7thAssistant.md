@@ -1,6 +1,6 @@
 # March7thAssistant 项目适配
 
-公共规则见 [公共任务协议](../author/TASK_PROTOCOL.md)；源码身份见 [source-lock](../../tools/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [公共任务协议](../author/TASK_PROTOCOL.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
@@ -18,7 +18,6 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 
 - March7th `InstanceNotCompleted` 从有效配置模板经 `Base.send_notification_with_screenshot` 逐行写入 INFO，随后才截图和发送 ERROR 级通知。四个已核实失败分支记录当前 source/epoch、父任务、目标副本和内部执行序号；首次失败保留 open 问题事件，不提前重启整项任务。连续三次重试耗尽且退出范围才形成失败；相同目标的显式重试、完整轮次和目标次数证据才能恢复对应事件。另一副本成功、通用完成横幅、历史时间戳不能洗掉失败。历战余响与活动调用独立归属；无法确定范围时保留 unattributed_error，不猜给清体力。
 
-- 默认关闭的签到 [日志桥原型](../../tools/march7th-bridge/README.md) 独立于专项 ZIP；它不表示官方安装版已支持静默分支。
 
 ## 日常入口与资源范围
 
@@ -28,7 +27,7 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.3.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -36,7 +35,7 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 | [v2026.9.30](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.9.30) | `5bbe11c4a1e799b89258dd01cf8d30837eadb32f` |
 | [v2026.9.25](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.9.25) | `e3eb9fc844bdf8a4e6672eb261563f5c31c550ba` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -77,7 +76,7 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 | activity_planarfissure_enable | 位面分裂 | 活动检测外层和条件检查；无活动可跳过，活动处理异常保留 | 原配置续跑；保留日期、次数与额度 |
 | activity_journey_highlights_notification_enable | 旅途拾忆通知 | 技术步骤，不计业务分母；不作为其他任务成功凭证 | 不独立触发业务重试 |
 
-该表逐项列出 13 个一级入口与已知子开关。默认 main 与 routine 不等价；未出现独立成功证据的周常不能因整轮结束被补成完成。[生产模块](../../tools/task-protocol/march7th)。
+该表逐项列出 13 个一级入口与已知子开关。默认 main 与 routine 不等价；未出现独立成功证据的周常不能因整轮结束被补成完成。[生产模块](../../adapters/task-protocol/march7th)。
 
 旧配置中的 weekly_relic_smart_discard_enable、divergent_auto_save_enable、fight_reward_enable 与 notify_qmsg_enable 属于已知辅助/历史开关，不作为独立业务任务或未知启用任务阻断日常发现。原字节与开关值保留，原配置续跑不重置它们；真正未知的启用任务仍不静默忽略。
 

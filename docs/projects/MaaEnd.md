@@ -1,6 +1,6 @@
 # MaaEnd 项目适配
 
-公共框架见[MXU](../frameworks/MXU.md)，结果契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0，最低 Host 0.16.14。
+公共框架见[MXU](../frameworks/MXU.md)，结果契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0，最低 Host 0.16.15。
 
 MaaEnd 保持官方发行实际使用的 MXU GUI。MaaStellaSora 的 MFA 迁移不改变 MaaEnd 或独立 MaaFrameworkDriver 的配置入口。
 
@@ -10,11 +10,11 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 
 日常失败参与有限选择重试并保留额度、选项和其他实例。Host 继续复核实际补丁后的启用集合与行为签名，并用 CAS/journal 恢复。匿名 FailureCollector 子项缺少稳定任务身份时，不独立归属到业务子项。
 
-源码生成模块仍为 tools/task-protocol/mxu，不因其他插件更换 GUI 删除 MXU 分支。
+源码生成模块仍为 adapters/task-protocol/mxu，不因其他插件更换 GUI 删除 MXU 分支。
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.3.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -22,7 +22,7 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 | [v2.30.1](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.1) | `6e8f43c8fa9348b5e375358c6232cb40fc6e0e5a` |
 | [v2.30.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.0) | `f921c0165bd49ab62f9867419bd9ac6da4c92747` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -87,7 +87,7 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 | DailyEventRewards |
 | DailyProtocolPassRewards |
 
-上述任务均由唯一自动执行实例的稳定 task ID 选择。定位/目标/预设/前置设置等只有 option 或 preset 的 import 不独立建业务任务。AccountSwitch、DevTest、导入、实时辅助等在 PI 中可发现，不代表这些手工操作的内部业务已单独核验。任务定义缺失、控制器/资源不兼容、名称归属歧义与日志缺口保持明确限制。资源控制器缓存选择随事务恢复。[生产模块](../../tools/task-protocol/mxu)。
+上述任务均由唯一自动执行实例的稳定 task ID 选择。定位/目标/预设/前置设置等只有 option 或 preset 的 import 不独立建业务任务。AccountSwitch、DevTest、导入、实时辅助等在 PI 中可发现，不代表这些手工操作的内部业务已单独核验。任务定义缺失、控制器/资源不兼容、名称归属歧义与日志缺口保持明确限制。资源控制器缓存选择随事务恢复。[生产模块](../../adapters/task-protocol/mxu)。
 
 ## 最新发行新增入口与阻断边界
 

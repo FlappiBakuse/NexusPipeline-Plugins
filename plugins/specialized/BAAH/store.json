@@ -17,6 +17,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
   "changelog": [
     {
+      "version": "0.3.0",
+      "date": "2026-10-04",
+      "items": [
+        "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-10-03",
       "items": [
@@ -29,13 +36,6 @@
       "date": "2026-09-25",
       "items": [
         "收紧平行任务与错误退出后的重试判定，保留静默业务未核验。"
-      ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-21",
-      "items": [
-        "新增版本化任务计划、当前日志任务判定和受检选择重试；需要宿主 0.16.8。"
       ]
     }
   ],
@@ -52,6 +52,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.0",
+          "date": "2026-10-04",
+          "items": [
+            "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
+          ]
+        },
+        {
           "version": "0.2.2",
           "items": [
             "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
@@ -62,12 +69,6 @@
           "version": "0.2.1",
           "items": [
             "Narrowed parallel-task and post-exit retry decisions; silent business steps remain unverified."
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "items": [
-            "Added versioned task plans, current-log task observations and guarded selective retries; requires Host 0.16.8."
           ]
         }
       ]

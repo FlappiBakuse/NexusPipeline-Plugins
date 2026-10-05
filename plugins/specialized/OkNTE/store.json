@@ -14,6 +14,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkNTE",
   "changelog": [
     {
+      "version": "0.2.0",
+      "date": "2026-10-04",
+      "items": [
+        "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
+      ]
+    },
+    {
       "version": "0.1.2",
       "date": "2026-10-03",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-09-25",
       "items": [
         "新官方稳定发行在基础身份可确认时受限运行，不沿用旧版高级结果规则。"
-      ]
-    },
-    {
-      "version": "0.1.0",
-      "date": "2026-09-21",
-      "items": [
-        "初始日常适配开发版本；Windows 安装发行资格验证尚未完成。"
       ]
     }
   ],
@@ -47,6 +47,13 @@
       ],
       "changelog": [
         {
+          "version": "0.2.0",
+          "date": "2026-10-04",
+          "items": [
+            "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
+          ]
+        },
+        {
           "version": "0.1.2",
           "items": [
             "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
@@ -57,12 +64,6 @@
           "version": "0.1.1",
           "items": [
             "Allows restricted runs for newer official stable builds with basic identity checks."
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "items": [
-            "Initial daily adapter candidate; Windows installed-distribution qualification is pending."
           ]
         }
       ]

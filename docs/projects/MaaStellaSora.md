@@ -12,7 +12,7 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.2.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.3.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -20,7 +20,7 @@
 | [v1.5.0](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.0) | `ea7890883b4001bb2d5aed3d0866ba0f49aeada6` |
 | [v1.4.4](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.4.4) | `4009bc79591ad189d80f8f5d74d34d78bb8508cd` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -44,7 +44,7 @@
 | 心链送礼 | 心链送礼 | MFA 当前实例任务范围，顺序/重复次数闭环 | 失败可选择重试；选项、额度与进度不改 | resource/tasks/talk.json |
 | 领取任务奖励 | 领取任务奖励 | MFA 当前实例任务范围，顺序/重复次数闭环 | 失败可选择重试；选项、额度与进度不改 | resource/tasks/task.json |
 
-上表是适配器登记的 resource/tasks 布局任务。preset 只筛选/排序任务，不作为额外业务分母；控制器与资源不兼容任务不启用。重复次数必须为有限正整数，无持久选择字段的默认任务按耦合范围重试。同名任务的迟到失败不能唯一定位时保守失败。旧 MXU callbacks 不参与当前 MFA 日志匹配。[生产模块](../../tools/task-protocol/mfa)。
+上表是适配器登记的 resource/tasks 布局任务。preset 只筛选/排序任务，不作为额外业务分母；控制器与资源不兼容任务不启用。重复次数必须为有限正整数，无持久选择字段的默认任务按耦合范围重试。同名任务的迟到失败不能唯一定位时保守失败。旧 MXU callbacks 不参与当前 MFA 日志匹配。[生产模块](../../adapters/task-protocol/mfa)。
 
 ## 最新发行实际 PI 布局
 

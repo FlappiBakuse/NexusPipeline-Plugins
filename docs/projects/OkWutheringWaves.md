@@ -1,6 +1,6 @@
 # OkWutheringWaves 项目适配
 
-公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../tools/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 当前 0.2.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
 
@@ -10,7 +10,7 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.1.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.2.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -18,7 +18,7 @@
 | [v3.7.2](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.2) | `b2c3af8025c28f0a128f73f8cbee77404bb1baf8` |
 | [v3.6.7](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.6.7) | `7df910be3b91e73be0f7a96d34fb4091510f7fac` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -40,7 +40,7 @@
 | farm_4c | Teleport and Farm 4C Echo | 需 Weekly Challenge/Boss Challenge 与正有限 Repeat Farm Count；无效配置阻断 |
 | extra:<未知值> | 未知启用附加项 | 不支持，阻断日常计划，不能隐藏 |
 
-所有隐含步骤共享 DailyTask 重试单元；不伪造单独启停字段。其执行顺序、条件与额度在发现时冻结，明确子错误与权威父成功形成部分完成；该父子范围不能整轮重跑。独立的手动 FarmEchoTask 入口与作为日常附加步骤的 farm_4c 分别处理。[生产模块](../../tools/task-protocol/okww)。
+所有隐含步骤共享 DailyTask 重试单元；不伪造单独启停字段。其执行顺序、条件与额度在发现时冻结，明确子错误与权威父成功形成部分完成；该父子范围不能整轮重跑。独立的手动 FarmEchoTask 入口与作为日常附加步骤的 farm_4c 分别处理。[生产模块](../../adapters/task-protocol/okww)。
 
 ## 配置修复
 

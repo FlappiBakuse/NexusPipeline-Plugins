@@ -15,4 +15,4 @@
 
 配置契约为 `mfa-avalonia.instances.v1`。旧 MXU 快照由 Host 启动恢复后原字节归档并清空配置输入，用户从“编辑配置”重新选择 MFA 稳定实例，不迁移旧字段。重置 journal 防止中断后误采用共享安装配置；原生目录和其他账号保持不变。原生程序可能写全局默认配置及实例文件，因此配置目录与 appsettings 的交换/恢复是统一账户事务，不能只保存页面状态。
 
-源码证据固定于 [上游窗口](../../tools/task-protocol/upstream-window.json)：MFAConfiguration/InstanceConfiguration、TaskLoader.SynchronizeTaskItems、TaskQueueViewModel 控制器/资源解析、MFATask.Run、MaaProcessor.MonitorLog 和单实例入口。合成 Jint 测试不等于原生发行运行。当前自动化范围为中文日常；无限重复、未知结构或实例缺失阻止准入。
+源码证据固定于 [上游窗口](../../adapters/task-protocol/upstream-window.json)：MFAConfiguration/InstanceConfiguration、TaskLoader.SynchronizeTaskItems、TaskQueueViewModel 控制器/资源解析、MFATask.Run、MaaProcessor.MonitorLog 和单实例入口。合成 Jint 测试不等于原生发行运行。当前自动化范围为中文日常；无限重复、未知结构或实例缺失阻止准入。

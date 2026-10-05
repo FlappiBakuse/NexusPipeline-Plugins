@@ -1,6 +1,6 @@
 # 项目适配索引与最新稳定发行发现
 
-核对日期：2026-10-04（Asia/Shanghai）。以下来自官方 GitHub Release API，排除 draft/prerelease。任务与配置规则见各项目页，验证状态统一记录在 [STATUS](../STATUS.md)。
+核对日期：2026-10-05（Asia/Shanghai）。以下来自官方 GitHub Release API，排除 draft/prerelease。任务与配置规则见各项目页，验证状态统一记录在 [STATUS](../STATUS.md)。
 
 | 项目 / 全量任务兼容清单 | 最新稳定发行 | 发布时间（UTC） |
 | --- | --- | --- |
@@ -10,7 +10,7 @@
 | [BAAH](BAAH.md) | [BAAH2.4.13](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.13) | 2026-09-06T13:10:22Z |
 | [MaaEnd](MaaEnd.md) | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) | 2026-10-02T15:41:49Z |
 | [MaaStellaSora](MaaStellaSora.md) | [v1.5.1](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.1) | 2026-10-01T08:05:25Z |
-| [OkNTE](OkNTE.md) | [v1.4.7](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7) | 2026-10-02T17:07:05Z |
+| [OkNTE](OkNTE.md) | [v1.4.8](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.8) | 2026-10-04T15:22:25Z |
 | [OkWutheringWaves](OkWutheringWaves.md) | [v3.7.3](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.3) | 2026-10-03T11:08:38Z |
 
 ## GUI / 框架发现
@@ -22,7 +22,7 @@
 
 MaaStellaSora 最新稳定发行是 v1.5.1；其 import 布局见项目任务清单。旧 MXU 绑定在 Host 启动恢复后备份清空，由用户重新设置。MaaEnd 不随之改用 MFA。
 
-完整最近三版 SHA、资产 URL/大小/摘要见 [upstream-window](../../tools/task-protocol/upstream-window.json)。每个项目文档逐项列出已知任务及终态、选择、配置和未知项边界。
+完整最近三版 SHA、资产 URL/大小/摘要见 [upstream-window](../../adapters/task-protocol/upstream-window.json)。每个项目文档逐项列出已知任务及终态、选择、配置和未知项边界。
 
 <a id="历史发行发现与实际样本"></a>
 历史发行记录以相应发行与归档证据为准，本页维护当前发现。公共契约见 [TASK_PROTOCOL](../author/TASK_PROTOCOL.md)，实际测试入口见 [TESTING](../TESTING.md)。

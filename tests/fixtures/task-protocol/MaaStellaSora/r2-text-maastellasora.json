@@ -1,0 +1,35 @@
+{
+  "artifact": "MaaStellaSora",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"领取每日奖励\", \"enabled\": true}, {\"id\": \"custom\", \"taskName\": \"领取每日奖励\", \"customName\": \"User name\", \"enabled\": false}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取每日奖励\", \"label\": \"领取每日奖励\"}]}"
+    }
+  ],
+  "coverage": "unsupported",
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mfa.migration_required"
+    }
+  ],
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ]
+}
