@@ -482,7 +482,7 @@ public sealed class GameCheckInTests
         }
     }
 
-    private sealed class ScopedDataHostContext : IPluginHostContextV1_8
+    private sealed class ScopedDataHostContext : IPluginHostContext
     {
         private readonly FakePluginHostContext _inner;
 
@@ -510,7 +510,7 @@ public sealed class GameCheckInTests
         public IPluginLocalization I18n => _inner.I18n;
         public IPluginAssetStore Assets => _inner.Assets;
         public IPluginEmulatorSupportRegistry EmulatorSupport => _inner.EmulatorSupport;
-        IPluginEmulatorSupportRegistry IPluginHostContextV1_7.EmulatorSupport => EmulatorSupport;
+        public IPluginExecutionProviderRegistry ExecutionProviders => _inner.ExecutionProviders;
     }
 
     private sealed class QueueHttpClientFactory : IPluginHttpClientFactory

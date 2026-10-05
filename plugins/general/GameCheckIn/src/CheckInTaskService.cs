@@ -19,7 +19,7 @@ internal sealed class CheckInTaskService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly string[] PlatformOrder = { "cn", "os", "skland", "skport", "kuro" };
 
-    private readonly IPluginHostContextV1_8 _context;
+    private readonly IPluginHostContext _context;
     private readonly Func<DateTimeOffset> _clock;
     private readonly HoyoLabClient _osClient;
     private readonly MiyousheClient _cnClient;
@@ -36,7 +36,7 @@ internal sealed class CheckInTaskService
     private bool _stopped;
 
     public CheckInTaskService(
-        IPluginHostContextV1_8 context,
+        IPluginHostContext context,
         Func<DateTimeOffset>? clock = null)
     {
         _context = context;

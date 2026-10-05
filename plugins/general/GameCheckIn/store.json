@@ -19,6 +19,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.4.0",
+      "date": "2026-10-04",
+      "items": [
+        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
+      ]
+    },
+    {
       "version": "0.3.5",
       "date": "2026-09-21",
       "items": [
@@ -30,13 +37,6 @@
       "date": "2026-09-18",
       "items": [
         "统一签到任务定时列表与调度队列的公共按钮状态和响应式布局。"
-      ]
-    },
-    {
-      "version": "0.3.3",
-      "date": "2026-09-18",
-      "items": [
-        "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
       ]
     }
   ],
@@ -56,6 +56,13 @@
       ],
       "changelog": [
         {
+          "version": "0.4.0",
+          "date": "2026-10-04",
+          "items": [
+            "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
+          ]
+        },
+        {
           "version": "0.3.5",
           "items": [
             "Aligned check-in task card spacing with user, script instance and queue cards."
@@ -65,12 +72,6 @@
           "version": "0.3.4",
           "items": [
             "Unified check-in schedule controls with the queue editor's public button state and responsive layout."
-          ]
-        },
-        {
-          "version": "0.3.3",
-          "items": [
-            "Fixed frontend styles that depended on the host drag control's internal selectors."
           ]
         }
       ]
