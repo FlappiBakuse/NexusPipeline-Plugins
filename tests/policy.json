@@ -275,8 +275,13 @@
       "host.runtime.test-build": 25000,
       "host.jint.test-build": 12000,
       "plugins.source-validation": 2000,
-      "maa.native": 20000
+      "maa.native": 20000,
+      "plugin.frontend:EmulatorSupport": 5000
     },
-    "unitMs": {}
+    "unitMs": {
+      "plugins.runtime:GameCheckIn": 25000,
+      "plugins.plugin.package:CustomWallpaper": 25000,
+      "plugins.plugin.package:MaaFrameworkDriver": 25000
+    }
   }
 }
