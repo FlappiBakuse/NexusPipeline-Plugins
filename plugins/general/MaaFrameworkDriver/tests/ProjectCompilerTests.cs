@@ -338,12 +338,15 @@ public sealed class ProjectCompilerTests
         Assert.Equal(new[] { "A" }, selected.SelectedTasks);
         Assert.Equal(2, compiler.Compile(selected).Tasks[0].Override["Entry"]!["timeout"]!.GetValue<int>());
         Assert.Single(compiler.Inspect()["setting"]!.AsArray());
+        foreach (int schema in new[] { 0, 1, 3 })
+            Assert.Contains("schema mismatch", Assert.Throws<InvalidDataException>(() =>
+                compiler.Compile(selected with { SchemaVersion = schema })).Message);
     }
 
     private sealed class Fixture : IDisposable
     {
         internal string Root { get; } = Path.Combine(Path.GetTempPath(), "nxp-pi-" + Guid.NewGuid().ToString("N"));
-        internal DriverProfile Profile => new() { ProfileId = "p", Revision = "r", PackageRoot = Root,
+        internal DriverProfile Profile => new() { SchemaVersion = 2, ProfileId = "p", Revision = "r", PackageRoot = Root,
             Controller = "PC", Resource = "R", NativeDirectory = "native", NativeVersion = "v5.14.0" };
         internal Fixture()
         {

@@ -71,10 +71,9 @@ public sealed class ProjectCompiler
         if (cancellationToken.CanBeCanceled) _token = cancellationToken;
         _token.ThrowIfCancellationRequested();
         BytesRead = 0; FilesHashed = 0; EntriesEnumerated = 0;
-        if (profile.SchemaVersion is not (1 or 2) || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
+        if (profile.SchemaVersion != 2 || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
             throw Error("profile", "root or schema mismatch");
         if (profile.WindowSelection is not ("exact_process" or "executable")
-            || profile.WindowSelection == "executable" && profile.SchemaVersion != 2
             || profile.WindowWaitMilliseconds is < 1 or > 30000)
             throw Error("profile.windowSelection", "unsupported selector or wait bound");
         var controller = Find("controller", profile.Controller);

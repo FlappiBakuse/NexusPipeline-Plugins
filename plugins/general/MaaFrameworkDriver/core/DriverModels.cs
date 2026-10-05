@@ -4,7 +4,7 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
 public sealed record DriverProfile
 {
-    public int SchemaVersion { get; init; } = 1;
+    public int SchemaVersion { get; init; }
     public string ProfileId { get; init; } = "";
     public string Revision { get; init; } = "";
     public string ParentRevision { get; init; } = "";
