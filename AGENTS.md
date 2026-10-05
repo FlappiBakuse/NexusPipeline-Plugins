@@ -48,12 +48,14 @@
 日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。累计预算、真实能力边界、原生输入和报告见 `docs/TESTING.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/RELEASING.md`：
 
 ```text
-python tools/repository.py validate-source
-python tools/repository.py check-syntax
-node tools/Test-ConfigEditors.mjs
-python -m unittest discover -s tools/tests -v
-python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <Host路径> --sdk-sha <SDK_SHA>
-python tools/repository.py candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output .generated/stable-candidate
+python tools/repo.py check source
+python tools/repo.py check syntax
+node tests/config-editors/run.mjs
+python -m unittest discover -s tests/tooling -v
+python tools/repo.py check source --base <完整PR基线SHA>
+python tools/repo.py check host --host-root <显式Host路径> --sdk-sha <完整HostSHA>
+node tests/run.mjs daily --changed --base <完整PR基线SHA> --host-root <显式Host路径>
+python tools/repo.py release candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output .generated/stable-candidate
 ```
 
 PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享输入保守扩大。合并后稳定候选使用当前受保护 main 的 catalog/state/packages 快照，按已发布游标覆盖累计未发行变更。没有发行变化返回 `NO_CHANGES`，不得制造新版本或空生成物提交。本地合成 run ID 只用于诊断，不能用于远端发布。
@@ -83,3 +85,5 @@ dry-run 不写远端。实际写入入口必须有可测试实现，不能以永
 清理前保留失败证据到外部明确目录，核对本次文件所有权、进程已退出和 Git 状态。永久保留现役 schema、源码、测试、发布工具、作者指南与稳定发行事实；临时产物按精确清单删除。
 
 最终报告分开列实现、实际验证和远端启用状态。用无父文档、无实施包的新 checkout 验证上手路径。未经实际执行不宣称产品构建、全量测试、远端资格或发布通过。
+
+正式支持与验收范围为 Windows 11 x64，现役 Plugin API 精确为 2.0，Frontend API 为 1.5，自有 .NET 工程使用 .NET 10。1.0.0 前仍持续清理无调用的旧 Nexus 协议、别名、工具入口和自动迁移，不保留兼容 wrapper；外部上游最新稳定及前两版适配独立维护。旧配置、外观、历史及未知恢复现场原字节保留；破坏性版本在新目录安装、人工重新配置，独立升级屏障须先于资产公开生效。

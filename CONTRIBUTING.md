@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configEditor`；已退役的 `configValidator` 会被拒绝；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContextV1_7` 注册驱动 provider。
+- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configEditor`；已退役的 `configValidator` 会被拒绝；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContext` 注册驱动 provider。
 
 ## 开发流程
 
@@ -20,7 +20,7 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写 `.generated/`，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
+7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -32,7 +32,7 @@
 - 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/author/FRONTEND_PLUGIN.md) 的当前清单为准。
 - 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
-详细字段约定见 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API v1.6 与 Frontend API 1.5，`game-checkin` 使用 Plugin API v1.8 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API v1.5，`EmulatorSupport` 使用 Plugin API v1.7。
+详细字段约定见 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API 2.0 与 Frontend API 1.5，`game-checkin` 使用 Plugin API 2.0 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API 2.0，`EmulatorSupport` 使用 Plugin API 2.0。
 
 ## 发行包规则
 
@@ -47,24 +47,27 @@
 
 ```text
 # PR 范围验证：从官方 Host main 固定完整 SHA 后传入
-python tools/repository.py verify --scope all --base origin/main --host-root ..\NexusPipeline --sdk-sha <Host_SHA>
+python tools/repo.py check source --base <完整PR基线SHA>
+python tools/repo.py check host --host-root <显式Host路径> --sdk-sha <完整HostSHA>
+node tests/run.mjs daily --changed --base <完整PR基线SHA> --host-root <显式Host路径>
 
 # 合并后本地候选诊断：合成 run ID 不能用于远端发布
-python tools/repository.py candidate --host-root ..\NexusPipeline --sdk-sha <Host_SHA> --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
+python tools/repo.py release candidate --host-root ..\NexusPipeline --sdk-sha <Host_SHA> --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output <新的外部stable-candidate目录>
 
 # 获明确远端执行授权后的候选；publish-only 另传原 candidate run ID
 gh workflow run publish-stable.yml --ref main -f operation=candidate -f source_ref=main
 
-# develop preview：只写新的本地 .generated/preview，不写 stable 文件
-python tools/repository.py publish-develop --source-ref develop --output .generated/preview
+# develop preview：只写新的外部 preview 候选，不写 stable 文件
+python tools/repo.py release plan --channel preview --host-root <显式Host路径> --sdk-sha <完整HostSHA> --output <新plan-phase.json>
+# 根据 plan 为每个 artifact 执行 package，再执行 release assemble；见 tools/README.md。
 
 # 完整 ZIP / SHA256 / catalog 审计（手动诊断）
-python tools/repository.py audit --full
+python tools/repo.py release audit --baseline <可信分发完整SHA>
 ```
 
 managed-code 插件还应在 `plugins/general/<ArtifactName>/src/` 执行 `dotnet build --no-restore`，确认发行包包含 manifest、入口 DLL 及所需依赖。带前端的插件还应确认 ZIP 中入口与 styles 所列文件均位于 `web/`，浏览器能加载 ES module/CSS，宿主的启用状态、API 兼容性和公开资源校验均正常。仓库工具提供源码校验、宿主 locale 对账、构建、测试、增量打包和发行包校验入口。
 
-MaaFrameworkDriver 的现役 managed 门禁覆盖 PI 编译、授权、导入与配置评估等可离线判定的驱动逻辑；TRX 保存到 `.generated/test-results/managed/run-*/`，保留每次失败报告。原生 Win32／ADB controller、标准 Agent、pretask 和真实设备须另行人工验收。该插件的 package builder 必须包含独立 worker/runtimeconfig、binding 5.10.0 和 LGPL/GPL 许可。
+MaaFrameworkDriver 的现役 managed 门禁覆盖 PI 编译、授权、导入与配置评估等可离线判定的驱动逻辑；TRX 保存到外部测试根的对应 run 目录，保留每次失败报告。原生 Win32／ADB controller、标准 Agent、pretask 和真实设备须另行人工验收。该插件的 package builder 必须包含独立 worker/runtimeconfig、binding 5.10.0 和 LGPL/GPL 许可。
 
 在 Windows PowerShell 5.1 中，可以使用 `python -m json.tool <file>` 逐个检查 JSON；本机必须已经安装 Python。插件工具负责仓库级源码、构建、测试和发行包校验；插件有效性仍需要使用 NexusPipeline 的插件发现、脚本探测和真实运行流程验证。
 
@@ -124,6 +127,6 @@ Pull Request 应包含：
 
 测试政策登记清单是当前核心能力的事实来源；新增插件同时登记实际组件实例、场景和生产包义务，清单不固定为十三。批次 CI、测试 Host source 锁与完整时长规则见 [核心测试](docs/TESTING.md)。
 
-仓库根目录的 `global.json` 固定 .NET 8 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 8。
+仓库根目录的 `global.json` 固定 .NET 10 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 10。
 
-专项编辑代码在 `tools/config-editor/` 维护，运行 `python tools/generate_config_editors.py` 后提交生成的八个 `data/editor.js`。不要手改 bundle；`--check` 与 source gate 校验一致性。修复不能进入 discover，诊断不能写配置。完整接口见 [配置编辑](docs/author/CONFIG_EDITOR.md)。
+专项编辑代码在 `adapters/config-editor/` 维护，运行 `python tools/repo.py generate editors` 后提交生成的八个 `data/editor.js`。不要手改 bundle；`--check` 与 source gate 校验一致性。修复不能进入 discover，诊断不能写配置。完整接口见 [配置编辑](docs/author/CONFIG_EDITOR.md)。

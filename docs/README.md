@@ -27,4 +27,4 @@
 
 [贡献指南](../CONTRIBUTING.md) 说明源码和开发流程；[核心测试](TESTING.md) 说明现役 runner、固定输入、预算及原生报告；[发行指南](RELEASING.md) 维护候选、preview/stable 和发布验证；[状态](STATUS.md) 只记录尚未完成或未验证事项。
 
-宿主公开接口见 [Host Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)。Plugin API 1.9、Frontend API 1.5、taskProtocol 0.2.0 和各插件版本独立管理。
+宿主公开接口见 [Host Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)。Plugin API 2.0、Frontend API 1.5、taskProtocol 0.2.0 和各插件版本独立管理。
