@@ -142,10 +142,6 @@ export async function runBatch(root,args) {
   try {
     const runtime=context.batch.units.filter(unit=>unit.kind==="plugin"&&(unit.pluginKind==="data-specialized"||unit.expectedMethodIds.length||unit.expectedScenarioIds.length));
     if(runtime.length) {
-      if(runtime.some(unit=>unit.preparations.includes("maa.native"))&&!env.NEXUS_MAA_NATIVE_ROOT) {
-        const native=path.join(artifactRoot,"cache/maa-native");
-        await run(python,["tests/bootstrap-native.py","--output",native],root);env.NEXUS_MAA_NATIVE_ROOT=native;
-      }
       const previous={artifact:process.env.NEXUS_TEST_ARTIFACT_ROOT,run:process.env.NEXUS_TEST_RUN_ID,native:process.env.NEXUS_MAA_NATIVE_ROOT};
       process.env.NEXUS_TEST_ARTIFACT_ROOT=artifactRoot;process.env.NEXUS_TEST_RUN_ID=`${runId}-runtime`;
       if(env.NEXUS_MAA_NATIVE_ROOT) process.env.NEXUS_MAA_NATIVE_ROOT=env.NEXUS_MAA_NATIVE_ROOT;

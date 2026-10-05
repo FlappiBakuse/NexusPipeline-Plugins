@@ -84,6 +84,10 @@ try {
   const frontendNames = managedNames.filter(name => (!batch || wants(name,"frontend") || wants(name,"capability"))
     && fs.existsSync(path.join(plugins.directory,policy.plugins[name].root,"frontend")));
   const componentNames = managedNames.filter(name => !batch || wants(name,"component") || capability(name));
+  const bootstrapNative = managedNames.includes("MaaFrameworkDriver") && capability("MaaFrameworkDriver")
+    && (batch ? "adapter" : input.options["--profile"] || policy.plugins.MaaFrameworkDriver.defaultProfile) === "adapter"
+    && !env.NEXUS_MAA_NATIVE_ROOT;
+  if (bootstrapNative) env.NEXUS_MAA_NATIVE_ROOT = path.join(runRoot,"maa-native");
   const preparation = await Promise.allSettled([
     (async () => {
       if (!managed) return;
@@ -120,10 +124,16 @@ try {
       }
     })(),
     (async () => {
-      // Component projects share their production SDK/TestKit graph; build them serially.
-      // Test Host uses its separate restore/output graph and can prepare concurrently.
-      for (const name of componentNames)
-        await step(`${name}: component build`,"dotnet",["build",policy.plugins[name].testProject,...dotnetOptions()]);
+      if (!componentNames.length) return;
+      const solution = path.join(runRoot,"components.slnx");
+      const escape = value => value.replaceAll("&","&amp;").replaceAll('"',"&quot;").replaceAll("<","&lt;");
+      fs.writeFileSync(solution,`<Solution>\n${componentNames.map(name=>`<Project Path="${escape(path.join(plugins.directory,policy.plugins[name].testProject))}" />`).join("\n")}\n</Solution>\n`,{flag:"wx"});
+      // Dependencies outside the solution must retain the selected Release configuration.
+      await step("shared component graph","dotnet",["build",solution,...dotnetOptions(),"-p:ShouldUnsetParentConfigurationAndPlatform=false"]);
+    })(),
+    (async () => {
+      if (bootstrapNative)
+        await step("Maa native inputs",python,["tests/bootstrap-native.py","--output",env.NEXUS_MAA_NATIVE_ROOT]);
     })(),
   ]);
   const preparationFailure = preparation.find(outcome => outcome.status === "rejected");
@@ -168,9 +178,6 @@ try {
           fs.writeFileSync(path.join(directory,"discovery.json"),JSON.stringify({expectedCaseIds:expected,expectedMethods:item.expectedMethods},null,2));
           await run("component rules", "dotnet", ["test", item.testProject, ...dotnetOptions(),"--no-build","--no-restore",
             "--logger", "trx;LogFileName=native.trx", "--results-directory", directory]);
-        })();
-        await componentWork;
-        if(!batch||wants(name,"component")||capability(name)) {
         await run("native counts", python, [path.join(host.directory, "tests/support/native-report.py"), "trx", raw, normalized]);
         const native = JSON.parse(fs.readFileSync(normalized, "utf8"));
         const methodOf = id => id.split("(")[0];
@@ -180,10 +187,10 @@ try {
         if(JSON.stringify([...result.expectedCaseIds].sort())!==JSON.stringify([...native.caseIds].sort())) throw Object.assign(new Error("Native instances differ from pre-run discovery"),{exitCode:4});
         result.completedCaseIds = native.caseIds; result.counts = { passed: native.passed, failed: native.failed, skipped: native.skipped };
         result.artifacts.push(raw, normalized); result.boundaries.real.push("current plugin component implementation");
-        }
-        if(batch&&!capability(name)) {
-          result.completedScenarioIds=[];
-        } else if (name === "MaaFrameworkDriver" && profile === "core") {
+        })();
+        const capabilityWork = (async()=>{
+        if(batch&&!capability(name)) return;
+        if (name === "MaaFrameworkDriver" && profile === "core") {
           result.expectedScenarioIds = ["P-X01.protocol-only"]; result.completedScenarioIds = [...result.expectedScenarioIds];
           result.boundaries.substituted.push("no native execution claimed");
         } else {
@@ -195,6 +202,10 @@ try {
           }
           await runCapability();
         }
+        })();
+        const work=await Promise.allSettled([componentWork,capabilityWork]);
+        const failed=work.find(outcome=>outcome.status==="rejected");
+        if(failed) throw failed.reason;
       } else {
         result.expectedCaseIds = item.fixtureIds;
         result.expectedEditorCaseIds = ["BetterGI", "ZenlessZoneZeroOneDragon", "MaaStellaSora"].includes(name)
