@@ -50,7 +50,7 @@ try {
   const payload = path.join(runtime.runtimeDir, "plugins/GameCheckIn"); fs.mkdirSync(payload, { recursive: true });
   for (const name of ["plugin.json", "i18n", "web"]) fs.cpSync(path.join(source, name), path.join(payload, name), { recursive: true });
   const dll = "NexusPipeline.Plugin.GameCheckIn.dll";
-  fs.copyFileSync(path.join(source, "src/bin/Release/net8.0", dll), path.join(payload, dll));
+  fs.copyFileSync(path.join(source, "src/bin/Release/net10.0", dll), path.join(payload, dll));
   const settingsPath = path.join(runtime.runtimeDir, "config/settings.json");
   const settings = JSON.parse(fs.readFileSync(settingsPath));
   Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, AutoOpenBrowser: false,

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "commands": {
+    "check source": [],
+    "check syntax": [],
+    "check docs": [],
+    "check host": [
+      "--host-root",
+      "--sdk-sha"
+    ],
+    "package": [
+      "--artifact",
+      "--output",
+      "--report"
+    ],
+    "generate tasks": [],
+    "generate editors": [],
+    "generate schema": [],
+    "scaffold task-plugin": [
+      "--artifact",
+      "--name",
+      "--output"
+    ],
+    "release scope": [
+      "--channel"
+    ],
+    "release plan": [
+      "--channel",
+      "--host-root",
+      "--output",
+      "--sdk-sha"
+    ],
+    "release assemble": [
+      "--channel",
+      "--host-root",
+      "--output",
+      "--package-phases",
+      "--plan-phase",
+      "--run-attempt",
+      "--run-id",
+      "--sdk-sha",
+      "--workflow-sha"
+    ],
+    "release candidate": [
+      "--host-root",
+      "--output",
+      "--run-attempt",
+      "--run-id",
+      "--sdk-sha",
+      "--workflow-sha"
+    ],
+    "release audit": [],
+    "release source": [
+      "--candidate-run-id",
+      "--channel",
+      "--current-run-id",
+      "--github-output"
+    ],
+    "release extract": [
+      "--artifact-zip",
+      "--channel",
+      "--expected-digest",
+      "--output"
+    ],
+    "release inspect": [
+      "--channel",
+      "--generated-root",
+      "--run-attempt",
+      "--run-id",
+      "--workflow-sha"
+    ],
+    "release validate": [
+      "--channel",
+      "--generated-root",
+      "--run-attempt",
+      "--run-id",
+      "--source-sha",
+      "--workflow-sha"
+    ],
+    "release publish": [
+      "--channel",
+      "--generated-root",
+      "--run-attempt",
+      "--run-id",
+      "--source-sha",
+      "--workflow-sha"
+    ]
+  }
+}

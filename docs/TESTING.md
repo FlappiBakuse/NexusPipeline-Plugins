@@ -1,6 +1,6 @@
 # 核心测试
 
-项目维护的工作流、任务与步骤使用中文职责名称，保留 Host、Plugins、工具与插件的专有名称。`tests/ci-names.json` 登记控制检查、必需汇总、完整预算和未选中批次的名称；`tests/ci-names.mjs` 从逻辑门禁注册表生成批次标题。标题列出前三项职责和总数，运行摘要列出完整门禁清单；内部 batch ID、artifact 名称与 run/attempt 身份保持稳定。
+项目维护的工作流、任务与步骤使用中文职责名称，保留 Host、Plugins、工具与插件的专有名称。`tests/ci/names.json` 登记控制检查、必需汇总、完整预算和未选中批次的名称；`tests/ci/names.mjs` 从逻辑门禁注册表生成批次标题。标题列出前三项职责和总数，运行摘要列出完整门禁清单；内部 batch ID、artifact 名称与 run/attempt 身份保持稳定。
 
 必需汇总通过同一命名入口核验实际任务集合；完整预算复核批次编号、任务总数、完整耗时及可信登记。显示名称改变时，可信 main 控制器触发名称、任务匹配与分支保护绑定须同步；不一致时失败。GitHub 自动生成的启动、收尾步骤由平台提供。
 
@@ -13,7 +13,7 @@ node tests/run.mjs daily --changed --base <完整基线SHA> --host-root <Host>
 node tests/run.mjs daily --all-core --host-root <Host>
 node tests/run.mjs plan --base <完整基线SHA> --include-working-tree --output <外部scope.json>
 node tests/run.mjs batch --plan <外部scope.json> --batch <control或batch-01至batch-05> --host-root <固定Host检出>
-node tools/check-doc-links.mjs
+python tools/repo.py check docs
 node tests/run.mjs gate --id plugins.plugin.package:GameCheckIn --host-root <固定Host检出>
 node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 ```
@@ -43,9 +43,9 @@ python tests/bootstrap-native.py --output <新的外部目录> [--archive <已�
 
 随后设置进程环境 `NEXUS_MAA_NATIVE_ROOT` 指向该目录。版本、URL、大小和 SHA256 在 `tests/inputs.lock.json`；测试不自动下载或忽略未知版本。受控 WinForms 窗口必须实际可见，以供 Win32 controller 绑定；场景结束必须退出。
 
-CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全清单与架构合同在 control 执行一次，数据、managed 与 native 按准备图分层，生产包与 Test Host key 分离。每物理 job 三分钟硬停止，必需汇总 汇总独立核验本次报告和 Actions API 完整前序 job 时长。完成后以 `python tests/audit-jobs.py --run-id <ID> --attempt <N>` 只读检查包括 必需汇总 在内的最终时长；可信 main 的 begin 控制器先登记同 PR/head/run/attempt 身份，finalize 在 CI 完成后审计所有物理 job，写入 `Plugins / 完整预算` 检查；该检查须与 `Plugins / 必需汇总` 一同绑定到 main 规则。回写检查不存在或失败时不得合并。测试专用 Host SHA 只写入 `tests/inputs.lock.json`，不改变兼容元数据 `host.lock.json`。当前锁要求填写真实合入且包含工具的 Host 提交；缺失时明确失败，不追随浮动 main。本地开发树可带已确认改动，但报告标明源码指纹，不充当正式资格。
+CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全清单与架构合同在 control 执行一次，数据、managed 与 native 按准备图分层，生产包与 Test Host key 分离。每物理 job 三分钟硬停止，必需汇总 汇总独立核验本次报告和 Actions API 完整前序 job 时长。完成后以 `python tests/ci/audit_jobs.py --run-id <ID> --attempt <N>` 只读检查包括 必需汇总 在内的最终时长；可信 main 的 begin 控制器先登记同 PR/head/run/attempt 身份，finalize 在 CI 完成后审计所有物理 job，写入 `Plugins / 完整预算` 检查；该检查须与 `Plugins / 必需汇总` 一同绑定到 main 规则。回写检查不存在或失败时不得合并。测试专用 Host SHA 只写入 `tests/inputs.lock.json`，不改变兼容元数据 `host.lock.json`。当前锁要求填写真实合入且包含工具的 Host 提交；缺失时明确失败，不追随浮动 main。本地开发树可带已确认改动，但报告标明源码指纹，不充当正式资格。
 
-`python tools/repository.py verify`、全部历史 TaskProtocol fixture 和前端模拟 Host 工具保留为显式诊断；其边界不替代上述实际能力证据。生产打包、来源、hash 和 publisher 校验继续由现役发行工具维护。
+`python tools/repo.py check source`、全部历史 TaskProtocol fixture 和前端模拟 Host 工具保留为显式诊断；其边界不替代上述实际能力证据。生产打包、来源、hash 和 publisher 校验继续由现役发行工具维护。
 
 正式完整资格为每物理 job 150 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + 必需汇总 + begin + finalize 最多十个 job。必需汇总 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
 
@@ -62,7 +62,7 @@ gh workflow run final-budget.yml --repo FlappiBakuse/NexusPipeline-Plugins --ref
 
 不要只重跑失败 job 来替代完整资格。CI 完成后自动触发 finalize；检查成功后仍须读取生产者与两个控制器的完整服务端作业记录，包括 post-action。
 
-配置编辑生成一致性使用 `python tools/generate_config_editors.py --check`；准备行为使用 `node tools/Test-ConfigEditors.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。
+配置编辑生成一致性使用 `python tools/repo.py generate editors --check`；准备行为使用 `node tests/config-editors/run.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。
 
 ## 双仓候选配对
 
@@ -71,7 +71,7 @@ gh workflow run final-budget.yml --repo FlappiBakuse/NexusPipeline-Plugins --ref
 从已审核的控制器 checkout 运行只读命令，参数依次为 Host 和 Plugins 的实际 PR 编号：
 
 ```text
-python tests/ci_inputs.py --create-pair <Host_PR编号> <Plugins_PR编号>
+python tests/ci/inputs.py --create-pair <Host_PR编号> <Plugins_PR编号>
 ```
 
 命令查询已经存在的 base/head、PR merge commit/tree、策略和输入锁摘要、main 控制器身份，输出待登记的源对象。将完整输出置于双方描述的 `nexus-ci-pair` 代码块中；不要手填未来 SHA 或 run ID。生成输出不代表已获资格，控制器会重新核验实际服务端状态。生成与验证共用 Python 的递归键排序、紧凑 UTF-8 JSON 和 SHA256，源摘要排除自身字段，运行绑定另含真实 run/attempt。

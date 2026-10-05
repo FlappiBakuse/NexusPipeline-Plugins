@@ -43,10 +43,15 @@ try {
     const response = await runtime.api("POST", `api/plugin-api/${manifest.name}/${route}`, body);
     const value = await response.json(); assert.equal(response.status, status, JSON.stringify(value)); return value;
   };
-  let profile = { profileId: "owned", packageRoot: project, interfacePath: "interface.json", controller: "Owned", resource: "R",
+  let profile = { schemaVersion: 2, profileId: "owned", packageRoot: project, interfacePath: "interface.json", controller: "Owned", resource: "R",
     nativeDirectory: "native", nativeVersion: locked.version, selectedTasks: ["Finite"], windowHandle: window.handle,
     windowProcessId: window.pid, windowExecutable: window.executable, windowStartedAtUtc: window.startedAtUtc,
     windowSelection: "exact_process", windowWaitMilliseconds: 1000 };
+  for (const schemaVersion of [undefined, 1, 3]) {
+    const rejected = await invoke("preview", { scriptId: "", profileId: profile.profileId,
+      profile: { ...profile, schemaVersion } }, 400);
+    assert.match(rejected.error, /unsupported_profile_schema/);
+  }
   for (let index = 0; index < 6; index++) {
     const preview = await invoke("preview", { scriptId: "", profileId: profile.profileId,
       profile: { ...profile, language: index % 2 ? "en_us" : "zh_cn" } });

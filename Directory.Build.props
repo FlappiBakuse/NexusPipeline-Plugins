@@ -1,5 +1,13 @@
 <Project>
   <PropertyGroup>
-    <NexusHostRoot Condition="'$(NexusHostRoot)' == ''">$(MSBuildThisFileDirectory)..\NexusPipeline</NexusHostRoot>
+    <RuntimeFrameworkVersion>10.0.12</RuntimeFrameworkVersion>
+    <RollForward>LatestPatch</RollForward>
   </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Update="Microsoft.NETCore.App;Microsoft.WindowsDesktop.App;Microsoft.AspNetCore.App" RuntimeFrameworkVersion="10.0.12" />
+  </ItemGroup>
+  <Target Name="RequireNexusHostRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(NexusHostRoot)' == '' or !Exists('$(NexusHostRoot)/src/NexusPipeline.Plugin.Abstractions/NexusPipeline.Plugin.Abstractions.csproj')"
+           Text="Set an explicit Host checkout with --host-root or -p:NexusHostRoot=absolute-path." />
+  </Target>
 </Project>

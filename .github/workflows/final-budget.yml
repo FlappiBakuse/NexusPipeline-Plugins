@@ -51,4 +51,4 @@ jobs:
           RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
           ATTEMPT: ${{ github.event.workflow_run.run_attempt || inputs.attempt }}
           PHASE: ${{ github.event.action == 'requested' && 'begin' || inputs.phase || 'finalize' }}
-        run: python tests/final-budget.py --phase "$PHASE" --run-id "$RUN_ID" --attempt "$ATTEMPT" --required-name 'Plugins / 必需汇总' --check-name 'Plugins / 完整预算'
+        run: python tests/ci/final_budget.py --phase "$PHASE" --run-id "$RUN_ID" --attempt "$ATTEMPT" --required-name 'Plugins / 必需汇总' --check-name 'Plugins / 完整预算'

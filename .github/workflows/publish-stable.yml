@@ -27,14 +27,6 @@ on:
         description: 运行包含多个成功候选时使用的产物 ID
         required: false
         type: string
-      reuse_candidate_run_id:
-        description: 有限基线刷新复用的先前已核验候选运行
-        required: false
-        type: string
-      reuse_candidate_artifact_id:
-        description: 可复用运行包含多个候选时使用的产物 ID
-        required: false
-        type: string
 
 permissions:
   contents: read
@@ -117,7 +109,7 @@ jobs:
         id: plan
         shell: pwsh
         run: >-
-          python ../Plugins-Control/tools/repository.py candidate-plan --root .
+          python ../Plugins-Control/tools/repo.py release plan --channel stable --root .
           --host-root ../NexusPipeline --sdk-sha '${{ steps.host.outputs.sha }}'
           --output .generated/plan-phase.json --github-output $env:GITHUB_OUTPUT
       - name: 上传固定发行计划
@@ -176,7 +168,7 @@ jobs:
         if: contains(fromJSON(needs.source-plan.outputs.managed), matrix.artifact)
         uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
-          dotnet-version: "8.0.424"
+          global-json-file: global.json
       - name: 下载固定发行计划
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
@@ -185,7 +177,7 @@ jobs:
       - name: 构建并验证单插件包
         shell: pwsh
         run: >-
-          python ../Plugins-Control/tests/package-one.py --root . --host-root ../NexusPipeline
+          python ../Plugins-Control/tools/repo.py package --root . --host-root ../NexusPipeline
           --artifact '${{ matrix.artifact }}'
           --sdk-sha '${{ needs.source-plan.outputs.partner_sha }}'
           --plan-phase .generated/plan-phase/plan-phase.json
@@ -252,7 +244,7 @@ jobs:
         id: build
         shell: pwsh
         run: >-
-          python ../Plugins-Control/tools/repository.py candidate-assemble --root .
+          python ../Plugins-Control/tools/repo.py release assemble --channel stable --root .
           --host-root ../NexusPipeline
           --plan-phase .generated/plan-phase/plan-phase.json
           --package-phases .generated/package-phases
@@ -310,7 +302,7 @@ jobs:
         id: verify
         shell: pwsh
         run: |
-          python ../Plugins-Control/tools/repository.py validate-candidate --root . --generated-root .generated/stable-candidate --source-sha '${{ needs.source-plan.outputs.source_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
+          python ../Plugins-Control/tools/repo.py release validate --channel stable --root . --generated-root .generated/stable-candidate --source-sha '${{ needs.source-plan.outputs.source_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
           if ($LASTEXITCODE -ne 0) { throw 'Stable candidate validation failed' }
           "status=VALIDATED" >> $env:GITHUB_OUTPUT
       - name: 上传原始候选
@@ -359,7 +351,7 @@ jobs:
           if (-not $env:CANDIDATE_RUN_ID) { throw 'publish-only requires candidate_run_id' }
           $arguments = @('--candidate-run-id', $env:CANDIDATE_RUN_ID, '--current-run-id', $env:GITHUB_RUN_ID, '--github-output', $env:GITHUB_OUTPUT)
           if ($env:CANDIDATE_ARTIFACT_ID) { $arguments += @('--artifact-id', $env:CANDIDATE_ARTIFACT_ID) }
-          python tools/repository_candidate_source.py @arguments
+          python tools/repo.py release source --channel stable @arguments
           if ($LASTEXITCODE -ne 0) { throw 'Original candidate source was not verifiable' }
       - name: 下载候选并核验服务端摘要
         shell: pwsh
@@ -372,13 +364,13 @@ jobs:
           $uri = "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$env:ARTIFACT_ID/zip"
           curl.exe -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $env:GITHUB_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' --output '.generated/stable-candidate-artifact.zip' $uri
           if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact download failed' }
-          python tools/repository.py extract-candidate --artifact-zip '.generated/stable-candidate-artifact.zip' --expected-digest $env:ARTIFACT_DIGEST --output '.generated/stable-candidate'
+          python tools/repo.py release extract --channel stable --artifact-zip '.generated/stable-candidate-artifact.zip' --expected-digest $env:ARTIFACT_DIGEST --output '.generated/stable-candidate'
           if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact failed server digest or path validation' }
       - name: 核验原始候选来源
         id: candidate
         shell: pwsh
         run: >-
-          python tools/repository.py inspect-candidate
+          python tools/repo.py release inspect --channel stable
           --generated-root .generated/stable-candidate
           --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
           --run-id '${{ steps.source.outputs.run_id }}'
@@ -394,7 +386,7 @@ jobs:
       - name: 核验源码、构建、分发与包字节
         shell: pwsh
         run: >-
-          python tools/repository.py validate-candidate
+          python tools/repo.py release validate --channel stable
           --root ../NexusPipeline-Plugins-Source
           --generated-root .generated/stable-candidate
           --source-sha '${{ steps.candidate.outputs.source_sha }}'
@@ -415,7 +407,7 @@ jobs:
         env:
           PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
         run: >-
-          python tools/repository.py publish-candidate
+          python tools/repo.py release publish --channel stable
           --root ../NexusPipeline-Plugins-Source
           --generated-root .generated/stable-candidate
           --source-sha '${{ steps.candidate.outputs.source_sha }}'

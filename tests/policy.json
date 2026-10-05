@@ -15,7 +15,6 @@
       "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
       "expectedMethods": [
         "NexusPipeline.Plugin.CustomWallpaper.Tests.CustomWallpaperConformanceTests.Lifecycle_RegistersWebApiAndStopIsIdempotent",
-        "NexusPipeline.Plugin.CustomWallpaper.Tests.CustomWallpaperConformanceTests.Lifecycle_RequiresThePluginAssetPort",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_StoresContentAddressedAssetAndProjectsState",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_RejectsContentThatDoesNotMatchDeclaredType",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Upload_DeduplicatesIdenticalContent",
@@ -23,7 +22,7 @@
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Delete_RemovesAssetFromConfigAndStorage",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.SavePalette_ValidatesTokensAndBumpsRevision",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch",
-        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.LegacyImport_MovesPayloadIntoSettingsAndRemovesMigrationScope"
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.InitializationPreservesUnsupportedAppearanceScope"
       ],
       "fixtureIds": [],
       "realScenario": "P-G02"

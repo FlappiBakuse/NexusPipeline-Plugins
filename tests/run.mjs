@@ -1,11 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import { parseArguments, validateInventory } from "./selection.mjs";
-import { runScopeCommand } from "./scope-cli.mjs";
-import { runPluginGate } from "./gate-runner.mjs";
+import { parseArguments, validateInventory } from "./runner/selection.mjs";
+import { runScopeCommand } from "./runner/scope-cli.mjs";
+import { runPluginGate } from "./runner/gate-runner.mjs";
 
-import {runPluginCore} from "./plugin-core.mjs";
-import {runBatch} from "./batch-runner.mjs";
+import {runPluginCore} from "./runner/plugin-core.mjs";
+import {runBatch} from "./runner/batch-runner.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 if (process.argv[2] === "plan") {
