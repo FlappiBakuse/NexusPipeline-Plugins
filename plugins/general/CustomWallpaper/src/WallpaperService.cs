@@ -23,7 +23,6 @@ internal sealed class WallpaperService
 
     internal const string RotationScope = "rotation";
 
-    internal const string LegacyImportScope = "legacy-appearance-import";
 
     private static readonly HashSet<string> AllowedMimeTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -68,7 +67,6 @@ internal sealed class WallpaperService
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
             await SaveConfigAsync(config, cancellationToken).ConfigureAwait(false);
-            await ImportLegacyAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -383,116 +381,6 @@ internal sealed class WallpaperService
             return runtime.LastRandomId;
         }
         return ResolveSelectedId(config);
-    }
-
-    private async Task ImportLegacyAsync(CancellationToken cancellationToken)
-    {
-        JsonObject? payload = await _scopedData.ReadJsonAsync(LegacyImportScope, cancellationToken).ConfigureAwait(false);
-        if (payload is null)
-        {
-            return;
-        }
-        try
-        {
-            WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
-            var imported = new List<WallpaperAssetRecord>();
-            var remappedOrder = new List<string>();
-            if (payload["assets"] is JsonArray assets)
-            {
-                foreach (JsonNode? node in assets)
-                {
-                    if (node is not JsonObject asset)
-                    {
-                        continue;
-                    }
-                    string id = asset["id"]?.ToString()?.Trim().ToLowerInvariant() ?? "";
-                    if (!IsSafeAssetId(id) || config.Assets.Any(item => string.Equals(item.Id, id, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        continue;
-                    }
-                    string extension = asset["extension"]?.ToString()?.Trim().ToLowerInvariant() ?? "";
-                    PluginAssetContent? content = await _assets.OpenAsync(AssetScope, id, cancellationToken).ConfigureAwait(false);
-                    if (content is null)
-                    {
-                        _logger.Warn($"旧外观数据缺少资产文件，已跳过：{id}");
-                        continue;
-                    }
-                    PluginAssetInfo info = content.Info;
-                    content.Dispose();
-                    var record = new WallpaperAssetRecord
-                    {
-                        Id = id,
-                        OriginalName = SanitizeFileName(asset["originalName"]?.ToString(), id + (extension.Length > 0 ? "." + extension : "")),
-                        MimeType = asset["mimeType"]?.ToString()?.Trim().ToLowerInvariant() ?? "image/jpeg",
-                        SizeBytes = info.SizeBytes,
-                        CreatedAt = info.CreatedAt,
-                        PaletteVersion = 0,
-                        Palette = new Dictionary<string, string>(StringComparer.Ordinal),
-                    };
-                    if (asset["paletteVersion"] is not null && ReadInt(asset["paletteVersion"], "paletteVersion") >= PaletteVersion
-                        && asset["palette"] is JsonObject palette)
-                    {
-                        try
-                        {
-                            record.Palette = ParsePalette(palette);
-                            record.PaletteVersion = PaletteVersion;
-                        }
-                        catch (WallpaperException)
-                        {
-                            record.Palette = new Dictionary<string, string>(StringComparer.Ordinal);
-                            record.PaletteVersion = 0;
-                        }
-                    }
-                    if (!AllowedMimeTypes.Contains(record.MimeType))
-                    {
-                        record.MimeType = "image/jpeg";
-                    }
-                    imported.Add(record);
-                    remappedOrder.Add(id);
-                }
-            }
-            if (payload["settings"] is JsonObject settings)
-            {
-                string selected = settings["selectedId"]?.ToString()?.Trim().ToLowerInvariant() ?? "";
-                if (remappedOrder.Contains(selected, StringComparer.OrdinalIgnoreCase))
-                {
-                    config.SelectedId = selected;
-                }
-                if (settings["rotation"] is JsonObject rotation)
-                {
-                    ApplyRotation(config, rotation);
-                }
-                if (settings["effects"] is JsonObject effects)
-                {
-                    ApplyEffects(config, effects);
-                }
-                if (settings["providerEnabled"] is not null)
-                {
-                    config.Enabled = ReadBool(settings["providerEnabled"], "providerEnabled");
-                }
-            }
-            if (imported.Count > 0)
-            {
-                config.Assets.AddRange(imported);
-                config.Order = remappedOrder
-                    .Concat(config.Order)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-                if (string.IsNullOrWhiteSpace(config.SelectedId))
-                {
-                    config.SelectedId = remappedOrder[0];
-                }
-                config.Revision = Math.Max(1, config.Revision + 1);
-                config.UpdatedAt = _utcNow();
-                await SaveConfigAsync(config, cancellationToken).ConfigureAwait(false);
-            }
-            await _scopedData.DeleteAsync(LegacyImportScope, cancellationToken).ConfigureAwait(false);
-            _logger.Info($"已导入宿主搬迁的自定义壁纸数据：{imported.Count} 张。");
-        }
-        catch (Exception ex)
-        {
-            _logger.Error($"导入旧自定义壁纸数据失败，保留迁移载荷供下次启动重试：{ex.Message}");
-        }
     }
 
     private async Task<WallpaperConfig> LoadConfigAsync(CancellationToken cancellationToken)

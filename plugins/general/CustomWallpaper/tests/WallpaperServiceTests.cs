@@ -157,55 +157,17 @@ public sealed class WallpaperServiceTests
     }
 
     [Fact]
-    public async Task LegacyImport_MovesPayloadIntoSettingsAndRemovesMigrationScope()
+    public async Task InitializationPreservesUnsupportedAppearanceScope()
     {
         var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService first = CreateService(context, () => DateTimeOffset.UtcNow);
-        string assetId = await UploadIdAsync(first, PngBytes(31));
-        await context.Config.WriteAsync(new WallpaperConfig { Assets = new List<WallpaperAssetRecord>(), Order = new List<string>() });
-        await context.Assets.DeleteAsync(WallpaperService.AssetScope, assetId);
-        PluginAssetInfo stored = await context.Assets.WriteAsync(
-            WallpaperService.AssetScope,
-            "png",
-            new MemoryStream(PngBytes(31)));
-        await context.ScopedData.WriteJsonAsync(WallpaperService.LegacyImportScope, new JsonObject
-        {
-            ["schemaVersion"] = 1,
-            ["settings"] = new JsonObject
-            {
-                ["selectedId"] = stored.Id,
-                ["providerEnabled"] = true,
-                ["rotation"] = new JsonObject { ["mode"] = "timer", ["intervalMinutes"] = 15 },
-                ["effects"] = new JsonObject { ["blurPx"] = 6, ["dimPercent"] = 30 },
-            },
-            ["assets"] = new JsonArray(new JsonObject
-            {
-                ["id"] = stored.Id,
-                ["extension"] = "png",
-                ["originalName"] = "旧壁纸.png",
-                ["mimeType"] = "image/png",
-                ["palette"] = new JsonObject { ["--accent"] = "#abcdef" },
-                ["paletteVersion"] = 3,
-            }),
-        });
-
+        const string scope = "legacy-appearance-import";
+        var payload = new JsonObject { ["schemaVersion"] = 1, ["settings"] = new JsonObject { ["providerEnabled"] = true } };
+        await context.ScopedData.WriteJsonAsync(scope, payload);
+        string before = (await context.ScopedData.ReadJsonAsync(scope))!.ToJsonString();
         WallpaperService service = CreateService(context, () => DateTimeOffset.UtcNow);
         await service.InitializeAsync();
-        JsonObject state = await service.GetStateAsync();
-
-        Assert.Single(state["assets"]!.AsArray());
-        JsonObject asset = state["assets"]!.AsArray()[0]!.AsObject();
-        Assert.Equal(stored.Id, asset["id"]!.GetValue<string>());
-        Assert.Equal("旧壁纸.png", asset["originalName"]!.GetValue<string>());
-        Assert.Equal("#abcdef", asset["palette"]!["--accent"]!.GetValue<string>());
-        Assert.True(state["enabled"]!.GetValue<bool>());
-        Assert.Equal("timer", state["rotation"]!["mode"]!.GetValue<string>());
-        Assert.Equal(15, state["rotation"]!["intervalMinutes"]!.GetValue<int>());
-        Assert.Equal(6, state["effects"]!["blurPx"]!.GetValue<int>());
-        Assert.False(context.ScopedData.Contains(WallpaperService.LegacyImportScope));
-
         await service.InitializeAsync();
-        JsonObject repeated = await service.GetStateAsync();
-        Assert.Single(repeated["assets"]!.AsArray());
+        Assert.Equal(before, (await context.ScopedData.ReadJsonAsync(scope))!.ToJsonString());
+        Assert.Empty((await service.GetStateAsync())["assets"]!.AsArray());
     }
 }
