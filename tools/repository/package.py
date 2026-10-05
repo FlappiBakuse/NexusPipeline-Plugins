@@ -5,6 +5,7 @@ import re
 import shutil
 import tempfile
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from dataclasses import replace
 
@@ -185,7 +186,14 @@ def build_plugin_package(
             _copy_tree(plugin.root / "data", payload / "data")
         else:
             build_output = temporary_root / "build"
-            _build_managed(plugin, build_output, root, host_root)
+            if plugin.manifest.get("frontend") is not None:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    managed = executor.submit(_build_managed, plugin, build_output, root, host_root)
+                    frontend = executor.submit(_build_frontend, plugin, root)
+                    managed.result()
+                    frontend.result()
+            else:
+                _build_managed(plugin, build_output, root, host_root)
             _copy_managed_payload(build_output, payload)
             if plugin.artifact_name == "MaaFrameworkDriver":
                 worker_output = build_output / "worker"
@@ -195,7 +203,6 @@ def build_plugin_package(
                 validate_maa_worker_payload(payload)
         if plugin.manifest.get("frontend") is not None:
             repository_io._require(plugin.kind == "managed-code", f"专项插件 {plugin.artifact_name} 禁止构建 frontend")
-            _build_frontend(plugin, root)
             _copy_tree(plugin.root / "web", payload / "web")
         if plugin.manifest.get("localization") is not None:
             _copy_tree(plugin.root / "i18n", payload / "i18n")
