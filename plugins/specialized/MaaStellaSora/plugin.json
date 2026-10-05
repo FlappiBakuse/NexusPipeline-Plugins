@@ -5,9 +5,9 @@
   "displayName": "星塔助手",
   "gameName": "星塔旅人",
   "description": "MaaStellaSora 专项：MFAAvalonia 稳定实例绑定、日常任务观察与失败重试；旧 MXU 配置备份清空后重新设置。",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.14",
+  "minHostVersion": "0.16.15",
   "capabilities": [
     "emulator",
     "no-fresh-config"

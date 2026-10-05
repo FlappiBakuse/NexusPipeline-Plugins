@@ -1,13 +1,13 @@
 # 专项任务协议
 
-`data-specialized` 插件可以通过 `taskProtocol` 显式启用任务计划、日志事实与选择性重试。最低宿主版本为 `0.16.8`；旧式 judge 仍使用原有接口。声明错误、缺失脚本或未知协议版本会被拒绝，不能回退到旧 judge。
+`data-specialized` 插件可以通过 `taskProtocol` 显式启用任务计划、日志事实与选择性重试。最低宿主版本为 `0.16.15`；旧式 judge 仍使用原有接口。声明错误、缺失脚本或未知协议版本会被拒绝，不能回退到旧 judge。
 
 ```json
 {
-  "minHostVersion": "0.16.8",
+  "minHostVersion": "0.16.15",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "0.1.0",
+    "version": "0.2.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
@@ -22,7 +22,7 @@
 
 ## 日常协议 0.2.0
 
-`0.2.0` 要求 `minHostVersion >= 0.16.14`，三阶段线版本保持 `0.2.0`，manifest 包含 `repairRules` 数组。旧 `0.1.0/0.1.1` 保持原解释，不能只改 manifest 版本就假定适配器满足新语义。
+`0.2.0` 要求 `minHostVersion >= 0.16.15`，三阶段线版本保持 `0.2.0`，manifest 包含 `repairRules` 数组。旧 `0.1.0/0.1.1` 声明和旧报告明确拒绝，原文件保留。
 
 任务必填：`completionPolicy: flow|authoritative`、`workflowRole: daily|technical|manual_only`、`observationContract: {ruleSetId,sources,rules:[{id,kind}]}`、`retryPolicy: {mode: selective_config|native_resume,resourceConsumption,limitRefs}`。启用日常任务必须声明可支持的观察范围；manual_only 不能启用或计数。规则最多64个、来源最多8个，规则及来源唯一。
 
@@ -30,17 +30,15 @@
 
 重试输出保留已有 included/prerequisite/expanded/filePatches，并增加 `targetTaskIds` 和 `launchScopeTaskIds`。stop 的动作数组必须全空。native_resume 的目标是未完成任务、启动范围是全部原启用任务，补丁及扩展数组为空；Host 复核行为未变化，不通过写时间戳或重置次数实现续跑。selective 继续使用最小选择字段补丁，保留预算、额度、进度和账号隔离；资源消耗不是新日常协议的拒绝原因。partial 子树禁止重试。
 
-模板命令 `python tools/create_task_plugin.py --help` 支持 `--protocol-version 0.2.0`。可执行例子为 `examples/DailyProtocolExample`；Host 联调工具的 `--daily-protocol <新的外部目录>` 实际验证 Jint 三阶段、失败重试、选择恢复、计数及其他账号字节、报告2保存/重读。该测试不代表上游发行已实测。
+模板命令 `python tools/repo.py scaffold task-plugin --help` 只生成当前协议。可执行例子为 `examples/task-protocol/json-id-array`；Host 联调工具的 `--daily-protocol <新的外部目录>` 实际验证 Jint 三阶段、失败重试、选择恢复、计数及其他账号字节、报告2保存/重读。该测试不代表上游发行已实测。
 
 ## 文本与包版本兼容
 
-`0.1.0` manifest 必须声明 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/i18n/zh-CN.json", "en-US": "data/i18n/en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。旧开发版的 `1.0`、`1.1`、`1.2` 声明均不再加载。
-
-`0.1.1` 是 Host v0.16.9 增加的**包声明**扩展：必须声明 `repairRules` 数组，并把 `minHostVersion` 设为至少 `0.16.9`。三阶段输入和输出的 `protocolVersion` 仍为 `0.1.0`。旧 Host 会拒绝整个 `0.1.1` 包，不能忽略未知修复字段后继续运行。空数组表示没有自动修复能力。
+`0.2.0` manifest 必须声明 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/i18n/zh-CN.json", "en-US": "data/i18n/en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。旧开发版的 `1.0`、`1.1`、`1.2` 声明均不再加载。
 
 0.2.0 的修复权限由 `repairRules` 声明，策略由 `configEditor` 生成提案，Host 负责验证与事务。详见 [配置编辑契约](CONFIG_EDITOR.md)。discover 仅做只读配置诊断。
 
-所有阶段使用协商的 `input.protocolVersion`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
+所有阶段精确使用 `input.protocolVersion = "0.2.0"`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
 
 ```json
 {"kind":"plugin","key":"task.daily.name","args":{},"fallback":"每日任务"}
@@ -56,11 +54,11 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 `readResources` 最多 128 项，每项为 `{id, source, path, format, required}`。`source` 为 `root` 或 `extraConfig`；前者相对实例根目录，后者路径以附加配置索引开头，例如 `0/settings.json`。格式为 `json`、`yaml` 或 `text`；JSONC 接口可声明为 text 后由适配器解析。路径禁止绝对路径、回退段和重解析点；只读资源永远不可作为补丁目标。
 
-包声明 `0.1.1` 中，`source: root`、`format: json` 的只读资源可声明 `operationalFields`，例如 `{ "running": "boolean", "last_start": "timestamp" }`。最多两项；发行身份、渠道、版本和更新字段不可声明为运行期可变。受限运行仅允许这些字段按类型改变，未声明字段保持原值。OK 的 `running` 是持久线索，Host 另检查安装目录中的嵌入式 worker；活动或不可读会阻断，确认无 worker 且标记遗留才允许基础受限流程。
+当前包声明中，`source: root`、`format: json` 的只读资源可声明 `operationalFields`，例如 `{ "running": "boolean", "last_start": "timestamp" }`。最多两项；发行身份、渠道、版本和更新字段不可声明为运行期可变。受限运行仅允许这些字段按类型改变，未声明字段保持原值。OK 的 `running` 是持久线索，Host 另检查安装目录中的嵌入式 worker；活动或不可读会阻断，确认无 worker 且标记遗留才允许基础受限流程。
 
 ## discover 配置诊断
 
-`0.1.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`。Host v0.16.9 拒绝声明已退役 `configValidator` 的旧包，并提示升级或卸载，用户配置不变。
+`0.2.0` 的 `discover`、`observe`、`retry` 阶段均包含文本引用能力，`discover` 还必须返回只读 `configAssessment`。任务词典放在 `data/i18n/{locale}.json`；manifest 必须声明 `configRules` 与 `environmentChecks`。Host v0.16.9 拒绝声明已退役 `configValidator` 的旧包，并提示升级或卸载，用户配置不变。
 
 `configRules` 是插件规则 ID 清单，形如 `{ "id": "example.configuration", "required": true, "criticality": "advisory_or_contextual" }`；`criticality` 只能是 `critical_when_applicable` 或 `advisory_or_contextual`。每次 discover 必须为每条 required 规则返回一次 `satisfied`、`violated`、`unknown` 或 `not_applicable`，不能缺失后默认为通过。
 
@@ -134,26 +132,26 @@ Host 冻结启动时的完整词典，预览及历史只保存实际引用的翻
 
 每次输出最多 1 MiB；预览预算 2 秒，运行阶段 30 秒，最多 200 万条语句。用户配置单文件 2 MiB，公共只读 text 资源单文件 8 MiB，总计 32 MiB/256 个资源；选择事务最多 32 个文件和 2048 个字段。日志缓冲受限，超限显式 hasGap；每条证据最多保存 1024 字符片段，完整日志仍走历史归档。
 
-生产脚本由 `tools/task-protocol/phase-modules.json` 声明模块、提供的符号、依赖及三阶段入口，结合只记录元数据路径的 `adapters.json` 确定性生成；各适配器的规则索引和文本键放在自身目录的 `*.metadata.json`。纯函数位于 `core/`，各适配器函数位于独立目录；不保留另一份完整 bundle 源文件。依赖先于调用者输出，缺依赖、循环、重复符号和未知阶段均失败。重试复用发现与当前配置校验，观察不携带发现和重试执行器；MXU 观察仍包含其确实需要的只读资源解析。上游固定版本和文件摘要保存在 `source-lock.json`；fixture 使用合成数据，规则来自对应源码，不读取真实用户数据。
+生产脚本由 `adapters/task-protocol/phase-modules.json` 声明模块、提供的符号、依赖及三阶段入口，结合只记录元数据路径的 `adapters.json` 确定性生成；各适配器的规则索引和文本键放在自身目录的 `*.metadata.json`。纯函数位于 `core/`，各适配器函数位于独立目录；不保留另一份完整 bundle 源文件。依赖先于调用者输出，缺依赖、循环、重复符号和未知阶段均失败。重试复用发现与当前配置校验，观察不携带发现和重试执行器；MXU 观察仍包含其确实需要的只读资源解析。上游固定版本和文件摘要保存在 `source-lock.json`；fixture 使用合成数据，规则来自对应源码，不读取真实用户数据。
 
 修改模块时同步依赖清单。三个入口都在业务处理前严格检查 `input.phase`，错误阶段不能降级为“配置不支持”。`--check` 只比较，不改输出字节或时间戳。Python 构建测试验证依赖闭包，Host 联调验证真实 Jint 三阶段行为和权限；脚本哈希不同本身不代表阶段拆分通过。
 
 ```text
-python tools/generate_task_protocol.py
-python tools/generate_task_protocol.py --check
+python tools/repo.py generate tasks
+python tools/repo.py generate tasks --check
 dotnet run --project <Host>/tools/NexusPipeline.TaskProtocolTests -- --plugin-root <Plugins>
-python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <Host> --sdk-sha <SDK_SHA>
+python tools/repo.py check source --base <完整PR基线SHA>
 ```
 
 `verify --scope all` 执行生成一致性、真实 Host Jint/归并器/配置 journal 的八适配器测试，以及适用的 managed 和前端契约检查。Node 语法检查不是 Host Jint 测试的替代品；零夹具或缺少任何适配器均失败。运行时使用干净且固定 SHA 的 Host checkout。
 
 ## 作者模板
 
-[JSON Schema](../../contracts/task-protocol.schema.json) 描述三个阶段的输出，跨字段约束由宿主继续校验。使用 `python tools/create_task_plugin.py --artifact MyAdapter --name my-adapter --output <新目录>` 创建待适配模板。默认模板含 `__NXP_ADAPTATION_REQUIRED__` 标记，源码、ZIP 和宿主加载均拒绝该标记。完成上游源码审查和证据/风险规则后才能移除。
+[JSON Schema](../../contracts/task-protocol.schema.json) 描述三个阶段的输出，跨字段约束由宿主继续校验。使用 `python tools/repo.py scaffold task-plugin --artifact MyAdapter --name my-adapter --output <新目录>` 创建待适配模板。默认模板含 `__NXP_ADAPTATION_REQUIRED__` 标记，源码、ZIP 和宿主加载均拒绝该标记。完成上游源码审查和证据/风险规则后才能移除。
 
-`--example` 生成完整的合成协议示例。[TaskProtocolExample](../../examples/TaskProtocolExample/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
+`--example` 生成完整的合成协议示例。[TaskProtocolExample](../../examples/task-protocol/json-id-array/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-默认生成完整的 `0.1.0` 首发协议、`data/i18n/` 中英文词典、`configRules` 和 `environmentChecks` 骨架。`--protocol-version` 接受 `0.1.0`、`0.1.1` 或 `0.2.0`；0.1.1 生成空的 `repairRules` 并要求 Host 0.16.9；0.2.0 同样生成空数组并要求 Host 0.16.14；实际修复规则须逐项审查后声明。旧开发协议和 `TaskProtocolLegacy` 示例已废弃。用户自定义名称使用 literal，不按名称猜测词典键。
+默认生成当前 `0.2.0` 日常协议、`data/i18n/` 中英文词典、`configRules`、`environmentChecks` 和空的 `repairRules`，最低 Host 为 `0.16.15`。实际规则须完成上游源码审查。用户自定义名称使用 literal，不按名称猜测词典键。
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 
@@ -161,7 +159,7 @@ python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root <
 
 ## 固定运行资源的完整性
 
-`0.1.0` 的 `readResources` 可添加可选 `sha256`，值为 64 位小写十六进制，且资源必须为 `source: root`、`format: text`。宿主按捕获的原始字节比较，包含 BOM 和换行；`readResource` 增加 `integrity: verified|mismatch`。不匹配时 document 为 null，缺失/不可读仍按资源不可用处理。未声明哈希的资源返回形状不变；配置 revision 仍为不透明令牌，不返回内容摘要。既有路径白名单、单文件及总量预算不变。
+`0.2.0` 的 `readResources` 可添加可选 `sha256`，值为 64 位小写十六进制，且资源必须为 `source: root`、`format: text`。宿主按捕获的原始字节比较，包含 BOM 和换行；`readResource` 增加 `integrity: verified|mismatch`。不匹配时 document 为 null，缺失/不可读仍按资源不可用处理。未声明哈希的资源返回形状不变；配置 revision 仍为不透明令牌，不返回内容摘要。既有路径白名单、单文件及总量预算不变。
 
 此声明用于已审查的发行文件。发现时由插件 critical 规则决定阻断；运行阶段 Host 在接受观察前及结束时复核已固定资源，变化或不可读会停止接受后续证据及自动重试，记录运行链异常，保留此前任务事实。它不是对全部 Python 依赖、解释器、加载代码或瞬时替换的完整证明，也不会阻止上游启动器修复/更新；新发行字节必须重新审查。
 

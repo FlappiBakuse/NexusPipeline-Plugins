@@ -16,7 +16,7 @@ Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`�
 
 ## 夹具维护
 
-[fixtures](../../tools/task-protocol/fixtures) 按插件划分正例、重复名称、缺失身份、日志来源、未配对终态、嵌套与选择重试。`example-*` 覆盖五种配置结构。Host 工具读取真实 manifest 和生成脚本，通过实际 Jint、归并器、选择补丁与恢复；缺少任一官方适配器或零用例会失败。新增可确认规则时，同时增加相反分支；0.2.0 已支持任务遇到缺失边界、格式失配或缺口必须 failed；未支持的启用任务阻止准入。旧协议仍保持原语义。
+[fixtures](../../tests/fixtures/task-protocol) 按插件划分正例、重复名称、缺失身份、日志来源、未配对终态、嵌套与选择重试。`example-*` 覆盖五种配置结构。Host 工具读取真实 manifest 和生成脚本，通过实际 Jint、归并器、选择补丁与恢复；缺少任一官方适配器或零用例会失败。新增可确认规则时，同时增加相反分支；0.2.0 已支持任务遇到缺失边界、格式失配或缺口必须 failed；未支持的启用任务阻止准入。旧 Nexus 协议拒绝加载；其负例仅验证拒绝和原文件保留。
 
 ## 三阶段脚本按职责生成
 
@@ -36,4 +36,4 @@ Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`�
 
 [ZZZ 应用组和体力子范围](../projects/ZenlessZoneZeroOneDragon.md)。
 
-配置编辑脚本由 `generate_config_editors.py` 生成，账号准备和修复不进入三阶段观察 bundle；见 [配置编辑契约](CONFIG_EDITOR.md)。
+配置编辑脚本由 `tools/generate/config_editors.py` 生成，账号准备和修复不进入三阶段观察 bundle；见 [配置编辑契约](CONFIG_EDITOR.md)。

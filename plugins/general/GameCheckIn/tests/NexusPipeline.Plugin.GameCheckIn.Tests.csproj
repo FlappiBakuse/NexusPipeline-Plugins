@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>true</IsTestProject>
@@ -15,6 +15,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\NexusPipeline.Plugin.GameCheckIn.csproj" />
-    <ProjectReference Include="..\..\..\..\tools\PluginTestKit\NexusPipeline.Plugin.TestKit.csproj" />
+    <ProjectReference Include="..\..\..\..\tests\support\dotnet\PluginTestKit\NexusPipeline.Plugin.TestKit.csproj" />
   </ItemGroup>
 </Project>

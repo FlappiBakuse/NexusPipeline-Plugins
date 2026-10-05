@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "taskProtocol 0.2.0 repairRules",
-  "description": "Structural schema; Host and repository validation additionally enforce rule references, safe resource paths and kind-specific selectors. Protocol 0.1.1 retains its narrower validator.",
+  "description": "Structural schema; Host and repository validation additionally enforce rule references, safe resource paths and kind-specific selectors.",
   "type": "array",
   "maxItems": 8,
   "items": {

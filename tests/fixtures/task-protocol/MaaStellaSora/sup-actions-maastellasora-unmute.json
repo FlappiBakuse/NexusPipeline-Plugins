@@ -1,0 +1,39 @@
+{
+  "artifact": "MaaStellaSora",
+  "resources": [
+    {
+      "id": "config:mxu-MaaStellaSora.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\"}, \"instances\": [{\"id\": \"other\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"unmute\"}}}]}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"power\", \"taskName\": \"__MXU_POWER__\", \"enabled\": true, \"optionValues\": {\"__MXU_POWER_OPTION__\": {\"caseName\": \"unmute\"}}}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaStellaSora\", \"task\": []}"
+    }
+  ],
+  "source": {
+    "type": "synthetic",
+    "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
+  },
+  "coverage": "unsupported",
+  "tasks": {},
+  "batches": [],
+  "results": {},
+  "diagnostics": [
+    {
+      "code": "mfa.migration_required"
+    }
+  ],
+  "configChecks": [
+    {
+      "ruleId": "mfa.instance",
+      "evaluation": "unknown",
+      "executionEffect": "block"
+    }
+  ],
+  "contractDecisions": [
+    "D15",
+    "D19"
+  ]
+}

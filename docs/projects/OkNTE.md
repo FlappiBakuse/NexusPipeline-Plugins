@@ -1,6 +1,6 @@
 # OkNTE 项目适配
 
-公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../tools/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 当前 0.2.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
 
@@ -10,15 +10,15 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.1.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.2.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v1.4.8](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.8) | `0b1867f35cd30cb9b063ce40152295490c6274a3` |
 | [v1.4.7](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7) | `29fce6bad94625d6cdf7183773324cda3c553b7b` |
 | [v1.4.6](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.6) | `7f4c05f4b035e58c6ade25375fdd7881640afcfe` |
-| [v1.4.5](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.5) | `123267d44bb73cec1fe772cab5affca755c1c3ab` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -35,7 +35,7 @@
 | furniture | 异象家具 | 关 | DailyRoutineTask 当前项开始/完成/失败配对；语言不支持可跳过 |
 | gift | 羁遇赠礼 | 关 | DailyRoutineTask 当前项开始/完成/失败配对；语言不支持可跳过 |
 
-异常中止时当前任务失败、已确认未执行的后续项 blocked。完整且唯一的显式 enabled 列表支持选择补丁；缺省补项等不能安全单独选择时耦合日常范围。独立框架任务类或一次性脚本不是 Routine Items，不把不认识的类自动纳入/删除。安装结构兼容、官方渠道和 worker/updater 状态共同准入，旧版本号和旧源码 hash 不作为拒绝新发行的理由。[生产模块](../../tools/task-protocol/oknte)。
+异常中止时当前任务失败、已确认未执行的后续项 blocked。完整且唯一的显式 enabled 列表支持选择补丁；缺省补项等不能安全单独选择时耦合日常范围。独立框架任务类或一次性脚本不是 Routine Items，不把不认识的类自动纳入/删除。安装结构兼容、官方渠道和 worker/updater 状态共同准入，旧版本号和旧源码 hash 不作为拒绝新发行的理由。[生产模块](../../adapters/task-protocol/oknte)。
 
 ## 启动与日志配置门禁
 

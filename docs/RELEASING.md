@@ -59,7 +59,7 @@ web/main.js                         # 仅 managed-code 且声明 frontend 时
 web/style.css                       # 仅 managed-code 且声明 frontend 时
 ```
 
-`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明文件，不得包含 `frontend/`、`web/`、浏览器载荷或 .NET 程序集。managed-code 插件还包含入口 DLL、Plugin API 依赖 DLL 和所需 JSON 运行时文件；带前端的 managed 插件才额外包含 manifest 声明的 `web/` 资源。包不包含 `src/`、测试文件、`obj/`、调试符号或用户数据。
+`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明文件，不得包含 `frontend/`、`web/`、浏览器载荷或 .NET 程序集。managed-code 插件包含入口 DLL、第三方依赖和所需 JSON 文件，根目录不附带宿主提供的 SDK DLL；独立 worker 包含当前 SDK 运行依赖；带前端的 managed 插件才额外包含 manifest 声明的 `web/` 资源。包不包含 `src/`、测试文件、`obj/`、调试符号或用户数据。
 
 ## 发布前准备
 
@@ -68,38 +68,41 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 以及可选 configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.1.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，禁止已退役的 configValidator；公开 configEditor 字段不变，官方资产使用 `data/editor.js`；
+- data-specialized 插件的 resolve、judgeScript 以及可选 configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.2.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，禁止已退役的 configValidator；公开 configEditor 字段不变，官方资产使用 `data/editor.js`；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 
 ## 增量发行流程
 
-发行工具入口为 `python tools/repository.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
+发行工具入口为 `python tools/repo.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
 
 PR 用固定 Host checkout 运行选中的源码和 managed 检查；当前代码合入 `main` 后，稳定候选从该提交取源码，并从同一受保护快照取 catalog/state/packages。工作流不扫描历史资格证明，也不为工具或文档改动自动提升插件版本。
 
 ```text
 $env:HOST_ROOT="<absolute NexusPipeline checkout>"
 $env:SDK_SHA="<fixed official Host SHA>"
-python tools/repository.py verify --scope all --base <PR_BASE_SHA> --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA
-python tools/repository.py candidate --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output .generated/stable-candidate
+python tools/repo.py check source --base <完整PR基线SHA>
+python tools/repo.py check host --host-root <显式Host路径> --sdk-sha <完整HostSHA>
+node tests/run.mjs daily --changed --base <完整PR基线SHA> --host-root <显式Host路径>
+python tools/repo.py release candidate --host-root $env:HOST_ROOT --sdk-sha $env:SDK_SHA --workflow-sha <当前完整SHA> --run-id 1 --run-attempt 1 --output <新的外部stable-candidate目录>
 
 # develop preview，只生成并校验本地候选，不写 stable
-python tools/repository.py publish-develop --source-ref develop --output .generated/preview --producer-output .generated/preview-producer.json --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
-python tools/repository.py publish-preview --generated-root .generated/preview --producer .generated/preview-producer.json --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
+python tools/repo.py release plan --channel preview --host-root <显式Host路径> --sdk-sha <完整HostSHA> --output <新plan-phase.json>
+# 根据 plan 为每个 artifact 执行 package，再执行 release assemble；见 tools/README.md。
+python tools/repo.py release publish --channel preview --generated-root <外部preview目录> --producer <外部producer.json> --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
 ```
 
-上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。手动入口明确选择 `operation=candidate` 或 `operation=publish-only`：candidate 可从受保护 main 历史固定 source，且不持有发布令牌；publish-only 必须给出原 candidate run ID，只消费下载并复核过的 artifact，不运行源码、单测或构建。恢复命令为 `gh workflow run publish-stable.yml --ref main -f operation=publish-only -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main 的候选验收成功且有发行变化时自动进入独立 writer。
+上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate-verify` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。手动入口明确选择 `operation=candidate` 或 `operation=publish-only`：candidate 可从受保护 main 历史固定 source，且不持有发布令牌；publish-only 必须给出原 candidate run ID，只消费下载并复核过的 artifact，不运行源码、单测或构建。恢复命令为 `gh workflow run publish-stable.yml --ref main -f operation=publish-only -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main 的候选验收成功且有发行变化时自动进入独立 writer。
 
 预览候选由 `publish-develop.yml` 的审核过的 main 控制工具打包显式 `develop` payload。`operation=candidate,publish=false` 是不创建 Publisher token 的只读候选路径；远端缺少 develop 时最早步骤明确报告 `SOURCE_UNAVAILABLE`。发布使用同一 candidate 操作并显式 `publish=true`。原 preview-build 成功但 promote 失败时，从 `main` 选择 `operation=restore`、`publish=true` 并传 `candidate_run_id=<原 run ID>`；同 run 多候选时指定 `candidate_artifact_id`。恢复仅下载原包，不重新构建。preview 的 producer sidecar 位于候选目录外，同包清单、原 run/attempt、源码 tree 与在线 develop 最新 SHA 均需一致；旧 catalog 来源不得回退。发布器先上传并复核包，最后切换 catalog。
 
 `release-plan.json` 是同一次发行中唯一的受影响插件清单。计划列出 `changed`、`deleted`、`requiresPackage`、`managed`、变更原因和精确清理路径；release 不会重新推断另一套插件集合。
 
-分发基线变化后应显式运行新的 candidate；可传入既有服务端 candidate 作为 `reuse_candidate_run_id`。新候选始终以最新 catalog/state/packages 重算计划，只对 package input identity（插件源码、Host lock/API 输入、构建器、SDK 与平台）完全一致且清单/ZIP 摘要复核通过的包复制原字节，其余目标各构建一次。writer 不执行源码或重新编译。
+分发基线变化后应显式运行新的 candidate。新候选以最新 catalog/state/packages 重算计划，按固定 package input identity（插件源码、Host lock/API 输入、构建器、SDK 与平台）构建受影响的包。writer 不执行源码或重新编译。
 
-`validate-source` 用于在 PR 或新插件候选的 catalog 尚未生成时校验当前源码、JSON、分类目录和宿主锁。`validate` 还会校验当前 catalog 集合与已存在发行包，因此只有 catalog/packages 已包含当前源码版本时才能通过；新插件或新版本进入候选时，源码阶段应先运行 `validate-source`，生成候选物后运行 `validate-generated`，正式发布流水线更新 catalog/packages 后再运行 `validate`。
+`check source` 校验当前源码、JSON、分类目录和 Host 契约，不要求新版本已经出现在 stable catalog。`release validate --channel stable|preview` 校验生成候选及来源身份；正式发布完成后，`release audit --baseline <可信分发SHA>` 核对 catalog、state、包摘要和稳定字节不可变性。当前命令和必需参数见 [工具索引](../tools/README.md)。
 
-`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`validate-host-locales` 仍可作为独立诊断。
+`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`check host` 仍可作为独立诊断。
 
 普通发行的处理边界如下：
 
@@ -110,9 +113,7 @@ python tools/repository.py publish-preview --generated-root .generated/preview -
 5. retention 只扫描受影响 artifact 目录；
 6. 同一 `(artifactName, version)` 的 ZIP 内容不同会立即失败。
 
-源码从旧的平铺目录迁移到分类目录时，规划器会比较迁移前后的插件身份、版本和 Git tree。内容完全相同的纯 relocation 不要求受限版本递增，不生成 ZIP，不计算 SHA，也不修改 catalog entry，只推进发行状态；迁移同时包含 payload 变化时按正常版本发行规则处理，必须提升插件版本。
-
-新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `audit --full` 负责。
+新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `release audit --baseline <可信分发SHA>` 负责。
 
 工具、文档、工作流和兼容元数据变化会触发适用检查；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 写入候选清单。`catalog.json`、`packages/` 与 `.release-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
 
@@ -207,13 +208,13 @@ python tools/repository.py publish-preview --generated-root .generated/preview -
 ## 校验层级
 
 ```text
-python tools/repository.py validate-source
+python tools/repo.py check source
 ```
 
 校验源码、manifest、store、data-specialized 引用、catalog 集合和包路径元数据。它不会为未变更插件重新计算 ZIP SHA256。
 
 ```text
-python tools/repository.py audit --full
+python tools/repo.py release audit
 ```
 
 Full Audit 只由手动入口触发，不参与每次 PR/main 快速检查。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
@@ -222,6 +223,6 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 
 ## 校验工作流
 
-`scope` 根据完整变更与固定测试 Host 输入规划逻辑义务；可选 control 和最多五个 Windows batch 按同输入准备图运行原生能力与独立生产 ZIP 验证。每个物理 job 三分钟硬停止；必需汇总 与可信 main 的 完整预算 两项检查均须成功，完整预算及启用状态见 [核心测试](TESTING.md) 和 [STATUS](STATUS.md)。纯文档变更明确为 N/A；未知共享输入保守选择全部。`Plugins / 必需汇总` 汇总核对本次 run/attempt、源码与 Host 锁、原生用例及场景、清理、插件预算和 Actions 完整 job 时长，失败、取消、意外跳过或 API 不可达均失败。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，执行实际生产打包与包验收；功能测试在合并前的适用日常核心门禁执行，候选阶段不重复运行。`tools/verification.py` 负责 PR 范围，`tools/repository_candidate.py` 负责稳定和预览候选清单，`tools/repository_publish.py` 负责受保护 writer；`tools/sdk_source.py` 在每个 job 固定官方 Host 输入。手动 `audit --full` 只作完整包诊断，不自动改变 stable 状态。
+`scope` 根据完整变更与固定测试 Host 输入规划逻辑义务；可选 control 和最多五个 Windows batch 按同输入准备图运行原生能力与独立生产 ZIP 验证。每个物理 job 三分钟硬停止；必需汇总 与可信 main 的 完整预算 两项检查均须成功，完整预算及启用状态见 [核心测试](TESTING.md) 和 [STATUS](STATUS.md)。纯文档变更明确为 N/A；未知共享输入保守选择全部。`Plugins / 必需汇总` 汇总核对本次 run/attempt、源码与 Host 锁、原生用例及场景、清理、插件预算和 Actions 完整 job 时长，失败、取消、意外跳过或 API 不可达均失败。候选 job 在合并后的受保护 `main` 上重新读取完整稳定游标，执行实际生产打包与包验收；功能测试在合并前的适用日常核心门禁执行，候选阶段不重复运行。`tests/runner/` 负责 PR 范围，`tools/release/candidate.py` 负责稳定和预览候选清单，`tools/release/stable.py` 与 `preview.py` 负责受保护 writer；`tools/sdk/source.py` 在每个 job 固定官方 Host 输入。手动 `release audit --baseline <可信分发SHA>` 只作完整包诊断，不自动改变 stable 状态。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](author/TASK_PROTOCOL.md)。

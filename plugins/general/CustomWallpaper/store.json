@@ -15,6 +15,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.3.0",
+      "date": "2026-10-04",
+      "items": [
+        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
+        "旧外观数据保持原位，新实例使用当前插件资源重新配置。"
+      ]
+    },
+    {
       "version": "0.2.8",
       "date": "2026-09-18",
       "items": [
@@ -26,13 +34,6 @@
       "date": "2026-09-17",
       "items": [
         "将排序交互迁移到宿主公开 nxp-* 控件，保持自定义壁纸列表的拖拽排序与触控操作。"
-      ]
-    },
-    {
-      "version": "0.2.6",
-      "date": "2026-09-16",
-      "items": [
-        "壁纸列表改为一张完整卡片并用分隔线区分条目，拖拽把手统一使用宿主公开样式 token，触控命中区保持 40px。"
       ]
     }
   ],
@@ -48,6 +49,14 @@
       ],
       "changelog": [
         {
+          "version": "0.3.0",
+          "date": "2026-10-04",
+          "items": [
+            "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15.",
+            "Leaves old appearance data untouched; configure current plugin resources in the new instance."
+          ]
+        },
+        {
           "version": "0.2.8",
           "items": [
             "Fixed frontend styles that depended on the host drag control's internal selectors."
@@ -57,12 +66,6 @@
           "version": "0.2.7",
           "items": [
             "Migrated sorting interactions to the host's public nxp-* controls while preserving drag sorting and touch operation for the custom wallpaper list."
-          ]
-        },
-        {
-          "version": "0.2.6",
-          "items": [
-            "Wallpaper entries now share one card with dividers, and the drag handle follows the host's public style tokens with a 40px touch target."
           ]
         }
       ]

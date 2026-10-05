@@ -1,6 +1,6 @@
 # BetterGI 项目适配
 
-公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0 / daily-flow-v1，最低 Host 0.16.14。
+公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0 / daily-flow-v1，最低 Host 0.16.15。
 
 发现按 TaskDefinitions、TaskOrder、TaskEnabledList 和 NextTaskId 冻结可执行顺序。任务使用 GUID 或旧配置键作身份；同名任务不合并。NextTaskId 只限定本轮计划，选择重试仍按冻结任务和 CAS 补丁复核。
 
@@ -10,11 +10,11 @@
 
 上游审查基线包括 0.66.0 的 OneDragonFlowViewModel、TaskRunner、ScriptService 和 GoToAdventurersGuildTask。
 
-生产源位于 tools/task-protocol/bettergi，生成 data/discover.js、judge.js、retry.js；不直接编辑生成产物。现役有限轨迹入口见[测试命令](../TESTING.md)。
+生产源位于 adapters/task-protocol/bettergi，生成 data/discover.js、judge.js、retry.js；不直接编辑生成产物。现役有限轨迹入口见[测试命令](../TESTING.md)。
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.3.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -22,7 +22,7 @@
 | [0.65.0](https://github.com/babalae/better-genshin-impact/releases/tag/0.65.0) | `f29b0828ab4f8f91d9087152dcb487719e80fa16` |
 | [0.64.0](https://github.com/babalae/better-genshin-impact/releases/tag/0.64.0) | `f0cd4fe90d22e9b1fcb3f6b4b61fe6131773410e` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -40,7 +40,7 @@
 | 领取尘歌壶奖励 | 尘歌壶领取流程；无内容可领取的正常闭环可完成 | 范围 ERR 未恢复即失败；选择重试，成功项保持关闭 |
 | 用户配置组 / 自定义名称 | 按冻结 GUID/旧键和配置组序号识别；同名不合并；只判外层闭环 | 范围 ERR 未恢复即失败；选择重试，成功项保持关闭 |
 
-内置任务从 OneDragonFlowViewModel 冻结顺序定位，ScriptService 的配置组使用独立序号。任务名称变化、重复日志、跨批消息和嵌套 finally 均不能越过范围归属。现代 TaskDefinitions/TaskOrder 与旧 TaskEnabledList 均可读取；未知 NextTaskId 不猜造成功。发现、日志信封与选择规则见 [生产模块](../../tools/task-protocol/bettergi)。
+内置任务从 OneDragonFlowViewModel 冻结顺序定位，ScriptService 的配置组使用独立序号。任务名称变化、重复日志、跨批消息和嵌套 finally 均不能越过范围归属。现代 TaskDefinitions/TaskOrder 与旧 TaskEnabledList 均可读取；未知 NextTaskId 不猜造成功。发现、日志信封与选择规则见 [生产模块](../../adapters/task-protocol/bettergi)。
 
 ## 配置修复
 

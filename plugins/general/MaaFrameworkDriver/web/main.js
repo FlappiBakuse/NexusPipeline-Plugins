@@ -77,7 +77,7 @@ export function activate(host) {
           profile.windowSelection = v; profile.schemaVersion = 2;
         }, { options: [
           { value: 'executable', label: text('每次按完整路径和项目窗口规则重新发现', 'Rediscover by full path and project window filters each run') },
-          { value: 'exact_process', label: text('只使用已选进程生命期（旧配置）', 'Use the selected process lifetime only (legacy)') },
+          { value: 'exact_process', label: text('只使用已选进程生命期', 'Use the selected process lifetime only') },
         ] });
         field(text('窗口等待上限（毫秒）', 'Window wait limit (milliseconds)'), 'nxp-text-input', String(profile.windowWaitMilliseconds || 10000), v => {
           const value = Number(v); if (!Number.isInteger(value) || value < 1 || value > 30000) throw new Error(text('等待上限须为 1–30000 毫秒', 'Wait limit must be 1–30000 milliseconds'));

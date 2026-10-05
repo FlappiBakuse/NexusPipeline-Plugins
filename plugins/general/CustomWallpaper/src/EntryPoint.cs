@@ -14,13 +14,9 @@ public sealed class EntryPoint : INexusPlugin
     public async ValueTask InitializeAsync(IPluginHostContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
-        if (context is not IPluginHostContextV1_6 host)
-        {
-            throw new NotSupportedException("自定义壁纸需要宿主提供 Plugin API v1.6 的插件资产存储能力。");
-        }
-        _service = new WallpaperService(host.Config, host.ScopedData, host.Assets, host.Logger);
+        _service = new WallpaperService(context.Config, context.ScopedData, context.Assets, context.Logger);
         _webApi = new WallpaperWebApi(_service);
-        _webApi.Register(host.WebApi);
+        _webApi.Register(context.WebApi);
         await _service.InitializeAsync(cancellationToken).ConfigureAwait(false);
     }
 

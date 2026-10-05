@@ -2,7 +2,7 @@
 
 NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
 
-宿主项目负责插件运行时、安装更新和 Plugin API（当前 API v1.9）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/author/FRONTEND_PLUGIN.md)。
+宿主项目负责插件运行时、安装更新和 Plugin API（当前 API 2.0）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.5、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/author/FRONTEND_PLUGIN.md)。
 
 ## 上游最新稳定发行发现
 
@@ -32,12 +32,12 @@ NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插�
 | `okww` | `OkWutheringWaves` | 鸣潮（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
 | `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config`, `self-managed-pc-launch` |
 | `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
-| `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API v1.7 provider |
+| `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API 2.0 provider |
 | `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
 | `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
 | `maa-framework` | `MaaFrameworkDriver` | MaaFramework 项目直驱 | `managed-code` | `frontend-module` |
 
-`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API v1.7 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
+`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API 2.0 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
 
 宿主使用 stable `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包；develop preview 使用固定 `plugins-develop` Release asset 与同通道缓存，绝不回退到 stable。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的 stable 源码树与包事实，`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`；每个验证或候选 job 固定一次官方 Host `sdkSourceSha`。
 
@@ -80,15 +80,15 @@ NexusPipeline-Plugins/
 │   └── <ArtifactName>-<version>.zip
 ├── .release-state.json                  # 最近一次成功发行状态
 ├── host.lock.json                       # Host/Frontend API 与 locale 兼容元数据
+├── adapters/                            # 当前任务和编辑器作者源码、注册表及上游锁
+├── examples/task-protocol/              # 五种当前协议合成示例
+├── tests/                               # runner、ci、tooling、frontend、config-editors、fixtures
 ├── tools/
-│   ├── repository.py                    # 范围校验、候选与发布入口
-│   ├── repository_core.py               # 可测试的仓库规则实现
-│   ├── repository_candidate.py          # 稳定/预览候选清单与来源校验
-│   ├── sdk_source.py                    # 官方 Host SDK SHA 与 checkout 校验
-│   ├── repository_publish.py            # 本地候选生成与稳定 writer 边界
-│   ├── Test-ConfigEditors.mjs           # 后端编辑准备脚本行为验证
-│   ├── Test-FrontendPlugins.mjs         # Frontend API 入口与元素门禁
-│   └── tests/                           # 仓库工具单元测试
+│   ├── repo.py                          # 唯一 Python 仓库入口
+│   ├── repository/                      # 源码、版本、归档、包和 catalog 规则
+│   ├── release/                         # 候选、来源、稳定与预览 writer
+│   ├── sdk/                             # 显式官方 Host SDK 输入
+│   └── generate/                        # 任务、编辑器、schema 和脚手架
 └── docs/
     ├── README.md、map.json              # 分类导航与机器路由
     ├── TESTING.md、RELEASING.md         # 验证与发行
@@ -118,10 +118,10 @@ NexusPipeline-Plugins/
 - 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
 - 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
 - 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` v0.3.1 使用独立签到任务、任务级平台凭据和本机时区计划；通知由宿主全局渠道发送，任务可覆盖 SMTP 收件人，新的 v2 任务存储不导入 0.3.0 任务数据。`emulator-support` 使用 Plugin API v1.7 注册厂商模拟器 provider；`custom-wallpaper` 使用 Plugin API 1.6 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
+- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` 使用独立签到任务、任务级平台凭据和本机时区计划；通知由宿主全局渠道发送，任务可覆盖 SMTP 收件人，当前 v2 任务存储只接受当前格式，旧任务数据保持原字节。`emulator-support` 使用 Plugin API 2.0 注册厂商模拟器 provider；`custom-wallpaper` 使用 Plugin API 2.0 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.5 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
 - 插件启停和安装更新遵循宿主的重启生效约定。
-- Plugin API 1.6 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
-- 宿主升级后会把旧外观数据（`config/appearance.json`、`user-assets/appearance/wallpapers/` 与旧轮换游标）一次性搬迁到原提供方插件的 `legacy-appearance-import` 作用域数据，资产写入该插件的 `wallpapers` 资产 scope。插件应在初始化时读取并消费该载荷，导入完成后删除该作用域记录；宿主保留旧文件。
+- Plugin API 2.0 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.5 的通用外观表面。
+- 旧外观配置、壁纸和游标在原目录保留。新目录安装后重新配置壁纸，宿主和插件不导入或转换旧文件。
 
 ## 数据与安全
 

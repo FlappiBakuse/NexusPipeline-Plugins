@@ -17,7 +17,7 @@
       "codePaths": [
         "tests/run.mjs",
         "tests/policy.json",
-        "tests/ci-gate.py"
+        "tests/ci/gate.py"
       ],
       "testDomains": [
         "managed",
@@ -74,7 +74,7 @@
       "codePaths": [
         "plugins/general/CustomWallpaper/frontend",
         "plugins/general/GameCheckIn/frontend",
-        "tools/Test-FrontendPlugins.mjs"
+        "tests/frontend/run.mjs"
       ],
       "testDomains": [
         "frontend-contract",
@@ -100,7 +100,7 @@
       ],
       "codePaths": [
         "plugins/specialized",
-        "tools/repository.py"
+        "tools/repo.py"
       ],
       "testDomains": [
         "repository-tools",
@@ -127,7 +127,7 @@
       ],
       "codePaths": [
         "plugins/specialized",
-        "tools/repository_core.py"
+        "tools/repository"
       ],
       "testDomains": [
         "data-contract",
@@ -152,8 +152,8 @@
         "本地验证"
       ],
       "codePaths": [
-        "tools/tests",
-        "tools/repository.py"
+        "tests/tooling",
+        "tools/repo.py"
       ],
       "testDomains": [
         "repository-tools"
@@ -180,7 +180,7 @@
       "codePaths": [
         "catalog.json",
         "packages",
-        "tools/repository.py"
+        "tools/repo.py"
       ],
       "testDomains": [
         "repository-tools",
@@ -204,9 +204,9 @@
         "任务协议"
       ],
       "codePaths": [
-        "tools/task-protocol",
+        "adapters/task-protocol",
         "contracts/task-protocol.schema.json",
-        "tools/create_task_plugin.py",
+        "tools/generate/task_plugin.py",
         "contracts/config-repair.schema.json"
       ],
       "testDomains": [
@@ -227,7 +227,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -247,7 +247,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -267,7 +267,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -287,7 +287,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -307,7 +307,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -327,7 +327,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -347,7 +347,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -367,7 +367,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -387,7 +387,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -407,7 +407,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -427,7 +427,7 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol"
+        "adapters/task-protocol"
       ],
       "testDomains": [
         "data-contract",
@@ -449,8 +449,8 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol/core/configAssessment.js",
-        "tools/task-protocol/fixtures"
+        "adapters/task-protocol/core/config-assessment.js",
+        "tests/fixtures/task-protocol"
       ],
       "testDomains": [
         "data-contract"
@@ -471,8 +471,8 @@
       ],
       "aliases": [],
       "codePaths": [
-        "tools/task-protocol/mfa",
-        "tools/task-protocol/upstream-window.json"
+        "adapters/task-protocol/mfa",
+        "adapters/task-protocol/upstream-window.json"
       ],
       "testDomains": [
         "data-contract"
@@ -495,9 +495,9 @@
         "editor"
       ],
       "codePaths": [
-        "tools/generate_config_editors.py",
-        "tools/config-editor",
-        "tools/Test-ConfigEditors.mjs"
+        "tools/generate/config_editors.py",
+        "adapters/config-editor",
+        "tests/config-editors/run.mjs"
       ],
       "testDomains": [
         "repository-tools"

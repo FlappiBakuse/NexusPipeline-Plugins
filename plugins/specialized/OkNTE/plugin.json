@@ -5,9 +5,9 @@
   "displayName": "ok-nte 日常",
   "gameName": "异环",
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.14",
+  "minHostVersion": "0.16.15",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "capabilities": [

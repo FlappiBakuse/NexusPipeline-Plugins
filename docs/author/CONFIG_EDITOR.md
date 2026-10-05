@@ -30,7 +30,7 @@
 
 MXU 启动使用连接窗口前的前置程序；MFA 使用实例 SoftwarePath/BeforeTask 启动设置，修复为启动软件并运行脚本。共享字段只建立当前实例覆盖。MFA 编辑准备设置一次性 NoAutoStart，提交阶段清除；实例启动配置保留，取消和恢复使用原字节。提交源码使用同名 .commit.js，由生成器合成；未提供提交代码的编辑器该阶段为空操作。BAAH 日志开关位于附加软件配置 SAVE_LOG_TO_FILE，应用后下次配置交换使用该快照。
 
-旧 0.1.1 仍保留 Host 中既有 March7th config.yaml/after_finish 有限枚举修复，不要求旧包包含新 editor 提案能力。0.2.0 插件未提供 editor 时没有可用修复，不借旧处理器猜测。
+0.2.0 插件未提供 editor 时没有可用修复；不根据插件名称或旧字段猜测修复动作。
 
 ## 事务与账号保护
 
@@ -40,12 +40,12 @@ MXU 启动使用连接窗口前的前置程序；MFA 使用实例 SoftwarePath/B
 
 ## 生成与验证
 
-唯一源为 `tools/config-editor/repair.js` 及三个准备模块：BetterGI 选择一条龙配置；ZZZ 只保留当前实例并设置 CURRENT；MFA 设置一次性 NoAutoStart，防止编辑时执行。其余专项编辑准备无额外调整。账号文件隔离、交换、快照及恢复由 Host 负责，不生成第二套事务实现。
+唯一源为 `adapters/config-editor/repair.js` 及三个准备模块：BetterGI 选择一条龙配置；ZZZ 只保留当前实例并设置 CURRENT；MFA 设置一次性 NoAutoStart，防止编辑时执行。其余专项编辑准备无额外调整。账号文件隔离、交换、快照及恢复由 Host 负责，不生成第二套事务实现。
 
 ```text
-python tools/generate_config_editors.py
-python tools/generate_config_editors.py --check
-node tools/Test-ConfigEditors.mjs
+python tools/repo.py generate editors
+python tools/repo.py generate editors --check
+node tests/config-editors/run.mjs
 dotnet <隔离Host工具DLL> --plugin-root <Plugins> --config-repair <新报告.json>
 dotnet <隔离Host工具DLL> --plugin-root <Plugins> --account-isolation <新报告.json>
 ```

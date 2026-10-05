@@ -1,6 +1,6 @@
 # MaaFramework 项目直驱
 
-`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.16.9、Plugin API 1.9 和 Frontend API 1.5。它不进入 Host 初始载荷，原有 MaaEnd、MaaStellaSora 专项和绑定配置不会自动迁移。
+`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.16.15、Plugin API 2.0 和 Frontend API 1.5。它不进入 Host 初始载荷，原有 MaaEnd、MaaStellaSora 专项和绑定配置不会自动迁移。
 
 ## 用户入口
 
@@ -24,7 +24,7 @@ Agent / pretask 是项目代码，授权摘要包含执行声明、资源和程�
 
 标准 Agent 使用官方 MaaAgentClient/server identifier 握手。pretask 在 interface 所在目录先执行，声明的选项以紧凑 JSON 放在最后一个参数。PI_* 环境按 PI v2.10.2 提供。pretask 超时范围为 1–120000 ms，默认 10000 ms；Agent RPC timeout 还接受官方项目使用的 -1。它不取消 Host 的 30 秒整体启动预算、总运行预算或取消边界。取消沿 Host 受控 IPC 传播，Host 独立确认写入进程已经停止后恢复配置。
 
-每次执行使用独立 x64 worker，仅从明确选择的原生目录加载 DLL。版本必须与配置声明一致；ABI 缺失、架构错配和握手失败拒绝执行。上游 resource hash 不一致显示警告。原生任务成功只证明引擎完成，没有项目业务证据时仍显示“流程已结束 · 有未核验项”。结构化事件通过 Host 历史模型保存，既有 taskProtocol 日志证据格式保持兼容。
+每次执行使用独立 x64 worker，仅从明确选择的原生目录加载 DLL。版本必须与配置声明一致；ABI 缺失、架构错配和握手失败拒绝执行。上游 resource hash 不一致显示警告。原生任务成功只证明引擎完成，没有项目业务证据时仍显示“流程已结束 · 有未核验项”。结构化事件通过 Host 历史模型保存，provider 使用 schema 1 / provider-execution-v1 独立报告；日常 taskProtocol 使用 schema 2 / daily-flow-v1。
 
 ## 当前原生验证范围
 
@@ -49,7 +49,7 @@ The worker validates the CRT temporary name before native initialization. An unu
 ```powershell
 npm ci --no-audit --no-fund
 npm run build:frontend
-python tools/repository.py test-managed --full --host-root '<隔离 Host checkout>'
+node tests/run.mjs plugin --plugin MaaFrameworkDriver --host-root <显式 Host checkout>
 ```
 
 门禁覆盖 PI 编译、授权、导入与配置评估等可离线判定的驱动逻辑；TRX 位于 `.generated/test-results/managed/run-*/`，缺依赖、零用例和失败都不算通过。真实账号、真实游戏、真实模拟器和真实设备须另行人工验收，其状态独立报告。

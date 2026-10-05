@@ -9,11 +9,7 @@ public sealed class EntryPoint : INexusPlugin
     public ValueTask InitializeAsync(IPluginHostContext context, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (context is not IPluginHostContextV1_7 api)
-        {
-            throw new InvalidOperationException("模拟器支持扩展需要 Plugin API 1.7。");
-        }
-        _registration = api.EmulatorSupport.Register(new EmulatorSupportProvider());
+        _registration = context.EmulatorSupport.Register(new EmulatorSupportProvider());
         context.Logger.Info("已注册雷电、夜神和 BlueStacks 模拟器支持。");
         return ValueTask.CompletedTask;
     }

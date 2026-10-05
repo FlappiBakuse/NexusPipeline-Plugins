@@ -1,6 +1,6 @@
 # ZenlessZoneZeroOneDragon 项目适配
 
-公共规则见 [公共任务协议](../author/TASK_PROTOCOL.md)；源码身份见 [source-lock](../../tools/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [公共任务协议](../author/TASK_PROTOCOL.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
@@ -28,7 +28,7 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-04（Asia/Shanghai）。专项源码版本 `0.3.2`，协议 `0.2.0`，最低 Host `0.16.14`。插件版本与下表上游版本独立。
+核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -36,7 +36,7 @@
 | [v2.5.1](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.1) | `a75973a368d21efcb3c92ccf209eee35eed835b9` |
 | [v2.4.7](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.4.7) | `55926ffbdde06ab6643886d2fb6a841f8707af57` |
 
-资产 URL、大小和发布方摘要见 [上游窗口](../../tools/task-protocol/upstream-window.json)。
+资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
 任务表遵循 [共同识别口径](README.md#识别兼容口径)。
 
@@ -75,7 +75,7 @@
 | auto_battle | 自动战斗 | 名称已知；需显式存在于组配置，仅按显式组选择启用 | 应用开始 + 终态 + 组回执；组结束不替代应用终态 |
 | dodge_assistant | 闪避助手 | 名称已知；需显式存在于组配置，仅按显式组选择启用 | 应用开始 + 终态 + 组回执；组结束不替代应用终态 |
 
-所有日常应用采用原配置续跑。通知、调试、战斗辅助、截图、灵敏度和编队检查等名称登记不意味着 Host 额外启动手工入口。现代组配置中的未知启用项被明确拒绝；未启用的未知项不影响已知任务。子任务“副本挑战”由 charge_plan 派生，不另写选择开关。[生产模块](../../tools/task-protocol/zzz)。
+所有日常应用采用原配置续跑。通知、调试、战斗辅助、截图、灵敏度和编队检查等名称登记不意味着 Host 额外启动手工入口。现代组配置中的未知启用项被明确拒绝；未启用的未知项不影响已知任务。子任务“副本挑战”由 charge_plan 派生，不另写选择开关。[生产模块](../../adapters/task-protocol/zzz)。
 
 ## 配置修复
 

@@ -18,7 +18,7 @@ plugins/specialized/Example/
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
-上例是目录示意。日常自动化使用 `taskProtocol` 0.2.0、`minHostVersion` 0.16.14 和报告 2，把任务/原因/诊断词典放在 `data/i18n/`。Host 继续读取 0.1.0/0.1.1 旧协议；有限修复声明使用 `repairRules`，详见 [任务协议](TASK_PROTOCOL.md)。公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
+上例是目录示意。日常自动化使用 `taskProtocol` 0.2.0、`minHostVersion` 0.16.15 和报告 2 / daily-flow-v1，把任务/原因/诊断词典放在 `data/i18n/`。Host 只接受当前 0.2.0；有限修复声明使用 `repairRules`，详见 [任务协议](TASK_PROTOCOL.md)。公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
 
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
