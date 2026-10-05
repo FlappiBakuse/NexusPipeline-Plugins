@@ -1,110 +1,110 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "a7b7170ba6d9104aaf3d73db93eeb72fbaf16557",
+  "sourceCommit": "1b61bf36491753ad952daff85e6be19b45f1a17d",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.2.2",
-      "sha256": "5b868d8b63564724a31907615c7628c36bbd1976d4671773d8cf9f73dc0b7615",
-      "sizeBytes": 111579,
-      "sourceTree": "04567beafb4de73aeca7ee5ef9961bda576a11a4"
+      "version": "0.3.0",
+      "sha256": "32b25eff2d2fe2155316ec391891c1150589bf69dfb3e70f9d2fd6c474eaa0d3",
+      "sizeBytes": 109987,
+      "sourceTree": "b9fef87fb9e82469fdd498c55ce973f6e7c59b10"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.3.2",
-      "sha256": "7f711a0f72ed9f1c3e3855678843b38fa4375b5052a31f17c9a81e46b93ca510",
-      "sizeBytes": 78818,
-      "sourceTree": "f089b91a90da23a2201370e8a0d99ea8b327e043"
+      "version": "0.4.0",
+      "sha256": "39d991dee53a169be60a7170b73ccbdc2bd3c7c09020310e5851c8f86e6c0b75",
+      "sizeBytes": 75655,
+      "sourceTree": "2f0362aad1bf4d8ae7b5b5d86d2af412b157d38c"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
       "artifactName": "CustomWallpaper",
-      "version": "0.2.8",
-      "sha256": "e80312af998f01388adbd845fa8ffad5d2d4ac9cd1113e63b3842e74c3d2d56c",
-      "sizeBytes": 258681,
-      "sourceTree": "6096f7eff88fd755052031441afa4e9cba3d6b0d"
+      "version": "0.3.0",
+      "sha256": "56212f16716a6de6ce4b76b2490401eaaa7619f250c846df20ed37b9be8854f3",
+      "sizeBytes": 175120,
+      "sourceTree": "59f9048e3377ad0193f5b462c0cc5dab95225773"
     },
     "EmulatorSupport": {
       "name": "emulator-support",
       "artifactName": "EmulatorSupport",
-      "version": "0.1.0",
-      "sha256": "95948588cee447e5f02cfc57178e0437a2530a920d9a6e4155c5659b400417a6",
-      "sizeBytes": 163017,
-      "sourceTree": "2478fc3096663fe96f4e2171c1752a15fca3ddab"
+      "version": "0.2.0",
+      "sha256": "cb16118c673be4edb2822de8837406bed648b2c2248ce2f9523ad07921b56ce5",
+      "sizeBytes": 84655,
+      "sourceTree": "2b7a56f639e5ddadc02e96779864e62bd687b626"
     },
     "GameCheckIn": {
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
-      "version": "0.3.5",
-      "sha256": "e136a07d59685f107fc71b43a81304892d7a56c8f9cb16793baaed2e1726ff49",
-      "sizeBytes": 380996,
-      "sourceTree": "9b8b0bdc74d5f8e0c59e8e930164aa4e75f44695"
+      "version": "0.4.0",
+      "sha256": "d23e9428fb581cec927c635d899c1eb1d5853d0db200b229d9b9c74bc239b3ef",
+      "sizeBytes": 301970,
+      "sourceTree": "4e18540ddcc004ff2d6963285bd1504ade2327af"
     },
     "LiveScreenshot": {
       "name": "live-screenshot",
       "artifactName": "LiveScreenshot",
-      "version": "0.2.0",
-      "sha256": "015e4270d0cb75ce0be0961ceefed02d118913c9c9900954d5bd4be16a73aafc",
-      "sizeBytes": 170192,
-      "sourceTree": "1bb1e3262ffad49f9720a54f1dd569a0300824f2"
+      "version": "0.3.0",
+      "sha256": "44528558326d13d3a94867f371ae336c0d58828c3a74d3aeabc65a7e51f5ea63",
+      "sizeBytes": 97836,
+      "sourceTree": "88401225212aa5f60b58e0bf37c7add375221a9d"
     },
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.3.2",
-      "sha256": "060145731bf0e7b7af7f483660da33f0b645c41647cb4c27c7bf8d367f7b00e4",
-      "sizeBytes": 155058,
-      "sourceTree": "dd786daabef9bedf164ee3e9ab53f5c4c5f404b7"
+      "version": "0.4.0",
+      "sha256": "4aaefc85de955ca07a069e588be102a0e8a61db74bdc8e234a5c18f3e83398bd",
+      "sizeBytes": 154082,
+      "sourceTree": "ed65299a7827e25daff696d921cc7732af6ed902"
     },
     "MaaFrameworkDriver": {
       "name": "maa-framework",
       "artifactName": "MaaFrameworkDriver",
-      "version": "0.1.1",
-      "sha256": "bd30a0f470cad7d8198835c0ad70e5d01cb60de1ac5a81cae404026b79218718",
-      "sizeBytes": 930951,
-      "sourceTree": "9e6757e0678fbcfe344b5c9430bad64c9e95e3f8"
+      "version": "0.2.0",
+      "sha256": "8560af25a88b02dd379e1b321045a3fd8af909a11a366400658e12593ead3a2d",
+      "sizeBytes": 827273,
+      "sourceTree": "6d6c2aef5313bd45f24cdc6b7ad8eb99258d5538"
     },
     "MaaStellaSora": {
       "name": "maas",
       "artifactName": "MaaStellaSora",
-      "version": "0.2.2",
-      "sha256": "05f5735265713aca97373314fb87e3a18f4083f9b18375a299f6a4c937012e18",
-      "sizeBytes": 112153,
-      "sourceTree": "acd853e7408ea275ad15018ac3c9ab6f6bd9d97f"
+      "version": "0.3.0",
+      "sha256": "fc1058557e802ef6d0f30be86fee16563dce804c00d3557e32988567cd469383",
+      "sizeBytes": 111873,
+      "sourceTree": "92ad482b03204bece8b56cb2bbad7bc1353912fe"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.3.2",
-      "sha256": "3cf132e577d1e38853514f6cc3bc3b63f1a4075efca1ad8acd5575705f35d0f0",
-      "sizeBytes": 130543,
-      "sourceTree": "6fede3ee021b2196b3789cfea21857083ef86b91"
+      "version": "0.4.0",
+      "sha256": "b71f89b700c52f01c4b49e84bf0e6b05b466d4680d8cfdba3567a047f7d1a41f",
+      "sizeBytes": 128715,
+      "sourceTree": "c8ef79fee2df1edd5048afb13aaa1be98cfecbc9"
     },
     "OkNTE": {
       "name": "oknte",
       "artifactName": "OkNTE",
-      "version": "0.1.2",
-      "sha256": "276cc396f409001ffe4e0f0ac7074881e63a2e74c5f74e6fb59b8ac7db1dcdb7",
-      "sizeBytes": 93890,
-      "sourceTree": "9870fa0819531a1a8a9056eb1795978b3479e3bc"
+      "version": "0.2.0",
+      "sha256": "be2623ddac08eb69187cd153c109867f7f5e9875dda441586c6774250e82cdd2",
+      "sizeBytes": 93505,
+      "sourceTree": "356c26d7e7c3409bf9407018753b56ffa7421cd6"
     },
     "OkWutheringWaves": {
       "name": "okww",
       "artifactName": "OkWutheringWaves",
-      "version": "0.1.2",
-      "sha256": "d5dd4128adc85692ba53c0f29514166c12b84580524f9366e6e32c8adf1a90a4",
-      "sizeBytes": 98907,
-      "sourceTree": "1607fa2813a10d96bc72a7b5a40170f076678bb8"
+      "version": "0.2.0",
+      "sha256": "ef5034aaf0aca21080f423c01dbabb013e5a450cd32b9845e9cb6c75620198de",
+      "sizeBytes": 98479,
+      "sourceTree": "191973cdf8998c2ca8f7e8db5841e2225ab88298"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.3.2",
-      "sha256": "d149dabb8dd8e0fd2cb19b4ee31c680e25a349fd3e3db55611773f4b698169dc",
-      "sizeBytes": 99133,
-      "sourceTree": "178bac1efa56fd7f1ee6901e5b67f5df084f8990"
+      "version": "0.4.0",
+      "sha256": "637e3c3736afbdd78f14ddb471c58c91f137fdd8e326221dfcf4b62a951ada84",
+      "sizeBytes": 98034,
+      "sourceTree": "fa10f2ef6405bfce8eee3eb0c0f2cc7ba91c2d64"
     }
   }
 }
