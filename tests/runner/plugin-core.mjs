@@ -92,8 +92,7 @@ try {
     (async () => {
       if (!managed) return;
       const frontend = path.join(host.directory,"frontend");
-      const hostSteps = await Promise.allSettled([
-        (async () => {
+      const frontendReady = (async () => {
           if (!withUi) return;
           if (!fs.existsSync(path.join(frontend,"node_modules/.package-lock.json")))
             await step("Host frontend dependencies",npm,["ci","--no-audit","--no-fund"],{cwd:frontend});
@@ -101,17 +100,20 @@ try {
           const browser = path.join(host.directory,"tests/e2e");
           if (!fs.existsSync(path.join(browser,"node_modules/playwright/package.json")))
             await step("shared browser bindings",npm,["ci","--no-audit","--no-fund"],{cwd:browser});
-        })(),
+        })();
+      const hostSteps = await Promise.allSettled([
+        frontendReady,
         (async () => {
+          await frontendReady;
+          const embedded = path.join(runRoot,"embedded-frontend");
+          if (withUi) await step("embedded frontend",python,["tools/embed_frontend.py","--source",path.join(frontend,"dist"),"--output",embedded],{cwd:host.directory});
           await step("shared Test Host","dotnet",["publish","src/NexusPipeline.csproj",...dotnetOptions(),"-r","win-x64",
-            "--self-contained","false","-p:NexusTestHost=true","-p:PublishSingleFile=true","-p:DebugType=none","-p:DebugSymbols=false","-o",hostBuild],{cwd:host.directory});
-          await step("Test Host manifest",python,["tools/pe_manifest.py","--exe",path.join(hostBuild,"nexus-pipeline.exe"),"--expected-level","asInvoker"],{cwd:host.directory});
+            "--self-contained","false","-p:NexusTestHost=true",...(withUi?[`-p:NexusFrontendProps=${path.join(embedded,"embedded-frontend.props")}`]:[]),"-p:PublishSingleFile=true","-p:DebugType=none","-p:DebugSymbols=false","-o",hostBuild],{cwd:host.directory});
+          await step("Test Host manifest",python,["tools/pe_manifest.py","--exe",path.join(hostBuild,"NexusPipeline.exe"),"--expected-level","asInvoker"],{cwd:host.directory});
         })(),
       ]);
       const failed = hostSteps.find(outcome => outcome.status === "rejected");
       if (failed) throw failed.reason;
-      if (withUi) fs.cpSync(path.join(frontend,"dist"),path.join(hostBuild,"wwwroot"),{recursive:true});
-      else fs.mkdirSync(path.join(hostBuild,"wwwroot"));
     })(),
     (async () => {
       if (!frontendNames.length) return;

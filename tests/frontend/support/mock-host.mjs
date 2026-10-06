@@ -89,6 +89,7 @@ export function gameCheckInTask(input, id, previous = null) {
 export function createMockHost(pluginName, registrations, metrics, state = defaultTestState()) {
   const gameCheckInPlugin = String(pluginName).replaceAll("-", "").toLowerCase() === "gamecheckin";
   const host = {
+    getCapabilities: async () => Object.freeze({ schemaVersion: 1, connectionKind: metrics.connectionKind || "local", operations: { general: { allowed: true, denyReason: null }, hostFilePicker: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "host_file_picker_requires_local" : null }, nativeConfigEditor: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "native_config_editor_requires_local" : null } } }),
     plugin: Object.freeze({ name: pluginName }),
     i18n: {
       t(_key, _args, fallback = "") { return fallback || _key; },

@@ -174,7 +174,11 @@ def _validate_zip(
             repository_io._require("configValidator" not in manifest, f"ZIP 声明已退役的 configValidator：{repository_io._display(package)}")
             repository_io._require(repository_versions.parse_semver(manifest.get("minHostVersion")) >= repository_versions.parse_semver("0.16.15"), "当前 ZIP minHostVersion 必须至少为 0.16.15")
             if manifest.get("kind") == "managed-code":
-                repository_io._require(manifest.get("apiVersion") == "2.0", "当前 managed ZIP 必须使用 Plugin API 2.0")
+                repository_io._require(manifest.get("apiVersion") == "2.1", "当前 managed ZIP 必须使用 Plugin API 2.1")
+            if manifest.get("kind") == "managed-code":
+                repository_io._require(repository_versions.parse_semver(manifest.get("minHostVersion")) >= repository_versions.parse_semver("0.17.0"), "managed ZIP minHostVersion 必须至少为 0.17.0")
+                frontend = manifest.get("frontend")
+                repository_io._require(frontend is None or isinstance(frontend, dict) and frontend.get("apiVersion") == "1.6", "managed ZIP Frontend API 必须为 1.6")
             repository_source._task_protocol_scripts(manifest)
             repository_io._require(manifest.get("schemaVersion") == 2, f"ZIP manifest schemaVersion 无效：{repository_io._display(package)}")
             repository_io._require(mode in {"stable", "preview"}, f"ZIP 校验模式无效：{mode}")
