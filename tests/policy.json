@@ -22,6 +22,7 @@
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Delete_RemovesAssetFromConfigAndStorage",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.SavePalette_ValidatesTokensAndBumpsRevision",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch",
+        "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.RemoteReadsAndStartupRotationKeepStoredConfigAndRuntimeBytes",
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.InitializationPreservesUnsupportedAppearanceScope"
       ],
       "fixtureIds": [],

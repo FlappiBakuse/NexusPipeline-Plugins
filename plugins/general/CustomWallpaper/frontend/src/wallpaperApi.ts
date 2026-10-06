@@ -29,6 +29,7 @@ export interface WallpaperState {
 }
 
 export interface WallpaperHost {
+  getCapabilities(signal?: AbortSignal): Promise<{ connectionKind: "local" | "remote" | "unknown" }>;
   i18n: {
     locale: string;
     t(key: string, args?: Record<string, unknown>, fallback?: string): string;
@@ -98,13 +99,13 @@ export async function uploadAsset(
 }
 
 /** 生成并保存当前资产的配色；配色生成失败不回滚已上传的资产。 */
-export async function ensurePalette(host: WallpaperHost, asset: WallpaperAsset, blob: Blob): Promise<Record<string, string> | null> {
+export async function ensurePalette(host: WallpaperHost, asset: WallpaperAsset, blob: Blob, persist = true): Promise<Record<string, string> | null> {
   if (asset.paletteVersion === 3 && asset.palette && Object.keys(asset.palette).length > 0) {
     return asset.palette;
   }
   try {
     const palette = await derivePalette(blob);
-    await savePalette(host, asset.id, palette);
+    if (persist) await savePalette(host, asset.id, palette);
     return palette;
   } catch (error) {
     return null;

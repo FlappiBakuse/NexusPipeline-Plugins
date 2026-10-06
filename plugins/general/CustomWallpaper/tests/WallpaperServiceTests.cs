@@ -129,6 +129,30 @@ public sealed class WallpaperServiceTests
     }
 
     [Fact]
+    public async Task RemoteReadsAndStartupRotationKeepStoredConfigAndRuntimeBytes()
+    {
+        var context = new FakePluginHostContext("CustomWallpaper");
+        var service = CreateService(context, () => DateTimeOffset.UtcNow);
+        await service.InitializeAsync();
+        await UploadIdAsync(service, PngBytes(21));
+        await UploadIdAsync(service, PngBytes(22));
+        await service.ApplySettingsAsync(new JsonObject { ["enabled"] = true, ["rotation"] = new JsonObject { ["mode"] = "startup" } });
+        string config = (await context.Config.ReadAsync<JsonObject>())!.ToJsonString();
+        string? runtime = (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))?.ToJsonString();
+        var web = new WallpaperWebApi(service); web.Register(context.WebApi);
+        var route = context.WebApi.Routes.Single(item => item.Route == "rotation/advance-session");
+        foreach (var kind in new[] { PluginClientConnectionKind.Remote, PluginClientConnectionKind.Unknown })
+        {
+            var response = await route.Handler(new("POST", route.Route, new Dictionary<string, string>(), null, kind), CancellationToken.None);
+            Assert.Equal(200, response.StatusCode);
+            await service.GetStateAsync();
+            Assert.Equal(config, (await context.Config.ReadAsync<JsonObject>())!.ToJsonString());
+            Assert.Equal(runtime, (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))?.ToJsonString());
+        }
+        web.Dispose();
+    }
+
+    [Fact]
     public async Task Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch()
     {
         DateTimeOffset now = new(2026, 9, 12, 10, 0, 0, TimeSpan.Zero);
@@ -152,7 +176,12 @@ public sealed class WallpaperServiceTests
         Assert.NotNull(configured["rotation"]!["nextSwitchAt"]!.GetValue<string>());
 
         now = now.AddMinutes(2);
+        JsonObject unchanged = await service.GetStateAsync();
+        Assert.Equal(inFirstSlot, unchanged["currentId"]!.GetValue<string>());
+        await service.CheckTimerAsync(CancellationToken.None);
         JsonObject rotated = await service.GetStateAsync();
+        await service.CheckTimerAsync(CancellationToken.None);
+        Assert.Equal(rotated["currentId"]!.GetValue<string>(), (await service.GetStateAsync())["currentId"]!.GetValue<string>());
         Assert.NotEqual(inFirstSlot, rotated["currentId"]!.GetValue<string>());
     }
 

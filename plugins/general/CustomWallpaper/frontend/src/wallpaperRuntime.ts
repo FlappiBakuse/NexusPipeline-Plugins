@@ -111,7 +111,7 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
         surfaceTransparencyPercent: next?.effects?.surfaceTransparencyPercent,
         secondarySurfaceTransparency: next?.effects?.applyTransparencyToSecondarySurfaces !== false,
       });
-      const palette = await ensurePalette(host, asset, blob);
+      const palette = await ensurePalette(host, asset, blob, false);
       if (disposed || myGeneration !== generation) return;
       if (palette) host.appearance.setTokens(palette);
       scheduleRotation(next);
@@ -146,7 +146,8 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
     async start(): Promise<void> {
       if (disposed) return;
       try {
-        const next = await advanceSessionRotation(host);
+        const capabilities = await host.getCapabilities();
+        const next = capabilities.connectionKind === "local" ? await advanceSessionRotation(host) : await loadState(host);
         if (disposed) return;
         await applyState(next, true);
       } catch {

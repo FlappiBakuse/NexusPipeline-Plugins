@@ -18,13 +18,13 @@ internal sealed class WallpaperWebApi
     public void Register(IPluginWebApiRegistry registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
-        _registrations.Add(registry.Register(new PluginWebApiRoute("GET", "state", HandleState)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "rotation/advance-session", HandleAdvanceSessionRotation)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("PUT", "settings", HandleSettings)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets", HandleUpload)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets/delete", HandleDelete)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("PUT", "assets/palette", HandlePalette)));
-        _registrations.Add(registry.Register(new PluginWebApiRoute("GET", "asset", HandleAsset)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("GET", "state", PluginOperationAccess.General, HandleState)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "rotation/advance-session", PluginOperationAccess.General, HandleAdvanceSessionRotation)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("PUT", "settings", PluginOperationAccess.General, HandleSettings)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets", PluginOperationAccess.General, HandleUpload)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("POST", "assets/delete", PluginOperationAccess.General, HandleDelete)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("PUT", "assets/palette", PluginOperationAccess.General, HandlePalette)));
+        _registrations.Add(registry.Register(new PluginWebApiRoute("GET", "asset", PluginOperationAccess.General, HandleAsset)));
     }
 
     public void Dispose()
@@ -55,7 +55,9 @@ internal sealed class WallpaperWebApi
         try
         {
             return PluginWebApiResponse.Json(
-                await _service.AdvanceSessionRotationAsync(cancellationToken).ConfigureAwait(false));
+                request.ConnectionKind == PluginClientConnectionKind.Local
+                    ? await _service.AdvanceSessionRotationAsync(cancellationToken).ConfigureAwait(false)
+                    : await _service.GetStateAsync(cancellationToken).ConfigureAwait(false));
         }
         catch (WallpaperException ex)
         {

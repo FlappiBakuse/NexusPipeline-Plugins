@@ -77,4 +77,15 @@ export async function assertWallpaperTimerRotation(entry, manifest, probe) {
   if (probe.intervals.size > 0) {
     fail(`CustomWallpaper 定时轮换实例停用后仍有 ${probe.intervals.size} 个定时器未释放`);
   }
+  for (const connectionKind of ['remote','unknown']) {
+    const readMetrics = createMetrics(); readMetrics.connectionKind = connectionKind;
+    const readState = wallpaperTestState({rotation: {mode:'startup',intervalMinutes:30,epochUnixMs:Date.now(),nextSwitchAt:null}});
+    const remote = await import(`${pathToFileURL(entry).href}?case=${connectionKind}`);
+    const dispose = activationCleanup(await remote.activate(createMockHost(manifest.artifactName, [], readMetrics, readState)));
+    try {
+      await flushDom();
+      if (readMetrics.apiPost || readMetrics.apiPut) fail(`CustomWallpaper ${connectionKind} activation mutated shared wallpaper state`);
+      if (!readMetrics.appearanceBackgroundUrl) fail(`CustomWallpaper ${connectionKind} activation did not project the saved wallpaper`);
+    } finally { await dispose(); await flushDom(); }
+  }
 }

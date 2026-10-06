@@ -67,6 +67,7 @@ internal sealed class WallpaperService
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
             await SaveConfigAsync(config, cancellationToken).ConfigureAwait(false);
+            await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -80,7 +81,7 @@ internal sealed class WallpaperService
         try
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
-            string currentId = await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
+            string currentId = await ResolveCurrentAsync(config, cancellationToken, commit: false).ConfigureAwait(false);
             return BuildState(config, currentId);
         }
         finally
@@ -344,7 +345,19 @@ internal sealed class WallpaperService
             : candidates[RandomNumberGenerator.GetInt32(candidates.Length)];
     }
 
-    private async Task<string> ResolveCurrentAsync(WallpaperConfig config, CancellationToken cancellationToken)
+    public async Task CheckTimerAsync(CancellationToken cancellationToken)
+    {
+        await _sync.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
+            if (config.Enabled && config.Rotation.Mode == "timer")
+                await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
+        }
+        finally { _sync.Release(); }
+    }
+
+    private async Task<string> ResolveCurrentAsync(WallpaperConfig config, CancellationToken cancellationToken, bool commit = true)
     {
         if (config.Order.Count == 0)
         {
@@ -357,6 +370,7 @@ internal sealed class WallpaperService
             long nowMs = _utcNow().ToUnixTimeMilliseconds();
             long slot = Math.Max(0, nowMs - epoch) / intervalMs;
             WallpaperRotationRuntime runtime = await LoadRuntimeAsync(cancellationToken).ConfigureAwait(false);
+            if (!commit) return ContainsId(config.Order, runtime.LastRandomId) ? runtime.LastRandomId : ResolveSelectedId(config);
             bool sameSlot = runtime.TimerSlot == slot
                 && runtime.TimerEpochUnixMs == epoch
                 && runtime.TimerIntervalMinutes == config.Rotation.IntervalMinutes;
@@ -366,13 +380,14 @@ internal sealed class WallpaperService
                 runtime.TimerSlot = slot;
                 runtime.TimerEpochUnixMs = epoch;
                 runtime.TimerIntervalMinutes = config.Rotation.IntervalMinutes;
-                await SaveRuntimeAsync(runtime, cancellationToken).ConfigureAwait(false);
+                if (commit) await SaveRuntimeAsync(runtime, cancellationToken).ConfigureAwait(false);
             }
             return runtime.LastRandomId;
         }
         if (config.Rotation.Mode.Equals("startup", StringComparison.OrdinalIgnoreCase))
         {
             WallpaperRotationRuntime runtime = await LoadRuntimeAsync(cancellationToken).ConfigureAwait(false);
+            if (!commit) return ContainsId(config.Order, runtime.LastRandomId) ? runtime.LastRandomId : ResolveSelectedId(config);
             if (!ContainsId(config.Order, runtime.LastRandomId))
             {
                 runtime.LastRandomId = ResolveSelectedId(config);
