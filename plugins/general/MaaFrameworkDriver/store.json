@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
   "changelog": [
     {
+      "version": "0.2.1",
+      "date": "2026-10-05",
+      "items": [
+        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
+      ]
+    },
+    {
       "version": "0.2.0",
       "date": "2026-10-04",
       "items": [
@@ -27,13 +34,6 @@
       "date": "2026-09-29",
       "items": [
         "包内许可说明不再引用已移除的原生测试锁定文件。"
-      ]
-    },
-    {
-      "version": "0.1.0",
-      "date": "2026-09-26",
-      "items": [
-        "首版独立 MaaFramework 项目执行 provider。"
       ]
     }
   ]

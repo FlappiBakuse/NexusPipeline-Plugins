@@ -15,7 +15,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
         _host = context;
         _registrations.Add(_host.ExecutionProviders.Register(this));
         foreach (string route in new[] { "inspect", "profile", "preview", "save", "authorize", "secret", "import", "windows", "preset" })
-            _registrations.Add(_host.WebApi.Register(new("POST", route, (request, token) => HandleAsync(route, request, token))));
+            _registrations.Add(_host.WebApi.Register(new("POST", route, PluginOperationAccess.General, (request, token) => HandleAsync(route, request, token))));
         return ValueTask.CompletedTask;
     }
 
