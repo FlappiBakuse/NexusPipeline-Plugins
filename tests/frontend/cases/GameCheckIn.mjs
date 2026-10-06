@@ -21,9 +21,10 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (navigation.title !== "签到" || navigation.route !== "tasks") fail("GameCheckIn 侧边栏导航必须打开签到任务页面");
 
   const view = document.createElement("main");
-  view.id = "view";
   document.body.append(view);
-  await route.handler(1, ["plugin", "game-checkin", "tasks"], host);
+  const controller = new AbortController();
+  const cleanup = await route.handler(Object.freeze({ element: view, token: 1, segments: Object.freeze(["plugin", "game-checkin", "tasks"]), signal: controller.signal }), host);
+  if (typeof cleanup !== "function") fail("GameCheckIn route 必须返回 cleanup");
   await flushDom();
   await flushDom();
   if (!view.querySelector("[data-game-check-in-page]")) fail("GameCheckIn route 未挂载签到任务页面");
@@ -110,11 +111,14 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (deleted?.body?.taskId !== "task-check-in-1" || state.tasks.length !== 0) fail("删除任务没有调用对应的任务 API");
   if (state.tasks.length !== 0 || !view.querySelector("nxp-empty-state")) fail("删除最后一个任务后没有反馈空状态");
 
+  controller.abort(); cleanup();
   for (const registration of metrics.lifecycleHandlers) registration.handler();
   await flushDom();
   if (view.querySelector("[data-game-check-in-page]")) fail("离开签到页面时没有卸载页面组件");
-  await route.handler(2, ["plugin", "game-checkin", "tasks"], host);
+  const nextController = new AbortController();
+  const nextCleanup = await route.handler(Object.freeze({ element: view, token: 2, segments: Object.freeze(["plugin", "game-checkin", "tasks"]), signal: nextController.signal }), host);
   await flushDom();
   if (!view.querySelector("[data-game-check-in-page]")) fail("再次进入签到 route 后没有重新挂载页面");
+  nextController.abort(); nextCleanup();
   return { route: route.route, nav: navigation.id, apiCalls: metrics.apiCalls.filter(call => call.route !== "state").length };
 }

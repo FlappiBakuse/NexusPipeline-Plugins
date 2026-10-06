@@ -405,7 +405,7 @@ public sealed class GameCheckInTests
         JsonObject? body = null)
     {
         PluginWebApiRoute registration = context.WebApi.Routes.Single(item => item.Method == method && item.Route == route);
-        var request = new PluginWebApiRequest(method, route, new Dictionary<string, string>(), body?.ToJsonString());
+        var request = new PluginWebApiRequest(method, route, new Dictionary<string, string>(), body?.ToJsonString(), PluginClientConnectionKind.Local);
         return await registration.Handler(request, CancellationToken.None);
     }
 
