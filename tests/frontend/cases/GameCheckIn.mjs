@@ -79,7 +79,7 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (!created.body.notification?.enabled || created.body.notification?.smtpTo !== "task@example.test") fail("新增任务没有提交宿主通知设置和 SMTP 收件人");
   if ("cnDeviceId" in created.body || "kuroDevCode" in created.body || "kuroDistinctId" in created.body) fail("任务保存请求暴露了内部设备标识");
   if ("notifications" in created.body || "webhookUrl" in (created.body.secrets || {}) || "smtpPassword" in (created.body.secrets || {})) fail("任务保存请求仍包含旧版独立通知字段");
-  if (!view.textContent.includes("晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
+  if (![...view.querySelectorAll("nxp-overflow-text")].some(element => element.getAttribute("label") === "晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
   if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("cnDeviceId")) fail("任务列表泄露了任务凭据或内部设备标识");
 
   clickPluginButton(view, "立即签到");

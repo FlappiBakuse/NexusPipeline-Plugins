@@ -22,7 +22,7 @@ export async function preparePlugin() {
   fs.copyFileSync(path.join(source, "src/bin/Release/net10.0", manifest.entryAssembly), path.join(target, manifest.entryAssembly));
   const settingsPath = path.join(runtime.runtimeDir, "config/settings.json");
   const settings = JSON.parse(fs.readFileSync(settingsPath));
-  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, OpenDesktopOnStartup: false,
+  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, LightweightMode: true, OpenDesktopOnStartup: false,
     PluginPreferences: { [manifest.name]: { Enabled: true } } });
   fs.writeFileSync(settingsPath, JSON.stringify(settings));
   return manifest;
