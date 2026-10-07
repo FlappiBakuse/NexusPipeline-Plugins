@@ -7,7 +7,7 @@ import { gameCheckInTestState, wallpaperTestState, defaultTestState, createMetri
 import { installDom, installLifecycleProbe, flushDom } from "./support/dom.mjs";
 import { assertGameCheckInRoute } from "./cases/GameCheckIn.mjs";
 import { assertMaaRenderer } from "./cases/MaaFrameworkDriver.mjs";
-import { assertWallpaperTimerRotation, assertWallpaperActivation, assertWallpaperRenderer, assertWallpaperSettingsReleased, assertWallpaperDisposed } from "./cases/CustomWallpaper.mjs";
+import { assertWallpaperTimerRotation, assertWallpaperStateOrdering, assertWallpaperActivation, assertWallpaperRenderer, assertWallpaperSettingsReleased, assertWallpaperDisposed } from "./cases/CustomWallpaper.mjs";
 import { resolvePublicElements } from "./contract.mjs";
 
 export function parseArguments(args) {
@@ -134,6 +134,7 @@ export async function runPlugin(repositoryRoot, manifestPath, publicElements) {
       }
       if (wallpaperPlugin) {
         await assertWallpaperTimerRotation(entry, manifest, probe);
+        await assertWallpaperStateOrdering(path.join(plugin, 'frontend/src/wallpaperRuntime.ts'));
       }
       return {
         artifactName: manifest.artifactName,

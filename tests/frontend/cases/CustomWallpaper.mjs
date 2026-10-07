@@ -1,4 +1,7 @@
 import { pathToFileURL } from "node:url";
+import { registerHooks } from "node:module";
+import { existsSync } from "node:fs";
+import assert from "node:assert/strict";
 import { wallpaperTestState, createMetrics, createMockHost } from "../support/mock-host.mjs";
 import { activationCleanup, fail } from "../contract.mjs";
 import { flushDom } from "../support/dom.mjs";
@@ -87,5 +90,74 @@ export async function assertWallpaperTimerRotation(entry, manifest, probe) {
       if (readMetrics.apiPost || readMetrics.apiPut) fail(`CustomWallpaper ${connectionKind} activation mutated shared wallpaper state`);
       if (!readMetrics.appearanceBackgroundUrl) fail(`CustomWallpaper ${connectionKind} activation did not project the saved wallpaper`);
     } finally { await dispose(); await flushDom(); }
+  }
+}
+
+export async function assertWallpaperStateOrdering(source) {
+  const hook = registerHooks({ resolve(specifier, context, nextResolve) {
+    if (specifier.startsWith('./') && context.parentURL?.endsWith('.ts')) {
+      const candidate = new URL(specifier + '.ts', context.parentURL);
+      if (existsSync(candidate)) return nextResolve(candidate.href, context);
+    }
+    return nextResolve(specifier, context);
+  } });
+  let createWallpaperRuntime;
+  try { ({ createWallpaperRuntime } = await import(pathToFileURL(source).href)); }
+  finally { hook.deregister(); }
+  const original = { now: Date.now, setTimeout, clearTimeout, setInterval, clearInterval };
+  let now = 1_000_000, nextId = 1;
+  const timers = new Map(), intervals = new Map();
+  Date.now = () => now;
+  globalThis.setTimeout = (callback, delay) => { const id = nextId++; timers.set(id, { callback, at: now + delay }); return id; };
+  globalThis.clearTimeout = id => timers.delete(id);
+  globalThis.setInterval = (callback, delay) => { const id = nextId++; intervals.set(id, { callback, delay }); return id; };
+  globalThis.clearInterval = id => intervals.delete(id);
+  const settle = async () => { for (let index = 0; index < 24; index++) await Promise.resolve(); };
+  const tick = async milliseconds => {
+    now += milliseconds;
+    for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.callback(); }
+    await settle();
+  };
+  const metrics = createMetrics(); metrics.connectionKind = 'remote';
+  const server = wallpaperTestState({ rotation: { mode: 'timer', nextSwitchAt: new Date(now + 1000).toISOString() } });
+  const host = createMockHost('CustomWallpaper', [], metrics, server);
+  const runtime = createWallpaperRuntime(host);
+  try {
+    await Promise.all([runtime.start(), runtime.start()]);
+    assert.equal(metrics.apiGet, 1); assert.equal(metrics.apiPost, 0); assert.equal(intervals.size, 1);
+    await tick(1000);
+    assert.equal(metrics.apiGet, 2); assert.equal(timers.size, 1, 'early unchanged read must schedule catch-up');
+    const second = 'b'.repeat(64);
+    server.assets.push({ ...server.assets[0], id: second }); server.currentId = second;
+    server.rotation.nextSwitchAt = new Date(now + 60_000).toISOString();
+    await tick(1000);
+    assert.equal(runtime.snapshot().state.currentId, second, 'timer commit with unchanged config revision must appear');
+    assert.equal(metrics.apiGet, 3);
+    let resolveOld;
+    const oldState = structuredClone(server);
+    host.api.get = async () => new Promise(resolve => { resolveOld = resolve; });
+    const oldRead = runtime.refresh();
+    const saved = { ...structuredClone(server), revision: 2, currentId: server.assets[0].id };
+    await runtime.apply(saved);
+    const backgroundCount = metrics.appearanceSetBackground;
+    resolveOld({ ...oldState, revision: 1 }); await oldRead;
+    assert.equal(runtime.snapshot().state.revision, 2); assert.equal(runtime.snapshot().state.currentId, saved.currentId);
+    assert.equal(metrics.appearanceSetBackground, backgroundCount, 'stale GET must not undo a confirmed save');
+    host.api.get = async () => structuredClone(saved);
+    await runtime.apply({ ...saved, rotation: { mode: 'timer', nextSwitchAt: new Date(now - 1000).toISOString() } });
+    const expired = structuredClone(runtime.snapshot().state);
+    let reads = 0; host.api.get = async () => { reads++; return structuredClone(expired); };
+    for (let index = 0; index < 12; index++) await tick(1000);
+    assert.equal(timers.size, 0); assert.ok(reads <= 8, 'overdue projection must stop high-frequency retry');
+    await runtime.apply({ ...saved, rotation: { mode: 'timer', nextSwitchAt: 'invalid' } });
+    assert.equal(timers.size, 0);
+    let resolveDisposed; host.api.get = async () => new Promise(resolve => { resolveDisposed = resolve; });
+    const pending = runtime.refresh(); runtime.dispose(); const afterDispose = metrics.appearanceSetBackground;
+    resolveDisposed(saved); await pending;
+    assert.equal(metrics.appearanceSetBackground, afterDispose); assert.equal(runtime.snapshot().state, null);
+    assert.equal(timers.size, 0); assert.equal(intervals.size, 0);
+  } finally {
+    runtime.dispose(); Date.now = original.now;
+    for (const key of ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']) globalThis[key] = original[key];
   }
 }

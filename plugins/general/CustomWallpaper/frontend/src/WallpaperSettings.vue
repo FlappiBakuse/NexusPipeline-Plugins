@@ -17,7 +17,15 @@ const expanded = ref(false);
 const busy = ref("");
 const help = ref("");
 const thumbnails = ref<Record<string, string>>({});
+type EffectKey = "blurPx" | "dimPercent" | "surfaceTransparencyPercent";
+const effectDrafts = ref<Partial<Record<EffectKey, { value: number; committed: boolean }>>>({});
+const blurRange = ref<HTMLElement | null>(null);
+const dimRange = ref<HTMLElement | null>(null);
+const transparencyRange = ref<HTMLElement | null>(null);
+const releaseRangeListeners: (() => void)[] = [];
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingSave: Record<string, unknown> | null = null;
+let saveInFlight = false;
 let unsubscribe: (() => void) | null = null;
 let disposed = false;
 
@@ -101,6 +109,28 @@ function syncSnapshot(snapshot: WallpaperRuntimeSnapshot) {
   if (disposed) return;
   state.value = snapshot.state;
   runtimeError.value = snapshot.error;
+  reconcileEffectDrafts();
+}
+
+function reconcileEffectDrafts() {
+  if (saveInFlight || pendingSave) return;
+  for (const key of Object.keys(effectDrafts.value) as EffectKey[]) {
+    const draft = effectDrafts.value[key];
+    if (draft?.committed && state.value?.effects?.[key] === draft.value) delete effectDrafts.value[key];
+  }
+}
+
+function effectValue(key: EffectKey, fallback = 0): number {
+  return effectDrafts.value[key]?.value ?? state.value?.effects?.[key] ?? fallback;
+}
+
+function previewEffect(key: EffectKey, value: unknown) {
+  effectDrafts.value[key] = { value: Number(value) || 0, committed: false };
+}
+
+function commitEffect(key: EffectKey, setting: string, value: unknown) {
+  effectDrafts.value[key] = { value: Number(value) || 0, committed: true };
+  updateSetting(setting, value);
 }
 
 async function releaseThumbnails(keep: string[] = []) {
@@ -128,11 +158,22 @@ async function loadThumbnails(items: WallpaperAsset[]) {
 
 function requestSave(patch: unknown, optimistic: (current: WallpaperState) => WallpaperState) {
   if (state.value) state.value = optimistic(state.value);
+  pendingSave = { ...pendingSave, ...(patch as Record<string, unknown>) };
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     saveTimer = null;
-    void (async () => {
-      busy.value = tr("status.saving", {}, "保存中");
+    void flushSaves();
+  }, 0);
+}
+
+async function flushSaves() {
+  if (saveInFlight || disposed) return;
+  saveInFlight = true;
+  busy.value = tr("status.saving", {}, "保存中");
+  try {
+    while (pendingSave && !disposed) {
+      const patch = pendingSave;
+      pendingSave = null;
       try {
         const next = await saveSettings(props.host, patch);
         if (disposed) return;
@@ -140,11 +181,18 @@ function requestSave(patch: unknown, optimistic: (current: WallpaperState) => Wa
       } catch (error) {
         help.value = errorMessage(error, "status.save_failed", "保存失败");
         await props.runtime.refresh();
-      } finally {
-        busy.value = "";
       }
-    })();
-  }, 0);
+    }
+  } finally {
+    saveInFlight = false;
+    busy.value = "";
+    reconcileEffectDrafts();
+  }
+}
+
+function committedEffectValue(key: EffectKey): number {
+  const draft = effectDrafts.value[key];
+  return draft?.committed ? draft.value : state.value?.effects?.[key] ?? 0;
 }
 
 interface SettingsPatch {
@@ -170,9 +218,9 @@ function settingsPatch(): SettingsPatch {
       epochUnixMs: current.rotation?.epochUnixMs || Date.now(),
     },
     effects: {
-      blurPx: Number(current.effects?.blurPx) || 0,
-      dimPercent: Number(current.effects?.dimPercent) || 0,
-      surfaceTransparencyPercent: Number(current.effects?.surfaceTransparencyPercent) || 0,
+      blurPx: committedEffectValue("blurPx"),
+      dimPercent: committedEffectValue("dimPercent"),
+      surfaceTransparencyPercent: committedEffectValue("surfaceTransparencyPercent"),
       applyTransparencyToSecondarySurfaces: secondaryTransparency.value,
     },
   };
@@ -283,6 +331,14 @@ function reorderWallpapers(ids: string[]) {
 }
 
 onMounted(async () => {
+  // Vue 的 DOM patcher 会忽略 onUpdate:*；公开元素的值事件需直接订阅。
+  for (const [key, control] of [["blurPx", blurRange], ["dimPercent", dimRange], ["surfaceTransparencyPercent", transparencyRange]] as const) {
+    const element = control.value;
+    if (!element) continue;
+    const listener = (event: Event) => previewEffect(key, eventValue(event));
+    element.addEventListener("update:modelValue", listener);
+    releaseRangeListeners.push(() => element.removeEventListener("update:modelValue", listener));
+  }
   window.addEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe = props.runtime.subscribe(syncSnapshot);
   syncSnapshot(props.runtime.snapshot());
@@ -291,11 +347,13 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   disposed = true;
+  releaseRangeListeners.splice(0).forEach(release => release());
   window.removeEventListener(settingsPanelStateEvent, syncPanelState);
   unsubscribe?.();
   unsubscribe = null;
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = null;
+  pendingSave = null;
   Object.values(thumbnails.value).forEach(url => URL.revokeObjectURL(url));
   thumbnails.value = {};
 });
@@ -362,40 +420,43 @@ onBeforeUnmount(() => {
         <nxp-field class="cw-field" :help="tr('settings.blur_help', {}, '模糊范围为 0 至 40 像素。')" :label="tr('settings.blur', {}, '模糊（像素）')">
           <span class="cw-range-row">
             <nxp-range
-              :model-value="state?.effects?.blurPx || 0"
+              ref="blurRange"
+              :model-value="effectValue('blurPx')"
               :min="0"
               :max="40"
               :step="1"
               :aria-label="tr('settings.blur', {}, '模糊（像素）')"
-              @change="updateSetting('blur', eventValue($event))"
+              @change="commitEffect('blurPx', 'blur', eventValue($event))"
             />
-            <output>{{ state?.effects?.blurPx || 0 }}px</output>
+            <output>{{ effectValue('blurPx') }}px</output>
           </span>
         </nxp-field>
         <nxp-field class="cw-field" :help="tr('settings.dim_help', {}, '变暗范围为 0 至 80%，用于调整壁纸与内容的对比度。')" :label="tr('settings.dim', {}, '变暗')">
           <span class="cw-range-row">
             <nxp-range
-              :model-value="state?.effects?.dimPercent ?? 20"
+              ref="dimRange"
+              :model-value="effectValue('dimPercent', 20)"
               :min="0"
               :max="80"
               :step="1"
               :aria-label="tr('settings.dim', {}, '变暗')"
-              @change="updateSetting('dim', eventValue($event))"
+              @change="commitEffect('dimPercent', 'dim', eventValue($event))"
             />
-            <output>{{ state?.effects?.dimPercent ?? 20 }}%</output>
+            <output>{{ effectValue('dimPercent', 20) }}%</output>
           </span>
         </nxp-field>
         <nxp-field class="cw-field" :help="tr('settings.transparency_help', {}, '控制页面卡片、侧边栏和其他表面的透明度，范围为 0 至 50%。')" :label="tr('settings.transparency', {}, '卡片与侧边栏透明度')">
           <span class="cw-range-row">
             <nxp-range
-              :model-value="state?.effects?.surfaceTransparencyPercent || 0"
+              ref="transparencyRange"
+              :model-value="effectValue('surfaceTransparencyPercent')"
               :min="0"
               :max="50"
               :step="1"
               :aria-label="tr('settings.transparency', {}, '卡片与侧边栏透明度')"
-              @change="updateSetting('transparency', eventValue($event))"
+              @change="commitEffect('surfaceTransparencyPercent', 'transparency', eventValue($event))"
             />
-            <output>{{ state?.effects?.surfaceTransparencyPercent || 0 }}%</output>
+            <output>{{ effectValue('surfaceTransparencyPercent') }}%</output>
           </span>
         </nxp-field>
       </div>
