@@ -19,5 +19,10 @@
     "styles": [
       "web/style.css"
     ]
+  },
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/MaaAssistantArknights/design/c226f79dc954646ddd904294849ea19064e8e53e/v1/icons/maa-logo_512x512.png",
+    "sha256": "f404ffe0af05122c8b3097fe89c30bbd9cd94d6228036dd902f26a79ed373592",
+    "contentType": "image/png"
   }
 }

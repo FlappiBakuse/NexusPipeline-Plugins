@@ -5,10 +5,29 @@ import os
 import re
 from pathlib import Path, PureWindowsPath
 from typing import Any
+from urllib.parse import urlsplit
 
 import tools.repository.io as repository_io
 import tools.repository.model as repository_model
 import tools.repository.versions as repository_versions
+
+def _validate_script_type_icon(manifest: dict[str, Any]) -> None:
+    if "scriptTypeIcon" not in manifest:
+        return
+    icon = manifest["scriptTypeIcon"]
+    repository_io._require(isinstance(icon, dict), "scriptTypeIcon 必须是对象")
+    url, digest, mime = icon.get("url"), icon.get("sha256"), icon.get("contentType")
+    repository_io._require(isinstance(url, str) and len(url) <= 2048, "scriptTypeIcon URL 无效")
+    parsed = urlsplit(url)
+    repository_io._require(parsed.scheme == "https" and parsed.hostname == "raw.githubusercontent.com"
+        and parsed.port in (None, 443) and not parsed.username and not parsed.password
+        and not parsed.query and not parsed.fragment, "scriptTypeIcon 必须使用 HTTPS raw 来源")
+    parts = parsed.path.split("/")
+    repository_io._require(len(parts) >= 5 and re.fullmatch(r"[A-Za-z0-9-]+", parts[1])
+        and re.fullmatch(r"[A-Za-z0-9._-]+", parts[2]) and re.fullmatch(r"[a-fA-F0-9]{40}", parts[3])
+        and all(part and part not in (".", "..") for part in parts[4:]), "scriptTypeIcon 必须固定完整源码 SHA")
+    repository_io._require(isinstance(digest, str) and re.fullmatch(r"[a-fA-F0-9]{64}", digest), "scriptTypeIcon SHA-256 无效")
+    repository_io._require(mime in ("image/x-icon", "image/png") and parsed.path.lower().endswith(".png" if mime == "image/png" else ".ico"), "scriptTypeIcon 图像类型不匹配")
 
 def _canonical_locale(value: Any) -> str | None:
     if not isinstance(value, str):
@@ -527,6 +546,7 @@ def _validate_task_localization(manifest: dict[str, Any], read) -> None:
 def _validate_specialized_manifest_contract(manifest: dict[str, Any], label: str) -> None:
     """校验专项插件的声明面；源码与 ZIP 复用同一份白名单。"""
     _task_protocol_scripts(manifest)
+    _validate_script_type_icon(manifest)
     artifact = str(manifest.get("artifactName", label))
     repository_io._require(str(manifest.get("kind", "")).strip().lower() == "data-specialized", f"专项插件 {artifact} 的 kind 必须为 data-specialized")
     repository_io._require("frontend" not in manifest, f"专项插件 {artifact} 禁止声明 frontend 字段（包括 null）")
@@ -740,6 +760,7 @@ def validate_source_plugin(root: Path, *, supported_locales: frozenset[str] = re
     repository_io._require("configValidator" not in manifest, f"插件 {root.name} 声明已退役的 configValidator；请升级到 taskProtocol 配置诊断")
     repository_io._require(isinstance(store, dict), f"store.json 必须是对象：{repository_io._display(store_path)}")
     _task_protocol_scripts(manifest)
+    _validate_script_type_icon(manifest)
     repository_io._require(manifest.get("schemaVersion") == 2, f"插件 {root.name} 的 plugin.json schemaVersion 必须为 2")
     artifact = manifest.get("artifactName")
     repository_io._require(isinstance(artifact, str) and repository_model.ARTIFACT_PATTERN.fullmatch(artifact) and any(char.isupper() for char in artifact), f"artifactName 无效：{artifact}")

@@ -116,5 +116,10 @@
       }
     ]
   },
-  "configEditor": "data/editor.js"
+  "configEditor": "data/editor.js",
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/04b14f43570a361a5289f5ad7982e06ffe1f72d7/assets/logo/March7th.ico",
+    "sha256": "7c0c67608f1902a21d4a8dbac223d648828fe01c384e2d93fca321fea6a8f0b8",
+    "contentType": "image/x-icon"
+  }
 }

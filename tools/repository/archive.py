@@ -171,6 +171,7 @@ def _validate_zip(
             infos = archive.infolist()
             info_by_name = _validate_zip_layout(infos, package)
             manifest = _zip_json(archive, "plugin.json", package, info_by_name)
+            repository_source._validate_script_type_icon(manifest)
             repository_io._require("configValidator" not in manifest, f"ZIP 声明已退役的 configValidator：{repository_io._display(package)}")
             repository_io._require(repository_versions.parse_semver(manifest.get("minHostVersion")) >= repository_versions.parse_semver("0.16.15"), "当前 ZIP minHostVersion 必须至少为 0.16.15")
             if manifest.get("kind") == "managed-code":

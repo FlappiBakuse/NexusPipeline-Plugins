@@ -56,6 +56,7 @@ plugins/specialized/Example/
 | `displayName` | UI 展示名称 | 建议提供 |
 | `gameName` | UI 中的游戏名称 | 建议提供 |
 | `description` | 插件说明 | 建议提供 |
+| `scriptTypeIcon` | 新建脚本类型卡片的上游图标来源 | 可选对象，含 `url`、`sha256`、`contentType`；URL 必须为 HTTPS raw.githubusercontent.com 并固定完整40位源码 SHA，摘要为64位十六进制 SHA-256，图像类型为与 `.ico`/`.png` 匹配的 `image/x-icon`/`image/png` |
 | `version` | 插件自身版本 | 与宿主版本独立；使用 `major.minor.patch`、`-beta.N` 或 `-rc.N` |
 | `minHostVersion` | 最低宿主版本 | 使用与宿主一致的受限版本格式 |
 | `kind` | 插件类型 | 数据化专项插件使用 `data-specialized` |
@@ -66,6 +67,8 @@ plugins/specialized/Example/
 | `configEditor` | 配置编辑准备与只读修复提案脚本，相对插件目录 | 仅 `data-specialized` 可声明；公共字段不改；官方资产为 `data/editor.js` |
 
 宿主加载数据化插件时，`name`、`resolve`、`judgeScript` 以及被引用的文件是进入专项插件集合的必要条件。JSON 解析失败或引用文件缺失时，插件会被记录为加载失败并跳过。
+
+类型图标属于插件的声明数据，不提供浏览器代码。宿主 v0.17.0 加载已启用兼容插件后后台预取，复用代理并校验图像摘要；图像字节只保存到 `.nxp/cache/script-type-icons/`，不能放入插件源码或发行包。未声明或下载失败时使用宿主项目图标，不阻塞启动和创建。来源不得带凭据、查询或片段，不跟随重定向；请求新建弹窗时可以重试失败下载。managed-code 执行 provider 同样可以在 manifest 声明该字段。
 
 `data/` 下的 JavaScript/ECMAScript 和 Python 文件必须属于 `judgeScript`、`configEditor` 或 `taskProtocol` 三阶段脚本的实际引用闭包，或属于这些后端脚本使用的相对辅助脚本；未被执行契约引用的脚本会被拒绝。discover 配置检查是只读的，不提供任意浏览器代码执行能力。
 

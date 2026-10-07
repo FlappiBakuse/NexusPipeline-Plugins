@@ -398,5 +398,10 @@
       }
     ]
   },
-  "configurationRevision": "mfa-avalonia.instances.v1"
+  "configurationRevision": "mfa-avalonia.instances.v1",
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/MaaStellaSora/MaaStellaSora/ee9f3c9b65011d1b7649202328c0914af7910c81/assets/logo.ico",
+    "sha256": "8d1d2864177c25d338ea0f444a5214520f8e3575e9ef1fab0fc265217d4dc7b3",
+    "contentType": "image/x-icon"
+  }
 }

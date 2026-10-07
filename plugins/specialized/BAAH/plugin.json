@@ -155,5 +155,10 @@
       }
     ]
   },
-  "configEditor": "data/editor.js"
+  "configEditor": "data/editor.js",
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/BlueArchiveArisHelper/BAAH/c008a8f3eac90acacac6da49ebb10c061f44fc24/DATA/icons/aris.ico",
+    "sha256": "9c36c0cd7257ddde201d57a72cad096f6616b30d9b08e3686a948b25a29788b3",
+    "contentType": "image/x-icon"
+  }
 }
