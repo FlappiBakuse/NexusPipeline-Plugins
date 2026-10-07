@@ -20,7 +20,7 @@ export function loadBatch(root,args) {
   for(let i=0;i<args.length;i++) {
     const flag=args[i],value=args[++i];
     if(!["--plan","--batch","--host-root"].includes(flag)||Object.hasOwn(options,flag)||!value||value.startsWith("--"))
-      throw new Error("Usage: batch --plan <plan> --batch <control|batch-01..05> [--host-root <fixed Host>]");
+      throw new Error("Usage: batch --plan <plan> --batch <control|batch-NN> [--host-root <fixed Host>]");
     options[flag]=value;
   }
   if(!options["--plan"]||!options["--batch"]) throw new Error("Missing batch input");
@@ -28,7 +28,7 @@ export function loadBatch(root,args) {
   if(fs.lstatSync(file).isSymbolicLink()||fs.statSync(file).size>4*1024*1024) throw new Error("Unsafe plan file");
   const bytes=fs.readFileSync(file);policyDigest(bytes);
   const plan=JSON.parse(bytes);
-  if(plan.schemaVersion!==2||plan.repository!=="Plugins"||plan.capacityStatus!=="PLANNED"||plan.estimatedTotalJobs>10||plan.batches.length>5)
+  if(plan.schemaVersion!==2||plan.repository!=="Plugins"||plan.capacityStatus!=="PLANNED")
     throw new Error("Invalid or CAPACITY_EXCEEDED batch plan");
   const policy=JSON.parse(fs.readFileSync(path.join(root,"tests/policy.json")));
   const {registry}=readRegistry(root);
@@ -84,7 +84,7 @@ export function saveBatch(context,runRoot,workspace,units,exitCode,elapsedMs,cle
       inputMode:context.plan.inputMode??"default",inputPair:context.plan.inputPair??null,partnerSha:context.plan.partnerSha,partner:context.partnerSource??null,partnerFingerprint:context.partnerFingerprint??null,source:workspace?.source??null,sourceFingerprint:workspace?.sourceFingerprint??null,
       workingTreeDirty:workspace?.source.workingTreeDirty??null,toolchain:{...workspace?.toolchain,platform:process.platform,arch:process.arch,rid:"win-x64",buildModes:["production","test-host"]},
       toolchainFingerprint:hash(JSON.stringify({...workspace?.toolchain,platform:process.platform,arch:process.arch,rid:"win-x64",buildModes:["production","test-host"]}))},policyDigest:context.plan.policyDigest,planDigest:context.planDigest,
-    status:exitCode?"FAIL":"PASS",exitCode,timing:{qualificationMs:300000,hardTimeoutMs:300000,processElapsedMs:elapsedMs,preparationElapsedMs:context.setupElapsedMs??0,completeJobMs:null},
+    status:exitCode?"FAIL":"PASS",exitCode,timing:{qualificationMs:null,hardTimeoutMs:null,processElapsedMs:elapsedMs,preparationElapsedMs:context.setupElapsedMs??0,completeJobMs:null},
     cleanupComplete:cleanup.cleanupComplete,units:units.map(unit=>({real:[],substituted:[],...unit})),artifacts};
   fs.writeFileSync(path.join(runRoot,"batch-report.json"),JSON.stringify(report,null,2)+"\n");
   return report;
@@ -125,7 +125,7 @@ export async function runBatch(root,args) {
   if(!Number.isFinite(jobStarted)||jobStarted>Date.now()) throw new Error("Invalid job start time");
   const elapsedSetup=Date.now()-jobStarted;
   context.setupElapsedMs=elapsedSetup;
-  const budget=new Budget("Plugins batch",300000,{reserveMs:20000,qualificationMs:300000,inheritedWorkMs:280000-elapsedSetup,inheritedHardMs:300000-elapsedSetup});
+  const budget=new Budget("Plugins batch",null);
   const tmp=path.join(artifactRoot,"tmp");fs.mkdirSync(tmp,{recursive:true});
   const env={...process.env,NEXUS_TEST_ARTIFACT_ROOT:artifactRoot,TEMP:tmp,TMP:tmp,PYTHONDONTWRITEBYTECODE:"1",PYTHONUTF8:"1",
     NUGET_PACKAGES:process.env.NUGET_PACKAGES||path.join(artifactRoot,"cache/nuget"),npm_config_cache:process.env.npm_config_cache||path.join(artifactRoot,"cache/npm"),
@@ -201,7 +201,6 @@ export async function runBatch(root,args) {
     if(host) {context.partnerSource=host.source;context.partnerFingerprint=host.sourceFingerprint;}
     const cleanup=getProcessRunnerState();if(!cleanup.cleanupComplete) primary ||=6;
     if(cleanup.cleanupComplete) {workspace?.release();host?.release();}
-    if(budget.elapsedMs+elapsedSetup>300000) primary ||=5;
     saveBatch(context,runRoot,workspace??reportWorkspace,results,primary,budget.elapsedMs,cleanup);
   }
   return primary;

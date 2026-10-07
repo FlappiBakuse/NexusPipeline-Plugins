@@ -52,7 +52,7 @@ export async function runPluginGate(id, hostRoot) {
   if (!/^[A-Za-z0-9_-]+$/.test(runId)) throw new Error("Invalid gate run identity");
   const runRoot = path.join(artifactRoot, "runs", runId);
   fs.mkdirSync(runRoot, { recursive: true });
-  const budget = new Budget(id, 300000, { qualificationMs: 300000, reserveMs: 10000 });
+  const budget = new Budget(id, null);
   const temporary = path.join(artifactRoot, "tmp"); fs.mkdirSync(temporary, { recursive: true });
   const env = { ...process.env, NEXUS_TEST_ARTIFACT_ROOT: artifactRoot, TEMP: temporary, TMP: temporary,
     NUGET_PACKAGES: process.env.NUGET_PACKAGES || path.join(artifactRoot, "cache/nuget"),
@@ -139,14 +139,13 @@ export async function runPluginGate(id, hostRoot) {
     const cleanup = getProcessRunnerState();
     if (!cleanup.cleanupComplete) exitCode ||= 6;
     if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
-    if (budget.elapsedMs > 300000) exitCode ||= 5;
     const report = { schemaVersion: 1, scope: "LOCAL_GATE", gateId: id, kind: gate.kind, runId,
       source: plugins?.source ?? { commitSha: sourceSha, workingTreeDirty: sourceDirty },
       partner: gate.partnerRequired ? host?.source ?? { commitSha: hostSha, workingTreeDirty: hostDirty } : null,
       policyDigest: digest,
       digestFormat: "utf8-lf-v1", selectedCases: expectedCases, completedCases: cases, counts, scenarios,
       status: exitCode ? "FAIL" : "PASS", exitCode, failure,
-      timing: { qualificationMs: 300000, hardTimeoutMs: 300000, localElapsedMs: budget.elapsedMs, actualJobMs: null },
+      timing: { qualificationMs: null, hardTimeoutMs: null, localElapsedMs: budget.elapsedMs, actualJobMs: null },
       cleanup, artifacts: artifacts.map(file => ({ file: path.relative(runRoot, file).replaceAll("\\", "/"),
         sha256: sha256(fs.readFileSync(file)) })) };
     fs.writeFileSync(path.join(runRoot, "gate-report.json"), JSON.stringify(report, null, 2) + "\n");

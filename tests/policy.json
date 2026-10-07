@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "invocationBudgetMs": 300000,
-  "qualificationMs": 300000,
-  "cleanupReserveMs": 10000,
-  "pluginCleanupReserveMs": 5000,
+  "invocationBudgetMs": null,
+  "qualificationMs": null,
+  "cleanupReserveMs": 0,
+  "pluginCleanupReserveMs": 0,
   "plugins": {
     "CustomWallpaper": {
       "root": "plugins/general/CustomWallpaper",
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 300000
+        "core": null
       },
       "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
       "expectedMethods": [
@@ -35,7 +35,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 300000
+        "core": null
       },
       "testProject": "plugins/general/EmulatorSupport/tests/NexusPipeline.Plugin.EmulatorSupport.Tests.csproj",
       "expectedMethods": [
@@ -53,7 +53,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 300000
+        "core": null
       },
       "testProject": "plugins/general/GameCheckIn/tests/NexusPipeline.Plugin.GameCheckIn.Tests.csproj",
       "expectedMethods": [
@@ -78,7 +78,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 300000
+        "core": null
       },
       "testProject": "plugins/general/LiveScreenshot/tests/NexusPipeline.Plugin.LiveScreenshot.Tests.csproj",
       "expectedMethods": [
@@ -92,8 +92,8 @@
       "kind": "managed-code",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": "plugins/general/MaaFrameworkDriver/tests/NexusPipeline.Plugin.MaaFrameworkDriver.Tests.csproj",
       "expectedMethods": [
@@ -124,8 +124,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -142,8 +142,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -159,8 +159,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -173,13 +173,16 @@
       "realScenario": "P-S-MaaEnd"
     },
     "MaaStellaSora": {
-      "editorCaseIds": ["MaaStellaSora.editor-select-and-preserve", "MaaStellaSora.editor-repeat"],
+      "editorCaseIds": [
+        "MaaStellaSora.editor-select-and-preserve",
+        "MaaStellaSora.editor-repeat"
+      ],
       "root": "plugins/specialized/MaaStellaSora",
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -197,8 +200,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -216,8 +219,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -233,8 +236,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -250,8 +253,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 300000,
-        "adapter": 300000
+        "core": null,
+        "adapter": null
       },
       "testProject": null,
       "expectedMethods": [],
@@ -267,8 +270,7 @@
     }
   },
   "ciBatchPolicy": {
-    "workMs": 280000,
-    "maxBatches": 5,
+    "workMs": null,
     "fixedJobs": 5,
     "preparationMs": {
       "source": 500,

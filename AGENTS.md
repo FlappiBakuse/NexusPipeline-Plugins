@@ -45,7 +45,7 @@
 
 自动化测试从当前终端直接运行并继承权限。普通或管理员终端均可，不主动 UAC、降权或按权限跳过。Windows managed/宿主运行测试仍需要 Windows；平台缺失写明 NOT_RUN，不冒称普通权限导致无法测试。Host 功能联调使用其 asInvoker Test Host，正式发行 EXE 的管理员要求保持。
 
-日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。累计预算、真实能力边界、原生输入和报告见 `docs/TESTING.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/RELEASING.md`：
+日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。完整耗时记录、真实能力边界、原生输入和报告见 `docs/TESTING.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/RELEASING.md`：
 
 ```text
 python tools/repo.py check source
@@ -68,7 +68,7 @@ PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享�
 
 ## 5. 候选与发布
 
-PR 要求 `Plugins / 必需汇总` 与 `Plugins / 完整预算` 两项检查。scope、可选 control、最多五个 Windows batch、必需汇总 及可信 main 的 begin/finalize 控制器，每 attempt 最多十个物理 job，每个完整 job 不超过 300 秒。本地 batch 使用 280 秒工作窗口和 300 秒硬截止（最后 50 秒留给收尾）；本地耗时不能代替 Actions 完整时长。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
+PR 要求 `Plugins / 必需汇总` 与 `Plugins / 完整预算` 两项检查。scope、可选 control、按准备依赖划分的 Windows batch、必需汇总 及可信 main 的 begin/finalize 控制器，每 attempt 核验全部实际物理 job 和完整耗时，不设执行时间或作业数量预算上限。本地 batch 不设执行时间预算；本地耗时不能代替 Actions 完整时长。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
 
 构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Publisher App 令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
 

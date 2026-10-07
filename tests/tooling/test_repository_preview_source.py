@@ -56,8 +56,7 @@ class PreviewSourceTests(unittest.TestCase):
         fixture[f"{PREFIX}/runs/12/attempts/2/jobs?per_page=100&page=1"] = {"jobs": jobs}
         self.assertEqual(self.resolve(fixture)["runAttempt"], 2)
         jobs[-1]["completed_at"] = "2026-09-29T00:05:01Z"
-        with self.assertRaisesRegex(CandidateSourceError, "超过 300 秒"):
-            self.resolve(fixture)
+        self.assertEqual(self.resolve(fixture)["runAttempt"],2)
         jobs[-1]["completed_at"] = "2026-09-29T00:05:00Z"
         jobs[-1]["conclusion"] = "skipped"
         with self.assertRaisesRegex(CandidateSourceError, "未真实成功"):

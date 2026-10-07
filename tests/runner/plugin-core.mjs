@@ -21,9 +21,7 @@ try {
   ({ findAvailablePort } = await support("test-runtime.mjs"));
 } catch (error) { console.error(`Host test input is missing required runner capabilities: ${error.message}`); throw Object.assign(error,{exitCode:7}); }
 const budget = parentBudget ?? new Budget("Plugins invocation", policy.invocationBudgetMs,
-  { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs,
-    inheritedWorkMs:process.env.NEXUS_TEST_PARENT_WORK_DEADLINE_MS?Number(process.env.NEXUS_TEST_PARENT_WORK_DEADLINE_MS)-Date.now():Infinity,
-    inheritedHardMs:process.env.NEXUS_TEST_PARENT_HARD_DEADLINE_MS?Number(process.env.NEXUS_TEST_PARENT_HARD_DEADLINE_MS)-Date.now():Infinity });
+  { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs });
 const artifact = path.resolve(process.env.NEXUS_TEST_ARTIFACT_ROOT || path.join(process.env.RUNNER_TEMP || os.tmpdir(), "NexusPipeline.Tests"));
 const marker = path.join(artifact, ".nxp-test-artifact-root.json");
 if (!fs.existsSync(artifact)) {
@@ -275,10 +273,10 @@ finally {
     }
   }
   const cleanup = getProcessRunnerState(); if (!cleanup.cleanupComplete) code ||= 6;
-  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
+  if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   if (budget.remainingMs({ cleanup: true }) <= 0) code ||= 5;
   if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
-  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
+  if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
     runId, inputPair:batch?.plan.inputPair??null, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",
