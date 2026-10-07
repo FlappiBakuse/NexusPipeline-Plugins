@@ -1,0 +1,45 @@
+{
+  "epochUnixMs": 1000000,
+  "boundaryUnixMs": 1060000,
+  "commitUnixMs": 1064000,
+  "before": {
+    "currentId": "d1cda942191fcae9d609b7bf8b435c72e8d6b51b7ec09f0a044ffc2b90c650af",
+    "revision": 4,
+    "rotation": {
+      "mode": "timer",
+      "intervalMinutes": 1,
+      "epochUnixMs": 1000000,
+      "nextSwitchAt": "1970-01-01T00:17:40.0000000+00:00"
+    }
+  },
+  "committed": {
+    "currentId": "75a9c823127f73396c52c89af46df98bfdd884e7b3be35412c894d96debfaf34",
+    "revision": 4,
+    "rotation": {
+      "mode": "timer",
+      "intervalMinutes": 1,
+      "epochUnixMs": 1000000,
+      "nextSwitchAt": "1970-01-01T00:18:40.0000000+00:00"
+    }
+  },
+  "singleBefore": {
+    "currentId": "d1cda942191fcae9d609b7bf8b435c72e8d6b51b7ec09f0a044ffc2b90c650af",
+    "revision": 3,
+    "rotation": {
+      "mode": "timer",
+      "intervalMinutes": 1,
+      "epochUnixMs": 1000000,
+      "nextSwitchAt": "1970-01-01T00:17:40.0000000+00:00"
+    }
+  },
+  "singleCommitted": {
+    "currentId": "d1cda942191fcae9d609b7bf8b435c72e8d6b51b7ec09f0a044ffc2b90c650af",
+    "revision": 3,
+    "rotation": {
+      "mode": "timer",
+      "intervalMinutes": 1,
+      "epochUnixMs": 1000000,
+      "nextSwitchAt": "1970-01-01T00:18:40.0000000+00:00"
+    }
+  }
+}

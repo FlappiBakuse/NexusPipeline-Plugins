@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { registerHooks } from "node:module";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import { wallpaperTestState, createMetrics, createMockHost } from "../support/mock-host.mjs";
 import { activationCleanup, fail } from "../contract.mjs";
@@ -105,59 +105,110 @@ export async function assertWallpaperStateOrdering(source) {
   try { ({ createWallpaperRuntime } = await import(pathToFileURL(source).href)); }
   finally { hook.deregister(); }
   const original = { now: Date.now, setTimeout, clearTimeout, setInterval, clearInterval };
-  let now = 1_000_000, nextId = 1;
+  const contract = JSON.parse(readFileSync(new URL('../../../plugins/general/CustomWallpaper/tests/fixtures/timer-contract.json', import.meta.url)));
+  let now = contract.boundaryUnixMs - 1000, nextId = 1;
   const timers = new Map(), intervals = new Map();
   Date.now = () => now;
   globalThis.setTimeout = (callback, delay) => { const id = nextId++; timers.set(id, { callback, at: now + delay }); return id; };
   globalThis.clearTimeout = id => timers.delete(id);
-  globalThis.setInterval = (callback, delay) => { const id = nextId++; intervals.set(id, { callback, delay }); return id; };
+  globalThis.setInterval = (callback, delay) => { const id = nextId++; intervals.set(id, { callback, delay, at: now + delay }); return id; };
   globalThis.clearInterval = id => intervals.delete(id);
   const settle = async () => { for (let index = 0; index < 24; index++) await Promise.resolve(); };
   const tick = async milliseconds => {
-    now += milliseconds;
-    for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.callback(); }
+    const end = now + milliseconds;
+    while (true) {
+      const next = Math.min(...[...timers.values(), ...intervals.values()].map(timer => timer.at));
+      if (next > end) break;
+      now = next;
+      for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.callback(); }
+      for (const timer of intervals.values()) if (timer.at <= now) { timer.at += timer.delay; timer.callback(); }
+      await settle();
+    }
+    now = end;
     await settle();
   };
-  const metrics = createMetrics(); metrics.connectionKind = 'remote';
-  const server = wallpaperTestState({ rotation: { mode: 'timer', nextSwitchAt: new Date(now + 1000).toISOString() } });
-  const host = createMockHost('CustomWallpaper', [], metrics, server);
-  const runtime = createWallpaperRuntime(host);
+  const response = frame => {
+    const state = wallpaperTestState(frame);
+    const ids = [...new Set([contract.before.currentId, contract.committed.currentId])];
+    state.assets = ids.map(id => ({ ...state.assets[0], id }));
+    state.order = ids;
+    state.selectedId = ids[0];
+    return state;
+  };
+  const runtimes = [];
   try {
-    await Promise.all([runtime.start(), runtime.start()]);
-    assert.equal(metrics.apiGet, 1); assert.equal(metrics.apiPost, 0); assert.equal(intervals.size, 1);
-    await tick(1000);
-    assert.equal(metrics.apiGet, 2); assert.equal(timers.size, 1, 'early unchanged read must schedule catch-up');
-    const second = 'b'.repeat(64);
-    server.assets.push({ ...server.assets[0], id: second }); server.currentId = second;
-    server.rotation.nextSwitchAt = new Date(now + 60_000).toISOString();
-    await tick(1000);
-    assert.equal(runtime.snapshot().state.currentId, second, 'timer commit with unchanged config revision must appear');
-    assert.equal(metrics.apiGet, 3);
+    for (const [before, committed] of [[contract.before, contract.committed], [contract.singleBefore, contract.singleCommitted]]) {
+      now = contract.boundaryUnixMs - 1000;
+      const metrics = createMetrics(); metrics.connectionKind = 'remote';
+      const host = createMockHost('CustomWallpaper', [], metrics, response(before));
+      host.api.get = async () => { metrics.apiGet++; return response(now < contract.commitUnixMs ? before : committed); };
+      const runtime = createWallpaperRuntime(host); runtimes.push(runtime);
+      const unsubscribe = runtime.subscribe(() => {});
+      await Promise.all([runtime.start(), runtime.start()]);
+      unsubscribe();
+      assert.equal(metrics.apiGet, 1); assert.equal(metrics.apiPost, 0); assert.equal(intervals.size, 1);
+      for (let index = 0; index < 4; index++) {
+        await tick(1000);
+        assert.equal(runtime.snapshot().state.currentId, before.currentId);
+        assert.equal(runtime.snapshot().state.rotation.nextSwitchAt, before.rotation.nextSwitchAt);
+        assert.equal(timers.size, 1, 'pending committed cursor must retain one catch-up timer');
+      }
+      await tick(1000);
+      assert.equal(now, contract.commitUnixMs);
+      assert.equal(metrics.apiGet, 6, 'four-second backend delay must resolve before the 30-second poll');
+      assert.equal(runtime.snapshot().state.currentId, committed.currentId);
+      assert.equal(runtime.snapshot().state.revision, committed.revision);
+      assert.equal(runtime.snapshot().state.rotation.nextSwitchAt, committed.rotation.nextSwitchAt);
+      assert.equal([...timers.values()][0].at, Date.parse(committed.rotation.nextSwitchAt));
+      assert.equal(metrics.appearanceSetBackground, before.currentId === committed.currentId ? 1 : 2);
+      runtime.dispose(); assert.equal(timers.size, 0); assert.equal(intervals.size, 0);
+    }
+    now = contract.boundaryUnixMs;
+    const metrics = createMetrics(); metrics.connectionKind = 'remote';
+    const host = createMockHost('CustomWallpaper', [], metrics, response(contract.before));
+    const runtime = createWallpaperRuntime(host); runtimes.push(runtime);
+    await runtime.start();
+    let reads = 0;
+    host.api.get = async () => { reads++; throw new Error('temporarily unavailable'); };
+    await tick(12_000);
+    assert.equal(reads, 8, 'failed overdue reads must stop at eight retries');
+    assert.equal(timers.size, 0); assert.equal(intervals.size, 1);
+    host.api.get = async () => response(contract.committed);
+    await tick(18_000);
+    assert.equal(runtime.snapshot().state.currentId, contract.committed.currentId, 'low-frequency poll must recover after catch-up exhaustion');
+    assert.equal(runtime.snapshot().error, '');
     let resolveOld;
-    const oldState = structuredClone(server);
+    const oldState = response(contract.committed);
     host.api.get = async () => new Promise(resolve => { resolveOld = resolve; });
     const oldRead = runtime.refresh();
-    const saved = { ...structuredClone(server), revision: 2, currentId: server.assets[0].id };
+    const saved = { ...response(contract.before), revision: oldState.revision + 1 };
     await runtime.apply(saved);
     const backgroundCount = metrics.appearanceSetBackground;
-    resolveOld({ ...oldState, revision: 1 }); await oldRead;
-    assert.equal(runtime.snapshot().state.revision, 2); assert.equal(runtime.snapshot().state.currentId, saved.currentId);
+    resolveOld(oldState); await oldRead;
+    assert.equal(runtime.snapshot().state.revision, saved.revision);
+    assert.equal(runtime.snapshot().state.currentId, saved.currentId);
     assert.equal(metrics.appearanceSetBackground, backgroundCount, 'stale GET must not undo a confirmed save');
     host.api.get = async () => structuredClone(saved);
-    await runtime.apply({ ...saved, rotation: { mode: 'timer', nextSwitchAt: new Date(now - 1000).toISOString() } });
-    const expired = structuredClone(runtime.snapshot().state);
-    let reads = 0; host.api.get = async () => { reads++; return structuredClone(expired); };
-    for (let index = 0; index < 12; index++) await tick(1000);
-    assert.equal(timers.size, 0); assert.ok(reads <= 8, 'overdue projection must stop high-frequency retry');
+    for (const patch of [{effectiveEnabled:false}, {rotation:{mode:'off',nextSwitchAt:null}}, {assets:[],order:[],currentId:''}]) {
+      await runtime.apply({ ...saved, ...patch });
+      assert.equal(timers.size, 0, 'disabled or empty wallpaper must release its rotation timer');
+    }
     await runtime.apply({ ...saved, rotation: { mode: 'timer', nextSwitchAt: 'invalid' } });
     assert.equal(timers.size, 0);
+    let resolveBlob;
+    host.api.blob = async () => new Promise(resolve => { resolveBlob = resolve; });
+    const applying = runtime.apply(saved);
+    await settle();
     let resolveDisposed; host.api.get = async () => new Promise(resolve => { resolveDisposed = resolve; });
-    const pending = runtime.refresh(); runtime.dispose(); const afterDispose = metrics.appearanceSetBackground;
-    resolveDisposed(saved); await pending;
-    assert.equal(metrics.appearanceSetBackground, afterDispose); assert.equal(runtime.snapshot().state, null);
+    const pending = runtime.refresh(); runtime.dispose();
+    const afterDispose = [metrics.appearanceSetBackground, metrics.appearanceSetTokens];
+    resolveBlob(new Blob(['late wallpaper'])); resolveDisposed(saved);
+    await Promise.all([pending, applying]);
+    assert.deepEqual([metrics.appearanceSetBackground, metrics.appearanceSetTokens], afterDispose);
+    assert.equal(runtime.snapshot().state, null);
     assert.equal(timers.size, 0); assert.equal(intervals.size, 0);
   } finally {
-    runtime.dispose(); Date.now = original.now;
+    runtimes.forEach(runtime => runtime.dispose()); Date.now = original.now;
     for (const key of ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval']) globalThis[key] = original[key];
   }
 }

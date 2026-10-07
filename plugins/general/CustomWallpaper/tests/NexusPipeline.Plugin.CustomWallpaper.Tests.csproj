@@ -15,4 +15,7 @@
     <ProjectReference Include="..\src\NexusPipeline.Plugin.CustomWallpaper.csproj" />
     <ProjectReference Include="..\..\..\..\tests\support\dotnet\PluginTestKit\NexusPipeline.Plugin.TestKit.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="fixtures/timer-contract.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
