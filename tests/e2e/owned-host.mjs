@@ -7,7 +7,7 @@ export const runtime = await import(pathToFileURL(path.join(process.env.NEXUS_HO
 export function prepareProcessIdentity() {
   if (process.platform !== "win32") return;
   const probe = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
-    `$null = Get-CimInstance Win32_Process -Filter 'ProcessId = ${process.pid}' -ErrorAction Stop`],
+    `$null = Get-Process -Id ${process.pid} -ErrorAction Stop`],
     { encoding: "utf8", windowsHide: true, timeout: 10000 });
   if (probe.status !== 0) throw new Error(`Windows process identity preparation failed: ${probe.error?.message || probe.stderr}`);
 }
