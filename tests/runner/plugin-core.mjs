@@ -141,7 +141,7 @@ try {
   const preparationFailure = preparation.find(outcome => outcome.status === "rejected");
   if (preparationFailure) throw preparationFailure.reason;
   if (specialized) await step("shared Jint test engine", "dotnet", ["build", "tools/NexusPipeline.TaskProtocolTests", ...dotnetOptions(), "-p:NexusTestHost=true"], { cwd: host.directory });
-  for (const name of selection.selected) {
+  const executePlugin=async name=>{
     const item = policy.plugins[name];
     const profile = input.options["--profile"] || (batch&&name==="MaaFrameworkDriver" ? "adapter" : item.defaultProfile);
     const pluginBudget = budget.child(name, item.profiles[profile], policy.pluginCleanupReserveMs);
@@ -254,7 +254,14 @@ try {
       fs.writeFileSync(path.join(directory, "summary.json"), JSON.stringify(result, null, 2));
     }
     if (result.exitCode) throw Object.assign(new Error(`${name}: ${result.status}`), { exitCode: result.exitCode });
-  }
+  };
+  const parallel=selection.selected.every(name=>policy.plugins[name].kind==="managed-code")?2:1;
+  let next=0;
+  const outcomes=await Promise.allSettled(Array.from({length:Math.min(parallel,selection.selected.length)},async()=>{
+    while(next<selection.selected.length)await executePlugin(selection.selected[next++]);
+  }));
+  const failed=outcomes.find(outcome=>outcome.status==="rejected");
+  if(failed)throw failed.reason;
 } catch (error) { code = error.exitCode ?? 3; failure = error.message; console.error(error.message); }
 finally {
   for (const name of selection?.selected ?? []) {

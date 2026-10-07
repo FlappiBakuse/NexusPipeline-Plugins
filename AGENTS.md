@@ -68,7 +68,7 @@ PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享�
 
 ## 5. 候选与发布
 
-PR 要求 `Plugins / 必需汇总` 与 `Plugins / 完整预算` 两项检查。scope、可选 control、最多五个 Windows batch、必需汇总 及可信 main 的 begin/finalize 控制器，每 attempt 最多十个物理 job，每个完整 job 不超过 150 秒。本地 batch 使用 130 秒工作窗口和 180 秒硬截止（最后 50 秒留给收尾）；本地耗时不能代替 Actions 完整时长。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
+PR 要求 `Plugins / 必需汇总` 与 `Plugins / 完整预算` 两项检查。scope、可选 control、最多五个 Windows batch、必需汇总 及可信 main 的 begin/finalize 控制器，每 attempt 最多十个物理 job，每个完整 job 不超过 300 秒。本地 batch 使用 280 秒工作窗口和 300 秒硬截止（最后 50 秒留给收尾）；本地耗时不能代替 Actions 完整时长。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
 
 构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Publisher App 令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
 

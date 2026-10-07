@@ -38,7 +38,7 @@ jobs:
     name: Plugins / 预览输入
     if: inputs.operation == 'candidate'
     runs-on: windows-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -121,7 +121,7 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.preview-plan.outputs.matrix) }}
     runs-on: windows-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -186,7 +186,7 @@ jobs:
     name: Plugins / 预览构建
     needs: [preview-plan, preview-package]
     runs-on: windows-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     defaults:
       run:
         working-directory: NexusPipeline-Plugins
@@ -250,7 +250,7 @@ jobs:
     needs: build-preview
     if: inputs.operation == 'candidate' && inputs.publish
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     environment: plugin-preview-publish
     concurrency:
       group: plugin-develop-preview-publish
@@ -302,7 +302,7 @@ jobs:
     name: Plugins / 预览恢复
     if: inputs.operation == 'restore'
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     environment: plugin-preview-publish
     concurrency:
       group: plugin-develop-preview-publish

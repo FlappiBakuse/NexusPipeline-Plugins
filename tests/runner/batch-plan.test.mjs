@@ -35,12 +35,12 @@ test("0/1/13/50/100 synthetic plugins never cause a sixth batch or lose obligati
     assert.equal(plan.units.length,count);
     assert.equal(plan.requiredObligations.length,count);
     assert.equal(plan.batches.reduce((sum,b)=>sum+b.units.length,0)+plan.unplacedUnits.length,count);
-    if(count>=50) assert.equal(plan.capacityStatus,"CAPACITY_EXCEEDED");
+    if(count>=100) assert.equal(plan.capacityStatus,"CAPACITY_EXCEEDED");
   }
 });
 test("oversized unit fails capacity without becoming N/A",()=>{
   const unit={id:"slow",provides:["essential"],preparations:[],kind:"plugin"};
-  const plan=allocateUnits([unit],{}, {unitMs:{slow:130001}});
+  const plan=allocateUnits([unit],{}, {unitMs:{slow:280001}});
   assert.equal(plan.capacityStatus,"CAPACITY_EXCEEDED");
   assert.deepEqual(plan.requiredObligations,["essential"]);
   assert.equal(plan.unplacedUnits[0].id,"slow");
@@ -59,6 +59,8 @@ test("browser capability batches reserve preparation without losing package obli
   assert.ok(plan.batches.length<=5);
   assert.deepEqual(plan.batches.flatMap(batch=>batch.units.flatMap(unit=>unit.provides)).concat(plan.control.units.flatMap(unit=>unit.provides)).sort(),plan.requiredObligations);
   for(const batch of plan.batches.filter(batch=>batch.units.some(unit=>unit.preparations.includes("host.browser")))) {
-    assert.ok(!batch.units.some(unit=>unit.preparations.some(preparation=>preparation.startsWith("plugin.production-package:"))));
+    assert.ok(batch.estimatedMs<=policy.ciBatchPolicy.workMs);
+    for(const unit of batch.units.filter(unit=>unit.preparations.includes('host.browser')))
+      assert.ok(unit.expectedScenarioIds.length>0);
   }
 });

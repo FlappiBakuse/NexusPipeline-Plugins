@@ -20,7 +20,7 @@ node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 
 `tests/policy.json` 登记当前插件清单、组件方法和有限适配轨迹（当前 13 个，数量不是扩展上限）；源码 manifest 必须与登记精确一致。未知插件、重复参数、空变化集合、遗漏报告、零用例和 skip 均失败。变化只属于一个插件时只选该插件；共享、删除、改名和未知输入保守选择全部。纯文档变化为 NOT_APPLICABLE，CI 仍生成范围与汇总检查。
 
-正式 PR 门禁由 `plan` 将逻辑义务合并为执行单元，分配到可选 control 与最多五个 batch；容量不足明确失败，不删除义务。`gate --id` 是显式诊断。batch 工作窗口 130 秒、硬截止 180 秒（最后 50 秒用于收尾），所有准备、子进程、报告与清理继承父截止；过程加准备上限 150 秒只证明本地预算。包内容 gate 实际构建所选插件 ZIP，核对名称、版本、内容边界、大小和 SHA256。`plugin` 与 `daily` 保留为本地诊断入口；同一次命令仍共享 180 秒预算，但不再采用 30/60/120 秒的固定插件合格线。超时为 5、清理失败为 6、缺少所需能力为 7、报告错误为 4、取消为 130。
+正式 PR 门禁由 `plan` 将逻辑义务合并为执行单元，分配到可选 control 与最多五个 batch；容量不足明确失败，不删除义务。`gate --id` 是显式诊断。batch 工作窗口 280 秒、硬截止 300 秒（最后 20 秒用于收尾），所有准备、子进程、报告与清理继承父截止；过程加准备上限 300 秒只证明本地预算。包内容 gate 实际构建所选插件 ZIP，核对名称、版本、内容边界、大小和 SHA256。`plugin` 与 `daily` 保留为本地诊断入口；同一次命令仍共享 300 秒预算，但不再采用 30/60/120 秒的固定插件合格线。超时为 5、清理失败为 6、缺少所需能力为 7、报告错误为 4、取消为 130。
 
 运行目录和依赖缓存位于已登记的外部 `NEXUS_TEST_ARTIFACT_ROOT`；不设置时使用 runner 或系统临时目录。源码按原字节复制并记录完整指纹，Host 与 Plugins 构建各有独占 lease。不可并行执行两个写入同一缓存的命令。失败证据保留，不覆盖已有 run ID。
 
@@ -35,6 +35,8 @@ node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 
 Host Test Host 与插件组件使用独立的恢复和输出图，可以并行准备；共享生产 SDK/TestKit 的组件工程仍串行构建。选中的插件前端共用一次 npm workspace 依赖安装，类型检查与构建逐插件执行。组件发现、原生测试、真实 Host 能力、包构建和清理继续逐项记录，并共享同一个父预算。
 
+完成共享组件构建后，纯 managed-code 选择最多使用两个插件执行槽位。每个插件的原生发现、用例和真实能力场景仍有独立报告、进程、端口和运行目录，全部槽位继承同一父预算并等待收尾；任一失败或清理不完整使整条命令失败。包含专项插件的选择保持单槽位。
+
 Maa native 输入单独准备并验证官方压缩包及文件 hash：
 
 ```text
@@ -47,9 +49,9 @@ CI 的范围 job 启动可选轻量 control 和最多五个 Windows batch；全�
 
 `python tools/repo.py check source`、全部历史 TaskProtocol fixture 和前端模拟 Host 工具保留为显式诊断；其边界不替代上述实际能力证据。生产打包、来源、hash 和 publisher 校验继续由现役发行工具维护。
 
-正式完整资格为每物理 job 150 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + 必需汇总 + begin + finalize 最多十个 job。必需汇总 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
+正式完整资格为每物理 job 300 秒，包含 checkout、工具/依赖准备、上传及 post-action；scope + 可选 control + 五批 + 必需汇总 + begin + finalize 最多十个 job。必需汇总 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
 
-必需汇总 只等待仍在排队或运行中的可信 main begin 登记，最多 100 秒，并受自身 130 秒工作截止约束；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
+必需汇总 只等待仍在排队或运行中的可信 main begin 登记，最多 100 秒，并受自身 280 秒工作截止约束；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
 
 ### 同 SHA 完整重跑
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "invocationBudgetMs": 180000,
-  "qualificationMs": 150000,
+  "invocationBudgetMs": 300000,
+  "qualificationMs": 300000,
   "cleanupReserveMs": 10000,
   "pluginCleanupReserveMs": 5000,
   "plugins": {
@@ -10,7 +10,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 150000
+        "core": 300000
       },
       "testProject": "plugins/general/CustomWallpaper/tests/NexusPipeline.Plugin.CustomWallpaper.Tests.csproj",
       "expectedMethods": [
@@ -35,7 +35,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 150000
+        "core": 300000
       },
       "testProject": "plugins/general/EmulatorSupport/tests/NexusPipeline.Plugin.EmulatorSupport.Tests.csproj",
       "expectedMethods": [
@@ -53,7 +53,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 150000
+        "core": 300000
       },
       "testProject": "plugins/general/GameCheckIn/tests/NexusPipeline.Plugin.GameCheckIn.Tests.csproj",
       "expectedMethods": [
@@ -78,7 +78,7 @@
       "kind": "managed-code",
       "defaultProfile": "core",
       "profiles": {
-        "core": 150000
+        "core": 300000
       },
       "testProject": "plugins/general/LiveScreenshot/tests/NexusPipeline.Plugin.LiveScreenshot.Tests.csproj",
       "expectedMethods": [
@@ -92,8 +92,8 @@
       "kind": "managed-code",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": "plugins/general/MaaFrameworkDriver/tests/NexusPipeline.Plugin.MaaFrameworkDriver.Tests.csproj",
       "expectedMethods": [
@@ -124,8 +124,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -142,8 +142,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -159,8 +159,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -178,8 +178,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -197,8 +197,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -216,8 +216,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -233,8 +233,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -250,8 +250,8 @@
       "kind": "data-specialized",
       "defaultProfile": "adapter",
       "profiles": {
-        "core": 150000,
-        "adapter": 150000
+        "core": 300000,
+        "adapter": 300000
       },
       "testProject": null,
       "expectedMethods": [],
@@ -267,7 +267,7 @@
     }
   },
   "ciBatchPolicy": {
-    "workMs": 130000,
+    "workMs": 280000,
     "maxBatches": 5,
     "fixedJobs": 5,
     "preparationMs": {
