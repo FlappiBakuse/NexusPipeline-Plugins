@@ -5,7 +5,7 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.15",
   "resolve": "data/resolve.json",

@@ -16,6 +16,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
   "changelog": [
     {
+      "version": "0.3.1",
+      "date": "2026-10-07",
+      "items": [
+        "声明官方上游脚本类型图标的固定源码地址与 SHA256，供宿主校验、缓存和展示。"
+      ]
+    },
+    {
       "version": "0.3.0",
       "date": "2026-10-04",
       "items": [
@@ -29,13 +36,6 @@
         "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
         "更新任务兼容说明和上游发行发现。",
         "使用 MFAAvalonia 稳定实例；旧 MXU 配置在 Host 启动恢复后备份清空，由用户重新设置。"
-      ]
-    },
-    {
-      "version": "0.2.1",
-      "date": "2026-09-25",
-      "items": [
-        "增加独立 PC 启动责任准入，保持原有机器身份。"
       ]
     }
   ],
@@ -51,6 +51,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.1",
+          "date": "2026-10-07",
+          "items": [
+            "Declare the official upstream script type icon with a pinned source URL and SHA256 for Host validation, caching and display."
+          ]
+        },
+        {
           "version": "0.3.0",
           "date": "2026-10-04",
           "items": [
@@ -64,14 +71,9 @@
             "Updated task compatibility and upstream release discovery.",
             "Uses stable MFAAvalonia instances; Host archives and clears legacy MXU configuration after startup recovery so users can configure it again."
           ]
-        },
-        {
-          "version": "0.2.1",
-          "items": [
-            "Added independent PC launch-owner admission while preserving the existing machine identity."
-          ]
         }
       ]
     }
-  }
+  },
+  "updatedAt": "2026-10-07"
 }
