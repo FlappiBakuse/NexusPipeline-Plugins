@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
   "changelog": [
     {
+      "version": "0.3.1",
+      "date": "2026-10-05",
+      "items": [
+        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
+      ]
+    },
+    {
       "version": "0.3.0",
       "date": "2026-10-04",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-09-12",
       "items": [
         "插件前端升级到 Frontend API 1.5，改用公开 nxp-* 组件与宿主稳定 design token。"
-      ]
-    },
-    {
-      "version": "0.1.6",
-      "date": "2026-09-11",
-      "items": [
-        "修复 Vue 前端发行产物在浏览器中无法挂载的问题。"
       ]
     }
   ],
@@ -48,6 +48,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.1",
+          "date": "2026-10-05",
+          "items": [
+            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+          ]
+        },
+        {
           "version": "0.3.0",
           "date": "2026-10-04",
           "items": [
@@ -58,12 +65,6 @@
           "version": "0.2.0",
           "items": [
             "The plugin frontend targets Frontend API 1.5 and now uses public nxp-* elements with host design tokens."
-          ]
-        },
-        {
-          "version": "0.1.6",
-          "items": [
-            "Fixed the Vue frontend package so the live preview mounts in the browser."
           ]
         }
       ]

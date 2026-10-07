@@ -119,12 +119,12 @@ internal sealed class CheckInTaskService
 
     private void RegisterRoutes()
     {
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("GET", "state", GetStateAsync)));
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks", CreateTaskAsync)));
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks", UpdateTaskAsync)));
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks/order", ReorderTasksAsync)));
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("DELETE", "tasks", DeleteTaskAsync)));
-        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks/run", RunTaskAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("GET", "state", PluginOperationAccess.General, GetStateAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks", PluginOperationAccess.General, CreateTaskAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks", PluginOperationAccess.General, UpdateTaskAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks/order", PluginOperationAccess.General, ReorderTasksAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("DELETE", "tasks", PluginOperationAccess.General, DeleteTaskAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks/run", PluginOperationAccess.General, RunTaskAsync)));
     }
 
     private async ValueTask<PluginWebApiResponse> GetStateAsync(PluginWebApiRequest request, CancellationToken cancellationToken)

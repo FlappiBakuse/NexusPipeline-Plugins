@@ -52,6 +52,11 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
   let rotationTimer: ReturnType<typeof setTimeout> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let inFlight: Promise<void> | null = null;
+  let inFlightEpoch = -1;
+  let readEpoch = 0;
+  let starting: Promise<void> | null = null;
+  let overdueSlot = "";
+  let overdueReads = 0;
   let generation = 0;
   let disposed = false;
 
@@ -80,8 +85,22 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
   function scheduleRotation(next: WallpaperState | null): void {
     clearRotation();
     const nextSwitchAt = next?.rotation?.nextSwitchAt;
-    if (next?.rotation?.mode !== "timer" || !nextSwitchAt) return;
-    const delay = Math.max(1000, new Date(nextSwitchAt).getTime() - Date.now());
+    if (!currentAsset(next) || next?.rotation?.mode !== "timer" || !nextSwitchAt) {
+      overdueSlot = "";
+      overdueReads = 0;
+      return;
+    }
+    const due = new Date(nextSwitchAt).getTime();
+    if (!Number.isFinite(due)) return;
+    if (overdueSlot !== nextSwitchAt) {
+      overdueSlot = nextSwitchAt;
+      overdueReads = 0;
+    }
+    const remaining = due - Date.now();
+    // The backend commits every five seconds; early reads need a finite catch-up window.
+    if (remaining <= 0 && overdueReads++ >= 8) return;
+    if (remaining > 0) overdueReads = 0;
+    const delay = Math.min(2_147_483_647, Math.max(1000, remaining));
     rotationTimer = setTimeout(() => {
       rotationTimer = null;
       void refresh();
@@ -91,9 +110,9 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
   async function applyState(next: WallpaperState | null, changed: boolean): Promise<void> {
     if (disposed) return;
     publish(next);
+    scheduleRotation(next);
     if (!changed) return;
     const myGeneration = ++generation;
-    clearRotation();
     const asset = currentAsset(next);
     if (!asset) {
       host.appearance.clearBackground();
@@ -111,10 +130,9 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
         surfaceTransparencyPercent: next?.effects?.surfaceTransparencyPercent,
         secondarySurfaceTransparency: next?.effects?.applyTransparencyToSecondarySurfaces !== false,
       });
-      const palette = await ensurePalette(host, asset, blob);
+      const palette = await ensurePalette(host, asset, blob, false);
       if (disposed || myGeneration !== generation) return;
       if (palette) host.appearance.setTokens(palette);
-      scheduleRotation(next);
     } catch (cause) {
       if (disposed || myGeneration !== generation) return;
       publish(next, cause instanceof Error ? cause.message : String(cause));
@@ -123,42 +141,61 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
 
   async function load(force: boolean): Promise<void> {
     if (disposed) return;
+    const epoch = readEpoch;
     try {
       const next = await loadState(host);
-      if (disposed) return;
+      if (disposed || epoch !== readEpoch) return;
+      if ((next.revision ?? 0) < (state?.revision ?? 0)) {
+        scheduleRotation(state);
+        return;
+      }
       await applyState(next, force || surfaceChanged(state, next));
     } catch (cause) {
-      if (disposed) return;
+      if (disposed || epoch !== readEpoch) return;
       publish(state, cause instanceof Error ? cause.message : String(cause));
+      scheduleRotation(state);
     }
   }
 
   async function refresh(): Promise<void> {
-    if (inFlight) return inFlight;
-    inFlight = load(false).finally(() => {
-      inFlight = null;
+    if (disposed) return;
+    if (inFlight && inFlightEpoch === readEpoch) return inFlight;
+    inFlightEpoch = readEpoch;
+    const request = load(false).finally(() => {
+      if (inFlight === request) inFlight = null;
     });
-    return inFlight;
+    inFlight = request;
+    return request;
+  }
+
+  async function start(): Promise<void> {
+    if (disposed || pollTimer) return;
+    if (starting) return starting;
+    const epoch = ++readEpoch;
+    const request = (async () => {
+      try {
+        const capabilities = await host.getCapabilities();
+        if (disposed || epoch !== readEpoch) return;
+        const next = capabilities.connectionKind === "local" ? await advanceSessionRotation(host) : await loadState(host);
+        if (disposed || epoch !== readEpoch) return;
+        await applyState(next, true);
+      } catch {
+        if (!disposed && epoch === readEpoch) await load(true);
+      }
+    })().finally(() => {
+      if (!disposed && !pollTimer) pollTimer = setInterval(() => { void refresh(); }, pollIntervalMs);
+      if (starting === request) starting = null;
+    });
+    starting = request;
+    return request;
   }
 
   return {
     snapshot,
-    async start(): Promise<void> {
-      if (disposed) return;
-      try {
-        const next = await advanceSessionRotation(host);
-        if (disposed) return;
-        await applyState(next, true);
-      } catch {
-        await load(true);
-      }
-      if (disposed || pollTimer) return;
-      pollTimer = setInterval(() => {
-        void refresh();
-      }, pollIntervalMs);
-    },
+    start,
     refresh,
     async apply(next: WallpaperState | null): Promise<void> {
+      readEpoch += 1;
       await applyState(next, true);
     },
     subscribe(listener: (snapshot: WallpaperRuntimeSnapshot) => void): () => void {
@@ -168,6 +205,7 @@ export function createWallpaperRuntime(host: WallpaperHost, options: WallpaperRu
     dispose(): void {
       if (disposed) return;
       disposed = true;
+      readEpoch += 1;
       generation += 1;
       clearRotation();
       if (pollTimer) clearInterval(pollTimer);

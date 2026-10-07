@@ -324,7 +324,8 @@ class RepositoryCoreTests(unittest.TestCase):
             "judgeScript": "data/judge.js",
         }
         if managed:
-            manifest["apiVersion"] = "2.0"
+            manifest["apiVersion"] = "2.1"
+            manifest["minHostVersion"] = "0.17.0"
         store = {
             "schemaVersion": 1,
             "gameName": "Test",
@@ -353,8 +354,8 @@ class RepositoryCoreTests(unittest.TestCase):
         write_json(
             root / "host.lock.json",
             {
-                "hostApiVersion": "2.0",
-                "frontendApiVersion": "1.5",
+                "hostApiVersion": "2.1",
+                "frontendApiVersion": "1.6",
                 "supportedLocales": ["zh-CN", "en-US"],
             },
         )

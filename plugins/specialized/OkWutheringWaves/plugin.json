@@ -5,7 +5,7 @@
   "displayName": "ok-ww 日常",
   "gameName": "鸣潮",
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.15",
   "resolve": "data/resolve.json",
@@ -244,5 +244,10 @@
       }
     ]
   },
-  "configEditor": "data/editor.js"
+  "configEditor": "data/editor.js",
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/ok-oldking/ok-wuthering-waves/2243d465d58c74f52765b658174bff76165656ee/icons/icon.ico",
+    "sha256": "46cd289700892cd072016d0ca99ab6b0441ea8dc09d1c652b18e515f4edea52f",
+    "contentType": "image/x-icon"
+  }
 }

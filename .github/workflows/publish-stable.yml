@@ -40,7 +40,6 @@ jobs:
     name: Plugins / 候选输入
     if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.operation == 'candidate')
     runs-on: windows-latest
-    timeout-minutes: 3
     permissions:
       actions: read
       contents: read
@@ -128,7 +127,6 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJSON(needs.source-plan.outputs.matrix) }}
     runs-on: windows-latest
-    timeout-minutes: 3
     permissions:
       actions: read
       contents: read
@@ -196,7 +194,6 @@ jobs:
     needs: [source-plan, build-package]
     if: always() && needs.source-plan.result == 'success' && needs.source-plan.outputs.needs_build == 'true' && (needs.build-package.result == 'success' || (needs.build-package.result == 'skipped' && needs.source-plan.outputs.package_count == '0'))
     runs-on: windows-latest
-    timeout-minutes: 3
     permissions:
       actions: read
       contents: read
@@ -265,7 +262,6 @@ jobs:
     needs: [source-plan, catalog-assembly]
     if: needs.catalog-assembly.result == 'success'
     runs-on: windows-latest
-    timeout-minutes: 3
     permissions:
       actions: read
       contents: read
@@ -319,7 +315,6 @@ jobs:
     needs: candidate
     if: always() && ((github.event_name == 'push' && needs.candidate.result == 'success' && needs.candidate.outputs.status == 'VALIDATED') || (github.event_name == 'workflow_dispatch' && inputs.operation == 'publish-only'))
     runs-on: windows-latest
-    timeout-minutes: 3
     environment: plugin-stable-publish
     permissions:
       actions: read

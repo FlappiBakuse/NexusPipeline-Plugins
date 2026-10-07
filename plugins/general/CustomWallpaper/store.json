@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.3.1",
+      "date": "2026-10-05",
+      "items": [
+        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
+      ]
+    },
+    {
       "version": "0.3.0",
       "date": "2026-10-04",
       "items": [
@@ -27,13 +34,6 @@
       "date": "2026-09-18",
       "items": [
         "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
-      ]
-    },
-    {
-      "version": "0.2.7",
-      "date": "2026-09-17",
-      "items": [
-        "将排序交互迁移到宿主公开 nxp-* 控件，保持自定义壁纸列表的拖拽排序与触控操作。"
       ]
     }
   ],
@@ -49,6 +49,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.1",
+          "date": "2026-10-05",
+          "items": [
+            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+          ]
+        },
+        {
           "version": "0.3.0",
           "date": "2026-10-04",
           "items": [
@@ -60,12 +67,6 @@
           "version": "0.2.8",
           "items": [
             "Fixed frontend styles that depended on the host drag control's internal selectors."
-          ]
-        },
-        {
-          "version": "0.2.7",
-          "items": [
-            "Migrated sorting interactions to the host's public nxp-* controls while preserving drag sorting and touch operation for the custom wallpaper list."
           ]
         }
       ]

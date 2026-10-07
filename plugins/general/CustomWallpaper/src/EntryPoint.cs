@@ -10,11 +10,14 @@ public sealed class EntryPoint : INexusPlugin
 {
     private WallpaperService? _service;
     private WallpaperWebApi? _webApi;
+    private IPluginJobScheduler? _scheduler;
+    private IDisposable? _rotation;
 
     public async ValueTask InitializeAsync(IPluginHostContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
         _service = new WallpaperService(context.Config, context.ScopedData, context.Assets, context.Logger);
+        _scheduler = context.Scheduler;
         _webApi = new WallpaperWebApi(_service);
         _webApi.Register(context.WebApi);
         await _service.InitializeAsync(cancellationToken).ConfigureAwait(false);
@@ -23,11 +26,15 @@ public sealed class EntryPoint : INexusPlugin
     /// <summary>插件启动生命周期不推进 startup 轮换；轮换由 Web 前端会话显式推进。</summary>
     public ValueTask StartAsync(CancellationToken cancellationToken)
     {
+        var service = _service ?? throw new InvalidOperationException("Wallpaper is not initialized");
+        _rotation ??= _scheduler!.Register(new PluginJobDefinition("rotation", Interval: TimeSpan.FromSeconds(5), Timeout: TimeSpan.FromSeconds(5)),
+            async (_, token) => await service.CheckTimerAsync(token).ConfigureAwait(false));
         return ValueTask.CompletedTask;
     }
 
     public ValueTask StopAsync(CancellationToken cancellationToken)
     {
+        _rotation?.Dispose(); _rotation = null; _scheduler = null;
         _webApi?.Dispose();
         _webApi = null;
         _service = null;

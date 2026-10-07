@@ -5,7 +5,7 @@
   "displayName": "终末地小助手",
   "gameName": "明日方舟：终末地",
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.15",
   "capabilities": [
@@ -622,5 +622,10 @@
     ],
     "environmentChecks": []
   },
-  "configEditor": "data/editor.js"
+  "configEditor": "data/editor.js",
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/MaaEnd/MaaEnd/f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d/assets/locales/MaaEnd-Tiny.png",
+    "sha256": "69d9944eee6cbd84898988ac58705f2765431fcf958255093ae81601fa34febe",
+    "contentType": "image/png"
+  }
 }

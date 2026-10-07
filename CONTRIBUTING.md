@@ -10,7 +10,7 @@
 - `displayName` 面向 UI，修改展示文字不应改变 `name`。
 - 插件版本使用独立的受限版本字符串，例如 `0.1.0`、`0.1.0-beta.1` 或 `0.1.0-rc.1`；宿主最低版本写在 `plugin.json` 的 `minHostVersion`。
 - `store.json.authors` 是正式插件的必填展示元数据，至少包含 1 位作者，作者 URL 为空或使用 HTTPS。
-- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configEditor`；已退役的 `configValidator` 会被拒绝；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.5`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContext` 注册驱动 provider。
+- `data-specialized` 插件只使用 `resolve`、`judgeScript` 和可选的 `configEditor`；已退役的 `configValidator` 会被拒绝；能力只能是 `emulator`、`self-managed-pc-launch`、`no-fresh-config`。它不得声明 `frontend`（包括 `null`），不得包含 `frontend/`、`web/`、浏览器工程或 .NET 程序集。Frontend API `1.6`、`frontend-module`、`frontend/` 和 `web/` 仅适用于 `managed-code`；`EmulatorSupport` 使用 `IPluginHostContext` 注册驱动 provider。
 
 ## 开发流程
 
@@ -19,7 +19,7 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.5`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
+6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.6`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
 7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
@@ -32,7 +32,7 @@
 - 前端插件使用公开 Frontend API、公开 slot 和 `nxp-*` 元件；公共复合元件与最低宿主版本要求以 [Frontend 插件指南](docs/author/FRONTEND_PLUGIN.md) 的当前清单为准。
 - 模拟器 provider 插件覆盖探测的不匹配/错误、重复匹配、优先级、注册撤销、取消与超时边界，并验证冻结驱动完成应用启动、前台查询、截图、应用停止和实例关闭；厂商实现不得在证明实例身份前执行进程清理。
 
-详细字段约定见 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API 2.0 与 Frontend API 1.5，`game-checkin` 使用 Plugin API 2.0 与 Frontend API 1.5，`live-screenshot` 使用 Plugin API 2.0，`EmulatorSupport` 使用 Plugin API 2.0。
+详细字段约定见 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)，判断脚本约定见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)，代码插件接口约定见 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)，前端模块约定见 [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)。`custom-wallpaper` 使用 Plugin API 2.1 与 Frontend API 1.6，`game-checkin` 使用 Plugin API 2.1 与 Frontend API 1.6，`live-screenshot` 使用 Plugin API 2.1，`EmulatorSupport` 使用 Plugin API 2.1。
 
 ## 发行包规则
 

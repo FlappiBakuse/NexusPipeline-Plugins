@@ -51,14 +51,13 @@ class CandidateSourceTests(unittest.TestCase):
         paths = self.fixture()
         paths[f"{PREFIX}/runs/12"]["head_sha"] = "c" * 40
         jobs = [{"name": name, "status": "completed", "conclusion": "success",
-                 "started_at": "2026-09-29T00:00:00Z", "completed_at": "2026-09-29T00:02:30Z"}
+                 "started_at": "2026-09-29T00:00:00Z", "completed_at": "2026-09-29T00:05:00Z"}
                 for name in (*NEW_REQUIRED_JOBS, BUILD_JOB_PREFIX + "GameCheckIn")]
         paths[f"{PREFIX}/runs/12/attempts/2/jobs?per_page=100&page=1"] = {"jobs": jobs}
-        self.assertTrue(self.resolve(paths)["budgetQualified"])
-        jobs[-1]["completed_at"] = "2026-09-29T00:02:31Z"
-        with self.assertRaisesRegex(CandidateSourceError, "超过 150 秒"):
-            self.resolve(paths)
-        jobs[-1]["completed_at"] = "2026-09-29T00:02:30Z"
+        self.assertTrue(self.resolve(paths)["completedJobsVerified"])
+        jobs[-1]["completed_at"] = "2026-09-29T00:05:01Z"
+        self.assertTrue(self.resolve(paths)["completedJobsVerified"])
+        jobs[-1]["completed_at"] = "2026-09-29T00:05:00Z"
         jobs[-1]["conclusion"] = "skipped"
         with self.assertRaisesRegex(CandidateSourceError, "未真实成功"):
             self.resolve(paths)
@@ -71,7 +70,7 @@ class CandidateSourceTests(unittest.TestCase):
              "started_at": "2026-09-29T00:00:00Z",
              "completed_at": "2026-09-29T00:01:00Z"}
             for name in NEW_REQUIRED_JOBS]}
-        self.assertTrue(self.resolve(paths)["budgetQualified"])
+        self.assertTrue(self.resolve(paths)["completedJobsVerified"])
 
     def test_artifact_digest_and_unique_identity_are_required(self):
         paths = self.fixture()

@@ -129,31 +129,162 @@ public sealed class WallpaperServiceTests
     }
 
     [Fact]
+    public async Task RemoteReadsAndStartupRotationKeepStoredConfigAndRuntimeBytes()
+    {
+        var context = new FakePluginHostContext("CustomWallpaper");
+        var service = CreateService(context, () => DateTimeOffset.UtcNow);
+        await service.InitializeAsync();
+        await UploadIdAsync(service, PngBytes(21));
+        await UploadIdAsync(service, PngBytes(22));
+        await service.ApplySettingsAsync(new JsonObject { ["enabled"] = true, ["rotation"] = new JsonObject { ["mode"] = "startup" } });
+        string config = (await context.Config.ReadAsync<JsonObject>())!.ToJsonString();
+        string? runtime = (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))?.ToJsonString();
+        var web = new WallpaperWebApi(service); web.Register(context.WebApi);
+        var route = context.WebApi.Routes.Single(item => item.Route == "rotation/advance-session");
+        foreach (var kind in new[] { PluginClientConnectionKind.Remote, PluginClientConnectionKind.Unknown })
+        {
+            var response = await route.Handler(new("POST", route.Route, new Dictionary<string, string>(), null, kind), CancellationToken.None);
+            Assert.Equal(200, response.StatusCode);
+            await service.GetStateAsync();
+            Assert.Equal(config, (await context.Config.ReadAsync<JsonObject>())!.ToJsonString());
+            Assert.Equal(runtime, (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))?.ToJsonString());
+        }
+        web.Dispose();
+    }
+
+    private static JsonObject TimerContract() => JsonNode.Parse(
+        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "fixtures", "timer-contract.json")))!.AsObject();
+
+    private static void AssertTimerFrame(JsonObject expected, JsonObject state)
+    {
+        Assert.Equal(expected["currentId"]!.GetValue<string>(), state["currentId"]!.GetValue<string>());
+        Assert.Equal(expected["revision"]!.GetValue<long>(), state["revision"]!.GetValue<long>());
+        Assert.True(JsonNode.DeepEquals(expected["rotation"], state["rotation"]));
+    }
+
+    [Fact]
     public async Task Rotation_TimerSlotChangesCurrentWallpaperAndReportsNextSwitch()
     {
-        DateTimeOffset now = new(2026, 9, 12, 10, 0, 0, TimeSpan.Zero);
+        JsonObject contract = TimerContract();
+        DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(contract["epochUnixMs"]!.GetValue<long>());
         var context = new FakePluginHostContext("custom-wallpaper");
-        WallpaperService service = CreateService(context, () => now);
+        var stores = new CountingStores(context);
+        var service = new WallpaperService(stores, stores, context.Assets, context.Logger, () => now);
         string first = await UploadIdAsync(service, PngBytes(11));
         string second = await UploadIdAsync(service, PngBytes(12));
-
+        await context.ScopedData.WriteAsync(WallpaperService.RotationScope, new WallpaperRotationRuntime { LastRandomId = second });
         JsonObject configured = await service.ApplySettingsAsync(new JsonObject
         {
             ["enabled"] = true,
-            ["rotation"] = new JsonObject
-            {
-                ["mode"] = "timer",
-                ["intervalMinutes"] = 1,
-                ["epochUnixMs"] = now.ToUnixTimeMilliseconds(),
-            },
+            ["rotation"] = new JsonObject { ["mode"] = "timer", ["intervalMinutes"] = 1, ["epochUnixMs"] = now.ToUnixTimeMilliseconds() },
         });
-        string inFirstSlot = configured["currentId"]!.GetValue<string>();
-        Assert.Contains(inFirstSlot, new[] { first, second });
-        Assert.NotNull(configured["rotation"]!["nextSwitchAt"]!.GetValue<string>());
+        AssertTimerFrame(contract["before"]!.AsObject(), configured);
+        string config = (await context.Config.ReadAsync<JsonObject>())!.ToJsonString();
+        string runtime = (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))!.ToJsonString();
+        int writes = stores.Writes;
+        now = DateTimeOffset.FromUnixTimeMilliseconds(contract["boundaryUnixMs"]!.GetValue<long>());
+        for (int index = 0; index < 4; index++)
+        {
+            AssertTimerFrame(contract["before"]!.AsObject(), await service.GetStateAsync());
+            Assert.Equal(writes, stores.Writes);
+            Assert.Equal(config, (await context.Config.ReadAsync<JsonObject>())!.ToJsonString());
+            Assert.Equal(runtime, (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))!.ToJsonString());
+            now = now.AddSeconds(1);
+        }
+        await service.CheckTimerAsync(CancellationToken.None);
+        Assert.Equal(writes + 1, stores.Writes);
+        AssertTimerFrame(contract["committed"]!.AsObject(), await service.GetStateAsync());
+        WallpaperRotationRuntime committed = (await context.ScopedData.ReadAsync<WallpaperRotationRuntime>(WallpaperService.RotationScope))!;
+        Assert.Equal(1, committed.TimerSlot);
+        Assert.Equal(second, committed.LastRandomId);
+        Assert.Equal(config, (await context.Config.ReadAsync<JsonObject>())!.ToJsonString());
+        await service.CheckTimerAsync(CancellationToken.None);
+        Assert.Equal(writes + 1, stores.Writes);
+    }
 
-        now = now.AddMinutes(2);
-        JsonObject rotated = await service.GetStateAsync();
-        Assert.NotEqual(inFirstSlot, rotated["currentId"]!.GetValue<string>());
+    [Fact]
+    public async Task Rotation_SingleAssetAdvancesDeadlineWithoutChangingImageOrRevision()
+    {
+        JsonObject contract = TimerContract();
+        DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(contract["epochUnixMs"]!.GetValue<long>());
+        var context = new FakePluginHostContext("custom-wallpaper");
+        WallpaperService service = CreateService(context, () => now);
+        await UploadIdAsync(service, PngBytes(11));
+        JsonObject configured = await service.ApplySettingsAsync(new JsonObject
+        {
+            ["enabled"] = true,
+            ["rotation"] = new JsonObject { ["mode"] = "timer", ["intervalMinutes"] = 1, ["epochUnixMs"] = now.ToUnixTimeMilliseconds() },
+        });
+        AssertTimerFrame(contract["singleBefore"]!.AsObject(), configured);
+        now = DateTimeOffset.FromUnixTimeMilliseconds(contract["commitUnixMs"]!.GetValue<long>());
+        AssertTimerFrame(contract["singleBefore"]!.AsObject(), await service.GetStateAsync());
+        await service.CheckTimerAsync(CancellationToken.None);
+        AssertTimerFrame(contract["singleCommitted"]!.AsObject(), await service.GetStateAsync());
+        Assert.Equal(1, (await context.ScopedData.ReadAsync<WallpaperRotationRuntime>(WallpaperService.RotationScope))!.TimerSlot);
+    }
+
+    [Fact]
+    public async Task Rotation_UninitializedOrMismatchedRuntimeKeepsStableReadOnlyDeadline()
+    {
+        DateTimeOffset now = DateTimeOffset.FromUnixTimeMilliseconds(1_000_000);
+        var context = new FakePluginHostContext("custom-wallpaper");
+        var stores = new CountingStores(context);
+        var service = new WallpaperService(stores, stores, context.Assets, context.Logger, () => now);
+        string id = await UploadIdAsync(service, PngBytes(11));
+        foreach (long epoch in new long[] { 0, 900_000, 950_000 })
+        {
+            WallpaperConfig config = (await context.Config.ReadAsync<WallpaperConfig>())!;
+            config.Enabled = true;
+            config.Rotation = new() { Mode = "timer", IntervalMinutes = 2, EpochUnixMs = epoch };
+            await context.Config.WriteAsync(config);
+            await context.ScopedData.WriteAsync(WallpaperService.RotationScope,
+                new WallpaperRotationRuntime { LastRandomId = id, TimerSlot = 4, TimerEpochUnixMs = 900_000, TimerIntervalMinutes = 1 });
+            string beforeConfig = (await context.Config.ReadAsync<JsonObject>())!.ToJsonString();
+            string beforeRuntime = (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))!.ToJsonString();
+            int writes = stores.Writes;
+            for (int index = 0; index < 10; index++)
+            {
+                JsonObject state = await service.GetStateAsync();
+                Assert.Equal(id, state["currentId"]!.GetValue<string>());
+                Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(epoch), DateTimeOffset.Parse(state["rotation"]!["nextSwitchAt"]!.GetValue<string>()));
+                now = now.AddSeconds(1);
+            }
+            Assert.Equal(writes, stores.Writes);
+            Assert.Equal(beforeConfig, (await context.Config.ReadAsync<JsonObject>())!.ToJsonString());
+            Assert.Equal(beforeRuntime, (await context.ScopedData.ReadJsonAsync(WallpaperService.RotationScope))!.ToJsonString());
+            await service.CheckTimerAsync(CancellationToken.None);
+            JsonObject committed = await service.GetStateAsync();
+            Assert.True(DateTimeOffset.Parse(committed["rotation"]!["nextSwitchAt"]!.GetValue<string>()) > now);
+            Assert.Equal(config.Revision, committed["revision"]!.GetValue<long>());
+        }
+    }
+
+    private sealed class CountingStores(FakePluginHostContext context) : IPluginConfigStore, IPluginScopedDataStore
+    {
+        public int Writes { get; private set; }
+        public ValueTask<T?> ReadAsync<T>(CancellationToken cancellationToken = default) => context.Config.ReadAsync<T>(cancellationToken);
+        public ValueTask WriteAsync<T>(T value, CancellationToken cancellationToken = default)
+        {
+            Writes++;
+            return context.Config.WriteAsync(value, cancellationToken);
+        }
+        public ValueTask<T?> ReadAsync<T>(string scope, CancellationToken cancellationToken = default) => context.ScopedData.ReadAsync<T>(scope, cancellationToken);
+        public ValueTask WriteAsync<T>(string scope, T value, CancellationToken cancellationToken = default)
+        {
+            Writes++;
+            return context.ScopedData.WriteAsync(scope, value, cancellationToken);
+        }
+        public ValueTask<JsonObject?> ReadJsonAsync(string scope, CancellationToken cancellationToken = default) => context.ScopedData.ReadJsonAsync(scope, cancellationToken);
+        public ValueTask WriteJsonAsync(string scope, JsonObject value, CancellationToken cancellationToken = default)
+        {
+            Writes++;
+            return context.ScopedData.WriteJsonAsync(scope, value, cancellationToken);
+        }
+        public ValueTask DeleteAsync(string scope, CancellationToken cancellationToken = default)
+        {
+            Writes++;
+            return context.ScopedData.DeleteAsync(scope, cancellationToken);
+        }
     }
 
     [Fact]

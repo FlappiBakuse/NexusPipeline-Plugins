@@ -21,9 +21,10 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (navigation.title !== "签到" || navigation.route !== "tasks") fail("GameCheckIn 侧边栏导航必须打开签到任务页面");
 
   const view = document.createElement("main");
-  view.id = "view";
   document.body.append(view);
-  await route.handler(1, ["plugin", "game-checkin", "tasks"], host);
+  const controller = new AbortController();
+  const cleanup = await route.handler(Object.freeze({ element: view, token: 1, segments: Object.freeze(["plugin", "game-checkin", "tasks"]), signal: controller.signal }), host);
+  if (typeof cleanup !== "function") fail("GameCheckIn route 必须返回 cleanup");
   await flushDom();
   await flushDom();
   if (!view.querySelector("[data-game-check-in-page]")) fail("GameCheckIn route 未挂载签到任务页面");
@@ -78,7 +79,7 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (!created.body.notification?.enabled || created.body.notification?.smtpTo !== "task@example.test") fail("新增任务没有提交宿主通知设置和 SMTP 收件人");
   if ("cnDeviceId" in created.body || "kuroDevCode" in created.body || "kuroDistinctId" in created.body) fail("任务保存请求暴露了内部设备标识");
   if ("notifications" in created.body || "webhookUrl" in (created.body.secrets || {}) || "smtpPassword" in (created.body.secrets || {})) fail("任务保存请求仍包含旧版独立通知字段");
-  if (!view.textContent.includes("晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
+  if (![...view.querySelectorAll("nxp-overflow-text")].some(element => element.getAttribute("label") === "晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
   if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("cnDeviceId")) fail("任务列表泄露了任务凭据或内部设备标识");
 
   clickPluginButton(view, "立即签到");
@@ -110,11 +111,14 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (deleted?.body?.taskId !== "task-check-in-1" || state.tasks.length !== 0) fail("删除任务没有调用对应的任务 API");
   if (state.tasks.length !== 0 || !view.querySelector("nxp-empty-state")) fail("删除最后一个任务后没有反馈空状态");
 
+  controller.abort(); cleanup();
   for (const registration of metrics.lifecycleHandlers) registration.handler();
   await flushDom();
   if (view.querySelector("[data-game-check-in-page]")) fail("离开签到页面时没有卸载页面组件");
-  await route.handler(2, ["plugin", "game-checkin", "tasks"], host);
+  const nextController = new AbortController();
+  const nextCleanup = await route.handler(Object.freeze({ element: view, token: 2, segments: Object.freeze(["plugin", "game-checkin", "tasks"]), signal: nextController.signal }), host);
   await flushDom();
   if (!view.querySelector("[data-game-check-in-page]")) fail("再次进入签到 route 后没有重新挂载页面");
+  nextController.abort(); nextCleanup();
   return { route: route.route, nav: navigation.id, apiCalls: metrics.apiCalls.filter(call => call.route !== "state").length };
 }

@@ -5,7 +5,7 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "kind": "data-specialized",
   "minHostVersion": "0.16.15",
   "resolve": "data/resolve.json",
@@ -115,5 +115,10 @@
         "followReparsePoints": false
       }
     ]
+  },
+  "scriptTypeIcon": {
+    "url": "https://raw.githubusercontent.com/babalae/better-genshin-impact/0af68c28f6b0e714d5304625ce644736d508022e/BetterGenshinImpact/Resources/Images/logo.ico",
+    "sha256": "b0a24e99613f6b64665e62bd019852701b64d5d36c0b79c89eaeacfc66882454",
+    "contentType": "image/x-icon"
   }
 }

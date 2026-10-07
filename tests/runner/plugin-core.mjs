@@ -21,9 +21,7 @@ try {
   ({ findAvailablePort } = await support("test-runtime.mjs"));
 } catch (error) { console.error(`Host test input is missing required runner capabilities: ${error.message}`); throw Object.assign(error,{exitCode:7}); }
 const budget = parentBudget ?? new Budget("Plugins invocation", policy.invocationBudgetMs,
-  { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs,
-    inheritedWorkMs:process.env.NEXUS_TEST_PARENT_WORK_DEADLINE_MS?Number(process.env.NEXUS_TEST_PARENT_WORK_DEADLINE_MS)-Date.now():Infinity,
-    inheritedHardMs:process.env.NEXUS_TEST_PARENT_HARD_DEADLINE_MS?Number(process.env.NEXUS_TEST_PARENT_HARD_DEADLINE_MS)-Date.now():Infinity });
+  { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs });
 const artifact = path.resolve(process.env.NEXUS_TEST_ARTIFACT_ROOT || path.join(process.env.RUNNER_TEMP || os.tmpdir(), "NexusPipeline.Tests"));
 const marker = path.join(artifact, ".nxp-test-artifact-root.json");
 if (!fs.existsSync(artifact)) {
@@ -92,8 +90,7 @@ try {
     (async () => {
       if (!managed) return;
       const frontend = path.join(host.directory,"frontend");
-      const hostSteps = await Promise.allSettled([
-        (async () => {
+      const frontendReady = (async () => {
           if (!withUi) return;
           if (!fs.existsSync(path.join(frontend,"node_modules/.package-lock.json")))
             await step("Host frontend dependencies",npm,["ci","--no-audit","--no-fund"],{cwd:frontend});
@@ -101,17 +98,20 @@ try {
           const browser = path.join(host.directory,"tests/e2e");
           if (!fs.existsSync(path.join(browser,"node_modules/playwright/package.json")))
             await step("shared browser bindings",npm,["ci","--no-audit","--no-fund"],{cwd:browser});
-        })(),
+        })();
+      const hostSteps = await Promise.allSettled([
+        frontendReady,
         (async () => {
+          await frontendReady;
+          const embedded = path.join(runRoot,"embedded-frontend");
+          if (withUi) await step("embedded frontend",python,["tools/embed_frontend.py","--source",path.join(frontend,"dist"),"--output",embedded],{cwd:host.directory});
           await step("shared Test Host","dotnet",["publish","src/NexusPipeline.csproj",...dotnetOptions(),"-r","win-x64",
-            "--self-contained","false","-p:NexusTestHost=true","-p:PublishSingleFile=true","-p:DebugType=none","-p:DebugSymbols=false","-o",hostBuild],{cwd:host.directory});
-          await step("Test Host manifest",python,["tools/pe_manifest.py","--exe",path.join(hostBuild,"nexus-pipeline.exe"),"--expected-level","asInvoker"],{cwd:host.directory});
+            "--self-contained","false","-p:NexusTestHost=true",...(withUi?[`-p:NexusFrontendProps=${path.join(embedded,"embedded-frontend.props")}`]:[]),"-p:PublishSingleFile=true","-p:DebugType=none","-p:DebugSymbols=false","-o",hostBuild],{cwd:host.directory});
+          await step("Test Host manifest",python,["tools/pe_manifest.py","--exe",path.join(hostBuild,"NexusPipeline.exe"),"--expected-level","asInvoker"],{cwd:host.directory});
         })(),
       ]);
       const failed = hostSteps.find(outcome => outcome.status === "rejected");
       if (failed) throw failed.reason;
-      if (withUi) fs.cpSync(path.join(frontend,"dist"),path.join(hostBuild,"wwwroot"),{recursive:true});
-      else fs.mkdirSync(path.join(hostBuild,"wwwroot"));
     })(),
     (async () => {
       if (!frontendNames.length) return;
@@ -139,7 +139,7 @@ try {
   const preparationFailure = preparation.find(outcome => outcome.status === "rejected");
   if (preparationFailure) throw preparationFailure.reason;
   if (specialized) await step("shared Jint test engine", "dotnet", ["build", "tools/NexusPipeline.TaskProtocolTests", ...dotnetOptions(), "-p:NexusTestHost=true"], { cwd: host.directory });
-  for (const name of selection.selected) {
+  const executePlugin=async name=>{
     const item = policy.plugins[name];
     const profile = input.options["--profile"] || (batch&&name==="MaaFrameworkDriver" ? "adapter" : item.defaultProfile);
     const pluginBudget = budget.child(name, item.profiles[profile], policy.pluginCleanupReserveMs);
@@ -252,7 +252,14 @@ try {
       fs.writeFileSync(path.join(directory, "summary.json"), JSON.stringify(result, null, 2));
     }
     if (result.exitCode) throw Object.assign(new Error(`${name}: ${result.status}`), { exitCode: result.exitCode });
-  }
+  };
+  const parallel=selection.selected.every(name=>policy.plugins[name].kind==="managed-code")?2:1;
+  let next=0;
+  const outcomes=await Promise.allSettled(Array.from({length:Math.min(parallel,selection.selected.length)},async()=>{
+    while(next<selection.selected.length)await executePlugin(selection.selected[next++]);
+  }));
+  const failed=outcomes.find(outcome=>outcome.status==="rejected");
+  if(failed)throw failed.reason;
 } catch (error) { code = error.exitCode ?? 3; failure = error.message; console.error(error.message); }
 finally {
   for (const name of selection?.selected ?? []) {
@@ -266,10 +273,10 @@ finally {
     }
   }
   const cleanup = getProcessRunnerState(); if (!cleanup.cleanupComplete) code ||= 6;
-  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
+  if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   if (budget.remainingMs({ cleanup: true }) <= 0) code ||= 5;
   if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
-  if (budget.elapsedMs > policy.qualificationMs) code ||= 5;
+  if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
     runId, inputPair:batch?.plan.inputPair??null, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",

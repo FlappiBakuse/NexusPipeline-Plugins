@@ -7,7 +7,7 @@ export const runtime = await import(pathToFileURL(path.join(process.env.NEXUS_HO
 export function prepareProcessIdentity() {
   if (process.platform !== "win32") return;
   const probe = spawnSync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command",
-    `$null = Get-CimInstance Win32_Process -Filter 'ProcessId = ${process.pid}' -ErrorAction Stop`],
+    `$null = Get-Process -Id ${process.pid} -ErrorAction Stop`],
     { encoding: "utf8", windowsHide: true, timeout: 10000 });
   if (probe.status !== 0) throw new Error(`Windows process identity preparation failed: ${probe.error?.message || probe.stderr}`);
 }
@@ -22,7 +22,7 @@ export async function preparePlugin() {
   fs.copyFileSync(path.join(source, "src/bin/Release/net10.0", manifest.entryAssembly), path.join(target, manifest.entryAssembly));
   const settingsPath = path.join(runtime.runtimeDir, "config/settings.json");
   const settings = JSON.parse(fs.readFileSync(settingsPath));
-  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, AutoOpenBrowser: false,
+  Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, LightweightMode: true, OpenDesktopOnStartup: false,
     PluginPreferences: { [manifest.name]: { Enabled: true } } });
   fs.writeFileSync(settingsPath, JSON.stringify(settings));
   return manifest;

@@ -16,6 +16,8 @@ public sealed class CustomWallpaperConformanceTests
             new FakePluginHostContext("CustomWallpaper"));
 
         Assert.True(harness.Started);
+        Assert.Single(harness.Context.Scheduler.Definitions);
+        await harness.Context.Scheduler.TriggerAsync("rotation");
         Assert.Equal("CustomWallpaper", harness.Context.PluginName);
         // Web 会话轮换通过明确的插件 API 推进，插件启动生命周期不触发随机轮换。
         Assert.Equal(
@@ -37,6 +39,7 @@ public sealed class CustomWallpaperConformanceTests
         await harness.StopAsync();
         Assert.True(harness.Stopped);
         Assert.Empty(harness.Context.WebApi.Routes);
+        Assert.Empty(harness.Context.Scheduler.Definitions);
     }
 
 }
