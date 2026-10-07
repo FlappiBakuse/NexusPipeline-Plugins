@@ -96,7 +96,7 @@ function reorderTasks(ids: string[]) {
         <span class="gci-task-avatar" aria-hidden="true">{{ initial(task.name) }}</span>
         <div class="gci-task-copy">
           <div class="gci-task-heading">
-            <h2>{{ task.name }}</h2>
+            <h2><nxp-overflow-text :label="task.name" /></h2>
           </div>
           <p v-if="task.remark" class="gci-task-remark">{{ task.remark }}</p>
           <div class="gci-task-meta">

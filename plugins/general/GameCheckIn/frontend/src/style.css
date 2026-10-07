@@ -122,14 +122,14 @@
   color: var(--nx-color-danger);
 }
 
-.gci-task-list {
+.gci-task-list:not(nxp-sortable-list) {
   display: flex;
   min-width: 0;
   flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--content-card-border);
-  border-radius: var(--nx-radius-lg);
-  background: var(--nx-color-surface);
+  border-radius: var(--radius-lg, var(--nx-radius-lg));
+  background: var(--content-card, var(--nx-color-surface));
 }
 
 .gci-task-row {
@@ -140,7 +140,7 @@
   padding: var(--nx-space-4) var(--nx-space-5);
   /* Match the host list rows, accounting for the drag handle's inner space. */
   padding-inline-start: calc(var(--nx-space-5) - var(--nx-space-2));
-  border-bottom: 1px solid var(--nx-color-border);
+  border-bottom: 1px solid var(--content-card-border, var(--nx-color-border));
   transition: background var(--nx-motion-duration-micro, 120ms) var(--nx-motion-ease, ease);
 }
 
@@ -461,3 +461,7 @@
   .gci-task-actions > nxp-button { width: 100%; }
   .gci-task-row-main > .gci-drag-handle { width: var(--nx-drag-handle-touch-size); }
 }
+
+.gci-task-list:not(nxp-sortable-list) { box-shadow: 0 4px 18px color-mix(in srgb, var(--nx-color-text) 3%, transparent); }
+.gci-task-heading h2 { min-width: 0; max-width: 100%; }
+.gci-task-meta > nxp-badge { max-width: min(220px, 100%); }

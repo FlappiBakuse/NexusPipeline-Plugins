@@ -10,7 +10,7 @@ type PluginHost = {
     delete(route: string, body: unknown, signal?: AbortSignal): Promise<unknown>;
   };
   routes: { register(route: string, handler: (surface: { element: HTMLElement; token: number; segments: readonly string[]; signal: AbortSignal }, host: PluginHost) => () => void): { dispose?: () => void } };
-  nav: { register(item: { id: string; title: string; route: string; icon: string; order: number }): { dispose?: () => void } };
+  nav: { register(item: { id: string; title: string; titleKey?: string; route: string; icon: string; order: number }): { dispose?: () => void } };
   lifecycle: { onDispose(handler: () => void): { dispose?: () => void } };
   i18n: { t(key: string, args?: Record<string, unknown>, fallback?: string): string };
   ui?: { toast(message: string, tone?: string): void };
@@ -32,6 +32,7 @@ export function activate(host: PluginHost) {
   const nav = host.nav.register({
     id: "check-in-tasks",
     title: host.i18n.t("nav.title", {}, "签到"),
+    titleKey: "nav.title",
     route: "tasks",
     icon: "check",
     order: -100,

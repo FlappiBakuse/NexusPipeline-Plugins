@@ -126,7 +126,7 @@ export function activate(host) {
 | `host.api.blob(route, { query?, signal? })` | `GET` 读取二进制响应并返回 `Blob` |
 | `host.api.upload(route, body, { method?, contentType?, query?, signal? })` | 发送二进制请求体并读取 JSON 响应 |
 | `host.routes.register(route, handler)` | 注册 `#/plugin/<name>/<route>` 页面 |
-| `host.nav.register(item)` | 增加 `shell.nav` 导航项，item 包含 id、title、route、icon、order |
+| `host.nav.register(item)` | 增加 `shell.nav` 导航项，item 包含 id、title、可选 titleKey、route、icon、order；titleKey 从插件词典读取并随界面语言变化更新，title 作为回退 |
 | `host.slots.register(slot, renderer)` | 为稳定 UI slot 注册自定义 renderer；renderer 接收 `{ element, context }`，在独立 surface 中挂载内容 |
 | `host.ui.query/save/action` | 读取或提交宿主声明式 UI 贡献 |
 | `host.lifecycle.*` | 订阅页面进入、离开、更新和释放事件 |
@@ -137,6 +137,8 @@ export function activate(host) {
 `renderer({ element, context })` 可以使用 DOM API 或在 `element` 上挂载 Vue Custom Element；渲染器返回的函数会在 slot 重绘前调用。插件页面只在传入的 RouteSurface.element 内创建同源 DOM，并在释放时移除事件与节点。宿主公共控件通过公开 `nxp-*` Native Custom Elements 提供，注册表为宿主 `frontend/src/ui/register.ts` 的 `NEXUS_PUBLIC_ELEMENTS`，`tests/frontend/run.mjs` 按该集合校验插件产物；元素位置之外的 `nxp-*` 名称（例如自定义事件名）不属于元素使用。
 
 公开元素在 light DOM 下渲染，元素标签自身不产生额外布局盒（结构卡片与 `nxp-switch-list` 内的开关都是如此），因此插件卡片与宿主卡片共享同一套栅格与展开置顶规则。把多个 `nxp-switch-setting` 放进 `nxp-switch-list` 即可得到与设置页一致的开关列表外观。文本类元素（`nxp-button`、`nxp-badge`）用 `label` 属性传文案：属性写法不产生插槽子节点，父级重渲染不会影响元素自身的 DOM 与交互。
+
+`settings.cards` 中的 `nxp-collapsible-card` 通过唯一的 `data-settings-panel` 与当前 `title` 自动提供设置分类入口，按钮与下方卡片顺序一致，并沿用 `nxp-settings-panel-toggle`／`nxp-settings-panel-state` 协调展开。输入类元素的 `update:modelValue`（Custom Element 也发出 `update:model-value`）用于同步编辑值，`change` 用于提交。Vue 消费者用元素 ref 的 `addEventListener` 订阅 `update:modelValue`，并在卸载时移除监听；Vue 的 DOM 事件处理会忽略模板中的 `onUpdate:*`。滑块可以在拖动中显示数值，在提交时保存。
 
 结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`、`surface`；`surface` 可取 `default` 或 `secondary`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页的折叠协调协议对插件开放：插件展开自己的卡片时向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
 
@@ -227,4 +229,8 @@ Frontend API 1.6 的 `host.getCapabilities(signal?)` 返回冻结只读的 schem
 
 原生文件选择只能禁用“浏览”按钮，路径输入仍可编辑并保存。普通账号、脚本、队列、计划、运行、历史、插件安装与诊断是 General；诊断 ZIP 写入宿主受控 staging，返回明确路径。脚本文件读取只在已批准脚本根、配置位置及游戏程序父目录范围内，拒绝链接与路径穿越，不枚举宿主磁盘。
 
-路由处理器接收 `RouteSurface`：`element`、`routeToken`、`segments`、`signal`。必须在 element 内挂载，返回清理函数（或最终返回函数的 Promise）；路由离开、替换或插件停止时先中止 signal，再执行清理。不得查询宿主私有页面容器。公开 18 个 slot 与 39 个元素保持既有名称。
+路由处理器接收 `RouteSurface`：`element`、`routeToken`、`segments`、`signal`。必须在 element 内挂载，返回清理函数（或最终返回函数的 Promise）；路由离开、替换或插件停止时先中止 signal，再执行清理。不得查询宿主私有页面容器。公开 18 个 slot 与 40 个元素保持既有名称。
+
+## 紧凑长文字
+
+卡片名称、简短摘要与复杂按钮中的文案使用公开 `nxp-overflow-text`，通过 `label` 或默认文本 slot 传值。组件在溢出时保持单行，悬停或聚焦时滚动。`nxp-badge` 与纯文本 `nxp-button` 已内置同一行为；调用方只需限制可用宽度。详情区可为这三个元件设置布尔属性 `wrap=true`，让文本正常换行且不滚动；复杂按钮 slot 中的文字由内部文本元件决定。诊断详情、README 和日志保持正文换行，不依赖宿主私有 CSS 类。
