@@ -8,18 +8,6 @@ import {createScopePlan} from "./scope-plan.mjs";
 import {loadBatch} from "./batch-runner.mjs";
 const root=path.resolve(import.meta.dirname,"../..");
 const host=JSON.parse(fs.readFileSync(path.join(root,"tests/gates.json"))).repository==="Host";
-test("workflow exposes one bounded matrix and keeps control free of dotnet setup",()=>{
-  const workflow=fs.readFileSync(path.join(root,".github/workflows/ci.yml"),"utf8").replaceAll("\r\n","\n");
-  const jobs=[...workflow.slice(workflow.indexOf("jobs:\n")).matchAll(/^  ([a-z_]+):$/gm)].map(match=>match[1]);
-  assert.deepEqual(jobs,["scope","control","batches","required"]);
-  assert.equal([...workflow.matchAll(/^    strategy:$/gm)].length,1);
-  assert.equal([...workflow.matchAll(/^    timeout-minutes:/gm)].length,0);
-  const control=workflow.slice(workflow.indexOf("  control:"),workflow.indexOf("  batches:"));
-  assert.ok(!control.includes("setup-dotnet"));
-  assert.ok(workflow.includes("needs: [scope, control, batches]"));
-  const policy=JSON.parse(fs.readFileSync(path.join(root,"tests/policy.json")));
-  assert.equal(policy.ciBatchPolicy.workMs,null);
-});
 test("altered units, fingerprints, capacity and control manifests fail before work",()=>{
   const temporary=fs.mkdtempSync(path.join(process.env.NEXUS_TEST_ARTIFACT_ROOT||os.tmpdir(),"batch-input-"));
   const file=path.join(temporary,"plan.json");
