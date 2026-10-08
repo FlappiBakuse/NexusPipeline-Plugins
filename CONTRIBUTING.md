@@ -20,7 +20,7 @@
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
 6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.6`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，合并后由稳定候选 job 计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
+7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，手动稳定候选按已发布游标计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -125,7 +125,7 @@ Pull Request 应包含：
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/author/TASK_PROTOCOL.md)。
 
-测试政策登记清单是当前核心能力的事实来源；新增插件同时登记实际组件实例、场景和生产包义务，清单不固定为十三。批次 CI、测试 Host source 锁与完整时长规则见 [核心测试](docs/TESTING.md)。
+测试政策登记清单是当前核心能力的事实来源；新增插件同时登记实际组件实例、场景和生产包义务，清单不固定为十三。本机批次、生产 PR 检查、测试 Host source 锁与完整时长规则见 [核心测试](docs/TESTING.md)。
 
 仓库根目录的 `global.json` 固定 .NET 10 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 10。
 
