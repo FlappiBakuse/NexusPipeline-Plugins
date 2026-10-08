@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "3707c0b367697a24fffbb7b66e46c71514b2c78f",
+  "sourceCommit": "bbfd2096e845d02787d65ed496e796df97499364",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -37,10 +37,10 @@
     "GameCheckIn": {
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
-      "version": "0.4.1",
-      "sha256": "a9f07a76d9ee99820653741e00457c08e3bb1d206b203a0849fd50b270cc22bf",
-      "sizeBytes": 302408,
-      "sourceTree": "779c006a6a5a50123f12ccdd9c914c20d5b64e14"
+      "version": "0.4.2",
+      "sha256": "272a6e0a70e0ec921b2199a589b6fd8725fa91e20d725950ff99bfe326a8b242",
+      "sizeBytes": 311580,
+      "sourceTree": "98515dee4abbe3721792539f243b1f0de73edfc2"
     },
     "LiveScreenshot": {
       "name": "live-screenshot",

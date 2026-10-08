@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-10-07T11:53:02Z",
+  "generatedAt": "2026-10-08T14:33:24Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -166,19 +166,26 @@
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-08",
       "hasReadme": true,
-      "version": "0.4.1",
+      "version": "0.4.2",
       "kind": "managed-code",
       "apiVersion": "2.1",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.17.0",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.1.zip",
-      "sha256": "a9f07a76d9ee99820653741e00457c08e3bb1d206b203a0849fd50b270cc22bf",
-      "sizeBytes": 302408,
+      "minHostVersion": "0.17.1",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.2.zip",
+      "sha256": "272a6e0a70e0ec921b2199a589b6fd8725fa91e20d725950ff99bfe326a8b242",
+      "sizeBytes": 311580,
       "changelog": [
+        {
+          "version": "0.4.2",
+          "items": [
+            "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
+          ],
+          "date": "2026-10-08"
+        },
         {
           "version": "0.4.1",
           "date": "2026-10-05",
@@ -191,13 +198,6 @@
           "date": "2026-10-04",
           "items": [
             "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
-          ]
-        },
-        {
-          "version": "0.3.5",
-          "date": "2026-09-21",
-          "items": [
-            "调整签到任务卡片的左侧留白，与用户、脚本实例及调度队列卡片保持一致。"
           ]
         }
       ],
@@ -217,6 +217,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.2",
+              "items": [
+                "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
+              ],
+              "date": "2026-10-08"
+            },
+            {
               "version": "0.4.1",
               "date": "2026-10-05",
               "items": [
@@ -228,12 +235,6 @@
               "date": "2026-10-04",
               "items": [
                 "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
-              ]
-            },
-            {
-              "version": "0.3.5",
-              "items": [
-                "Aligned check-in task card spacing with user, script instance and queue cards."
               ]
             }
           ]
