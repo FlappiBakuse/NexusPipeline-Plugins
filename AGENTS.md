@@ -23,7 +23,7 @@
 ## 2. 授权、Git、版本与数据
 
 - 本地代码实施与 commit/push/tag/PR/合并/规则修改/Release 发布分别受用户授权。缺少发布凭据不阻止纯规则、工具和测试实现；不得把缺权限当作 writer 可以永久留空的理由。
-- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / 必需汇总` 与 `Plugins / 完整预算` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。
+- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / 打包检查` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。
 - 唯一生成物直推例外为专用 stable publisher App，路径白名单严格为 `catalog.json`、`.release-state.json`、`packages/**`。例外不包含源码、工作流、host.lock 或版本修改。Writer 校验实际 Git 差异、父链和来源后正常快进推送；bypass 权限本身不提供路径隔离。
 - 发布控制文件的修改仍通过当时实际生效的 PR 门禁与维护者审核；不得用 Publisher bypass 提交源码或工作流，也不伪造检查结果。
 - `develop` 同一目标版本可多次修改和预览，不强制每次 bump；不修改稳定 catalog/state/packages。稳定 `(artifactName, version)` 不得对应不同字节。正式版本及日期按用户明确指示，发布脚本不自动 bump。
@@ -68,7 +68,7 @@ PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享�
 
 ## 5. 候选与发布
 
-PR 要求 `Plugins / 必需汇总` 与 `Plugins / 完整预算` 两项检查。scope、可选 control、按准备依赖划分的 Windows batch、必需汇总 及可信 main 的 begin/finalize 控制器，每 attempt 核验全部实际物理 job 和完整耗时，不设执行时间或作业数量预算上限。本地 batch 不设执行时间预算；本地耗时不能代替 Actions 完整时长。候选 job 只有在源码、适用 Host 集成和实际 ZIP/catalog/state 验收成功后上传 artifact。候选清单绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和文件 hash；writer 仍须用 Actions 服务端记录验证原 job 成功与 artifact 摘要，不把清单当成签名。
+PR 只要求固定 `Plugins / 打包检查`，单 job `timeout-minutes: 10`，按完整变更闭包生产打包与校验，不运行项目测试。纯文档和纯本机测试输入产生明确无需打包的成功结果，未知生产共享输入扩大闭包。数据插件不启动 .NET 或浏览器；managed 插件使用一次固定的真实 Host SDK。完整候选和实际发布分别手动触发，main push 不自动构建候选或进入 writer。本机验证与完整手动发行不受十分钟时限约束。候选清单仍绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和逐文件 hash；writer 用服务端记录复核原 job 和 artifact 摘要。
 
 构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Publisher App 令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
 

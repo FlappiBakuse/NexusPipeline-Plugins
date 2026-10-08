@@ -4,7 +4,7 @@
     {
       "id": "testing.core",
       "path": "TESTING.md",
-      "summary": "十三插件有限能力轨迹、累计预算、固定输入和 CI 汇总",
+      "summary": "插件本机能力轨迹、固定输入与生产 PR 打包检查",
       "topics": [
         "测试",
         "预算",
@@ -17,7 +17,8 @@
       "codePaths": [
         "tests/run.mjs",
         "tests/policy.json",
-        "tests/ci/gate.py"
+        "tests/ci/gate.py",
+        "tools/ci_check.py"
       ],
       "testDomains": [
         "managed",

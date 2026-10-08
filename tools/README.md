@@ -1,6 +1,6 @@
 # 仓库工具
 
-唯一 Python 入口为 `python tools/repo.py`，测试编排入口为 `node tests/run.mjs`。参数名精确匹配；未知、重复参数和缺少必需输入会失败。`--root` 默认为入口所在仓库，其他 checkout 必须显式提供。所有构建、依赖缓存、报告及候选输出使用仓库外的新目录；本地配置 TEMP/TMP 等进程环境变量，不修改全局环境。
+仓库打包与发行入口为 `python tools/repo.py`，生产 PR 检查使用 `python tools/ci_check.py plan|run`，本机测试编排入口为 `node tests/run.mjs`。参数名精确匹配；未知、重复参数和缺少必需输入会失败。`--root` 默认为仓库工具入口所在仓库，其他 checkout 必须显式提供。所有构建、依赖缓存、报告及候选输出使用仓库外的新目录；本地配置 TEMP/TMP 等进程环境变量，不修改全局环境。
 
 | 目录 | 职责 |
 |---|---|

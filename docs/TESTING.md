@@ -1,8 +1,6 @@
 # 核心测试
 
-项目维护的工作流、任务与步骤使用中文职责名称，保留 Host、Plugins、工具与插件的专有名称。`tests/ci/names.json` 登记控制检查、必需汇总、完整预算和未选中批次的名称；`tests/ci/names.mjs` 从逻辑门禁注册表生成批次标题。标题列出前三项职责和总数，运行摘要列出完整门禁清单；内部 batch ID、artifact 名称与 run/attempt 身份保持稳定。
-
-必需汇总通过同一命名入口核验实际任务集合；完整预算复核批次编号、任务总数、完整耗时及可信登记。显示名称改变时，可信 main 控制器触发名称、任务匹配与分支保护绑定须同步；不一致时失败。GitHub 自动生成的启动、收尾步骤由平台提供。
+GitHub PR 只运行固定 `Plugins / 打包检查`，单 job 十分钟内执行受影响插件的实际生产打包、清单及 ZIP 边界验证，不运行项目测试。文档和纯本机测试变更生成固定成功结果。本机测试保留原生结果、输入身份、计数、场景和清理验证，不设执行预算。
 
 在仓库根执行，显式提供包含测试工具的实际 Host 源码：
 
@@ -18,9 +16,9 @@ node tests/run.mjs gate --id plugins.plugin.package:GameCheckIn --host-root <固
 node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 ```
 
-`tests/policy.json` 登记当前插件清单、组件方法和有限适配轨迹（当前 13 个，数量不是扩展上限）；源码 manifest 必须与登记精确一致。未知插件、重复参数、空变化集合、遗漏报告、零用例和 skip 均失败。变化只属于一个插件时只选该插件；共享、删除、改名和未知输入保守选择全部。纯文档变化为 NOT_APPLICABLE，CI 仍生成范围与汇总检查。
+`tests/policy.json` 登记当前插件清单、组件方法和有限适配轨迹（当前 13 个，数量不是扩展上限）；源码 manifest 必须与登记精确一致。未知插件、重复参数、空变化集合、遗漏报告、零用例和 skip 均失败。变化只属于一个插件时只选该插件；共享、删除、改名和未知输入保守选择全部。纯文档变化为 NOT_APPLICABLE，GitHub 仍生成固定生产检查结果。
 
-正式 PR 门禁由 plan 将逻辑义务合并为执行单元，按准备依赖划分 control 与 Windows batch。构建、测试、插件 profile、命令和完整 CI job 均不设执行时间或作业数量预算上限；policy 与门禁注册表使用 null 表示无限制，估算耗时只供观察。实际耗时仍记录准备、子命令、原生测试、真实场景、报告、上传和收尾。源码身份、预期用例和场景、原始证据及进程清理仍必须完整；功能失败、取消或缺少报告不能成功。操作协议和进程退出观察仍保留有限等待，用于识别功能失败。
+本机 plan、batch、gate 按实际准备依赖组织测试，记录准备、原生命令、真实场景和清理的完整耗时。缺少报告、失败、取消、空用例或意外跳过不能成功。操作协议与进程退出保留有限等待。
 
 配对核验继续严格检查实际 commit、tree、policy、input lock 和可信 main 登记；核验子进程不设执行时间预算。
 
@@ -47,43 +45,14 @@ python tests/bootstrap-native.py --output <新的外部目录> [--archive <已�
 
 随后设置进程环境 `NEXUS_MAA_NATIVE_ROOT` 指向该目录。版本、URL、大小和 SHA256 在 `tests/inputs.lock.json`；测试不自动下载或忽略未知版本。受控 WinForms 窗口必须实际可见，以供 Win32 controller 绑定；场景结束必须退出。
 
-CI 的范围 job 启动可选轻量 control 和按准备依赖划分的 Windows batch；全清单与架构合同在 control 执行一次，数据、managed 与 native 按准备图分层，生产包与 Test Host key 分离。每物理 job 记录完整实际耗时，不设项目执行时间上限，必需汇总 汇总独立核验本次报告和 Actions API 完整前序 job 时长。完成后以 `python tests/ci/audit_jobs.py --run-id <ID> --attempt <N>` 只读检查包括 必需汇总 在内的最终时长；可信 main 的 begin 控制器先登记同 PR/head/run/attempt 身份，finalize 在 CI 完成后审计所有物理 job，写入 `Plugins / 完整预算` 检查；该检查须与 `Plugins / 必需汇总` 一同绑定到 main 规则。回写检查不存在或失败时不得合并。测试专用 Host SHA 只写入 `tests/inputs.lock.json`，不改变兼容元数据 `host.lock.json`。当前锁要求填写真实合入且包含工具的 Host 提交；缺失时明确失败，不追随浮动 main。本地开发树可带已确认改动，但报告标明源码指纹，不充当正式资格。
 
-`python tools/repo.py check source`、全部历史 TaskProtocol fixture 和前端模拟 Host 工具保留为显式诊断；其边界不替代上述实际能力证据。生产打包、来源、hash 和 publisher 校验继续由现役发行工具维护。
-
-完整资格核验每个实际物理 job 的成功状态和完整耗时，包含 checkout、工具/依赖准备、上传及 post-action，不设执行时间或作业数量预算上限。必需汇总 自身和 finalize 收尾须用完成后的服务端记录复核。schemaVersion 2 报告绑定原生证据 hash、source/partner/policy/control manifest；缺失、skip、零用例、错 attempt、路径越界及规范化与原生不一致均失败。当前远端启用状态见 [STATUS](STATUS.md)。轻量文档义务只检查真实文件、内链和命令入口，不准备 .NET、Host 或浏览器；语义仍需人工审查。
-
-必需汇总 只等待仍在排队或运行中的可信 main begin 登记，不设总等待预算；登记身份错误或已完成失败立即拒绝。API 中带 runner 选择标签、但从未分配 runner 且没有 steps 的已知可选 skipped job 不计为物理作业；已分配 runner、实际 steps 和未知作业继续严格审计。
-
-### 同 SHA 完整重跑
-
-首次 CI 由 `requested` 事件登记一次可信 begin。完整重跑不产生该事件，须由已审核 `main` 显式登记新的 attempt；新 必需汇总 只接受本次 PR/head/run/attempt 身份，未登记时失败。先重跑整个生产者，读取新的 attempt，再执行：
+生产检查复现入口：
 
 ```text
-gh run rerun <producer-run-id> --repo FlappiBakuse/NexusPipeline-Plugins
-gh workflow run final-budget.yml --repo FlappiBakuse/NexusPipeline-Plugins --ref main -f run_id=<producer-run-id> -f attempt=<新的attempt> -f phase=begin
+python tools/ci_check.py plan --base <完整base SHA> --head <完整head SHA> --checkout <实际checkout SHA> --report <外部plan.json>
+python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输出目录> [--host-root <固定干净Host SDK检出>]
 ```
 
-不要只重跑失败 job 来替代完整资格。CI 完成后自动触发 finalize；检查成功后仍须读取生产者与两个控制器的完整服务端作业记录，包括 post-action。
+计划绑定源码原字节、完整 tree 和一次固定的官方 Host SHA。数据插件不准备 .NET 或浏览器，managed 包实际构建程序集及声明的前端。删除、改名和共享输入按生产依赖扩大闭包。run 重新推导计划并核对输入，不能篡改计划跳过目标。测试专用 Host SHA 继续由 `tests/inputs.lock.json` 独立管理。
 
 配置编辑生成一致性使用 `python tools/repo.py generate editors --check`；准备行为使用 `node tests/config-editors/run.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。
-
-## 双仓候选配对
-
-默认输入使用固定的已合入源码：Host 在一次 scope 中解析 Plugins main，Plugins 使用 `tests/inputs.lock.json` 中已经属于 Host main 历史的提交。API 或源码路径需要两仓同时修改时，可在两个正式 PR 描述中登记同一份 `nexus-ci-pair` JSON 代码块。配对只替换测试来源，现有义务与必需检查保持不变。
-
-从已审核的控制器 checkout 运行只读命令，参数依次为 Host 和 Plugins 的实际 PR 编号：
-
-```text
-python tests/ci/inputs.py --create-pair <Host_PR编号> <Plugins_PR编号>
-```
-
-命令查询已经存在的 base/head、PR merge commit/tree、策略和输入锁摘要、main 控制器身份，输出待登记的源对象。将完整输出置于双方描述的 `nexus-ci-pair` 代码块中；不要手填未来 SHA 或 run ID。生成输出不代表已获资格，控制器会重新核验实际服务端状态。生成与验证共用 Python 的递归键排序、紧凑 UTF-8 JSON 和 SHA256，源摘要排除自身字段，运行绑定另含真实 run/attempt。
-
-配对要求双方 PR 属于官方仓库、面向 main 且保持打开。scope、实际 checkout、报告和可信 main 的 begin/finalize 必须引用同一 pair；缺少登记、摘要不同、对端变更或部分重跑均不能通过。正式 producer 仍是 `pull_request` 的 `ci.yml`，包含正文 edited 事件，普通正文编辑也运行正常义务。默认模式不接受任意对端覆盖环境变量。
-
-配对登记须先于同一 head 的首个 producer。维护者可在准备两端引用与正文期间短暂暂停 `ci.yml` 调度，登记后立即恢复工作流，并通过 `ready_for_review` 事件启动两端首次完整运行。准备期间必需检查规则保持生效，尚未验证的新 head 不具备合并资格；不得删除早先失败记录或以局部重跑代替完整验证。
-
-两边描述同步后，两边都须完成新的完整运行。另一仓提交不会自动撤销本仓旧绿勾；合并前必须只读复核双方当前 base/head/merge tree、pairDigest 和最新完整 attempt 均一致且检查成功。两个 finalize 独立完成，不互相等待。Host 合入后，将 Plugins 默认测试锁改为真实已合入 Host SHA，移除配对块并重新执行完整默认 CI，再按现役流程合并与发行。源码合入、插件稳定字节和最终 Host 预装候选分别验证。
-
-现役保护规则中的“完整预算”检查名称保持稳定；当前检查核验源码、完整作业身份、成功状态和真实耗时，不设耗时合格线。工作流不设置项目 timeout-minutes，仍受 GitHub Actions 平台自身的运行限制。
