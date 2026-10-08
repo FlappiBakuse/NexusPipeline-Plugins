@@ -170,6 +170,12 @@ internal sealed class CheckInSecretInput
     public string? Value { get; set; }
 }
 
+internal sealed class CheckInCredentialReadRequest
+{
+    public Guid TaskId { get; set; }
+    public string Platform { get; set; } = "";
+}
+
 internal sealed class CheckInTaskView
 {
     public Guid Id { get; init; }

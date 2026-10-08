@@ -228,3 +228,5 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 完整 stable candidate 与 publish-only 均由 `workflow_dispatch` 发起；main push 不自动构建或发布。candidate 按已发布 source cursor 计算累计差异，不重复项目测试；无发行变化返回 `NO_CHANGES`。writer 继续严格验证原候选、服务端 job、digest、不可变字节、生成物白名单与快进，不重新构建。preview 保持显式 candidate/restore 和 publish 参数。
 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](author/TASK_PROTOCOL.md)。
+
+未提交源码本机验收可由 Host 的 `tools/local_acceptance.py build --host-root <Host源码> --plugins-root <本仓源码> --output <外部独占目录>` 装配全部现役插件。该流程不写稳定 catalog/state/packages，本机 receipt 不能用于正式 publisher。

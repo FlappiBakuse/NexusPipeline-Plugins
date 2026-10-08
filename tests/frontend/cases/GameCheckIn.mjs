@@ -11,7 +11,12 @@ export function clickPluginButton(container, label) {
 export function changePublicControl(container, selector, value) {
   const control = container.querySelector(selector);
   if (!control) fail(`GameCheckIn 页面缺少公开控件：${selector}`);
-  control.dispatchEvent(new window.CustomEvent("change", { bubbles: true, detail: [value] }));
+  control.dispatchEvent(new window.CustomEvent(selector.includes("gci-secret-") ? "update:modelValue" : "change", { bubbles: true, detail: [value] }));
+}
+
+function credentialValue(container) {
+  const control = container.querySelector("#gci-secret-cn");
+  return control?.modelValue ?? control?.getAttribute("model-value");
 }
 
 export async function assertGameCheckInRoute(host, metrics, state) {
@@ -92,6 +97,8 @@ export async function assertGameCheckInRoute(host, metrics, state) {
 
   clickPluginButton(view, "编辑签到");
   await flushDom();
+  await flushDom();
+  if (credentialValue(view) !== "task-cookie-secret") fail("已保存凭据没有专用回读到编辑器");
   changePublicControl(view, "nxp-text-input#gci-task-name", "晨间签到（更新）");
   clickPluginButton(view, "保存");
   await flushDom();
@@ -101,6 +108,83 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (updated.body.secrets?.cn?.action !== "keep") fail("编辑时留空凭据没有提交保留动作");
   const saved = state.tasks.find(task => task.id === "task-check-in-1");
   if (!saved?.credentials?.cn || saved.notification?.smtpTo !== "task@example.test") fail("留空凭据保留或 SMTP 收件人保存语义不正确");
+
+  clickPluginButton(view, "编辑签到");
+  await flushDom();
+  await flushDom();
+  const writesBeforeClear = metrics.apiCalls.filter(call => call.method === "PUT").length;
+  view.querySelector("#gci-clear-cn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  await flushDom();
+  if (metrics.apiCalls.filter(call => call.method === "PUT").length !== writesBeforeClear) fail("清除草稿提前发送了写请求");
+  clickPluginButton(view, "取消");
+  await flushDom();
+  clickPluginButton(view, "编辑签到");
+  await flushDom();
+  await flushDom();
+  if (credentialValue(view) !== "task-cookie-secret") fail("取消清除草稿丢失已保存凭据");
+  view.querySelector("#gci-clear-cn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  changePublicControl(view, "nxp-text-input#gci-secret-cn", "replacement-cookie");
+  clickPluginButton(view, "保存");
+  await flushDom();
+  await flushDom();
+  const replaced = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
+  if (replaced?.body?.secrets?.cn?.action !== "set" || replaced.body.secrets.cn.value !== "replacement-cookie") fail("清除后重新输入没有提交 set");
+
+  const post = host.api.post;
+  const pendingReads = [];
+  host.api.post = async (route, body, options) => {
+    if (route === "tasks/credential/read" && body?.platform === "cn") {
+      const response = await post(route, body, options);
+      return new Promise(resolve => pendingReads.push(() => resolve(response)));
+    }
+    return post(route, body, options);
+  };
+  try {
+    clickPluginButton(view, "编辑签到");
+    await flushDom(); await flushDom();
+    clickPluginButton(view, "取消");
+    await flushDom();
+    clickPluginButton(view, "编辑签到");
+    await flushDom(); await flushDom();
+    changePublicControl(view, "nxp-text-input#gci-secret-cn", "new-draft-cookie");
+    if (pendingReads.length !== 2) fail("迟到回读场景没有实际挂起两个编辑会话");
+    for (const resolve of pendingReads) resolve();
+    await flushDom(); await flushDom();
+    if (credentialValue(view) !== "new-draft-cookie") fail("迟到回读覆盖新会话输入");
+    clickPluginButton(view, "保存");
+    await flushDom(); await flushDom();
+    const latest = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
+    if (latest?.body?.secrets?.cn?.action !== "set" || latest.body.secrets.cn.value !== "new-draft-cookie") fail("迟到回读改变了保存意图");
+  } finally { host.api.post = post; }
+
+  let readFailed = false;
+  host.api.post = async (route, body, options) => {
+    if (route === "tasks/credential/read" && body?.platform === "cn" && !readFailed) {
+      readFailed = true;
+      throw new Error("credential_read_failed");
+    }
+    return post(route, body, options);
+  };
+  try {
+    clickPluginButton(view, "编辑签到");
+    await flushDom(); await flushDom();
+    if (!readFailed || !view.querySelector('[role="alert"]')) fail("回读失败没有提供可观察错误");
+    clickPluginButton(view, "重试读取");
+    await flushDom(); await flushDom();
+    if (credentialValue(view) !== "new-draft-cookie") fail("回读重试没有恢复已保存值");
+    clickPluginButton(view, "保存");
+    await flushDom(); await flushDom();
+    const kept = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
+    if (kept?.body?.secrets?.cn?.action !== "keep") fail("回读重试被当成 set 保存");
+  } finally { host.api.post = post; }
+
+  clickPluginButton(view, "编辑签到");
+  await flushDom(); await flushDom();
+  view.querySelector("#gci-clear-cn").dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
+  clickPluginButton(view, "保存");
+  await flushDom(); await flushDom();
+  const cleared = metrics.apiCalls.findLast(call => call.method === "PUT" && call.route === "tasks");
+  if (cleared?.body?.secrets?.cn?.action !== "clear" || state.tasks[0]?.credentials?.cn) fail("清除草稿保存没有实际删除凭据");
 
   clickPluginButton(view, "删除签到");
   await flushDom();

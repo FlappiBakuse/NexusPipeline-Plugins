@@ -68,7 +68,12 @@
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_SavesPlatformSecretsMaskedAndDeletesItsV2Scope",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReordersTasksOnlyForACompleteUniquePermutation",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.ScheduledTask_ClaimsOneLocalOccurrenceAndCredentialChangeResetsDailyDeduplication",
-        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_RestoresSecretsWhenTaskStoreWriteFails"
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_RestoresSecretsWhenTaskStoreWriteFails",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReportsUnknownWhenSecretRollbackFails",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReportsUnknownWhenResponseProjectionFailsAfterCommit",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReadCredentialIsScopedAndDoesNotModifyTaskOrSecrets",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ClearAndKeepCommitOnlyOnSaveAndSurviveServiceReload",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_RunningSnapshotRejectsCredentialClear"
       ],
       "fixtureIds": [],
       "realScenario": "P-G01"

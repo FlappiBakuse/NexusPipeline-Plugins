@@ -61,7 +61,7 @@
     {
       "id": "authoring.frontend",
       "path": "author/FRONTEND_PLUGIN.md",
-      "summary": "Frontend API 1.5、公共 nxp-* 元件、slot 和生命周期",
+      "summary": "Frontend API 1.6、公共 nxp-* 元件、slot 和生命周期",
       "topics": [
         "frontend",
         "nxp",

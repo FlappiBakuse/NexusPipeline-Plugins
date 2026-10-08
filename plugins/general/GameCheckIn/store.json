@@ -19,6 +19,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.4.2",
+      "items": [
+        "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
+      ],
+      "date": "2026-10-08"
+    },
+    {
       "version": "0.4.1",
       "date": "2026-10-05",
       "items": [
@@ -30,13 +37,6 @@
       "date": "2026-10-04",
       "items": [
         "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
-      ]
-    },
-    {
-      "version": "0.3.5",
-      "date": "2026-09-21",
-      "items": [
-        "调整签到任务卡片的左侧留白，与用户、脚本实例及调度队列卡片保持一致。"
       ]
     }
   ],
@@ -56,6 +56,13 @@
       ],
       "changelog": [
         {
+          "version": "0.4.2",
+          "items": [
+            "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
+          ],
+          "date": "2026-10-08"
+        },
+        {
           "version": "0.4.1",
           "date": "2026-10-05",
           "items": [
@@ -67,12 +74,6 @@
           "date": "2026-10-04",
           "items": [
             "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
-          ]
-        },
-        {
-          "version": "0.3.5",
-          "items": [
-            "Aligned check-in task card spacing with user, script instance and queue cards."
           ]
         }
       ]
