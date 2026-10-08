@@ -120,6 +120,7 @@ internal sealed class CheckInTaskService
     private void RegisterRoutes()
     {
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("GET", "state", PluginOperationAccess.General, GetStateAsync)));
+        _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks/credential/read", PluginOperationAccess.General, ReadCredentialAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("POST", "tasks", PluginOperationAccess.General, CreateTaskAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks", PluginOperationAccess.General, UpdateTaskAsync)));
         _routes.Add(_context.WebApi.Register(new PluginWebApiRoute("PUT", "tasks/order", PluginOperationAccess.General, ReorderTasksAsync)));
@@ -154,6 +155,25 @@ internal sealed class CheckInTaskService
         {
             return Error(500, "state_unavailable");
         }
+    }
+
+    private async ValueTask<PluginWebApiResponse> ReadCredentialAsync(PluginWebApiRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryDeserialize(request.JsonBody, out CheckInCredentialReadRequest? input)
+            || input!.TaskId == Guid.Empty) return Error(400, "task_id_required");
+        if (!PlatformOrder.Contains(input.Platform, StringComparer.Ordinal)) return Error(400, "credential_platform_invalid");
+        await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_stopped) return Error(503, "service_stopping");
+            CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
+            if (!store.Tasks.Any(task => task.Id == input.TaskId)) return Error(404, "task_not_found");
+            string? value = await _context.Secrets.GetAsync(SecretKey(input.TaskId, SecretName(input.Platform)), cancellationToken).ConfigureAwait(false);
+            return Json(new { input.TaskId, input.Platform, configured = !string.IsNullOrWhiteSpace(value), value });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch { return Error(500, "credential_read_failed"); }
+        finally { _storeGate.Release(); }
     }
 
     private ValueTask<PluginWebApiResponse> CreateTaskAsync(PluginWebApiRequest request, CancellationToken cancellationToken) =>
@@ -214,6 +234,7 @@ internal sealed class CheckInTaskService
         if (validation is not null) return Error(400, validation);
 
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        bool committed = false;
         try
         {
             if (_stopped) return Error(503, "service_stopping");
@@ -247,12 +268,13 @@ internal sealed class CheckInTaskService
                 if (existing is null) store.Tasks.Add(task);
                 else store.Tasks[store.Tasks.IndexOf(existing)] = task;
                 await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
+                committed = true;
             }
             catch
             {
-                if (secretSnapshot is not null) await RestoreSecretsAsync(id, secretSnapshot).ConfigureAwait(false);
+                bool restored = secretSnapshot is null || await RestoreSecretsAsync(id, secretSnapshot).ConfigureAwait(false);
                 if (cancellationToken.IsCancellationRequested) throw new OperationCanceledException(cancellationToken);
-                return Error(500, "task_save_failed");
+                return Error(500, restored ? "task_save_failed" : "task_save_unconfirmed");
             }
 
             CheckInTaskView view = await ToViewAsync(task, cancellationToken).ConfigureAwait(false);
@@ -264,7 +286,7 @@ internal sealed class CheckInTaskService
         }
         catch
         {
-            return Error(500, "task_save_failed");
+            return Error(500, committed ? "task_save_unconfirmed" : "task_save_failed");
         }
         finally
         {
@@ -901,8 +923,9 @@ internal sealed class CheckInTaskService
         return snapshot;
     }
 
-    private async Task RestoreSecretsAsync(Guid taskId, IReadOnlyDictionary<string, string?> snapshot)
+    private async Task<bool> RestoreSecretsAsync(Guid taskId, IReadOnlyDictionary<string, string?> snapshot)
     {
+        bool restored = true;
         foreach ((string name, string? value) in snapshot)
         {
             try
@@ -912,9 +935,11 @@ internal sealed class CheckInTaskService
             }
             catch
             {
+                restored = false;
                 _context.Logger.Warn("签到任务保存回滚未能恢复全部凭据。");
             }
         }
+        return restored;
     }
 
     private static string SecretName(string field) => field.ToLowerInvariant() switch

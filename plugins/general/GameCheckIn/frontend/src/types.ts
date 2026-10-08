@@ -29,6 +29,16 @@ export type TaskDraft = {
   notification: CheckInNotification;
 };
 export type SecretAction = { action: "keep" | "set" | "clear"; value?: string };
+export type CredentialRead = { taskId: string; platform: string; configured: boolean; value: string | null };
+export type CredentialDraft = {
+  configured: boolean;
+  storedValue: string | null;
+  inputValue: string;
+  intent: SecretAction["action"];
+  generation: number;
+  loading: boolean;
+  readError: boolean;
+};
 export type TaskSavePayload = TaskDraft & { secrets: Record<string, SecretAction> };
 export type Translate = (key: string, args?: Record<string, unknown>, fallback?: string) => string;
 

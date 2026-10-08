@@ -145,5 +145,14 @@
   "error.task_remark_invalid": "备注不能超过 512 字节。",
   "error.smtp_recipient_invalid": "SMTP 收件人内容过长。",
   "error.task_order_save_failed": "任务顺序保存失败。",
-  "error.task_order_invalid": "任务顺序无效，请刷新页面后重试。"
+  "error.task_order_invalid": "任务顺序无效，请刷新页面后重试。",
+  "field.secret_show": "显示凭据",
+  "field.secret_hide": "隐藏凭据",
+  "field.secret_loading": "正在读取已保存凭据…",
+  "field.secret_retry": "重试读取",
+  "field.secret_clear_pending": "将在保存后清除",
+  "field.secret_set_pending": "新凭据待保存",
+  "error.credential_read_failed": "凭据读取失败；可保留、重新输入或清除。",
+  "error.credential_platform_invalid": "凭据平台无效。",
+  "error.task_save_unconfirmed": "保存结果未确认，请重新读取任务与凭据状态后处理。"
 }

@@ -88,6 +88,14 @@ export function gameCheckInTask(input, id, previous = null) {
 
 export function createMockHost(pluginName, registrations, metrics, state = defaultTestState()) {
   const gameCheckInPlugin = String(pluginName).replaceAll("-", "").toLowerCase() === "gamecheckin";
+  const taskSecrets = new Map();
+  const applySecrets = (taskId, secrets) => {
+    for (const [platform, input] of Object.entries(secrets || {})) {
+      const key = `${taskId}/${platform}`;
+      if (input.action === "set") taskSecrets.set(key, input.value);
+      if (input.action === "clear") taskSecrets.delete(key);
+    }
+  };
   const host = {
     getCapabilities: async () => Object.freeze({ schemaVersion: 1, connectionKind: metrics.connectionKind || "local", operations: { general: { allowed: true, denyReason: null }, hostFilePicker: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "host_file_picker_requires_local" : null }, nativeConfigEditor: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "native_config_editor_requires_local" : null } } }),
     plugin: Object.freeze({ name: pluginName }),
@@ -126,6 +134,7 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
           const index = state.tasks.findIndex(task => task.id === copiedBody?.id);
           if (index < 0) throw Object.assign(new Error("task_not_found"), { code: "task_not_found" });
           state.tasks[index] = gameCheckInTask(copiedBody, copiedBody.id, state.tasks[index]);
+          applySecrets(copiedBody.id, copiedBody.secrets);
           return structuredClone(state.tasks[index]);
         }
         if (gameCheckInPlugin && route === "tasks/order") {
@@ -145,9 +154,14 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
         metrics.apiPostRoutes.push(String(route));
         const copiedBody = JSON.parse(JSON.stringify(body || {}));
         metrics.apiCalls.push({ method: "POST", route: String(route), body: copiedBody });
+        if (gameCheckInPlugin && route === "tasks/credential/read") {
+          const value = taskSecrets.get(`${copiedBody.taskId}/${copiedBody.platform}`) || null;
+          return { taskId: copiedBody.taskId, platform: copiedBody.platform, configured: value !== null, value };
+        }
         if (gameCheckInPlugin && route === "tasks") {
           const task = gameCheckInTask(copiedBody, "task-check-in-1");
           state.tasks.push(task);
+          applySecrets(task.id, copiedBody.secrets);
           return structuredClone(task);
         }
         if (gameCheckInPlugin && route === "tasks/run") {

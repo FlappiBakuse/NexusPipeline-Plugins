@@ -145,5 +145,14 @@
   "error.task_remark_invalid": "The remark cannot exceed 512 bytes.",
   "error.smtp_recipient_invalid": "The SMTP recipient is too long.",
   "error.task_order_save_failed": "Could not save the task order.",
-  "error.task_order_invalid": "The task order is invalid. Refresh and try again."
+  "error.task_order_invalid": "The task order is invalid. Refresh and try again.",
+  "field.secret_show": "Show credential",
+  "field.secret_hide": "Hide credential",
+  "field.secret_loading": "Reading saved credential…",
+  "field.secret_retry": "Retry reading",
+  "field.secret_clear_pending": "Will be cleared after saving",
+  "field.secret_set_pending": "New credential awaiting save",
+  "error.credential_read_failed": "Credential could not be read. Keep it, enter a replacement, or clear it.",
+  "error.credential_platform_invalid": "Invalid credential platform.",
+  "error.task_save_unconfirmed": "The save result is unconfirmed. Read the task and credentials again before continuing."
 }

@@ -56,3 +56,5 @@ python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输�
 计划绑定源码原字节、完整 tree 和一次固定的官方 Host SHA。数据插件不准备 .NET 或浏览器，managed 包实际构建程序集及声明的前端。删除、改名和共享输入按生产依赖扩大闭包。run 重新推导计划并核对输入，不能篡改计划跳过目标。测试专用 Host SHA 继续由 `tests/inputs.lock.json` 独立管理。
 
 配置编辑生成一致性使用 `python tools/repo.py generate editors --check`；准备行为使用 `node tests/config-editors/run.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。
+
+GameCheckIn 凭据改动按专用读取范围、keep/set/clear 持久结果、运行中 409、写盘恢复及迟到响应选择验证；普通 DTO 不含明文。前端 conformance 使用已构建插件与实际 Host 公开元素；mock 结果不代表真实远端认证撤销。
