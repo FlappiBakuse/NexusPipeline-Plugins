@@ -130,3 +130,13 @@ Pull Request 应包含：
 仓库根目录的 `global.json` 固定 .NET 10 SDK 补丁带，允许同一带内的最新补丁。先在仓库内执行 `dotnet --version`，安装匹配的 SDK；只有其他主版本或特征带不满足此输入。生产与隔离 Test Host 继续使用 .NET 10。
 
 专项编辑代码在 `adapters/config-editor/` 维护，运行 `python tools/repo.py generate editors` 后提交生成的八个 `data/editor.js`。不要手改 bundle；`--check` 与 source gate 校验一致性。修复不能进入 discover，诊断不能写配置。完整接口见 [配置编辑](docs/author/CONFIG_EDITOR.md)。
+
+## 开工与完工治理
+
+开工运行 `python tools/repo.py preflight --path <插件或工具目录> --keyword <主题>`；双仓任务显式加 `--host-root <Host路径>`，从该 Host 的现役治理入口读取 UI 注册表和公共 API。没有对端时该范围为 NOT_CHECKED，不能声称双仓契约通过。文档/测试域来自当前 `docs/map.json`，不维护第二份组件清单。
+
+完工运行 `python tools/repo.py check governance --base <完整基线SHA> --working-tree --owner Tools Docs Tests --host-root <Host路径>`。Owner 使用报告中的名称，多个值一次传入；`Plugin/<artifactName>` 来自目录并经现役 manifest 校验，机器 ID 单独从 manifest 读取。报告可用 `--report <仓库外JSON路径>` 保存。纯治理任务加 `--governance-only`，明确拒绝插件、adapter、公开契约和锁输入变更；普通任务的版本授权仍由维护者判断。
+
+此入口复用 runner 的 Git A/R/C、暂存、rename 和未跟踪解析。新增插件资源调用既有 source/manifest/script 边界验证；stable 产物沿用生产检查拒绝，合法 fixture/Schema/adapter 资源放行，未知角色和任务外 Owner 为 REVIEW。不限制文件数或 LOC，不追溯阻断历史目录。REVIEW 的退出码 0 只表示没有确定性拒绝，人工审核仍未完成。
+
+`python tools/repo.py check docs` 同时检查指定前端指南声明及 manifest 示例与 `host.lock.json`；历史旧数字不扫描，模糊表述为 REVIEW，提取失败为 NOT_CHECKED 且非零。路径允许规范化后仍在仓库内的 `../CONTRIBUTING.md`，拒绝不存在或真正仓库外的目标。治理工具不替代 A06、ZIP 检查、生产 PR 检查或功能测试，也不更改发布 writer 权限。工具自测沿用 `python -m unittest discover -s tests/tooling -v`，将隔离输出定位到已登记的外部测试根。

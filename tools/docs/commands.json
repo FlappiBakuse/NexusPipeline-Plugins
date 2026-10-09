@@ -4,10 +4,14 @@
     "check source": [],
     "check syntax": [],
     "check docs": [],
+    "check governance": [
+      "--base"
+    ],
     "check host": [
       "--host-root",
       "--sdk-sha"
     ],
+    "preflight": [],
     "package": [
       "--artifact",
       "--output",

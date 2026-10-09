@@ -154,7 +154,10 @@
       ],
       "codePaths": [
         "tests/tooling",
-        "tools/repo.py"
+        "tools/repo.py",
+        "tools/repository/governance.py",
+        "tools/docs/contracts.mjs",
+        "tests/tooling/test_governance.py"
       ],
       "testDomains": [
         "repository-tools"
