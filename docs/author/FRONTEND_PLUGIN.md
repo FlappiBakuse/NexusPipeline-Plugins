@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.0，不接受较早或未声明的未来 minor。Frontend API 1.6 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.1，不接受较早或未声明的未来 minor。Frontend API 1.6 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -35,8 +35,8 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "description": "提供额外的管理页面功能",
   "version": "0.1.0",
   "kind": "managed-code",
-  "minHostVersion": "0.15.9",
-  "apiVersion": "1.6",
+  "minHostVersion": "0.17.0",
+  "apiVersion": "2.1",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
@@ -201,7 +201,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 3. 入口和样式文件通过 manifest 与安装包检查；
 4. 入口和样式文件位于插件目录的公开 `web/` 路径，并通过资源扩展名和文件存在性校验。
 
-前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。Frontend API 只接受精确版本 `1.5`，其他版本不会加载。可见交互控件应使用 `nxp-*` Native Custom Elements 或插件自有 Vue 组件，开发者应把前端源码、构建结果与发行包一并纳入人工审查。
+前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。Frontend API 只接受精确版本 `1.6`，其他版本不会加载。可见交互控件应使用 `nxp-*` Native Custom Elements 或插件自有 Vue 组件，开发者应把前端源码、构建结果与发行包一并纳入人工审查。
 
 ## 安全与资源边界
 

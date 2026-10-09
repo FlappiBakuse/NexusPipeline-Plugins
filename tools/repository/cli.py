@@ -51,6 +51,13 @@ def parser(default_root: Path) -> argparse.ArgumentParser:
     leaf(check, "source", "check_source", optional=("base",))
     leaf(check, "syntax", "check_syntax")
     leaf(check, "docs", "check_docs")
+    governance = leaf(check, "governance", "check_governance", required=("base",), optional=("host-root", "report"))
+    governance.add_argument("--working-tree", action="store_true")
+    governance.add_argument("--governance-only", action="store_true")
+    governance.add_argument("--owner", nargs="+", default=[])
+    preflight = leaf(commands, "preflight", "preflight", optional=("host-root", "report"))
+    for name in ("path", "keyword", "owner"):
+        preflight.add_argument("--" + name, nargs="+", default=[])
     leaf(check, "host", "check_host", required=("host-root", "sdk-sha"))
     leaf(commands, "package", "package", required=("artifact", "output", "report"),
          optional=("host-root", "plan-phase", "sdk-sha"))
@@ -292,6 +299,9 @@ def main(argv: list[str] | None = None, *, default_root: Path) -> int:
                     target.parent.mkdir(parents=True, exist_ok=True)
                     target.write_text(text, encoding="utf-8", newline="\n")
             print("Checked task plugin" if args.check else "Created task plugin")
+        elif args.route in ("check_governance", "preflight"):
+            from tools.repository.governance import run
+            run(root, args)
         elif args.route == "check_docs":
             from tools.repository.io import _run
             from tools.docs.validate import validate_commands

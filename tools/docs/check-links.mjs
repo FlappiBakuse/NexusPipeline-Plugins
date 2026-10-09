@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkContracts, repositoryPath } from "./contracts.mjs";
 
 /**
  * Markdown 内链与片段校验。只检查本仓库内的相对链接；
@@ -90,10 +91,15 @@ for (const topic of navigation.topics || []) {
   if (!topic.id || topicIds.has(topic.id)) failures.push(`docs/map.json: duplicate/empty topic ${topic.id}`);
   topicIds.add(topic.id);
   for (const [base, relative] of [["docs", topic.path], ...(topic.codePaths || []).map(value => ["", value])]) {
-    const resolved = typeof relative === "string" ? path.resolve(projectRoot, base, relative) : projectRoot;
-    if (typeof relative !== "string" || path.isAbsolute(relative) || path.relative(projectRoot, resolved).startsWith("..")
-        || !fs.existsSync(path.join(projectRoot, base, relative))) failures.push(`docs/map.json: missing/invalid path ${relative}`);
+    try { repositoryPath(projectRoot, base, relative); }
+    catch (error) { failures.push(`GOV-DOC-02 docs/map.json: ${error.message}`); }
   }
+}
+
+const contracts = checkContracts(projectRoot);
+for (const result of contracts) {
+  console.error(JSON.stringify(result));
+  if (["FAIL", "NOT_CHECKED"].includes(result.status)) failures.push(`${result.rule} ${result.file || ""}: ${result.reason || `${result.actual} != ${result.expected}`}`);
 }
 
 if (failures.length > 0) {
@@ -101,5 +107,5 @@ if (failures.length > 0) {
   for (const failure of failures) console.error(`  ${failure}`);
   process.exitCode = 1;
 } else {
-  console.error(`文档内链检查通过：校验 ${checked} 个本地链接`);
+  console.error(`文档内链检查通过：校验 ${checked} 个本地链接；契约 REVIEW=${contracts.filter(result => result.status === "REVIEW").length}（REVIEW 仍需审核）`);
 }
