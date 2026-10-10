@@ -142,3 +142,5 @@ NexusPipeline-Plugins/
 测试源码固定输入位于 `tests/inputs.lock.json`，与 `host.lock.json` 的 API/locale 兼容元数据分离。升级测试 Host 锁时先取得含所需支持工具的真实已合入 Host SHA，再迁移 Plugins 生产者；本地未提交指纹不能填入正式锁。PR 的逻辑义务按最多五批执行，入口与完整预算见 [核心测试](docs/TESTING.md)。
 
 GameCheckIn 当前源码版本 0.4.2 需要 Host 0.17.1，提供已保存凭据回读和保存后清除；稳定商店仍以已发布 catalog 为准。操作说明见 [游戏签到](plugins/general/GameCheckIn/README.md)。
+
+通用插件 [GameActivities](plugins/general/GameActivities/README.md) 提供活动卡、独立订阅与来源诊断；真实来源覆盖仍有未完成项。

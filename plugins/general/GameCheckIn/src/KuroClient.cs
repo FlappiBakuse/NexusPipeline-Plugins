@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
@@ -20,6 +22,27 @@ internal sealed class KuroClient
     {
         _http = http;
         _now = now ?? (() => DateTimeOffset.Now);
+    }
+
+    internal async Task<string> ValidateCredentialAsync(string value, CancellationToken token)
+    {
+        CredentialValidation.RawToken(value);
+        string deviceId = Guid.NewGuid().ToString("D");
+        var accounts = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var game in KuroGameDefinitions.All)
+        {
+            using var roles = await SendFormAsync("/user/role/findRoleList", value, deviceId, deviceId,
+                new Dictionary<string, string> { ["gameId"] = game.GameId }, token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(roles, "code", 200, 220);
+            CredentialValidation.Property(roles.RootElement, "data", JsonValueKind.Array);
+            foreach (var role in ReadRoles(roles, game.GameId))
+            {
+                CredentialValidation.MaskIdentity("kuro", role.UserId);
+                accounts.Add(role.UserId);
+            }
+        }
+        if (accounts.Count > 1) throw new CredentialException("credential_capture_ambiguous");
+        return CredentialValidation.MaskIdentity("kuro", accounts.SingleOrDefault());
     }
 
     public async Task<CheckInResult> SignAsync(
@@ -115,7 +138,8 @@ internal sealed class KuroClient
         string devCode,
         string distinctId,
         IReadOnlyDictionary<string, string> fields,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         using HttpClient client = _http.CreateClient(new Uri(BaseUrl + path), TimeSpan.FromSeconds(30));
         using var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl + path);
@@ -139,8 +163,7 @@ internal sealed class KuroClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus).ConfigureAwait(false);
     }
 
     private static List<Role> ReadRoles(JsonDocument document, string gameId)

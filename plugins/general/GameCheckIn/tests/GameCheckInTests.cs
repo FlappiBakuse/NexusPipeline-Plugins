@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using NexusPipeline.Plugin.Abstractions;
 using NexusPipeline.Plugin.TestKit;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 using Xunit;
 
 namespace NexusPipeline.Plugin.GameCheckIn.Tests;
@@ -226,7 +227,7 @@ public sealed class GameCheckInTests
         {
             string secretKey = CheckInTaskService.SecretKey(id, "credential-" + platforms[index]);
             Assert.Equal($"tasks-v2/{id:N}/credential-{platforms[index]}", secretKey);
-            Assert.Equal(secretValues[index], await context.Secrets.GetAsync(secretKey));
+            Assert.Equal(secretValues[index], CredentialRecord.Decode(await context.Secrets.GetAsync(secretKey))!.Value);
         }
         Assert.False(context.UserData.HasConfig("game-check-in"));
         Assert.Empty(context.Notifications.Notifications);
@@ -340,7 +341,8 @@ public sealed class GameCheckInTests
         PluginWebApiResponse created = await InvokeAsync(context, "POST", "tasks", create);
         Guid id = Guid.Parse(created.JsonBody!["id"]!.GetValue<string>());
         string secretKey = CheckInTaskService.SecretKey(id, "credential-kuro");
-        Assert.Equal("rollback-token-old", await context.Secrets.GetAsync(secretKey));
+        string? originalPayload = await context.Secrets.GetAsync(secretKey);
+        Assert.Equal("rollback-token-old", CredentialRecord.Decode(originalPayload)!.Value);
 
         JsonObject update = NewKuroTaskInput("Rollback Updated", "rollback-token-new");
         update["id"] = id.ToString();
@@ -348,7 +350,7 @@ public sealed class GameCheckInTests
         PluginWebApiResponse response = await InvokeAsync(context, "PUT", "tasks", update);
 
         Assert.Equal(500, response.StatusCode);
-        Assert.Equal("rollback-token-old", await context.Secrets.GetAsync(secretKey));
+        Assert.Equal(originalPayload, await context.Secrets.GetAsync(secretKey));
         Assert.Equal("Rollback", (await GetTaskStateAsync(context, id))["name"]!.GetValue<string>());
         await service.StopAsync(CancellationToken.None);
     }
@@ -364,14 +366,14 @@ public sealed class GameCheckInTests
         Guid id = Guid.Parse(created.JsonBody!["id"]!.GetValue<string>());
         JsonObject update = NewKuroTaskInput("Uncommitted name", "new-token");
         update["id"] = id.ToString();
-        secrets.FailSetValue = "old-token";
+        secrets.FailSetValue = await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro"));
         store.FailNextWrite();
 
         PluginWebApiResponse result = await InvokeAsync(context, "PUT", "tasks", update);
 
         Assert.Equal(500, result.StatusCode);
         Assert.Equal("task_save_unconfirmed", result.JsonBody!["error"]!.GetValue<string>());
-        Assert.Equal("new-token", await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+        Assert.Equal("new-token", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         Assert.Equal("Rollback failure", (await GetTaskStateAsync(context, id))["name"]!.GetValue<string>());
         await service.StopAsync(CancellationToken.None);
     }
@@ -392,7 +394,7 @@ public sealed class GameCheckInTests
 
         Assert.Equal(500, result.StatusCode);
         Assert.Equal("task_save_unconfirmed", result.JsonBody!["error"]!.GetValue<string>());
-        Assert.Equal("new-token", await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+        Assert.Equal("new-token", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         secrets.FailReadsAfterSet = false;
         secrets.ReadFailure = false;
         Assert.Equal("Committed name", (await GetTaskStateAsync(context, id))["name"]!.GetValue<string>());
@@ -434,9 +436,9 @@ public sealed class GameCheckInTests
         update["id"] = id.ToString();
         update["secrets"] = new JsonObject { ["kuro"] = new JsonObject { ["action"] = "keep" }, ["cn"] = new JsonObject { ["action"] = "keep" } };
         Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", update)).StatusCode);
-        Assert.Equal("saved-kuro", await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+        Assert.Equal("saved-kuro", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         update["secrets"]!["kuro"]!["action"] = "clear";
-        Assert.Equal("saved-kuro", await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+        Assert.Equal("saved-kuro", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", update)).StatusCode);
         await service.StopAsync(CancellationToken.None);
         var restarted = new CheckInTaskService(context);
@@ -471,9 +473,71 @@ public sealed class GameCheckInTests
             PluginWebApiResponse response = await InvokeAsync(context, "PUT", "tasks", update);
             Assert.Equal(409, response.StatusCode);
             Assert.Equal("task_running", response.JsonBody!["error"]!.GetValue<string>());
-            Assert.Equal("run-snapshot", await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+            Assert.Equal("run-snapshot", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         }
         finally { release.Set(); await service.StopAsync(CancellationToken.None); }
+    }
+
+    [Fact]
+    public async Task TaskApi_BrowserCandidateSurvivesRollbackAndCommitsOnlyForOwner()
+    {
+        var context = new FakePluginHostContext("game-check-in");
+        using var store = new ControlledScopedDataStore(context.ScopedData);
+        var service = new CheckInTaskService(new ScopedDataHostContext(context, store), browserLoginReady: platform => platform == "os");
+        try
+        {
+            Guid taskId = await CreateKuroTaskAsync(context, "Browser candidate", "old-manual-secret");
+            var client = new PluginClientSessionContext("host", "owner", "desktop", true);
+            var opened = await InvokeAsync(context, "POST", "credentials/editors", new JsonObject { ["taskId"] = taskId }, client);
+            string editorId = opened.JsonBody!["editorSessionId"]!.GetValue<string>();
+            var prepared = await InvokeAsync(context, "POST", "credentials/login/prepare", new JsonObject
+            {
+                ["editorSessionId"] = editorId, ["platform"] = "os", ["expectedFieldGeneration"] = 0,
+            }, client);
+            Assert.Equal(200, prepared.StatusCode);
+            long generation = prepared.JsonBody!["fieldGeneration"]!.GetValue<long>();
+            var invocation = new PluginBrowserInvocation("operation", editorId, generation, prepared.JsonBody["context"]!.AsObject(), client);
+            context.Http.ResponseFactory = request => new(HttpStatusCode.OK)
+            {
+                Content = new StringContent(request.RequestUri!.AbsolutePath.EndsWith("/info")
+                    ? "{\"retcode\":0,\"data\":{\"is_sign\":false}}"
+                    : "{\"retcode\":0,\"data\":{\"list\":[{\"game_uid\":\"123456789\"}]}}"),
+            };
+            var flow = context.BrowserLogin.Flows["os"];
+            flow.ValidateInvocation(invocation);
+            var candidate = await flow.Complete(new([new(".hoyolab.com", "/", "ltuid_v2", "123"), new(".hoyolab.com", "/", "ltoken_v2", "synthetic-token")], [], DateTimeOffset.UtcNow), invocation, CancellationToken.None);
+            Assert.True(candidate.Success);
+            await flow.Terminal(invocation, PluginBrowserLoginTerminal.Completed, CancellationToken.None);
+            var update = NewKuroTaskInput("Browser committed", "unused");
+            update["id"] = taskId; update["editorSessionId"] = editorId;
+            update["secrets"] = new JsonObject { ["os"] = new JsonObject { ["action"] = "set", ["candidateId"] = candidate.CandidateId, ["fieldGeneration"] = generation } };
+            var foreign = client with { ClientSessionId = "other" };
+            Assert.Equal(403, (await InvokeAsync(context, "PUT", "tasks", update, foreign)).StatusCode);
+            Assert.Equal(409, (await InvokeAsync(context, "PUT", "tasks", update, client)).StatusCode);
+            var active = await InvokeAsync(context, "POST", "credentials/editors/state", new JsonObject { ["editorSessionId"] = editorId }, client);
+            update["secrets"]!["os"]!["fieldGeneration"] = active.JsonBody!["fields"]!["os"]!["fieldGeneration"]!.GetValue<long>();
+            string key = CheckInTaskService.SecretKey(taskId, "credential-os");
+            store.FailNextWrite();
+            Assert.Equal(500, (await InvokeAsync(context, "PUT", "tasks", update, client)).StatusCode);
+            Assert.Null(await context.Secrets.GetAsync(key));
+            var retained = await InvokeAsync(context, "POST", "credentials/editors/state", new JsonObject { ["editorSessionId"] = editorId }, client);
+            Assert.Equal(candidate.CandidateId, retained.JsonBody!["fields"]!["os"]!["candidateId"]!.GetValue<string>());
+            Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", update, client)).StatusCode);
+            var record = CredentialRecord.Decode(await context.Secrets.GetAsync(key))!;
+            Assert.Equal("browser", record.Source); Assert.Contains("synthetic-token", record.Value);
+            Assert.Equal("old-manual-secret", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(taskId, "credential-kuro")))!.Value);
+            Assert.Equal(400, (await InvokeAsync(context, "POST", "credentials/editors/state", new JsonObject { ["editorSessionId"] = editorId }, client)).StatusCode);
+            var state = await GetTaskStateAsync(context, taskId);
+            Assert.Equal("browser", state["credentialStates"]!["os"]!["source"]!.GetValue<string>());
+            Assert.DoesNotContain("synthetic-token", state.ToJsonString());
+            Assert.Equal(403, (await InvokeAsync(context, "POST", "tasks/credential/read", new JsonObject { ["taskId"] = taskId, ["platform"] = "os" })).StatusCode);
+            var reopened = await InvokeAsync(context, "POST", "credentials/editors", new JsonObject { ["taskId"] = taskId }, client);
+            var read = new JsonObject { ["editorSessionId"] = reopened.JsonBody!["editorSessionId"]!.GetValue<string>(), ["platform"] = "os", ["fieldGeneration"] = 0 };
+            Assert.Equal(403, (await InvokeAsync(context, "POST", "tasks/credential/read", read, client)).StatusCode);
+            Assert.Equal(200, (await InvokeAsync(context, "POST", "tasks/credential/reveal/confirm", new JsonObject { ["confirm"] = true }, client)).StatusCode);
+            Assert.Equal(record.Value, (await InvokeAsync(context, "POST", "tasks/credential/read", read, client)).JsonBody!["value"]!.GetValue<string>());
+        }
+        finally { await service.StopAsync(CancellationToken.None); }
     }
 
     private static JsonObject NewTaskInput(string name, string time, DayOfWeek day) => new()
@@ -525,10 +589,11 @@ public sealed class GameCheckInTests
         FakePluginHostContext context,
         string method,
         string route,
-        JsonObject? body = null)
+        JsonObject? body = null,
+        PluginClientSessionContext? client = null)
     {
         PluginWebApiRoute registration = context.WebApi.Routes.Single(item => item.Method == method && item.Route == route);
-        var request = new PluginWebApiRequest(method, route, new Dictionary<string, string>(), body?.ToJsonString(), PluginClientConnectionKind.Local);
+        var request = new PluginWebApiRequest(method, route, new Dictionary<string, string>(), body?.ToJsonString(), PluginClientConnectionKind.Local) { ClientSession = client };
         return await registration.Handler(request, CancellationToken.None);
     }
 
@@ -635,6 +700,8 @@ public sealed class GameCheckInTests
         public IPluginAssetStore Assets => _inner.Assets;
         public IPluginEmulatorSupportRegistry EmulatorSupport => _inner.EmulatorSupport;
         public IPluginExecutionProviderRegistry ExecutionProviders => _inner.ExecutionProviders;
+        public IPluginDashboardCardRegistry DashboardCards => _inner.DashboardCards;
+        public IPluginBrowserLoginRegistry BrowserLogin => _inner.BrowserLogin;
     }
 
     private sealed class ControlledSecrets(IPluginSecretStore inner) : IPluginSecretStore

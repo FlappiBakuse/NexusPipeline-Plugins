@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { Directive } from "vue";
-import type { CredentialDraft, CredentialRead, PlatformOption, Schedule, Task, TaskDraft, TaskSavePayload, Translate } from "./types";
+import type { PluginHost, PlatformOption, Schedule, Task, TaskDraft, TaskSavePayload, Translate } from "./types";
+import { createCredentialEditor } from './credentials';
 
 const props = defineProps<{
   open: boolean;
@@ -13,7 +14,7 @@ const props = defineProps<{
   error: string;
   nameError: string;
   translate: Translate;
-  readCredential: (taskId: string, platform: string, signal: AbortSignal) => Promise<CredentialRead>;
+  host: PluginHost;
 }>();
 
 const emit = defineEmits<{
@@ -24,8 +25,8 @@ const emit = defineEmits<{
 }>();
 
 const draft = ref<TaskDraft | null>(null);
-const secretFields = ref<Record<string, CredentialDraft>>({});
-const credentialReads = new Map<string, AbortController>();
+const credentials = createCredentialEditor(props.host);
+const {fields: secretFields, native, ready: credentialsReady, error: credentialError, confirmation} = credentials;
 const credentialInputListeners = new WeakMap<HTMLElement, EventListener>();
 const vCredentialInput: Directive<HTMLElement, string> = {
   mounted(element, binding) {
@@ -40,7 +41,6 @@ const vCredentialInput: Directive<HTMLElement, string> = {
     credentialInputListeners.delete(element);
   },
 };
-let editorGeneration = 0;
 const settingsExpanded = ref(true);
 const expandedScheduleIds = ref<string[]>([]);
 const localError = ref("");
@@ -71,10 +71,7 @@ watch(() => `${props.open}:${props.task?.id || "new"}`, () => {
 }, { immediate: true });
 
 function clearDraft() {
-  editorGeneration++;
-  for (const controller of credentialReads.values()) controller.abort();
-  credentialReads.clear();
-  secretFields.value = {};
+  credentials.close();
   draft.value = null;
 }
 onBeforeUnmount(clearDraft);
@@ -109,13 +106,7 @@ function resetDraft() {
     schedules: [],
     notification: { enabled: false, smtpTo: "" },
   };
-  secretFields.value = Object.fromEntries(props.platforms.map(platform => [platform.id, {
-    configured: task?.credentials?.[platform.id] === true,
-    storedValue: null, inputValue: "", intent: "keep", generation: 0, loading: false, readError: false,
-  }]));
-  if (task) for (const platform of props.platforms) {
-    if (task.credentials?.[platform.id]) void loadCredential(platform.id);
-  }
+  void credentials.open(task?.id);
   settingsExpanded.value = true;
   localError.value = "";
   localNameError.value = "";
@@ -157,6 +148,12 @@ function credentialDescription(platformId: string) {
 
 function credentialPlaceholder(platformId: string) {
   return t(`field.${credentialKey(platformId)}_placeholder`, {}, "");
+}
+
+function configuredCredentialPlaceholder(platformId: string) {
+  const field = secretFields.value[platformId];
+  if (!field?.configured) return credentialPlaceholder(platformId);
+  return [field.maskedAccount, t('field.secret_configured', {}, '已配置，点击眼睛显示')].filter(Boolean).join(' · ');
 }
 
 function addSchedule() {
@@ -206,55 +203,13 @@ function reorderSchedules(ids: string[]) {
 }
 
 function setSecret(platformId: string, value: string) {
-  const field = secretFields.value[platformId];
-  if (!field || props.submitting) return;
-  field.generation++;
-  credentialReads.get(platformId)?.abort();
-  field.loading = false;
-  field.readError = false;
-  field.storedValue = null;
-  field.inputValue = value;
-  field.intent = value.trim() ? "set" : field.intent === "clear" ? "clear" : "keep";
+  if (!props.submitting) credentials.mutate(platformId, value);
 }
 
 function clearSecret(platformId: string) {
-  const field = secretFields.value[platformId];
-  if (!field || props.submitting) return;
-  setSecret(platformId, "");
-  field.intent = "clear";
+  if (!props.submitting) void credentials.clear(platformId);
 }
-
-async function loadCredential(platformId: string) {
-  const field = secretFields.value[platformId];
-  const taskId = props.task?.id;
-  if (!field || !taskId || props.submitting || field.intent !== "keep") return;
-  credentialReads.get(platformId)?.abort();
-  const controller = new AbortController();
-  credentialReads.set(platformId, controller);
-  const session = editorGeneration;
-  const generation = ++field.generation;
-  field.loading = true;
-  field.readError = false;
-  const current = () => !controller.signal.aborted && props.open && props.task?.id === taskId
-    && editorGeneration === session && secretFields.value[platformId] === field && field.generation === generation;
-  try {
-    const result = await props.readCredential(taskId, platformId, controller.signal);
-    if (!current()) return;
-    if (result?.taskId !== taskId || result.platform !== platformId
-      || typeof result.configured !== "boolean"
-      || (result.configured ? typeof result.value !== "string" : result.value !== null)) throw new Error("credential_read_failed");
-    field.configured = result.configured;
-    field.storedValue = result.value;
-    field.inputValue = result.value || "";
-  } catch {
-    if (current()) field.readError = true;
-  } finally {
-    if (current()) field.loading = false;
-    if (credentialReads.get(platformId) === controller) credentialReads.delete(platformId);
-  }
-}
-
-function submit() {
+async function submit() {
   if (!draft.value || props.submitting) return;
   const value = draft.value;
   if (!value.name.trim() || value.name.trim().length > 100) {
@@ -282,12 +237,8 @@ function submit() {
     return;
   }
   localError.value = "";
-  const secrets: TaskSavePayload["secrets"] = {};
-  for (const platform of props.platforms) {
-    const field = secretFields.value[platform.id];
-    secrets[platform.id] = field?.intent === "set"
-      ? { action: "set", value: field.inputValue } : { action: field?.intent || "keep" };
-  }
+  const credentialPayload = await credentials.payload();
+  if (!credentialPayload) { localError.value = t('error.credential_draft_unconfirmed', {}, '凭据草稿尚未确认，请检查错误后再保存。'); return; }
   emit("save", {
     ...value,
     id: value.id,
@@ -295,7 +246,7 @@ function submit() {
     remark: value.remark.trim(),
     schedules: value.schedules.map(schedule => ({ ...schedule, days: [...schedule.days] })),
     notification: { ...value.notification, smtpTo: value.notification.smtpTo.trim() },
-    secrets,
+    ...credentialPayload,
   });
 }
 
@@ -390,26 +341,38 @@ function submit() {
                   :model-value="secretFields[platform.id]?.inputValue || ''"
                   type="password"
                   :show-password-toggle="true"
+                  password-visibility-controlled
+                  :password-visible="secretFields[platform.id]?.visible === true"
+                  :secret-configured="secretFields[platform.id]?.configured === true"
+                  :readonly="secretFields[platform.id]?.source === 'browser' && !secretFields[platform.id]?.visible"
                   :show-password-label="t('field.secret_show', {}, '显示凭据')"
                   :hide-password-label="t('field.secret_hide', {}, '隐藏凭据')"
-                  :disabled="submitting"
+                  :disabled="submitting || !credentialsReady || secretFields[platform.id]?.loading"
                   autocomplete="new-password"
-                  :placeholder="task?.credentials?.[platform.id] ? t('field.secret_configured', {}, '已保存，留空保留') : credentialPlaceholder(platform.id)"
+                  :placeholder="configuredCredentialPlaceholder(platform.id)"
                   :aria-label="t('field.credential', { platform: platform.name }, `${platform.name} 凭据`)"
+                  @password-visibility-request="credentials.visibility(platform.id)"
+                />
+                <nxp-button
+                  v-if="native && platform.browserLogin?.ready"
+                  :label="t('field.browser_login', {}, '网页登录')"
+                  :aria-label="`${platform.name} · ${t('field.browser_login', {}, '网页登录')}`"
+                  :disabled="submitting || !credentialsReady || secretFields[platform.id]?.loading"
+                  @click="credentials.login(platform.id)"
                 />
                 <nxp-button
                   v-if="secretFields[platform.id]?.configured"
                   :id="`gci-clear-${platform.id}`"
                   :label="t('field.secret_clear', {}, '清除已保存凭据')"
                   :aria-label="`${platform.name} · ${t('field.secret_clear', {}, '清除已保存凭据')}`"
-                  :disabled="submitting"
+                  :disabled="submitting || !credentialsReady || secretFields[platform.id]?.loading"
                   @click="clearSecret(platform.id)"
                 />
               </div>
             </nxp-field>
             <p v-if="secretFields[platform.id]?.loading" role="status">{{ t('field.secret_loading', {}, '正在读取已保存凭据…') }}</p>
-            <p v-if="secretFields[platform.id]?.readError" role="alert">{{ t('error.credential_read_failed', {}, '凭据读取失败；可保留、重新输入或清除。') }}</p>
-            <nxp-button v-if="secretFields[platform.id]?.readError" :disabled="submitting" :label="t('field.secret_retry', {}, '重试读取')" @click="loadCredential(platform.id)" />
+            <p v-if="secretFields[platform.id]?.localError || secretFields[platform.id]?.error" role="alert">{{ t(`error.${secretFields[platform.id]?.localError || secretFields[platform.id]?.error}`, {}, '凭据草稿未确认，请检查后清除并重新填写。') }}</p>
+            <nxp-button v-if="secretFields[platform.id]?.localError && secretFields[platform.id]?.intent === 'keep'" :disabled="submitting" :label="t('field.secret_retry', {}, '重试读取')" @click="credentials.retry(platform.id)" />
             <p v-if="secretFields[platform.id]?.intent === 'clear'" role="status">{{ t('field.secret_clear_pending', {}, '将在保存后清除') }}</p>
             <p v-else-if="secretFields[platform.id]?.intent === 'set'" role="status">{{ t('field.secret_set_pending', {}, '新凭据待保存') }}</p>
           </div>
@@ -511,7 +474,7 @@ function submit() {
         />
       </section>
 
-      <p v-if="localError || error" class="gci-error" role="alert">{{ localError || error }}</p>
+      <p v-if="localError || error || credentialError" class="gci-error" role="alert">{{ localError || error || t(`error.${credentialError}`, {}, '凭据操作未完成，请检查后重试。') }}</p>
     </div>
 
     <div slot="footer" class="gci-modal-footer-actions">
@@ -519,9 +482,17 @@ function submit() {
         :label="submitting ? t('status.saving', {}, '保存中…') : t('action.save', {}, '保存')"
         tone="primary"
         :busy="submitting"
+        :disabled="!credentialsReady"
         @click="submit"
       />
       <nxp-button :label="t('action.cancel', {}, '取消')" variant="ghost" :disabled="submitting" @click="emit('close')" />
+    </div>
+  </nxp-modal>
+  <nxp-modal v-if="confirmation" open footer :title="t('reveal.title', {}, '显示自动获取的凭据')" :close-label="t('action.close', {}, '关闭')" @close="confirmation = null">
+    <p>{{ t('reveal.description', {}, '凭据可用于访问你的账号。确认后，本客户端在 24 小时内可主动显示自动凭据；其他客户端仍需单独确认。关闭服务后确认失效。') }}</p>
+    <div slot="footer" class="gci-modal-footer-actions">
+      <nxp-button tone="primary" :label="t('reveal.confirm', {}, '确认显示')" @click="credentials.confirm()" />
+      <nxp-button variant="ghost" :label="t('action.cancel', {}, '取消')" @click="confirmation = null" />
     </div>
   </nxp-modal>
 </template>

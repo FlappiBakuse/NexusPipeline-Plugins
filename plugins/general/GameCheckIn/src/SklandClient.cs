@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
@@ -23,12 +25,47 @@ internal sealed class SklandClient
         string platform,
         Func<CancellationToken, Task<string>>? deviceIdProvider = null)
     {
+        if (platform is not ("skland" or "skport")) throw new ArgumentOutOfRangeException(nameof(platform));
         _http = http;
         _platform = platform;
         _deviceId = deviceIdProvider ?? new SklandDeviceFingerprintProvider(http).GetDeviceIdAsync;
     }
 
     internal string Platform => _platform;
+
+    internal async Task<string> ValidateCredentialAsync(string value, CancellationToken token)
+    {
+        CredentialValidation.RawToken(value);
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
+        deadline.CancelAfter(TimeSpan.FromSeconds(30));
+        var profile = Profile.For(_platform, endfield: true);
+        string deviceId = await _deviceId(deadline.Token).ConfigureAwait(false);
+        try
+        {
+            var (cred, signToken) = await AuthenticateAsync(value, profile, deviceId, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            using var user = await SignedRequestAsync(new Uri(profile.WebBase + "/user"), cred, signToken, profile, "",
+                HttpMethod.Get, "", null, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(user, "code", 0, 401, 10002);
+            var data = CredentialValidation.Property(user.RootElement, "data", JsonValueKind.Object);
+            var account = CredentialValidation.Property(data, "user", JsonValueKind.Object);
+            string identity = CredentialValidation.MaskIdentity(_platform, ReadString(account, "id"));
+            using var bindings = await SignedRequestAsync(new Uri(profile.ApiBase + "/game/player/binding"), cred, signToken, profile, "",
+                HttpMethod.Get, "", null, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(bindings, "code", 0, 401, 10002);
+            var bindingData = CredentialValidation.Property(bindings.RootElement, "data", JsonValueKind.Object);
+            CredentialValidation.Property(bindingData, "list", JsonValueKind.Array);
+            // An authenticated account can legitimately have no bound game roles.
+            return identity;
+        }
+        catch (SklandCredentialException ex)
+        {
+            throw new CredentialException(ex.Code == "risk_control" ? "credential_rejected" : "credential_not_authenticated");
+        }
+        catch (InvalidOperationException)
+        {
+            throw new CredentialException("readonly_validation_failed");
+        }
+    }
 
     public async Task<CheckInResult> SignAsync(
         SklandGameDefinition game,
@@ -163,7 +200,8 @@ internal sealed class SklandClient
         string token,
         Profile profile,
         string deviceId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         string timestamp = UnixTimestamp();
         using JsonDocument grant = await SendJsonAsync(
@@ -171,7 +209,10 @@ internal sealed class SklandClient
             HttpMethod.Post,
             JsonSerializer.Serialize(new { token, appCode = profile.AppCode, type = 0 }),
             AuthHeaders(profile, timestamp, deviceId),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken, validateHttpStatus).ConfigureAwait(false);
+        if (validateHttpStatus) CredentialValidation.RequireCode(grant, "status", 0, 1);
+        if (validateHttpStatus)
+            CredentialValidation.Property(CredentialValidation.Property(grant.RootElement, "data", JsonValueKind.Object), "code", JsonValueKind.String);
         if (!grant.RootElement.TryGetProperty("status", out JsonElement status)
             || !status.TryGetInt32(out int statusCode)
             || statusCode != 0)
@@ -190,7 +231,14 @@ internal sealed class SklandClient
             HttpMethod.Post,
             JsonSerializer.Serialize(new { kind = 1, code = codeElement.GetString() }),
             AuthHeaders(profile, timestamp, deviceId),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken, validateHttpStatus).ConfigureAwait(false);
+        if (validateHttpStatus) CredentialValidation.RequireCode(credential, "code", 0, 401, 10002);
+        if (validateHttpStatus)
+        {
+            var credentialData = CredentialValidation.Property(credential.RootElement, "data", JsonValueKind.Object);
+            CredentialValidation.RawToken(CredentialValidation.Property(credentialData, "cred", JsonValueKind.String).GetString());
+            CredentialValidation.RawToken(CredentialValidation.Property(credentialData, "token", JsonValueKind.String).GetString());
+        }
         if (!credential.RootElement.TryGetProperty("code", out JsonElement credentialCode)
             || !credentialCode.TryGetInt32(out int code)
             || code != 0)
@@ -228,7 +276,8 @@ internal sealed class SklandClient
         HttpMethod method,
         string body,
         Dictionary<string, string>? extraHeaders,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         string timestamp = UnixTimestamp();
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -255,7 +304,7 @@ internal sealed class SklandClient
                 headers[name] = value;
             }
         }
-        return await SendJsonAsync(endpoint, method, body, headers, cancellationToken).ConfigureAwait(false);
+        return await SendJsonAsync(endpoint, method, body, headers, cancellationToken, validateHttpStatus).ConfigureAwait(false);
     }
 
     private async Task<JsonDocument> SendJsonAsync(
@@ -263,7 +312,8 @@ internal sealed class SklandClient
         HttpMethod method,
         string body,
         IReadOnlyDictionary<string, string> headers,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         using HttpClient client = _http.CreateClient(endpoint, TimeSpan.FromSeconds(30));
         using var request = new HttpRequestMessage(method, endpoint);
@@ -283,8 +333,7 @@ internal sealed class SklandClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus).ConfigureAwait(false);
     }
 
     private static Dictionary<string, string> AuthHeaders(Profile profile, string timestamp, string deviceId) =>

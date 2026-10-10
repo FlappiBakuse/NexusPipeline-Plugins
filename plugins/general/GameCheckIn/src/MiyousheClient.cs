@@ -3,6 +3,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
@@ -19,6 +21,31 @@ internal sealed class MiyousheClient
     public MiyousheClient(IPluginHttpClientFactory http)
     {
         _http = http;
+    }
+
+    internal async Task<string> ValidateCredentialAsync(string cookie, CancellationToken token)
+    {
+        string deviceId = Guid.NewGuid().ToString("D");
+        using var client = _http.CreateClient(GameDefinitions.RolesEndpoint, TimeSpan.FromSeconds(30));
+        foreach (var game in GameDefinitions.All)
+        {
+            using var roles = await SendAsync(client, new Uri(GameDefinitions.RolesEndpoint + "?game_biz=" + game.Cn.GameBiz),
+                HttpMethod.Get, cookie, deviceId, game.Cn.SignGame, game.Cn.Referer, null, token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(roles, "retcode", 0, -100);
+            CredentialValidation.Property(CredentialValidation.Property(roles.RootElement, "data", JsonValueKind.Object), "list", JsonValueKind.Array);
+            foreach (var role in ReadRoles(roles))
+            {
+                string identity = CredentialValidation.MaskIdentity(game.Cn.GameBiz, role.Uid);
+                using var info = await SendAsync(client, BuildInfoUri(game.Cn.InfoEndpoint, game.Cn.ActId, role), HttpMethod.Get,
+                    cookie, deviceId, game.Cn.SignGame, game.Cn.Referer, null, token, validateHttpStatus: true).ConfigureAwait(false);
+                CredentialValidation.RequireCode(info, "retcode", 0, -100);
+                var data = CredentialValidation.Property(info.RootElement, "data", JsonValueKind.Object);
+                if (!data.TryGetProperty("is_sign", out var signed) || signed.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                    throw new CredentialException("readonly_signin_status_unverified");
+                return identity;
+            }
+        }
+        throw new CredentialException("readonly_identity_unverified");
     }
 
     public async Task<CheckInResult> SignAsync(
@@ -126,7 +153,8 @@ internal sealed class MiyousheClient
         string signGame,
         string referer,
         string? body,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         using var request = new HttpRequestMessage(method, endpoint);
         if (body is not null)
@@ -150,8 +178,7 @@ internal sealed class MiyousheClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus).ConfigureAwait(false);
     }
 
     internal static string GenerateDs()

@@ -1,5 +1,5 @@
 export type GameOption = { id: string; name: string };
-export type PlatformOption = { id: string; name: string; games: GameOption[] };
+export type PlatformOption = { id: string; name: string; games: GameOption[]; browserLogin?: { ready: boolean; status: string } };
 export type Schedule = { id: string; days: number[]; enabled: boolean; time: string };
 export type RunResult = { platform: string; gameCode: string; success: boolean; code: string; message: string };
 export type Run = { id: string; trigger: string; startedAt: string; completedAt: string | null; status: string; results: RunResult[] };
@@ -14,6 +14,7 @@ export type Task = {
   notification: CheckInNotification;
   runs: Run[];
   credentials: Record<string, boolean>;
+  credentialStates: Record<string, CredentialFieldState>;
   isRunning: boolean;
   nextRunAt: string | null;
   recentRun: Run | null;
@@ -28,18 +29,20 @@ export type TaskDraft = {
   schedules: Schedule[];
   notification: CheckInNotification;
 };
-export type SecretAction = { action: "keep" | "set" | "clear"; value?: string };
-export type CredentialRead = { taskId: string; platform: string; configured: boolean; value: string | null };
-export type CredentialDraft = {
+export type SecretAction = { action: "keep" | "set" | "clear"; value?: string; candidateId?: string; fieldGeneration: number };
+export type CredentialRead = { platform: string; fieldGeneration: number; configured: boolean; source: string | null; value: string | null; revealRemainingSeconds?: number | null };
+export type CredentialFieldState = {
   configured: boolean;
-  storedValue: string | null;
-  inputValue: string;
+  source: "manual" | "browser" | null;
+  fieldGeneration: number;
   intent: SecretAction["action"];
-  generation: number;
-  loading: boolean;
-  readError: boolean;
+  candidateId: string | null;
+  maskedAccount: string | null;
+  expiresAt: string | null;
+  error: string | null;
 };
-export type TaskSavePayload = TaskDraft & { secrets: Record<string, SecretAction> };
+export type CredentialEditor = { editorSessionId: string; fields: Record<string, CredentialFieldState> };
+export type TaskSavePayload = TaskDraft & { editorSessionId: string; secrets: Record<string, SecretAction> };
 export type Translate = (key: string, args?: Record<string, unknown>, fallback?: string) => string;
 
 export type PluginHost = {
@@ -50,5 +53,7 @@ export type PluginHost = {
     delete(route: string, body: unknown, signal?: AbortSignal): Promise<unknown>;
   };
   i18n: { t(key: string, args?: Record<string, unknown>, fallback?: string): string };
+  clientSessions: { get(): Promise<{ hostSessionId: string; clientSessionId: string; nativeBrowserAvailable: boolean }> };
+  browserLogin: { open(request: { flowId: string; editorSessionId: string; fieldGeneration: number; context: Record<string, unknown> }, signal?: AbortSignal): Promise<{ completed: Promise<{ success: boolean; error?: string }>; cancel(): Promise<void> }> };
   ui?: { toast(message: string, tone?: string): void };
 };

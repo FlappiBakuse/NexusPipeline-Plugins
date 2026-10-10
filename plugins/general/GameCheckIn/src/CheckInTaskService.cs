@@ -5,10 +5,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
-internal sealed class CheckInTaskService
+internal sealed partial class CheckInTaskService
 {
     internal const string PollerJobId = "scheduled-check-in-poll";
     private const string StoreScope = "tasks-v2/task-store";
@@ -34,10 +35,13 @@ internal sealed class CheckInTaskService
     private readonly List<IDisposable> _routes = new();
     private IDisposable? _pollerRegistration;
     private bool _stopped;
+    private readonly CredentialDraftService _credentials = new();
+    private readonly BrowserLogin.GameCheckInLoginFlows _loginFlows;
 
     public CheckInTaskService(
         IPluginHostContext context,
-        Func<DateTimeOffset>? clock = null)
+        Func<DateTimeOffset>? clock = null,
+        Func<string, bool>? browserLoginReady = null)
     {
         _context = context;
         _clock = clock ?? (() => DateTimeOffset.Now);
@@ -47,6 +51,8 @@ internal sealed class CheckInTaskService
         _skportClient = new SklandClient(context.Http, "skport");
         _kuroClient = new KuroClient(context.Http);
         RegisterRoutes();
+        RegisterCredentialRoutes();
+        _loginFlows = new(context, _credentials, browserLoginReady);
     }
 
     public async ValueTask StartAsync(CancellationToken cancellationToken)
@@ -87,6 +93,8 @@ internal sealed class CheckInTaskService
             if (_stopped) return;
             _stopped = true;
             _lifetime.Cancel();
+            _loginFlows.Dispose();
+            _credentials.Dispose();
             active = _activeRuns.Values.ToArray();
             foreach (RunHandle run in active) run.Cancellation.Cancel();
         }
@@ -159,19 +167,32 @@ internal sealed class CheckInTaskService
 
     private async ValueTask<PluginWebApiResponse> ReadCredentialAsync(PluginWebApiRequest request, CancellationToken cancellationToken)
     {
-        if (!TryDeserialize(request.JsonBody, out CheckInCredentialReadRequest? input)
-            || input!.TaskId == Guid.Empty) return Error(400, "task_id_required");
+        if (!TryDeserialize(request.JsonBody, out CheckInCredentialReadRequest? input) || input is null) return Error(400, "task_id_required");
         if (!PlatformOrder.Contains(input.Platform, StringComparer.Ordinal)) return Error(400, "credential_platform_invalid");
+        if (input.EditorSessionId is { } editor)
+        {
+            try
+            {
+                var read = _credentials.Read(Client(request), editor, input.Platform, input.FieldGeneration);
+                return Json(new { input.Platform, input.FieldGeneration, read.State.Configured, read.State.Source, value = read.Value,
+                    revealRemainingSeconds = read.State.Source == "browser" ? _credentials.RevealRemainingSeconds(Client(request)) : (double?)null });
+            }
+            catch (CredentialException ex) { return CredentialError(ex); }
+        }
+        if (input.TaskId == Guid.Empty) return Error(400, "task_id_required");
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
             if (_stopped) return Error(503, "service_stopping");
             CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
             if (!store.Tasks.Any(task => task.Id == input.TaskId)) return Error(404, "task_not_found");
-            string? value = await _context.Secrets.GetAsync(SecretKey(input.TaskId, SecretName(input.Platform)), cancellationToken).ConfigureAwait(false);
+            var record = CredentialRecord.Decode(await _context.Secrets.GetAsync(SecretKey(input.TaskId, SecretName(input.Platform)), cancellationToken).ConfigureAwait(false));
+            if (record?.Source == "browser") return Error(403, "credential_editor_required");
+            string? value = record?.Value;
             return Json(new { input.TaskId, input.Platform, configured = !string.IsNullOrWhiteSpace(value), value });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (CredentialException ex) { return CredentialError(ex); }
         catch { return Error(500, "credential_read_failed"); }
         finally { _storeGate.Release(); }
     }
@@ -235,6 +256,7 @@ internal sealed class CheckInTaskService
 
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         bool committed = false;
+        CredentialDraftService.Reservation? reservation = null;
         try
         {
             if (_stopped) return Error(503, "service_stopping");
@@ -260,15 +282,36 @@ internal sealed class CheckInTaskService
                 return Error(409, "task_name_duplicate");
 
             CheckInTask task = BuildTask(input!, id, existing);
+            var current = new Dictionary<string, string?>(StringComparer.Ordinal);
+            foreach (string platform in input!.Secrets.Keys)
+                current[platform] = existing is null ? null : await _context.Secrets.GetAsync(SecretKey(id, SecretName(platform)), cancellationToken).ConfigureAwait(false);
+            Dictionary<string, CheckInSecretInput> changes;
+            if (input.EditorSessionId is { } editorId)
+            {
+                reservation = _credentials.Reserve(Client(request), editorId, existing?.Id, input.Secrets, current);
+                changes = reservation.Changes;
+            }
+            else
+            {
+                changes = new(StringComparer.Ordinal);
+                foreach (var (platform, change) in input.Secrets)
+                {
+                    CredentialRecord? old = null;
+                    if (change.Action != "clear") old = CredentialRecord.Decode(current[platform]);
+                    if (change.Action == "set" && (change.CandidateId is not null || old?.Source == "browser")) throw new CredentialException("credential_editor_required");
+                    changes[platform] = new() { Action = change.Action, Value = change.Action == "set" ? new CredentialRecord(1, change.Value!, "manual").Encode() : null };
+                }
+            }
             Dictionary<string, string?>? secretSnapshot = null;
             try
             {
-                secretSnapshot = await CaptureSecretChangesAsync(id, input!.Secrets, cancellationToken).ConfigureAwait(false);
-                await ApplySecretChangesAsync(id, input!.Secrets, cancellationToken).ConfigureAwait(false);
+                secretSnapshot = await CaptureSecretChangesAsync(id, changes, cancellationToken).ConfigureAwait(false);
+                await ApplySecretChangesAsync(id, changes, cancellationToken).ConfigureAwait(false);
                 if (existing is null) store.Tasks.Add(task);
                 else store.Tasks[store.Tasks.IndexOf(existing)] = task;
                 await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
                 committed = true;
+                if (reservation is not null) reservation.Committed = true;
             }
             catch
             {
@@ -280,6 +323,7 @@ internal sealed class CheckInTaskService
             CheckInTaskView view = await ToViewAsync(task, cancellationToken).ConfigureAwait(false);
             return Json(view, create ? 201 : 200);
         }
+        catch (CredentialException ex) { return CredentialError(ex); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
@@ -290,6 +334,7 @@ internal sealed class CheckInTaskService
         }
         finally
         {
+            reservation?.Dispose();
             _storeGate.Release();
         }
     }
@@ -313,6 +358,7 @@ internal sealed class CheckInTaskService
             try
             {
                 await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
+                _credentials.ReleaseTask(task.Id);
                 foreach (string secretName in SecretNames)
                 {
                     await _context.Secrets.SetAsync(SecretKey(task.Id, secretName), null, cancellationToken)
@@ -401,9 +447,9 @@ internal sealed class CheckInTaskService
             var credentialValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
             foreach (string platform in PlatformOrder)
             {
-                credentialValues[platform] = await _context.Secrets
+                credentialValues[platform] = CredentialRecord.Decode(await _context.Secrets
                     .GetAsync(SecretKey(taskId, "credential-" + platform), cancellationToken)
-                    .ConfigureAwait(false);
+                    .ConfigureAwait(false))?.Value;
             }
 
             var run = new CheckInRun
@@ -755,12 +801,19 @@ internal sealed class CheckInTaskService
     private async Task<CheckInTaskView> ToViewAsync(CheckInTask task, CancellationToken cancellationToken)
     {
         var credentials = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        var credentialStates = new Dictionary<string, CredentialFieldState>(StringComparer.OrdinalIgnoreCase);
         foreach (string platform in PlatformOrder)
         {
             string? value = await _context.Secrets
                 .GetAsync(SecretKey(task.Id, "credential-" + platform), cancellationToken)
                 .ConfigureAwait(false);
             credentials[platform] = !string.IsNullOrWhiteSpace(value);
+            try
+            {
+                var record = CredentialRecord.Decode(value);
+                credentialStates[platform] = new(record is not null, record?.Source, 0, "keep", MaskedAccount: record?.MaskedAccount);
+            }
+            catch (CredentialException ex) { credentialStates[platform] = new(true, null, 0, "keep", Error: ex.Code); }
         }
         DateTimeOffset now = _clock().ToLocalTime();
         DateTimeOffset? nextAt = task.Enabled
@@ -786,6 +839,7 @@ internal sealed class CheckInTaskService
             Notification = Clone(task.Notification),
             Runs = task.Runs.Take(MaxRunHistory).Select(Clone).ToList(),
             Credentials = credentials,
+            CredentialStates = credentialStates,
             IsRunning = _activeRuns.ContainsKey(task.Id),
             NextRunAt = nextAt,
             RecentRun = task.Runs.FirstOrDefault() is { } recent ? Clone(recent) : null,
@@ -806,6 +860,7 @@ internal sealed class CheckInTaskService
         {
             id = platform,
             name = _context.I18n.T("platform." + platform, platform),
+            browserLogin = new { ready = _loginFlows.Ready(platform), status = BrowserLogin.GameCheckInLoginFlows.Readiness.Single(p => p.Platform == platform).Status },
             games = games.Select(game => new
             {
                 id = game.Code,
@@ -997,7 +1052,11 @@ internal sealed class CheckInTaskService
         {
             if (field is null || value is null || field.ToLowerInvariant() is not ("cn" or "os" or "skland" or "skport" or "kuro")) return "secret_field_invalid";
             if (value.Action is null || value.Action.ToLowerInvariant() is not ("keep" or "set" or "clear")) return "secret_action_invalid";
-            if (value.Action.Equals("set", StringComparison.OrdinalIgnoreCase) && !IsValidCredential(value.Value)) return "secret_value_invalid";
+            if (value.Action.Equals("set", StringComparison.OrdinalIgnoreCase)
+                && ((value.Value is null) == (value.CandidateId is null) || value.Value is not null && !IsValidCredential(value.Value)
+                    || value.CandidateId is { Length: < 1 or > 64 })) return "secret_value_invalid";
+            if (!value.Action.Equals("set", StringComparison.OrdinalIgnoreCase) && (value.Value is not null || value.CandidateId is not null)) return "secret_action_invalid";
+            value.Action = value.Action.ToLowerInvariant();
         }
         return null;
     }

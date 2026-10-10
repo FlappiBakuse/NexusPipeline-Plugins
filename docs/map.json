@@ -61,7 +61,7 @@
     {
       "id": "authoring.frontend",
       "path": "author/FRONTEND_PLUGIN.md",
-      "summary": "Frontend API 1.6、公共 nxp-* 元件、slot 和生命周期",
+      "summary": "Frontend API 1.7、公共 nxp-* 元件、slot 和生命周期",
       "topics": [
         "frontend",
         "nxp",
@@ -508,6 +508,28 @@
       ],
       "authorityFor": [
         "configuration-editing"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "plugin.game-activities",
+      "path": "../plugins/general/GameActivities/README.md",
+      "summary": "八游戏十一进度活动卡、来源与限制",
+      "topics": [
+        "GameActivities",
+        "活动",
+        "卡池"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "plugins/general/GameActivities"
+      ],
+      "testDomains": [
+        "managed",
+        "frontend-contract"
+      ],
+      "authorityFor": [
+        "game-activities"
       ],
       "status": "current"
     }

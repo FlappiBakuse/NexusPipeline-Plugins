@@ -16,7 +16,7 @@ node tests/run.mjs gate --id plugins.plugin.package:GameCheckIn --host-root <固
 node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 ```
 
-`tests/policy.json` 登记当前插件清单、组件方法和有限适配轨迹（当前 13 个，数量不是扩展上限）；源码 manifest 必须与登记精确一致。未知插件、重复参数、空变化集合、遗漏报告、零用例和 skip 均失败。变化只属于一个插件时只选该插件；共享、删除、改名和未知输入保守选择全部。纯文档变化为 NOT_APPLICABLE，GitHub 仍生成固定生产检查结果。
+`tests/policy.json` 登记当前插件清单、组件方法和有限适配轨迹（当前 14 个，数量不是扩展上限）；源码 manifest 必须与登记精确一致。未知插件、重复参数、空变化集合、遗漏报告、零用例和 skip 均失败。变化只属于一个插件时只选该插件；共享、删除、改名和未知输入保守选择全部。纯文档变化为 NOT_APPLICABLE，GitHub 仍生成固定生产检查结果。
 
 本机 plan、batch、gate 按实际准备依赖组织测试，记录准备、原生命令、真实场景和清理的完整耗时。缺少报告、失败、取消、空用例或意外跳过不能成功。操作协议与进程退出保留有限等待。
 
@@ -58,3 +58,5 @@ python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输�
 配置编辑生成一致性使用 `python tools/repo.py generate editors --check`；准备行为使用 `node tests/config-editors/run.mjs`；修复真实 Jint 使用 Host 工具 `--plugin-root <Plugins> --config-repair <新报告.json>`，账号隔离使用 `--account-isolation <新报告.json>`。这些是实际调用和字段效果验证，不能用语法检查替代。
 
 GameCheckIn 凭据改动按专用读取范围、keep/set/clear 持久结果、运行中 409、写盘恢复及迟到响应选择验证；普通 DTO 不含明文。前端 conformance 使用已构建插件与实际 Host 公开元素；mock 结果不代表真实远端认证撤销。
+
+GameActivities 核心入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，包含原生领域/设置/生命周期测试和 P-G05 真实 Host 浏览器场景。该场景保持空订阅，不作为真实外部来源验收。

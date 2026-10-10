@@ -369,12 +369,14 @@
 }
 
 .gci-credential-input-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
   gap: var(--nx-space-2);
   min-width: 0;
 }
+
+.gci-credential-input-row > nxp-text-input { flex: 1; min-width: 0; }
+.gci-credential-input-row > nxp-button { flex: 0 0 auto; }
 
 .gci-notification-settings {
   display: grid;
