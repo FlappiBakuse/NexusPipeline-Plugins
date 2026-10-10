@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "gameName": "通用活动",
+  "authors": [
+    {
+      "name": "FlappiBakuse",
+      "url": "https://github.com/FlappiBakuse"
+    }
+  ],
+  "tags": [
+    "活动",
+    "卡池",
+    "概览"
+  ],
+  "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
+  "changelog": [
+    {
+      "version": "0.1.0",
+      "date": "2026-10-09",
+      "items": [
+        "提供独立活动卡、进度选择、缓存与来源诊断。"
+      ]
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "Game Activities",
+      "gameName": "General activities",
+      "description": "Subscribe to game activities with isolated progressions, cached feeds and source diagnostics.",
+      "tags": [
+        "Activities",
+        "Gacha",
+        "Dashboard"
+      ],
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-10-09",
+          "items": [
+            "Adds a dashboard card, progression selection, cached feeds and source diagnostics."
+          ]
+        }
+      ]
+    }
+  }
+}

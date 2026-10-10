@@ -1,0 +1,1193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:nexuspipeline:game-activities:activity-feed:1",
+  "title": "GameActivities normalized activity feed",
+  "description": "NEW DESIGN. One game/progression snapshot. Runtime semantic checks, source qualification and byte limits are additional required gates.",
+  "formatVersion": 1,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "pluginId",
+    "dataClass",
+    "snapshotId",
+    "gameId",
+    "progressionId",
+    "contentLocale",
+    "builtAt",
+    "contentPeriod",
+    "version",
+    "overview",
+    "sources",
+    "activities",
+    "coverage",
+    "primary",
+    "health"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": 1
+    },
+    "pluginId": {
+      "const": "game-activities"
+    },
+    "dataClass": {
+      "enum": [
+        "live",
+        "synthetic"
+      ]
+    },
+    "snapshotId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gameId": {
+      "enum": [
+        "blue-archive",
+        "genshin-impact",
+        "arknights-endfield",
+        "stella-sora",
+        "honkai-star-rail",
+        "neverness-to-everness",
+        "wuthering-waves",
+        "zenless-zone-zero"
+      ]
+    },
+    "progressionId": {
+      "enum": [
+        "default",
+        "cn",
+        "jp",
+        "global"
+      ]
+    },
+    "contentLocale": {
+      "enum": [
+        "zh-CN",
+        "en-US"
+      ]
+    },
+    "builtAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+    },
+    "contentPeriod": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/contentPeriod"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "version": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/version"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "overview": {
+      "$ref": "#/$defs/overview"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      },
+      "minItems": 1,
+      "maxItems": 64
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      },
+      "maxItems": 250
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "events",
+        "gacha"
+      ],
+      "properties": {
+        "events": {
+          "$ref": "#/$defs/coveragePart"
+        },
+        "gacha": {
+          "$ref": "#/$defs/coveragePart"
+        }
+      }
+    },
+    "primary": {
+      "$ref": "#/$defs/primary"
+    },
+    "health": {
+      "$ref": "#/$defs/health"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "gameId": {
+            "const": "blue-archive"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "progressionId": {
+            "enum": [
+              "cn",
+              "jp",
+              "global"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "gameId": {
+            "const": "neverness-to-everness"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "progressionId": {
+            "enum": [
+              "cn",
+              "global"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "gameId": {
+            "enum": [
+              "genshin-impact",
+              "arknights-endfield",
+              "stella-sora",
+              "honkai-star-rail",
+              "wuthering-waves",
+              "zenless-zone-zero"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "progressionId": {
+            "const": "default"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dataClass": {
+            "const": "live"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sources": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "not": {
+                    "const": "synthetic"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "dataClass": {
+            "const": "synthetic"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "sources": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "const": "synthetic"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceId",
+        "providerId",
+        "providerVersion",
+        "kind",
+        "url",
+        "locale",
+        "retrievedAt",
+        "sourceUpdatedAt",
+        "note"
+      ],
+      "properties": {
+        "sourceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+        },
+        "providerId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+        },
+        "providerVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "kind": {
+          "enum": [
+            "official-api",
+            "official-notice",
+            "aggregate",
+            "synthetic"
+          ]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^/@\\s]+(?:[/?#][^\\s]*)?$",
+          "maxLength": 2048
+        },
+        "locale": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 35
+        },
+        "retrievedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        },
+        "sourceUpdatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      }
+    },
+    "fieldEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "sourceRef",
+        "locator",
+        "transform",
+        "ruleId",
+        "note"
+      ],
+      "properties": {
+        "field": {
+          "type": "string",
+          "pattern": "^/(?:[A-Za-z0-9_~.-]+/)*[A-Za-z0-9_~.-]+$",
+          "maxLength": 256
+        },
+        "sourceRef": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+        },
+        "locator": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "transform": {
+          "enum": [
+            "copied",
+            "normalized",
+            "derived"
+          ]
+        },
+        "ruleId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 1000
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "transform": {
+                "const": "derived"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "ruleId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            }
+          }
+        }
+      ]
+    },
+    "timePoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "instantUtc",
+        "rawValue",
+        "timeBasis",
+        "sourceZone",
+        "precision",
+        "certainty",
+        "sourceRef"
+      ],
+      "properties": {
+        "instantUtc": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rawValue": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "timeBasis": {
+          "enum": [
+            "utc",
+            "explicit-offset",
+            "server-local",
+            "source-default",
+            "unknown"
+          ]
+        },
+        "sourceZone": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "precision": {
+          "enum": [
+            "second",
+            "minute",
+            "day",
+            "unknown"
+          ]
+        },
+        "certainty": {
+          "enum": [
+            "confirmed",
+            "reported",
+            "estimated",
+            "unknown"
+          ]
+        },
+        "sourceRef": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "timeBasis": {
+                "const": "unknown"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "instantUtc": {
+                "type": "null"
+              },
+              "sourceZone": {
+                "type": "null"
+              },
+              "certainty": {
+                "enum": [
+                  "estimated",
+                  "unknown"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "precision": {
+                "enum": [
+                  "day",
+                  "unknown"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "instantUtc": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "instantUtc": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "sourceZone": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "precision": {
+                "enum": [
+                  "second",
+                  "minute"
+                ]
+              },
+              "timeBasis": {
+                "not": {
+                  "const": "unknown"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "contentPeriod": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "kind",
+        "title",
+        "provenance"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+        },
+        "kind": {
+          "enum": [
+            "version",
+            "campaign"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "provenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldEvidence"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      }
+    },
+    "version": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "number",
+        "title",
+        "start",
+        "end",
+        "provenance"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+        },
+        "number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "start": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timePoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "end": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/timePoint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldEvidence"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      }
+    },
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "number", "start", "end", "cover", "sourceRef", "provenance"],
+      "properties": {
+        "title": { "type": "string", "maxLength": 256 },
+        "number": { "type": ["string", "null"], "maxLength": 32 },
+        "start": {
+          "anyOf": [{ "$ref": "#/$defs/timePoint" }, { "type": "null" }]
+        },
+        "end": {
+          "anyOf": [{ "$ref": "#/$defs/timePoint" }, { "type": "null" }]
+        },
+        "cover": {
+          "anyOf": [{ "$ref": "#/$defs/cover" }, { "type": "null" }]
+        },
+        "sourceRef": { "type": "string", "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$" },
+        "provenance": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fieldEvidence" },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      }
+    },
+    "cover": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceUrl",
+        "assetId",
+        "alt",
+        "sourceRef"
+      ],
+      "properties": {
+        "sourceUrl": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://[^/@\\s]+(?:[/?#][^\\s]*)?$",
+          "maxLength": 2048
+        },
+        "assetId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "alt": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "sourceRef": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "title",
+        "description",
+        "descriptionTruncated",
+        "channel",
+        "category",
+        "availability",
+        "importance",
+        "isOfficialFeatured",
+        "versionRelation",
+        "periodKey",
+        "times",
+        "cover",
+        "officialUrl",
+        "officialLinkKind",
+        "provenance"
+      ],
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 8000
+        },
+        "descriptionTruncated": {
+          "type": "boolean"
+        },
+        "channel": {
+          "enum": ["in-game", "web"]
+        },
+        "category": {
+          "enum": [
+            "gacha-character",
+            "gacha-weapon",
+            "gacha-other",
+            "main-story",
+            "story",
+            "combat",
+            "exploration",
+            "minigame",
+            "login",
+            "resource-bonus",
+            "battle-pass",
+            "shop",
+            "other"
+          ]
+        },
+        "availability": {
+          "enum": [
+            "limited",
+            "permanent",
+            "unknown"
+          ]
+        },
+        "importance": {
+          "enum": [
+            "major-story",
+            "story",
+            "featured-gameplay",
+            "routine",
+            "unknown"
+          ]
+        },
+        "isOfficialFeatured": {
+          "type": "boolean"
+        },
+        "versionRelation": {
+          "enum": [
+            "current",
+            "carried",
+            "other",
+            "unknown"
+          ]
+        },
+        "periodKey": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "times": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "start",
+            "playEnd",
+            "claimEnd"
+          ],
+          "properties": {
+            "start": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/timePoint"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "playEnd": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/timePoint"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "claimEnd": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/timePoint"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "cover": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/cover"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "officialUrl": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://[^/@\\s]+(?:[/?#][^\\s]*)?$",
+              "maxLength": 2048
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "officialLinkKind": {
+          "enum": [
+            "exact-activity",
+            "version-notice",
+            "missing"
+          ]
+        },
+        "provenance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fieldEvidence"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "availability": {
+                "const": "permanent"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "times": {
+                "properties": {
+                  "playEnd": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "officialLinkKind": {
+                "const": "missing"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "officialUrl": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "officialUrl": {
+                "type": "string",
+                "format": "uri",
+                "pattern": "^https://[^/@\\s]+(?:[/?#][^\\s]*)?$",
+                "maxLength": 2048
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "descriptionTruncated": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8000
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "versionRelation": {
+                "const": "current"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "periodKey": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "coveragePart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "asOf",
+        "sourceRefs",
+        "note"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "partial",
+            "unavailable",
+            "not-checked"
+          ]
+        },
+        "asOf": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 64
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "complete"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "asOf": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+              },
+              "sourceRefs": {
+                "minItems": 1
+              },
+              "note": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "primary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "ruleId",
+        "algorithmVersion",
+        "computedAt"
+      ],
+      "properties": {
+        "eventId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9:._-]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ruleId": {
+          "enum": [
+            "current-major-story",
+            "current-story",
+            "current-featured-gameplay",
+            "carried-story",
+            "ongoing-gameplay",
+            "upcoming-current-story",
+            "no-eligible-event"
+          ]
+        },
+        "algorithmVersion": {
+          "const": 1
+        },
+        "computedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "eventId": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "ruleId": {
+                "const": "no-eligible-event"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "ruleId": {
+                "not": {
+                  "const": "no-eligible-event"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cacheState",
+        "contentState",
+        "lastGoodAt",
+        "lastCheckedAt",
+        "nextCheckAt",
+        "diagnostics"
+      ],
+      "properties": {
+        "cacheState": {
+          "enum": [
+            "fresh",
+            "stale",
+            "empty"
+          ]
+        },
+        "contentState": {
+          "enum": [
+            "available",
+            "outdated",
+            "empty"
+          ]
+        },
+        "lastGoodAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastCheckedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextCheckAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "diagnostics": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "sourceRef",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$"
+              },
+              "sourceRef": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9:._-]{0,95}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 1000
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

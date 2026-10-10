@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><RootNamespace>NexusPipeline.Plugin.GameActivities</RootNamespace><AssemblyName>NexusPipeline.Plugin.GameActivities</AssemblyName><Version>0.1.0</Version></PropertyGroup>
+  <ItemGroup><ProjectReference Include="$(NexusHostRoot)\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" Private="false" /><PackageReference Include="AngleSharp" Version="1.8.2" /></ItemGroup>
+  <ItemGroup><InternalsVisibleTo Include="NexusPipeline.Plugin.GameActivities.Tests" /></ItemGroup>
+</Project>

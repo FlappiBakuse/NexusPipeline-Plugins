@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "name": "game-activities",
+  "artifactName": "GameActivities",
+  "displayName": "游戏活动",
+  "description": "订阅八款游戏活动、区服独立缓存、卡池与官方来源详情。",
+  "version": "0.1.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.17.2",
+  "apiVersion": "2.2",
+  "entryAssembly": "NexusPipeline.Plugin.GameActivities.dll",
+  "entryType": "NexusPipeline.Plugin.GameActivities.EntryPoint",
+  "capabilities": [
+    "frontend-module"
+  ],
+  "frontend": {
+    "apiVersion": "1.7",
+    "entry": "web/main.js",
+    "styles": [
+      "web/style.css"
+    ]
+  },
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}
