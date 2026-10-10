@@ -7,7 +7,7 @@
   "description": "MaaStellaSora 专项：MFAAvalonia 稳定实例绑定、日常任务观察与失败重试；旧 MXU 配置备份清空后重新设置。",
   "version": "0.3.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.15",
+  "minHostVersion": "0.17.2",
   "capabilities": [
     "emulator",
     "no-fresh-config"
@@ -403,5 +403,6 @@
     "url": "https://raw.githubusercontent.com/MaaStellaSora/MaaStellaSora/ee9f3c9b65011d1b7649202328c0914af7910c81/assets/logo.ico",
     "sha256": "8d1d2864177c25d338ea0f444a5214520f8e3575e9ef1fab0fc265217d4dc7b3",
     "contentType": "image/x-icon"
-  }
+  },
+  "apiVersion": "2.2"
 }

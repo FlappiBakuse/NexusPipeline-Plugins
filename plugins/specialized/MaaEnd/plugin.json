@@ -7,7 +7,7 @@
   "description": "MaaEnd 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
   "version": "0.4.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.15",
+  "minHostVersion": "0.17.2",
   "capabilities": [
     "emulator"
   ],
@@ -627,5 +627,6 @@
     "url": "https://raw.githubusercontent.com/MaaEnd/MaaEnd/f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d/assets/locales/MaaEnd-Tiny.png",
     "sha256": "69d9944eee6cbd84898988ac58705f2765431fcf958255093ae81601fa34febe",
     "contentType": "image/png"
-  }
+  },
+  "apiVersion": "2.2"
 }

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { stat, readdir, readFile } from "node:fs/promises";
 
-export const FRONTEND_API_VERSION = "1.6";
+export const FRONTEND_API_VERSION = "1.7";
 
 export const allowedSlots = new Set([
   "dashboard.cards",

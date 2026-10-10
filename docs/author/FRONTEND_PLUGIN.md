@@ -1,10 +1,14 @@
-# Frontend API 1.6 插件指南
+# Frontend API 1.7 插件指南
 
 NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且 Frontend API 精确匹配后加载同源资源，增加页面、导航、路由、主题、背景表面和运行画面预览能力。插件源码推荐使用 Vue 3、TypeScript 和 Vite；运行宿主只需要 `web/` 静态资源。
 
 ## 适用范围
 
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.1，不接受较早或未声明的未来 minor。Frontend API 1.6 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+`host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或注入外站脚本。后端通过 `IPluginHostContext.BrowserLogin` 注册限定采集规则、只读验证和终态补偿。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
+
+秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
+
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -36,12 +40,12 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "version": "0.1.0",
   "kind": "managed-code",
   "minHostVersion": "0.17.0",
-  "apiVersion": "2.1",
+  "apiVersion": "2.2",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
   "frontend": {
-    "apiVersion": "1.6",
+    "apiVersion": "1.7",
     "entry": "web/main.js",
     "styles": ["web/style.css"]
   },
@@ -122,7 +126,8 @@ export function activate(host) {
 | 能力 | 用途 |
 |---|---|
 | `host.plugin` | 当前插件的只读 name、displayName、version 和资源描述 |
-| `host.api.get/post/put/patch/delete` | 以 JSON 语义调用本插件注册的 `/api/plugin-api/<name>/...` 路由 |
+| `host.api.get(route, signal?, query?)` | JSON 读取本插件命名空间；查询参数用独立对象传入，不拼进 route |
+| `host.api.post/put/patch/delete` | JSON 写入本插件注册的 `/api/plugin-api/<name>/...` 路由 |
 | `host.api.blob(route, { query?, signal? })` | `GET` 读取二进制响应并返回 `Blob` |
 | `host.api.upload(route, body, { method?, contentType?, query?, signal? })` | 发送二进制请求体并读取 JSON 响应 |
 | `host.routes.register(route, handler)` | 注册 `#/plugin/<name>/<route>` 页面 |
@@ -161,7 +166,7 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API 2.1 配合方式
+## Plugin API 2.2 配合方式
 
 `PluginNotification.SmtpTo` 指定可选 SMTP 收件人。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。插件通过 `IPluginHostContext.Notifications` 发送通知。
 
@@ -201,7 +206,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 3. 入口和样式文件通过 manifest 与安装包检查；
 4. 入口和样式文件位于插件目录的公开 `web/` 路径，并通过资源扩展名和文件存在性校验。
 
-前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。Frontend API 只接受精确版本 `1.6`，其他版本不会加载。可见交互控件应使用 `nxp-*` Native Custom Elements 或插件自有 Vue 组件，开发者应把前端源码、构建结果与发行包一并纳入人工审查。
+前端模块与管理页面同源运行，可以使用 DOM、同源 fetch 和当前页面可用的管理 API。Frontend API 只接受精确版本 `1.7`，其他版本不会加载。可见交互控件应使用 `nxp-*` Native Custom Elements 或插件自有 Vue 组件，开发者应把前端源码、构建结果与发行包一并纳入人工审查。
 
 ## 安全与资源边界
 
@@ -215,7 +220,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件声明精确 Plugin API 2.1，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.6；
+- managed-code 插件声明精确 Plugin API 2.2，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.7；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
@@ -223,9 +228,9 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 请求来源与本机交互
 
-Plugin API 2.1 只定义 `General`、`HostFilePicker`、`NativeConfigEditor` 三类访问。每条 `PluginWebApiRoute` 必须显式设置 `Access`；声明式 UI 的读取、保存和每个动作分别显式设置访问类，缺失或未知值使注册失败。`PluginWebApiRequest.ConnectionKind` 由实际传输对端确定为 `Local`、`Remote` 或 `Unknown`，不采信 Host、Origin、Referer 或转发头。General 在三种来源均可用；后两类只允许 Local，在读取参数、请求体或执行回调前拒绝 Remote/Unknown。SDK 包及程序集继续为 2.0.0，与接口 2.1 独立治理。
+Plugin API 2.2 只定义 `General`、`HostFilePicker`、`NativeConfigEditor` 三类访问。每条 `PluginWebApiRoute` 必须显式设置 `Access`；声明式 UI 的读取、保存和每个动作分别显式设置访问类，缺失或未知值使注册失败。`PluginWebApiRequest.ConnectionKind` 由实际传输对端确定为 `Local`、`Remote` 或 `Unknown`，不采信 Host、Origin、Referer 或转发头。General 在三种来源均可用；后两类只允许 Local，在读取参数、请求体或执行回调前拒绝 Remote/Unknown。SDK 包及程序集继续为 2.0.0，与接口 2.2 独立治理。
 
-Frontend API 1.6 的 `host.getCapabilities(signal?)` 返回冻结只读的 schema 1 对象：`connectionKind` 为 local/remote/unknown，`operations` 精确包含 general、hostFilePicker、nativeConfigEditor，每项有 allowed 与 denyReason。拒绝原因分别为 host_file_picker_requires_local、native_config_editor_requires_local、client_origin_unverified。缓存绑定同源、认证和当前 Host 实例；重连或重启使旧读取失效。它用于呈现界面，后端每次操作仍重新判断来源。
+Frontend API 1.7 的 `host.getCapabilities(signal?)` 返回冻结只读的 schema 1 对象：`connectionKind` 为 local/remote/unknown，`operations` 精确包含 general、hostFilePicker、nativeConfigEditor，每项有 allowed 与 denyReason。拒绝原因分别为 host_file_picker_requires_local、native_config_editor_requires_local、client_origin_unverified。缓存绑定同源、认证和当前 Host 实例；重连或重启使旧读取失效。它用于呈现界面，后端每次操作仍重新判断来源。
 
 原生文件选择只能禁用“浏览”按钮，路径输入仍可编辑并保存。普通账号、脚本、队列、计划、运行、历史、插件安装与诊断是 General；诊断 ZIP 写入宿主受控 staging，返回明确路径。脚本文件读取只在已批准脚本根、配置位置及游戏程序父目录范围内，拒绝链接与路径穿越，不枚举宿主磁盘。
 
@@ -234,3 +239,11 @@ Frontend API 1.6 的 `host.getCapabilities(signal?)` 返回冻结只读的 schem
 ## 紧凑长文字
 
 卡片名称、简短摘要与复杂按钮中的文案使用公开 `nxp-overflow-text`，通过 `label` 或默认文本 slot 传值。组件在溢出时保持单行，悬停或聚焦时滚动。`nxp-badge` 与纯文本 `nxp-button` 已内置同一行为；调用方只需限制可用宽度。详情区可为这三个元件设置布尔属性 `wrap=true`，让文本正常换行且不滚动；复杂按钮 slot 中的文字由内部文本元件决定。诊断详情、README 和日志保持正文换行，不依赖宿主私有 CSS 类。
+
+## 独立今日概览卡片
+
+后端通过 Plugin API 2.2 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
+
+Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与 18 个公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
+
+官方外链经 `await host.navigation.openExternal(url)`；插件先验证官方域。Host 仅接受无用户信息的 HTTPS，桌面交给系统浏览器，Web 用户点击在独立标签打开并移除 opener/referrer。失败在插件界面可见，禁止在轮询或刷新时自动打开。

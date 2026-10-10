@@ -7,7 +7,7 @@
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
   "version": "0.4.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.15",
+  "minHostVersion": "0.17.2",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -121,5 +121,6 @@
     "url": "https://raw.githubusercontent.com/moesnow/March7thAssistant/04b14f43570a361a5289f5ad7982e06ffe1f72d7/assets/logo/March7th.ico",
     "sha256": "7c0c67608f1902a21d4a8dbac223d648828fe01c384e2d93fca321fea6a8f0b8",
     "contentType": "image/x-icon"
-  }
+  },
+  "apiVersion": "2.2"
 }

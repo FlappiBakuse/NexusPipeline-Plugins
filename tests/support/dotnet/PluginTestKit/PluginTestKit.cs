@@ -91,7 +91,7 @@ public sealed class InMemoryPluginUserDataStore : IPluginUserDataStore
 
 public sealed class InMemoryPluginScopedDataStore : IPluginScopedDataStore
 {
-    private readonly Dictionary<string, JsonNode?> _values = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, JsonNode?> _values = new(StringComparer.OrdinalIgnoreCase);
     public ValueTask<T?> ReadAsync<T>(string scope, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -107,7 +107,7 @@ public sealed class InMemoryPluginScopedDataStore : IPluginScopedDataStore
     public ValueTask<JsonObject?> ReadJsonAsync(string scope, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return ValueTask.FromResult(_values.TryGetValue(scope, out JsonNode? value) ? value?.AsObject() : null);
+        return ValueTask.FromResult(_values.TryGetValue(scope, out JsonNode? value) ? value?.DeepClone().AsObject() : null);
     }
     public ValueTask WriteJsonAsync(string scope, JsonObject value, CancellationToken cancellationToken = default)
     {
@@ -118,7 +118,7 @@ public sealed class InMemoryPluginScopedDataStore : IPluginScopedDataStore
     public ValueTask DeleteAsync(string scope, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        _values.Remove(scope);
+        _values.TryRemove(scope, out _);
         return ValueTask.CompletedTask;
     }
     public bool Contains(string scope) => _values.ContainsKey(scope);
@@ -348,7 +348,7 @@ public sealed class RecordingPluginHttpClientFactory : IPluginHttpClientFactory
         public Handler(RecordingPluginHttpClientFactory owner) => _owner = owner;
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            _owner.Requests.Add(request);
+            lock (_owner.Requests) _owner.Requests.Add(request);
             return Task.FromResult(_owner.ResponseFactory?.Invoke(request)
                 ?? new HttpResponseMessage(HttpStatusCode.OK)
                 {
@@ -390,6 +390,10 @@ public sealed class FakePluginHostContext : IPluginHostContext
         EmulatorSupport = new RecordingPluginEmulatorSupportRegistry();
     }
     public string PluginName { get; }
+    public RecordingDashboardCardRegistry DashboardCards { get; } = new();
+    IPluginDashboardCardRegistry IPluginHostContext.DashboardCards => DashboardCards;
+    public RecordingBrowserLoginRegistry BrowserLogin { get; } = new();
+    IPluginBrowserLoginRegistry IPluginHostContext.BrowserLogin => BrowserLogin;
     public IPluginExecutionProviderRegistry ExecutionProviders { get; } = new RecordingPluginExecutionProviderRegistry();
     public RecordingPluginLogger Logger { get; }
     IPluginLogger IPluginHostContext.Logger => Logger;
@@ -475,4 +479,16 @@ internal sealed class CallbackDisposable : IDisposable
     private Action? _dispose;
     public CallbackDisposable(Action dispose) => _dispose = dispose;
     public void Dispose() => Interlocked.Exchange(ref _dispose, null)?.Invoke();
+}
+
+public sealed class RecordingDashboardCardRegistry : IPluginDashboardCardRegistry
+{
+    public List<PluginDashboardCardDescriptor> Cards { get; } = [];
+    public IDisposable Register(PluginDashboardCardDescriptor descriptor)
+    {
+        if(Cards.Any(card=>card.Id==descriptor.Id)) throw new InvalidOperationException("duplicate_card");
+        Cards.Add(descriptor);
+        return new Release(()=>Cards.Remove(descriptor));
+    }
+    private sealed class Release(Action release) : IDisposable { private Action? _release=release; public void Dispose()=>Interlocked.Exchange(ref _release,null)?.Invoke(); }
 }

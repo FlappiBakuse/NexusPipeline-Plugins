@@ -140,3 +140,5 @@ Pull Request 应包含：
 此入口复用 runner 的 Git A/R/C、暂存、rename 和未跟踪解析。新增插件资源调用既有 source/manifest/script 边界验证；stable 产物沿用生产检查拒绝，合法 fixture/Schema/adapter 资源放行，未知角色和任务外 Owner 为 REVIEW。不限制文件数或 LOC，不追溯阻断历史目录。REVIEW 的退出码 0 只表示没有确定性拒绝，人工审核仍未完成。
 
 `python tools/repo.py check docs` 同时检查指定前端指南声明及 manifest 示例与 `host.lock.json`；历史旧数字不扫描，模糊表述为 REVIEW，提取失败为 NOT_CHECKED 且非零。路径允许规范化后仍在仓库内的 `../CONTRIBUTING.md`，拒绝不存在或真正仓库外的目标。治理工具不替代 A06、ZIP 检查、生产 PR 检查或功能测试，也不更改发布 writer 权限。工具自测沿用 `python -m unittest discover -s tests/tooling -v`，将隔离输出定位到已登记的外部测试根。
+
+当前公开契约为 Plugin API 2.2 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。GameActivities 的真实来源缺口见其 README，打包成功不等于来源验收通过。

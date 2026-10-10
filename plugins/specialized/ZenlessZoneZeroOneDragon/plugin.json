@@ -7,7 +7,7 @@
   "description": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
   "version": "0.4.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.15",
+  "minHostVersion": "0.17.2",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configEditor": "data/editor.js",
@@ -117,5 +117,6 @@
     "url": "https://raw.githubusercontent.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/a2789666e6a0175b33969ec61d3c27dce517ff14/assets/ui/logo.ico",
     "sha256": "ec198b1a3c8dcf7cbd8a4cf5656676533bfb2a74a723e93665ed149c165dda64",
     "contentType": "image/x-icon"
-  }
+  },
+  "apiVersion": "2.2"
 }

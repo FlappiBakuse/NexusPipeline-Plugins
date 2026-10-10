@@ -6,8 +6,8 @@
   "description": "提供雷电、夜神和 BlueStacks 模拟器的识别、启动、截图与关闭支持。",
   "version": "0.2.1",
   "kind": "managed-code",
-  "minHostVersion": "0.17.0",
-  "apiVersion": "2.1",
+  "minHostVersion": "0.17.2",
+  "apiVersion": "2.2",
   "entryAssembly": "NexusPipeline.Plugin.EmulatorSupport.dll",
   "entryType": "NexusPipeline.Plugin.EmulatorSupport.EntryPoint"
 }

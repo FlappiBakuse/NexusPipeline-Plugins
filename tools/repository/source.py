@@ -663,7 +663,7 @@ def _validate_frontend_contract(plugin: Path, manifest: dict[str, Any]) -> None:
     capabilities = manifest.get("capabilities", [])
     repository_io._require("frontend-module" in capabilities, f"插件 {manifest['artifactName']} 声明 frontend 时必须声明 frontend-module capability")
     api_version = frontend.get("apiVersion")
-    repository_io._require(api_version == "1.6", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.6")
+    repository_io._require(api_version == "1.7", f"插件 {manifest['artifactName']} 的 frontend.apiVersion 必须为 1.7")
     repository_io._safe_relative(plugin, frontend.get("entry"), f"插件 {manifest['artifactName']} 的 frontend.entry", ".js")
     styles = frontend.get("styles", [])
     repository_io._require(isinstance(styles, list), f"插件 {manifest['artifactName']} 的 frontend.styles 必须是数组")
@@ -812,7 +812,7 @@ def validate_source_plugin(root: Path, *, supported_locales: frozenset[str] = re
         repository_io._require(bool(projects), f"managed-code 插件 {artifact} 缺少 src/*.csproj")
         repository_io._require(host_version >= repository_versions.parse_semver("0.17.0"), f"managed-code 插件 {artifact} 的 minHostVersion 必须至少为 0.17.0")
         api_version = manifest.get("apiVersion")
-        repository_io._require(api_version == "2.1", f"managed-code 插件 {artifact} 必须使用 Plugin API 2.1")
+        repository_io._require(api_version == "2.2", f"managed-code 插件 {artifact} 必须使用 Plugin API 2.2")
     if "configEditor" in manifest:
         repository_io._require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)

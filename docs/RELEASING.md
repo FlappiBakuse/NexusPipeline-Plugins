@@ -230,3 +230,5 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 
 专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](author/TASK_PROTOCOL.md)。
 
 未提交源码本机验收可由 Host 的 `tools/local_acceptance.py build --host-root <Host源码> --plugins-root <本仓源码> --output <外部独占目录>` 装配全部现役插件。该流程不写稳定 catalog/state/packages，本机 receipt 不能用于正式 publisher。
+
+当前公开契约为 Plugin API 2.2 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。GameActivities 的真实来源缺口见其 README，打包成功不等于来源验收通过。

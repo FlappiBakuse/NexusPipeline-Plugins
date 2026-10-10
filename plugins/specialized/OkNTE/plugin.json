@@ -7,7 +7,7 @@
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
   "version": "0.2.1",
   "kind": "data-specialized",
-  "minHostVersion": "0.16.15",
+  "minHostVersion": "0.17.2",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "capabilities": [
@@ -250,5 +250,6 @@
     "url": "https://raw.githubusercontent.com/BnanZ0/ok-nte/b629f536f8d8b3c1b82d397033434838a0c3e922/icons/icon.ico",
     "sha256": "c5f2393cd14fb3ff1b38a9f5d15d5013c7bed604d9656cdf111e33c5b97abcf8",
     "contentType": "image/x-icon"
-  }
+  },
+  "apiVersion": "2.2"
 }

@@ -70,7 +70,7 @@ export async function runPlugin(repositoryRoot, manifestPath, publicElements) {
     const result = await module.activate(host);
     if (!registrations.length && !gameCheckInPlugin) fail(`插件 ${manifest.artifactName} 未注册任何 UI slot`);
     for (const registration of registrations) {
-      if (!allowedSlots.has(registration.slot)) fail(`插件 ${manifest.artifactName} 注册了未知 UI slot：${registration.slot}`);
+      if (registration.kind !== "dashboard-card" && !allowedSlots.has(registration.slot)) fail(`插件 ${manifest.artifactName} 注册了未知 UI slot：${registration.slot}`);
     }
     const cleanup = activationCleanup(result);
     if (!cleanup) fail(`插件 ${manifest.artifactName} 的 activate(host) 未返回 cleanup/dispose`);
@@ -96,9 +96,10 @@ export async function runPlugin(repositoryRoot, manifestPath, publicElements) {
           const element = document.createElement("div");
           document.body.append(element);
           const context = { mode: "test", primaryId: manifest.artifactName === "LiveScreenshot" ? "run-test" : "" };
-          const rendererCleanup = await registration.renderer({ element, context });
+          const controller=new AbortController();
+          const rendererCleanup = await registration.renderer({ element, context, signal:controller.signal, cardId:registration.cardId });
           if (typeof rendererCleanup !== "function") fail(`插件 ${manifest.artifactName} 的 ${registration.slot} renderer 未返回 cleanup`);
-          rendererCleanups.push(rendererCleanup);
+          rendererCleanups.push(()=>{controller.abort();rendererCleanup();});
           await flushDom();
           if (wallpaperPlugin) assertWallpaperRenderer(element);
           if (manifest.artifactName === "LiveScreenshot" && !element.querySelector("[data-live-screenshot-card]")) {
@@ -126,6 +127,7 @@ export async function runPlugin(repositoryRoot, manifestPath, publicElements) {
       )) {
         fail("GameCheckIn cleanup 未释放 route、nav 或页面生命周期订阅");
       }
+      if (manifest.artifactName === "GameActivities" && metrics.externalOpen) fail("Activity refresh must not open external pages");
       if (probe.intervals.size > 0) {
         fail(`插件 ${manifest.artifactName} 卸载后仍有 ${probe.intervals.size} 个定时器未释放`);
       }

@@ -19,7 +19,8 @@ export async function preparePlugin() {
   const target = path.join(runtime.runtimeDir, "plugins", manifest.artifactName); fs.mkdirSync(target, { recursive: true });
   for (const name of ["plugin.json", "i18n", "web"])
     if (fs.existsSync(path.join(source, name))) fs.cpSync(path.join(source, name), path.join(target, name), { recursive: true });
-  fs.copyFileSync(path.join(source, "src/bin/Release/net10.0", manifest.entryAssembly), path.join(target, manifest.entryAssembly));
+  const binaries=path.join(source,"src/bin/Release/net10.0");
+  for(const name of fs.readdirSync(binaries)) if((name.endsWith(".dll") && name!=="NexusPipeline.Plugin.Abstractions.dll") || name===manifest.entryAssembly.replace(/\.dll$/, ".deps.json")) fs.copyFileSync(path.join(binaries,name),path.join(target,name));
   const settingsPath = path.join(runtime.runtimeDir, "config/settings.json");
   const settings = JSON.parse(fs.readFileSync(settingsPath));
   Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, LightweightMode: true, OpenDesktopOnStartup: false,
