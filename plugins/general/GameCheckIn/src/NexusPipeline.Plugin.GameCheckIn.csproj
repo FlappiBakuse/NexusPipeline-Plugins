@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <RootNamespace>NexusPipeline.Plugin.GameCheckIn</RootNamespace>
     <AssemblyName>NexusPipeline.Plugin.GameCheckIn</AssemblyName>
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <OutputType>Library</OutputType>
   </PropertyGroup>
 
@@ -15,5 +15,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="NexusPipeline.Plugin.GameCheckIn.Tests" />
+    <EmbeddedResource Include="BrowserLogin\PageScripts\*.js" />
   </ItemGroup>
 </Project>

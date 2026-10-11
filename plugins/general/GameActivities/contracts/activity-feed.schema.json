@@ -1,0 +1,413 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexuspipeline.local/contracts/game-activities/feed-v3",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "formatVersion",
+    "snapshotId",
+    "gameId",
+    "progressionId",
+    "contentLocale",
+    "overview",
+    "activities",
+    "source",
+    "health"
+  ],
+  "properties": {
+    "formatVersion": {
+      "const": 3
+    },
+    "snapshotId": {
+      "type": "string"
+    },
+    "gameId": {
+      "type": "string"
+    },
+    "progressionId": {
+      "type": "string"
+    },
+    "contentLocale": {
+      "type": "string"
+    },
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overviewId",
+        "title",
+        "number",
+        "start",
+        "end",
+        "cover"
+      ],
+      "properties": {
+        "overviewId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "start": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "instantUtc",
+                "rawValue",
+                "timeBasis",
+                "sourceZone"
+              ],
+              "properties": {
+                "instantUtc": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rawValue": {
+                  "type": "string"
+                },
+                "timeBasis": {
+                  "enum": [
+                    "explicit",
+                    "source-default",
+                    "unknown"
+                  ]
+                },
+                "sourceZone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "end": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "instantUtc",
+                "rawValue",
+                "timeBasis",
+                "sourceZone"
+              ],
+              "properties": {
+                "instantUtc": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rawValue": {
+                  "type": "string"
+                },
+                "timeBasis": {
+                  "enum": [
+                    "explicit",
+                    "source-default",
+                    "unknown"
+                  ]
+                },
+                "sourceZone": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "cover": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "assetId",
+                "sourceUrl",
+                "alt"
+              ],
+              "properties": {
+                "assetId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sourceUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "alt": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "activities": {
+      "type": "array",
+      "maxItems": 250,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "eventId",
+          "title",
+          "summary",
+          "kind",
+          "times",
+          "cover"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "times": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "start",
+              "playEnd"
+            ],
+            "properties": {
+              "start": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "instantUtc",
+                      "rawValue",
+                      "timeBasis",
+                      "sourceZone"
+                    ],
+                    "properties": {
+                      "instantUtc": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "rawValue": {
+                        "type": "string"
+                      },
+                      "timeBasis": {
+                        "enum": [
+                          "explicit",
+                          "source-default",
+                          "unknown"
+                        ]
+                      },
+                      "sourceZone": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              "playEnd": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "instantUtc",
+                      "rawValue",
+                      "timeBasis",
+                      "sourceZone"
+                    ],
+                    "properties": {
+                      "instantUtc": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "rawValue": {
+                        "type": "string"
+                      },
+                      "timeBasis": {
+                        "enum": [
+                          "explicit",
+                          "source-default",
+                          "unknown"
+                        ]
+                      },
+                      "sourceZone": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "assetId",
+                  "sourceUrl",
+                  "alt"
+                ],
+                "properties": {
+                  "assetId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "sourceUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "alt": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "url"
+      ],
+      "properties": {
+        "provider": {
+          "const": "sra"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "health": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cacheState",
+        "contentState",
+        "lastGoodAt",
+        "lastCheckedAt",
+        "nextCheckAt",
+        "diagnostics"
+      ],
+      "properties": {
+        "cacheState": {
+          "enum": [
+            "empty",
+            "fresh",
+            "stale"
+          ]
+        },
+        "contentState": {
+          "enum": [
+            "empty",
+            "available"
+          ]
+        },
+        "lastGoodAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lastCheckedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nextCheckAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

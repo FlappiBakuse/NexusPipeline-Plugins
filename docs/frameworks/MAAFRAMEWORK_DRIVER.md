@@ -1,6 +1,6 @@
 # MaaFramework 项目直驱
 
-`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.16.15、Plugin API 2.0 和 Frontend API 1.5。它不进入 Host 初始载荷，原有 MaaEnd、MaaStellaSora 专项和绑定配置不会自动迁移。
+`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.17.2、Plugin API 2.2 和 Frontend API 1.7。它不进入 Host 初始载荷，原有 MaaEnd、MaaStellaSora 专项和绑定配置不会自动迁移。
 
 ## 用户入口
 

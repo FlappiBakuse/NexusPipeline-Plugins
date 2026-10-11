@@ -135,16 +135,16 @@ function reorderTasks(ids: string[]) {
         </div>
       </div>
 
-      <details v-if="task.runs?.length" class="gci-run-history">
-        <summary>{{ t("action.show_results", {}, "运行记录") }} · {{ task.runs.length }}</summary>
+      <details v-if="task.recentRun" class="gci-run-history">
+        <summary>{{ t("action.show_results", {}, "运行记录") }}</summary>
         <div class="gci-run-list">
-          <section v-for="run in task.runs" :key="run.id" class="gci-run-entry">
+          <section class="gci-run-entry">
             <header class="gci-run-entry-head">
-              <span>{{ formatDate(run.completedAt || run.startedAt) }}</span>
-              <nxp-badge :label="t(`status.${run.status}`, {}, run.status)" :tone="runTone(run.status)" />
+              <span>{{ formatDate(task.recentRun.completedAt || task.recentRun.startedAt) }}</span>
+              <nxp-badge :label="t(`status.${task.recentRun.status}`, {}, task.recentRun.status)" :tone="runTone(task.recentRun.status)" />
             </header>
-            <ul v-if="run.results?.length">
-              <li v-for="(result, index) in run.results" :key="`${result.platform}-${result.gameCode}-${index}`">
+            <ul v-if="task.recentRun.results?.length">
+              <li v-for="(result, index) in task.recentRun.results" :key="`${result.platform}-${result.gameCode}-${index}`">
                 <span>{{ gameName(result.platform, result.gameCode) }}</span>
                 <span>{{ result.message }}</span>
               </li>

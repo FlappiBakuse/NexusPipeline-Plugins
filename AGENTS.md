@@ -33,7 +33,7 @@
 
 ## 3. 两类插件与包边界
 
-`managed-code` 可以提供公开 Plugin API 以及 Frontend API 1.6 的 slot/route、生命周期与公开 `nxp-*` Native Custom Elements。禁止依赖 Host Vue 内部组件、私有 class 或未声明的宿主服务。
+`managed-code` 可以提供公开 Plugin API 以及 Frontend API 1.7 的 slot/route、生命周期与公开 `nxp-*` Native Custom Elements。禁止依赖 Host Vue 内部组件、私有 class 或未声明的宿主服务。
 
 `data-specialized` 只包含 manifest、数据、允许的后端判定/配置脚本、i18n 和说明。浏览器扩展点仅声明受支持的 Host 能力，代码由 Host 实现。拒绝 frontend 字段（含 null/空对象）、frontend-module、frontend/、web/、浏览器工程、HTML/CSS 浏览器载荷和 .NET 程序集。不能按 .js 后缀删除现役 judge/configEditor；configValidator 已退役，源码与新包不得声明，Host 显式拒绝旧字段且保留用户快照。配置诊断使用 taskProtocol discover.configAssessment，保持 configEditor 公共字段但官方资产使用 `data/editor.js`。旧开发协议 1.0/1.1/1.2 不作为兼容契约加载。
 
@@ -86,6 +86,6 @@ dry-run 不写远端。实际写入入口必须有可测试实现，不能以永
 
 最终报告分开列实现、实际验证和远端启用状态。用无父文档、无实施包的新 checkout 验证上手路径。未经实际执行不宣称产品构建、全量测试、远端资格或发布通过。
 
-正式支持与验收范围为 Windows 11 x64，现役 Plugin API 精确为 2.1，Frontend API 为 1.6，自有 .NET 工程使用 .NET 10。1.0.0 前仍持续清理无调用的旧 Nexus 协议、别名、工具入口和自动迁移，不保留兼容 wrapper；外部上游最新稳定及前两版适配独立维护。旧配置、外观、历史及未知恢复现场原字节保留；破坏性版本在新目录安装、人工重新配置，独立升级屏障须先于资产公开生效。
+正式支持与验收范围为 Windows 11 x64，现役 Plugin API 精确为 2.2，Frontend API 为 1.7，自有 .NET 工程使用 .NET 10。1.0.0 前仍持续清理无调用的旧 Nexus 协议、别名、工具入口和自动迁移，不保留兼容 wrapper；外部上游最新稳定及前两版适配独立维护。旧配置、外观、历史及未知恢复现场原字节保留；破坏性版本在新目录安装、人工重新配置，独立升级屏障须先于资产公开生效。
 
 GameCheckIn 的专用凭据回读只接受当前任务与固定平台；默认遮罩，清除须保存任务才生效。普通 DTO、轮询、配置和诊断保持脱敏。本机未提交源码装配入口和正式 publisher 边界见 `docs/RELEASING.md`。

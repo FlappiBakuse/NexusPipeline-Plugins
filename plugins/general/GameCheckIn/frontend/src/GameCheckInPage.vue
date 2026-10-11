@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import CheckInTaskEditor from "./CheckInTaskEditor.vue";
 import CheckInTaskList from "./CheckInTaskList.vue";
-import type { CredentialRead, PluginHost, Task, TaskSavePayload, TaskState, Translate } from "./types";
+import type { PluginHost, Task, TaskSavePayload, TaskState, Translate } from "./types";
 
 const props = defineProps<{ host: PluginHost }>();
 
@@ -78,10 +78,6 @@ function closeEditor() {
   editorError.value = "";
 }
 
-async function readCredential(taskId: string, platform: string, signal: AbortSignal): Promise<CredentialRead> {
-  return await props.host.api.post("tasks/credential/read", { taskId, platform }, signal) as CredentialRead;
-}
-
 async function saveTask(payload: TaskSavePayload) {
   if (saving.value) return;
   saving.value = true;
@@ -102,6 +98,7 @@ async function saveTask(payload: TaskSavePayload) {
     } else {
       editorError.value = message;
     }
+    if (code === "task_save_unconfirmed") await loadState();
     props.host.ui?.toast(message, "error");
   } finally {
     saving.value = false;
@@ -207,7 +204,7 @@ onBeforeUnmount(() => {
       :error="editorError"
       :name-error="nameError"
       :translate="translate"
-      :read-credential="readCredential"
+      :host="host"
       @close="closeEditor"
       @save="saveTask"
       @invalid="props.host.ui?.toast($event, 'error')"

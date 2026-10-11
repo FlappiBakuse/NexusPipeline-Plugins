@@ -1,8 +1,11 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
@@ -13,34 +16,79 @@ internal sealed class SklandClient
     private const string SkportAppCode = "6eb76d4e13aa36e6";
     private const string UserAgent = "Skland/1.5.1 (com.hypergryph.skland; build:100501001; Android 34; ) Okhttp/4.11.0";
     private const string RequestedWith = "com.hypergryph.skland";
+    private static readonly JsonSerializerOptions SignJson = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     private readonly IPluginHttpClientFactory _http;
     private readonly string _platform;
     private readonly Func<CancellationToken, Task<string>> _deviceId;
+    private readonly LoginValidationTrace? _trace;
 
     public SklandClient(
         IPluginHttpClientFactory http,
         string platform,
-        Func<CancellationToken, Task<string>>? deviceIdProvider = null)
+        Func<CancellationToken, Task<string>>? deviceIdProvider = null,
+        LoginValidationTrace? trace = null)
     {
+        if (platform is not ("skland" or "skport")) throw new ArgumentOutOfRangeException(nameof(platform));
         _http = http;
         _platform = platform;
-        _deviceId = deviceIdProvider ?? new SklandDeviceFingerprintProvider(http).GetDeviceIdAsync;
+        _deviceId = platform == "skport" ? _ => Task.FromResult("")
+            : deviceIdProvider ?? new SklandDeviceFingerprintProvider(http).GetDeviceIdAsync;
+        _trace = trace;
     }
 
     internal string Platform => _platform;
 
+    internal async Task<string> ValidateCredentialAsync(string value, CancellationToken token, CredentialWebContext? web = null)
+    {
+        CredentialValidation.RawToken(value);
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
+        deadline.CancelAfter(TimeSpan.FromSeconds(30));
+        var profile = Profile.For(_platform, endfield: true, browser: web is not null);
+        string deviceId = await ResolveDeviceIdAsync(web, deadline.Token).ConfigureAwait(false);
+        try
+        {
+            var (cred, signToken) = await AuthenticateAsync(value, profile, deviceId, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            _trace?.Stage("current_user");
+            using var user = await SignedRequestAsync(new Uri(profile.UserEndpoint), cred, signToken, profile, deviceId,
+                HttpMethod.Get, "", null, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(user, "code", 0, 401, 10002);
+            var data = CredentialValidation.Property(user.RootElement, "data", JsonValueKind.Object);
+            var account = CredentialValidation.Property(data, "user", JsonValueKind.Object);
+            if (_platform == "skport") account = CredentialValidation.Property(account, "basicUser", JsonValueKind.Object);
+            string identity = CredentialValidation.MaskPassportIdentity(_platform,
+                CredentialValidation.Property(account, "id", JsonValueKind.String).GetString());
+            _trace?.Stage("bindings");
+            using var bindings = await SignedRequestAsync(new Uri(profile.ApiBase + "/game/player/binding"), cred, signToken, profile, deviceId,
+                HttpMethod.Get, "", null, deadline.Token, validateHttpStatus: true).ConfigureAwait(false);
+            CredentialValidation.RequireCode(bindings, "code", 0, 401, 10002);
+            var bindingData = CredentialValidation.Property(bindings.RootElement, "data", JsonValueKind.Object);
+            CredentialValidation.Property(bindingData, "list", JsonValueKind.Array);
+            // An authenticated account can legitimately have no bound game roles.
+            return identity;
+        }
+        catch (SklandCredentialException ex)
+        {
+            throw new CredentialException(ex.Code == "risk_control" ? "credential_rejected" : "credential_not_authenticated");
+        }
+        catch (InvalidOperationException)
+        {
+            throw new CredentialException("readonly_validation_failed");
+        }
+    }
+
     public async Task<CheckInResult> SignAsync(
         SklandGameDefinition game,
         string token,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        CredentialWebContext? web = null)
     {
         try
         {
-            Profile profile = Profile.For(_platform, game.IsEndfield);
-            string deviceId = await _deviceId(cancellationToken).ConfigureAwait(false);
+            Profile profile = Profile.For(_platform, game.IsEndfield, browser: web is not null);
+            string deviceId = await ResolveDeviceIdAsync(web, cancellationToken).ConfigureAwait(false);
             (string cred, string signToken) = await AuthenticateAsync(token, profile, deviceId, cancellationToken).ConfigureAwait(false);
-            string signedDeviceId = game.IsEndfield ? "" : deviceId;
+            string signedDeviceId = web is not null || !game.IsEndfield ? deviceId : "";
             using JsonDocument bindings = await SignedRequestAsync(
                 new Uri(profile.ApiBase + "/game/player/binding"),
                 cred,
@@ -144,13 +192,14 @@ internal sealed class SklandClient
         string platform,
         string versionName)
     {
+        // The signature must match JSON.stringify, including unescaped Base64 device characters.
         string headerJson = JsonSerializer.Serialize(new
         {
             platform,
             timestamp,
             dId = deviceId,
             vName = versionName,
-        });
+        }, SignJson);
         string message = path + body + timestamp + headerJson;
         byte[] hmac = HMACSHA256.HashData(
             Encoding.UTF8.GetBytes(signToken),
@@ -159,19 +208,31 @@ internal sealed class SklandClient
         return Convert.ToHexString(MD5.HashData(Encoding.UTF8.GetBytes(hex))).ToLowerInvariant();
     }
 
+    private Task<string> ResolveDeviceIdAsync(CredentialWebContext? web, CancellationToken token)
+    {
+        if (web is null) return _deviceId(token);
+        if (web.Platform != _platform || !web.Valid()) throw new CredentialException("credential_record_invalid");
+        return Task.FromResult(web.DeviceId!);
+    }
+
     private async Task<(string Cred, string SignToken)> AuthenticateAsync(
         string token,
         Profile profile,
         string deviceId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         string timestamp = UnixTimestamp();
+        _trace?.Stage("passport_grant");
         using JsonDocument grant = await SendJsonAsync(
             new Uri(profile.AuthBase + "/user/oauth2/v2/grant"),
             HttpMethod.Post,
             JsonSerializer.Serialize(new { token, appCode = profile.AppCode, type = 0 }),
             AuthHeaders(profile, timestamp, deviceId),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken, validateHttpStatus).ConfigureAwait(false);
+        if (validateHttpStatus) CredentialValidation.RequireCode(grant, "status", 0, 1);
+        if (validateHttpStatus)
+            CredentialValidation.Property(CredentialValidation.Property(grant.RootElement, "data", JsonValueKind.Object), "code", JsonValueKind.String);
         if (!grant.RootElement.TryGetProperty("status", out JsonElement status)
             || !status.TryGetInt32(out int statusCode)
             || statusCode != 0)
@@ -185,12 +246,20 @@ internal sealed class SklandClient
             throw new SklandCredentialException("credential_expired", "通行证授权码获取失败");
         }
 
+        _trace?.Stage("credential_exchange");
         using JsonDocument credential = await SendJsonAsync(
             new Uri(profile.WebBase + "/user/auth/generate_cred_by_code"),
             HttpMethod.Post,
             JsonSerializer.Serialize(new { kind = 1, code = codeElement.GetString() }),
             AuthHeaders(profile, timestamp, deviceId),
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken, validateHttpStatus).ConfigureAwait(false);
+        if (validateHttpStatus) CredentialValidation.RequireCode(credential, "code", 0, 401, 10002);
+        if (validateHttpStatus)
+        {
+            var credentialData = CredentialValidation.Property(credential.RootElement, "data", JsonValueKind.Object);
+            CredentialValidation.RawToken(CredentialValidation.Property(credentialData, "cred", JsonValueKind.String).GetString());
+            CredentialValidation.RawToken(CredentialValidation.Property(credentialData, "token", JsonValueKind.String).GetString());
+        }
         if (!credential.RootElement.TryGetProperty("code", out JsonElement credentialCode)
             || !credentialCode.TryGetInt32(out int code)
             || code != 0)
@@ -228,22 +297,23 @@ internal sealed class SklandClient
         HttpMethod method,
         string body,
         Dictionary<string, string>? extraHeaders,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         string timestamp = UnixTimestamp();
         var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["cred"] = cred,
-            ["User-Agent"] = UserAgent,
+            ["User-Agent"] = profile.UserAgent,
             ["Accept-Encoding"] = "gzip",
             ["Connection"] = "close",
-            ["X-Requested-With"] = RequestedWith,
             ["platform"] = profile.Platform,
             ["timestamp"] = timestamp,
             ["dId"] = deviceId,
             ["vName"] = profile.VersionName,
             ["sign"] = ComputeSign(signToken, endpoint.AbsolutePath, body, timestamp, deviceId, profile.Platform, profile.VersionName),
         };
+        AddProfileHeaders(headers, profile);
         if (method == HttpMethod.Post)
         {
             headers["Content-Type"] = "application/json";
@@ -255,7 +325,7 @@ internal sealed class SklandClient
                 headers[name] = value;
             }
         }
-        return await SendJsonAsync(endpoint, method, body, headers, cancellationToken).ConfigureAwait(false);
+        return await SendJsonAsync(endpoint, method, body, headers, cancellationToken, validateHttpStatus).ConfigureAwait(false);
     }
 
     private async Task<JsonDocument> SendJsonAsync(
@@ -263,7 +333,8 @@ internal sealed class SklandClient
         HttpMethod method,
         string body,
         IReadOnlyDictionary<string, string> headers,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false)
     {
         using HttpClient client = _http.CreateClient(endpoint, TimeSpan.FromSeconds(30));
         using var request = new HttpRequestMessage(method, endpoint);
@@ -283,21 +354,33 @@ internal sealed class SklandClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus, _trace).ConfigureAwait(false);
     }
 
-    private static Dictionary<string, string> AuthHeaders(Profile profile, string timestamp, string deviceId) =>
-        new(StringComparer.OrdinalIgnoreCase)
+    private static Dictionary<string, string> AuthHeaders(Profile profile, string timestamp, string deviceId)
+    {
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
             ["Content-Type"] = "application/json",
-            ["User-Agent"] = UserAgent,
-            ["X-Requested-With"] = RequestedWith,
+            ["User-Agent"] = profile.UserAgent,
             ["platform"] = profile.Platform,
             ["timestamp"] = timestamp,
             ["dId"] = deviceId,
             ["vName"] = profile.VersionName,
         };
+        AddProfileHeaders(headers, profile);
+        return headers;
+    }
+
+    private static void AddProfileHeaders(Dictionary<string, string> headers, Profile profile)
+    {
+        if (profile.Browser)
+        {
+            headers["Origin"] = profile.Origin;
+            headers["Referer"] = profile.Origin + "/";
+        }
+        else headers["X-Requested-With"] = RequestedWith;
+    }
 
     private static List<Binding> ReadBindings(JsonDocument document, SklandGameDefinition game)
     {
@@ -451,9 +534,13 @@ internal sealed class SklandClient
         string ApiBase,
         string AppCode,
         string Platform,
-        string VersionName)
+        string VersionName,
+        bool Browser)
     {
-        public static Profile For(string platform, bool endfield) => platform switch
+        public string Origin => WebBase.Contains("skport.com", StringComparison.Ordinal) ? "https://www.skport.com" : "https://www.skland.com";
+        public string UserEndpoint => Origin.EndsWith("skport.com", StringComparison.Ordinal) ? "https://zonai.skport.com/web/v2/user" : WebBase + "/user";
+        public string UserAgent => Browser ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" : SklandClient.UserAgent;
+        public static Profile For(string platform, bool endfield, bool browser = false) => platform switch
         {
             "skport" => new Profile(
                 "https://as.gryphline.com",
@@ -461,21 +548,21 @@ internal sealed class SklandClient
                 "https://zonai.skport.com/api/v1",
                 SkportAppCode,
                 "3",
-                "1.0.0"),
-            _ when endfield => new Profile(
+                "1.0.0", true),
+            _ when endfield || browser => new Profile(
                 "https://as.hypergryph.com",
                 "https://zonai.skland.com/web/v1",
                 "https://zonai.skland.com/api/v1",
                 SklandAppCode,
                 "3",
-                "1.0.0"),
+                "1.0.0", browser),
             _ => new Profile(
                 "https://as.hypergryph.com",
                 "https://zonai.skland.com/web/v1",
                 "https://zonai.skland.com/api/v1",
                 SklandAppCode,
                 "1",
-                "1.5.1"),
+                "1.5.1", false),
         };
     }
 

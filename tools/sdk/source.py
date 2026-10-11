@@ -56,7 +56,7 @@ def _validate_compatibility(compatibility: dict[str, Any]) -> dict[str, Any]:
             isinstance(compatibility[key], str) and VERSION_PATTERN.fullmatch(compatibility[key]) is not None,
             f"Host compatibility metadata 的 {key} 无效",
         )
-    _require(compatibility["hostApiVersion"] == "2.1" and compatibility["frontendApiVersion"] == "1.6", "仅接受 Plugin API 2.1 与 Frontend API 1.6")
+    _require(compatibility["hostApiVersion"] == "2.2" and compatibility["frontendApiVersion"] == "1.7", "仅接受 Plugin API 2.2 与 Frontend API 1.7")
     locales = compatibility["supportedLocales"]
     _require(
         isinstance(locales, list)

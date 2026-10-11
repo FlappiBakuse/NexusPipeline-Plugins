@@ -3,6 +3,8 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using NexusPipeline.Plugin.Abstractions;
+using NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
+using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
@@ -15,11 +17,41 @@ internal sealed class KuroClient
 
     private readonly IPluginHttpClientFactory _http;
     private readonly Func<DateTimeOffset> _now;
+    private readonly LoginValidationTrace? _trace;
 
-    public KuroClient(IPluginHttpClientFactory http, Func<DateTimeOffset>? now = null)
+    public KuroClient(IPluginHttpClientFactory http, Func<DateTimeOffset>? now = null, LoginValidationTrace? trace = null)
     {
         _http = http;
         _now = now ?? (() => DateTimeOffset.Now);
+        _trace = trace;
+    }
+
+    internal async Task<string> ValidateCredentialAsync(string value, CancellationToken token, CredentialWebContext? web = null)
+    {
+        CredentialValidation.RawToken(value);
+        ValidateContext(web);
+        string deviceId = Guid.NewGuid().ToString("D");
+        _trace?.Stage("current_user");
+        using var user = await SendFormAsync("/user/mineV2", value, deviceId, deviceId,
+            new Dictionary<string, string> { ["type"] = "1", ["searchType"] = "2" }, token, true, web).ConfigureAwait(false);
+        CredentialValidation.RequireCode(user, "code", 200, 220, 230);
+        var mine = CredentialValidation.Property(CredentialValidation.Property(user.RootElement, "data", JsonValueKind.Object), "mine", JsonValueKind.Object);
+        string accountId = ReadString(mine, "userId") ?? "";
+        string identity = CredentialValidation.MaskIdentity("kuro", accountId);
+        foreach (var game in KuroGameDefinitions.All)
+        {
+            _trace?.Stage("roles_" + game.Code);
+            using var roles = await SendFormAsync("/user/role/findRoleList", value, deviceId, deviceId,
+                new Dictionary<string, string> { ["gameId"] = game.GameId }, token, true, web).ConfigureAwait(false);
+            CredentialValidation.RequireCode(roles, "code", 200, 220);
+            CredentialValidation.Property(roles.RootElement, "data", JsonValueKind.Array);
+            foreach (var role in ReadRoles(roles, game.GameId))
+            {
+                CredentialValidation.MaskIdentity("kuro", role.UserId);
+                if (role.UserId != accountId) throw new CredentialException("credential_capture_ambiguous");
+            }
+        }
+        return identity;
     }
 
     public async Task<CheckInResult> SignAsync(
@@ -27,17 +59,19 @@ internal sealed class KuroClient
         string token,
         string devCode,
         string distinctId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        CredentialWebContext? web = null)
     {
         try
         {
+            ValidateContext(web);
             using JsonDocument roles = await SendFormAsync(
                 "/user/role/findRoleList",
                 token,
                 devCode,
                 distinctId,
                 new Dictionary<string, string> { ["gameId"] = game.GameId },
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken, web: web).ConfigureAwait(false);
             CheckInResult? roleError = MapRoleResponse(roles, game.Code);
             if (roleError is not null)
             {
@@ -67,7 +101,7 @@ internal sealed class KuroClient
                         ["userId"] = role.UserId,
                         ["reqMonth"] = requestMonth,
                     },
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken, web: web).ConfigureAwait(false);
                 CheckInResult result = MapResponse(response, game.Code) ??
                     new CheckInResult("kuro", game.Code, "server_error", "签到接口返回未知状态", false);
                 if (result.Code == "already")
@@ -115,32 +149,43 @@ internal sealed class KuroClient
         string devCode,
         string distinctId,
         IReadOnlyDictionary<string, string> fields,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool validateHttpStatus = false,
+        CredentialWebContext? web = null)
     {
         using HttpClient client = _http.CreateClient(new Uri(BaseUrl + path), TimeSpan.FromSeconds(30));
         using var request = new HttpRequestMessage(HttpMethod.Post, BaseUrl + path);
         request.Headers.TryAddWithoutValidation("pragma", "no-cache");
         request.Headers.TryAddWithoutValidation("cache-control", "no-cache");
-        request.Headers.TryAddWithoutValidation("source", Source);
+        request.Headers.TryAddWithoutValidation("source", web is null ? Source : "h5");
         request.Headers.TryAddWithoutValidation("lang", "zh-Hans");
         request.Headers.TryAddWithoutValidation("devcode", devCode);
-        request.Headers.TryAddWithoutValidation("distinct_id", CanonicalUuid(distinctId));
+        request.Headers.TryAddWithoutValidation("distinct_id", web?.DistinctId ?? CanonicalUuid(distinctId));
         request.Headers.TryAddWithoutValidation("countrycode", "CN");
-        request.Headers.TryAddWithoutValidation("model", "NexusPipeline");
+        if (web is null) request.Headers.TryAddWithoutValidation("model", "NexusPipeline");
         request.Headers.TryAddWithoutValidation("version", "2.2.0");
-        request.Headers.TryAddWithoutValidation("versioncode", "2200");
+        if (web is null) request.Headers.TryAddWithoutValidation("versioncode", "2200");
         request.Headers.TryAddWithoutValidation("token", token);
-        request.Headers.TryAddWithoutValidation("x-requested-with", "com.kurogame.kjq");
+        if (web is null) request.Headers.TryAddWithoutValidation("x-requested-with", "com.kurogame.kjq");
+        else
+        {
+            request.Headers.TryAddWithoutValidation("Origin", "https://www.kurobbs.com");
+            request.Headers.TryAddWithoutValidation("Referer", "https://www.kurobbs.com/");
+        }
         request.Headers.Accept.Clear();
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Headers.UserAgent.ParseAdd(UserAgent);
+        request.Headers.UserAgent.ParseAdd(web is null ? UserAgent : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
         request.Content = new FormUrlEncodedContent(fields);
         using HttpResponseMessage response = await client.SendAsync(
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus, _trace).ConfigureAwait(false);
+    }
+
+    private static void ValidateContext(CredentialWebContext? web)
+    {
+        if (web is not null && (web.Platform != "kuro" || !web.Valid())) throw new CredentialException("credential_record_invalid");
     }
 
     private static List<Role> ReadRoles(JsonDocument document, string gameId)

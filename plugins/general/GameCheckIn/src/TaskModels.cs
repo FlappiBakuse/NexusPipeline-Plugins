@@ -106,6 +106,7 @@ internal sealed record SuccessfulCheckIn(
 
 internal sealed class CheckInTaskSaveRequest
 {
+    public string? EditorSessionId { get; set; }
     [JsonPropertyName("id")]
     public Guid? Id { get; set; }
 
@@ -163,6 +164,8 @@ internal sealed class CheckInTaskOrderRequest
 
 internal sealed class CheckInSecretInput
 {
+    public string? CandidateId { get; set; }
+    public long? FieldGeneration { get; set; }
     [JsonPropertyName("action")]
     public string Action { get; set; } = "keep";
 
@@ -172,6 +175,8 @@ internal sealed class CheckInSecretInput
 
 internal sealed class CheckInCredentialReadRequest
 {
+    public string? EditorSessionId { get; set; }
+    public long FieldGeneration { get; set; }
     public Guid TaskId { get; set; }
     public string Platform { get; set; } = "";
 }
@@ -187,6 +192,7 @@ internal sealed class CheckInTaskView
     public CheckInNotification Notification { get; init; } = new();
     public List<CheckInRun> Runs { get; init; } = new();
     public Dictionary<string, bool> Credentials { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, Credentials.CredentialFieldState> CredentialStates { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     public bool IsRunning { get; init; }
     public DateTimeOffset? NextRunAt { get; init; }
     public CheckInRun? RecentRun { get; init; }

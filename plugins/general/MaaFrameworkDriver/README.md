@@ -1,21 +1,26 @@
 # MaaFramework 框架直驱
 
-这是独立安装的 managed 插件，需 Host v0.16.9 / Plugin API 1.9。原有 MaaEnd、MaaStellaSora 专项和用户配置不会自动迁移。插件使用自己的 profile，经现有 Host 队列、用户绑定、历史和恢复流程执行。
+直接读取 MaaFramework 项目的任务声明，在 NexusPipeline 中配置并运行任务。
 
-配置、显式导入、支持范围和现役验证入口见 [MaaFramework 框架指南](../../../docs/MAAFRAMEWORK_DRIVER.md)。仓库文档不随商店 ZIP 打包，包内保留本说明与 `LICENSES/`。
+当前版本 0.2.2，需要 NexusPipeline 0.17.2 或更高的兼容版本，运行环境为 Windows 11 x64。
 
-## 配置和信任
+## 开始使用
 
-项目检查与预览只读取批准项目根内的 PI v2 声明，不加载 native，也不启动 Agent、pretask 或更新器。执行前需明确选择运行库、控制器、资源、任务和参数，并确认执行授权摘要。执行声明、代码或解释器身份变化需重新授权；展示文案变化不撤销授权。
+1. 在插件页面安装并启用插件，按提示重启 NexusPipeline。安装版本以插件页面为准；本文说明当前源码对应的功能。
+2. 新建脚本并选择 MaaFramework 框架直驱，指定已准备好的项目根目录。
+3. 读取项目，选择运行库、控制器、资源、任务、顺序及参数。Win32 指定完整程序路径与窗口条件；ADB 指定 adb.exe 和设备地址。
+4. 执行只读预览，核对授权摘要并确认保存独立配置，最后保存脚本。绑定用户后加入队列运行。
 
-项目 Agent 和 pretask 是代码。进程隔离不等于沙箱，项目可以写共享根或联网；共享可写根由 Host 串行保护。密码只保存 secret 引用，运行时通过受控引导输入进入 worker 内存；不写普通配置、预览或历史。项目程序的 stdout/stderr 被消费但不转发，避免密码回显。
+## 使用范围
 
-## 状态
+可显式导入支持的 MXU 或 MaaPiCli 配置：先预览，再载入草稿并重新授权。不会自动迁移 MaaEnd、MaaStellaSora 或同步源配置。
 
-首版已提供项目读取、独立配置、用户绑定、执行预览与授权、MXU/MaaPiCli 显式导入，以及标准 Agent/pretask 运行入口。发行资格仍须由同次源码的正式双仓、原生与安装事务报告证明；本地诊断包不代表商店已上架。
+项目 Agent 和运行前任务会执行项目代码，进程隔离不提供文件系统或网络沙箱，请只授权信任的项目。项目代码、程序或资源变化后可能需要重新授权。
 
-新 Win32 配置保存完整 EXE 路径和 PI 窗口过滤条件，在 pretasks 完成后每次重新选择唯一窗口，再冻结 HWND、PID 和启动时间。已有精确进程配置保留原语义，需在界面明确改为每次解析后重新授权。多候选、无法观测或 Host 启动身份不符会阻断该项，不关闭用户的启动器。
+## 常见问题
 
-## 构建输入
+窗口有多个匹配时，收紧完整 EXE 路径及窗口条件。运行库版本、架构或接口不匹配时不会执行；请使用项目要求的运行库。原生引擎完成不一定代表游戏业务成功，请结合任务历史和游戏结果检查。
 
-worker 使用官方 `Maa.Framework.Binding.Native` 与 `Maa.Framework.Binding` v5.10.0 的 net7.0 资产，在 .NET 8 x64 独立进程内运行。来源 commit 为 `27c69a5b8ff41b6002ead71f403a16f442a7168e`。项目原生库按其自身版本使用，不统一替换为插件构建版本。官方绑定为 LGPL-3.0-only；发行包需附对应许可、来源与替换说明。
+## 更多说明
+
+[框架配置与支持范围](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/main/docs/frameworks/MAAFRAMEWORK_DRIVER.md)。

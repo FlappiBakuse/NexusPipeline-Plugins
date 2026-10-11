@@ -19,6 +19,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.4.3",
+      "date": "2026-10-11",
+      "items": [
+        "开放五个平台网页登录，自动打开登录界面，并修复凭据认证、取消和保存重启恢复。",
+        "完善凭据提示及游戏选择框布局；任务运行记录只显示最近一次签到结果。"
+      ]
+    },
+    {
       "version": "0.4.2",
       "items": [
         "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
@@ -30,13 +38,6 @@
       "date": "2026-10-05",
       "items": [
         "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-      ]
-    },
-    {
-      "version": "0.4.0",
-      "date": "2026-10-04",
-      "items": [
-        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
       ]
     }
   ],
@@ -56,6 +57,14 @@
       ],
       "changelog": [
         {
+          "version": "0.4.3",
+          "date": "2026-10-11",
+          "items": [
+            "Enables browser login for all five platforms, opens login dialogs automatically, and improves credential validation, cancellation, and persistence.",
+            "Refines credential hints and game selection layout; each task displays only its latest sign-in run."
+          ]
+        },
+        {
           "version": "0.4.2",
           "items": [
             "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
@@ -67,13 +76,6 @@
           "date": "2026-10-05",
           "items": [
             "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-          ]
-        },
-        {
-          "version": "0.4.0",
-          "date": "2026-10-04",
-          "items": [
-            "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
           ]
         }
       ]
