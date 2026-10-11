@@ -1,146 +1,37 @@
-# NexusPipeline-Plugins
+# NexusPipeline 官方插件
 
-NexusPipeline 官方插件仓库，提供 managed-code 与 data-specialized 插件的源码目录、发行包和插件商店索引。
+为 NexusPipeline 提供游戏脚本接入、签到、活动信息、外观与运行辅助功能。用户从 NexusPipeline 的插件页面安装、启用与更新；启停或更新后按界面提示重启。插件不包含游戏，专项插件也不包含上游自动化软件。
 
-宿主项目负责插件运行时、安装更新和 Plugin API（当前 API 2.1）；本仓库负责官方插件内容及插件作者的开发、校验和发布流程。宿主运行时规范以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和对应版本的实现为准，本仓库文档聚焦于插件作者的实际工作流。任务入口见[文档门户](docs/README.md)，Frontend API 1.6、插件本地化、前端模块和 UI slot 约定见 [前端插件指南](docs/author/FRONTEND_PLUGIN.md)。
+## 选择插件
 
-## 上游最新稳定发行发现
+下面的使用说明对应当前源码；商店可安装版本以软件内展示为准。当前源码要求 Host 0.17.2，Plugin API 2.2 / Frontend API 1.7；插件版本独立管理。
 
-核对日期：2026-10-04。完整任务兼容情况及三版 SHA/资产见[项目索引](docs/projects/README.md)。发现不代表真实游戏实测通过。
+| 插件使用说明 | 源码版本 | 用途类别 |
+| --- | --- | --- |
+| [自定义壁纸](plugins/general/CustomWallpaper/README.md) | 0.3.2 | 通用功能 |
+| [模拟器支持扩展](plugins/general/EmulatorSupport/README.md) | 0.2.2 | 通用功能 |
+| [游戏活动](plugins/general/GameActivities/README.md) | 0.1.0 | 通用功能 |
+| [游戏签到](plugins/general/GameCheckIn/README.md) | 0.4.3 | 通用功能 |
+| [实时截图窗口](plugins/general/LiveScreenshot/README.md) | 0.3.2 | 通用功能 |
+| [MaaFramework 框架直驱](plugins/general/MaaFrameworkDriver/README.md) | 0.2.2 | 通用功能 |
+| [蔚蓝档案爱丽丝助手](plugins/specialized/BAAH/README.md) | 0.3.2 | 专项脚本接入 |
+| [更好的原神](plugins/specialized/BetterGI/README.md) | 0.4.2 | 专项脚本接入 |
+| [终末地小助手](plugins/specialized/MaaEnd/README.md) | 0.4.2 | 专项脚本接入 |
+| [星塔助手](plugins/specialized/MaaStellaSora/README.md) | 0.3.2 | 专项脚本接入 |
+| [三月七小助手](plugins/specialized/March7thAssistant/README.md) | 0.4.2 | 专项脚本接入 |
+| [ok-nte 日常](plugins/specialized/OkNTE/README.md) | 0.2.2 | 专项脚本接入 |
+| [ok-ww 日常](plugins/specialized/OkWutheringWaves/README.md) | 0.2.2 | 专项脚本接入 |
+| [绝区零一条龙](plugins/specialized/ZenlessZoneZeroOneDragon/README.md) | 0.4.2 | 专项脚本接入 |
 
-| 脚本 | 最新稳定发行 |
-|---|---|
-| BAAH | [BAAH2.4.13](https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.4.13) |
-| BetterGI | [0.66.0](https://github.com/babalae/better-genshin-impact/releases/tag/0.66.0) |
-| MaaEnd | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) |
-| MaaStellaSora | [v1.5.1](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.1) |
-| March7thAssistant | [v2026.10.3](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.10.3) |
-| OkNTE | [v1.4.7](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7) |
-| OkWutheringWaves | [v3.7.3](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.3) |
-| ZenlessZoneZeroOneDragon | [v2.5.2](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.2) |
+## 安装与使用
 
-## 当前插件
+1. 在 NexusPipeline 插件页面查看说明并安装需要的插件。
+2. 启用插件，按提示重启软件。
+3. 通用插件在主页面、设置或独立功能页面使用；专项插件在新建脚本时选择，并绑定实际安装目录及用户配置。
+4. 先手动运行并检查结果，再开启计划。旧配置、账号状态及上游版本限制请阅读对应插件说明。
 
-| 机器 ID | artifactName | 游戏 | 类型 | 能力 / 扩展点 |
-|---|---|---|---|---|
-| `baah` | `BAAH` | 蔚蓝档案 | `data-specialized` | `emulator`, `self-managed-pc-launch` |
-| `bettergi` | `BetterGI` | 原神 | `data-specialized` | — |
-| `maaend` | `MaaEnd` | 明日方舟：终末地 | `data-specialized` | `emulator` |
-| `maas` | `MaaStellaSora` | 星塔旅人（MFAAvalonia 稳定实例） | `data-specialized` | `emulator` |
-| `march7th` | `March7thAssistant` | 崩坏：星穹铁道 | `data-specialized` | — |
-| `zzzonedragon` | `ZenlessZoneZeroOneDragon` | 绝区零 | `data-specialized` | `no-fresh-config` |
-| `okww` | `OkWutheringWaves` | 鸣潮（单账号日常开发候选） | `data-specialized` | `no-fresh-config` |
-| `oknte` | `OkNTE` | 异环（单账号日常开发候选） | `data-specialized` | `no-fresh-config`, `self-managed-pc-launch` |
-| `game-checkin` | `GameCheckIn` | 多平台独立签到任务 | `managed-code` | `frontend-module` |
-| `emulator-support` | `EmulatorSupport` | 雷电、夜神、BlueStacks 驱动 | `managed-code` | Plugin API 2.1 provider |
-| `custom-wallpaper` | `CustomWallpaper` | 通用外观 | `managed-code` | `frontend-module` |
-| `live-screenshot` | `LiveScreenshot` | 通用游戏与安卓模拟器 | `managed-code` | `frontend-module`, `execution-preview-client` |
-| `maa-framework` | `MaaFrameworkDriver` | MaaFramework 项目直驱 | `managed-code` | `frontend-module` |
+稳定商店使用正式发行版本。开发预览面向测试，不能把源码版本或本机验收包视为已正式上架。卸载或重装前请保全用户配置与凭据。
 
-`emulator` 表示专项脚本支持宿主的安卓模拟器启动方式；`self-managed-pc-launch` 表示 PC 客户端由脚本自身负责启动，宿主在 PC 模式下收紧启动计划；`no-fresh-config` 表示插件不允许使用全新配置文件模式。`EmulatorSupport` 通过 managed-code Plugin API 2.1 注册模拟器 provider，不使用数据化插件的 `emulator` capability；Generic ADB 与 MuMuManager 由宿主内置，雷电、夜神和 BlueStacks 的厂商专属识别与实例关闭需要安装并启用该扩展。
+## 开发与维护
 
-宿主使用 stable `catalog.json` 发现可安装版本，再从固定官方仓库的 `raw.githubusercontent.com` 地址下载 `packages/` 中对应的 ZIP 发行包；develop preview 使用固定 `plugins-develop` Release asset 与同通道缓存，绝不回退到 stable。插件版本与 NexusPipeline 宿主版本独立管理；`minHostVersion` 用于表达最低宿主版本要求。宿主安装或启动时都会校验该字段，宿主版本不足时保留插件元数据并标记不兼容，跳过运行时解析与程序集激活。`.release-state.json` 记录最近一次成功发行的 stable 源码树与包事实，`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`；每个验证或候选 job 固定一次官方 Host `sdkSourceSha`。
-
-## 插件本地化资源
-
-需要前端或宿主插件上下文文案时，可在 `plugin.json` 的 `localization` 中声明 `i18n/*.json` 资源。locale 使用规范化 BCP 47 形式，`defaultLocale` 必须有对应文件；所有语言资源必须拥有相同的 key 集合和占位符集合，值必须是非空字符串，禁止使用 `legacy.*` key。数据化专项插件的 `resolve.json.inputs` 可用 `labelKey` 与 `descriptionKey` 引用同一份插件词典，`label` 与 `description` 作为回退文本。仓库校验会检查路径边界、文件大小、key/value 数量和占位符一致性。
-
-## 发布规则
-
-stable 插件发行包由受保护 publisher 写回 `main` 的 `catalog.json`、`.release-state.json` 与 `packages/**` 维护；develop preview 固定发布到 `plugins-develop` Release，不提交 preview 生成物，也不创建 stable 状态。源码按插件类型分为 `plugins/general/` 与 `plugins/specialized/`，每个插件使用正式大小写的 artifact 名称建立末级源码目录与发行目录，并最多保留最近三个 stable 版本包。版本使用 `major.minor.patch`、`-beta.N` 或 `-rc.N`，stable 相同 `(artifactName, version)` 的 ZIP 内容不可覆盖；preview 包名追加其完整 SHA256，可允许同版本不同内容。
-
-```text
-packages/<ArtifactName>/<ArtifactName>-<version>.zip
-```
-
-例如 `game-checkin` 的正式包名形如 `GameCheckIn/GameCheckIn-<version>.zip`，`catalog.json` 的 `packageUrl` 必须精确指向对应 raw 文件。机器 ID 保持稳定的小写 kebab-case；artifact 名称用于分类源码目录的末级目录、宿主安装目录、发行目录和 ZIP 文件名。源码路径、安装路径与发行路径分别为 `plugins/{general|specialized}/<ArtifactName>/`、`plugins/<ArtifactName>/` 和 `packages/<ArtifactName>/`。插件平台展示最近版本的更新记录，安装入口始终使用 catalog 当前版本。
-
-## 仓库结构
-
-```text
-NexusPipeline-Plugins/
-├── catalog.json                         # 插件商店索引与包完整性信息
-├── plugins/
-│   ├── general/<ArtifactName>/          # managed-code 通用插件源码
-│   │   ├── plugin.json                  # 元数据与入口声明
-│   │   ├── store.json                    # 商店展示元数据与更新记录
-│   │   ├── frontend/                     # 可选 Vue/TypeScript/Vite 前端源码
-│   │   ├── web/                          # 构建后的 Frontend API 1.6 模块、样式和静态资源
-│   │   ├── i18n/                         # 可选 zh-CN/en-US 插件词典
-│   │   └── src/                          # managed-code 插件项目（.csproj 与 C# 源码）
-│   └── specialized/<ArtifactName>/      # 只有声明/数据/后端脚本的专项源码
-│       ├── plugin.json                  # 元数据与入口声明
-│       ├── store.json                    # 商店展示元数据与更新记录
-│       ├── data/                         # data-specialized 插件资源
-│       │   ├── resolve.json              # 脚本根目录推导规则
-│       │   ├── judge.js 或 judge.py      # 运行中完成/失败判定
-│       │   └── editor.js                 # 生成的编辑准备与修复提案脚本
-│       └── i18n/                         # 可选 zh-CN/en-US 插件词典
-├── packages/<ArtifactName>/             # 按正式大小写归档的发行包目录（最多 3 个版本）
-│   └── <ArtifactName>-<version>.zip
-├── .release-state.json                  # 最近一次成功发行状态
-├── host.lock.json                       # Host/Frontend API 与 locale 兼容元数据
-├── adapters/                            # 当前任务和编辑器作者源码、注册表及上游锁
-├── examples/task-protocol/              # 五种当前协议合成示例
-├── tests/                               # runner、ci、tooling、frontend、config-editors、fixtures
-├── tools/
-│   ├── repo.py                          # 唯一 Python 仓库入口
-│   ├── repository/                      # 源码、版本、归档、包和 catalog 规则
-│   ├── release/                         # 候选、来源、稳定与预览 writer
-│   ├── sdk/                             # 显式官方 Host SDK 输入
-│   └── generate/                        # 任务、编辑器、schema 和脚手架
-└── docs/
-    ├── README.md、map.json              # 分类导航与机器路由
-    ├── TESTING.md、RELEASING.md         # 验证与发行
-    ├── STATUS.md                       # 未完成/未验证事项
-    ├── author/                         # 插件、任务协议、editor 与前端契约
-    ├── frameworks/                     # 原生框架与完成动作
-    └── projects/                       # 八专项全部已知任务及固定发行窗口
-```
-
-发行 ZIP 的根目录直接对应运行时插件目录内容。`data-specialized` 只包含 `plugin.json`、`store.json`、`data/`、`i18n/` 和说明；禁止 `frontend`、`web`、浏览器载荷及 .NET 程序集。`managed-code` 包含 `plugin.json`、`store.json`、入口 DLL 及其依赖 DLL；带前端的 managed 插件额外包含 manifest 声明的 `web/` 资源和 `README.md`。源码目录中的测试草稿和个人配置不应进入发行包。
-
-## 快速开始
-
-新增插件时，可以选择一个结构接近的现有插件作为起点：
-
-1. `data-specialized` 插件在 `plugins/specialized/<ArtifactName>/` 创建 `plugin.json`、`store.json`、`data/resolve.json` 和判断脚本；`managed-code` 插件在 `plugins/general/<ArtifactName>/` 创建 `src/` 项目并引用宿主 Plugin API。
-2. 数据化插件用 `require` 与 `paths` 推导运行时 profile；代码插件实现 `INexusPlugin` 生命周期并通过声明式 API 端口接入宿主。
-3. 按插件类型完成本地构建、JSON 检查、运行语义和敏感数据审查。
-4. 按 [数据化专项插件开发指南](docs/author/DATA_SPECIALIZED_PLUGIN.md)、[判断脚本指南](docs/author/JUDGE_SCRIPT.md) 或 [发布指南](docs/RELEASING.md) 完成对应校验。
-5. 发行 payload 变化时更新插件自身版本和 `store.json`，在源码阶段按[核心测试](docs/TESTING.md)运行单插件或变化选择验证；合并后稳定候选根据已发布游标计算累计变化，工具与文档改动不强制版本提升。仓库根目录 `host.lock.json` 的兼容元数据记录 API 与 locale 集合，插件本地化资源必须遵循该集合。Pull Request 只提交源码与元数据；stable publisher 根据验收通过的原候选生成受影响插件的包、catalog 与状态文件。develop 预览使用 `publish-develop`，不改写 stable 文件。
-
-## 重要运行语义
-
-- `plugin.json` 的 `name` 是脚本实例保存的稳定标识；脚本实例的专项身份来自 `PluginType`。
-- 专项脚本实例在 `scripts.json` 中保存 `PluginType + RootPath` 等稳定声明；宿主在 API 展示、准入、配置编辑和运行时解析当前插件 profile。主程序、参数、配置路径、日志路径和判断脚本属于插件运行时资产，每次新运行或编辑都会自动使用当前版本。
-- 已触发的调度 occurrence 会冻结当时的有效运行计划；尚未触发的 occurrence 在触发时重新解析当前插件。插件变更 `configPath` 或文件/目录形态时，新位置缺失会阻断本次运行并保留旧用户快照；新位置存在时宿主按当前配置重新建立该用户唯一快照并更新当前元数据，插件发布说明应明确标注这类影响。
-- 插件缺失、类型不匹配或运行时不可用时，相关修改入口会被服务端拒绝；解除绑定、删除脚本等清理操作仍可用。
-- 数据化插件可通过 `configEdit` 与 `configEditor` 声明多候选配置的编辑隔离和工作副本调整；宿主在保存、取消及恢复时还原 `edit-isolation` 现场。
-- 判断脚本运行失败、超时或没有输出最终 JSON 时，宿主继续等待后续日志或进程退出语义，不会把脚本异常直接当作成功。
-- managed-code 插件默认关闭，启用后随宿主重启加载；用户级配置、密钥、设置贡献、用户列表徽章、用户运行事件和插件本地化均通过 Plugin API 的通用端口处理。`game-checkin` 使用独立签到任务、任务级平台凭据和本机时区计划；通知由宿主全局渠道发送，任务可覆盖 SMTP 收件人，当前 v2 任务存储只接受当前格式，旧任务数据保持原字节。`emulator-support` 使用 Plugin API 2.1 注册厂商模拟器 provider；`custom-wallpaper` 使用 Plugin API 2.1 的通用资产存储与二进制 Web API 自行实现壁纸配置、配额、校验、轮换与配色，并通过 Frontend API 1.6 的通用外观表面渲染；`live-screenshot` 通过 `execution-preview-client` 能力接入宿主统一的受控实时画面。
-- 插件启停和安装更新遵循宿主的重启生效约定。
-- Plugin API 2.1 的 `IPluginAssetStore` 提供按插件命名空间隔离的二进制资产存储（内容寻址、原子写入、宿主级绝对上限），插件 Web API 支持原始请求体流与白名单 Content-Type 的二进制响应。宿主不再提供外观业务实现：壁纸配置、配额、校验、轮换与配色由插件自行承担，宿主只保留通用资产存储、二进制 Web API 与 Frontend API 1.6 的通用外观表面。
-- 旧外观配置、壁纸和游标在原目录保留。新目录安装后重新配置壁纸，宿主和插件不导入或转换旧文件。
-
-## 数据与安全
-
-仓库中的 JSON、脚本和其他公开资源必须使用公开的默认值，禁止提交账号、Token、Cookie、真实路径、用户日志或运行数据。JavaScript 判断脚本使用宿主提供的受控 Jint API；Python 判断脚本以系统 `python.exe` 子进程运行；managed-code 插件构建产物只应在发行包校验通过后进入 `packages/`。插件前端与发行包内容应在发布前完成代码审查，详见 [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)。
-
-## 贡献入口
-
-- [项目状态与待办](docs/STATUS.md)
-- [CONTRIBUTING.md](CONTRIBUTING.md)
-- [DATA_SPECIALIZED_PLUGIN.md](docs/author/DATA_SPECIALIZED_PLUGIN.md)
-- [JUDGE_SCRIPT.md](docs/author/JUDGE_SCRIPT.md)
-- [RELEASING.md](docs/RELEASING.md)
-- [FRONTEND_PLUGIN.md](docs/author/FRONTEND_PLUGIN.md)
-- [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md)
-
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](docs/author/TASK_PROTOCOL.md)。
-
-测试源码固定输入位于 `tests/inputs.lock.json`，与 `host.lock.json` 的 API/locale 兼容元数据分离。升级测试 Host 锁时先取得含所需支持工具的真实已合入 Host SHA，再迁移 Plugins 生产者；本地未提交指纹不能填入正式锁。PR 的逻辑义务按最多五批执行，入口与完整预算见 [核心测试](docs/TESTING.md)。
-
-GameCheckIn 当前源码版本 0.4.2 需要 Host 0.17.1，提供已保存凭据回读和保存后清除；稳定商店仍以已发布 catalog 为准。操作说明见 [游戏签到](plugins/general/GameCheckIn/README.md)。
-
-通用插件 [GameActivities](plugins/general/GameActivities/README.md) 提供活动卡、独立订阅与来源诊断；真实来源覆盖仍有未完成项。
+插件作者请从 [贡献指南](CONTRIBUTING.md) 开始；[文档导航](docs/README.md)、[测试](docs/TESTING.md)、[发布](docs/RELEASING.md) 和 [上游项目支持索引](docs/projects/README.md) 提供工程说明。用户不需要 Node、npm 或自行构建。

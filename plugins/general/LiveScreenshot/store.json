@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
   "changelog": [
     {
+      "version": "0.3.2",
+      "date": "2026-10-11",
+      "items": [
+        "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+      ]
+    },
+    {
       "version": "0.3.1",
       "date": "2026-10-05",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-10-04",
       "items": [
         "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
-      ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-09-12",
-      "items": [
-        "插件前端升级到 Frontend API 1.5，改用公开 nxp-* 组件与宿主稳定 design token。"
       ]
     }
   ],
@@ -48,6 +48,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.2",
+          "date": "2026-10-11",
+          "items": [
+            "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+          ]
+        },
+        {
           "version": "0.3.1",
           "date": "2026-10-05",
           "items": [
@@ -59,12 +66,6 @@
           "date": "2026-10-04",
           "items": [
             "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "items": [
-            "The plugin frontend targets Frontend API 1.5 and now uses public nxp-* elements with host design tokens."
           ]
         }
       ]
