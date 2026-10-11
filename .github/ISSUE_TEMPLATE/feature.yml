@@ -1,0 +1,51 @@
+name: 插件功能或适配建议
+description: 提议插件能力、交互改进、新的专项接入或上游版本适配
+title: "[建议] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先检索已有建议，说明要解决的使用问题和期望结果。
+        仅涉及宿主通用能力的建议，请到[宿主仓库](https://github.com/FlappiBakuse/NexusPipeline/issues)提交。
+  - type: input
+    id: target
+    attributes:
+      label: 涉及插件或目标软件
+      description: 填写现有插件名称，或希望新增接入的目标软件。
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景与当前问题
+      description: 谁会在什么条件下使用？目前有什么限制？
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 期望结果与建议方案
+      description: 先说明希望完成什么，再描述建议的操作流程；无需预先确定技术实现。
+    validations:
+      required: true
+  - type: textarea
+    id: upstream
+    attributes:
+      label: 上游项目或官方参考
+      description: 新专项接入或版本适配建议可提供官方仓库、稳定版本和文档链接；其他建议可以留空。不要填写个人下载链接或账号信息。
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 完成标准与现有数据影响
+      description: 可用具体场景说明如何验收，以及是否需要保留已有脚本绑定、配置或运行数据；不了解的内容可以留空。
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已检索已有建议，未发现相同请求，或已说明与现有建议的区别。
+          required: true
+        - label: 我没有包含账号凭据、访问令牌、密钥、用户配置或未脱敏材料。
+          required: true
