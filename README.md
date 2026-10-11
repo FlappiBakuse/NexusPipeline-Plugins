@@ -35,3 +35,7 @@
 ## 开发与维护
 
 插件作者请从 [贡献指南](CONTRIBUTING.md) 开始；[文档导航](docs/README.md)、[测试](docs/TESTING.md)、[发布](docs/RELEASING.md) 和 [上游项目支持索引](docs/projects/README.md) 提供工程说明。用户不需要 Node、npm 或自行构建。
+
+## License
+
+本仓库自有代码与文档采用 [MIT 许可证](LICENSE)。第三方依赖和资源遵循各自的许可证；MaaFramework 相关许可与声明见 [LICENSES](plugins/general/MaaFrameworkDriver/LICENSES/NOTICE.md)。
