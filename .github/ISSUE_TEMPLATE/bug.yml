@@ -1,0 +1,95 @@
+name: 插件问题反馈
+description: 报告官方插件安装、配置、适配、界面或运行中的可复现问题
+title: "[缺陷] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请先检索已有问题，并提供下面的版本与最小复现信息。
+        宿主自身的安装、调度或更新问题，请到[宿主仓库](https://github.com/FlappiBakuse/NexusPipeline/issues)反馈。
+        不要公开账号凭据、完整配置或未脱敏日志；涉及宿主安全边界的漏洞请使用[私密漏洞报告](https://github.com/FlappiBakuse/NexusPipeline/security/advisories/new)。
+  - type: input
+    id: plugin
+    attributes:
+      label: 插件名称与版本
+      description: 请填写软件插件页面显示的名称及完整版本；同时影响多个插件时逐一列出。
+      placeholder: 插件名称；插件版本
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: NexusPipeline 版本
+      description: 请填写完整宿主版本；从源码构建时同时填写提交标识。
+    validations:
+      required: true
+  - type: dropdown
+    id: channel
+    attributes:
+      label: 插件来源
+      options:
+        - 官方稳定商店
+        - 官方开发预览
+        - 从源码构建
+        - 手动安装或不确定
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 版本
+      placeholder: 例如：Windows 11 24H2，x64
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 目标软件与相关环境
+      description: 专项适配问题请填写上游软件的完整版本；涉及模拟器时填写模拟器名称和版本。可补充桌面或浏览器访问、出现频率及最近变更。不涉及的内容可以省略。
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请描述最小操作流程和必要条件；使用示例名称代替真实账号，不附带完整配置。
+      placeholder: |
+        1. 安装并启用……插件
+        2. 配置或执行……
+        3. 出现……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期行为
+      description: 操作成功时应该发生什么？
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+      description: 保留完整错误提示，说明是否必现，以及是否影响已有脚本、配置或数据。
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 脱敏日志片段
+      description: 仅提供与问题直接相关的必要片段。请移除访问令牌、浏览器凭据、账号、通知地址、个人路径和配置内容。
+      render: text
+  - type: textarea
+    id: attachments
+    attributes:
+      label: 截图或补充材料
+      description: 可附已脱敏截图、最小复现材料或官方上游版本链接。
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已检索已有问题，未发现相同反馈，或已说明与现有问题的区别。
+          required: true
+        - label: 我已移除或脱敏账号凭据、访问令牌、密钥、用户配置和个人路径。
+          required: true
