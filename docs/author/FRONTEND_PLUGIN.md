@@ -4,7 +4,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-`host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或注入外站脚本。后端通过 `IPluginHostContext.BrowserLogin` 注册限定采集规则、只读验证和终态补偿。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
+`host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或提交临时外站脚本。后端可通过 flow 的可选 `PageBootstrap` 注册随包维护的固定页面初始化函数，限定 origin/path，在隔离世界检查登录状态并点击页头入口；不读取凭据。返回等待、已点击、已有登录框或已登录状态，Host 管加载代次、250 ms 轮询、30 秒上限和取消；同一 origin/path 的页内 history 更新保持等待，离开登记路径停止任务。后端通过 `IPluginHostContext.BrowserLogin` 注册限定采集规则、只读验证和终态补偿。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
 
 秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
 

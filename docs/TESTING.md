@@ -59,4 +59,4 @@ python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输�
 
 GameCheckIn 凭据改动按专用读取范围、keep/set/clear 持久结果、运行中 409、写盘恢复及迟到响应选择验证；普通 DTO 不含明文。前端 conformance 使用已构建插件与实际 Host 公开元素；mock 结果不代表真实远端认证撤销。
 
-GameActivities 核心入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，包含原生领域/设置/生命周期测试和 P-G05 真实 Host 浏览器场景。该场景保持空订阅，不作为真实外部来源验收。
+GameActivities 核心入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，覆盖11组SRA接口映射、时间/身份、快照替换、空列表、失败恢复、设置/取消/原子保存/图片替换，并执行前端类型检查和构建。单一观察器与共享图片会话的前端行为合同由tests/frontend/run.mjs的runPlugin和contract.mjs的resolvePublicElements执行。P-G05实际Test Host场景验证空订阅设置与生命周期，不替代真实外部接口验收。真实响应记录获取时间及SHA。实际Host SHA与tests/inputs.lock.json的locked gate分别报告。

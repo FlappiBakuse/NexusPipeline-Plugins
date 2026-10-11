@@ -1,12 +1,12 @@
 # 项目状态（Status）
 
-**更新日期**：2026-10-05｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / 打包检查` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
+**更新日期**：2026-10-11｜**开发分支**：`develop`。源码进入 `main` 须经 PR、`Plugins / 打包检查` 检查与 squash merge；预览和稳定发行按[发行指南](RELEASING.md)分别授权执行。
 
 > 本文件记录尚未完成的开发计划、活跃技术验证和当前未解决问题，不重复已完成事项。当前实现和支持范围以代码、测试及[专项适配器说明](author/TASK_ADAPTERS.md)为准；发布事实以发行记录为准。本地测试或 develop 推送不代表插件已正式发布。正式版本仅按用户明确指定修改。
 
 ## 后续版本开发
 
-- [ ] 完成 API 2.1 / Frontend 1.6 五个 managed 插件的双仓正式 CI、人工桌面和 stable 发布验收。当前稳定 catalog、发布状态和包由正式 publisher 维护；本地完整装配不代表已发布。
+- [ ] 完善 GameCheckIn 的 HoYoLAB 签到验证处理：识别平台要求的人工验证，提供明确提示与完成验证后的重试入口；验证完成前不得将对应游戏标记为签到成功。
 
 ### MaaFramework 与兼容过渡
 
@@ -15,7 +15,7 @@
 
 现役 Maa 配置、编译、原生输入、许可及验证入口见 [MaaFramework 框架指南](frameworks/MAAFRAMEWORK_DRIVER.md)。正式候选与商店发行资格由[发行指南](RELEASING.md)及对应运行记录判定。
 
-当前八专项采用 `taskProtocol` 0.2.0 / Host 0.16.15；只加载当前日常报告和显式 provider 语义。当前行为见 [任务协议](author/TASK_PROTOCOL.md)、[MFAAvalonia](frameworks/MFA_AVALONIA.md) 及各项目文档，发行发现固定在 [三版窗口](../adapters/task-protocol/upstream-window.json)。
+当前八专项采用 `taskProtocol` 0.2.0 / Host 0.17.2；只加载当前日常报告和显式 provider 语义。当前行为见 [任务协议](author/TASK_PROTOCOL.md)、[MFAAvalonia](frameworks/MFA_AVALONIA.md) 及各项目文档，发行发现固定在 [三版窗口](../adapters/task-protocol/upstream-window.json)。
 
 ## 专项适配的未验证范围
 
