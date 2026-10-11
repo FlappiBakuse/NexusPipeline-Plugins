@@ -1,46 +1,57 @@
-# 网页登录资格
+# 网页登录范围与认证
 
-资格按平台与采集规则版本维护；网页登录按钮只向可信本机 Electron 客户端显示。其他客户端继续手动配置与专用回读。真实平台验证不执行签到或领取奖励。
+网页登录按钮只向可信本机 Electron 客户端显示。其他客户端使用手动配置与专用回读。网页登录认证仅执行只读查询，签到由任务执行流程发起。
 
-| 平台 | flow / extractor | 资格 | 已验证登录方式 |
-| --- | --- | --- | --- |
-| HoYoLAB | 1 / 1 | passed | 官方网页邮箱密码 |
-| 米游社 | 1 / 1 | not_run | 未执行 |
-| 森空岛 | 1 / 1 | not_run | 未执行 |
-| SKPORT | 1 / 1 | not_run | 未执行 |
-| 库街区 | 1 / 1 | not_run | 未执行 |
+| 平台 | flow / extractor |
+| --- | --- |
+| HoYoLAB | 1 / 1 |
+| 米游社 | 3 / 2 |
+| 森空岛 | 5 / 3 |
+| SKPORT | 7 / 3 |
+| 库街区 | 3 / 2 |
 
-## 适配代码与采集边界
+## 起始页面
 
-资格与代码完成度分别记录。米游社和库街区已有固定采集规则、规范化、只读核验和编辑器候选接线，仍未开放网页登录按钮。森空岛和 SKPORT 已有独立域名及 appCode 的原始通行证 Token 鉴权交换、签名用户查询与角色绑定查询；网页登录采集尚未接线，不能称为五平台完整网页登录通过。
+插件固定维护起始网址，不保存最后浏览页面。米游社为 `https://www.miyoushe.com/ys/`，库街区为 `https://www.kurobbs.com/mc/home/9`；森空岛、SKPORT 和 HoYoLAB 分别为各自官网根路径。每次开窗或刷新起始页重新尝试登录入口，已登录或已有登录框时跳过；HoYoLAB 不注册初始化脚本，保留网站自行弹出登录。SKPORT 先打开头像菜单，再点击文字明确且唯一的登录项，每步每次加载至多一次；菜单出现退出项时按已登录处理，未知或歧义菜单保留手动操作；其余三站入口只点击一次。页面异步入口最多等待 30 秒，同一地址的 history 初始化不终止等待；离开登记路径、取消或采集时停止自动操作。米游社脚本资源为 `miyoushe.js`，对应固定平台 ID `cn`。自动操作失败可继续手动登录和采集。
 
-| 平台 | 凭据消费类型与只读验证 | 未执行或未支持范围 |
-| --- | --- | --- |
-| 米游社 | 完整 Cookie 字符串，仅选 CookieToken/account ID 对应字段；角色绑定查询及现役 info 查询产生脱敏角色身份 | 实际 CookieToken 新旧字段采集、登录跳转与官方账号核验均 not_run |
-| 库街区 | `www.kurobbs.com` 的 `localStorage.auth_token` 原始字符串，作为现役客户端 token header；查询两款游戏绑定，拒绝混合账号 | 实际登录方式、账号、网页 token 对现役客户端的兼容性均 not_run |
-| 森空岛 | Hypergryph 原始通行证 Token；鉴权交换只在内存使用 cred/signToken；签名用户查询证明身份，绑定查询验证现役协议 | 当前网页只持久化派生 cred；原始 Token 采集未支持，真实平台 not_run |
-| SKPORT | GRYPHLINE 原始通行证 Token，鉴权域名和 appCode 与森空岛分离；独立签名用户及绑定查询 | 原始 Token 经服务端 cookie store 读取；尚无已确认的固定 Cookie 捕获规则，真实平台 not_run |
+## 采集与可用状态
 
-米游社仅采集 `.mihoyo.com` / `.miyoushe.com`、`/` 下的 `cookie_token_v2/account_id_v2/account_mid_v2` 或旧 `cookie_token/account_id`；字段必须构成同一域内的完整组合，同名冲突与不同账号拒绝，不以 Cookie 中的 ID 直接证明身份。库街区不采集 `auth` 用户资料或账户中心 `accessToken`。两者都不导出完整 Cookie/storage。
+五个平台均支持本机桌面网页登录。采集规则与平台参数由插件维护；平台身份核实后生成候选，保存任务后凭据才持久化。
 
-采集依据来自[米游社官网](https://www.miyoushe.com/)及其[官方账号 SDK](https://webstatic.mihoyo.com/dora/biz/mihoyo-account-sdk/main.js)、[库街区官网](https://www.kurobbs.com/login-page)的当前前端。米游社 CookieToken 具体字段仍须实采确认；官网 SDK 的身份字段命名不能替代这项验证。
+| 平台 | 固定采集与只读验证 |
+| --- | --- |
+| 米游社 | 同域 CookieToken/account ID 固定字段组合；无目标 UID 的 getUserFullInfo 当前用户查询、getUserGameRolesByCookieToken 角色绑定及现役 info 查询 |
+| HoYoLAB | 固定 ltoken/ltuid 字段组合；角色绑定及现役 info 查询 |
+| 库街区 | www.kurobbs.com 的 localStorage.auth_token 与可选 distinct_id；H5 参数查询 mineV2 当前用户及两款游戏绑定 |
+| 森空岛 | 当前临时浏览器会话 POST https://web-api.skland.com/account/info/hg/check，仅提取 data.content 原始通行证 Token，同时读取 localStorage.SK_SHUMEI_DEVICE_ID_KEY 中的实际设备信息 |
+| SKPORT | 当前临时浏览器会话 GET https://web-api.skport.com/cookie_store/account_token，仅提取 data.content 原始通行证 Token |
 
-[森空岛官方账号 SDK 3.4.0](https://web.hycdn.cn/hg_account_web_sdk/lib/3.4.0/hg-account-web-sdk.min.js)通过服务端账户会话读取原始 Token，网页保存的 `SK_OAUTH_CRED_KEY` 是派生 cred。[GRYPHLINE 官方账号 SDK 2.0.0](https://web-static.hg-cdn.com/gl_account_web_sdk/2.0.0/gl-account-web-sdk.min.js)通过固定 cookie-store API 读取原始 Token。`HG_OAUTH_TOKEN` 是应用授权缓存，不能认定为原始通行证 Token。现役 Host 只提供固定 Cookie/storage 采集，不提供页面任意脚本、网络响应拦截或全部 Cookie 导出，因此不注册猜测字段的森空岛/SKPORT flow。接线需先确认能返回原始 Token 的有限字段或经审核的固定交换方案，再做真实资格核验。
+通行证读取依据为[森空岛官网](https://www.skland.com/)所配置的 web-api.skland.com 与[官方账号 SDK](https://web.hycdn.cn/hg_account_web_sdk/lib/3.4.0/hg-account-web-sdk.min.js)，以及 [GRYPHLINE 官方账号 SDK](https://web-static.hg-cdn.com/gl_account_web_sdk/2.0.0/gl-account-web-sdk.min.js) 的固定 cookie-store 查询。登录导航须处于平台注册的 HTTPS origin 与路径范围内；额外第三方跳转可能不受支持。
 
-新增只读核验拒绝 HTTP 错误、缺字段、重复认证字段、超限响应和非法 Token；米游社/库街区的空角色响应不能证明身份。森空岛/SKPORT 只有独立用户查询已证明身份后，才允许空绑定列表。只读核验不调用签到、社区任务或奖励接口；既有签到仍按平台业务响应解释“今日已签到”。受控用例覆盖不等于官方平台验证。
+森空岛与 SKPORT 不采集派生 cred 或应用授权缓存作为通行证。Host 仅在用户点击完成登录后执行已注册的固定请求，页面初始化函数只操作登录 UI；采集不接受任意脚本、任意请求参数、网络拦截或全部 Cookie 导出。两款平台分别执行原始 Token 鉴权交换、签名用户查询和角色绑定查询，使用独立域名与 appCode，不执行签到或领取奖励来核验登录。
+
+请求限定 HTTPS、精确地址、GET 或空 POST、无重定向、JSON 类型和 64 KiB 响应上限，只返回指定路径的字符串；取消即终止请求并清理临时会话。凭据继续绑定当前客户端、编辑会话和字段代次，窗口清理成功后才发布候选，保存任务才持久化。
 
 ## 已知平台行为
 
-用户已完成人工界面验收，并反馈 HoYoLAB 部分游戏返回“需要手动完成验证码，本次已停止”。该结果属于平台人工验证要求；本版记录现象，保留停止处理，不增加验证码自动处理或自动重试。此反馈不能作为这些游戏实际签到成功的证据。
+HoYoLAB 部分游戏可能返回“需要手动完成验证码，本次已停止”。插件停止本次处理，保留人工验证要求，不自动绕过验证码或自动重试。
 
-## HoYoLAB 已有真实资格
+## HoYoLAB 认证
 
-HoYoLAB 在 2026-10-10（Asia/Shanghai）、Windows 11 x64、Electron 44.5.1、Host 0.17.2 / Plugin API 2.2 / Frontend API 1.7、GameCheckIn 0.4.2 的本机独立核验环境完成真实人工验证。验证使用实际桌面窗口、监督管道、当前 SDK 和实际插件服务；资格环境仅开放 HoYoLAB，并拦截实际签到写入。
+导航限定 `www.hoyolab.com`、`account.hoyoverse.com` 和 `account.hoyolab.com` 的 HTTPS origin。采集 `.hoyolab.com`、`/` 下的 `ltoken_v2`、`ltuid_v2`、`ltmid_v2`，兼容旧字段 `ltoken/ltuid`；不读取 storage。
 
-导航规则限定 `www.hoyolab.com`、`account.hoyoverse.com` 和 `account.hoyolab.com` 的 HTTPS origin。本次邮箱密码链路在此允许范围内完成；其他登录方式和额外跳转域为 `not_run`。实际采集只包含 `.hoyolab.com`、`/` 下的 `ltoken_v2`、`ltuid_v2`、`ltmid_v2`，没有 storage。兼容旧字段 `ltoken/ltuid` 的格式处理通过受控测试，其真实登录采集为 `not_run`。
+只读身份来自 `api-account-os.hoyolab.com/binding/api/getUserGameRolesByLtoken` 的已认证角色响应，使用返回的 `game_uid` 生成脱敏身份，并通过现役签到 info 查询核验。空角色响应不足以确认身份，不生成候选。
 
-只读身份来自 `api-account-os.hoyolab.com/binding/api/getUserGameRolesByLtoken` 的已认证角色响应，使用返回的 `game_uid` 生成脱敏身份；原神 `sg-hk4e-api.hoyolab.com/event/sol/info` 确认同一凭据适用于现役查询。两者实际返回 HTTP 200 / retcode 0。空角色响应不构成可靠身份，本次拒绝生成候选；其他游戏的角色回退验证为 `not_run`。实际签到状态查询另已对原神、星铁、绝区零返回成功，但签到写入被核验环境拒绝，不能记为真实签到通过。
+候选绑定当前客户端与编辑会话，创建满两小时或 30 分钟未活动后失效；自动凭据的明文回读确认最长 24 小时，期限使用单调时钟。临时窗口与会话清理成功后才发布 Completed；取消、关闭或过期候选不能替换已保存凭据。
 
-人工确认了成功后脱敏候选与保存、自动凭据首次显示确认/取消/确认后显示/隐藏、清除后取消保留、重新开窗为未登录环境以及直接取消保留旧凭据。未登录时点击完成返回 `credential_fields_missing`，关闭后实际终态为 Cancelled；成功终态 Completed 在窗口清理之后发布。独立 Host 退出及重启成功，临时登录会话未复用。
+## 网页认证与诊断
 
-客户端隔离、24 小时单调期限、撤销、晚到候选、回滚和写入失败由受控测试覆盖，不将推进时钟或注入故障称为真实平台异常。真实平台过期/风控/未绑定账号、第三方登录及长时间浸泡为 `not_run`。改变 flow/采集规则或平台协议后须重新核验，不能沿用版本不匹配的资格。
+米游社、森空岛、SKPORT 和库街区必须由当前用户接口核实身份；已认证但没有游戏角色时允许保存，任务执行按无角色结果处理。米游社有角色时还需通过现役签到 info 只读核验。
+
+森空岛授权交换、用户及绑定签名查询使用同一网页设备 dId、platform 3 与 vName 1.0.0；缺失设备信息提示重新登录。SKPORT 用户接口为 /web/v2/user，当前用户身份读取 data.user.basicUser.id；森空岛 /web/v1/user 读取 data.user.id。分别校验精确响应结构，不回退到其他账号字段。SKPORT 使用独立官网参数，不生成森空岛设备身份。库街区新网页凭据的验证与执行均使用 source h5；旧手动记录保留原参数。必要网页上下文随专用凭据密文持久化，普通 DTO、明文回读和日志不返回上下文；修改凭据明文会清除上下文，旧记录不自动改写。
+
+森空岛网页设备 ID 作为不透明字符串原样参与授权和签名；校验长度及 HTTP Header 字符，不假定前缀或编码格式。签名 Header JSON 使用与官网 JSON.stringify 一致的字符编码。两站当前用户响应中的字符串 ID 支持数字、字母、下划线与连字符，校验长度并遮罩显示，不将凭据或 Cookie ID 视为身份。
+
+官方登录后的页面刷新继续使用同一临时会话。刷新完成后点击“完成登录”，读取当前会话的指定字段；成功或取消后清理临时会话。“新凭据待保存”显示在对应输入框的 placeholder，保存成功后恢复已配置状态。
+
+验证日志只含平台、operation、固定阶段、HTTP 状态、业务码和失败类别，不含凭据、账号、响应正文或请求 URL。阶段区分 capture、passport_grant、credential_exchange、current_user、bindings、roles_游戏代码与 info_游戏代码。主动取消保持静默；真实失败由编辑器提示一次。

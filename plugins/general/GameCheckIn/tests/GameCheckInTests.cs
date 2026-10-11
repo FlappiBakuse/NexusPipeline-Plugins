@@ -72,6 +72,8 @@ public sealed class GameCheckInTests
             "1.0.0");
 
         Assert.Equal("5e3b1772dd282fa234eb98493d2a5be8", sign);
+        Assert.Equal("c270d1d23e69e0fbf1a439a3f6d4a89b",
+            SklandClient.ComputeSign("sign-token", "/web/v1/user", "", "1700000000", "Bopaque/device+id==", "3", "1.0.0"));
     }
 
     [Fact]
@@ -111,8 +113,8 @@ public sealed class GameCheckInTests
         Assert.Contains("as.gryphline.com", factory.Requests[0].RequestUri!.Host, StringComparison.Ordinal);
         Assert.Contains("zonai.skport.com", factory.Requests[1].RequestUri!.Host, StringComparison.Ordinal);
         Assert.Contains("zonai.skport.com", factory.Requests[2].RequestUri!.Host, StringComparison.Ordinal);
-        Assert.Equal("Bdevice", factory.Requests[0].Headers.GetValues("dId").Single());
-        Assert.Equal("Bdevice", factory.Requests[1].Headers.GetValues("dId").Single());
+        Assert.Equal("", factory.Requests[0].Headers.GetValues("dId").Single());
+        Assert.Equal("", factory.Requests[1].Headers.GetValues("dId").Single());
         Assert.Equal("", factory.Requests[2].Headers.GetValues("dId").Single());
         Assert.Equal("3", factory.Requests[2].Headers.GetValues("platform").Single());
         Assert.Equal("", factory.Requests[3].Headers.GetValues("dId").Single());
@@ -476,6 +478,81 @@ public sealed class GameCheckInTests
             Assert.Equal("run-snapshot", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")))!.Value);
         }
         finally { release.Set(); await service.StopAsync(CancellationToken.None); }
+    }
+
+    [Fact]
+    public async Task BrowserWebContextIsSavedReloadedAndUsedByTaskExecution()
+    {
+        foreach (string platform in new[] { "skland", "kuro" })
+        {
+            var context = new FakePluginHostContext("game-check-in");
+            context.Http.ResponseFactory = request =>
+            {
+                string path = request.RequestUri!.AbsolutePath;
+                string body;
+                if (platform == "kuro")
+                {
+                    Assert.Equal("h5", request.Headers.GetValues("source").Single());
+                    Assert.Equal("browser-distinct", request.Headers.GetValues("distinct_id").Single());
+                    body = path == "/user/mineV2" ? "{\"code\":200,\"data\":{\"mine\":{\"userId\":12345678}}}"
+                        : path == "/user/role/findRoleList" ? "{\"code\":200,\"data\":[{\"roleId\":\"role\",\"serverId\":\"server\",\"userId\":\"12345678\"}]}"
+                        : path == "/encourage/signIn/v2" ? "{\"code\":200}" : throw new InvalidOperationException();
+                }
+                else
+                {
+                    Assert.Equal("Bbrowser_device", request.Headers.GetValues("dId").Single());
+                    Assert.Equal("3", request.Headers.GetValues("platform").Single());
+                    Assert.False(request.Headers.Contains("X-Requested-With"));
+                    body = path.EndsWith("/grant") ? "{\"status\":0,\"data\":{\"code\":\"grant\"}}"
+                        : path.EndsWith("/generate_cred_by_code") ? "{\"code\":0,\"data\":{\"cred\":\"cred\",\"token\":\"sign\"}}"
+                        : path.EndsWith("/user") ? "{\"code\":0,\"data\":{\"user\":{\"id\":\"12345678\"}}}"
+                        : path.EndsWith("/binding") ? "{\"code\":0,\"data\":{\"list\":[{\"appCode\":\"arknights\",\"bindingList\":[{\"uid\":\"uid\",\"channelMasterId\":\"1\"}]}]}}"
+                        : path.EndsWith("/attendance") ? "{\"code\":0}" : throw new InvalidOperationException();
+                    if (request.Headers.Contains("sign"))
+                    {
+                        string timestamp = request.Headers.GetValues("timestamp").Single();
+                        string payload = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult() ?? "";
+                        Assert.Equal(SklandClient.ComputeSign("sign", path, payload, timestamp, "Bbrowser_device", "3", "1.0.0"), request.Headers.GetValues("sign").Single());
+                    }
+                }
+                return new(HttpStatusCode.OK) { Content = new StringContent(body) };
+            };
+            var service = new CheckInTaskService(context);
+            Guid taskId = await CreateKuroTaskAsync(context, "Web context", "old-secret");
+            var client = new PluginClientSessionContext("host", "owner", "desktop", true);
+            var editor = await InvokeAsync(context, "POST", "credentials/editors", new JsonObject { ["taskId"] = taskId }, client);
+            string editorId = editor.JsonBody!["editorSessionId"]!.GetValue<string>();
+            var preparation = await InvokeAsync(context, "POST", "credentials/login/prepare", new JsonObject { ["editorSessionId"] = editorId, ["platform"] = platform, ["expectedFieldGeneration"] = 0 }, client);
+            long generation = preparation.JsonBody!["fieldGeneration"]!.GetValue<long>();
+            var invocation = new PluginBrowserInvocation(Guid.NewGuid().ToString("N"), editorId, generation, preparation.JsonBody["context"]!.AsObject(), client);
+            PluginBrowserCapture capture = platform == "kuro"
+                ? new([], [new("https://www.kurobbs.com", "localStorage", "auth_token", "web-token"), new("https://www.kurobbs.com", "localStorage", "distinct_id", "browser-distinct")], DateTimeOffset.UtcNow)
+                : new([], [new("https://www.skland.com", "localStorage", "SK_SHUMEI_DEVICE_ID_KEY", "{\"id\":\"Bbrowser_device\",\"timestamp\":123}")], DateTimeOffset.UtcNow) { JsonValues = [new("passport-token", "web-token")] };
+            var flow = context.BrowserLogin.Flows[platform];
+            var candidate = await flow.Complete(capture, invocation, CancellationToken.None);
+            Assert.True(candidate.Success);
+            await flow.Terminal(invocation, PluginBrowserLoginTerminal.Completed, CancellationToken.None);
+            var active = await InvokeAsync(context, "POST", "credentials/editors/state", new JsonObject { ["editorSessionId"] = editorId }, client);
+            generation = active.JsonBody!["fields"]![platform]!["fieldGeneration"]!.GetValue<long>();
+            var update = NewKuroTaskInput("Web context", "unused");
+            update["id"] = taskId; update["editorSessionId"] = editorId;
+            update["games"] = new JsonObject { [platform] = new JsonArray(JsonValue.Create(platform == "kuro" ? "ww" : "ak")) };
+            update["secrets"] = new JsonObject { [platform] = new JsonObject { ["action"] = "set", ["candidateId"] = candidate.CandidateId, ["fieldGeneration"] = generation } };
+            Assert.Equal(200, (await InvokeAsync(context, "PUT", "tasks", update, client)).StatusCode);
+            var record = CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(taskId, "credential-" + platform)))!;
+            Assert.Equal(platform, record.WebContext!.Platform);
+            string view = (await GetTaskStateAsync(context, taskId)).ToJsonString();
+            Assert.DoesNotContain("browser-distinct", view); Assert.DoesNotContain("Bbrowser_device", view);
+            await service.StopAsync(CancellationToken.None);
+            var restarted = new CheckInTaskService(context);
+            try
+            {
+                Assert.Equal(202, (await InvokeAsync(context, "POST", "tasks/run", new JsonObject { ["taskId"] = taskId })).StatusCode);
+                var state = await WaitForStateAsync(context, taskId, 1);
+                Assert.Equal("success", state["runs"]![0]!["status"]!.GetValue<string>());
+            }
+            finally { await restarted.StopAsync(CancellationToken.None); }
+        }
     }
 
     [Fact]

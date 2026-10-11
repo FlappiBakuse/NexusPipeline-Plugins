@@ -87,6 +87,11 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (![...view.querySelectorAll("nxp-overflow-text")].some(element => element.getAttribute("label") === "晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
   if (view.textContent.includes("task-cookie-secret") || view.textContent.includes("cnDeviceId")) fail("任务列表泄露了任务凭据或内部设备标识");
 
+  const previousRun = { id: "run-check-in-previous", trigger: "manual", startedAt: "2026-09-15T09:00:00+08:00",
+    completedAt: "2026-09-15T09:00:01+08:00", status: "failed",
+    results: [{ platform: "cn", gameCode: "gi", code: "expired", message: "上次运行的凭据已过期", success: false }] };
+  state.tasks[0].runs.push(previousRun);
+  state.tasks[0].recentRun = previousRun;
   clickPluginButton(view, "立即签到");
   await flushDom();
   await flushDom();
@@ -94,6 +99,8 @@ export async function assertGameCheckInRoute(host, metrics, state) {
     fail("立即签到没有调用任务手动运行 API");
   }
   if (!view.textContent.includes("成功")) fail("页面没有反馈本次签到结果");
+  if (!view.textContent.includes("签到成功") || view.textContent.includes(previousRun.results[0].message)) fail("运行记录必须只展示最近一次签到结果");
+  if (!state.tasks[0].runs.some(run => run.id === previousRun.id)) fail("只展示最近记录不应删除历史数据");
 
   clickPluginButton(view, "编辑签到");
   await flushDom();
@@ -220,6 +227,23 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   clickPluginButton(view,'编辑签到');await flushDom();await flushDom();
   if(osValue()!=='explicit-manual-secret')fail('明确清除再输入没有转为手动来源');
   clickPluginButton(view,'取消');await flushDom();
+
+  const openOsLogin=()=>[...view.querySelectorAll('nxp-button')].find(control=>control.getAttribute('aria-label')==='HoYoLAB · 网页登录').dispatchEvent(new window.MouseEvent('click',{bubbles:true}));
+  const errors=()=>metrics.toasts?.filter(t=>t.kind==='error').length||0;
+  const beforeCancel=errors();metrics.cancelBrowserLogin=true;
+  clickPluginButton(view,'编辑签到');await flushDom();await flushDom();openOsLogin();await flushDom();await flushDom();
+  if(errors()!==beforeCancel||osValue()!=='explicit-manual-secret')fail('网页登录取消提示错误或覆盖旧凭据');
+  clickPluginButton(view,'保存');await flushDom();await flushDom();
+  if(metrics.apiCalls.findLast(call=>call.method==='PUT'&&call.route==='tasks')?.body?.secrets?.os?.action!=='keep')fail('取消后旧凭据不能继续保存');
+  metrics.cancelBrowserLogin=false;metrics.browserLoginError='browser_validation_failed';
+  clickPluginButton(view,'编辑签到');await flushDom();await flushDom();openOsLogin();await flushDom();await flushDom();
+  if(errors()!==beforeCancel+1)fail('真实凭据失败没有且仅有一次 toast');
+  clickPluginButton(view,'取消');await flushDom();metrics.browserLoginError=null;
+  let releaseLogin;metrics.pendingBrowserLogin=new Promise(resolve=>{releaseLogin=resolve;});
+  clickPluginButton(view,'编辑签到');await flushDom();await flushDom();openOsLogin();await flushDom();
+  clickPluginButton(view,'取消');await flushDom();releaseLogin({success:false,error:'credential_editor_closed'});await flushDom();await flushDom();
+  if(errors()!==beforeCancel+1)fail('编辑器关闭后迟到登录结果弹出错误');
+  metrics.pendingBrowserLogin=null;
 
   clickPluginButton(view, "删除签到");
   await flushDom();

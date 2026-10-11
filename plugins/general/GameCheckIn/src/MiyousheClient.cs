@@ -17,25 +17,35 @@ internal sealed class MiyousheClient
     private const string ClientType = "5";
     private const string Salt = "d9200c846b10886e8c874fc33c8f308b";
     private readonly IPluginHttpClientFactory _http;
+    private readonly LoginValidationTrace? _trace;
 
-    public MiyousheClient(IPluginHttpClientFactory http)
+    public MiyousheClient(IPluginHttpClientFactory http, LoginValidationTrace? trace = null)
     {
         _http = http;
+        _trace = trace;
     }
 
     internal async Task<string> ValidateCredentialAsync(string cookie, CancellationToken token)
     {
         string deviceId = Guid.NewGuid().ToString("D");
         using var client = _http.CreateClient(GameDefinitions.RolesEndpoint, TimeSpan.FromSeconds(30));
+        _trace?.Stage("current_user");
+        using var user = await SendAsync(client, new Uri("https://bbs-api.miyoushe.com/user/wapi/getUserFullInfo?gids=2"),
+            HttpMethod.Get, cookie, deviceId, "hk4e", Origin + "/ys/", null, token, validateHttpStatus: true).ConfigureAwait(false);
+        CredentialValidation.RequireCode(user, "retcode", 0, -100, -101);
+        var account = CredentialValidation.Property(CredentialValidation.Property(user.RootElement, "data", JsonValueKind.Object), "user_info", JsonValueKind.Object);
+        string identity = CredentialValidation.MaskIdentity("cn", ReadString(account, "uid"));
         foreach (var game in GameDefinitions.All)
         {
+            _trace?.Stage("roles_" + game.Code);
             using var roles = await SendAsync(client, new Uri(GameDefinitions.RolesEndpoint + "?game_biz=" + game.Cn.GameBiz),
                 HttpMethod.Get, cookie, deviceId, game.Cn.SignGame, game.Cn.Referer, null, token, validateHttpStatus: true).ConfigureAwait(false);
             CredentialValidation.RequireCode(roles, "retcode", 0, -100);
             CredentialValidation.Property(CredentialValidation.Property(roles.RootElement, "data", JsonValueKind.Object), "list", JsonValueKind.Array);
             foreach (var role in ReadRoles(roles))
             {
-                string identity = CredentialValidation.MaskIdentity(game.Cn.GameBiz, role.Uid);
+                CredentialValidation.MaskIdentity(game.Cn.GameBiz, role.Uid);
+                _trace?.Stage("info_" + game.Code);
                 using var info = await SendAsync(client, BuildInfoUri(game.Cn.InfoEndpoint, game.Cn.ActId, role), HttpMethod.Get,
                     cookie, deviceId, game.Cn.SignGame, game.Cn.Referer, null, token, validateHttpStatus: true).ConfigureAwait(false);
                 CredentialValidation.RequireCode(info, "retcode", 0, -100);
@@ -45,7 +55,7 @@ internal sealed class MiyousheClient
                 return identity;
             }
         }
-        throw new CredentialException("readonly_identity_unverified");
+        return identity;
     }
 
     public async Task<CheckInResult> SignAsync(
@@ -178,7 +188,7 @@ internal sealed class MiyousheClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus).ConfigureAwait(false);
+        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus, _trace).ConfigureAwait(false);
     }
 
     internal static string GenerateDs()

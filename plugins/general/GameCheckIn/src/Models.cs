@@ -23,7 +23,7 @@ internal sealed record MiyousheGameDefinition(
 
 internal static class GameDefinitions
 {
-    public static readonly Uri RolesEndpoint = new("https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookie");
+    public static readonly Uri RolesEndpoint = new("https://api-takumi.mihoyo.com/binding/api/getUserGameRolesByCookieToken");
 
     public static readonly IReadOnlyList<GameDefinition> All = new[]
     {

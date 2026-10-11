@@ -18,6 +18,19 @@ internal static class CredentialValidation
     {
         if (identity is not { Length: >= 4 and <= 32 } || !identity.All(char.IsAsciiDigit))
             throw new CredentialException("readonly_identity_unverified");
+        return Mask(platform, identity);
+    }
+
+    internal static string MaskPassportIdentity(string platform, string? identity)
+    {
+        if (identity is not { Length: >= 4 and <= 128 }
+            || !identity.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_'))
+            throw new CredentialException("readonly_identity_unverified");
+        return Mask(platform, identity);
+    }
+
+    private static string Mask(string platform, string identity)
+    {
         int visible = identity.Length >= 6 ? 2 : 1;
         return platform + " · " + identity[..visible] + new string('*', Math.Min(12, identity.Length - visible * 2)) + identity[^visible..];
     }
@@ -37,8 +50,10 @@ internal static class CredentialValidation
         if (code != success) throw new CredentialException(unauthenticated.Contains(code) ? "credential_not_authenticated" : "credential_rejected");
     }
 
-    internal static async Task<JsonDocument> ReadResponseAsync(HttpResponseMessage response, CancellationToken token, bool requireSuccessStatus = true)
+    internal static async Task<JsonDocument> ReadResponseAsync(HttpResponseMessage response, CancellationToken token, bool requireSuccessStatus = true,
+        LoginValidationTrace? trace = null)
     {
+        trace?.Response(response.StatusCode);
         if (requireSuccessStatus && !response.IsSuccessStatusCode) throw new CredentialException(response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden
             ? "credential_not_authenticated" : "readonly_validation_failed");
         const int limit = 262144;
@@ -52,7 +67,12 @@ internal static class CredentialValidation
             if (bytes.Length + count > limit) throw new CredentialException("readonly_validation_failed");
             bytes.Write(buffer, 0, count);
         }
-        try { return JsonDocument.Parse(bytes.ToArray(), new JsonDocumentOptions { MaxDepth = 32 }); }
+        try
+        {
+            var document = JsonDocument.Parse(bytes.ToArray(), new JsonDocumentOptions { MaxDepth = 32 });
+            trace?.Body(document.RootElement);
+            return document;
+        }
         catch (JsonException) { throw new CredentialException("readonly_validation_failed"); }
     }
 }

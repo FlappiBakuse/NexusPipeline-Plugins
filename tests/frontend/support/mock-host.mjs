@@ -106,8 +106,8 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
     browserLogin:{async open(request){
       if(!metrics.nativeBrowserAvailable)throw new Error('client_not_supported');
       const field=getEditor(request.editorSessionId).fields.os;
-      if(!metrics.cancelBrowserLogin)Object.assign(field,{configured:true,source:'browser',intent:'set',candidateId:'fixture-browser-candidate',value:'synthetic-browser-secret',maskedAccount:'12****89'});
-      return {operationId:'fixture-operation',completed:Promise.resolve(metrics.cancelBrowserLogin?{success:false,error:'browser_operation_cancelled'}:{success:true,configured:true,source:'browser',candidateId:field.candidateId,maskedAccount:field.maskedAccount}),cancel:async()=>{}};
+      if(!metrics.cancelBrowserLogin&&!metrics.browserLoginError&&!metrics.pendingBrowserLogin)Object.assign(field,{configured:true,source:'browser',intent:'set',candidateId:'fixture-browser-candidate',value:'synthetic-browser-secret',maskedAccount:'12****89'});
+      return {operationId:'fixture-operation',completed:metrics.pendingBrowserLogin||Promise.resolve(metrics.browserLoginError?{success:false,error:metrics.browserLoginError}:metrics.cancelBrowserLogin?{success:false,error:'browser_operation_cancelled'}:{success:true,configured:true,source:'browser',candidateId:field.candidateId,maskedAccount:field.maskedAccount}),cancel:async()=>{}};
     }},
     getCapabilities: async () => Object.freeze({ schemaVersion: 1, connectionKind: metrics.connectionKind || "local", operations: { general: { allowed: true, denyReason: null }, hostFilePicker: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "host_file_picker_requires_local" : null }, nativeConfigEditor: { allowed: !metrics.connectionKind || metrics.connectionKind === "local", denyReason: metrics.connectionKind === "remote" ? "native_config_editor_requires_local" : null } } }),
     plugin: Object.freeze({ name: pluginName }),
@@ -115,7 +115,7 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
       t(_key, _args, fallback = "") { return fallback || _key; },
       formatTime(value) { return value; },
     },
-    ui: { toast() {} },
+    ui: { toast(message,kind) { (metrics.toasts??=[]).push({message,kind}); } },
     appearance: {
       registerTheme() { return { dispose() {} }; },
       applyTheme() { return "system"; },
@@ -136,7 +136,7 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
       async get(route) {
         metrics.apiGet += 1;
         metrics.apiCalls.push({ method: "GET", route: String(route) });
-        if (activityPlugin) return {formatVersion:1,serverNowUtc:"2026-10-09T00:00:00Z",settingsRevision:0,refreshing:false,settings:{formatVersion:1,onboardingCompleted:false,selectedGames:[],progressions:{"blue-archive":"cn","neverness-to-everness":"cn"},carouselIntervalSeconds:30,pauseOnInteraction:true},selectedFeeds:[]};
+        if (activityPlugin) return {formatVersion:3,serverNowUtc:"2026-10-09T00:00:00Z",settingsRevision:0,refreshing:false,settings:{formatVersion:1,onboardingCompleted:false,selectedGames:[],progressions:{"blue-archive":"cn","neverness-to-everness":"cn"},carouselIntervalSeconds:30,pauseOnInteraction:true},selectedFeeds:[]};
         return gameCheckInPlugin ? structuredClone(state) : { ...structuredClone(state), route };
       },
       async put(route, body) {

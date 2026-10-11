@@ -3,15 +3,16 @@ using NexusPipeline.Plugin.GameCheckIn.Credentials;
 
 namespace NexusPipeline.Plugin.GameCheckIn.BrowserLogin;
 
-internal sealed class MiyousheLoginProvider(IPluginHttpClientFactory http)
+internal sealed class MiyousheLoginProvider(IPluginHttpClientFactory http, LoginValidationTrace? trace = null)
 {
-    internal const string FlowVersion = "1";
+    internal const string FlowVersion = "3";
     private static readonly string[] Domains = [".mihoyo.com", ".miyoushe.com"];
     private static readonly string[] Names = ["cookie_token_v2", "account_id_v2", "account_mid_v2", "cookie_token", "account_id"];
 
-    internal static PluginBrowserLoginFlow Flow(bool ready) => new("cn", "米游社", FlowVersion, "https://www.miyoushe.com/",
+    internal static PluginBrowserLoginFlow Flow(bool ready) => new("cn", "米游社", FlowVersion, "https://www.miyoushe.com/ys/",
         ["https://www.miyoushe.com", "https://user.mihoyo.com"], ["https://user.mihoyo.com"],
-        Domains.SelectMany(domain => Names.Select(name => new PluginBrowserCookieRule(domain, "/", name))).ToArray(), [], ready);
+        Domains.SelectMany(domain => Names.Select(name => new PluginBrowserCookieRule(domain, "/", name))).ToArray(), [], ready)
+        { PageBootstrap = LoginPageBootstrap.For("cn", "https://www.miyoushe.com/ys/") };
 
     internal static string Normalize(PluginBrowserCapture capture)
     {
@@ -42,7 +43,7 @@ internal sealed class MiyousheLoginProvider(IPluginHttpClientFactory http)
         string cookie = Normalize(capture);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
         deadline.CancelAfter(TimeSpan.FromSeconds(30));
-        string identity = await new MiyousheClient(http).ValidateCredentialAsync(cookie, deadline.Token).ConfigureAwait(false);
+        string identity = await new MiyousheClient(http, trace).ValidateCredentialAsync(cookie, deadline.Token).ConfigureAwait(false);
         return new(1, cookie, "browser", identity, DateTimeOffset.UtcNow, FlowVersion);
     }
 }

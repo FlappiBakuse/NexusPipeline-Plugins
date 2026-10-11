@@ -9,13 +9,14 @@ const code = (error:unknown) => {
   return 'credential_request_failed';
 };
 
-export function createCredentialEditor(host:PluginHost) {
-  const fields=ref<Record<string,Field>>({}),native=ref(false),ready=ref(false),busy=ref(0),error=ref(''),confirmation=ref<string|null>(null);
+export function createCredentialEditor(host:PluginHost,onError:(code:string)=>void) {
+  const fields=ref<Record<string,Field>>({}),native=ref(false),ready=ref(false),busy=ref(0),confirmation=ref<string|null>(null);
   const queues=new Map<string,Promise<void>>();
   let id='',generation=0,controller=new AbortController(),lease:ReturnType<typeof setInterval>|undefined;
   let revealExpiry:ReturnType<typeof setTimeout>|undefined;
   const project=(state:CredentialFieldState,old?:Field):Field=>({...state,inputValue:old?.inputValue||'',visible:old?.visible||false,loading:false,localError:old?.localError||'',localRevision:old?.localRevision||0});
   const current=(session:number)=>generation===session&&!controller.signal.aborted;
+  const report=(error:unknown)=>onError(code(error));
   async function refresh(session=generation) {
     const state=await host.api.post('credentials/editors/state',{editorSessionId:id},controller.signal) as CredentialEditor;
     if(current(session)) fields.value=Object.fromEntries(Object.entries(state.fields).map(([key,value])=>[key,project(value,fields.value[key])]));
@@ -27,7 +28,7 @@ export function createCredentialEditor(host:PluginHost) {
     if(old)void host.api.delete('credentials/editors',{editorSessionId:old}).catch(()=>{});
   }
   async function open(taskId?:string) {
-    close();const session=generation;error.value='';
+    close();const session=generation;
     try {
       const client=await host.clientSessions.get();if(!current(session))return;
       native.value=client.nativeBrowserAvailable;
@@ -36,8 +37,8 @@ export function createCredentialEditor(host:PluginHost) {
       id=state.editorSessionId;fields.value=Object.fromEntries(Object.entries(state.fields).map(([key,value])=>[key,project(value)]));ready.value=true;
       // Manual fields retain their established editing behavior; browser fields are never prefetched.
       for(const [platform,field] of Object.entries(fields.value))if(field.configured&&field.source==='manual'&&!field.error)void read(platform,false);
-      lease=setInterval(()=>{void host.api.post('credentials/lease',{editorSessionId:id},controller.signal).catch(e=>{if(current(session))error.value=code(e);});},60000);
-    } catch(e) {if(current(session))error.value=code(e);}
+      lease=setInterval(()=>{void host.api.post('credentials/lease',{editorSessionId:id},controller.signal).catch(e=>{if(current(session))report(e);});},60000);
+    } catch(e) {if(current(session))report(e);}
   }
   async function read(platform:string,visible:boolean) {
     const session=generation,field=fields.value[platform];if(!field||!ready.value)return;
@@ -71,7 +72,7 @@ export function createCredentialEditor(host:PluginHost) {
       Object.assign(field,state);
       if(clear&&field.localRevision===revision){field.inputValue='';field.visible=false;}
     }).catch(async e=>{
-      if(current(session)){field.localError=code(e);error.value=code(e);}
+      if(current(session)){field.localError=code(e);report(e);}
     }).finally(()=>{if(current(session))busy.value--;});
     queues.set(platform,work);
   }
@@ -100,11 +101,13 @@ export function createCredentialEditor(host:PluginHost) {
       if(revealExpiry)clearTimeout(revealExpiry);
       revealExpiry=setTimeout(()=>{for(const field of Object.values(fields.value))if(field.source==='browser'){field.visible=false;field.inputValue='';}},Math.max(0,Date.parse(grant.expiresAt)-Date.now()));
       await read(platform,true);
-    }catch(e){if(current(session))error.value=code(e);}
+    }catch(e){if(current(session))report(e);}
   }
   async function login(platform:string) {
     const session=generation,field=fields.value[platform];if(!field||!native.value)return;
     await flush();if(field.localError||!current(session))return;
+    let reported=false;
+    const fail=(error:unknown)=>{if(!reported){reported=true;report(error);}};
     field.loading=true;
     try {
       const preparation=await host.api.post('credentials/login/prepare',{editorSessionId:id,platform,expectedFieldGeneration:field.fieldGeneration},controller.signal) as {flowId:string;editorSessionId:string;fieldGeneration:number;context:Record<string,unknown>};
@@ -112,10 +115,11 @@ export function createCredentialEditor(host:PluginHost) {
       field.fieldGeneration=preparation.fieldGeneration;
       const operation=await host.browserLogin.open(preparation,controller.signal);
       const result=await operation.completed;if(!current(session))return;
-      if(!result.success)error.value=result.error||'browser_validation_failed';
-      await refresh(session);
+      const cancelled=!result.success&&['browser_operation_cancelled','credential_editor_closed'].includes(result.error||'');
+      if(!result.success&&!cancelled)fail(new Error(result.error||'browser_validation_failed'));
+      try {await refresh(session);}catch(e){if(!cancelled)throw e;}
       if(result.success){const latest=fields.value[platform];latest.visible=false;latest.inputValue='';}
-    }catch(e){if(current(session))error.value=code(e);}
+    }catch(e){if(current(session)&&!(e instanceof DOMException&&e.name==='AbortError'))fail(e);}
     finally {if(current(session)){field.loading=false;const latest=fields.value[platform];if(latest)latest.loading=false;}}
   }
   async function payload():Promise<{editorSessionId:string;secrets:Record<string,SecretAction>}|null> {
@@ -125,5 +129,5 @@ export function createCredentialEditor(host:PluginHost) {
       ...(field.intent==='set'?(field.candidateId?{candidateId:field.candidateId}:{value:field.inputValue}):{}),
     }]))};
   }
-  return {fields,native,ready,busy,error,confirmation,open,close,read,retry,mutate,clear,visibility,confirm,login,payload};
+  return {fields,native,ready,busy,confirmation,open,close,read,retry,mutate,clear,visibility,confirm,login,payload};
 }

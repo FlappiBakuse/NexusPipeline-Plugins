@@ -23,6 +23,30 @@ public sealed class CredentialTests
     private static void Error(string code, Action action) => Assert.Equal(code, Assert.Throws<CredentialException>(action).Code);
 
     [Fact]
+    public void WebContextSurvivesRecordAndCandidatePersistenceButEditingClearsIt()
+    {
+        foreach (var web in new[] { new CredentialWebContext("skland", DeviceId: "Dopaque/device+id=="), new CredentialWebContext("kuro", DistinctId: "browser-distinct") })
+        {
+            var record = Browser() with { WebContext = web };
+            Assert.Equal(record, CredentialRecord.Decode(record.Encode()));
+            Error("credential_record_invalid", () => (record with { Source = "manual" }).Encode());
+            using var service = new CredentialDraftService();
+            var client = Client();
+            var payloads = new Dictionary<string, string?> { [web.Platform] = record.Encode() };
+            var editor = service.Create(client, null, payloads);
+            Assert.DoesNotContain(web.DeviceId ?? web.DistinctId!, JsonSerializer.Serialize(editor));
+            service.Confirm(client);
+            Assert.Equal(record.Value, service.Read(client, editor.EditorSessionId, web.Platform, 0).Value);
+            var state = service.Mutate(client, editor.EditorSessionId, web.Platform, 0, "edit-current", "edited-secret");
+            using var reservation = service.Reserve(client, editor.EditorSessionId, null,
+                new Dictionary<string, CheckInSecretInput> { [web.Platform] = new() { Action = "set", CandidateId = state.CandidateId, FieldGeneration = state.FieldGeneration } }, payloads);
+            var edited = CredentialRecord.Decode(reservation.Changes[web.Platform].Value)!;
+            Assert.Equal("edited-secret", edited.Value);
+            Assert.Null(edited.WebContext);
+        }
+    }
+
+    [Fact]
     public void RecordsPreserveLegacyValuesAndRejectCorruptionWithoutManualFallback()
     {
         Assert.Equal("manual", CredentialRecord.Decode("legacy-secret")!.Source);
@@ -143,7 +167,6 @@ public sealed class CredentialTests
         context.Http.ResponseFactory = _ => new(HttpStatusCode.OK) { Content = new StringContent("{\"retcode\":-100}") };
         Assert.Equal("credential_not_authenticated", (await Assert.ThrowsAsync<CredentialException>(() => provider.ValidateAsync(capture, CancellationToken.None))).Code);
         Assert.True(GameCheckInLoginFlows.IsReady("os"));
-        Assert.All(GameCheckInLoginFlows.Readiness.Where(platform => platform.Platform != "os"), platform => Assert.Equal("not_run", platform.Status));
     }
 
     private sealed class Clock : TimeProvider

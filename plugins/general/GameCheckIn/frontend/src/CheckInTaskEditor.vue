@@ -25,8 +25,10 @@ const emit = defineEmits<{
 }>();
 
 const draft = ref<TaskDraft | null>(null);
-const credentials = createCredentialEditor(props.host);
-const {fields: secretFields, native, ready: credentialsReady, error: credentialError, confirmation} = credentials;
+const credentials = createCredentialEditor(props.host, code => {
+  if (props.open) props.host.ui?.toast(t(`error.${code}`, {}, '凭据操作未完成，请检查后重试。'), 'error');
+});
+const {fields: secretFields, native, ready: credentialsReady, confirmation} = credentials;
 const credentialInputListeners = new WeakMap<HTMLElement, EventListener>();
 const vCredentialInput: Directive<HTMLElement, string> = {
   mounted(element, binding) {
@@ -152,6 +154,7 @@ function credentialPlaceholder(platformId: string) {
 
 function configuredCredentialPlaceholder(platformId: string) {
   const field = secretFields.value[platformId];
+  if (field?.intent === 'set') return t('field.secret_set_pending', {}, '新凭据待保存');
   if (!field?.configured) return credentialPlaceholder(platformId);
   return [field.maskedAccount, t('field.secret_configured', {}, '已配置，点击眼睛显示')].filter(Boolean).join(' · ');
 }
@@ -370,11 +373,9 @@ async function submit() {
                 />
               </div>
             </nxp-field>
-            <p v-if="secretFields[platform.id]?.loading" role="status">{{ t('field.secret_loading', {}, '正在读取已保存凭据…') }}</p>
             <p v-if="secretFields[platform.id]?.localError || secretFields[platform.id]?.error" role="alert">{{ t(`error.${secretFields[platform.id]?.localError || secretFields[platform.id]?.error}`, {}, '凭据草稿未确认，请检查后清除并重新填写。') }}</p>
             <nxp-button v-if="secretFields[platform.id]?.localError && secretFields[platform.id]?.intent === 'keep'" :disabled="submitting" :label="t('field.secret_retry', {}, '重试读取')" @click="credentials.retry(platform.id)" />
             <p v-if="secretFields[platform.id]?.intent === 'clear'" role="status">{{ t('field.secret_clear_pending', {}, '将在保存后清除') }}</p>
-            <p v-else-if="secretFields[platform.id]?.intent === 'set'" role="status">{{ t('field.secret_set_pending', {}, '新凭据待保存') }}</p>
           </div>
         </div>
 
@@ -474,7 +475,7 @@ async function submit() {
         />
       </section>
 
-      <p v-if="localError || error || credentialError" class="gci-error" role="alert">{{ localError || error || t(`error.${credentialError}`, {}, '凭据操作未完成，请检查后重试。') }}</p>
+      <p v-if="localError || error" class="gci-error" role="alert">{{ localError || error }}</p>
     </div>
 
     <div slot="footer" class="gci-modal-footer-actions">

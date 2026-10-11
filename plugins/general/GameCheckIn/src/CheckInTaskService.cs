@@ -444,12 +444,12 @@ internal sealed partial class CheckInTaskService
                 }
             }
             CheckInTask snapshot = Clone(task);
-            var credentialValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            var credentialValues = new Dictionary<string, CredentialRecord?>(StringComparer.OrdinalIgnoreCase);
             foreach (string platform in PlatformOrder)
             {
                 credentialValues[platform] = CredentialRecord.Decode(await _context.Secrets
                     .GetAsync(SecretKey(taskId, "credential-" + platform), cancellationToken)
-                    .ConfigureAwait(false))?.Value;
+                    .ConfigureAwait(false));
             }
 
             var run = new CheckInRun
@@ -561,8 +561,8 @@ internal sealed partial class CheckInTaskService
             foreach (string platform in PlatformOrder)
             {
                 if (!task.Games.TryGetValue(platform, out List<string>? games)) continue;
-                string? credential = snapshot.Secrets.GetValueOrDefault(platform);
-                string fingerprint = CredentialFingerprint(credential);
+                var credential = snapshot.Secrets.GetValueOrDefault(platform);
+                string fingerprint = CredentialFingerprint(credential?.Value);
                 foreach (string gameCode in games)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -637,11 +637,13 @@ internal sealed partial class CheckInTaskService
         CheckInTask task,
         string platform,
         string gameCode,
-        string? credential,
+        CredentialRecord? record,
         string fingerprint,
         string runId,
         CancellationToken cancellationToken)
     {
+        string? credential = record?.Value;
+        var web = record?.WebContext;
         string flightKey = platform + "/" + gameCode + "/" + fingerprint;
         int lockIndex = (int)((uint)StringComparer.Ordinal.GetHashCode(flightKey) % (uint)_credentialGameLocks.Length);
         SemaphoreSlim flight = _credentialGameLocks[lockIndex];
@@ -650,7 +652,7 @@ internal sealed partial class CheckInTaskService
         {
             CheckInResult result;
             string localDate = _clock().ToLocalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-            if (!IsValidCredential(credential))
+            if (!IsValidCredential(credential) || (web is not null && web.Platform != platform))
             {
                 result = new CheckInResult(platform, gameCode, "invalid_credential", _context.I18n.T("result.invalid_credential", "凭据未配置或格式无效"), false);
             }
@@ -666,10 +668,10 @@ internal sealed partial class CheckInTaskService
                     {
                         "cn" => await _cnClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, task.CnDeviceId, cancellationToken).ConfigureAwait(false),
                         "os" => await _osClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, cancellationToken).ConfigureAwait(false),
-                        "skland" => await _sklandClient.SignAsync(SklandGameDefinitions.Find(gameCode)!, credential!, cancellationToken).ConfigureAwait(false),
-                        "skport" => await _skportClient.SignAsync(SkportGameDefinitions.Find(gameCode)!, credential!, cancellationToken).ConfigureAwait(false),
+                        "skland" => await _sklandClient.SignAsync(SklandGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
+                        "skport" => await _skportClient.SignAsync(SkportGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
                         "kuro" => await _kuroClient.SignAsync(
-                            KuroGameDefinitions.Find(gameCode)!, credential!, task.KuroDevCode, task.KuroDistinctId, cancellationToken).ConfigureAwait(false),
+                            KuroGameDefinitions.Find(gameCode)!, credential!, task.KuroDevCode, task.KuroDistinctId, cancellationToken, web).ConfigureAwait(false),
                         _ => new CheckInResult(platform, gameCode, "invalid_game", "签到游戏无效", false),
                     };
                 }
@@ -1140,7 +1142,7 @@ internal sealed partial class CheckInTaskService
 
     private sealed record DeleteTaskRequest(Guid TaskId);
     private sealed record RunTaskRequest(Guid TaskId);
-    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, string?> Secrets);
+    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, CredentialRecord?> Secrets);
 
     private sealed class RunHandle
     {
