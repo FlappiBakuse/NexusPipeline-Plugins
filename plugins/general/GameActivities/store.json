@@ -9,7 +9,7 @@
   ],
   "tags": [
     "活动",
-    "卡池",
+    "SRA",
     "概览"
   ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
@@ -26,10 +26,10 @@
     "en-US": {
       "displayName": "Game Activities",
       "gameName": "General activities",
-      "description": "Subscribe to game activities with isolated progressions, cached feeds and source diagnostics.",
+      "description": "Subscribe to SRA version overviews and activities with isolated progression caches.",
       "tags": [
         "Activities",
-        "Gacha",
+        "SRA",
         "Dashboard"
       ],
       "changelog": [

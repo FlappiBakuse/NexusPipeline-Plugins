@@ -10,25 +10,19 @@ internal sealed record ActivitySettings
     public bool PauseOnInteraction { get; init; } = true;
 }
 internal sealed record ActivitySettingsState(long Revision, ActivitySettings Settings);
-internal sealed record GameSource(string GameId, string ProgressionId, string File, string Locale, string? SourceZone, string OfficialUrl);
+internal sealed record GameSource(string GameId, string ProgressionId, string File, string Locale = "zh-CN")
+{
+    public Uri Endpoint => new("https://starrailassistant.top/api/v1/activity/" + File + ".json");
+}
 internal static class GameSources
 {
     public static readonly GameSource[] All = [
-        new("blue-archive","cn","ba-cn","zh-CN","Asia/Shanghai","https://bluearchive-cn.com/"),
-        new("blue-archive","jp","ba-jp","zh-CN","Asia/Shanghai","https://bluearchive.jp/news"),
-        new("blue-archive","global","ba-global","zh-CN","Asia/Shanghai","https://forum.nexon.com/bluearchive-en/"),
-        new("genshin-impact","default","ys","zh-CN","Asia/Shanghai","https://ys.mihoyo.com/main/news"),
-        new("arknights-endfield","default","end","zh-CN","Asia/Shanghai","https://endfield.hypergryph.com/news"),
-        new("stella-sora","default","xtlr","zh-CN","Asia/Shanghai","https://stellasora.yostar.cn/api/resource/news?index=1"),
-        new("honkai-star-rail","default","sr","zh-CN","Asia/Shanghai","https://sr.mihoyo.com/news?nav=news&type=notice"),
-        new("neverness-to-everness","cn","nte","zh-CN","Asia/Shanghai","https://yh.wanmei.com/news/index.html"),
-        new("neverness-to-everness","global","nte-en-US","en-US","Asia/Shanghai","https://nte.perfectworld.com/en/article/news/index.html"),
-        new("wuthering-waves","default","ww","zh-CN","Asia/Shanghai","https://mc.kurogames.com/main/news"),
-        new("zenless-zone-zero","default","zzz","zh-CN","Asia/Shanghai","https://zzz.mihoyo.com/news")];
+        new("blue-archive", "cn", "ba-cn"), new("blue-archive", "jp", "ba-jp"), new("blue-archive", "global", "ba-global"),
+        new("genshin-impact", "default", "ys"), new("arknights-endfield", "default", "end"), new("stella-sora", "default", "xtlr"),
+        new("honkai-star-rail", "default", "sr"), new("wuthering-waves", "default", "ww"), new("zenless-zone-zero", "default", "zzz"),
+        new("neverness-to-everness", "cn", "nte"), new("neverness-to-everness", "global", "nte-en-US", "en-US")
+    ];
     public static string Key(GameSource source) => source.GameId + "/" + source.ProgressionId;
-    public static TimeSpan OfficialDefaultOffset(GameSource source) => TimeSpan.FromHours(
-        source.GameId == "blue-archive" && source.ProgressionId is "jp" or "global" ? 9 : 8);
-    public static string OfficialDefaultZone(GameSource source) => OfficialDefaultOffset(source) == TimeSpan.FromHours(9) ? "UTC+09:00" : "UTC+08:00";
     public static GameSource Resolve(string game, string progression) => All.SingleOrDefault(source => source.GameId == game && source.ProgressionId == progression)
         ?? throw new ActivityException("invalid_progression", 400);
     public static GameSource[] Selected(ActivitySettings settings) => settings.SelectedGames.Select(game => Resolve(game,

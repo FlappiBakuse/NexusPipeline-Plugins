@@ -16,7 +16,7 @@ export function activate(host: DashboardHost) {
   const state = createActivityState(host);
   const slides = computed(() => (state.current.value?.selectedFeeds ?? []).map(summary => {
     const id = feedKey(summary.gameId, summary.progressionId);
-    return { id, cover: state.feeds.value[id]?.overview?.cover ?? null };
+    return { id, entityId: state.feeds.value[id]?.overview?.overviewId, cover: state.feeds.value[id]?.overview?.cover ?? null };
   }));
   const covers = createCoverAssets(host, slides);
   const registration = host.dashboard.registerCard("carousel", (surface: { element: HTMLElement; signal: AbortSignal }) => {

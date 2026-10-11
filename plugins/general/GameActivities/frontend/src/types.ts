@@ -3,38 +3,27 @@ export interface TimePoint {
   rawValue: string;
   timeBasis: string;
   sourceZone: string | null;
-  precision: string;
-  certainty: string;
-  sourceRef: string;
 }
-
 export interface Activity {
   eventId: string;
   title: string;
-  description: string | null;
-  descriptionTruncated: boolean;
-  channel: string;
-  category: string;
-  availability: string;
-  importance: string;
-  isOfficialFeatured: boolean;
-  versionRelation: string;
-  periodKey: string | null;
-  times: { start: TimePoint | null; playEnd: TimePoint | null; claimEnd: TimePoint | null };
+  summary: string | null;
+  kind: string | null;
+  times: { start: TimePoint | null; playEnd: TimePoint | null };
   cover: { assetId: string | null; alt: string } | null;
-  officialUrl: string | null;
-  officialLinkKind: string;
-  provenance: { field: string }[];
 }
-
+export interface FeedHealth {
+  cacheState: string; contentState: string; lastGoodAt: string | null; lastCheckedAt: string | null; nextCheckAt: string | null;
+  diagnostics: { code: string; message: string }[];
+}
 export interface Feed {
+  formatVersion: 3;
   snapshotId: string;
   gameId: string;
   progressionId: string;
   contentLocale: string;
-  contentPeriod: { key: string; kind: string; title: string } | null;
-  version: { number: string; title: string; end: TimePoint | null } | null;
   overview: {
+    overviewId: string | null;
     title: string;
     number: string | null;
     start: TimePoint | null;
@@ -42,17 +31,8 @@ export interface Feed {
     cover: { assetId: string | null; alt: string } | null;
   };
   activities: Activity[];
-  sources: { sourceId: string; kind: string; url: string; retrievedAt: string; note: string }[];
-  coverage: {
-    events: { status: string; note: string };
-    gacha: { status: string; note: string };
-  };
-  health: {
-    cacheState: string;
-    contentState: string;
-    lastGoodAt: string | null;
-    diagnostics: { code: string; message: string }[];
-  };
+  source: { provider: "sra"; url: string };
+  health: FeedHealth;
 }
 
 export interface Settings {
@@ -69,10 +49,11 @@ export interface FeedSummary {
   progressionId: string;
   contentLocale: string;
   snapshotId: string | null;
-  cacheState: string;
+  health: FeedHealth;
 }
 
 export interface ActivityState {
+  formatVersion: 3;
   serverNowUtc: string;
   settingsRevision: number;
   refreshing: boolean;
@@ -83,6 +64,7 @@ export interface ActivityState {
 export interface RefreshOperation {
   operationId: string;
   status: string;
+  checkedFeedCount: number; changedFeedCount: number; failedFeedCount: number; imageFailureCount: number;
 }
 
 export interface ActivityHost {

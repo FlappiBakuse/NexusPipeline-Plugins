@@ -4,7 +4,7 @@ import ActivityGameSetting from "./ActivityGameSetting.vue";
 import { translator } from "./formatting";
 import { gameIds, type ActivityHost, type Settings } from "./types";
 
-const props = defineProps<{ settings: Settings; host: ActivityHost; busy: boolean; refreshing: boolean; error: string }>();
+const props = defineProps<{ settings: Settings; host: ActivityHost; busy: boolean;  error: string }>();
 const emit = defineEmits<{ save: [settings: Settings]; cancel: []; refresh: [] }>();
 const t = translator(props.host);
 const draft = ref(structuredClone(props.settings));
@@ -49,7 +49,7 @@ function save() {
       <p v-if="!intervalValid" class="ga-error" role="alert">{{ t('settings.intervalInvalid') }}</p>
     </div>
     <p v-if="error" role="alert" class="ga-error">{{ error }}</p>
-    <div class="ga-settings-refresh"><div class="ga-muted"><slot /></div><nxp-button :disabled="refreshing || busy" :data-help="t('settings.refreshHelp')" @click="emit('refresh')">{{ t(refreshing ? 'state.loading' : 'refresh') }}</nxp-button></div>
+    <div class="ga-muted"><slot /></div>
     <div class="ga-actions"><nxp-button :disabled="busy" @click="emit('cancel')">{{ t('cancel') }}</nxp-button><nxp-button tone="primary" :disabled="busy || !intervalValid" @click="save">{{ t('save') }}</nxp-button></div>
   </div>
 </template>

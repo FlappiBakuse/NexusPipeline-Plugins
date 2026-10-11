@@ -7,6 +7,7 @@ import { gameCheckInTestState, wallpaperTestState, defaultTestState, createMetri
 import { installDom, installLifecycleProbe, flushDom } from "./support/dom.mjs";
 import { assertGameCheckInRoute } from "./cases/GameCheckIn.mjs";
 import { assertMaaRenderer } from "./cases/MaaFrameworkDriver.mjs";
+import { assertGameActivitiesBehavior } from "./cases/GameActivities.mjs";
 import { assertWallpaperTimerRotation, assertWallpaperStateOrdering, assertWallpaperActivation, assertWallpaperRenderer, assertWallpaperSettingsReleased, assertWallpaperDisposed } from "./cases/CustomWallpaper.mjs";
 import { resolvePublicElements } from "./contract.mjs";
 
@@ -128,6 +129,7 @@ export async function runPlugin(repositoryRoot, manifestPath, publicElements) {
         fail("GameCheckIn cleanup 未释放 route、nav 或页面生命周期订阅");
       }
       if (manifest.artifactName === "GameActivities" && metrics.externalOpen) fail("Activity refresh must not open external pages");
+      if (manifest.artifactName === "GameActivities") await assertGameActivitiesBehavior(plugin);
       if (probe.intervals.size > 0) {
         fail(`插件 ${manifest.artifactName} 卸载后仍有 ${probe.intervals.size} 个定时器未释放`);
       }

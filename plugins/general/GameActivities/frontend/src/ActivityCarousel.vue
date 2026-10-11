@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { countdown, instant } from "./activityPolicy";
+import { countdown, displayInstant } from "./activityPolicy";
 import { formatTime, translator, versionLabel } from "./formatting";
 import ActivityDetails from "./ActivityDetails.vue";
 import ActivitySettings from "./ActivitySettings.vue";
@@ -10,7 +10,7 @@ import { feedKey, type ActivityHost, type Settings, type TimePoint } from "./typ
 
 const props = defineProps<{ host: ActivityHost; state: ActivityStateModel; covers: CoverAssetsModel }>();
 const t = translator(props.host);
-const { current, feeds, index, error, busy, refreshing, now, saveSettings, refresh } = props.state;
+const { current, feeds, index, error, busy, refreshing, manualRefreshing, now, result, zone: displayZone, saveSettings, refresh } = props.state;
 const settingsOpen = ref(false);
 const detailsOpen = ref(false);
 const hovered = ref(false);
@@ -24,9 +24,8 @@ const slides = computed(() => (current.value?.selectedFeeds ?? []).map(summary =
   const data = feeds.value[id];
   return { id, summary, feed: data, overview: data?.overview };
 }));
-const { images, releaseImage } = props.covers;
+const { images } = props.covers;
 const media = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-const displayZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const intervalMs = computed(() => (current.value?.settings.carouselIntervalSeconds ?? 30) * 1000);
 let nextSlideAt = performance.now() + intervalMs.value;
 let carousel: ReturnType<typeof setInterval> | undefined;
@@ -52,10 +51,10 @@ function carouselKey(event: KeyboardEvent) {
 }
 
 function remaining(time: TimePoint | null | undefined) {
-  const end = instant(time);
+  const end = displayInstant(time);
   if (end === null) return t("time.unverified");
   const value = countdown(end - now.value);
-  return value.unit === "ended" ? t("state.ended") : t(`countdown.${value.unit}`, value);
+  return (value.unit === "ended" ? t("state.ended") : t(`countdown.${value.unit}`, value));
 }
 
 function lastGoodTime(value: string) {
@@ -108,7 +107,7 @@ onBeforeUnmount(() => {
         <div class="ga-viewport">
           <div class="ga-track" :style="{ transform: `translateX(-${index * 100}%)` }">
             <article v-for="(slide, position) in slides" :key="slide.id" class="ga-slide" role="group" aria-roledescription="slide" :aria-label="`${position + 1}/${slides.length} · ${t(`game.${slide.summary.gameId}`)}`" :aria-hidden="position !== index" :inert="position !== index ? true : undefined">
-              <img v-if="images[slide.id]" class="ga-cover" :src="images[slide.id]" :alt="slide.overview?.cover?.alt ?? ''" @error="releaseImage(slide.id)" />
+              <img v-if="images['overview/' + slide.id]" class="ga-cover" :src="images['overview/' + slide.id]" :alt="slide.overview?.cover?.alt ?? ''" />
               <div v-else class="ga-cover-fallback" aria-hidden="true"><span>{{ t(`game.${slide.summary.gameId}`) }}</span></div>
               <div class="ga-shade"></div>
               <div class="ga-slide-copy">
@@ -118,8 +117,8 @@ onBeforeUnmount(() => {
                   <span v-if="slide.summary.progressionId !== 'default'" class="ga-progression">{{ t(`progression.${slide.summary.progressionId}`) }}</span>
                 </div>
                 <h3>{{ slide.overview?.title || t('state.overview') }}</h3>
-                <div v-if="slide.overview?.end" class="ga-deadline"><span>{{ t('time.overviewEnd') }}</span><time :datetime="slide.overview.end.instantUtc || undefined">{{ formatTime(slide.overview.end, host) }}</time><strong>{{ remaining(slide.overview.end) }}</strong></div>
-                <p v-else-if="!slide.feed" class="ga-description">{{ t('state.loading') }}</p>
+                <div v-if="slide.overview?.end" class="ga-deadline"><span>{{ t('time.overviewEnd') }}</span><time :datetime="slide.overview.end.instantUtc || undefined">{{ formatTime(slide.overview.end, host, displayZone) }}</time><strong>{{ remaining(slide.overview.end) }}</strong></div>
+                <p v-else-if="!slide.feed" class="ga-description">{{ t(slide.summary.health.diagnostics.length ? 'state.unavailable' : 'state.loading') }}</p>
               </div>
               <button class="ga-open-details" type="button" :disabled="!slide.feed" :aria-label="t('details.open', { game: t(`game.${slide.summary.gameId}`) })" aria-haspopup="dialog" @click="detailsOpen = true"></button>
             </article>
@@ -127,11 +126,12 @@ onBeforeUnmount(() => {
         </div>
         <div class="ga-tools">
           <button v-if="intervalMs > 0 && slides.length > 1" type="button" class="ga-icon-button" :aria-label="t(paused ? 'carousel.resume' : 'carousel.pause')" :title="t(paused ? 'carousel.resume' : 'carousel.pause')" :aria-pressed="paused" @click="paused = !paused">{{ paused ? '▶️' : '⏸️' }}</button>
+          <button type="button" class="ga-icon-button" :aria-label="t('refresh')" :title="t('refresh')" :disabled="manualRefreshing" @click="covers.retryFailed(); refresh()">🔄</button>
           <button type="button" class="ga-icon-button" :aria-label="t('settings.title')" :title="t('settings.title')" @click="openSettings">⚙️</button>
         </div>
         <button type="button" class="ga-page-button ga-previous" :disabled="slides.length < 2" :aria-label="t('carousel.previous')" @click="step(-1)">‹</button>
         <button type="button" class="ga-page-button ga-next" :disabled="slides.length < 2" :aria-label="t('carousel.next')" @click="step(1)">›</button>
-        <div class="ga-carousel-controls">
+        <div class="ga-carousel-controls"><span class="ga-refresh-status" role="status" aria-live="polite">{{ refreshing ? t('state.loading') : result ? t(`refreshResult.${result.status}`, result as unknown as Record<string, unknown>) : '' }}</span>
           <div class="ga-indicators">
             <button v-for="(slide, position) in slides" :key="slide.id" type="button" :aria-label="`${t('carousel.show')} ${t(`game.${slide.summary.gameId}`)}`" :aria-current="position === index ? 'true' : undefined" :class="{ 'ga-current': position === index }" @click="selectSlide(position)"><span></span></button>
           </div>
@@ -139,12 +139,12 @@ onBeforeUnmount(() => {
       </div>
     </template>
     <nxp-modal v-if="settingsOpen && current" :open="settingsOpen" :title="t('settings.title')" size="wide" surface="secondary" :locked="busy" @close="settingsOpen = false">
-      <ActivitySettings :settings="current.settings" :host="host" :busy="busy" :refreshing="refreshing || current.refreshing" :error="error" @save="save" @cancel="settingsOpen = false" @refresh="refresh">
-        <span v-if="selected">{{ t(`cache.${selected.cacheState}`) }}<template v-if="feed?.health.lastGoodAt"> · {{ t('state.lastGood') }} {{ lastGoodTime(feed.health.lastGoodAt) }} ({{ displayZone }})</template></span>
+      <ActivitySettings :settings="current.settings" :host="host" :busy="busy" :error="error" @save="save" @cancel="settingsOpen = false">
+        <span v-if="selected">{{ t(`cache.${selected.health.cacheState}`) }}<template v-if="feed?.health.lastGoodAt"> · {{ t('state.lastGood') }} {{ lastGoodTime(feed.health.lastGoodAt) }} ({{ displayZone }})</template></span>
       </ActivitySettings>
     </nxp-modal>
     <nxp-modal v-if="detailsOpen" :open="detailsOpen" :title="t('details.title')" size="wide" @close="detailsOpen = false">
-      <ActivityDetails v-if="feed" :feed="feed" :host="host" :now="now" />
+      <ActivityDetails v-if="feed" :feed="feed" :host="host" :now="now" :covers="covers" :zone="displayZone" />
     </nxp-modal>
   </nxp-card>
 </template>

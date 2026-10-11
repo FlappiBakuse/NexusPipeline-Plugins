@@ -3,7 +3,7 @@
   "name": "game-activities",
   "artifactName": "GameActivities",
   "displayName": "游戏活动",
-  "description": "订阅八款游戏活动、区服独立缓存、卡池与官方来源详情。",
+  "description": "通过 SRA 订阅八款游戏的版本概览与活动，区服独立缓存。",
   "version": "0.1.0",
   "kind": "managed-code",
   "minHostVersion": "0.17.2",

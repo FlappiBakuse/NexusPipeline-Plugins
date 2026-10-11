@@ -7,24 +7,25 @@ internal sealed class ActivityHttp(IPluginHttpClientFactory factory)
 {
     private readonly SemaphoreSlim _requests = new(4, 4);
     public async Task<(byte[] Bytes, string? ETag, bool NotModified, string Mime, DateTimeOffset? LastModified)> ReadAsync(Uri uri, string? etag, int limit, CancellationToken ct,
-        HttpMethod? method = null, IReadOnlyDictionary<string, string>? headers = null, DateTimeOffset? lastModified = null)
+        DateTimeOffset? lastModified = null)
     {
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        budget.CancelAfter(TimeSpan.FromSeconds(15));
-        ct = budget.Token;
         await _requests.WaitAsync(ct).ConfigureAwait(false);
         try
         {
+            budget.CancelAfter(TimeSpan.FromSeconds(15));
+            ct = budget.Token;
             using var client = factory.CreateClient(uri, TimeSpan.FromSeconds(15), false);
-            using var request = new HttpRequestMessage(method ?? HttpMethod.Get, uri);
-            if (method == HttpMethod.Post) request.Content = new FormUrlEncodedContent([]);
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.UserAgent.ParseAdd("NexusPipeline-GameActivities/0.1.0");
-            if (headers is not null) foreach (var header in headers) request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             if (etag is not null) request.Headers.TryAddWithoutValidation("If-None-Match", etag);
             else if (lastModified is not null) request.Headers.IfModifiedSince = lastModified;
             using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false);
             if (response.StatusCode == HttpStatusCode.NotModified)
+            {
+                if (etag is null && lastModified is null) throw new ActivityException("unexpected_not_modified", 502);
                 return ([], response.Headers.ETag?.ToString() ?? etag, true, "", response.Content.Headers.LastModified ?? lastModified);
+            }
             if ((int)response.StatusCode == 429) throw new ActivityException("source_rate_limited", 429, response.Headers.RetryAfter?.Date ?? (response.Headers.RetryAfter?.Delta is { } delay ? DateTimeOffset.UtcNow + delay : null));
             response.EnsureSuccessStatusCode();
             if (response.Content.Headers.ContentLength > limit) throw new ActivityException("response_too_large", 502);

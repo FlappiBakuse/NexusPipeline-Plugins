@@ -21,7 +21,7 @@ public sealed class EntryPoint : INexusPlugin
     public async ValueTask StartAsync(CancellationToken ct)
     {
         var coordinator = _coordinator ?? throw new InvalidOperationException("Activities not initialized");
-        _card ??= _context!.DashboardCards.Register(new("carousel", "card.title", "card.description", true, 400));
+        _card ??= _context!.DashboardCards.Register(new("carousel", "card.title", "card.description", true, -100));
         _schedule ??= _context!.Scheduler.Register(
             new("refresh-due", Interval: TimeSpan.FromMinutes(1), Timeout: TimeSpan.FromSeconds(5)),
             async (_, token) => { await coordinator.QueueAsync(false, token).ConfigureAwait(false); });

@@ -1,146 +1,125 @@
 using NexusPipeline.Plugin.Abstractions;
+using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 
 namespace NexusPipeline.Plugin.GameActivities;
 
 internal sealed class ActivityAssetCache(ActivityHttp http, IPluginAssetStore assets, IPluginScopedDataStore data)
 {
-    public const string Scope = "activity";
-    private static readonly HashSet<string> Hosts = ["i0.hdslb.com", "prod-alicdn-community.kurobbs.com", "resource.starrailassistant.top", "web.hycdn.cn", "webusstatic.yo-star.com"];
+    public const string Scope = "activity-v3";
+    private const string ManifestScope = "sra/v3/asset-manifest";
     private readonly SemaphoreSlim _writes = new(1, 1);
-    private readonly HashSet<string> _protectedIds = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _protected = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Task<string?>> _requests = new();
     private JsonObject? _manifest;
-
-    public static void RestoreOverview(JsonObject feed, JsonObject raw, JsonObject manifest)
+    public async Task CacheAsync(JsonObject feed, GameSource source, bool force, CancellationToken ct,
+        Func<string, string, string, Task> published, Action<string> failed)
     {
-        string url = ActivityPolicy.Text(raw["cover"]);
-        if (!Allowed(url)) return;
-        string id = ActivityPolicy.Text(manifest[ActivityNormalizer.Hash(url)]?["id"]);
-        AttachCover(feed["overview"]!.AsObject(), url, id.Length == 0 ? null : id, ActivityPolicy.Text(feed["sources"]?[0]?["sourceId"]), "/cover");
-    }
-
-    public async Task CacheAsync(JsonObject feed, JsonObject raw, CancellationToken ct, Func<Task>? published = null)
-    {
-        await CacheCoverAsync(feed["overview"]!.AsObject(), ActivityPolicy.Text(raw["cover"]), "/cover", feed, ct, published).ConfigureAwait(false);
-        foreach (var item in feed["activities"]!.AsArray().OfType<JsonObject>())
+        var targets = feed["activities"]!.AsArray().OfType<JsonObject>().Append(feed["overview"]!.AsObject())
+            .Where(i => SraImages.Allowed(ActivityPolicy.Text(i["cover"]?["sourceUrl"]))).ToArray();
+        await Task.WhenAll(targets.Select(async target =>
         {
-            var original = raw["activities"]!.AsArray().OfType<JsonObject>().FirstOrDefault(row => ActivityPolicy.Text(row["name"]) == ActivityPolicy.Text(item["title"]));
-            if (original is null) continue;
-            await CacheCoverAsync(item, ActivityPolicy.Text(original["cover"]), "/activities/cover", feed, ct, published).ConfigureAwait(false);
-        }
+            string url = ActivityPolicy.Text(target["cover"]?["sourceUrl"]);
+            try
+            {
+                Task<string?> task;
+                await _writes.WaitAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    await Initialize(ct).ConfigureAwait(false);
+                    string requestKey = (force ? "forced:" : "automatic:") + url;
+                    if (!_requests.TryGetValue(requestKey, out task!)) _requests[requestKey] = task = Download(url, force, ct);
+                }
+                finally { _writes.Release(); }
+                string? id = await task.ConfigureAwait(false);
+                if (id is null) { failed(url); return; }
+                string entityId = ActivityPolicy.Text(target["eventId"] ?? target["overviewId"]);
+                await published(entityId, url, id).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (!ct.IsCancellationRequested) { failed(url); }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception error) when (error is HttpRequestException or ActivityException or IOException or UnauthorizedAccessException)
+            { failed(url); }
+        })).ConfigureAwait(false);
     }
-
-    private static bool Allowed(string url) => url.Length <= 2048 && Uri.TryCreate(url, UriKind.Absolute, out var uri)
-        && uri.Scheme == "https" && Hosts.Contains(uri.Host) && uri.UserInfo.Length == 0;
-
-    private static void AttachCover(JsonObject target, string url, string? id, string sourceRef, string locator)
-    {
-        target["cover"] = ActivityNormalizer.Object(new { sourceUrl = url, assetId = id, alt = ActivityPolicy.Text(target["title"]), sourceRef });
-        var evidence = target["provenance"]!.AsArray();
-        foreach (var old in evidence.Where(row => ActivityPolicy.Text(row?["field"]) == "/cover").ToArray()) evidence.Remove(old);
-        evidence.Add(ActivityNormalizer.Evidence("/cover", sourceRef, locator));
-    }
-
-    private async Task InitializeManifestAsync(CancellationToken ct)
+    private async Task Initialize(CancellationToken ct)
     {
         if (_manifest is not null) return;
-        _manifest = await data.ReadJsonAsync("asset-manifest", ct).ConfigureAwait(false) ?? new JsonObject();
+        var value = await data.ReadJsonAsync(ManifestScope, ct).ConfigureAwait(false) ?? new JsonObject { ["formatVersion"] = 3, ["entries"] = new JsonObject() };
+        if (value["formatVersion"]?.GetValue<int>() != 3 || value["entries"] is not JsonObject) throw new ActivityException("asset_manifest_invalid", 500);
+        var protectedIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var source in GameSources.All)
         {
-            var cached = await data.ReadJsonAsync("feed/" + source.GameId + "/" + source.ProgressionId + "/" + source.Locale + "/merged/v1", ct).ConfigureAwait(false);
-            var covers = (cached?["activities"]?.AsArray() ?? []).Select(item => item?["cover"])
-                .Append(cached?["overview"]?["cover"]);
-            foreach (var cover in covers)
-            {
-                string id = ActivityPolicy.Text(cover?["assetId"]);
-                if (id.Length > 0) _protectedIds.Add(id);
-            }
+            var cached = await data.ReadJsonAsync(ActivityCoordinator.Scope(source, "merged"), ct).ConfigureAwait(false);
+            foreach (var cover in (cached?["activities"]?.AsArray() ?? []).Select(i => i?["cover"]).Append(cached?["overview"]?["cover"]))
+            { string id = ActivityPolicy.Text(cover?["assetId"]); if (id.Length > 0) protectedIds.Add(id); }
         }
+        _protected.UnionWith(protectedIds); _manifest = value;
     }
-
-    private async Task<string?> ExistingIdAsync(string key, CancellationToken ct)
+    private async Task<string?> Download(string url, bool force, CancellationToken ct)
     {
-        string id = ActivityPolicy.Text(_manifest![key]?["id"]);
-        return id.Length > 0 && (await assets.ListAsync(Scope, ct).ConfigureAwait(false)).Any(asset => asset.Id == id) ? id : null;
-    }
-
-    private async Task CacheCoverAsync(JsonObject target, string url, string locator, JsonObject feed, CancellationToken ct, Func<Task>? published)
-    {
-        if (!Allowed(url)) return;
-        string key = ActivityNormalizer.Hash(url);
+        // Yield before acquiring the manifest gate held by the caller that registers this shared request.
+        await Task.Yield();
+        string key = ActivityNormalizer.Hash(url); JsonObject? old; string? existing;
+        await _writes.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            string? id;
+            old = _manifest!["entries"]![key]?.DeepClone().AsObject();
+            string id = ActivityPolicy.Text(old?["assetId"]);
+            existing = id.Length > 0 && (await assets.ListAsync(Scope, ct).ConfigureAwait(false)).Any(a => a.Id == id) ? id : null;
+        }
+        finally { _writes.Release(); }
+        var now = DateTimeOffset.UtcNow;
+        bool due = force || old is null || !DateTimeOffset.TryParse(ActivityPolicy.Text(old["validatedAt"]), out var validated) || validated <= now.AddHours(-6);
+        if (existing is not null && !due)
+        {
             await _writes.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                await InitializeManifestAsync(ct).ConfigureAwait(false);
-                id = await ExistingIdAsync(key, ct).ConfigureAwait(false);
+                var next = _manifest!.DeepClone().AsObject();
+                next["entries"]![key]!["lastReferencedAt"] = ActivityNormalizer.Utc(now);
+                await data.WriteJsonAsync(ManifestScope, next, ct).ConfigureAwait(false); _manifest = next; _protected.Add(existing);
             }
             finally { _writes.Release(); }
-            if (id is null)
-            {
-                var response = await http.ReadAsync(new Uri(url), null, 8388608, ct).ConfigureAwait(false);
-                string? extension = Extension(response.Bytes, response.Mime);
-                if (extension is null) return;
-                await _writes.WaitAsync(ct).ConfigureAwait(false);
-                try
-                {
-                    id = await ExistingIdAsync(key, ct).ConfigureAwait(false);
-                    if (id is null)
-                    {
-                        var list = await assets.ListAsync(Scope, ct).ConfigureAwait(false);
-                        long total = list.Sum(asset => asset.SizeBytes);
-                        var referencedAt = _manifest!.Select(pair => pair.Value).OfType<JsonObject>()
-                            .GroupBy(entry => ActivityPolicy.Text(entry["id"]), StringComparer.Ordinal)
-                            .ToDictionary(group => group.Key, group => group.Max(entry => ActivityPolicy.Text(entry["lastReferencedAt"]))!, StringComparer.Ordinal);
-                        // A cancelled manifest write can leave an owned asset without a manifest entry.
-                        foreach (var candidate in list.OrderBy(asset => referencedAt.GetValueOrDefault(asset.Id, ActivityNormalizer.Utc(asset.CreatedAt)), StringComparer.Ordinal))
-                        {
-                            if (total + response.Bytes.Length <= 134217728) break;
-                            string oldId = candidate.Id;
-                            if (_protectedIds.Contains(oldId)) continue;
-                            if (!await assets.DeleteAsync(Scope, oldId, ct).ConfigureAwait(false)) continue;
-                            total -= candidate.SizeBytes;
-                            foreach (var entry in _manifest!.Where(pair => ActivityPolicy.Text(pair.Value?["id"]) == oldId).Select(pair => pair.Key).ToArray()) _manifest!.Remove(entry);
-                        }
-                        if (total + response.Bytes.Length > 134217728) return;
-                        using var content = new MemoryStream(response.Bytes, false);
-                        id = (await assets.WriteAsync(Scope, extension, content, ct).ConfigureAwait(false)).Id;
-                    }
-                    _protectedIds.Add(id);
-                    _manifest![key] = ActivityNormalizer.Object(new { id, url, lastReferencedAt = ActivityNormalizer.Utc(DateTimeOffset.UtcNow) });
-                    await data.WriteJsonAsync("asset-manifest", _manifest, ct).ConfigureAwait(false);
-                }
-                finally { _writes.Release(); }
-            }
-            else
-            {
-                await _writes.WaitAsync(ct).ConfigureAwait(false);
-                try
-                {
-                    _protectedIds.Add(id);
-                    _manifest![key]!["lastReferencedAt"] = ActivityNormalizer.Utc(DateTimeOffset.UtcNow);
-                    await data.WriteJsonAsync("asset-manifest", _manifest, ct).ConfigureAwait(false);
-                }
-                finally { _writes.Release(); }
-            }
-            AttachCover(target, url, id, ActivityPolicy.Text(feed["sources"]?[0]?["sourceId"]), locator);
-            if (published is not null) await published().ConfigureAwait(false);
+            return existing;
         }
-        catch (OperationCanceledException) { throw; }
-        catch (Exception error) when (error is HttpRequestException or ActivityException)
+        string etag = ActivityPolicy.Text(old?["etag"]);
+        bool strong = etag.StartsWith('"') && !etag.StartsWith("W/", StringComparison.OrdinalIgnoreCase);
+        var response = await http.ReadAsync(new Uri(url), existing is not null && strong ? etag : null, 8388608, ct).ConfigureAwait(false);
+        if (response.NotModified && existing is null) throw new ActivityException("asset_checkpoint_missing", 502);
+        string hash = response.NotModified ? ActivityPolicy.Text(old?["contentHash"]) : Convert.ToHexStringLower(SHA256.HashData(response.Bytes));
+        string? extension = response.NotModified ? null : Extension(response.Bytes, response.Mime);
+        if (!response.NotModified && extension is null) throw new ActivityException("image_type_invalid", 502);
+        await _writes.WaitAsync(ct).ConfigureAwait(false);
+        try
         {
-            var diagnostics = feed["health"]!["diagnostics"]!.AsArray();
-            if (diagnostics.Count < 32) diagnostics.Add(ActivityNormalizer.Object(new
+            string? id = existing;
+            if (id is null || !response.NotModified && hash != ActivityPolicy.Text(old?["contentHash"]))
             {
-                code = "image_source_failed",
-                sourceRef = ActivityPolicy.Text(feed["sources"]?[0]?["sourceId"]),
-                message = error.GetType().Name
-            }));
+                var list = await assets.ListAsync(Scope, ct).ConfigureAwait(false); long total = list.Sum(a => a.SizeBytes);
+                var entries = _manifest!["entries"]!.AsObject();
+                var referenced = entries.Select(p => p.Value).OfType<JsonObject>().GroupBy(e => ActivityPolicy.Text(e["assetId"]))
+                    .ToDictionary(g => g.Key, g => g.Max(e => ActivityPolicy.Text(e["lastReferencedAt"]))!);
+                foreach (var asset in list.OrderBy(a => referenced.GetValueOrDefault(a.Id, ActivityNormalizer.Utc(a.CreatedAt)), StringComparer.Ordinal))
+                {
+                    if (total + response.Bytes.Length <= 134217728) break;
+                    if (_protected.Contains(asset.Id) || !await assets.DeleteAsync(Scope, asset.Id, ct).ConfigureAwait(false)) continue;
+                    total -= asset.SizeBytes;
+                    foreach (string entry in entries.Where(p => ActivityPolicy.Text(p.Value?["assetId"]) == asset.Id).Select(p => p.Key).ToArray()) entries.Remove(entry);
+                }
+                if (total + response.Bytes.Length > 134217728) return null;
+                using var content = new MemoryStream(response.Bytes, false);
+                id = (await assets.WriteAsync(Scope, extension!, content, ct).ConfigureAwait(false)).Id;
+            }
+            _protected.Add(id);
+            var next = _manifest!.DeepClone().AsObject();
+            next["entries"]![key] = ActivityNormalizer.Object(new { assetId = id, url, contentHash = hash, etag = response.ETag,
+                lastModified = response.LastModified, validatedAt = ActivityNormalizer.Utc(now), lastReferencedAt = ActivityNormalizer.Utc(now) });
+            await data.WriteJsonAsync(ManifestScope, next, ct).ConfigureAwait(false); _manifest = next;
+            return id;
         }
+        finally { _writes.Release(); }
     }
-
     public static string? Extension(byte[] bytes, string mime)
     {
         if (mime == "image/png" && bytes.Length >= 8 && bytes.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 })) return "png";
