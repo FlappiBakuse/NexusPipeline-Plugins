@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-10-08T14:33:24Z",
+  "generatedAt": "2026-10-11T12:01:34Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -21,19 +21,26 @@
         "主题"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "managed-code",
-      "apiVersion": "2.1",
+      "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.17.0",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.3.1.zip",
-      "sha256": "f6f1301d20e6fdd0bfe867566b342b9383fb92a29ca63a408dc7569f79d0f1a8",
-      "sizeBytes": 182050,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.3.2.zip",
+      "sha256": "5e586ba3b88c8c8149364d760a9e4850fd273917040c68fe562544132872139e",
+      "sizeBytes": 181382,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-10-05",
@@ -47,13 +54,6 @@
           "items": [
             "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
             "旧外观数据保持原位，新实例使用当前插件资源重新配置。"
-          ]
-        },
-        {
-          "version": "0.2.8",
-          "date": "2026-09-18",
-          "items": [
-            "修复前端样式对宿主公共拖拽控件内部选择器的依赖。"
           ]
         }
       ],
@@ -69,6 +69,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.3.1",
               "date": "2026-10-05",
               "items": [
@@ -81,12 +88,6 @@
               "items": [
                 "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15.",
                 "Leaves old appearance data untouched; configure current plugin resources in the new instance."
-              ]
-            },
-            {
-              "version": "0.2.8",
-              "items": [
-                "Fixed frontend styles that depended on the host drag control's internal selectors."
               ]
             }
           ]
@@ -110,17 +111,24 @@
         "运行支持"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/EmulatorSupport",
-      "updatedAt": "2026-10-05",
-      "hasReadme": false,
-      "version": "0.2.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.2.2",
       "kind": "managed-code",
-      "apiVersion": "2.1",
+      "apiVersion": "2.2",
       "capabilities": [],
-      "minHostVersion": "0.17.0",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/EmulatorSupport/EmulatorSupport-0.2.1.zip",
-      "sha256": "599ecccf33f7ed2979055f1c6cd8d245c185461dc9e51fe6fd4e5ab6ef007489",
-      "sizeBytes": 84833,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/EmulatorSupport/EmulatorSupport-0.2.2.zip",
+      "sha256": "016a1a4a623348b4a021580f609b0e4981157d63f27c54a5ef2c87b8783c6341",
+      "sizeBytes": 86007,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-10-05",
@@ -134,15 +142,69 @@
           "items": [
             "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
           ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-09-16",
-          "items": [
-            "提供雷电、夜神和 BlueStacks 模拟器识别、启动、截图与关闭支持。"
-          ]
         }
       ]
+    },
+    {
+      "name": "game-activities",
+      "artifactName": "GameActivities",
+      "displayName": "游戏活动",
+      "gameName": "通用活动",
+      "description": "通过 SRA 订阅八款游戏的版本概览与活动，区服独立缓存。",
+      "authors": [
+        {
+          "name": "FlappiBakuse",
+          "url": "https://github.com/FlappiBakuse"
+        }
+      ],
+      "tags": [
+        "活动",
+        "SRA",
+        "概览"
+      ],
+      "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
+      "updatedAt": "2026-10-09",
+      "hasReadme": true,
+      "version": "0.1.0",
+      "kind": "managed-code",
+      "apiVersion": "2.2",
+      "capabilities": [
+        "frontend-module"
+      ],
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameActivities/GameActivities-0.1.0.zip",
+      "sha256": "e2ab2c9c71771468fdac054d1de9e177acac00a0eb1ce69f7f376190265ce230",
+      "sizeBytes": 245997,
+      "changelog": [
+        {
+          "version": "0.1.0",
+          "date": "2026-10-09",
+          "items": [
+            "提供独立活动卡、进度选择、缓存与来源诊断。"
+          ]
+        }
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "Game Activities",
+          "gameName": "General activities",
+          "description": "Subscribe to SRA version overviews and activities with isolated progression caches.",
+          "tags": [
+            "Activities",
+            "SRA",
+            "Dashboard"
+          ],
+          "changelog": [
+            {
+              "version": "0.1.0",
+              "date": "2026-10-09",
+              "items": [
+                "Adds a dashboard card, progression selection, cached feeds and source diagnostics."
+              ]
+            }
+          ]
+        }
+      }
     },
     {
       "name": "game-checkin",
@@ -166,19 +228,27 @@
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-10-08",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.4.2",
+      "version": "0.4.3",
       "kind": "managed-code",
-      "apiVersion": "2.1",
+      "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.17.1",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.2.zip",
-      "sha256": "272a6e0a70e0ec921b2199a589b6fd8725fa91e20d725950ff99bfe326a8b242",
-      "sizeBytes": 311580,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.3.zip",
+      "sha256": "0ef1077e6ba6d2413e46c1d56aa41b909c09ce51bf73a4e83e90b71eb83a9b63",
+      "sizeBytes": 415838,
       "changelog": [
+        {
+          "version": "0.4.3",
+          "date": "2026-10-11",
+          "items": [
+            "开放五个平台网页登录，自动打开登录界面，并修复凭据认证、取消和保存重启恢复。",
+            "完善凭据提示及游戏选择框布局；任务运行记录只显示最近一次签到结果。"
+          ]
+        },
         {
           "version": "0.4.2",
           "items": [
@@ -191,13 +261,6 @@
           "date": "2026-10-05",
           "items": [
             "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-          ]
-        },
-        {
-          "version": "0.4.0",
-          "date": "2026-10-04",
-          "items": [
-            "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
           ]
         }
       ],
@@ -217,6 +280,14 @@
           ],
           "changelog": [
             {
+              "version": "0.4.3",
+              "date": "2026-10-11",
+              "items": [
+                "Enables browser login for all five platforms, opens login dialogs automatically, and improves credential validation, cancellation, and persistence.",
+                "Refines credential hints and game selection layout; each task displays only its latest sign-in run."
+              ]
+            },
+            {
               "version": "0.4.2",
               "items": [
                 "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
@@ -228,13 +299,6 @@
               "date": "2026-10-05",
               "items": [
                 "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-              ]
-            },
-            {
-              "version": "0.4.0",
-              "date": "2026-10-04",
-              "items": [
-                "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
               ]
             }
           ]
@@ -259,20 +323,27 @@
         "运行卡片"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/LiveScreenshot",
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.3.1",
+      "version": "0.3.2",
       "kind": "managed-code",
-      "apiVersion": "2.1",
+      "apiVersion": "2.2",
       "capabilities": [
         "execution-preview-client",
         "frontend-module"
       ],
-      "minHostVersion": "0.17.0",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.3.1.zip",
-      "sha256": "518d5ba0bd45cab9ebdf16efa46bd5b10d2fc04f8963d90dad343a59b3f03534",
-      "sizeBytes": 97894,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/LiveScreenshot/LiveScreenshot-0.3.2.zip",
+      "sha256": "ac93bd3af48223c2b2d4394ad29a42425f009f2ec44d599efeb763f01a02c1f7",
+      "sizeBytes": 98191,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-10-05",
@@ -285,13 +356,6 @@
           "date": "2026-10-04",
           "items": [
             "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-09-12",
-          "items": [
-            "插件前端升级到 Frontend API 1.5，改用公开 nxp-* 组件与宿主稳定 design token。"
           ]
         }
       ],
@@ -307,6 +371,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.3.1",
               "date": "2026-10-05",
               "items": [
@@ -318,12 +389,6 @@
               "date": "2026-10-04",
               "items": [
                 "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15."
-              ]
-            },
-            {
-              "version": "0.2.0",
-              "items": [
-                "The plugin frontend targets Frontend API 1.5 and now uses public nxp-* elements with host design tokens."
               ]
             }
           ]
@@ -348,19 +413,26 @@
         "ADB"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
-      "updatedAt": "2026-10-05",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "managed-code",
-      "apiVersion": "2.1",
+      "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.17.0",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.2.1.zip",
-      "sha256": "4805befcbdafb9f88b524a914dce064e95b670f1cb132747768d2b7045028d3e",
-      "sizeBytes": 831170,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.2.2.zip",
+      "sha256": "c2508f0abf062b40fc704e4712ae98c6368175951a7db10288e52d9ab0e052ed",
+      "sizeBytes": 857713,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-10-05",
@@ -374,13 +446,6 @@
           "items": [
             "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
             "独立 worker 使用 .NET 10.0.12 或更高的 10.0 补丁运行时，保留完整依赖与许可文件。"
-          ]
-        },
-        {
-          "version": "0.1.1",
-          "date": "2026-09-29",
-          "items": [
-            "包内许可说明不再引用已移除的原生测试锁定文件。"
           ]
         }
       ]
@@ -405,20 +470,27 @@
         "BAAH"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.3.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.3.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "emulator",
         "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.3.1.zip",
-      "sha256": "60fd02a1524df06dc8efc3610c9794bbe043883d11ba7c20ebcaec82738860f3",
-      "sizeBytes": 110379,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BAAH/BAAH-0.3.2.zip",
+      "sha256": "5a8d5c932e7bffc80b13cc6e01179ce55e14946bcaf5da0af60a3637d22d1c16",
+      "sizeBytes": 112125,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-10-07",
@@ -431,14 +503,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -455,6 +519,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.3.1",
               "date": "2026-10-07",
               "items": [
@@ -466,13 +537,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.2.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -497,17 +561,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BetterGI",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.4.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.4.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.4.1.zip",
-      "sha256": "78ecaa1bb59350473dd1238cc36c55de8d48f29521161a57ea17633b5a5c28f7",
-      "sizeBytes": 76084,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/BetterGI/BetterGI-0.4.2.zip",
+      "sha256": "bb9ea2ad506951fa4b40998d882cb44e419435215a4ac92bb0dd3bbf181da814",
+      "sizeBytes": 77853,
       "changelog": [
+        {
+          "version": "0.4.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.4.1",
           "date": "2026-10-07",
@@ -520,14 +591,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -543,6 +606,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.4.1",
               "date": "2026-10-07",
               "items": [
@@ -554,13 +624,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.3.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -585,19 +648,26 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.4.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.4.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "emulator"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.4.1.zip",
-      "sha256": "9fc59cce509ea2fbed8a34accadc95f28dabe08452f34b7dde4378380fbff3ac",
-      "sizeBytes": 154476,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.4.2.zip",
+      "sha256": "0c577e9f7cadf97a2f2bb77fcaa24874fce4644b9cf3201eff84e299a51c15ec",
+      "sizeBytes": 156132,
       "changelog": [
+        {
+          "version": "0.4.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.4.1",
           "date": "2026-10-07",
@@ -610,14 +680,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -633,6 +695,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.4.1",
               "date": "2026-10-07",
               "items": [
@@ -644,13 +713,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.3.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -676,20 +738,27 @@
         "MaaFramework"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaStellaSora",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.3.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.3.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "emulator",
         "no-fresh-config"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.3.1.zip",
-      "sha256": "dfb4ec525a409b83abced2036dd4954c7affe789727974c1e5783550a827beb6",
-      "sizeBytes": 112285,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaStellaSora/MaaStellaSora-0.3.2.zip",
+      "sha256": "1388ab4d4bbbff7300dd518beba8ac3f622bba924665a7d4d79b4fe7934c6349",
+      "sizeBytes": 113763,
       "changelog": [
+        {
+          "version": "0.3.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.3.1",
           "date": "2026-10-07",
@@ -702,15 +771,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。",
-            "使用 MFAAvalonia 稳定实例；旧 MXU 配置在 Host 启动恢复后备份清空，由用户重新设置。"
           ]
         }
       ],
@@ -726,6 +786,13 @@
           ],
           "changelog": [
             {
+              "version": "0.3.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.3.1",
               "date": "2026-10-07",
               "items": [
@@ -737,14 +804,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.2.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery.",
-                "Uses stable MFAAvalonia instances; Host archives and clears legacy MXU configuration after startup recovery so users can configure it again."
               ]
             }
           ]
@@ -769,17 +828,24 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.4.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.4.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.4.1.zip",
-      "sha256": "3a4e713981655f7b9d014d3d6364380ae49ad8af6338400ed43e0b32e5ef7be4",
-      "sizeBytes": 129131,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/March7thAssistant/March7thAssistant-0.4.2.zip",
+      "sha256": "5859e83cef7cbe386cbdd21ea30a14fca33f5dabd34c00ce80121b836399de21",
+      "sizeBytes": 130823,
       "changelog": [
+        {
+          "version": "0.4.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.4.1",
           "date": "2026-10-07",
@@ -792,14 +858,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -815,6 +873,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.4.1",
               "date": "2026-10-07",
               "items": [
@@ -826,13 +891,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.3.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -856,20 +914,27 @@
         "专项插件"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkNTE",
-      "updatedAt": "2026-10-07",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "no-fresh-config",
         "self-managed-pc-launch"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkNTE/OkNTE-0.2.1.zip",
-      "sha256": "67f7195144e129bc6be708bc70960fb264ceaf34e4cfb1617e273ccf3500f575",
-      "sizeBytes": 93875,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkNTE/OkNTE-0.2.2.zip",
+      "sha256": "8886dc2a8501be40e415ffa91664bb009f4da289eb70761c9d897a9d965036fb",
+      "sizeBytes": 93952,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-10-07",
@@ -882,14 +947,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -904,6 +961,13 @@
           ],
           "changelog": [
             {
+              "version": "0.2.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.2.1",
               "date": "2026-10-07",
               "items": [
@@ -915,13 +979,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.1.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -945,19 +1002,26 @@
         "专项插件"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
-      "updatedAt": "2026-10-07",
+      "updatedAt": "2026-10-11",
       "hasReadme": true,
-      "version": "0.2.1",
+      "version": "0.2.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkWutheringWaves/OkWutheringWaves-0.2.1.zip",
-      "sha256": "861a2aacc4029e6145e9067d9e72ba8e3ee4b3a028c69741357b7b95c8906e99",
-      "sizeBytes": 98856,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/OkWutheringWaves/OkWutheringWaves-0.2.2.zip",
+      "sha256": "a87a15fd82fc9459562a38a736a2a083632b3bdf9085963cd1d48d5895667f9b",
+      "sizeBytes": 98606,
       "changelog": [
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.2.1",
           "date": "2026-10-07",
@@ -970,14 +1034,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.1.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -992,6 +1048,13 @@
           ],
           "changelog": [
             {
+              "version": "0.2.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.2.1",
               "date": "2026-10-07",
               "items": [
@@ -1003,13 +1066,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.1.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
@@ -1034,19 +1090,26 @@
         "配置接管"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/ZenlessZoneZeroOneDragon",
-      "updatedAt": "2026-10-07",
-      "hasReadme": false,
-      "version": "0.4.1",
+      "updatedAt": "2026-10-11",
+      "hasReadme": true,
+      "version": "0.4.2",
       "kind": "data-specialized",
-      "apiVersion": "",
+      "apiVersion": "2.2",
       "capabilities": [
         "no-fresh-config"
       ],
-      "minHostVersion": "0.16.15",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.4.1.zip",
-      "sha256": "dc9a39cb85678ec750260f80cea77eca4bcdb440e2e4d3c2b617b295f8ce9c0c",
-      "sizeBytes": 98459,
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-0.4.2.zip",
+      "sha256": "d314a6b4f295ca8a57bb15681db18bc163a22338c4f5297994b61551b853bd33",
+      "sizeBytes": 100188,
       "changelog": [
+        {
+          "version": "0.4.2",
+          "date": "2026-10-11",
+          "items": [
+            "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
+          ]
+        },
         {
           "version": "0.4.1",
           "date": "2026-10-07",
@@ -1059,14 +1122,6 @@
           "date": "2026-10-04",
           "items": [
             "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
-          ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-10-03",
-          "items": [
-            "支持日常任务协议 0.2.0 的流程闭环、失败归并与保留额度的有限重试；需要 Host 0.16.14。",
-            "更新任务兼容说明和上游发行发现。"
           ]
         }
       ],
@@ -1082,6 +1137,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+              ]
+            },
+            {
               "version": "0.4.1",
               "date": "2026-10-07",
               "items": [
@@ -1093,13 +1155,6 @@
               "date": "2026-10-04",
               "items": [
                 "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
-              ]
-            },
-            {
-              "version": "0.3.2",
-              "items": [
-                "Added daily task protocol 0.2.0 flow outcomes and bounded retries preserving configured quotas; requires Host 0.16.14.",
-                "Updated task compatibility and upstream release discovery."
               ]
             }
           ]
