@@ -13,6 +13,23 @@ import tools.repository.model as repository_model
 import tools.repository.source as repository_source
 import tools.repository.versions as repository_versions
 
+def read_stable(root: Path) -> dict[str, Any]:
+    canonical = root / repository_model.CATALOG_FILE
+    projection = root / repository_model.CATALOG_PROJECTION
+    for file in (canonical, projection):
+        repository_io._require(file.is_file() and not file.is_symlink(), f"稳定 catalog 必须是普通文件：{file}")
+    repository_io._require(canonical.read_bytes() == projection.read_bytes(), "稳定 catalog canonical 与根投影字节不同")
+    return repository_io.read_json(canonical)
+
+
+def write_stable(root: Path, catalog: dict[str, Any]) -> None:
+    canonical = root / repository_model.CATALOG_FILE
+    repository_io.write_json(canonical, catalog)
+    projection = root / repository_model.CATALOG_PROJECTION
+    repository_io._require(not projection.is_symlink(), "稳定 catalog 根投影不得为链接")
+    projection.write_bytes(canonical.read_bytes())
+
+
 def _catalog_entry_by_artifact(catalog: dict[str, Any]) -> dict[str, dict[str, Any]]:
     entries = catalog.get("plugins")
     repository_io._require(isinstance(entries, list), "catalog.plugins 必须是数组")
@@ -106,7 +123,7 @@ def audit(root: Path, baseline: str | None = None) -> int:
         repository_io._require(re.fullmatch(r"[0-9a-f]{40}", baseline) is not None, "审计基线必须是完整分发 SHA")
     print(f"[repository] 原始 stable 字节基线：{base}", flush=True)
     plugins = repository_source.discover_source_plugins(root)
-    catalog = repository_io.read_json(root / "catalog.json")
+    catalog = read_stable(root)
     _validate_catalog_shape(root, catalog, plugins, True)
     entries = _catalog_entry_by_artifact(catalog)
     checked = 0

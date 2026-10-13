@@ -16,7 +16,11 @@ PACKAGE_URL_PREFIX = f"https://raw.githubusercontent.com/{REPOSITORY}/main/packa
 PREVIEW_RELEASE_URL_PREFIX = f"https://github.com/{REPOSITORY}/releases/download/plugins-develop"
 
 
-STATE_FILE = ".release-state.json"
+STATE_FILE = "metadata/releases/stable-state.json"
+
+CATALOG_FILE = "metadata/catalog/stable.json"
+CATALOG_PROJECTION = "catalog.json"
+STABLE_METADATA_FILES = (CATALOG_FILE, CATALOG_PROJECTION, STATE_FILE)
 
 
 STATE_SCHEMA_VERSION = 1

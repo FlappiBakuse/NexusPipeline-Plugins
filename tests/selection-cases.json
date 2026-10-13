@@ -66,7 +66,7 @@
       "id": "SC13",
       "repository": "Plugins",
       "changes": [
-        "host.lock.json"
+        "contracts/host-compatibility.json"
       ],
       "mustInclude": [
         "plugins.inventory"
@@ -124,7 +124,7 @@
       "repository": "Plugins",
       "changes": [
         "catalog.json",
-        ".release-state.json",
+        "metadata/releases/stable-state.json",
         "packages/BetterGI/example.zip"
       ],
       "mustInclude": [

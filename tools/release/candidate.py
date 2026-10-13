@@ -62,7 +62,7 @@ def release(
     repository_io._require(plan.get("head") == head, f"release plan 与当前 HEAD 不一致：{plan.get('head')} / {head}")
     plugins = repository_source.discover_source_plugins(root)
     by_artifact = {plugin.artifact_name: plugin for plugin in plugins}
-    old_catalog = repository_io.read_json(distribution_root / "catalog.json")
+    old_catalog = repository_catalog.read_stable(distribution_root)
     old_entries = repository_catalog._catalog_entry_by_artifact(old_catalog)
     state = repository_state.load_state(distribution_root)
     repository_io._require("relocated" not in plan, "不支持旧 release plan 格式")
@@ -115,7 +115,7 @@ def release(
         "plugins": final_entries,
     }
     repository_catalog._validate_catalog_shape(root, catalog, plugins, False)
-    repository_io.write_json(output / "catalog.json", catalog)
+    repository_catalog.write_stable(output, catalog)
 
     released = copy.deepcopy(state.get("released", {}))
     repository_io._require(isinstance(released, dict), f"{repository_model.STATE_FILE}.released 必须是对象")
@@ -163,8 +163,8 @@ def _expected_stable_package_paths(root: Path, generated_root: Path) -> set[str]
 
 def verify_unchanged_stable(root: Path, candidate: Path, distribution_root: Path) -> None:
     """Keep existing stable entries and packages byte-for-byte unchanged."""
-    old_catalog = repository_io.read_json(distribution_root / "catalog.json")
-    candidate_catalog = repository_io.read_json(candidate / "catalog.json")
+    old_catalog = repository_catalog.read_stable(distribution_root)
+    candidate_catalog = repository_catalog.read_stable(candidate)
     old_entries = repository_catalog._catalog_entry_by_artifact(old_catalog)
     new_entries = repository_catalog._catalog_entry_by_artifact(candidate_catalog)
     plan = repository_io.read_json(candidate / "release-plan.json")
@@ -187,10 +187,13 @@ def validate_stable_candidate_layout(root: Path, generated_root: Path) -> dict[s
     generated_root = generated_root.resolve()
     repository_io._require(generated_root.is_dir() and not generated_root.is_symlink(), "stable 候选目录必须是普通目录")
     expected_packages = _expected_stable_package_paths(root, generated_root)
-    required_files = {"catalog.json", repository_model.STATE_FILE, "release-plan.json"}
+    required_files = {*repository_model.STABLE_METADATA_FILES, "release-plan.json"}
     optional_files = {"candidate.json"}
     allowed_files = required_files | optional_files | expected_packages
     allowed_directories = {"packages"}
+    for relative in repository_model.STABLE_METADATA_FILES:
+        parts = relative.split("/")[:-1]
+        allowed_directories.update("/".join(parts[:index]) for index in range(1, len(parts) + 1))
     for relative in expected_packages:
         parts = relative.split("/")[:-1]
         allowed_directories.update("/".join(parts[:index]) for index in range(1, len(parts) + 1))
@@ -222,7 +225,7 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     generated_root = generated_root.resolve()
     distribution_root = (distribution_root or root).resolve()
     plan = repository_io.read_json(generated_root / "release-plan.json")
-    catalog = repository_io.read_json(generated_root / "catalog.json")
+    catalog = repository_catalog.read_stable(generated_root)
     state = repository_io.read_json(generated_root / repository_model.STATE_FILE)
     plugins = repository_source.discover_source_plugins(root)
     repository_io._require(repository_git.git_head(root) == plan.get("head"), "生成候选 source HEAD 与 release plan 不一致")
@@ -248,7 +251,7 @@ def validate_generated(root: Path, generated_root: Path, *, distribution_root: P
     ):
         repository_io._require(plan.get(key) == expected_plan.get(key), f"release plan {key} 与可信源码/分发基线推导不一致")
     repository_catalog._validate_catalog_shape(root, catalog, plugins, False)
-    old_catalog = repository_io.read_json(distribution_root / "catalog.json")
+    old_catalog = repository_catalog.read_stable(distribution_root)
     old_entries = repository_catalog._catalog_entry_by_artifact(old_catalog)
     repository_io._require("relocated" not in plan, "不支持旧 release plan 格式")
     requires = set(plan.get("requiresPackage", []))
@@ -360,7 +363,7 @@ def write_candidate_manifest(
         "releaseLabel": None,
         "distribution": {"headSha": distribution_sha,
                          "stateSha256": release_inventory._sha_file(distribution / repository_model.STATE_FILE),
-                         "catalogSha256": release_inventory._sha_file(distribution / "catalog.json")},
+                         "catalogSha256": release_inventory._sha_file(distribution / repository_model.CATALOG_FILE)},
         "packageInputs": release_inventory.package_input_identities(root, plan, partner_sha),
     }
     repository_io.write_json(output / "candidate.json", candidate)
@@ -688,7 +691,7 @@ def validate_inventory(root: Path, output: Path, *, expected_source_sha: str,
         distribution_root = Path(temporary)
         CandidateWorkspace._extract_distribution(root, expected_distribution_sha, distribution_root)
         repository_io._require(distribution["stateSha256"] == release_inventory._sha_file(distribution_root / repository_model.STATE_FILE)
-                      and distribution["catalogSha256"] == release_inventory._sha_file(distribution_root / "catalog.json"),
+                      and distribution["catalogSha256"] == release_inventory._sha_file(distribution_root / repository_model.CATALOG_FILE),
                       "candidate 分发基线摘要不符")
         validate_generated(root, output, distribution_root=distribution_root)
         verify_unchanged_stable(root, output, distribution_root)

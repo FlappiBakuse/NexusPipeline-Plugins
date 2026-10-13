@@ -34,7 +34,7 @@ class GitHubGitTransport:
         root = generated_root.resolve()
         repository_io._require(path.is_file() and not path.is_symlink() and root in resolved.parents, f"stable 候选文件无效：{path}")
         relative = resolved.relative_to(root).as_posix()
-        repository_io._require(relative in {"catalog.json", repository_model.STATE_FILE} or relative.startswith("packages/"), f"stable 候选路径不在白名单：{relative}")
+        repository_io._require(relative in set(repository_model.STABLE_METADATA_FILES) or relative.startswith("packages/"), f"stable 候选路径不在白名单：{relative}")
         return relative
 
     def publish_stable_candidate(
@@ -95,11 +95,11 @@ class GitHubGitTransport:
                 intervening = self._parse_changed_paths(self._run(
                     ["git", "diff", "--name-status", "--find-renames", "-z", f"{source_sha}..{current}"],
                     checkout, env=env))
-                repository_io._require(all(path in {"catalog.json", repository_model.STATE_FILE} or path.startswith("packages/")
+                repository_io._require(all(path in set(repository_model.STABLE_METADATA_FILES) or path.startswith("packages/")
                                   for path in intervening),
                               "SUPERSEDED：main 已有更新源码，旧候选不再写入")
             if (generated_root / "candidate.json").is_file():
-                for relative in ("catalog.json", repository_model.STATE_FILE, "packages"):
+                for relative in (*repository_model.STABLE_METADATA_FILES, "packages"):
                     original_tree = self._run(["git", "rev-parse", f"{base_sha}:{relative}"], checkout, env=env)
                     current_tree = self._run(["git", "rev-parse", f"{current}:{relative}"], checkout, env=env)
                     repository_io._require(original_tree == current_tree,
@@ -114,9 +114,10 @@ class GitHubGitTransport:
                 if destination.exists() or destination.is_symlink():
                     repository_io._require(destination.is_file() and not destination.is_symlink(), f"stable 目标包不是普通文件：{relative}")
                     repository_io._require(repository_io._same_package_bytes(destination, candidate), f"同一 SemVer 的远端发行包字节不同，拒绝覆盖：{relative}")
-            for relative in ("catalog.json", repository_model.STATE_FILE):
+            for relative in repository_model.STABLE_METADATA_FILES:
                 source = files[relative]
                 destination = checkout / relative
+                self._require_no_symlink_parents(checkout, destination)
                 repository_io._require(not destination.is_symlink(), f"stable 目标不得是 symlink：{relative}")
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(source, destination)
@@ -140,7 +141,7 @@ class GitHubGitTransport:
             self._run(["git", "fetch", "origin", "main"], checkout, env=env)
             latest = self._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
             repository_io._require(latest == current, "stable main 在写入前发生竞争，拒绝使用旧父提交")
-            self._run(["git", "add", "--all", "--", "catalog.json", repository_model.STATE_FILE, "packages"], checkout, env=env)
+            self._run(["git", "add", "--all", "--", *repository_model.STABLE_METADATA_FILES, "packages"], checkout, env=env)
             raw = self._run(["git", "diff", "--cached", "--name-status", "--find-renames", "-z"], checkout, env=env)
             changed = self._parse_changed_paths(raw)
             remove_directories = tuple(release_inventory._safe_relative(value, "stable plan removeArtifacts") for value in plan.get("removeArtifacts", []))
@@ -221,9 +222,11 @@ class GitHubGitTransport:
         fetched_head = cls._run(["git", "rev-parse", "refs/remotes/origin/main"], checkout, env=env)
         cls._run(["git", "merge-base", "--is-ancestor", published, fetched_head], checkout, env=env)
 
-        catalog_bytes = cls._read_tree_blob(checkout, published, "catalog.json", env)
+        catalog_bytes = cls._read_tree_blob(checkout, published, repository_model.CATALOG_FILE, env)
+        projection_bytes = cls._read_tree_blob(checkout, published, repository_model.CATALOG_PROJECTION, env)
         state_bytes = cls._read_tree_blob(checkout, published, repository_model.STATE_FILE, env)
         repository_io._require(catalog_bytes is not None and state_bytes is not None, "stable push 后 catalog/state 不可读取")
+        repository_io._require(catalog_bytes == projection_bytes, "stable push 后 catalog canonical 与根投影字节不同")
         try:
             catalog = json.loads(catalog_bytes.decode("utf-8"))
             state = json.loads(state_bytes.decode("utf-8"))
@@ -272,15 +275,16 @@ class GitHubGitTransport:
 
     @classmethod
     def _assert_checkout_modes(cls, checkout: Path, env: dict[str, str]) -> None:
-        for relative in ("catalog.json", repository_model.STATE_FILE, "packages"):
+        for relative in (*repository_model.STABLE_METADATA_FILES, "packages"):
             target = checkout / relative
+            cls._require_no_symlink_parents(checkout, target)
             if target.is_symlink():
                 raise repository_model.RepositoryError(f"stable checkout 白名单路径不得是 symlink：{relative}")
         packages = checkout / "packages"
         if packages.is_dir():
             for path in packages.rglob("*"):
                 repository_io._require(not path.is_symlink(), f"stable checkout packages 不得包含 symlink：{path.relative_to(checkout)}")
-        index = cls._run(["git", "ls-files", "-s", "--", "catalog.json", repository_model.STATE_FILE, "packages"], checkout, env=env)
+        index = cls._run(["git", "ls-files", "-s", "--", *repository_model.STABLE_METADATA_FILES, "packages"], checkout, env=env)
         repository_io._require(not any(line.startswith("160000 ") for line in index.splitlines()), "stable checkout 禁止 submodule")
 
     @classmethod
@@ -295,7 +299,7 @@ class GitHubGitTransport:
             # Idempotent readback is a statement about already-published bytes.  A
             # later README or ordinary source commit must not erase that fact.
             # New writes are still guarded below by the source/baseline diff.
-        for relative in ("catalog.json", repository_model.STATE_FILE):
+        for relative in repository_model.STABLE_METADATA_FILES:
             candidate_path = generated_root / relative
             current_bytes = cls._read_tree_blob(checkout, current, relative, env)
             if current_bytes is None or current_bytes != candidate_path.read_bytes():

@@ -19,8 +19,8 @@
 3. 数据化插件在目标软件目录验证 profile 推导；代码插件构建并验证入口程序集、依赖和 Plugin API 版本。
 4. 验证运行语义、错误处理、用户数据隔离和敏感数据边界。
 5. 检查 JSON、脚本源码和发行包不含个人数据。
-6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.7`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `host.lock.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
-7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，手动稳定候选按已发布游标计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`.release-state.json` 或 `packages/`。
+6. 仅 `managed-code` 可以校验 `frontend-module` capability、Frontend API `1.7`、`frontend/` 的 Vue/TypeScript/Vite 源码、`web/` 构建产物和 slot cleanup 行为；公共控件使用宿主 `nxp-*` Native Custom Elements，不依赖宿主私有 Vue 组件、私有 class 或内部实现。`data-specialized` 只校验三个 Host 声明能力和后端脚本闭包。若使用本地化，使用 `contracts/host-compatibility.json` 的 `supportedLocales` 中声明的规范化 BCP 47 locale，确保默认资源存在、所有语言 key 集合和占位符集合一致、value 为非空字符串且不使用 `legacy.*` key；数据化专项插件的 `inputs.labelKey` 与 `inputs.descriptionKey` 必须在所有 locale 资源中存在；确认公开资源不包含配置、密钥、程序集或调试符号。
+7. 正式发行前按授权确定插件版本并同步 `store.json`；未发布的同一目标版本内修复和重建不重复提升版本；工具、文档和 CI 治理改动不制造新插件版本。Pull Request 运行范围验证，手动稳定候选按已发布游标计算累计计划。catalog 尚未包含新插件或新版本时，`validate` 会因源码与现存 catalog 集合不一致而失败；候选生成只写指定的外部新输出目录，不改源 `catalog.json`、`metadata/releases/stable-state.json` 或 `packages/`。
 
 ## 测试与提交治理
 
@@ -36,7 +36,7 @@
 
 ## 发行包规则
 
-- stable 由受信 Publisher App 在验证原 candidate job 与包清单后写入 `main` 的 `catalog.json`、`.release-state.json` 和 `packages/<ArtifactName>/`；普通开发者、Agent 和常规 token 不得直接写入。develop preview 使用固定 `plugins-develop` Release，包名为 `<ArtifactName>-<version>-<sha256>.zip`，不修改 stable 文件。
+- stable 由受信 Publisher App 在验证原 candidate job 与包清单后写入 `main` 的 `catalog.json`、`metadata/releases/stable-state.json` 和 `packages/<ArtifactName>/`；普通开发者、Agent 和常规 token 不得直接写入。develop preview 使用固定 `plugins-develop` Release，包名为 `<ArtifactName>-<version>-<sha256>.zip`，不修改 stable 文件。
 - 每个 artifact 目录最多保留最近三个受限版本包；版本排序遵循 `beta < rc < stable`，旧包仅用于仓库存档，插件平台不提供降级安装。
 - stable ZIP 文件名使用 `<ArtifactName>-<version>.zip`，preview ZIP 文件名使用 `<ArtifactName>-<version>-<sha256>.zip`；目录名和文件名区分大小写。`catalog.json` 使用 schemaVersion 2，并包含 `artifactName`、精确包 URL、`sha256`、`sizeBytes` 和最近更新记录。stable 相同 `(artifactName, version)` 的发行包不可覆盖；preview 允许同版本按包哈希更新。
 - `packageUrl` 必须精确指向 `https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/<ArtifactName>/<ArtifactName>-<version>.zip`。
@@ -116,7 +116,7 @@ Pull Request 应包含：
 
 - 用户配置、账号信息、Cookie、Token、密钥和个人路径；
 - 运行日志、缓存、临时目录和开发机生成的无关文件；
-- 手工修改的 `.release-state.json`、`catalog.json`、`packages/` 或与发行包内容不一致的 SHA256 / `sizeBytes`；
+- 手工修改的 `metadata/releases/stable-state.json`、`catalog.json`、`packages/` 或与发行包内容不一致的 SHA256 / `sizeBytes`；
 - 未经许可重新分发的第三方二进制或资源。
 
 ## 维护约定
@@ -139,6 +139,6 @@ Pull Request 应包含：
 
 此入口复用 runner 的 Git A/R/C、暂存、rename 和未跟踪解析。新增插件资源调用既有 source/manifest/script 边界验证；stable 产物沿用生产检查拒绝，合法 fixture/Schema/adapter 资源放行，未知角色和任务外 Owner 为 REVIEW。不限制文件数或 LOC，不追溯阻断历史目录。REVIEW 的退出码 0 只表示没有确定性拒绝，人工审核仍未完成。
 
-`python tools/repo.py check docs` 同时检查指定前端指南声明及 manifest 示例与 `host.lock.json`；历史旧数字不扫描，模糊表述为 REVIEW，提取失败为 NOT_CHECKED 且非零。路径允许规范化后仍在仓库内的 `../CONTRIBUTING.md`，拒绝不存在或真正仓库外的目标。治理工具不替代 A06、ZIP 检查、生产 PR 检查或功能测试，也不更改发布 writer 权限。工具自测沿用 `python -m unittest discover -s tests/tooling -v`，将隔离输出定位到已登记的外部测试根。
+`python tools/repo.py check docs` 同时检查指定前端指南声明及 manifest 示例与 `contracts/host-compatibility.json`；历史旧数字不扫描，模糊表述为 REVIEW，提取失败为 NOT_CHECKED 且非零。路径允许规范化后仍在仓库内的 `../CONTRIBUTING.md`，拒绝不存在或真正仓库外的目标。治理工具不替代 A06、ZIP 检查、生产 PR 检查或功能测试，也不更改发布 writer 权限。工具自测沿用 `python -m unittest discover -s tests/tooling -v`，将隔离输出定位到已登记的外部测试根。
 
 当前公开契约为 Plugin API 2.2 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。插件 README 面向用户，统一说明用途、开始使用、使用范围和常见问题；开发协议与测试入口放入作者指南或插件 docs，不将构建通过写作真实平台验收通过。

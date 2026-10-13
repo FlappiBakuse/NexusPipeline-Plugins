@@ -57,7 +57,7 @@ test("rename selects both plugin owners and manifest deletion retains inventory"
 });
 
 test("publisher outputs select only release contract", () => {
-  const selected = ids([...change("catalog.json"), ...change(".release-state.json"), ...change("packages/BetterGI/example.zip")]);
+  const selected = ids([...change("catalog.json"), ...change("metadata/releases/stable-state.json"), ...change("packages/BetterGI/example.zip")]);
   assert.deepEqual(selected, ["plugins.release-contract", "plugins.required", "plugins.scope"]);
 });
 

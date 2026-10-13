@@ -34,5 +34,5 @@
 - [ ] 相关清单、说明、更新记录和适用测试已同步；不适用项已说明。
 - [ ] 专项或托管插件的内容符合各自契约，使用宿主支持的公开能力。
 - [ ] 未包含账号凭据、用户配置、运行日志、缓存或本机验收产物。
-- [ ] 未手工修改稳定分发文件 `catalog.json`、`.release-state.json` 或 `packages/`。
+- [ ] 未手工修改稳定分发文件 `catalog.json`、`metadata/releases/stable-state.json` 或 `packages/`。
 - [ ] 目标分支为 `main`；提交说明采用约定式提交格式（类型英文、说明中文）。

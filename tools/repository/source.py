@@ -84,17 +84,17 @@ def read_host_compatibility(root: Path) -> dict[str, Any]:
     该文件只表达公开契约版本与 locale 集合，不再承担 SDK 源码或 Git 提交
     锁定职责。SDK 的具体源码 SHA 由验证和候选任务单独固定。
     """
-    lock_path = root / "host.lock.json"
+    lock_path = root / "contracts/host-compatibility.json"
     data = repository_io.read_json(lock_path)
-    repository_io._require(isinstance(data, dict), f"host.lock.json 必须是对象：{repository_io._display(lock_path)}")
-    repository_io._require(set(data) == repository_model.HOST_COMPATIBILITY_KEYS, "host.lock.json 只能包含 hostApiVersion、frontendApiVersion、supportedLocales")
+    repository_io._require(isinstance(data, dict), f"contracts/host-compatibility.json 必须是对象：{repository_io._display(lock_path)}")
+    repository_io._require(set(data) == repository_model.HOST_COMPATIBILITY_KEYS, "contracts/host-compatibility.json 只能包含 hostApiVersion、frontendApiVersion、supportedLocales")
     for key in ("hostApiVersion", "frontendApiVersion"):
         value = data.get(key)
         repository_io._require(
             isinstance(value, str) and repository_model.HOST_API_VERSION_PATTERN.fullmatch(value) is not None,
-            f"host.lock.json 的 {key} 必须是 major.minor 字符串",
+            f"contracts/host-compatibility.json 的 {key} 必须是 major.minor 字符串",
         )
-    locales = _normalize_locale_list(data.get("supportedLocales"), "host.lock.json 的 supportedLocales")
+    locales = _normalize_locale_list(data.get("supportedLocales"), "contracts/host-compatibility.json 的 supportedLocales")
     return {
         "hostApiVersion": data["hostApiVersion"],
         "frontendApiVersion": data["frontendApiVersion"],
@@ -121,7 +121,7 @@ def validate_host_locale_registry(root: Path, host_root: Path) -> int:
     )
     repository_io._require(web_default == embedded_default, "宿主 Web 与 embedded 的默认 locale 不一致")
     repository_io._require(web_locales == embedded_locales, "宿主 Web 与 embedded 的 supported locale 顺序不一致")
-    repository_io._require(web_locales == locked_locales, "host.lock.json 的 supportedLocales 与宿主当前 locale registry 不一致")
+    repository_io._require(web_locales == locked_locales, "contracts/host-compatibility.json 的 supportedLocales 与宿主当前 locale registry 不一致")
     for locale in locked_locales:
         web_resource = host_root / "frontend" / "public" / "i18n" / f"{locale}.json"
         embedded_resource = localization_root / f"{locale}.json"

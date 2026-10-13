@@ -26,7 +26,7 @@ export function validatePairCheckout(root, file, plan, partnerRoot) {
       || own.headSha !== plan.headSha || own.testedSha !== plan.testedSha || partner.testedSha !== plan.partnerSha)
     throw new Error("Pair differs from scope identity");
   for (const [directory, source] of [[root,own], ...(partnerRoot ? [[partnerRoot,partner]] : [])]) {
-    const lock = source.repository === repositories[0] ? "plugins.lock.json" : "tests/inputs.lock.json";
+    const lock = "tests/inputs.lock.json";
     if (git(directory,"rev-parse","HEAD") !== source.testedSha || git(directory,"rev-parse","HEAD^{tree}") !== source.treeSha
         || git(directory,"status","--porcelain") || fileDigest(path.join(directory,"tests/policy.json")) !== source.policyDigest
         || fileDigest(path.join(directory,lock)) !== source.inputLockDigest)

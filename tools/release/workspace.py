@@ -7,6 +7,7 @@ import tools.repository.git as repository_git
 import tools.repository.io as repository_io
 import tools.repository.model as repository_model
 import tools.repository.state as repository_state
+import tools.repository.catalog as repository_catalog
 
 import io
 import re
@@ -19,7 +20,7 @@ from dataclasses import dataclass
 
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
-GENERATED_PREFIXES = ("catalog.json", repository_model.STATE_FILE, "packages/")
+GENERATED_PREFIXES = (*repository_model.STABLE_METADATA_FILES, "packages/")
 
 
 class CandidateWorkspaceError(repository_model.RepositoryError):
@@ -49,11 +50,11 @@ class CandidateWorkspace:
         distribution_root.mkdir(parents=True)
         try:
             cls._extract_distribution(source_root, base_sha, distribution_root)
-            catalog = repository_io.read_json(distribution_root / "catalog.json")
+            catalog = repository_catalog.read_stable(distribution_root)
             state = repository_state.load_state(distribution_root)
             state_source_sha = state.get("sourceCommit")
             if not isinstance(state_source_sha, str) or FULL_SHA.fullmatch(state_source_sha) is None:
-                raise CandidateWorkspaceError("B 的 .release-state.json.sourceCommit 必须是完整 commit SHA")
+                raise CandidateWorkspaceError("B 的 metadata/releases/stable-state.json.sourceCommit 必须是完整 commit SHA")
             if not cls._is_ancestor(source_root, state_source_sha, source_sha):
                 raise CandidateWorkspaceError("B 的发行 sourceCommit 不是 H 的允许祖先")
             if not isinstance(catalog, dict):
@@ -70,17 +71,26 @@ class CandidateWorkspace:
 
     @staticmethod
     def _reject_generated_changes(root: Path, base_sha: str, source_sha: str) -> None:
+        relocations = repository_state.distribution_relocations(root, base_sha, source_sha)
         for status, paths in repository_git.changed_paths(root, base_sha, source_sha):
             for path in paths:
                 normalized = path.replace("\\", "/")
-                if normalized == "catalog.json" or normalized == repository_model.STATE_FILE or normalized.startswith("packages/"):
+                if normalized in relocations:
+                    continue
+                if normalized in repository_model.STABLE_METADATA_FILES or normalized.startswith("packages/"):
                     raise CandidateWorkspaceError(
                         f"候选 H 不得人工修改发行生成物：{status} {normalized}"
                     )
 
     @staticmethod
     def _extract_distribution(root: Path, commit: str, destination: Path) -> None:
-        command = ["git", "archive", "--format=tar", commit, "catalog.json", repository_model.STATE_FILE, "packages"]
+        state_path = repository_state.state_path_at_commit(root, commit)
+        canonical_probe = subprocess.run(["git", "cat-file", "-e", f"{commit}:{repository_model.CATALOG_FILE}"],
+                                         cwd=root, capture_output=True, check=False)
+        source_paths = [repository_model.CATALOG_PROJECTION, state_path, "packages"]
+        if canonical_probe.returncode == 0:
+            source_paths.append(repository_model.CATALOG_FILE)
+        command = ["git", "archive", "--format=tar", commit, *source_paths]
         completed = subprocess.run(
             command,
             cwd=root,
@@ -96,11 +106,14 @@ class CandidateWorkspace:
                     name = member.name.replace("\\", "/")
                     if name.startswith("/") or any(part in {"", ".", ".."} for part in name.split("/")):
                         raise CandidateWorkspaceError(f"B 发行事实路径非法：{name}")
-                    if not (name == "catalog.json" or name == repository_model.STATE_FILE or name == "packages" or name.startswith("packages/")):
+                    metadata_directories = {"metadata", "metadata/catalog", "metadata/releases"}
+                    if not (name in source_paths or name in metadata_directories and member.isdir()
+                            or name.startswith("packages/")):
                         raise CandidateWorkspaceError(f"B 发行事实包含越界文件：{name}")
                     if member.issym() or member.islnk() or not (member.isdir() or member.isfile()):
                         raise CandidateWorkspaceError(f"B 发行事实禁止链接或特殊条目：{name}")
-                    target = (destination / name).resolve()
+                    target_name = repository_model.STATE_FILE if name == state_path else name
+                    target = (destination / target_name).resolve()
                     if destination.resolve() not in target.parents and target != destination.resolve():
                         raise CandidateWorkspaceError(f"B 发行事实越出隔离目录：{name}")
                     if member.isdir():
@@ -111,6 +124,11 @@ class CandidateWorkspace:
                     if extracted is None:
                         raise CandidateWorkspaceError(f"B 发行事实无法读取：{name}")
                     target.write_bytes(extracted.read())
+            canonical = destination / repository_model.CATALOG_FILE
+            if canonical_probe.returncode != 0:
+                canonical.parent.mkdir(parents=True, exist_ok=True)
+                canonical.write_bytes((destination / repository_model.CATALOG_PROJECTION).read_bytes())
+            repository_catalog.read_stable(destination)
         except tarfile.TarError as exc:
             raise CandidateWorkspaceError("B 发行事实归档无效") from exc
 

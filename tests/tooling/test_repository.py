@@ -30,6 +30,7 @@ from tools.release.candidate import release, validate_generated
 from tools.repository.catalog import catalog_entry
 from tools.repository.git import git_head, git_tree, plugin_root_from_path
 from tools.repository.io import read_json, write_json
+from tools.repository.catalog import read_stable, write_stable
 from tools.repository.model import SourcePlugin, RepositoryError
 from tools.repository.package import _package_files
 from tools.repository.plan import build_plan, validate_candidate_against_base
@@ -38,6 +39,48 @@ from tools.repository.state import load_state
 from tools.repository.versions import is_semver, parse_date, parse_semver
 
 class RepositoryCoreTests(unittest.TestCase):
+    def test_stable_catalog_projection_is_required_and_byte_exact(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="nxp-catalog-projection-") as temporary:
+            root = Path(temporary)
+            value = {"schemaVersion": 2, "plugins": []}
+            write_stable(root, value)
+            self.assertEqual(read_stable(root), value)
+            (root / "catalog.json").write_bytes(b'{"schemaVersion":2,"plugins":[]}\n')
+            with self.assertRaisesRegex(RepositoryError, "字节不同"):
+                read_stable(root)
+            (root / "catalog.json").unlink()
+            with self.assertRaisesRegex(RepositoryError, "普通文件"):
+                read_stable(root)
+
+    def test_distribution_relocation_preserves_historical_facts_and_rejects_edits(self) -> None:
+        from tools.repository.state import distribution_relocations
+        from tools.release.workspace import CandidateWorkspace
+        with tempfile.TemporaryDirectory(prefix="nxp-distribution-relocation-") as temporary:
+            root = Path(temporary) / "source"
+            root.mkdir()
+            self._git(root, "init")
+            write_json(root / "catalog.json", {"schemaVersion": 2, "plugins": []})
+            write_json(root / ".release-state.json", {"schemaVersion": 1, "sourceCommit": "a" * 40, "released": {}})
+            (root / "packages").mkdir()
+            (root / "packages/.keep").write_text("", encoding="utf-8")
+            self._git(root, "add", ".")
+            self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "baseline")
+            baseline = git_head(root)
+            distribution = Path(temporary) / "distribution"
+            distribution.mkdir()
+            CandidateWorkspace._extract_distribution(root, baseline, distribution)
+            self.assertEqual(read_stable(distribution), read_json(root / "catalog.json"))
+            self.assertEqual(load_state(distribution), read_json(root / ".release-state.json"))
+            for old, new in (("catalog.json", repository_model.CATALOG_FILE), (".release-state.json", repository_model.STATE_FILE)):
+                target = root / new
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((root / old).read_bytes())
+            (root / ".release-state.json").unlink()
+            self.assertEqual(distribution_relocations(root, baseline),
+                             {".release-state.json", repository_model.CATALOG_FILE, repository_model.STATE_FILE})
+            (root / repository_model.STATE_FILE).write_text('{}\n', encoding="utf-8")
+            self.assertEqual(distribution_relocations(root, baseline), set())
+
     def test_package_identity_tracks_author_inputs_separately_from_controller(self) -> None:
         from tools.release.inventory import _builder_fingerprint
         with tempfile.TemporaryDirectory(prefix="nxp-package-identity-") as temporary:
@@ -77,7 +120,7 @@ class RepositoryCoreTests(unittest.TestCase):
             with self.assertRaisesRegex(RepositoryError, "发行状态"):
                 load_state(root)
             self.assertEqual(catalog.read_bytes(), before)
-            self.assertFalse((root / ".release-state.json").exists())
+            self.assertFalse((root / "metadata/releases/stable-state.json").exists())
             self.assertIsNone(plugin_root_from_path("plugins/Alpha/plugin.json"))
             self.assertEqual(plugin_root_from_path("plugins/specialized/Alpha/plugin.json"), "plugins/specialized/Alpha")
 
@@ -244,7 +287,7 @@ class RepositoryCoreTests(unittest.TestCase):
                        "channel": "develop", "sourceCommit": source, "plugins": [entry]})
             validated = release_preview.validate_preview_candidate(output, expected_source_sha=source)
             self.assertEqual(validated["sourceCommit"], source)
-            self.assertFalse((output / ".release-state.json").exists())
+            self.assertFalse((output / "metadata/releases/stable-state.json").exists())
             self.assertRegex(package.name, r"^Alpha-0\.1\.0-[0-9a-f]{64}\.zip$")
         finally:
             self._remove_tree(root)
@@ -352,14 +395,14 @@ class RepositoryCoreTests(unittest.TestCase):
         package = root / "packages" / "Alpha" / "Alpha-0.1.0.zip"
         _package_files(payload, package)
         write_json(
-            root / "host.lock.json",
+            root / "contracts/host-compatibility.json",
             {
                 "hostApiVersion": "2.1",
                 "frontendApiVersion": "1.6",
                 "supportedLocales": ["zh-CN", "en-US"],
             },
         )
-        write_json(root / "catalog.json", {"schemaVersion": 2, "repository": "FlappiBakuse/NexusPipeline-Plugins", "generatedAt": "2026-01-01T00:00:00Z", "plugins": [catalog_entry(plugin, package)]})
+        write_stable(root, {"schemaVersion": 2, "repository": "FlappiBakuse/NexusPipeline-Plugins", "generatedAt": "2026-01-01T00:00:00Z", "plugins": [catalog_entry(plugin, package)]})
         self._git(root, "init")
         self._git(root, "add", ".")
         self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "baseline")
@@ -369,8 +412,8 @@ class RepositoryCoreTests(unittest.TestCase):
             "Alpha": {"name": "alpha", "artifactName": "Alpha", "version": "0.1.0",
                       "sha256": entry["sha256"], "sizeBytes": entry["sizeBytes"],
                       "sourceTree": git_tree(root, baseline_commit, plugin_root.relative_to(root).as_posix())}}}
-        write_json(root / ".release-state.json", state)
-        self._git(root, "add", ".release-state.json")
+        write_json(root / "metadata/releases/stable-state.json", state)
+        self._git(root, "add", "metadata/releases/stable-state.json")
         self._git(root, "-c", "user.email=test@example.test", "-c", "user.name=Test", "commit", "-m", "release state")
         return root
 

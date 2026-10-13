@@ -23,7 +23,7 @@ class GovernanceTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         (self.root / 'docs').mkdir()
         (self.root / 'docs/map.json').write_text(json.dumps({'schemaVersion': 1, 'topics': []}), encoding='utf-8')
-        for file in ('AGENTS.md', 'host.lock.json', 'docs/author/FRONTEND_PLUGIN.md'):
+        for file in ('AGENTS.md', 'contracts/host-compatibility.json', 'docs/author/FRONTEND_PLUGIN.md'):
             target = self.root / file
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(SOURCE / file, target)
@@ -42,11 +42,14 @@ class GovernanceTests(unittest.TestCase):
         self.assertTrue(all(rule['status'] == 'PASS' for rule in self.contracts()))
         file = self.root / 'docs/author/FRONTEND_PLUGIN.md'
         current = file.read_text(encoding='utf-8')
-        file.write_text(current.replace('只接受精确版本 `1.6`', '只接受精确版本 `1.5`'), encoding='utf-8')
-        self.assertTrue(any(rule['status'] == 'FAIL' and rule['expected'] == '1.6' for rule in self.contracts()))
-        file.write_text(current.replace('只接受精确版本 `1.6`', '接受当前精确版本'), encoding='utf-8')
+        version = json.loads((self.root / 'contracts/host-compatibility.json').read_bytes())['frontendApiVersion']
+        claim = f'只接受精确版本 `{version}`'
+        self.assertIn(claim, current)
+        file.write_text(current.replace(claim, '只接受精确版本 `99.0`'), encoding='utf-8')
+        self.assertTrue(any(rule['status'] == 'FAIL' and rule['expected'] == version for rule in self.contracts()))
+        file.write_text(current.replace(claim, '接受当前精确版本'), encoding='utf-8')
         self.assertTrue(any(rule['status'] == 'REVIEW' for rule in self.contracts()))
-        (self.root / 'host.lock.json').write_text('{}', encoding='utf-8')
+        (self.root / 'contracts/host-compatibility.json').write_text('{}', encoding='utf-8')
         self.assertEqual(self.contracts()[-1]['status'], 'NOT_CHECKED')
 
     def test_parent_navigation_and_outside_missing_paths(self):
@@ -78,7 +81,7 @@ class GovernanceTests(unittest.TestCase):
         self.assertEqual(check_changes(self.root, evidence, owners=['Tools'])['status'], 'PASS')
         evidence['changes'].append({'status': 'M', 'path': 'docs/new.md'})
         self.assertEqual(check_changes(self.root, evidence, owners=['Tools'])['status'], 'REVIEW')
-        evidence['changes'] = [{'status': 'M', 'path': 'host.lock.json'}]
+        evidence['changes'] = [{'status': 'M', 'path': 'contracts/host-compatibility.json'}]
         self.assertEqual(check_changes(self.root, evidence)['status'], 'REVIEW')
         self.assertEqual(check_changes(self.root, evidence, governance_only=True)['status'], 'FAIL')
 
