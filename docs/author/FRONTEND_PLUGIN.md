@@ -247,3 +247,9 @@ Frontend API 1.7 的 `host.getCapabilities(signal?)` 返回冻结只读的 schem
 Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与 18 个公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
 
 官方外链经 `await host.navigation.openExternal(url)`；插件先验证官方域。Host 仅接受无用户信息的 HTTPS，桌面交给系统浏览器，Web 用户点击在独立标签打开并移除 opener/referrer。失败在插件界面可见，禁止在轮询或刷新时自动打开。
+
+## 布局与本机设计验收
+
+宿主页与官方插件统一遵循 [Host 前端设计规范](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/development/frontend-design.md)。语义卡片最多三层，第四层起违规；透明包装、字段和列表行不计层，深数据继续用缩进分组显示。公共卡片通过真实 DOM 祖先交替表面，light DOM host 不重复计数。间距使用现役 token，排序采用整体卡面、分隔线行及稳定 ID 把手，保留键盘排序。交互与弹窗使用公开元件，长文本、双语、双主题及 360/768/1280 视口保持可读可操作，离开页面释放全部资源。
+
+设计静态检查和真实浏览器专项在仓外本地执行，全 route/slot/配置入口必须有 coverage，动态结构由浏览器闭环。脚本、例外映射、报告和当次截图不提交、不加入 PR CI，也不加入核心功能门禁；排序持久化、公开事件、焦点和生命周期的实际功能验证仍按现役测试维护。未运行真实浏览器不能记为设计验收通过。

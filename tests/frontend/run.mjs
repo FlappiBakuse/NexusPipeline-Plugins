@@ -1,5 +1,5 @@
 import { assertCapture } from "./cases/LiveScreenshot.mjs";
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { isFile, fail, FRONTEND_API_VERSION, safeRelative, assertPluginFrontendBoundaries, allowedSlots, activationCleanup } from "./contract.mjs";
@@ -16,10 +16,10 @@ export function parseArguments(args) {
   const seen = new Set();
   for (let index = 0; index < args.length; index += 2) {
     const option = args[index];
-    if (!["--root", "--host-root"].includes(option) || seen.has(option) || !args[index + 1] || args[index + 1].startsWith("--"))
-      throw new Error("Expected unique --root / --host-root values");
+    if (!["--root", "--host-root", "--artifact", "--report"].includes(option) || seen.has(option) || !args[index + 1] || args[index + 1].startsWith("--"))
+      throw new Error("Expected unique frontend runner options");
     seen.add(option);
-    result[option === "--root" ? "repositoryRoot" : "hostRoot"] = args[index + 1];
+    result[({ "--root": "repositoryRoot", "--host-root": "hostRoot", "--artifact": "artifact", "--report": "report" })[option]] = args[index + 1];
   }
   if (!result.hostRoot) throw new Error("An explicit Host checkout is required");
   return result;
@@ -162,14 +162,23 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(import.met
   const pluginRoot = path.join(repositoryRoot, "plugins");
   const publicElements = await resolvePublicElements(options.hostRoot);
   const manifests = (await findManifests(pluginRoot)).sort();
+  const policy = JSON.parse(await readFile(path.join(repositoryRoot, "tests/policy.json"), "utf8"));
+  const completed = [];
   let checked = 0;
   for (const manifestPath of manifests) {
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    if (options.artifact && manifest.artifactName !== options.artifact) continue;
     const result = await runPlugin(repositoryRoot, manifestPath, publicElements);
     if (!result) continue;
+    const cases = policy.plugins[result.artifactName]?.frontendCaseIds;
+    if (!cases?.length || !result.rendered && !result.route) fail("Missing registered frontend lifecycle evidence");
+    completed.push(...cases);
     checked += 1;
     console.log(`[frontend] ${result.artifactName}: activate -> render(${result.rendered}) -> cleanup`);
   }
   if (!checked) fail("未找到声明 frontend 的插件");
+  if (options.report) await writeFile(options.report, JSON.stringify({ schemaVersion: 1, status: "PASS", artifact: options.artifact,
+    caseIds: completed, passed: completed.length, failed: 0, skipped: 0 }, null, 2));
   console.log(`[frontend] conformance 通过：${checked} 个插件，公开元素 ${publicElements.size} 个`);
 } catch (error) {
   console.error(`[frontend] conformance 失败：${error instanceof Error ? error.message : String(error)}`);

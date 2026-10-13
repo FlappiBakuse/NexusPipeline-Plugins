@@ -77,6 +77,8 @@ export function validateInventory(root, policy) {
           || Object.entries(profiles).some(([name, limit]) => item.profiles[name] !== limit)
           || !Object.hasOwn(profiles, item.defaultProfile)) throw new Error("Unregistered plugin budget profile");
       const cases = manifest.kind === "data-specialized" ? item.fixtureIds : item.expectedMethods;
+      if (manifest.frontend && (!item.frontendCaseIds?.length || new Set(item.frontendCaseIds).size !== item.frontendCaseIds.length))
+        throw new Error("Missing frontend lifecycle case policy");
       if (!Array.isArray(cases) || !cases.length || new Set(cases).size !== cases.length)
         throw new Error("Empty or duplicate case policy");
       actual.push(manifest.artifactName);

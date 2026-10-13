@@ -28,7 +28,10 @@
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.InitializationPreservesUnsupportedAppearanceScope"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G02"
+      "realScenario": "P-G02",
+      "frontendCaseIds": [
+        "CustomWallpaper.frontend.lifecycle"
+      ]
     },
     "EmulatorSupport": {
       "root": "plugins/general/EmulatorSupport",
@@ -119,7 +122,10 @@
         "NexusPipeline.Plugin.LiveScreenshot.Tests.LiveScreenshotConformanceTests.Lifecycle_IsStartableAndStopIsIdempotent"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G03"
+      "realScenario": "P-G03",
+      "frontendCaseIds": [
+        "LiveScreenshot.frontend.lifecycle"
+      ]
     },
     "MaaFrameworkDriver": {
       "root": "plugins/general/MaaFrameworkDriver",

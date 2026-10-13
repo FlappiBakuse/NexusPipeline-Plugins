@@ -61,7 +61,10 @@ export function coreUnits(selected, registry, policy) {
           if (artifact === "MaaFrameworkDriver") item.preparations.push("maa.native");
           else if (artifact !== "EmulatorSupport") item.preparations.push("host.browser", "host.frontend.dependencies");
         }
-        if (["frontend", "capability"].includes(dimension)) item.preparations.push(`plugin.frontend:${artifact}`);
+        if (["frontend", "capability"].includes(dimension)) {
+          item.preparations.push(`plugin.frontend:${artifact}`);
+          item.expectedCaseIds.push(...(plugin.frontendCaseIds ?? []));
+        }
       } else if (dimension === "package" && plugin.kind === "managed-code") {
         item.preparations.push(`plugin.production-package:${artifact}`);
       }
