@@ -4,7 +4,7 @@
   "artifactName": "GameActivities",
   "displayName": "游戏活动",
   "description": "通过 SRA 订阅八款游戏的版本概览与活动，区服独立缓存。",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "kind": "managed-code",
   "minHostVersion": "0.17.2",
   "apiVersion": "2.2",

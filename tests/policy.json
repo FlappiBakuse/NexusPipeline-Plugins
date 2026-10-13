@@ -325,7 +325,10 @@
         "NexusPipeline.Plugin.GameActivities.Tests.StoreCancellationTests.FailedMergedWriteStillMarksMemoryStaleWhenFailureHealthCannotBePersisted"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G05"
+      "realScenario": "P-G05",
+      "frontendCaseIds": [
+        "GameActivities.frontend.lifecycle"
+      ]
     }
   },
   "ciBatchPolicy": {
