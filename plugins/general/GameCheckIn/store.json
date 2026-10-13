@@ -19,6 +19,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.4.4",
+      "date": "2026-10-12",
+      "items": [
+        "严格校验签到响应，查询提交后的实际状态，并提供有界脱敏诊断。",
+        "统一任务编辑器的公共控件与确认行为。"
+      ]
+    },
+    {
       "version": "0.4.3",
       "date": "2026-10-11",
       "items": [
@@ -32,13 +40,6 @@
         "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
       ],
       "date": "2026-10-08"
-    },
-    {
-      "version": "0.4.1",
-      "date": "2026-10-05",
-      "items": [
-        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-      ]
     }
   ],
   "locales": {
@@ -57,6 +58,14 @@
       ],
       "changelog": [
         {
+          "version": "0.4.4",
+          "date": "2026-10-12",
+          "items": [
+            "Validates check-in responses, confirms state after submission and provides bounded redacted diagnostics.",
+            "Aligns task editor controls and confirmation behavior with public frontend elements."
+          ]
+        },
+        {
           "version": "0.4.3",
           "date": "2026-10-11",
           "items": [
@@ -70,13 +79,6 @@
             "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
           ],
           "date": "2026-10-08"
-        },
-        {
-          "version": "0.4.1",
-          "date": "2026-10-05",
-          "items": [
-            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-          ]
         }
       ]
     }

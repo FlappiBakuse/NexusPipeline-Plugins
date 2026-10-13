@@ -23,10 +23,12 @@ function exchange(id, game, credential, sign, body) {
 }
 exchange("gi-a-info", "gi", 0, false, { retcode: 0, data: { is_sign: false } });
 exchange("gi-a-sign", "gi", 0, true, { retcode: 0 });
+exchange("gi-a-confirm", "gi", 0, false, { retcode: 0, data: { is_sign: true } });
 exchange("gi-b-rejected", "gi", 1, false, { retcode: -100 });
 exchange("hsr-a-already", "hsr", 0, false, { retcode: 0, data: { is_sign: true } });
 exchange("zzz-b-info", "zzz", 1, false, { retcode: 0, data: { is_sign: false } });
 exchange("zzz-b-sign", "zzz", 1, true, { retcode: 0 });
+exchange("zzz-b-confirm", "zzz", 1, false, { retcode: 0, data: { is_sign: true } });
 const request = async (method, route, body, status = 200) => {
   const response = await runtime.api(method, `api/plugin-api/game-checkin/${route}`, body);
   const result = await response.json();
@@ -77,7 +79,7 @@ try {
   await page.getByRole("textbox", { name: "任务名称", exact: true }).fill("Browser edited task");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Browser edited task", exact: true }) });
-  await card.getByRole("button", { name: "立即签到", exact: true }).click();
+  await card.getByRole("button", { name: "签到并记录脱敏诊断", exact: true }).click();
   await request("POST", "tasks/run", { taskId: tasks[1].id }, 202);
   await settled(tasks.slice(0, 2).map(task => task.id));
   await Promise.all(tasks.slice(2).map(task => request("POST", "tasks/run", { taskId: task.id }, 202)));
@@ -91,6 +93,10 @@ try {
   }
   const edited = byId.get(tasks[0].id);
   assert.equal(edited.name, "Browser edited task");
+  assert.deepEqual(edited.recentRun.diagnostics.map(item => item.phase), ["info", "sign", "confirm"]);
+  assert.ok(!byId.get(tasks[2].id).recentRun.diagnostics);
+  assert.ok(edited.recentRun.diagnosticsVersion);
+  for (const cookie of cookies) assert.ok(!JSON.stringify(edited.recentRun.diagnostics).includes(cookie));
   await request("PUT", "tasks", { ...edited, remark: "saved after completion", secrets: {} });
   await request("POST", "tasks/run", { taskId: edited.id }, 202);
   const repeated = await settled([edited.id]);

@@ -28,13 +28,14 @@ public sealed class GameCheckInTests
     {
         var factory = new QueueHttpClientFactory(
             "{\"retcode\":0,\"data\":{\"is_sign\":false}}",
-            "{\"retcode\":0}");
+            "{\"retcode\":0}",
+            "{\"retcode\":0,\"data\":{\"is_sign\":true}}");
         var client = new HoyoLabClient(factory);
 
         CheckInResult result = await client.SignAsync(GameDefinitions.All[0], "ltuid=1; ltoken=secret", CancellationToken.None);
 
         Assert.Equal("success", result.Code);
-        Assert.Equal(2, factory.Requests.Count);
+        Assert.Equal(3, factory.Requests.Count);
         Assert.Equal(HttpMethod.Get, factory.Requests[0].Method);
         Assert.Contains("/info?", factory.Requests[0].RequestUri!.ToString(), StringComparison.Ordinal);
         Assert.Equal(HttpMethod.Post, factory.Requests[1].Method);
@@ -46,13 +47,14 @@ public sealed class GameCheckInTests
         var factory = new QueueHttpClientFactory(
             "{\"retcode\":0,\"data\":{\"list\":[{\"game_uid\":\"1001\",\"region\":\"cn_gf01\"}]}}",
             "{\"retcode\":0,\"data\":{\"is_sign\":false}}",
-            "{\"retcode\":0}");
+            "{\"retcode\":0}",
+            "{\"retcode\":0,\"data\":{\"is_sign\":true}}");
         var client = new MiyousheClient(factory);
 
         CheckInResult result = await client.SignAsync(GameDefinitions.All[0], "stuid=1;stoken=secret", "device-id", CancellationToken.None);
 
         Assert.Equal("success", result.Code);
-        Assert.Equal(3, factory.Requests.Count);
+        Assert.Equal(4, factory.Requests.Count);
         Assert.Equal("cn_gf01", factory.Requests[1].RequestUri!.Query.Contains("region=cn_gf01", StringComparison.Ordinal) ? "cn_gf01" : "");
         Assert.True(factory.Requests[1].Headers.Contains("DS"));
         Assert.Equal("miyousheluodi", factory.Requests[0].Headers.GetValues("x-rpc-channel").Single());

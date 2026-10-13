@@ -120,9 +120,9 @@ async function reorderTasks(taskIds: string[]) {
   }
 }
 
-async function runTask(task: Task) {
+async function runTask(task: Task, diagnostics = false) {
   try {
-    await props.host.api.post("tasks/run", { taskId: task.id }, requestController.signal);
+    await props.host.api.post("tasks/run", { taskId: task.id, diagnostics }, requestController.signal);
     await loadState();
     props.host.ui?.toast(t("toast.run_started", {}, "签到已开始。"), "info");
   } catch (error) {
@@ -182,6 +182,7 @@ onBeforeUnmount(() => {
       :platforms="platforms"
       :translate="translate"
       @run="runTask"
+      @diagnose="task => runTask(task, true)"
       @edit="openEditor"
       @remove="deleteTarget = $event"
       @reorder="reorderTasks"

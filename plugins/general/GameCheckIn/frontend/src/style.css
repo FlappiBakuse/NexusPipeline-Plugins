@@ -477,3 +477,5 @@
 .gci-task-list:not(nxp-sortable-list) { box-shadow: 0 4px 18px color-mix(in srgb, var(--nx-color-text) 3%, transparent); }
 .gci-task-heading h2 { min-width: 0; max-width: 100%; }
 .gci-task-meta > nxp-badge { max-width: min(220px, 100%); }
+
+.gci-diagnostics { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; font: var(--nx-font-mono, monospace); }

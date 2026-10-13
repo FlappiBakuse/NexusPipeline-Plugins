@@ -399,7 +399,7 @@ internal sealed partial class CheckInTaskService
 
         try
         {
-            PluginWebApiResponse? response = await StartRunAsync(input.TaskId, "manual", cancellationToken).ConfigureAwait(false);
+            PluginWebApiResponse? response = await StartRunAsync(input.TaskId, "manual", cancellationToken, diagnostics: input.Diagnostics).ConfigureAwait(false);
             return response ?? Error(404, "task_not_found");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -417,7 +417,7 @@ internal sealed partial class CheckInTaskService
         string trigger,
         CancellationToken cancellationToken,
         IReadOnlyCollection<string>? dueScheduleIds = null,
-        string? occurrence = null)
+        string? occurrence = null, bool diagnostics = false)
     {
         RunHandle? handle = null;
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -470,7 +470,7 @@ internal sealed partial class CheckInTaskService
                 return Error(409, "task_running");
             }
 
-            RunSnapshot runSnapshot = new(snapshot, run.Id, credentialValues);
+            RunSnapshot runSnapshot = new(snapshot, run.Id, credentialValues, diagnostics ? new CheckInDiagnostics() : null);
             _ = Task.Run(() => ExecuteRunAsync(runSnapshot, handle), CancellationToken.None);
             return Json(new { runId = run.Id, status = "running" }, 202);
         }
@@ -573,7 +573,7 @@ internal sealed partial class CheckInTaskService
                             credential,
                             fingerprint,
                             handle.RunId,
-                            cancellationToken)
+                            cancellationToken, snapshot.Diagnostics)
                         .ConfigureAwait(false);
                     results.Add(result);
                 }
@@ -640,7 +640,7 @@ internal sealed partial class CheckInTaskService
         CredentialRecord? record,
         string fingerprint,
         string runId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, CheckInDiagnostics? diagnostics)
     {
         string? credential = record?.Value;
         var web = record?.WebContext;
@@ -666,8 +666,8 @@ internal sealed partial class CheckInTaskService
                 {
                     result = platform switch
                     {
-                        "cn" => await _cnClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, task.CnDeviceId, cancellationToken).ConfigureAwait(false),
-                        "os" => await _osClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, cancellationToken).ConfigureAwait(false),
+                        "cn" => await _cnClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, task.CnDeviceId, cancellationToken, diagnostics).ConfigureAwait(false),
+                        "os" => await _osClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, cancellationToken, diagnostics).ConfigureAwait(false),
                         "skland" => await _sklandClient.SignAsync(SklandGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
                         "skport" => await _skportClient.SignAsync(SkportGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
                         "kuro" => await _kuroClient.SignAsync(
@@ -693,7 +693,7 @@ internal sealed partial class CheckInTaskService
                     result.Success && IsValidCredential(credential)
                         ? new SuccessfulCheckIn(platform, gameCode, fingerprint, localDate)
                         : null,
-                    CancellationToken.None)
+                    CancellationToken.None, diagnostics)
                 .ConfigureAwait(false);
             return result;
         }
@@ -731,7 +731,7 @@ internal sealed partial class CheckInTaskService
         string? currentRunId,
         CheckInResult result,
         SuccessfulCheckIn? successfulCheckIn = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CheckInDiagnostics? diagnostics = null)
     {
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -741,7 +741,15 @@ internal sealed partial class CheckInTaskService
             if (task is not null && currentRunId is not null)
             {
                 CheckInRun? run = task.Runs.FirstOrDefault(item => item.Id == currentRunId);
-                if (run is not null) run.Results.Add(result);
+                if (run is not null)
+                {
+                    run.Results.Add(result);
+                    if (diagnostics is not null)
+                    {
+                        run.Diagnostics = diagnostics.Entries.ToList();
+                        run.DiagnosticsVersion = typeof(CheckInTaskService).Assembly.GetName().Version?.ToString();
+                    }
+                }
             }
             if (successfulCheckIn is not null
                 && !store.SuccessfulCheckIns.Any(entry =>
@@ -793,6 +801,11 @@ internal sealed partial class CheckInTaskService
         if (store.SchemaVersion != 2 || store.Tasks is null || store.SuccessfulCheckIns is null)
         {
             throw new InvalidOperationException("Unsupported task store format");
+        }
+        foreach (CheckInRun run in store.Tasks.SelectMany(task => task.Runs).Where(run => run.StartedAt < _clock().AddDays(-7)))
+        {
+            run.Diagnostics = null;
+            run.DiagnosticsVersion = null;
         }
         return store;
     }
@@ -1141,8 +1154,8 @@ internal sealed partial class CheckInTaskService
         PluginWebApiResponse.Json(new JsonObject { ["error"] = code }, statusCode);
 
     private sealed record DeleteTaskRequest(Guid TaskId);
-    private sealed record RunTaskRequest(Guid TaskId);
-    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, CredentialRecord?> Secrets);
+    private sealed record RunTaskRequest(Guid TaskId, bool Diagnostics = false);
+    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, CredentialRecord?> Secrets, CheckInDiagnostics? Diagnostics);
 
     private sealed class RunHandle
     {

@@ -2,7 +2,8 @@ export type GameOption = { id: string; name: string };
 export type PlatformOption = { id: string; name: string; games: GameOption[]; browserLogin?: { ready: boolean; status: string } };
 export type Schedule = { id: string; days: number[]; enabled: boolean; time: string };
 export type RunResult = { platform: string; gameCode: string; success: boolean; code: string; message: string };
-export type Run = { id: string; trigger: string; startedAt: string; completedAt: string | null; status: string; results: RunResult[] };
+export type Diagnostic = { platform: string; game: string; phase: string; httpStatus: number | null; retcode: number | null; isSign: boolean | null; classification: string; elapsedMs: number; attempt: number; scopes: unknown[] };
+export type Run = { diagnostics?: Diagnostic[]; diagnosticsVersion?: string; id: string; trigger: string; startedAt: string; completedAt: string | null; status: string; results: RunResult[] };
 export type CheckInNotification = { enabled: boolean; smtpTo: string };
 export type Task = {
   id: string;

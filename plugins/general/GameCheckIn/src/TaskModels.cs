@@ -96,6 +96,12 @@ internal sealed class CheckInRun
 
     [JsonPropertyName("results")]
     public List<CheckInResult> Results { get; set; } = new();
+
+    [JsonPropertyName("diagnostics"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<CheckInDiagnostic>? Diagnostics { get; set; }
+
+    [JsonPropertyName("diagnosticsVersion"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DiagnosticsVersion { get; set; }
 }
 
 internal sealed record SuccessfulCheckIn(

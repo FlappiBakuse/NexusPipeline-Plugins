@@ -54,7 +54,7 @@
   "result.already": "今日已签到",
   "result.game_not_available": "当前游戏暂不可签到",
   "result.first_bind": "尚未绑定签到活动",
-  "result.captcha_required": "需要手动完成验证码，本次已停止",
+  "result.captcha_required": "官方接口要求验证，签到尚未完成",
   "result.invalid_cookie": "Cookie 未配置或格式无效",
   "result.invalid_credential": "凭据未配置或格式无效",
   "result.credential_expired": "登录凭据已失效",
@@ -179,5 +179,10 @@
   "error.browser_cleanup_failed": "登录环境清理未完成，本次候选未生效。",
   "error.platform_not_ready": "此平台尚未完成网页登录资格验证，请手动填写凭据。",
   "error.client_session_required": "客户端会话已失效，请刷新后重新编辑。",
-  "error.client_not_supported": "网页登录仅支持已验证的本机桌面客户端。"
+  "error.client_not_supported": "网页登录仅支持已验证的本机桌面客户端。",
+  "result.challenge_incomplete": "验证信息不完整",
+  "result.verification_state_unknown": "验证或签到状态未知",
+  "result.success_unconfirmed": "签到结果尚未确认，将先查询当天状态",
+  "action.diagnose": "签到并记录脱敏诊断",
+  "diagnostics.title": "本次脱敏诊断（保留七天）"
 }

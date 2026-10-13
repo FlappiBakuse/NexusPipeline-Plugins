@@ -9,6 +9,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   run: [task: Task];
+  diagnose: [task: Task];
   edit: [task: Task];
   remove: [task: Task];
   reorder: [taskIds: string[]];
@@ -124,6 +125,7 @@ function reorderTasks(ids: string[]) {
             :disabled="task.isRunning"
             @click="emit('run', task)"
           />
+          <nxp-button :label="t('action.diagnose', {}, '签到并记录脱敏诊断')" variant="ghost" :disabled="task.isRunning" @click="emit('diagnose', task)" />
           <nxp-button :label="t('action.edit', {}, '编辑签到')" variant="ghost" @click="emit('edit', task)" />
           <nxp-button
             :label="t('action.delete', {}, '删除签到')"
@@ -149,6 +151,10 @@ function reorderTasks(ids: string[]) {
                 <span>{{ result.message }}</span>
               </li>
             </ul>
+            <details v-if="task.recentRun.diagnostics?.length">
+              <summary>{{ t('diagnostics.title', {}, '本次脱敏诊断（保留七天）') }}</summary>
+              <pre class="gci-diagnostics">{{ JSON.stringify(task.recentRun.diagnostics, null, 2) }}</pre>
+            </details>
           </section>
         </div>
       </details>

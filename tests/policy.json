@@ -93,10 +93,19 @@
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.PassportValidationSeparatesRegionsExchangesRawTokenAndOnlyReadsIdentityAndBindings",
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ProviderCallbacksKeepCandidatesProvisionalAndCancelWithoutChangingExistingCredentials",
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.RegistrationEnablesQualifiedPlatformsAndDisposesBindings",
-        "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ValidationDiagnosticsIdentifyStageWithoutSecretsAndFailuresDoNotPublishCandidates"
+        "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ValidationDiagnosticsIdentifyStageWithoutSecretsAndFailuresDoNotPublishCandidates",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.AlreadySignedAndUnknownStatusNeverSubmit",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.DiagnosticsAreBoundedAndContainOnlyWhitelistedShapes",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.HttpContentSizeAndDuplicateFieldsFailClosed",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.PostSuccessRequiresReadOnlyConfirmationAndNeverRetriesPost",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.SharedResponseClassifiesKnownScopesWithoutGuessing",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.SignedStateRequiresAnUnambiguousBoolean"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G01"
+      "realScenario": "P-G01",
+      "frontendCaseIds": [
+        "GameCheckIn.frontend.lifecycle"
+      ]
     },
     "LiveScreenshot": {
       "root": "plugins/general/LiveScreenshot",
