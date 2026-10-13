@@ -1,0 +1,317 @@
+{
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "dependencyId": "maafw-native-win-x64",
+      "kind": "native",
+      "version": "5.14.3",
+      "platform": "win-x64",
+      "repository": "MaaXYZ/MaaFramework",
+      "sourceCommit": "8963191215ca49d6b037802acd07d20a4213160a",
+      "releaseId": 408736806,
+      "assetId": 627222798,
+      "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.3/MAA-win-x86_64-v5.14.3.zip",
+      "sizeBytes": 83319548,
+      "sha256": "4042fde31c583cc5125ec5b12257f8d1929672bb5cb64c9052c34fc8ff4bb8ff",
+      "archivePrefix": "bin/",
+      "installPolicy": "owned_directory",
+      "license": "LGPL-3.0-only",
+      "bindingVersion": "5.10.0",
+      "files": [
+        {
+          "path": "dxil.dll",
+          "sizeBytes": 1503072,
+          "sha256": "cbcfe883a09fd0ca1f98abdf3a9553b560895e3283a136da82a8381253a169df"
+        },
+        {
+          "path": "MaaFramework.dll",
+          "sizeBytes": 2581504,
+          "sha256": "7085fedcaae06d7521020edfe8c3a3f9545986877e1b4a4bb8cf0188b39f97be"
+        },
+        {
+          "path": "opencv_world4_maa.dll",
+          "sizeBytes": 9276416,
+          "sha256": "132c00f39772159ec6f3586e662f9996f725429f72ae42af603b97aa80acaceb"
+        },
+        {
+          "path": "MaaToolkit.dll",
+          "sizeBytes": 558592,
+          "sha256": "acfb67016b4caa189f46a272e8db8ccb16e5a6029dcd5ea48e631ea4668e6d58"
+        },
+        {
+          "path": "ViGEmClient.dll",
+          "sizeBytes": 130048,
+          "sha256": "2bf0cb1d809039573c922737d298a1653d4dbc61408060ff45a9bcfde82e97d2"
+        },
+        {
+          "path": "webgpu_dawn_maa.dll",
+          "sizeBytes": 6863872,
+          "sha256": "3d492640ec3253ee7277ba7d2f7e5b78669e0b32f3a1ce1fe3d544f29624279c"
+        },
+        {
+          "path": "MaaCustomControlUnit.dll",
+          "sizeBytes": 315392,
+          "sha256": "cff748b5ff1ef62d6c66e1c91c2ad67f797c1be546305dd4b4a52c0378ff0e6b"
+        },
+        {
+          "path": "MaaAgentServer.dll",
+          "sizeBytes": 1309184,
+          "sha256": "859e0e435883ef7a09464f33b245ec369aa3f508dc0993e5b6a5c7ef412c4c6d"
+        },
+        {
+          "path": "fastdeploy_ppocr_maa.dll",
+          "sizeBytes": 1222656,
+          "sha256": "a7d12e9b0e7bb6257a67b56051823502dcb474a40e5911d4cbbbdd50f0606085"
+        },
+        {
+          "path": "MaaAgentClient.dll",
+          "sizeBytes": 1246208,
+          "sha256": "11f1246b3e4556e0d4209223363ec7fb1a87e527f00e47fcc0c603bc9574a745"
+        },
+        {
+          "path": "MaaUtils.dll",
+          "sizeBytes": 631808,
+          "sha256": "f71d437832891eb998369dffa0e2f96ac1663bdc7492589a088e90db2816bd71"
+        },
+        {
+          "path": "DirectML.dll",
+          "sizeBytes": 18527776,
+          "sha256": "9c9e6d822561c6c41b90e6994b3e8857cf1d66dbfb1e0c4c799c7c89b4e92da1"
+        },
+        {
+          "path": "MaaAdbControlUnit.dll",
+          "sizeBytes": 788992,
+          "sha256": "6006246dc6a2813962283d97bbb1e5b472c5e6417bc23b3d11a475c86463434b"
+        },
+        {
+          "path": "MaaWin32ControlUnit.dll",
+          "sizeBytes": 754688,
+          "sha256": "65809cb8a2c29049a4f1573e56aae8ecd304aa733f5d1db72dd7860797df8209"
+        },
+        {
+          "path": "MaaGamepadControlUnit.dll",
+          "sizeBytes": 350208,
+          "sha256": "72515206f7b948eda0a57832a428b5b2e6f1f18f9533e878d15a79ce0ac07964"
+        },
+        {
+          "path": "onnxruntime_maa.dll",
+          "sizeBytes": 25096704,
+          "sha256": "56e9d7d3beaad24e2ce79885201fe19f1b4dbdf511cf1d4bcb03549999c604dc"
+        },
+        {
+          "path": "dxcompiler.dll",
+          "sizeBytes": 17987384,
+          "sha256": "9b5e10ed756c461b4ec2c83a99f1d6ace20e97826e9c0b0e966b7b1cd6f2aec6"
+        },
+        {
+          "path": "MaaReplayControlUnit.dll",
+          "sizeBytes": 401920,
+          "sha256": "de4e6f28ecbbc0dd20616771f83dad3aec941c44277dcf868ef6dd7582066a1d"
+        },
+        {
+          "path": "MaaRecordControlUnit.dll",
+          "sizeBytes": 341504,
+          "sha256": "6f2d7397fea8b4d0fffeb27305f4c0a13a68fd2124b5a245b2b4c06ec8d85054"
+        }
+      ]
+    },
+    {
+      "dependencyId": "maafw-native-win-x64",
+      "kind": "native",
+      "version": "5.14.2",
+      "platform": "win-x64",
+      "repository": "MaaXYZ/MaaFramework",
+      "sourceCommit": "8061d5bcaa3f07afcc1008795913663f64de46c8",
+      "releaseId": 398872082,
+      "assetId": 597456451,
+      "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.2/MAA-win-x86_64-v5.14.2.zip",
+      "sizeBytes": 73033483,
+      "sha256": "e279163bcdcab7c87ebe5a9dd157c47e169c78742dbdcc30d095de55ab0eaa9c",
+      "archivePrefix": "bin/",
+      "installPolicy": "owned_directory",
+      "license": "LGPL-3.0-only",
+      "bindingVersion": "5.10.0",
+      "files": [
+        {
+          "path": "MaaFramework.dll",
+          "sizeBytes": 2565120,
+          "sha256": "339a933a2c10286acccd9eec4b2bb8d9ae80d25ab3dcb29959322a41f8c318b2"
+        },
+        {
+          "path": "opencv_world4_maa.dll",
+          "sizeBytes": 13624320,
+          "sha256": "9912a1f359b3a94e30d738aa5ed02cdfa3d805405f88432c26bea34b16cf6f8e"
+        },
+        {
+          "path": "MaaToolkit.dll",
+          "sizeBytes": 558592,
+          "sha256": "21ec108e24affe10eba083e6f3f5b3d92abb3a5ff510f82290a38e269ba23d12"
+        },
+        {
+          "path": "ViGEmClient.dll",
+          "sizeBytes": 130048,
+          "sha256": "2bf0cb1d809039573c922737d298a1653d4dbc61408060ff45a9bcfde82e97d2"
+        },
+        {
+          "path": "MaaCustomControlUnit.dll",
+          "sizeBytes": 315392,
+          "sha256": "75b1661bb9bc3c39ff2713ca96b5047971a8fd203ea04fa44cc6e2f243c065d7"
+        },
+        {
+          "path": "MaaAgentServer.dll",
+          "sizeBytes": 1383936,
+          "sha256": "9cf596ac2eb04082f895cbab462b9e199e10982304c77ef98ba2ed1b2e0f1e1c"
+        },
+        {
+          "path": "fastdeploy_ppocr_maa.dll",
+          "sizeBytes": 1169920,
+          "sha256": "dc05e0c6ddd97252c3ffe74a578297d128dd864de605ade2c21af05d4f827397"
+        },
+        {
+          "path": "MaaAgentClient.dll",
+          "sizeBytes": 1226240,
+          "sha256": "673a632b5f97fe4670eb2d83993b1fffefc9ef7db8e4eb4aeeaa3f7f094bdbd9"
+        },
+        {
+          "path": "MaaUtils.dll",
+          "sizeBytes": 632832,
+          "sha256": "fc40044dd8ed9d502cc19edac7808a72aaf16ef6c299f8bc6693094d635c6f17"
+        },
+        {
+          "path": "DirectML.dll",
+          "sizeBytes": 18527776,
+          "sha256": "9c9e6d822561c6c41b90e6994b3e8857cf1d66dbfb1e0c4c799c7c89b4e92da1"
+        },
+        {
+          "path": "MaaAdbControlUnit.dll",
+          "sizeBytes": 792064,
+          "sha256": "52b6ff772246a9fa8c040e5e071497aa0b1720b7281353a981aed50a6f056ca7"
+        },
+        {
+          "path": "MaaWin32ControlUnit.dll",
+          "sizeBytes": 752640,
+          "sha256": "711e3cc1e835fb5c987f6cf1cb34e7e1a4e8045e22ff96e56984b9c64a9c969d"
+        },
+        {
+          "path": "MaaGamepadControlUnit.dll",
+          "sizeBytes": 350208,
+          "sha256": "f5b4db2bcea1bd087884a66d4c83f8f262ec8693af9b48cdfe3e12b12b0e5609"
+        },
+        {
+          "path": "onnxruntime_maa.dll",
+          "sizeBytes": 18998272,
+          "sha256": "57194b62a8c03e180ce311bbe9b2be4824b7bc95cf72a951602bb8cfa925b7f3"
+        },
+        {
+          "path": "MaaReplayControlUnit.dll",
+          "sizeBytes": 401920,
+          "sha256": "a88579da747770aee4bf0d513704786090dbceeb506a9e9c2eec46a9fbe7f2d7"
+        },
+        {
+          "path": "MaaRecordControlUnit.dll",
+          "sizeBytes": 341504,
+          "sha256": "fa62a6a78af486e10b366c04c1bf0107f55c6a7ea012f7dc5f103494d68b7d2d"
+        }
+      ]
+    },
+    {
+      "dependencyId": "maafw-native-win-x64",
+      "kind": "native",
+      "version": "5.14.1",
+      "platform": "win-x64",
+      "repository": "MaaXYZ/MaaFramework",
+      "sourceCommit": "adba94d694569643d0517bc7c5220d1fdf603800",
+      "releaseId": 397984998,
+      "assetId": 594646363,
+      "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.1/MAA-win-x86_64-v5.14.1.zip",
+      "sizeBytes": 73040782,
+      "sha256": "e19add8da3fe37faa5a6131aaa022685cfc8e74e1b1b3c341a8e38ba9cb018bb",
+      "archivePrefix": "bin/",
+      "installPolicy": "owned_directory",
+      "license": "LGPL-3.0-only",
+      "bindingVersion": "5.10.0",
+      "files": [
+        {
+          "path": "MaaFramework.dll",
+          "sizeBytes": 2564096,
+          "sha256": "ffc6170c3d30e246f77c10d070625ee969c8d5b35fb12bafac147d5452baf3d2"
+        },
+        {
+          "path": "opencv_world4_maa.dll",
+          "sizeBytes": 13624320,
+          "sha256": "9912a1f359b3a94e30d738aa5ed02cdfa3d805405f88432c26bea34b16cf6f8e"
+        },
+        {
+          "path": "MaaToolkit.dll",
+          "sizeBytes": 558592,
+          "sha256": "48e186c39787ccb2bae5f173f1fc1b940d284bcea1c3858afc1821abc071db63"
+        },
+        {
+          "path": "ViGEmClient.dll",
+          "sizeBytes": 130048,
+          "sha256": "2bf0cb1d809039573c922737d298a1653d4dbc61408060ff45a9bcfde82e97d2"
+        },
+        {
+          "path": "MaaCustomControlUnit.dll",
+          "sizeBytes": 315392,
+          "sha256": "a3cfd97dbc40b4b98d385df0632ddd8a47c365044a008d4ddcf30adc450fe3c7"
+        },
+        {
+          "path": "MaaAgentServer.dll",
+          "sizeBytes": 1383936,
+          "sha256": "fd7a39206f0b0abd31778ac188d51ddedd37d93c7538f11a232f9cfca9f50731"
+        },
+        {
+          "path": "fastdeploy_ppocr_maa.dll",
+          "sizeBytes": 1169920,
+          "sha256": "dc05e0c6ddd97252c3ffe74a578297d128dd864de605ade2c21af05d4f827397"
+        },
+        {
+          "path": "MaaAgentClient.dll",
+          "sizeBytes": 1226240,
+          "sha256": "45b21c8c1405bb3688019a3f56cc89cd39d620fc656f2ae0fafe9bdef3f8e67a"
+        },
+        {
+          "path": "MaaUtils.dll",
+          "sizeBytes": 632832,
+          "sha256": "886b8b7eff23dc13e752e13f106d35077fe1a822900d2797f3b1b44dea63e833"
+        },
+        {
+          "path": "DirectML.dll",
+          "sizeBytes": 18527776,
+          "sha256": "9c9e6d822561c6c41b90e6994b3e8857cf1d66dbfb1e0c4c799c7c89b4e92da1"
+        },
+        {
+          "path": "MaaAdbControlUnit.dll",
+          "sizeBytes": 792064,
+          "sha256": "f8342f121f82ed3230a4523b14caa21ba3f267262b19cc03d8d01fc416f8bf6f"
+        },
+        {
+          "path": "MaaWin32ControlUnit.dll",
+          "sizeBytes": 752640,
+          "sha256": "f2ba508b3c5b70d5f7b60b139c84d2ead594f6e77cc1eb9896fda9c7ad9b6397"
+        },
+        {
+          "path": "MaaGamepadControlUnit.dll",
+          "sizeBytes": 350208,
+          "sha256": "76e68d241868b90af98fd11d024118864f2cb1bcf50fc903d17eb6ae479beed4"
+        },
+        {
+          "path": "onnxruntime_maa.dll",
+          "sizeBytes": 18998272,
+          "sha256": "57194b62a8c03e180ce311bbe9b2be4824b7bc95cf72a951602bb8cfa925b7f3"
+        },
+        {
+          "path": "MaaReplayControlUnit.dll",
+          "sizeBytes": 401920,
+          "sha256": "7da42a002edf6ad90d96653fa4d6c7b76a4dfa382e334140d9444f3400dc37ff"
+        },
+        {
+          "path": "MaaRecordControlUnit.dll",
+          "sizeBytes": 341504,
+          "sha256": "2ba56090e8a11f3d38a90300673e3912983b5aa04cd28e8deaddd4fb4eef8a5c"
+        }
+      ]
+    }
+  ]
+}

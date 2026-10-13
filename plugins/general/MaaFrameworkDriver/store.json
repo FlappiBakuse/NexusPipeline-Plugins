@@ -15,6 +15,16 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-10-12",
+      "items": [
+        "保存独立任务条目、重复次数与选项，自动发现并同步 MFA/MXU 来源。",
+        "锁定官方原生依赖及 MaaStellaSora 1.6.0 的 Python 运行闭包，在保存初始化时验证并准备依赖。",
+        "使用宿主会话目录采集原生日志，并验证受控 Agent、预任务和前端草稿交互。",
+        "用户覆盖经 Host 初始化提交独立修订，共享来源变化后自动重新套用覆盖并验证；并发编辑发生冲突时保留旧指针。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-10-11",
       "items": [
@@ -27,14 +37,36 @@
       "items": [
         "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
       ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-10-04",
-      "items": [
-        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
-        "独立 worker 使用 .NET 10.0.12 或更高的 10.0 补丁运行时，保留完整依赖与许可文件。"
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "MaaFramework Driver",
+      "gameName": "MaaFramework Project Interface projects",
+      "description": "Run MaaFramework Project Interface projects with isolated workers, verified dependencies and independent task options.",
+      "tags": ["Framework driver", "Win32", "ADB"],
+      "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-10-12",
+          "items": [
+            "Persists independent task occurrences, repeat counts and options with automatic MFA/MXU source discovery and synchronization.",
+            "Pins official native dependencies and the MaaStellaSora 1.6.0 Python environment, preparing and verifying dependencies during save initialization.",
+            "Captures native logs in host session directories and verifies controlled Agent, pre-task and frontend draft interactions.",
+            "Initializes independent user override revisions through Host and automatically rebases and verifies them after shared source changes, preserving previous pointers on concurrent-edit conflicts."
+          ]
+        },
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": ["Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."]
+        },
+        {
+          "version": "0.2.1",
+          "date": "2026-10-05",
+          "items": ["Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."]
+        }
       ]
     }
-  ]
+  }
 }

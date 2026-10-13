@@ -148,10 +148,28 @@
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.InvalidDisplayExpansionCannotSilentlyUseAnotherDisplayMode",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.UnknownExecutionDeclarationsAreLocatedBeforePreviewOrRun",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DisplayTranslationCannotRenameTasksCasesOrRewritePipelineValues",
-        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PresetUsesDeclaredTaskOrderDisabledTasksAndPerTaskOverrides"
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PresetUsesDeclaredTaskOrderDisabledTasksAndPerTaskOverrides",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.OccurrencesKeepIndependentOptionsRepeatOrdinalsAndStableIdsAcrossReorder",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.LegacyProfileMigrationPreservesUnusedOptionsAndInvalidatesAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.InstanceInheritanceUsesLocalScopedDefaultThenGlobalWithoutWrites",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.DuplicateTasksKeepOptionsRepeatDeletionHistoryAndIdentityAfterReorder",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.FourOptionLayersAndNestedCasesStayIndependentAndUnknownActionsFail",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.MfaSourceReaderUsesSelectedGlobalConfigurationAndPreservesSourceBytes",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.SavedWin32MethodsOverridePiWithoutMutationAndRejectUnknownBits",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.GuiWaitActionsKeepOrderParametersAndRejectUnknownActions",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.NativeRecipePlanningUsesOfficialIdentityAndPreservesUnknownInstallBytes",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.DiscoveryAndSemanticMappingNeedNoNativeAndAdmissionRejectsChangedSource",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.UserProfileRebaseTests.RebaseInheritsSourceChangesPreservesUserEditsAndRejectsRemovedEditedTasks",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.UserProfileRebaseTests.EffectiveConfigurationChangesValuesButCannotRebindFrozenTaskIdentity",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.SessionLogReaderTests.SessionOffsetsExcludeHistoryDrainRenamedFilesAndExposeTruncationAndInvalidEncoding",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.LogTextFramerTests.StreamingLogsPreserveLargeOutputAndRedactAcrossFramesAndReads",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.PythonDependencyTests.PythonPlanPinsClosureAndRejectsUnknownDeclarationsTargetsAndChangedLocks"
       ],
       "fixtureIds": [],
-      "realScenario": "P-X01"
+      "realScenario": "P-X01",
+      "frontendCaseIds": [
+        "MaaFrameworkDriver.frontend.lifecycle"
+      ]
     },
     "BAAH": {
       "root": "plugins/specialized/BAAH",

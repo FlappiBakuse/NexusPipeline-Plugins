@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/schemas/maa-dependency-lock-v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectName", "projectVersion", "rootIdentity", "installTarget", "native", "dependencies", "lockHash"],
+  "properties": {
+    "schemaVersion": { "enum": [1, 2] },
+    "projectName": { "type": "string", "minLength": 1 },
+    "projectVersion": { "type": "string" },
+    "rootIdentity": { "$ref": "#/$defs/identity" },
+    "installTarget": { "$ref": "#/$defs/path" },
+    "lockHash": { "$ref": "#/$defs/digest" },
+    "native": { "$ref": "#/$defs/native" },
+    "dependencies": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "python": { "$ref": "#/$defs/python" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "schemaVersion": { "const": 1 } } },
+      "then": { "properties": { "dependencies": { "maxItems": 0 } }, "not": { "required": ["python"] } },
+      "else": { "required": ["python"], "properties": { "dependencies": { "minItems": 1 } } }
+    }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "identity": { "type": "string", "pattern": "^[0-9a-f]{8}:[0-9a-f]{16}$" },
+    "path": { "type": "string", "maxLength": 512, "pattern": "^(?![/\\\\])(?!.*(?:^|/)\\.\\.?(?:/|$))[^:\\\\]+$" },
+    "file": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sizeBytes", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" },
+        "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "native": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dependencyId", "kind", "version", "platform", "repository", "sourceCommit", "releaseId", "assetId", "url", "sizeBytes", "sha256", "archivePrefix", "installPolicy", "license", "bindingVersion", "files"],
+      "properties": {
+        "dependencyId": { "type": "string", "minLength": 1 },
+        "kind": { "const": "native" },
+        "version": { "enum": ["5.14.3", "5.14.2", "5.14.1"] },
+        "platform": { "const": "win-x64" },
+        "repository": { "const": "MaaXYZ/MaaFramework" },
+        "sourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "releaseId": { "type": "integer", "minimum": 1 },
+        "assetId": { "type": "integer", "minimum": 1 },
+        "url": { "type": "string", "pattern": "^https://github\\.com/MaaXYZ/MaaFramework/releases/download/" },
+        "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 268435456 },
+        "sha256": { "$ref": "#/$defs/digest" },
+        "archivePrefix": { "const": "bin/" },
+        "installPolicy": { "const": "owned_directory" },
+        "license": { "type": "string", "minLength": 1 },
+        "bindingVersion": { "const": "5.10.0" },
+        "files": { "type": "array", "minItems": 3, "maxItems": 128, "items": { "$ref": "#/$defs/file" } }
+      }
+    },
+    "python": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schemaVersion", "recipeId", "recipeHash", "rootIdentity", "installTarget", "componentIds", "declarationHashes"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "recipeId": { "const": "maastellasora-1.6.0-python312-native-5.14.2" },
+        "recipeHash": { "$ref": "#/$defs/digest" },
+        "rootIdentity": { "$ref": "#/$defs/identity" },
+        "installTarget": { "$ref": "#/$defs/path" },
+        "componentIds": { "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "declarationHashes": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "requirements.txt": { "$ref": "#/$defs/digest" }, "agent/requirements.txt": { "$ref": "#/$defs/digest" } }
+        }
+      }
+    }
+  }
+}

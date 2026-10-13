@@ -5,5 +5,6 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 public static class DriverJson
 {
     public static readonly JsonSerializerOptions Options = new()
-    { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, MaxDepth = 32 };
+    { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, MaxDepth = 32,
+        UnmappedMemberHandling = System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow };
 }

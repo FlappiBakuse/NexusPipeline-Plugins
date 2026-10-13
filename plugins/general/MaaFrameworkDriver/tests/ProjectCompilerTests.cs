@@ -335,12 +335,60 @@ public sealed class ProjectCompilerTests
         """);
         var compiler = new ProjectCompiler(fixture.Root, "interface.json");
         var selected = compiler.ApplyPreset(fixture.Profile, "Daily");
-        Assert.Equal(new[] { "A" }, selected.SelectedTasks);
+        Assert.Equal(new[] { "A" }, selected.TaskOccurrences.Where(item => item.Enabled).Select(item => item.PiTaskName));
         Assert.Equal(2, compiler.Compile(selected).Tasks[0].Override["Entry"]!["timeout"]!.GetValue<int>());
         Assert.Single(compiler.Inspect()["setting"]!.AsArray());
-        foreach (int schema in new[] { 0, 1, 3 })
+        foreach (int schema in new[] { 0, 1, 4 })
             Assert.Contains("schema mismatch", Assert.Throws<InvalidDataException>(() =>
                 compiler.Compile(selected with { SchemaVersion = schema })).Message);
+    }
+
+    [Fact]
+    public void OccurrencesKeepIndependentOptionsRepeatOrdinalsAndStableIdsAcrossReorder()
+    {
+        using var fixture = new Fixture();
+        fixture.Write("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"task":[{"name":"T","entry":"Entry","option":["X"]}],
+         "option":{"X":{"cases":[{"name":"Y","pipeline_override":{"Entry":{"timeout":1}}},
+         {"name":"N","pipeline_override":{"Entry":{"timeout":2}}}]}}}
+        """);
+        var entries = new TaskOccurrence[] {
+            new() { OccurrenceId = "first", PiTaskName = "T", Order = 0, RepeatCount = 2, Options = new() { ["X"] = "Y" } },
+            new() { OccurrenceId = "second", PiTaskName = "T", Order = 1, Options = new() { ["X"] = "N" },
+                PipelineOverride = new() { ["Entry"] = new JsonObject { ["rate_limit"] = 7 } } } };
+        var profile = fixture.Profile with { SchemaVersion = 3, TaskOccurrences = entries };
+        var compiler = new ProjectCompiler(fixture.Root, "interface.json");
+        var tasks = compiler.Compile(profile).Tasks;
+        Assert.Equal(new[] { "first_1", "first_2", "second_1" }, tasks.Select(task => task.Id));
+        Assert.Equal(new[] { 1, 2, 1 }, tasks.Select(task => task.ExecutionOrdinal));
+        Assert.Equal(new[] { 1, 1, 2 }, tasks.Select(task => task.Override["Entry"]!["timeout"]!.GetValue<int>()));
+        Assert.Equal(7, tasks[2].Override["Entry"]!["rate_limit"]!.GetValue<int>());
+        var reordered = profile with { TaskOccurrences = [entries[1] with { Order = 0 }, entries[0] with { Order = 1 }] };
+        Assert.Equal(new[] { "second_1", "first_1", "first_2" }, compiler.Compile(reordered).Tasks.Select(task => task.Id));
+        Assert.Throws<InvalidDataException>(() => compiler.Compile(profile with {
+            TaskOccurrences = [entries[0] with { RepeatCount = 101 }, entries[1]] }));
+        Assert.Throws<InvalidDataException>(() => compiler.Compile(profile with {
+            TaskOccurrences = [entries[0], entries[1] with { OccurrenceId = "first" }] }));
+    }
+
+    [Fact]
+    public void LegacyProfileMigrationPreservesUnusedOptionsAndInvalidatesAuthorization()
+    {
+        var old = new DriverProfile { SchemaVersion = 2, ProfileId = "p", SelectedTasks = ["B", "A"],
+            TaskOptions = new() { ["A"] = new JsonObject { ["X"] = "Y" }, ["C"] = new JsonObject { ["X"] = "N" } },
+            AuthorizedFingerprint = "old-code" };
+        var migrated = ProfileMigration.Upgrade(old);
+        Assert.Equal(3, migrated.SchemaVersion);
+        Assert.Empty(migrated.AuthorizedFingerprint);
+        Assert.Equal(new[] { "B", "A", "C" }, migrated.TaskOccurrences.Select(item => item.PiTaskName));
+        Assert.False(migrated.TaskOccurrences[2].Enabled);
+        Assert.Equal("N", migrated.TaskOccurrences[2].Options["X"]!.GetValue<string>());
+        var reordered = ProfileMigration.Upgrade(old with { SelectedTasks = ["A", "B"] });
+        Assert.Equal(migrated.TaskOccurrences.Single(item => item.PiTaskName == "A").OccurrenceId, reordered.TaskOccurrences[0].OccurrenceId);
+        Assert.Equal(new[] { "B", "A" }, old.SelectedTasks);
+        Assert.Throws<InvalidDataException>(() => ProfileMigration.Upgrade(old with { SelectedTasks = ["A", "A"] }));
+        Assert.Throws<InvalidDataException>(() => ProfileMigration.Upgrade(migrated with { SelectedTasks = ["A"] }));
     }
 
     private sealed class Fixture : IDisposable

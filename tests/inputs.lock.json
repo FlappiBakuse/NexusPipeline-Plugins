@@ -7,15 +7,49 @@
     "status": "merged Host implementation commit"
   },
   "maaFramework": {
-    "version": "5.14.0",
+    "version": "5.14.3",
     "bindingVersion": "5.10.0",
-    "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.0/MAA-win-x86_64-v5.14.0.zip",
-    "sha256": "036f827bb59215c20eb304378d391742a7db95da8cc78ca3a88e19321c639d79",
-    "sizeBytes": 73020542
+    "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.3/MAA-win-x86_64-v5.14.3.zip",
+    "sha256": "4042fde31c583cc5125ec5b12257f8d1929672bb5cb64c9052c34fc8ff4bb8ff",
+    "sizeBytes": 83319548,
+    "repository": "MaaXYZ/MaaFramework",
+    "sourceCommit": "8963191215ca49d6b037802acd07d20a4213160a",
+    "releaseId": 408736806,
+    "assetId": 627222798,
+    "bindingRepository": "MaaXYZ/MaaFramework.Binding.CSharp",
+    "bindingSourceCommit": "27c69a5b8ff41b6002ead71f403a16f442a7168e"
   },
   "fixtures": {
     "origin": "synthetic repository fixtures",
     "accounts": "none",
     "currentBytes": "recorded by staged Plugins source fingerprint"
-  }
+  },
+  "maaFrameworkPrevious": [
+    {
+      "version": "5.14.2",
+      "bindingVersion": "5.10.0",
+      "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.2/MAA-win-x86_64-v5.14.2.zip",
+      "sha256": "e279163bcdcab7c87ebe5a9dd157c47e169c78742dbdcc30d095de55ab0eaa9c",
+      "sizeBytes": 73033483,
+      "repository": "MaaXYZ/MaaFramework",
+      "sourceCommit": "8061d5bcaa3f07afcc1008795913663f64de46c8",
+      "releaseId": 398872082,
+      "assetId": 597456451,
+      "bindingRepository": "MaaXYZ/MaaFramework.Binding.CSharp",
+      "bindingSourceCommit": "27c69a5b8ff41b6002ead71f403a16f442a7168e"
+    },
+    {
+      "version": "5.14.1",
+      "bindingVersion": "5.10.0",
+      "url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.1/MAA-win-x86_64-v5.14.1.zip",
+      "sha256": "e19add8da3fe37faa5a6131aaa022685cfc8e74e1b1b3c341a8e38ba9cb018bb",
+      "sizeBytes": 73040782,
+      "repository": "MaaXYZ/MaaFramework",
+      "sourceCommit": "adba94d694569643d0517bc7c5220d1fdf603800",
+      "releaseId": 397984998,
+      "assetId": 594646363,
+      "bindingRepository": "MaaXYZ/MaaFramework.Binding.CSharp",
+      "bindingSourceCommit": "27c69a5b8ff41b6002ead71f403a16f442a7168e"
+    }
+  ]
 }

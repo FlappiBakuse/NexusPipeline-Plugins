@@ -10,6 +10,7 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 /// <summary>Read-only PI v2 compiler; the same effective plan feeds preview and the worker.</summary>
 public sealed class ProjectCompiler
 {
+    public string Root => _root;
     private readonly string _root;
     private readonly string _directory;
     private readonly HashSet<string> _stack = new(StringComparer.OrdinalIgnoreCase);
@@ -24,6 +25,12 @@ public sealed class ProjectCompiler
     public long ParsedBytes { get; private set; }
     public int EntriesEnumerated { get; private set; }
     private JsonObject _authorizationManifest = new();
+    private readonly Dictionary<string, string> _readFiles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _readIdentities = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string _rootIdentity;
+    public IReadOnlyDictionary<string, string> ReadFiles => _readFiles;
+    public string[] DeclaredExecutables => Objects(_pi["agent"]).Select(entry => Required(entry, "child_exec"))
+        .Concat(Objects(_pi["pretask"]).Select(entry => Required(entry, "exec"))).ToArray();
 
     public ProjectCompiler(string packageRoot, string interfacePath, string language = "zh_cn", CancellationToken cancellationToken = default)
     {
@@ -31,6 +38,7 @@ public sealed class ProjectCompiler
         _token.ThrowIfCancellationRequested();
         _root = Path.GetFullPath(packageRoot).TrimEnd('\\', '/');
         string file = Scope(_root, interfacePath);
+        _rootIdentity = DirectoryIdentity.Read(_root);
         _directory = Path.GetDirectoryName(file)!;
         _pi = Load(file);
         if (_pi["interface_version"]?.GetValue<int>() != 2) throw Error("interface_version", "PI v2 required");
@@ -68,15 +76,32 @@ public sealed class ProjectCompiler
 
     public CompiledProject Compile(DriverProfile profile, CancellationToken cancellationToken = default)
     {
+        profile = ProfileMigration.Upgrade(profile);
+        var semantic = CompileSemantics(profile, cancellationToken);
+        if (semantic.ResourcePaths.Any(path => !Directory.Exists(path))) throw Error("resource.path", "directory missing");
+        var pretasks = Programs(_pi["pretask"], false, profile);
+        var agents = Programs(_pi["agent"], true, profile);
+        var logs = ProjectLogSources.Resolve(Required(_pi, "name"), Text(_pi, "version"), agents);
+        var fingerprint = ExecutionFingerprint(profile, semantic.Controller, semantic.Resource, semantic.ResourcePaths, pretasks, agents, logs);
+        return new(Required(_pi, "name"), Text(_pi, "version"), _directory,
+            Display(semantic.Controller)!.AsObject(), Display(semantic.Resource)!.AsObject(), semantic.ResourcePaths,
+            semantic.BaseResourceCount, semantic.ResourceHashes, semantic.Tasks, pretasks, agents, fingerprint, semantic.PublicSchema, 2, _authorizationManifest)
+            { LogSources = logs };
+    }
+
+    public SemanticProject CompileSemantics(DriverProfile profile, CancellationToken cancellationToken = default)
+    {
         if (cancellationToken.CanBeCanceled) _token = cancellationToken;
         _token.ThrowIfCancellationRequested();
         BytesRead = 0; FilesHashed = 0; EntriesEnumerated = 0;
-        if (profile.SchemaVersion != 2 || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
+        profile = ProfileMigration.Upgrade(profile);
+        ProfileMigration.Validate(profile.TaskOccurrences);
+        if (Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
             throw Error("profile", "root or schema mismatch");
         if (profile.WindowSelection is not ("exact_process" or "executable")
             || profile.WindowWaitMilliseconds is < 1 or > 30000)
             throw Error("profile.windowSelection", "unsupported selector or wait bound");
-        var controller = Find("controller", profile.Controller);
+        var controller = ControllerConfiguration.Apply(Find("controller", profile.Controller), profile.ControllerConfiguration);
         var resource = Find("resource", profile.Resource);
         ValidateConfiguredOptions(profile);
         string type = Required(controller, "type");
@@ -100,20 +125,26 @@ public sealed class ProjectCompiler
         int baseCount = paths.Length;
         paths = paths.Concat(Strings(controller["attach_resource_path"]).Concat(profile.AttachResourcePaths)
             .Select(path => Scope(_directory, path))).ToArray();
-        if (paths.Any(path => !Directory.Exists(path))) throw Error("resource.path", "directory missing");
         var tasks = new List<CompiledTask>();
-        if (profile.SelectedTasks.Distinct(StringComparer.Ordinal).Count() != profile.SelectedTasks.Length)
-            throw Error("selectedTasks", "duplicate identity");
-        foreach (string name in profile.SelectedTasks)
+        foreach (var occurrence in profile.TaskOccurrences.Where(item => item.Enabled))
         {
+            string name = occurrence.PiTaskName;
             _token.ThrowIfCancellationRequested();
+            if (occurrence.GuiAction.Length != 0)
+            {
+                GuiWaitActions.Validate(occurrence.GuiAction, occurrence.PipelineOverride);
+                for (int ordinal = 1; ordinal <= occurrence.RepeatCount; ordinal++)
+                    tasks.Add(new(name, name, occurrence.GuiAction, occurrence.PipelineOverride.DeepClone().AsObject(),
+                        occurrence.OccurrenceId + "_" + ordinal, occurrence.OccurrenceId, ordinal) { GuiAction = occurrence.GuiAction });
+                continue;
+            }
             var task = Find("task", name);
             if (!Active(task, profile)) throw Error("task." + name, "not applicable to selected controller/resource");
             var pipeline = task["pipeline_override"]?.DeepClone().AsObject() ?? new();
             foreach (var (declaration, configured) in new (JsonNode?, JsonObject?)[]
             {
                 (_pi["global_option"], null), (resource["option"], profile.ResourceOptions),
-                (controller["option"], profile.ControllerOptions), (task["option"], profile.TaskOptions[name] as JsonObject)
+                (controller["option"], profile.ControllerOptions), (task["option"], occurrence.Options)
             })
             {
                 JsonObject values = profile.Options.DeepClone().AsObject();
@@ -121,27 +152,27 @@ public sealed class ProjectCompiler
                     foreach (var pair in configured) values[pair.Key] = pair.Value?.DeepClone();
                 ApplyOptions(Strings(declaration), profile, values, pipeline, new(), new HashSet<string>(StringComparer.Ordinal));
             }
-            tasks.Add(new(name, Label(task), Required(task, "entry"), pipeline));
+            MergePipeline(pipeline, occurrence.PipelineOverride);
+            for (int ordinal = 1; ordinal <= occurrence.RepeatCount; ordinal++)
+                tasks.Add(new(name, Label(task), Required(task, "entry"), pipeline.DeepClone().AsObject(),
+                    occurrence.OccurrenceId + "_" + ordinal, occurrence.OccurrenceId, ordinal));
         }
-        var pretasks = Programs(_pi["pretask"], false, profile);
-        var agents = Programs(_pi["agent"], true, profile);
-        var fingerprint = ExecutionFingerprint(profile, controller, resource, paths, pretasks, agents);
-        return new(Required(_pi, "name"), Text(_pi, "version"), _directory,
-            Display(controller)!.AsObject(), Display(resource)!.AsObject(), paths, baseCount,
-            Strings(resource["hash"]), tasks.ToArray(), pretasks, agents, fingerprint, Inspect(), 2, _authorizationManifest);
+        return new(controller, resource, paths, baseCount, Strings(resource["hash"]), tasks.ToArray(), Inspect());
     }
 
     public DriverProfile ApplyPreset(DriverProfile profile, string presetName)
     {
         var preset = Find("preset", presetName);
-        var selected = new List<string>(); var options = profile.TaskOptions.DeepClone().AsObject();
+        var entries = new List<TaskOccurrence>();
         foreach (JsonObject task in Objects(preset["task"]))
         {
             string name = Required(task, "name"); Find("task", name);
-            if (task["enabled"]?.GetValue<bool>() != false) selected.Add(name);
-            if (task["option"] is JsonObject values) options[name] = values.DeepClone();
+            entries.Add(new() { OccurrenceId = ProfileMigration.Identity("preset", profile.ProfileId, presetName, name),
+                PiTaskName = name, Order = entries.Count, Enabled = task["enabled"]?.GetValue<bool>() != false,
+                Options = task["option"]?.DeepClone().AsObject() ?? new() });
         }
-        return profile with { SelectedTasks = selected.ToArray(), TaskOptions = options };
+        ProfileMigration.Validate(entries.ToArray());
+        return profile with { SchemaVersion = 3, SelectedTasks = [], TaskOptions = new(), TaskOccurrences = entries.ToArray(), AuthorizedFingerprint = "" };
     }
 
     private CompiledProgram[] Programs(JsonNode? declaration, bool agent, DriverProfile profile)
@@ -150,8 +181,18 @@ public sealed class ProjectCompiler
         foreach (var entry in Objects(declaration))
         {
             if (!agent && !Active(entry, profile)) continue;
-            string executable = ResolveExecutable(Required(entry, agent ? "child_exec" : "exec"));
+            string declared = Required(entry, agent ? "child_exec" : "exec");
+            string executable;
+            bool lockedPython = profile.DependencyLock?.Python is not null
+                && PythonDependencies.NormalizeExecutable(declared) == PythonDependencies.RequireRecipe(profile).DeclaredExecutable;
+            if (lockedPython)
+            {
+                executable = Scope(_root, profile.DependencyLock!.Python!.InstallTarget + "/python.exe");
+                if (!File.Exists(executable)) throw Error("exec", "locked Python environment missing");
+            }
+            else executable = ResolveExecutable(declared);
             var arguments = Strings(entry[agent ? "child_args" : "args"]).ToList();
+            if (lockedPython) arguments.InsertRange(0, ["-B", "-s"]);
             JsonObject? generatedOptions = null;
             if (!agent && Strings(entry["option"]).Length > 0)
             {
@@ -345,7 +386,7 @@ public sealed class ProjectCompiler
             "name", "label", "description", "icon", "path", "controller", "option", "hash");
         foreach (var item in Objects(pi["task"])) Known(item, source + ".task." + Required(item, "name"),
             "name", "label", "entry", "default_check", "description", "doc", "desc", "icon", "group", "resource",
-            "controller", "pipeline_override", "option");
+            "controller", "pipeline_override", "option", "repeatable", "repeat_count");
         foreach (var item in Objects(pi["group"])) Known(item, source + ".group", "name", "label", "description", "icon", "default_expand");
         foreach (var item in Objects(pi["setting"])) Known(item, source + ".setting", "name", "label", "description", "icon", "option", "default_expand");
         foreach (var item in Objects(pi["pretask"])) Known(item, source + ".pretask", "name", "label", "description", "icon",
@@ -375,6 +416,7 @@ public sealed class ProjectCompiler
     private JsonObject Read(string file)
     {
         if (++_files > 128) throw Error("import", "file count");
+        string fileIdentity = DirectoryIdentity.Read(file);
         long size = new FileInfo(file).Length;
         // MaaEnd v2.30.0 has a 2.2 MB declaration import. Keep an explicit
         // bounded parser budget that includes the locked official projects.
@@ -394,6 +436,13 @@ public sealed class ProjectCompiler
         }
         _token.ThrowIfCancellationRequested();
         byte[] bytes = content.ToArray();
+        if (bytes.LongLength != size || DirectoryIdentity.Read(file) != fileIdentity) throw Error("source", "file changed during read");
+        string relative = Path.GetRelativePath(_root, file);
+        string digest = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        if (_readFiles.TryGetValue(relative, out string? prior) && (prior != digest || _readIdentities[relative] != fileIdentity))
+            throw Error("source." + relative, "file changed between reads");
+        _readFiles[relative] = digest;
+        _readIdentities[relative] = fileIdentity;
         var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true, MaxDepth = 64 };
         using var document = JsonDocument.Parse(bytes.AsMemory(bytes.AsSpan().StartsWith(new byte[] { 239, 187, 191 }) ? 3 : 0), options);
         CheckDuplicates(document.RootElement);
@@ -421,6 +470,21 @@ public sealed class ProjectCompiler
             relative = relative[14..];
         }
         return ResolveScopedPath(_root, basis, relative);
+    }
+
+    public void VerifyReadSnapshot()
+    {
+        if (DirectoryIdentity.Read(_root) != _rootIdentity) throw Error("source.root", "directory identity changed");
+        foreach (var pair in _readFiles)
+        {
+            _token.ThrowIfCancellationRequested();
+            string file = Scope(_root, pair.Key);
+            if (DirectoryIdentity.Read(file) != _readIdentities[pair.Key]) throw Error("source." + pair.Key, "file identity changed");
+            if (new FileInfo(file).Length > 8 * 1024 * 1024) throw Error("source." + pair.Key, "file changed");
+            using var stream = File.OpenRead(file);
+            if (Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant() != pair.Value)
+                throw Error("source." + pair.Key, "file changed; read the source again");
+        }
     }
 
     public static string ResolveScopedPath(string packageRoot, string basis, string relative)
@@ -464,14 +528,16 @@ public sealed class ProjectCompiler
     }
 
     private string ExecutionFingerprint(DriverProfile profile, JsonObject controller, JsonObject resource, string[] resourcePaths,
-        CompiledProgram[] pretasks, CompiledProgram[] agents)
+        CompiledProgram[] pretasks, CompiledProgram[] agents, DeclaredLogSource[] logs)
     {
         string native = Scope(_root, profile.NativeDirectory);
         var programs = new JsonArray();
         var identity = new StringBuilder();
+        identity.Append(JsonSerializer.Serialize(logs, DriverJson.Options));
         identity.Append(JsonSerializer.Serialize(new { root = _root, interfacePath = Scope(_root, profile.InterfacePath), profile.NativeVersion }));
         identity.Append(JsonSerializer.Serialize(new { profile.HostLaunchRequired, profile.HostLaunchConfiguration,
             profile.WindowSelection, profile.WindowExecutable, profile.WindowWaitMilliseconds }));
+        identity.Append(profile.DependencyLock?.LockHash ?? "");
         identity.Append(JsonSerializer.Serialize(new { type = controller["type"], win32 = controller["win32"], path = resource["path"] }));
         // Execution declarations are authorized as code; translated display-only
         // metadata does not invalidate that authorization.
@@ -479,6 +545,8 @@ public sealed class ProjectCompiler
             identity.Append(JsonSerializer.Serialize(new { field, value = ExecutionDeclaration(_pi[field]) }));
         if (!Directory.Exists(native)) throw Error("nativeDirectory", "missing");
         var files = Directory.EnumerateFiles(native, "*.dll").Order(StringComparer.OrdinalIgnoreCase).ToList();
+        if (profile.DependencyLock?.Python is { } pythonLock)
+            files.AddRange(pythonLock.DeclarationHashes.Keys.Select(relative => Scope(_root, relative)));
         foreach (string path in resourcePaths) files.AddRange(ScopedTree(path));
         foreach (var program in pretasks.Concat(agents))
         {
@@ -509,7 +577,10 @@ public sealed class ProjectCompiler
                 files.Add(entry);
                 // Python's local imports can extend beyond the entry's directory.
                 // Authorize the package's bounded local Python code, never the interpreter installation.
-                files.AddRange(ScopedTree(_root).Where(IsLocalCode));
+                string[] excluded = profile.DependencyLock?.Python is { } python
+                    ? [Scope(_root, ".nexus"), Scope(_root, Path.GetDirectoryName(PythonDependencies.RequireRecipe(profile).DeclaredExecutable)!), Path.GetDirectoryName(program.Executable)!]
+                    : [Path.GetDirectoryName(program.Executable)!];
+                files.AddRange(ScopedTree(_root, excluded).Where(IsLocalCode));
             }
             else if (program.Executable.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 files.AddRange(ScopedTree(Path.GetDirectoryName(program.Executable)!).Where(IsLocalCode));
@@ -554,6 +625,8 @@ public sealed class ProjectCompiler
             ["programs"] = programs, ["resourceRoots"] = new JsonArray(resourcePaths.Select(path => (JsonNode?)JsonValue.Create(path)).ToArray()),
             ["localCodeScope"] = "Bounded package-local code for Python; bounded executable-directory code and runtime metadata for direct EXE",
             ["fileCount"] = unique.Length, ["contentFingerprint"] = fingerprint,
+            ["inputFiles"] = new JsonArray(unique.Where(file => file.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                .Select(file => (JsonNode?)JsonValue.Create(Path.GetRelativePath(_root, file).Replace('\\', '/'))).ToArray()),
             ["windowSelection"] = profile.WindowSelection, ["windowExecutable"] = profile.WindowExecutable };
         return fingerprint;
     }
@@ -562,7 +635,7 @@ public sealed class ProjectCompiler
         || path.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase)
         || path.EndsWith(".runtimeconfig.json", StringComparison.OrdinalIgnoreCase);
 
-    private IEnumerable<string> ScopedTree(string directory)
+    private IEnumerable<string> ScopedTree(string directory, string[]? excludedDirectories = null)
     {
         var pending = new Stack<string>(); pending.Push(directory);
         int entries = 0;
@@ -576,7 +649,10 @@ public sealed class ProjectCompiler
                 EntriesEnumerated++;
                 if (++entries > 50000) throw Error("resource", "file count limit");
                 Scope(_root, Path.GetRelativePath(_root, path));
-                if (Directory.Exists(path)) pending.Push(path);
+                if (Directory.Exists(path))
+                {
+                    if (excludedDirectories?.Contains(path, StringComparer.OrdinalIgnoreCase) != true) pending.Push(path);
+                }
                 else yield return path;
             }
         }
@@ -629,11 +705,15 @@ public sealed class ProjectCompiler
         Validate(profile.Options, "options");
         Validate(profile.ControllerOptions, "controllerOptions");
         Validate(profile.ResourceOptions, "resourceOptions");
-        foreach (var pair in profile.TaskOptions)
+        foreach (var occurrence in profile.TaskOccurrences)
         {
-            Find("task", pair.Key);
-            if (pair.Value is not JsonObject values) throw Error("taskOptions." + pair.Key, "object required");
-            Validate(values, "taskOptions." + pair.Key);
+            if (occurrence.GuiAction.Length == 0) Find("task", occurrence.PiTaskName);
+            else
+            {
+                GuiWaitActions.Validate(occurrence.GuiAction, occurrence.PipelineOverride);
+                if (occurrence.Options.Count != 0) throw Error("taskOccurrences.options", "unsupported special action options");
+            }
+            Validate(occurrence.Options, "taskOccurrences." + occurrence.OccurrenceId + ".options");
         }
     }
 

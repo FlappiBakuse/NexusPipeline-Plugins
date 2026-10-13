@@ -13,9 +13,11 @@ internal static class Program
         form.Shown += (_, _) =>
         {
             using var process = Process.GetCurrentProcess();
-            File.WriteAllText(args[0], JsonSerializer.Serialize(new { handle = (long)form.Handle, pid = process.Id,
+            File.WriteAllText(args[0] + ".pending", JsonSerializer.Serialize(new { handle = (long)form.Handle, pid = process.Id,
                 executable = process.MainModule!.FileName, startedAtUtc = process.StartTime.ToUniversalTime() }));
+            File.Move(args[0] + ".pending", args[0]);
         };
+        form.FormClosed += (_, _) => File.WriteAllText(args[0] + ".exited", "closed");
         using var timer = new System.Windows.Forms.Timer { Interval = 100 };
         timer.Tick += (_, _) => { if (File.Exists(args[0] + ".stop")) form.Close(); };
         timer.Start(); Application.Run(form);
