@@ -3165,23 +3165,26 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 	"aria-label",
 	"title",
 	"aria-pressed"
-], ws = [
+], ws = {
+	class: "ga-button-glyph",
+	"aria-hidden": "true"
+}, Ts = [
 	"aria-label",
 	"title",
 	"disabled"
-], Ts = ["aria-label", "title"], Es = ["disabled", "aria-label"], Ds = ["disabled", "aria-label"], Os = { class: "ga-carousel-controls" }, ks = {
+], Es = ["aria-label", "title"], Ds = ["disabled", "aria-label"], Os = ["disabled", "aria-label"], ks = { class: "ga-carousel-controls" }, As = {
 	class: "ga-refresh-status",
 	role: "status",
 	"aria-live": "polite"
-}, As = { class: "ga-indicators" }, js = [
+}, js = { class: "ga-indicators" }, Ms = [
 	"aria-label",
 	"aria-current",
 	"onClick"
-], Ms = [
+], Ns = [
 	"open",
 	"title",
 	"locked"
-], Ns = { key: 0 }, Ps = ["open", "title"], Fs = /* @__PURE__ */ Ln({
+], Ps = { key: 0 }, Fs = ["open", "title"], Is = /* @__PURE__ */ Ln({
 	__name: "ActivityCarousel",
 	props: {
 		host: {},
@@ -3255,14 +3258,17 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 		}, [
 			X("h2", is, M(B(n)("card.title")), 1),
 			B(o) && !h.value ? (J(), Y("p", as, M(B(o)), 1)) : Z("", !0),
-			!B(r) || !B(r).selectedFeeds.length ? (J(), Y("div", os, [X("p", null, M(B(n)(B(r) ? "state.select" : "state.loading")), 1), X("button", {
+			!B(r) || !B(r).selectedFeeds.length ? (J(), Y("div", os, [X("p", null, M(B(n)(B(r) ? "state.select" : "state.loading")), 1), X("nxp-button", {
 				type: "button",
 				class: "ga-icon-button ga-empty-settings",
 				disabled: !B(r),
 				"aria-label": B(n)("settings.title"),
 				title: B(n)("settings.title"),
 				onClick: ie
-			}, "⚙️", 8, ss)])) : x.value ? (J(), Y("div", {
+			}, [...i[11] ||= [X("span", {
+				class: "ga-button-glyph",
+				"aria-hidden": "true"
+			}, "⚙️", -1)]], 8, ss)])) : x.value ? (J(), Y("div", {
 				key: 2,
 				class: "ga-carousel",
 				role: "region",
@@ -3289,7 +3295,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						src: B(w)["overview/" + t.id],
 						alt: t.overview?.cover?.alt ?? ""
 					}, null, 8, ds)) : (J(), Y("div", fs, [X("span", null, M(B(n)(`game.${t.summary.gameId}`)), 1)])),
-					i[11] ||= X("div", { class: "ga-shade" }, null, -1),
+					i[12] ||= X("div", { class: "ga-shade" }, null, -1),
 					X("div", ps, [
 						X("div", ms, [
 							X("span", hs, M(B(n)(`game.${t.summary.gameId}`)), 1),
@@ -3303,7 +3309,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 							X("strong", null, M(re(t.overview.end)), 1)
 						])) : t.feed ? Z("", !0) : (J(), Y("p", bs, M(B(n)(t.summary.health.diagnostics.length ? "state.unavailable" : "state.loading")), 1))
 					]),
-					X("button", {
+					X("nxp-button", {
 						class: "ga-open-details",
 						type: "button",
 						disabled: !t.feed,
@@ -3313,7 +3319,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 					}, null, 8, xs)
 				], 8, us))), 128))], 4)]),
 				X("div", Ss, [
-					E.value > 0 && C.value.length > 1 ? (J(), Y("button", {
+					E.value > 0 && C.value.length > 1 ? (J(), Y("nxp-button", {
 						key: 0,
 						type: "button",
 						class: "ga-icon-button",
@@ -3321,8 +3327,8 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						title: B(n)(b.value ? "carousel.resume" : "carousel.pause"),
 						"aria-pressed": b.value,
 						onClick: i[1] ||= (e) => b.value = !b.value
-					}, M(b.value ? "▶️" : "⏸️"), 9, Cs)) : Z("", !0),
-					X("button", {
+					}, [X("span", ws, M(b.value ? "▶️" : "⏸️"), 1)], 8, Cs)) : Z("", !0),
+					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
 						"aria-label": B(n)("refresh"),
@@ -3331,37 +3337,52 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						onClick: i[2] ||= (t) => {
 							e.covers.retryFailed(), B(m)();
 						}
-					}, "🔄", 8, ws),
-					X("button", {
+					}, [...i[13] ||= [X("span", {
+						class: "ga-button-glyph",
+						"aria-hidden": "true"
+					}, "🔄", -1)]], 8, Ts),
+					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
 						"aria-label": B(n)("settings.title"),
 						title: B(n)("settings.title"),
 						onClick: ie
-					}, "⚙️", 8, Ts)
+					}, [...i[14] ||= [X("span", {
+						class: "ga-button-glyph",
+						"aria-hidden": "true"
+					}, "⚙️", -1)]], 8, Es)
 				]),
-				X("button", {
+				X("nxp-button", {
 					type: "button",
 					class: "ga-page-button ga-previous",
 					disabled: C.value.length < 2,
 					"aria-label": B(n)("carousel.previous"),
 					onClick: i[3] ||= (e) => O(-1)
-				}, "‹", 8, Es),
-				X("button", {
+				}, [...i[15] ||= [X("span", {
+					class: "ga-page-glyph",
+					"aria-hidden": "true"
+				}, "‹", -1)]], 8, Ds),
+				X("nxp-button", {
 					type: "button",
 					class: "ga-page-button ga-next",
 					disabled: C.value.length < 2,
 					"aria-label": B(n)("carousel.next"),
 					onClick: i[4] ||= (e) => O(1)
-				}, "›", 8, Ds),
-				X("div", Os, [X("span", ks, M(B(c) ? B(n)("state.loading") : B(d) ? B(n)(`refreshResult.${B(d).status}`, B(d)) : ""), 1), X("div", As, [(J(!0), Y(K, null, cr(C.value, (e, t) => (J(), Y("button", {
+				}, [...i[16] ||= [X("span", {
+					class: "ga-page-glyph",
+					"aria-hidden": "true"
+				}, "›", -1)]], 8, Os),
+				X("div", ks, [X("span", As, M(B(c) ? B(n)("state.loading") : B(d) ? B(n)(`refreshResult.${B(d).status}`, B(d)) : ""), 1), X("div", js, [(J(!0), Y(K, null, cr(C.value, (e, t) => (J(), Y("nxp-button", {
 					key: e.id,
 					type: "button",
 					"aria-label": `${B(n)("carousel.show")} ${B(n)(`game.${e.summary.gameId}`)}`,
 					"aria-current": t === B(a) ? "true" : void 0,
 					class: j({ "ga-current": t === B(a) }),
 					onClick: (e) => te(t)
-				}, [...i[12] ||= [X("span", null, null, -1)]], 10, js))), 128))])])
+				}, [...i[17] ||= [X("span", {
+					class: "ga-indicator-bar",
+					"aria-hidden": "true"
+				}, null, -1)]], 10, Ms))), 128))])])
 			], 40, cs)) : Z("", !0),
 			h.value && B(r) ? (J(), Y("nxp-modal", {
 				key: 3,
@@ -3379,14 +3400,14 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				onSave: A,
 				onCancel: i[5] ||= (e) => h.value = !1
 			}, {
-				default: xn(() => [x.value ? (J(), Y("span", Ns, [zi(M(B(n)(`cache.${x.value.health.cacheState}`)), 1), S.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + M(B(n)("state.lastGood")) + " " + M(k(S.value.health.lastGoodAt)) + " (" + M(B(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
+				default: xn(() => [x.value ? (J(), Y("span", Ps, [zi(M(B(n)(`cache.${x.value.health.cacheState}`)), 1), S.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + M(B(n)("state.lastGood")) + " " + M(k(S.value.health.lastGoodAt)) + " (" + M(B(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
 				_: 1
 			}, 8, [
 				"settings",
 				"host",
 				"busy",
 				"error"
-			])], 40, Ms)) : Z("", !0),
+			])], 40, Ns)) : Z("", !0),
 			g.value ? (J(), Y("nxp-modal", {
 				key: 4,
 				open: g.value,
@@ -3406,13 +3427,13 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				"now",
 				"covers",
 				"zone"
-			])) : Z("", !0)], 40, Ps)) : Z("", !0)
+			])) : Z("", !0)], 40, Fs)) : Z("", !0)
 		], 32));
 	}
 });
 //#endregion
 //#region src/useActivityState.ts
-function Is(e) {
+function Ls(e) {
 	let t = /* @__PURE__ */ Vt(null), n = /* @__PURE__ */ Vt({}), r = /* @__PURE__ */ z(0), i = /* @__PURE__ */ z(""), a = /* @__PURE__ */ z(!1), o = /* @__PURE__ */ z(!1), s = /* @__PURE__ */ z(Date.now()), c = /* @__PURE__ */ Vt(null), l = $(() => o.value || ["queued", "running"].includes(c.value?.status ?? "")), u = /* @__PURE__ */ z(Intl.DateTimeFormat().resolvedOptions().timeZone), d = $(() => o.value || !!t.value?.refreshing || ["queued", "running"].includes(c.value?.status ?? "")), f = new AbortController(), p = !1, m = 0, h = !1, g = null, _ = null, v, y = Date.now(), b = performance.now(), x = /* @__PURE__ */ new Map();
 	function S(e) {
 		p || (i.value = e instanceof Error ? e.message : String(e));
@@ -3557,7 +3578,7 @@ function Is(e) {
 }
 //#endregion
 //#region src/useCoverAssets.ts
-function Ls(e, t) {
+function Rs(e, t) {
 	let n = /* @__PURE__ */ Vt({}), r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = !1, o = 0, s;
 	function c() {
 		for (let e of r.values()) e.references.clear();
@@ -3655,8 +3676,8 @@ function Ls(e, t) {
 }
 //#endregion
 //#region src/main.ts
-function Rs(e) {
-	let t = Is(e), n = Ls(e, $(() => (t.current.value?.selectedFeeds ?? []).map((e) => {
+function zs(e) {
+	let t = Ls(e), n = Rs(e, $(() => (t.current.value?.selectedFeeds ?? []).map((e) => {
 		let n = Vo(e.gameId, e.progressionId);
 		return {
 			id: n,
@@ -3664,7 +3685,7 @@ function Rs(e) {
 			cover: t.feeds.value[n]?.overview?.cover ?? null
 		};
 	}))), r = e.dashboard.registerCard("carousel", (r) => {
-		let i = Qa(Fs, {
+		let i = Qa(Is, {
 			host: e,
 			state: t,
 			covers: n
@@ -3678,4 +3699,4 @@ function Rs(e) {
 	} };
 }
 //#endregion
-export { Rs as activate };
+export { zs as activate };

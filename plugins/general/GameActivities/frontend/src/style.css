@@ -56,20 +56,49 @@
 .game-activities .ga-open-details:focus-visible { outline: 3px solid var(--accent); outline-offset: -5px; }
 .game-activities .ga-open-details:disabled { cursor: default; }
 .ga-tools { position: absolute; z-index: 3; top: 10px; right: 10px; display: flex; gap: 2px; }
-.game-activities .ga-icon-button { position: relative; display: grid; width: 42px; height: 42px; min-height: 42px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: #fff; font-size: 21px; cursor: pointer; text-shadow: 0 1px 7px #000; place-items: center; }
-.game-activities .ga-icon-button:hover { background: #0003; }
-.game-activities .ga-page-button { position: absolute; z-index: 3; top: 50%; display: grid; width: 40px; height: 40px; min-height: 40px; padding: 0 0 3px; transform: translateY(-50%); border: 1px solid #ffffff24; border-radius: 50%; background: #0003; box-shadow: none; color: #fff; font-size: 30px; line-height: 1; cursor: pointer; place-items: center; backdrop-filter: blur(4px); }
-.game-activities .ga-page-button:hover { background: #0007; }
-.ga-page-button.ga-previous { left: 12px; }
-.ga-page-button.ga-next { right: 12px; }
-.ga-page-button:disabled { opacity: .3; cursor: default; }
+.game-activities nxp-button.ga-icon-button,
+.game-activities nxp-button.ga-page-button {
+  display: inline-flex;
+  --nx-button-width: 100%;
+  --nx-button-min-width: 0;
+  --nx-button-padding: 0;
+  --nx-button-radius: 50%;
+  --nx-button-color: #fff;
+  --nx-button-pressed-color: #fff;
+  --nx-button-pressed-border-color: transparent;
+  --nx-button-pressed-background: transparent;
+}
+.game-activities nxp-button.ga-icon-button {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  --nx-button-min-height: 42px;
+  --nx-button-border-color: transparent;
+  --nx-button-background: transparent;
+  --nx-button-hover-background: #0003;
+}
+.ga-button-glyph { display: block; font-size: 21px; line-height: 1.4; text-shadow: 0 1px 7px #000; }
+.game-activities nxp-button.ga-page-button {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translateY(-50%);
+  --nx-button-min-height: 40px;
+  --nx-button-border-color: #ffffff24;
+  --nx-button-background: #0003;
+  --nx-button-hover-background: #0007;
+}
+.ga-page-glyph { display: block; font-size: 30px; line-height: 1; padding-bottom: 3px; }
+nxp-button.ga-page-button.ga-previous { left: 12px; }
+nxp-button.ga-page-button.ga-next { right: 12px; }
 .ga-carousel-controls { position: absolute; z-index: 3; bottom: 8px; left: 50%; transform: translateX(-50%); }
 .ga-indicators { display: flex; justify-content: center; gap: 4px; }
-.game-activities .ga-indicators nxp-button { display: flex; align-items: center; justify-content: center; width: clamp(24px, 3vw, 34px); height: 32px; min-height: 32px; padding: 0 2px; border: 0; border-radius: 3px; background: transparent; box-shadow: none; cursor: pointer; }
-.ga-indicators nxp-button span { width: 100%; height: 3px; border-radius: 2px; background: #fff6; transition: background .2s, transform .2s; }
-.ga-indicators nxp-button.ga-current > span { background: #fff; transform: scaleY(1.3); }
-.ga-indicators nxp-button:hover > span { background: #fffc; }
-.ga-icon-button:focus-visible, .ga-page-button:focus-visible, .ga-indicators nxp-button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.game-activities .ga-indicators nxp-button { display: inline-flex; width: clamp(24px, 3vw, 34px); height: 32px; --nx-button-width: 100%; --nx-button-min-height: 32px; --nx-button-padding: 0 2px; --nx-button-radius: 3px; --nx-button-border-color: transparent; --nx-button-background: transparent; --nx-button-hover-background: transparent; }
+.ga-indicator-bar { display: block; width: 100%; height: 3px; border-radius: 2px; background: #fff6; transition: background .2s, transform .2s; }
+.ga-indicators nxp-button.ga-current .ga-indicator-bar { background: #fff; transform: scaleY(1.3); }
+.ga-indicators nxp-button:hover .ga-indicator-bar { background: #fffc; }
 
 .ga-settings { display: grid; gap: 16px; color: var(--text); }
 .ga-settings-card { min-width: 0; overflow: hidden; border: 1px solid var(--content-card-border); border-radius: var(--radius-lg); background: var(--content-card); }
@@ -142,8 +171,8 @@
   .ga-slide-meta { gap: 6px; }
   .ga-slide-copy { bottom: 24px; gap: 9px; padding: 20px 56px 24px; }
   .ga-deadline { gap: 3px 8px; font-size: 11px; }
-  .ga-page-button.ga-previous { left: 8px; }
-  .ga-page-button.ga-next { right: 8px; }
+  nxp-button.ga-page-button.ga-previous { left: 8px; }
+  nxp-button.ga-page-button.ga-next { right: 8px; }
   .ga-description { -webkit-line-clamp: 3; }
   .ga-game-setting { gap: 8px; padding: 12px; }
   .ga-game-handle { flex-basis: 32px; }
@@ -172,7 +201,7 @@
 a.ga-event-card:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 @media(max-width:520px) { .ga-event-card { grid-template-columns:minmax(0,1fr); } .ga-event-copy { padding:16px; } .ga-event-media { aspect-ratio:16/9; min-height:0; } .ga-event-media::before { background:linear-gradient(180deg,var(--content-card-soft),transparent 35%); } }
 
-.game-activities :is(.ga-icon-button, .ga-page-button, .ga-open-details, .ga-indicators nxp-button) {
+.game-activities nxp-button.ga-open-details {
   display: inline-flex; --nx-button-width: 100%; --nx-button-min-height: 40px;
   --nx-button-padding: 0; --nx-button-border-color: transparent; --nx-button-color: white;
   --nx-button-background: transparent; --nx-button-hover-background: transparent;

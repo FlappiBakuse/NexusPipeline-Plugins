@@ -18,7 +18,7 @@
       "version": "0.1.1",
       "date": "2026-10-12",
       "items": [
-        "调整活动卡表面、交互控件及前端生命周期验证。"
+        "调整活动卡表面、交互控件及前端生命周期验证。修复分页按钮重叠和 Emoji 图标裁切。"
       ]
     },
     {
@@ -44,7 +44,7 @@
           "version": "0.1.1",
           "date": "2026-10-12",
           "items": [
-            "Updates activity card surfaces, controls and frontend lifecycle validation."
+            "Updates activity card surfaces, controls and frontend lifecycle validation. Fixes overlapping page controls and clipped emoji icons."
           ]
         },
         {
