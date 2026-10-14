@@ -13,10 +13,6 @@ public sealed class SessionLogReaderTests
         Directory.CreateDirectory(root);
         try
         {
-            var python = new CompiledProgram("agent", "python.exe", ["-B", "-s", "./agent/main.py"], "owned");
-            Assert.Equal(2, ProjectLogSources.Resolve("MaaStellaSora", "1.6.0", [python]).Length);
-            Assert.Empty(ProjectLogSources.Resolve("MaaStellaSora", "1.6.0", [python with { Arguments = ["../agent/main.py"] }]));
-            Assert.Empty(ProjectLogSources.Resolve("Other", "1.6.0", [python]));
             string path = Path.Combine(root, "agent.log"); File.WriteAllText(path, "old-session\n", new UTF8Encoding(false));
             var logs = new List<string>(); var facts = new List<JsonObject>();
             ValueTask Send(string kind, JsonObject value) { if (kind == "log") logs.Add(value["text"]!.GetValue<string>()); else facts.Add(value.DeepClone().AsObject()); return ValueTask.CompletedTask; }

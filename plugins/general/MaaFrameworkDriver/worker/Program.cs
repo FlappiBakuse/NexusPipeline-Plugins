@@ -89,12 +89,19 @@ try
     string revision = bootstrap.Input["revision"]?.GetValue<string>() ?? "";
     if (mode == "initialize_only" && (operationId.Length is < 1 or > 64 || revision.Length is < 1 or > 128))
         throw new NativeStartupException("initialization_identity_required");
-    await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target,
+    if (mode == "run")
+    {
+        string[] selected = bootstrap.Input["selectedTaskIds"]!.Deserialize<string[]>(DriverJson.Options)!;
+        compiled = TaskSelection.Apply(compiled, selected);
+    }
+    bool succeeded = await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target,
         mode == "initialize_only", operationId, revision, bootstrap.SessionArtifactsDirectory ?? "", bootstrap.Nonce);
     await session.CloseAsync();
     workspace.Complete();
-    await Send("completed", new() { ["status"] = cancelled.IsCancellationRequested ? "cancelled" : "succeeded" });
-    return cancelled.IsCancellationRequested ? 2 : 0;
+    cancelled.Token.ThrowIfCancellationRequested();
+    await Send("completed", new() { ["status"] = succeeded ? "succeeded" : "failed",
+        ["code"] = succeeded ? "maa.succeeded" : "maa.task_failed" });
+    return succeeded ? 0 : 3;
 }
 catch (Exception ex)
 {

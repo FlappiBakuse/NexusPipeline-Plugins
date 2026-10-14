@@ -18,10 +18,16 @@
       "version": "0.2.3",
       "date": "2026-10-12",
       "items": [
-        "保存独立任务条目、重复次数与选项，自动发现并同步 MFA/MXU 来源。",
-        "锁定官方原生依赖及 MaaStellaSora 1.6.0 的 Python 运行闭包，在保存初始化时验证并准备依赖。",
-        "使用宿主会话目录采集原生日志，并验证受控 Agent、预任务和前端草稿交互。",
-        "用户覆盖经 Host 初始化提交独立修订，共享来源变化后自动重新套用覆盖并验证；并发编辑发生冲突时保留旧指针。"
+        "发现 PI v2 与 MXU/MFA/CFA/MaaPiCli 来源，保留独立任务、重复次数和分层选项。",
+        "验证本地运行库和 Python 输入，保存初始化后提交修订；来源同步不重放项目程序。",
+        "按真实框架任务结果进行有限失败子集续跑，保留成功任务和每次尝试。",
+        "关闭 Maa 自定义判断入口，保留旧资产；使用独占原生日志和 Agent 标准输出。",
+        "兼容 CFA 保存的关闭状态速通元数据，启用状态明确阻断。",
+        "使用最小查询权限读取游戏窗口的进程路径与启动时间，兼容禁止模块枚举的游戏进程。",
+        "遵循 MXU 保存的预任务开关和选项，并向外部 Agent 提供已验证的原生运行库路径。",
+        "兼容 MFA 保存但未启用的游戏启动路径，保留来源配置并阻断未支持的启动及断线重试动作。",
+        "发现并读取 MFA 旧式共享配置中的已登记实例，隔离实例字段并保留任务选择和顺序。",
+        "兼容 MFA 保存的窗口提示与 Agent 通道偏好，保持 Host 已核验的进程身份和独占会话。"
       ]
     },
     {
@@ -44,27 +50,41 @@
       "displayName": "MaaFramework Driver",
       "gameName": "MaaFramework Project Interface projects",
       "description": "Run MaaFramework Project Interface projects with isolated workers, verified dependencies and independent task options.",
-      "tags": ["Framework driver", "Win32", "ADB"],
+      "tags": [
+        "Framework driver",
+        "Win32",
+        "ADB"
+      ],
       "changelog": [
         {
           "version": "0.2.3",
           "date": "2026-10-12",
           "items": [
-            "Persists independent task occurrences, repeat counts and options with automatic MFA/MXU source discovery and synchronization.",
-            "Pins official native dependencies and the MaaStellaSora 1.6.0 Python environment, preparing and verifying dependencies during save initialization.",
-            "Captures native logs in host session directories and verifies controlled Agent, pre-task and frontend draft interactions.",
-            "Initializes independent user override revisions through Host and automatically rebases and verifies them after shared source changes, preserving previous pointers on concurrent-edit conflicts."
+            "Discovers PI v2 and MXU/MFA/CFA/MaaPiCli sources with independent occurrences, repeat counts and layered options.",
+            "Verifies local native/Python inputs and initializes saved revisions; passive source synchronization starts no project programs.",
+            "Retries the failed suffix within Host limits using native task results, retaining successful tasks and per-attempt evidence.",
+            "Disables Maa custom judgement while preserving existing assets; captures session-owned native logs and Agent standard output.",
+            "Accepts inactive speedrun metadata saved by CFA and explicitly rejects enabled speedrun behavior.",
+            "Reads window process paths and creation times with limited query access, supporting games that deny module enumeration.",
+            "Honors saved MXU pretask selection and options, and supplies the verified native library path to external Agents.",
+            "Accepts saved inactive MFA software paths without launching programs or enabling unsupported startup and reconnect actions.",
+            "Discovers registered MFA instances in shared configuration files while isolating instance fields and preserving task selection and order.",
+            "Accepts MFA saved window hints and Agent transport preferences while retaining Host-verified process identity and session ownership."
           ]
         },
         {
           "version": "0.2.2",
           "date": "2026-10-11",
-          "items": ["Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."]
+          "items": [
+            "Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."
+          ]
         },
         {
           "version": "0.2.1",
           "date": "2026-10-05",
-          "items": ["Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."]
+          "items": [
+            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+          ]
         }
       ]
     }

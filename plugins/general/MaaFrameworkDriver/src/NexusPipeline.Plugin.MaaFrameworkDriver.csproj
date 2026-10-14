@@ -8,7 +8,5 @@
   <ItemGroup>
     <ProjectReference Include="$(NexusHostRoot)\src\NexusPipeline.Plugin.Abstractions\NexusPipeline.Plugin.Abstractions.csproj" Private="false" />
     <Compile Include="..\core\**\*.cs" LinkBase="Core" />
-    <EmbeddedResource Include="..\compatibility\native-recipes.json" LogicalName="MaaFrameworkDriver.NativeRecipes.json" />
-    <EmbeddedResource Include="..\compatibility\python-recipes.json" LogicalName="MaaFrameworkDriver.PythonRecipes.json" />
   </ItemGroup>
 </Project>

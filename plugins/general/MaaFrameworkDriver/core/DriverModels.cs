@@ -14,7 +14,8 @@ public sealed record DriverProfile
     public string Resource { get; init; } = "";
     public string NativeDirectory { get; init; } = "";
     public string NativeVersion { get; init; } = "";
-    public NativeDependencyLock? DependencyLock { get; init; }
+    public JsonObject? DependencyLock { get; init; }
+    public RuntimeInputLock? RuntimeInputs { get; init; }
     public string AdbPath { get; init; } = "";
     public string AdbSerial { get; init; } = "";
     public long WindowHandle { get; init; }
@@ -32,6 +33,7 @@ public sealed record DriverProfile
     public JsonObject ResourceOptions { get; init; } = new();
     public JsonObject ControllerOptions { get; init; } = new();
     public JsonObject ControllerConfiguration { get; init; } = new();
+    public bool? AgentEmbedded { get; init; }
     public JsonObject TaskOptions { get; init; } = new();
     public string[] AttachResourcePaths { get; init; } = [];
     public string AuthorizedFingerprint { get; init; } = "";
@@ -70,8 +72,4 @@ public sealed record SemanticProject(JsonObject Controller, JsonObject Resource,
 public sealed record CompiledProject(string Name, string Version, string InterfaceDirectory,
     JsonObject Controller, JsonObject Resource, string[] ResourcePaths, int BaseResourceCount, string[] ResourceHashes,
     CompiledTask[] Tasks, CompiledProgram[] Pretasks, CompiledProgram[] Agents,
-    string ExecutionFingerprint, JsonObject PublicSchema, int SchemaVersion = 2, JsonObject? AuthorizationManifest = null)
-{
-    public DeclaredLogSource[] LogSources { get; init; } = [];
-}
-public sealed record DeclaredLogSource(string Id, string RelativePath, string? BackupPattern = null, bool Optional = false);
+    string ExecutionFingerprint, JsonObject PublicSchema, int SchemaVersion = 2, JsonObject? AuthorizationManifest = null);

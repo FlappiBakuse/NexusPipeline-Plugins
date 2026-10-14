@@ -89,7 +89,7 @@ export async function assertMaaRenderer(host, registrations) {
     await flushDom();
     const click = label => [...element.querySelectorAll('nxp-button')].find(item => item.textContent === label).dispatchEvent(new Event('click'));
     click('只读执行预览'); await flushDom();
-    click('确认授权并保存独立配置'); await flushDom();
+    click('保存用户配置'); await flushDom();
     const confirmation = element.querySelector('nxp-confirm-dialog');
     if (!confirmation || userSave) fail('Maa user initialization must wait for the public confirmation');
     confirmation.dispatchEvent(new Event('confirm')); await flushDom();

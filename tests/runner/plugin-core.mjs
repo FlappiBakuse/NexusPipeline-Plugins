@@ -138,9 +138,8 @@ try {
       if (bootstrapNative)
         await step("Maa native inputs",python,["tests/bootstrap-native.py","--output",env.NEXUS_MAA_NATIVE_ROOT]);
       if (maaAdapter) {
-        const primary = JSON.parse(fs.readFileSync(path.join(env.NEXUS_MAA_NATIVE_ROOT,"native-input.json")));
-        env.NEXUS_MAA_PYTHON_NATIVE_ROOT ||= primary.source.version === "5.14.2" ? env.NEXUS_MAA_NATIVE_ROOT : path.join(runRoot,"maa-python-native");
-        await step("Maa Python Agent native inputs",python,["tests/bootstrap-native.py","--output",env.NEXUS_MAA_PYTHON_NATIVE_ROOT,"--version","5.14.2"]);
+        env.NEXUS_MAA_PYTHON_ROOT ||= path.join(artifact, "cache", "maa-python-4.12.1");
+        await step("Maa local Python test input",python,["tests/bootstrap-python.py","--output",env.NEXUS_MAA_PYTHON_ROOT]);
       }
     })(),
   ]);

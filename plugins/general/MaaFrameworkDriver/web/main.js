@@ -23,7 +23,7 @@ export function activate(host) {
     });
     const userId = context.mode === 'binding' ? context.secondaryId || '' : '';
     let importPath = '', importKind = 'mxu', importInstance = '', importMode = 'new', presetName = '';
-    let discovered = null, selectedSource = '', advanced = false;
+    let explicitInterface = '', discovered = null, selectedSource = '', advanced = false;
     let profile = { schemaVersion: 3, profileId: context.executionProviderConfigId || crypto.randomUUID().replaceAll('-', ''),
       revision: '', packageRoot: context.packageRoot || '', interfacePath: 'interface.json', controller: '', resource: '',
       nativeDirectory: '', nativeVersion: '', language: 'zh_cn', selectedTasks: [], taskOccurrences: [], options: {}, resourceOptions: {}, controllerOptions: {}, taskOptions: {},
@@ -66,6 +66,12 @@ export function activate(host) {
     function draw() {
       fields.replaceChildren();
       if (!userId) {
+        if (discovered?.interfaceCandidates?.length > 1) {
+          field(text('项目接口', 'Project interface'), 'nxp-select', explicitInterface,
+            value => { explicitInterface = value; profile.interfacePath = value; discover().catch(fail); },
+            { options: discovered.interfaceCandidates.map(value => ({ value, label: value })) });
+          return;
+        }
         const choices = discovered?.candidates || [];
         if (choices.length > 1) field(text('来源配置', 'Source configuration'), 'nxp-select', selectedSource,
           value => { selectedSource = value; profile.sourceBinding = null; profile.sourceSnapshot = null; },
@@ -79,7 +85,6 @@ export function activate(host) {
       }
       field(text('Interface 相对路径', 'Relative interface path'), 'nxp-text-input', profile.interfacePath, v => profile.interfacePath = v);
       field(text('原生 DLL 相对目录', 'Relative native DLL directory'), 'nxp-text-input', profile.nativeDirectory, v => profile.nativeDirectory = v);
-      field(text('原生库精确版本', 'Exact native version'), 'nxp-text-input', profile.nativeVersion, v => profile.nativeVersion = v);
       field(text('导入源相对路径（只读）', 'Relative import source path (read-only)'), 'nxp-text-input', importPath, v => importPath = v);
       field(text('导入格式', 'Import schema'), 'nxp-select', importKind, v => importKind = v,
         { options: [{ value: 'mxu', label: 'MXU schema 1.0' }, { value: 'mfa', label: 'MFAAvalonia' }, { value: 'maapicli-v5.14.0', label: 'MaaPiCli v5.14.0' }] });
@@ -281,7 +286,7 @@ export function activate(host) {
       if (!userId && importMode === 'new') { profile.profileId = crypto.randomUUID().replaceAll('-', ''); profile.revision = ''; }
       draw(); notify(text('映射已载入草稿；请补齐窗口/ADB 参数并预览。', 'Mapping loaded into draft; complete the window/ADB target and preview.'));
     });
-    button(text('确认授权并保存独立配置', 'Authorize and save independent profile'), async () => {
+    button(text('保存用户配置', 'Save user configuration'), async () => {
       requireValidDraft();
       if (!userId) { publishDraft(); notify(text('请使用宿主的“保存”完成初始化和配置提交。', 'Use Save in the host to initialize and commit this configuration.')); return; }
       if (!preview || previewProfile !== JSON.stringify(profile))
@@ -305,9 +310,9 @@ export function activate(host) {
       if (!profile.packageRoot) return;
       const version = draftVersion;
       const result = await host.api.post('discover', { packageRoot: profile.packageRoot,
-        interfacePath: advanced ? profile.interfacePath : profile.sourceBinding?.interfaceRelativePath || '' }, abort.signal);
+        interfacePath: explicitInterface || (advanced ? profile.interfacePath : profile.sourceBinding?.interfaceRelativePath || '') }, abort.signal);
       requireCurrent(version); discovered = result; schema = result.schema;
-      profile.interfacePath = result.interfacePath;
+      if (result.interfacePath) profile.interfacePath = result.interfacePath;
       const binding = profile.sourceBinding;
       const selected = binding ? result.candidates.find(item => item.kind === binding.sourceKind && item.instanceId === binding.sourceInstanceId)
         : result.candidates.length === 1 ? result.candidates[0] : null;
@@ -322,7 +327,7 @@ export function activate(host) {
         profile = saved;
         if (profile.packageRoot.toLowerCase() !== String(context.packageRoot || '').toLowerCase()) {
           profile = { ...profile, packageRoot: context.packageRoot || '', sourceBinding: null, sourceSnapshot: null,
-            nativeDirectory: '', nativeVersion: '', dependencyLock: null, windowHandle: 0, windowProcessId: 0,
+            nativeDirectory: '', nativeVersion: '', dependencyLock: null, runtimeInputs: null, windowHandle: 0, windowProcessId: 0,
             windowExecutable: '', windowStartedAtUtc: null, authorizedFingerprint: '' };
         }
         draw();

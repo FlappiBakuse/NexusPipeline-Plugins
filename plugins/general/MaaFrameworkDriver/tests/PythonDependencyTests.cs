@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Xunit;
 
 namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
@@ -5,37 +6,42 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
 public sealed class PythonDependencyTests
 {
     [Fact]
-    public async Task PythonPlanPinsClosureAndRejectsUnknownDeclarationsTargetsAndChangedLocks()
+    public void LocalInterpreterAndScriptAreResolvedWithoutProjectRecipeOrSystemPath()
     {
-        string root = Path.Combine(Path.GetTempPath(), "nxp-python-plan-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(root);
+        string root = Path.Combine(Path.GetTempPath(), "nxp-python-input-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(root, "assets"));
+        Directory.CreateDirectory(Path.Combine(root, "resource"));
+        Directory.CreateDirectory(Path.Combine(root, "agent"));
         try
         {
-            File.WriteAllText(Path.Combine(root, "interface.json"), """
-                {"interface_version":2,"name":"MaaStellaSora","version":"1.6.0","controller":[{"name":"PC","type":"Win32"}],
-                "resource":[{"name":"R","path":"resource"}],"task":[{"name":"T","entry":"Entry"}],
-                "agent":{"child_exec":"./python/python.exe","child_args":["./agent/main.py"]}}
-                """);
-            string requirements = Path.Combine(root, "requirements.txt"); File.WriteAllText(requirements, "maafw\njson-with-comments\n");
-            var native = NativeDependencies.Bind(new() { SchemaVersion = 3, PackageRoot = root, ProfileId = "owned" }, "MaaStellaSora", "1.6.0", default);
-            var profile = PythonDependencies.Bind(native, default);
-            Assert.Equal(2, profile.DependencyLock!.SchemaVersion);
-            var recipe = PythonDependencies.RequireRecipe(profile);
-            Assert.Equal("3.12.10", recipe.PythonVersion); Assert.Equal(6, recipe.Components.Length);
-            Assert.Equal(new[] { "maaagentbinary-1.0.1", "numpy-2.5.3", "strenum-0.4.15" }, recipe.Components.Single(item => item.Name == "maafw").Dependencies);
-            Assert.False(Directory.Exists(Path.Combine(root, ".nexus")));
-            using var cancelled = new CancellationTokenSource(); cancelled.Cancel();
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await PythonDependencies.InstallAsync(profile, "cancelled", cancelled.Token));
-            Assert.False(Directory.Exists(Path.Combine(root, ".nexus")));
-            var changed = profile with { DependencyLock = profile.DependencyLock with { Python = profile.DependencyLock.Python! with { RecipeHash = new string('0', 64) } } };
-            Assert.Contains("lock_changed", Assert.Throws<InvalidDataException>(() => PythonDependencies.RequireRecipe(changed)).Message);
-            string target = Path.Combine(root, profile.DependencyLock.Python!.InstallTarget.Replace('/', Path.DirectorySeparatorChar));
-            Directory.CreateDirectory(target); string unknown = Path.Combine(target, "user-data"); File.WriteAllText(unknown, "preserve");
-            Assert.Contains("unknown_or_incomplete_target", (await Assert.ThrowsAsync<InvalidDataException>(async () => await PythonDependencies.InstallAsync(profile, "owned", default))).Message);
-            Assert.Equal("preserve", File.ReadAllText(unknown));
-            File.WriteAllText(requirements, "maafw\nunknown-package\n");
-            Assert.Contains("declaration_changed", Assert.Throws<InvalidDataException>(() => PythonDependencies.RequireRecipe(profile)).Message);
-            Assert.Contains("unsupported_declaration", Assert.Throws<InvalidDataException>(() => PythonDependencies.Bind(native, default)).Message);
+            string pi = """
+                {"interface_version":2,"name":"Arbitrary","version":"99","controller":[{"name":"PC","type":"Win32"}],
+                "resource":[{"name":"R","path":"../resource"}],"task":[],
+                "agent":{"child_exec":"python.exe","child_args":["-u","../agent/main.py","{literal}","secret:literal"]}}
+                """;
+            File.WriteAllText(Path.Combine(root, "assets", "interface.jsonc"), pi);
+            File.WriteAllText(Path.Combine(root, "agent", "main.py"), "print(1)");
+            File.WriteAllText(Path.Combine(root, "python.exe"), "inert owned interpreter");
+            var profile = new DriverProfile { SchemaVersion = 3, PackageRoot = root, InterfacePath = "assets/interface.jsonc", Controller = "PC", Resource = "R" };
+            var project = new ProjectCompiler(root, profile.InterfacePath).Compile(profile);
+            var program = Assert.Single(project.Agents);
+            Assert.Equal(Path.Combine(root, "python.exe"), program.Executable);
+            Assert.Equal(Path.Combine(root, "agent", "main.py"), program.Arguments[1]);
+            Assert.Equal(new[] { "{literal}", "secret:literal" }, program.Arguments.Skip(2));
+            var single = new ProjectCompiler(root, profile.InterfacePath);
+            single.Compile(profile);
+            var declarations = JsonNode.Parse(pi)!;
+            var agent = declarations["agent"]!.DeepClone();
+            declarations["agent"] = new JsonArray(agent.DeepClone(), agent.DeepClone());
+            File.WriteAllText(Path.Combine(root, "assets", "interface.jsonc"), declarations.ToJsonString());
+            var multiple = new ProjectCompiler(root, profile.InterfacePath);
+            Assert.Equal(2, multiple.Compile(profile).Agents.Length);
+            Assert.Equal(single.EntriesEnumerated, multiple.EntriesEnumerated);
+            Assert.Equal(single.FilesHashed, multiple.FilesHashed);
+            File.WriteAllText(Path.Combine(root, "assets", "interface.jsonc"), pi.Replace("Arbitrary", "Renamed").Replace("99", "100"));
+            Assert.Equal(program.Executable, Assert.Single(new ProjectCompiler(root, profile.InterfacePath).Compile(profile).Agents).Executable);
+            File.Delete(Path.Combine(root, "python.exe"));
+            Assert.Throws<InvalidDataException>(() => new ProjectCompiler(root, profile.InterfacePath).Compile(profile));
         }
         finally { Directory.Delete(root, true); }
     }

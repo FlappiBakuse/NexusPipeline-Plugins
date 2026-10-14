@@ -17,7 +17,8 @@ public static class MfaConfigurationMapper
         if (string.IsNullOrWhiteSpace(instanceId)) throw Error("instanceId", "required");
         string[] mappedFields = ["CurrentControllerName", "CurrentController", "Resource", "TaskItems", "CurrentTasks", "InstancePresetKey",
             "GlobalOptionItems", "ResourceOptionItems", "ControllerOptionItems", "AdbDevice", "BeforeTask", "AfterTask", "Prescript", "Post-script",
-            "Win32ControlScreenCapType", "Win32ControlMouseType", "Win32ControlKeyboardType"];
+            "Win32ControlScreenCapType", "Win32ControlMouseType", "Win32ControlKeyboardType", "SoftwarePath", "RetryOnDisconnectedWin32",
+            "DesktopWindowClassName", "DesktopWindowName", "AgentTcpMode"];
         string[] presentationFields = ["EnableEdit", "AutoMinimize", "AutoHide", "IncludeInGlobalStart", "InstanceName", "InstanceIcon",
             "EnableToastNotification", "CurrentLanguage", "LangIndex", "ThemeIndex", "BaseTheme", "ShouldMinimizeToTray"];
         foreach (string key in instance.Select(pair => pair.Key).Concat(global.Select(pair => pair.Key)
@@ -26,6 +27,21 @@ public static class MfaConfigurationMapper
             if (!mappedFields.Contains(key, StringComparer.Ordinal) && !presentationFields.Contains(key, StringComparer.Ordinal)
                 && !key.StartsWith("UI.", StringComparison.Ordinal)) throw Error(key, "unsupported instance field");
         JsonNode? Get(string key) => Inherit(instance, global, instanceId, key);
+        var windowHints = new JsonObject();
+        foreach (string key in new[] { "DesktopWindowClassName", "DesktopWindowName" })
+            if (Get(key) is { } hint)
+            {
+                if (hint is not JsonValue value || !value.TryGetValue<string>(out string? text) || text.Length > 512)
+                    throw Error(key, "bounded string required");
+                windowHints[key] = text;
+            }
+        bool? agentTcpMode = null;
+        if (Get("AgentTcpMode") is { } transport)
+        {
+            if (transport is not JsonValue value || !value.TryGetValue<bool>(out bool enabled))
+                throw Error("AgentTcpMode", "boolean required");
+            agentTcpMode = enabled;
+        }
         string controller = Get("CurrentControllerName")?.GetValue<string>() ?? throw Error("CurrentControllerName", "required");
         string resource = Get("Resource")?.GetValue<string>() ?? throw Error("Resource", "required");
         var controllerDefinition = Items(schema["controller"]).SingleOrDefault(item => Text(item, "name") == controller)
@@ -52,6 +68,12 @@ public static class MfaConfigurationMapper
         foreach (string key in new[] { "BeforeTask", "AfterTask" })
             if (Get(key) is { } action && action.GetValue<string>() != "None")
                 throw Error(key, "unsupported action: " + action.GetValue<string>());
+        // MFA keeps the launch path even when startup and disconnected retries are disabled.
+        if (Get("SoftwarePath") is { } softwarePath
+            && (softwarePath is not JsonValue pathValue || !pathValue.TryGetValue<string>(out _)))
+            throw Error("SoftwarePath", "string required");
+        if (Get("RetryOnDisconnectedWin32")?.GetValue<bool>() == true)
+            throw Error("RetryOnDisconnectedWin32", "unsupported executable action");
 
         JsonObject options = new(), resourceOptions = new(), controllerOptions = new();
         MapOptions(Get("GlobalOptionItems"), schema, options, "GlobalOptionItems");
@@ -113,7 +135,9 @@ public static class MfaConfigurationMapper
         return target with { SchemaVersion = 3, Controller = controller, Resource = resource, SelectedTasks = [], TaskOptions = new(),
             TaskOccurrences = entries.ToArray(), Options = options, ResourceOptions = resourceOptions, ControllerOptions = controllerOptions,
             ControllerConfiguration = controllerConfiguration,
+            // GUI labels and transport preferences do not replace Host's verified process identity or session-owned Agent transport.
             AuthorizedFingerprint = "", ImportProvenance = new() { ["sourceKind"] = "mfa", ["sourceInstanceId"] = instanceId,
+                ["savedWindowHints"] = windowHints, ["guiAgentTcpMode"] = agentTcpMode,
                 ["mapperVersion"] = 1, ["sourceModified"] = false, ["importedAt"] = DateTimeOffset.UtcNow.ToString("O") } };
     }
 

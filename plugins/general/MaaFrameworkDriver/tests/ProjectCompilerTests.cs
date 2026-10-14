@@ -6,6 +6,38 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver.Tests;
 
 public sealed class ProjectCompilerTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void MxuPretasksFollowSavedSelectionAndOptions(bool present, bool enabled)
+    {
+        using var fixture = new Fixture();
+        File.WriteAllText(Path.Combine(fixture.Root, "pretask.exe"), "inert owned program");
+        fixture.Write("""
+        {"interface_version":2,"name":"PI","controller":[{"name":"PC","type":"Win32"}],
+         "resource":[{"name":"R","path":["resource"]}],"task":[{"name":"Task","entry":"Entry"}],
+         "pretask":{"name":"Settings","exec":"./pretask.exe","option":["Mode"]},
+         "option":{"Mode":{"cases":[{"name":"Default"},{"name":"Saved"}],"default_case":"Default"}}}
+        """);
+        var source = JsonNode.Parse("""
+        {"version":"1.0","instances":[{"id":"one","name":"One","controllerName":"PC","resourceName":"R",
+        "tasks":[{"id":"task","taskName":"Task","enabled":true}]}]}
+        """)!.AsObject();
+        if (present) source["instances"]![0]!["tasks"]!.AsArray().Insert(0, new JsonObject
+        {
+            ["id"] = "settings", ["taskName"] = "__MXU_PRETASK__Settings", ["enabled"] = enabled,
+            ["optionValues"] = new JsonObject { ["Mode"] = new JsonObject { ["type"] = "select", ["caseName"] = "Saved" } }
+        });
+        var compiler = new ProjectCompiler(fixture.Root, "interface.json");
+        var profile = ConfigurationImporter.Map("mxu", source, compiler.Inspect(), fixture.Profile, "one");
+        var compiled = compiler.Compile(profile);
+        Assert.Equal("Task", Assert.Single(compiled.Tasks).Name);
+        if (present && enabled)
+            Assert.Equal("Saved", Assert.Single(compiled.Pretasks).GeneratedOptionPayload!["Mode"]!.GetValue<string>());
+        else Assert.Empty(compiled.Pretasks);
+    }
+
     [Fact]
     public void PathInterpreterReplacementInvalidatesAuthorization()
     {
@@ -245,7 +277,7 @@ public sealed class ProjectCompilerTests
     {
         using var fixture = new Fixture();
         const string pi = """
-        {"interface_version":2,"name":"PI","label":"LABEL","controller":[{"name":"PC","type":"Win32"}],
+        {"interface_version":2,"name":"PI","label":"LABEL","url":"https://example.com/project","controller":[{"name":"PC","type":"Win32"}],
          "resource":[{"name":"R","path":["resource"]}],"task":[]}
         """;
         fixture.Write(pi);

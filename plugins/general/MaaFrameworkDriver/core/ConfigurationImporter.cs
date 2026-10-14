@@ -4,6 +4,13 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
 public static class ConfigurationImporter
 {
+    internal const string MxuPretaskPrefix = "__MXU_PRETASK__";
+    internal static bool IsMxu(DriverProfile profile) => profile.SourceBinding?.SourceKind == "mxu"
+        || profile.ImportProvenance["sourceKind"]?.GetValue<string>() == "mxu";
+    internal static string PretaskName(JsonObject item) => MxuPretaskPrefix
+        + (item["name"]?.GetValue<string>() is { Length: > 0 } name ? name : Required(item, "exec"));
+    internal static IEnumerable<JsonObject> Pretasks(JsonObject schema) => schema["pretask"] switch
+    { JsonObject item => [item], JsonArray items => items.OfType<JsonObject>(), _ => [] };
     public static JsonObject Instances(JsonObject source) => new()
     { ["instances"] = new JsonArray((source["instances"]?.AsArray() ?? throw new InvalidDataException("import.mxu_instances_required"))
         .OfType<JsonObject>().Select(item => (JsonNode?)new JsonObject { ["id"] = item["id"]?.DeepClone(), ["name"] = item["name"]?.DeepClone() }).ToArray()) };
@@ -65,12 +72,10 @@ public static class ConfigurationImporter
             {
                 Known(task, ["name", "option"]); string name = Required(task, "name"); var values = new JsonObject();
                 foreach (var configured in task["option"]?.AsArray().OfType<JsonObject>() ?? []) MapCliOption(configured, schema, values);
-                bool duplicate = savedTasks.Count(item => Required(item, "name") == name) > 1;
-                string identity = ProfileMigration.Identity(kind, instanceId, name, duplicate ? ProfileMigration.Canonical(values) : "unique");
-                var prior = target.TaskOccurrences.SingleOrDefault(item => item.SourceTaskId == identity);
-                if (duplicate && prior is null && target.TaskOccurrences.Count(item => item.PiTaskName == name) > 1)
-                    throw new InvalidDataException("import.cli.task.ambiguous_occurrence_changed");
-                entries.Add(new() { OccurrenceId = prior?.OccurrenceId ?? identity, SourceTaskId = identity,
+                // CLI has no item ID; the source sequence identifies each occurrence, including identical entries.
+                string identity = ProfileMigration.Identity(kind, instanceId, ProfileMigration.Canonical(source["task"]!),
+                    entries.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                entries.Add(new() { OccurrenceId = identity, SourceTaskId = identity,
                     PiTaskName = name, Order = entries.Count, Options = values });
             }
             if (source["adb"] is JsonObject adb)
@@ -85,7 +90,8 @@ public static class ConfigurationImporter
             throw new InvalidDataException("import.controller_or_resource_removed");
         ProfileMigration.Validate(entries.ToArray());
         if (!entries.Any(item => item.Enabled)
-            || entries.Any(entry => !schema["task"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == entry.PiTaskName)))
+            || entries.Any(entry => !schema["task"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == entry.PiTaskName)
+                && !(kind == "mxu" && Pretasks(schema).Any(item => PretaskName(item) == entry.PiTaskName))))
             throw new InvalidDataException("import.task_selection_empty_or_removed");
         return target with { SchemaVersion = 3, Controller = controller, Resource = resource, SelectedTasks = [], TaskOccurrences = entries.ToArray(), Options = options,
             ResourceOptions = resourceOptions, ControllerOptions = controllerOptions,

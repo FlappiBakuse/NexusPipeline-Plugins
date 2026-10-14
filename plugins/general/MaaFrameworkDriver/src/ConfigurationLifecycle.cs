@@ -49,6 +49,7 @@ public sealed partial class EntryPoint
         if (requestedInterface.Length == 0 && (target.SourceBinding is not null || request.Configuration["profile"]?["interfacePath"] is not null))
             requestedInterface = target.InterfacePath;
         var discovery = SourceDiscovery.Discover(request.PackageRoot, requestedInterface, token);
+        if (discovery.InterfacePath.Length == 0) throw new InvalidDataException("source.interface.explicit_selection_required");
         target = target with { InterfacePath = discovery.InterfacePath };
         ConfigurationSourceCandidate? source = null;
         if (target.SourceBinding is { } binding)
@@ -63,13 +64,9 @@ public sealed partial class EntryPoint
         target = SourceDiscovery.Read(target, source, token);
         if (previousBinding is not null && previousBinding.RootIdentity != target.SourceBinding!.RootIdentity)
             throw new InvalidDataException("source.root.explicit_rebind_required");
-        string snapshot = target.SourceSnapshot!.SourceRevision;
-        await Task.Delay(600, token).ConfigureAwait(false);
-        target = SourceDiscovery.Read(target, source, token);
-        if (snapshot != target.SourceSnapshot!.SourceRevision) throw new InvalidDataException("source.unstable_writes");
         var compiler = new ProjectCompiler(target.PackageRoot, target.InterfacePath, target.Language, token);
         var semantic = compiler.CompileSemantics(target, token);
-        if (semantic.Controller["type"]!.GetValue<string>() == "Win32" && target.WindowHandle == 0 && target.WindowExecutable.Length == 0)
+        if (!request.SourceOnly && semantic.Controller["type"]!.GetValue<string>() == "Win32" && target.WindowHandle == 0 && target.WindowExecutable.Length == 0)
         {
             var windows = WindowDiscovery.Find(semantic.Controller).OfType<JsonObject>().ToArray();
             if (windows.Length != 1) throw new InvalidDataException("configuration.window.explicit_constraint_required");
@@ -78,11 +75,11 @@ public sealed partial class EntryPoint
                 WindowExecutable = window["executable"]!.GetValue<string>(), WindowStartedAtUtc = window["startedAtUtc"]!.GetValue<DateTime>(),
                 WindowSelection = "executable" };
         }
+        var sourceSnapshot = target.SourceSnapshot!;
+        target = RuntimeInputs.Bind(target, token);
         target = SourceDiscovery.Read(target, source, token);
-        target = NativeDependencies.Bind(target.DependencyLock is null ? target : target with { NativeVersion = "" },
-            semantic.PublicSchema["projectName"]!.GetValue<string>(), semantic.PublicSchema["projectVersion"]!.GetValue<string>(), token);
-        target = PythonDependencies.Bind(target, token);
-        target = SourceDiscovery.Read(target, source, token);
+        if (target.SourceSnapshot!.SourceHash != sourceSnapshot.SourceHash || target.SourceSnapshot.PiHash != sourceSnapshot.PiHash)
+            throw new InvalidDataException("source.unstable_writes");
         compiler.VerifyReadSnapshot();
         if (userDraft is not null) target = UserProfileRebase.Apply(oldUserParent!, target, userDraft);
         semantic = new ProjectCompiler(target.PackageRoot, target.InterfacePath, target.Language, token).CompileSemantics(target, token);
@@ -103,10 +100,8 @@ public sealed partial class EntryPoint
                 Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(executable)).ToLowerInvariant());
         }
         var dependencies = new JsonObject { ["schemaVersion"] = 1,
-            ["lock"] = JsonSerializer.SerializeToNode(target.DependencyLock, DriverJson.Options) };
-        if (target.DependencyLock!.Python is not null)
-            dependencies["pythonRecipe"] = JsonSerializer.SerializeToNode(PythonDependencies.RequireRecipe(target), DriverJson.Options);
-        return new(request.OperationId, request.ProfileId, target.Revision, request.ExpectedRevision, "pending_" + target.DependencyLock.LockHash, resources,
+            ["lock"] = JsonSerializer.SerializeToNode(target.RuntimeInputs, DriverJson.Options) };
+        return new(request.OperationId, request.ProfileId, target.Revision, request.ExpectedRevision, "pending_" + target.RuntimeInputs!.LockHash, resources,
             new() { ["profile"] = JsonSerializer.SerializeToNode(target, DriverJson.Options), ["userId"] = request.UserId, ["scriptId"] = request.ScriptInstanceId },
             dependencies, launch);
     }
@@ -142,22 +137,19 @@ public sealed partial class EntryPoint
         { return new("needs_attention", "", "source.mapping_or_dependency_changed"); }
     }
 
-    public async ValueTask<PluginProviderConfigurationCandidate> PrepareDependenciesAsync(PluginProviderConfigurationCandidate candidate, CancellationToken token)
+    public ValueTask<PluginProviderConfigurationCandidate> PrepareDependenciesAsync(PluginProviderConfigurationCandidate candidate, CancellationToken token)
     {
         var profile = candidate.PrivateCandidate["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
         SourceDiscovery.RequireCurrent(profile, token);
-        await NativeDependencies.InstallAsync(profile, candidate.OperationId, token).ConfigureAwait(false);
-        await PythonDependencies.InstallAsync(profile, candidate.OperationId, token).ConfigureAwait(false);
-        NativeDependencies.Verify(profile, token);
-        SourceDiscovery.RequireCurrent(profile, token);
+        RuntimeInputs.Verify(profile, token);
         var compiler = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token);
         var compiled = compiler.Compile(profile, token);
         compiler.VerifyReadSnapshot();
         profile = profile with { AuthorizedFingerprint = compiled.ExecutionFingerprint };
-        return candidate with { AuthorizationFingerprint = compiled.ExecutionFingerprint,
+        return ValueTask.FromResult(candidate with { AuthorizationFingerprint = compiled.ExecutionFingerprint,
             PrivateCandidate = new() { ["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options),
                 ["userId"] = candidate.PrivateCandidate["userId"]?.DeepClone(), ["scriptId"] = candidate.PrivateCandidate["scriptId"]?.DeepClone(),
-                ["compiled"] = JsonSerializer.SerializeToNode(compiled with { PublicSchema = new() }, DriverJson.Options) } };
+                ["compiled"] = JsonSerializer.SerializeToNode(compiled with { PublicSchema = new() }, DriverJson.Options) } });
     }
 
     public async Task<PluginProviderConfigurationInitialization> InitializeAsync(PluginProviderConfigurationContext context, CancellationToken token)
@@ -165,7 +157,7 @@ public sealed partial class EntryPoint
         var candidate = context.Candidate;
         var profile = candidate.PrivateCandidate["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
         SourceDiscovery.RequireCurrent(profile, token);
-        NativeDependencies.Verify(profile, token);
+        RuntimeInputs.Verify(profile, token);
         var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token).Compile(profile);
         if (compiled.ExecutionFingerprint != candidate.AuthorizationFingerprint) throw new InvalidDataException("configuration.inputs_changed");
         var input = candidate.PrivateCandidate.DeepClone().AsObject();
@@ -200,12 +192,13 @@ public sealed partial class EntryPoint
 
     public async ValueTask CommitAsync(PluginProviderConfigurationCandidate candidate, PluginProviderConfigurationInitialization initialization, CancellationToken token)
     {
-        if (!initialization.Ready || !initialization.CleanupConfirmed) throw new InvalidDataException("configuration.initialization_required");
+        if ((!initialization.Ready && !initialization.SourceOnly) || !initialization.CleanupConfirmed
+            || initialization.SourceOnly && candidate.ExpectedRevision.Length == 0) throw new InvalidDataException("configuration.initialization_required");
         var host = _host ?? throw new InvalidOperationException("provider disabled");
         var profile = candidate.PrivateCandidate["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
         if (profile.Revision != candidate.Revision || profile.ProfileId != candidate.ProfileId) throw new InvalidDataException("configuration.candidate_identity_changed");
         SourceDiscovery.RequireCurrent(profile, token);
-        NativeDependencies.Verify(profile, token);
+        RuntimeInputs.Verify(profile, token);
         var current = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token).Compile(profile);
         if (current.ExecutionFingerprint != candidate.AuthorizationFingerprint) throw new InvalidDataException("configuration.inputs_changed");
         await _writes.WaitAsync(token).ConfigureAwait(false);
@@ -229,13 +222,6 @@ public sealed partial class EntryPoint
     public ValueTask AbortAsync(PluginProviderConfigurationCandidate candidate, CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        var profile = candidate.PrivateCandidate["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
-        if (profile.DependencyLock is { } dependency)
-        {
-            string stage = ProjectCompiler.ResolveScopedPath(profile.PackageRoot, profile.PackageRoot, dependency.InstallTarget)
-                + "." + candidate.OperationId + ".partial";
-            if (Directory.Exists(stage) || File.Exists(stage)) throw new InvalidDataException("dependency.stage.cleanup_unconfirmed");
-        }
         // Immutable revisions may already be referenced by the Host's visible pointer.
         return ValueTask.CompletedTask;
     }

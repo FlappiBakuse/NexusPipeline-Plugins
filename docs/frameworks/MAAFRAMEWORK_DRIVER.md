@@ -1,57 +1,39 @@
 # MaaFramework 项目直驱
 
-`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.17.3、Plugin API 2.2 和 Frontend API 1.7，运行环境为 Windows 11 x64。正式包不预装项目、游戏、native 或用户数据；安装范围以插件 catalog 为准。
+`MaaFrameworkDriver` 要求 Host v0.17.3、Plugin API 2.2、Frontend API 1.7 和 Windows 11 x64。产品包不包含项目、游戏、运行库或用户数据。
 
-## 根目录与保存
+## 发现与配置
 
-在脚本编辑器选择 `maa-framework` 并填写可信项目根目录。驱动只读发现唯一 PI v2 interface，以及 MXU schema 1.0、MFA 2.16 实例或 MaaPiCli v5.14.0 保存的配置。唯一来源自动绑定；多个候选需要选择具体来源与稳定实例 ID。缺少来源、未知字段、已删除实例或目标歧义会显示异常，不回退其他配置。
+从根目录或 assets 的 interface.json/interface.jsonc 读取 PI v2。多个 interface 必须显式选择。MXU schema 1.0、MFA 2.16、MaaPiCli v5.14.0 和 MFW-PyQt6/CFA v4 配置按真实来源实例绑定；未知来源、实例删除、歧义或无法映射的执行字段明确报错，不回退到其他配置。
 
-普通流程使用宿主的一次“保存”：稳定读取来源、冻结候选、准备锁定依赖、等待配置和设备空闲、真实初始化、确认清理，再联合提交插件不可变 revision 与宿主脚本指针。保存可能执行 PI pretask、启动 Agent 或已映射的游戏目标，停在第一条正式任务提交前。关闭编辑器不会取消后台操作；重开后查询同一 operation，不重复执行 pretask。取消须等待清理确认。修改失败保留上一有效 revision。
+schema 3 的 occurrenceId 独立于显示名，保留顺序、禁用状态、逐条选项、pipeline override 和 1–100 次重复。相同名称或参数的 CLI 条目也保持独立身份。MXU/MFA/CLI 选项按 global、resource、controller、task 层合并。CFA 按已保存的可见 setting/resource/controller 选项、任务声明、任务选项顺序深层合并，不注入未保存选项的默认值；数值输入按声明类型转换。CFA 读取 multi_config/configs 的实例、bundle、controller、resource、分支及子选项；Win32 程序路径、参数和等待时间映射到宿主启动设置。CFA 保存的关闭状态 speedrun 元数据不参与任务选项编译；启用状态、未知内置动作、未映射的 ADB 方法覆盖及额外前后动作会阻断，不能静默丢失语义。嵌入式 Agent 配置可读取任务语义，但保存初始化与执行明确拒绝 GUI 进程内注册模式；只有上游明确选择外部 Agent 且本地环境完整时才执行外部程序。来源原字节保持不变。
 
-来源变更经过合并与稳定性核验，空闲后重新初始化并提交；运行中的计划保持冻结。每次准入重新核验输入。驱动不反向改写 GUI 配置。物理目录替换、选中实例删除、未知依赖或无法映射的字段进入异常，需要明确处理。
+MFA 的 CountdownAction/TimedWaitAction 由 native custom action 执行；未知动作拒绝。MXU 的单个非 shell、非等待、skipIfRunning PC preAction 映射到宿主启动与就绪确认。Win32 以完整 EXE 和窗口约束解析唯一目标；HWND/PID/启动时间只代表本次观测。ADB 使用保存的路径和精确 serial/address。
 
-高级参数用于补齐必要的控制器、资源、运行库及目标约束。Win32 保存完整 EXE 约束，在 pretask 后重新解析唯一窗口；HWND、PID 和启动时间只代表一次观测。已有 exact-process 配置仍核验原强身份。ADB 使用实际 adb.exe 和精确 serial/address，不替换用户已保存设备。
+MFA 保存的窗口类名、标题及 Agent TCP 偏好保留在导入来源信息中。窗口标签只是 GUI 的匹配提示，不能覆盖 Host 已核验的进程身份；Agent 通道由驱动独占会话管理，不继承 GUI 的通道生命周期。
 
-## 来源与任务语义
+宿主“保存”负责冻结候选、共享资源准入、初始化、清理和 revision 联合提交。initialize_only 可以执行 pretask 和 Agent，但 formalTasksSubmitted=0。关闭编辑器不会重复初始化；取消必须等待清理。失败保留上一有效修订。用户覆盖以 parent revision 绑定，冲突不覆盖现有指针。
 
-schema 3 使用独立 occurrenceId，保留顺序、禁用条目、逐条选项、pipeline override 和 1–100 次重复；executionOrdinal 区分每次执行。schema 2 读取转换为独立 scope，保留原字节。MFA 依次读取实例局部、实例作用域、默认和全局字段，绑定选中实例、appsettings 与必要继承文件的稳定快照。CurrentTasks 历史不激活已删除条目。相同任务的多个条目不按显示名合并。
+## 本地运行输入
 
-支持 MFA CountdownAction 与 TimedWaitAction，使用真实 native custom action 并参与取消；未知 GUI action、执行脚本、BeforeTask/AfterTask 动作明确拒绝。MXU 支持一个非 shell、无需等待退出且 skipIfRunning 的 PC EXE preAction，映射到宿主现役启动与就绪确认。保存初始化接收宿主就绪目标的完整映像、PID、启动时间和窗口身份；多个匹配目标阻断。
+驱动识别本地常见 native 目录，也支持显式目录。必需 DLL、x64 PE 架构、文件大小、SHA256 和物理根身份记录在 RuntimeInputs；原生进程加载后核对 v5 ABI。未知或多个候选必须处理。没有产品下载器、逐项目版本配方、pip 安装或系统 PATH 回退。
 
-用户 override 匹配共享身份与 parent revision，保存经过 Host 初始化并提交独立绑定修订。共享修订变化后先重新套用用户修改，再初始化并发布新修订；旧授权不会直接用于新执行。
+Python 使用发行包内解释器或显式路径；入口必须是可冻结的本地文件，保留原 argv。动态 -m/-c 拒绝。声明 uv run 时要求本地 uv.lock 与 .venv，启动设置 offline/no-sync。requirements、pyproject、uv.lock 及有界本地程序代码进入输入指纹。程序、资源或 DLL 改变后重新保存。旧 dependencyLock 保留读取，但不能代替新绑定。
 
-## 依赖与授权
+PI 文件支持 JSON/JSONC、BOM、相对 import 和展示翻译；拒绝重复字段、循环、逃逸及 reparse point。单文件 8 MiB，总计 32 MiB，最多 128 文件。翻译不改变执行值。密码通过宿主受保护存储引用，普通配置和预览不返回明文。
 
-已固定官方 MaaFramework native 5.14.3、5.14.2、5.14.1 和独立 C# binding 5.10.0。配方记录官方仓库、完整源码 SHA、Release/asset ID、下载摘要、平台、大小、安装路径和逐 DLL 摘要。按实际 DLL 字节识别用户安装；未知或多个 native 候选拒绝自动替换。已知 MaaEnd 2.32.0、MaaStellaSora 1.6.0 安装布局可识别现有 5.14.2；缺少运行库且无法确定配方时要求明确约束。
+## 同步、结果与重试
 
-缺失 native 下载到本次操作拥有的 staging，核验固定资产和逐文件字节后原子安装到项目 `.nexus/maa-framework/deps/win-x64/<archive SHA>`。已有未知文件不覆盖，部分目录仅在归属可核验时清理；未确认的安装现场阻断后续安装。
+一个物理根共享文件 watcher。变更合并后，在空闲时只读重新编译来源并发布修订，不启动 native、Agent 或 pretask。没有变更时仅做低频文件元数据核验。运行计划不被后台同步替换；准入重新核对冻结输入。
 
-MaaStellaSora 1.6.0 / native 5.14.2 的固定 Python 配方使用 CPython 3.12.10、maafw 5.14.2、MaaAgentBinary 1.0.1、numpy 2.5.3、StrEnum 0.4.15、json-with-comments 1.3.0。记录完整依赖关系、官方来源、许可证、归档与逐文件摘要；requirements 的实际字节进入锁。完全匹配的环境可复用，否则在 `.nexus/maa-framework/py/<recipe digest prefix>` 原子装配独立环境，锁中保留完整摘要。不会修改上游 Python 环境、系统 PATH 或执行 pip、sdist、安装钩子。worker 使用冻结的解释器路径与 `-B -s`；未知项目或声明明确拒绝。用户判断 Python 继续使用宿主现役解释器合同。
+可选 SDK 字段 ResultBasis 默认为 legacy-provider；本驱动声明 framework-task-v1。worker 通过认证 IPC 上报本次真实 native job ID 和任务终态。普通任务失败在资源清理后发送 completed/maa.task_failed；加载、资源、IPC、取消及清理异常保持独立失败。宿主在同一 run 中保留有效成功结果和逐次报告，通过 SelectedTaskIds 续跑首个失败任务及后续未成功任务。原始顺序不变，空集合不启动 worker，最大尝试次数和总预算仍由宿主限制。
 
-授权包含执行声明、资源、native、程序、Python 文件入口及有界本地代码。动态 Python `-m`/`-c` 入口拒绝。固定 argv 保留原样；只有生成的 pretask 选项载荷展开 secret 引用。密码放入 Host 受保护密钥存储，配置与预览只保存作用域引用。隔离 worker 不提供文件系统或网络沙箱，请只使用信任的项目。
-
-## 初始化与结果
-
-PI 解析接受 JSON/JSONC、BOM、相对 import 和展示翻译，拒绝重复字段、未知执行字段、循环、逃逸与 reparse point。单文件 8 MiB、总计 32 MiB、最多 128 文件。选项按任务声明、global、resource、controller、occurrence 层合并；翻译不改变任务身份或执行值。
-
-会话设置仅本进程的 TEMP/TMP，并验证 CRT 临时文件位置。native 真实加载后执行 PI pretask、加载资源、连接控制器、启动 Agent 并完成官方 identifier 握手，确认 Tasker 初始化。resource hash 不一致按官方语义警告。initialize_only 发布 operationId、revision、fingerprint、native/project 版本及 formalTasksSubmitted=0，并在清理后结束。
-
-pretask 默认 10000 ms，允许 1–120000 ms；Agent RPC timeout 支持官方 -1，但仍受 Host 启动、总预算及取消约束。stdout/stderr 增量脱敏后分帧，不静默丢弃长行。native 日志写入宿主提供的独占会话目录；文件身份、偏移、轮转与缺口进入 provider 日志来源元数据。结构化事实通过认证 IPC 传递，日志沿用宿主判断的字符尾部截断合同。Host 独立确认 worker 与必要写入进程停止后清理会话日志目录，清理不明形成恢复隔离，不能释放相关租约或盲目重放项目程序。
-
-引擎和业务结果分别保存。实例判断复用宿主关键字、JavaScript/Python、SessionJudge 与运行桥；有效用户结论决定业务结果，子任务保留原生事实。取消、总超时、IPC 结构错误及清理隔离不能被规则抹去。未配置独立业务证据时，native 成功仍显示“流程已结束 · 有未核验项”。
-
-通用判断的 configPath 指向 Host 按本次脚本／用户创建的 `configuration.json`，包含全局、资源、控制器及各 occurrence 的选项与 pipeline override。读取与 scriptDir 写入沿用通用文件 API；判断正文按通用脚本资产持久化。failed 结果可返回 `replaceConfigs: ["configuration.json"]`，Host 确认 worker 清理后备份并替换，重试重新编译有效值，最终恢复与清理。任务身份、顺序、启用、次数及安装根、设备、资源和程序授权保持冻结；不能通过替换重绑它们。该会话配置不会反写 GUI 来源或不可变 revision。
-
-已知 Agent 文件日志按核对的项目声明读取：MaaEnd 2.32.0 的 go-service 使用 `debug/go-service.log`，其 native 日志为 `debug/maafw.log`；cpp-algo 的 native 日志为 `debug/cpp-algo/debug/maafw.log`。MaaStellaSora 1.6.0 的 Python Agent 使用 `debug/agent/yyyy-MM-dd.log`，native 日志为 `debug/maafw.log`。会话在启动项目程序前记录原文件身份与偏移，排除旧历史，保留被重命名文件的未读尾部。MaaUtils 复制后截断轮转仅在新备份的已消费前缀摘要匹配时补读；损坏编码、断档或验证预算不足报告 incomplete。已有同根 Agent 写入进程或身份无法核验时阻断运行；未知项目不猜测文件来源。
+Maa 隐藏并拒绝新增/修改自定义判断，保留旧资产但不执行。框架任务成功显示“完成（框架）”，业务核验仍为 unverified。没有日志关键字猜测或判断配置替换重试。native 日志使用宿主独占会话目录，Agent stdout/stderr 经脱敏传递；不扫描项目私有日志。进程退出和资源清理未确认时保留隔离并阻止重试。
 
 ## 验证边界
 
-现役入口为 `node tests/run.mjs plugin --plugin MaaFrameworkDriver --profile adapter --host-root <Host checkout>`。原生输入先用 `python tests/bootstrap-native.py --output <Temp 路径> --version <锁定版本>` 准备，运行时指定 `NEXUS_MAA_NATIVE_ROOT`。runner 记录源码指纹、输入及报告；所有本机产物由 Temp 根管理。
+现役入口：`node tests/run.mjs plugin --plugin MaaFrameworkDriver --profile adapter --host-root <Host checkout>`。测试输入通过 `tests/bootstrap-native.py` 和 `tests/bootstrap-python.py` 准备到 Temp，并以官方资产大小、SHA256 和逐文件摘要固定；它们仅用于测试，不进入产品运行依赖。
 
-5.14.3/5.14.2/5.14.1 已通过受控 WinForms 目标的真实控制器、有限 DoNothing 任务、CountdownAction、仅初始化保存、官方 native 下载及来源同步测试；最新受控测试另覆盖关闭目标后的宿主启动和初始化。测试替代了真实游戏及项目业务，不能证明 MaaEnd/MaaStellaSora Agent、游戏任务或奖励成功。两项目真实安装的来源与 native 已只读核对，真实游戏验收仍待人工执行。
+组件回归覆盖 PI/来源/运行输入/任务选择等规则。受控 WinForms、官方 native 5.14.3 与发行包 Python Agent 验证真实初始化、有限任务、A/B/B/C 续跑和来源同步不重放预任务。它们不证明真实项目 Agent、设备或游戏业务成功。官方项目发行布局的只读发现不等于 GUI 配置等价或真机资格；缺少这些证据的项目继续保持待验收。
 
-固定 Python 闭包、真实 Python Agent 握手及 pretask 初始化已在受控项目中通过；默认 adapter 同时验证该 5.14.2 组合。受控用例不运行真实项目 Agent 或游戏任务。
-
-用户绑定的覆盖通过相同的初始化事务提交独立修订。共享配置变化后，按旧共享值、新共享值和用户值重新套用字段与任务覆盖，再初始化并以 CAS 发布用户修订。未修改的字段继承新来源，用户新增或修改的字段保留；来源删除已被用户修改的任务时提示处理并保留旧修订。编辑中的草稿不会因后台修订变化被覆盖，旧编辑修订提交时会报告冲突。
-
-English scope: saving prepares locked native inputs, waits for shared resource admission and commits one initialized revision. Official native 5.14.3, 5.14.2 and 5.14.1 were exercised with a controlled WinForms target. A fixed CPython/wheel closure, Python Agent handshake, pretask initialization and initialized user-override rebasing were exercised separately. Game-specific agents and real gameplay require manual acceptance; synthetic results do not establish game success.
+English scope: local PI v2 distributions and saved GUI configurations are frozen into immutable revisions. Runtime libraries and Python inputs are verified locally; the product does not download or install dependencies. Authenticated native task failures permit bounded suffix retries while preserving successful tasks. Passive source synchronization starts no project programs. Maa judgement assets remain stored but are not executed. Controlled native/Agent tests do not establish real-game compatibility or business success.

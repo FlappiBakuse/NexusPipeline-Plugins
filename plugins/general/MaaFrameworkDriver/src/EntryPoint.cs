@@ -14,7 +14,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
     {
         _host = context;
         _registrations.Add(_host.ExecutionProviders.Register(this));
-        foreach (string route in new[] { "inspect", "discover", "profile", "preview", "save", "authorize", "secret", "import", "windows", "preset" })
+        foreach (string route in new[] { "inspect", "discover", "profile", "preview", "secret", "import", "windows", "preset" })
             _registrations.Add(_host.WebApi.Register(new("POST", route, PluginOperationAccess.General, (request, token) => HandleAsync(route, request, token))));
         return ValueTask.CompletedTask;
     }
@@ -51,7 +51,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         if (!Path.GetFullPath(request.PackageRoot).Equals(Path.GetFullPath(profile.PackageRoot), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("driver.package_root_changed");
         SourceDiscovery.RequireCurrent(profile, cancellationToken);
-        if (profile.DependencyLock is not null) NativeDependencies.Verify(profile, cancellationToken);
+        RuntimeInputs.Verify(profile, cancellationToken);
         var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (compiled.Tasks.Length == 0) throw new InvalidDataException("driver.task_selection_required");
         var resources = new List<PluginProviderResource> { new("writable_root", profile.PackageRoot) };
@@ -67,7 +67,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
                 ["committedRevision"] = request.ConfigRevision,
                 ["committedUserRevision"] = request.UserConfigRevision,
                 ["compiled"] = JsonSerializer.SerializeToNode(compiled with { PublicSchema = new() }, DriverJson.Options) })
-            { EffectiveConfiguration = EffectiveConfiguration.FromProfile(profile) };
+            { EffectiveConfiguration = EffectiveConfiguration.FromProfile(profile), ResultBasis = "framework-task-v1" };
     }
 
     public async Task<PluginProviderRunResult> RunAsync(PluginProviderRunContext context, CancellationToken cancellationToken)
@@ -83,19 +83,20 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
                 : await ReadProfileAsync(host, UserScope(context.UserId, context.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
         if (shared is null || saved is null || shared.Revision + ":" + saved.Revision != context.Plan.ConfigRevision)
             throw new InvalidDataException("driver.profile_revision_changed");
-        if (context.EffectiveConfigurationPath.Length != 0)
-        {
-            using var configuration = File.OpenRead(context.EffectiveConfigurationPath);
-            profile = EffectiveConfiguration.Apply(profile, JsonNode.Parse(configuration)!.AsObject());
-        }
         SourceDiscovery.RequireCurrent(profile, cancellationToken);
-        if (profile.DependencyLock is not null) NativeDependencies.Verify(profile, cancellationToken);
+        RuntimeInputs.Verify(profile, cancellationToken);
         var fresh = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (fresh.ExecutionFingerprint != context.Plan.AuthorizationFingerprint
-            || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.authorization_required");
+            || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.source_changed");
         var input = context.Plan.PrivatePlan.DeepClone().AsObject();
         input["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options);
-        input["compiled"] = JsonSerializer.SerializeToNode(fresh with { PublicSchema = new() }, DriverJson.Options);
+        var frozen = context.Plan.PrivatePlan["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
+        string[] selected = context.SelectedTaskIds?.ToArray() ?? context.Plan.Tasks.Select(task => task.Id).ToArray();
+        if (!frozen.Tasks.Select(task => task.Id).SequenceEqual(context.Plan.Tasks.Select(task => task.Id)))
+            throw new InvalidDataException("driver.plan_task_mismatch");
+        var selection = TaskSelection.Apply(frozen, selected);
+        if (selection.Tasks.Length == 0) return new("succeeded", "MaaFramework: no selected tasks", true);
+        input["selectedTaskIds"] = JsonSerializer.SerializeToNode(selected, DriverJson.Options);
         if (profile.HostLaunchRequired && context.LaunchTarget is null)
             throw new InvalidDataException("driver.host_launch_required: explicitly apply the reviewed Host launch settings");
         if (context.LaunchTarget is { } target)
@@ -246,12 +247,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
                     await host.Secrets.SetAsync(key, body["value"]!.GetValue<string>(), token).ConfigureAwait(false);
                     return new(200, new JsonObject { ["reference"] = "secret:" + key, ["configured"] = true });
                 }
-                if (route == "authorize" && body["confirmedFingerprint"]?.GetValue<string>() != project!.ExecutionFingerprint)
-                    return new(409, new JsonObject { ["error"] = "execution declarations changed; preview again" });
-                profile = profile with { Revision = Guid.NewGuid().ToString("N"), AuthorizedFingerprint = route == "authorize"
-                    ? project!.ExecutionFingerprint : old?.AuthorizedFingerprint == project!.ExecutionFingerprint ? project.ExecutionFingerprint : "" };
-                await host.ScopedData.WriteAsync("schema-3/" + scope, profile, token).ConfigureAwait(false);
-                return new(200, JsonSerializer.SerializeToNode(profile, DriverJson.Options));
+                return new(404, new JsonObject { ["error"] = "driver.route_not_found" });
             }
             finally { _writes.Release(); }
         }

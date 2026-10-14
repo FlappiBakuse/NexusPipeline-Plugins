@@ -27,8 +27,8 @@ internal sealed class NativeSession : IDisposable
     private readonly CancellationTokenSource _outputStop = new();
     private string[] _logSecrets = [];
     private NativeLogSource? _nativeLog;
-    private readonly List<SessionLogReader> _projectLogs = [];
     private string _nativeLogDirectory = "";
+    private string _nativeDirectory = "";
 
     private async ValueTask Stage(string phase, string state)
     {
@@ -42,14 +42,14 @@ internal sealed class NativeSession : IDisposable
         _ = Task.Run(() => { lock (_gate) { if (!_disposed) _tasker?.Stop(); } });
     }
 
-    internal async Task RunAsync(DriverProfile profile, CompiledProject project, JsonObject secrets,
+    internal async Task<bool> RunAsync(DriverProfile profile, CompiledProject project, JsonObject secrets,
         Func<string, JsonObject, ValueTask> send, CancellationToken token, PluginProviderLaunchTarget? hostTarget = null,
         bool initializeOnly = false, string operationId = "", string revision = "", string artifactsDirectory = "", string nonce = "")
     {
         if (!Environment.Is64BitProcess || !OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
         _send = send;
         _logSecrets = secrets.Select(pair => pair.Value?.GetValue<string>() ?? "").Append(nonce).ToArray();
-        if (profile.DependencyLock is not null) NativeDependencies.Verify(profile, token);
+        if (profile.RuntimeInputs is not null) RuntimeInputs.Verify(profile, token);
         await Stage("compiled.validate", "enter");
         if (project.SchemaVersion != 2) throw new NativeStartupException("compiled_schema");
         await Stage("compiled.validate", "exit");
@@ -60,6 +60,7 @@ internal sealed class NativeSession : IDisposable
             projectRelative ? profile.NativeDirectory[14..] : profile.NativeDirectory);
         await Stage("native.load", "enter");
         ConfigureNative(native);
+        _nativeDirectory = native;
         foreach (string module in new[] { "MaaFramework.dll", "MaaToolkit.dll", "MaaAgentClient.dll" })
         {
             using var bytes = File.OpenRead(Path.Combine(native, module));
@@ -75,34 +76,12 @@ internal sealed class NativeSession : IDisposable
         Directory.CreateDirectory(_nativeLogDirectory);
         if (!MaaGlobal.Shared.SetOption_LogDir(_nativeLogDirectory)) throw new NativeStartupException("log_directory_rejected");
         _nativeLog = new NativeLogSource(_nativeLogDirectory, send, _logSecrets); _nativeLog.Start();
-        if (project.LogSources.Length > 0)
-        {
-            foreach (var executable in project.Agents.Select(agent => agent.Executable).Distinct(StringComparer.OrdinalIgnoreCase))
-                foreach (var process in Process.GetProcessesByName(Path.GetFileNameWithoutExtension(executable)))
-                    using (process)
-                    {
-                        try
-                        {
-                            if (process.MainModule?.FileName is { } image && Path.GetFullPath(image).StartsWith(
-                                Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-                                throw new NativeStartupException("log.project_active_writer");
-                        }
-                        catch (System.ComponentModel.Win32Exception) { throw new NativeStartupException("log.project_writer_identity_unavailable"); }
-                        catch (InvalidOperationException) when (process.HasExited) { }
-                    }
-            foreach (var source in project.LogSources)
-                foreach (int day in source.RelativePath.Contains("{date}", StringComparison.Ordinal) ? new[] { 0, 1 } : new[] { 0 })
-                {
-                    string relative = source.RelativePath.Replace("{date}", DateTime.Today.AddDays(day).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
-                    string path = ProjectCompiler.ResolveScopedPath(profile.PackageRoot, profile.PackageRoot, relative);
-                    var reader = new SessionLogReader(path, relative, source.Id + (day == 0 ? "" : ".next"), send, _logSecrets,
-                        skipExisting: true, backupPattern: source.BackupPattern, optional: source.Optional);
-                    _projectLogs.Add(reader); reader.Start();
-                }
-        }
         string version = NativeBindingContext.LibraryVersion;
         await Stage("native.load", "exit");
-        if (version.TrimStart('v') != profile.NativeVersion.TrimStart('v')) throw new NativeStartupException("native_version_changed");
+        if (!Version.TryParse(version.TrimStart('v'), out var observed) || observed.Major != 5)
+            throw new NativeStartupException("native_abi_unsupported");
+        if (profile.NativeVersion.Length != 0 && version.TrimStart('v') != profile.NativeVersion.TrimStart('v'))
+            throw new NativeStartupException("native_version_changed");
         MaaGlobal.Shared.SetOption_StdoutLevel(LoggingLevel.Off);
         foreach (var pretask in project.Pretasks)
         {
@@ -168,7 +147,7 @@ internal sealed class NativeSession : IDisposable
             await send("progress", new() { ["code"] = "initialization.completed", ["operationId"] = operationId,
                 ["revision"] = revision, ["fingerprint"] = project.ExecutionFingerprint,
                 ["nativeVersion"] = version, ["projectVersion"] = project.Version, ["formalTasksSubmitted"] = 0 });
-            return;
+            return true;
         }
         _tasker.Callback += OnCallback;
         using var callbackStop = new CancellationTokenSource();
@@ -197,10 +176,14 @@ internal sealed class NativeSession : IDisposable
                 await send("task_event", new() { ["taskId"] = task.Id, ["status"] = "running", ["nativeTaskId"] = job.Id.ToString() });
                 MaaJobStatus status = await Task.Run(() => job.Wait(), CancellationToken.None).WaitAsync(token);
                 await Stage("task.complete", "exit");
+                token.ThrowIfCancellationRequested();
+                if (status is not (MaaJobStatus.Succeeded or MaaJobStatus.Failed))
+                    throw new NativeStartupException("task_terminal_unknown");
                 await send("task_event", new() { ["taskId"] = task.Id,
                     ["status"] = status == MaaJobStatus.Succeeded ? "succeeded" : "failed", ["nativeTaskId"] = job.Id.ToString(), ["nativeStatus"] = status.ToString() });
-                if (status != MaaJobStatus.Succeeded) throw new InvalidDataException("native task failed");
+                if (status == MaaJobStatus.Failed) return false;
             }
+            return true;
         }
         finally
         {
@@ -236,13 +219,13 @@ internal sealed class NativeSession : IDisposable
             nint handle = (nint)profile.WindowHandle;
             if (handle == 0 || !IsWindow(handle) || GetWindowThreadProcessId(handle, out uint pid) == 0
                 || pid != profile.WindowProcessId) throw new NativeStartupException("window_identity_changed");
-            using Process process = Process.GetProcessById((int)pid);
-            if (profile.WindowStartedAtUtc is null || process.StartTime.ToUniversalTime() != profile.WindowStartedAtUtc
-                || !string.Equals(process.MainModule?.FileName, profile.WindowExecutable, StringComparison.OrdinalIgnoreCase))
+            var selected = WindowDiscovery.Find(project.Controller).OfType<JsonObject>().SingleOrDefault(window =>
+                window["handle"]!.GetValue<long>() == profile.WindowHandle && window["pid"]!.GetValue<int>() == profile.WindowProcessId)
+                ?? throw new NativeStartupException("window_filter_changed");
+            if (profile.WindowStartedAtUtc is null || DateTime.Parse(selected["startedAtUtc"]!.GetValue<string>(),
+                    System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind) != profile.WindowStartedAtUtc
+                || !string.Equals(selected["executable"]!.GetValue<string>(), profile.WindowExecutable, StringComparison.OrdinalIgnoreCase))
                 throw new NativeStartupException("window_executable_changed");
-            if (!WindowDiscovery.Find(project.Controller).OfType<JsonObject>().Any(window =>
-                window["handle"]!.GetValue<long>() == profile.WindowHandle && window["pid"]!.GetValue<int>() == profile.WindowProcessId))
-                throw new NativeStartupException("window_filter_changed");
             var win = project.Controller["win32"] as JsonObject ?? new();
             T Method<T>(string field, T fallback) where T : struct, Enum => win[field] is null ? fallback
                 : Enum.TryParse<T>(win[field]!.GetValue<string>(), true, out var value) ? value : throw new InvalidDataException("unsupported controller method");
@@ -282,10 +265,19 @@ internal sealed class NativeSession : IDisposable
         if (definition.GeneratedOptionPayload is not null)
             psi.ArgumentList.Add(ResolveSecrets(definition.GeneratedOptionPayload, secrets)!.ToJsonString());
         if (identifier is not null) psi.ArgumentList.Add(identifier);
+        if (Path.GetFileNameWithoutExtension(definition.Executable).Equals("uv", StringComparison.OrdinalIgnoreCase))
+        {
+            // The approved distribution owns its environment; execution must not resolve or download new code.
+            psi.Environment["UV_NO_SYNC"] = "1";
+            psi.Environment["UV_OFFLINE"] = "1";
+            psi.Environment["UV_PROJECT_ENVIRONMENT"] = Path.Combine(project.InterfaceDirectory, ".venv");
+        }
         psi.Environment["PI_INTERFACE_VERSION"] = "v2.10.2";
         psi.Environment["PI_CLIENT_NAME"] = "NexusPipeline"; psi.Environment["PI_CLIENT_VERSION"] = "v0.17.3";
         psi.Environment["PI_CLIENT_LANGUAGE"] = profile.Language; psi.Environment["PI_CLIENT_MAAFW_VERSION"] = nativeVersion;
         psi.Environment["PI_VERSION"] = project.Version;
+        // Native DLL search registrations are local to the worker; external C++ Agents need the verified directory too.
+        psi.Environment["PATH"] = _nativeDirectory + Path.PathSeparator + psi.Environment["PATH"];
         psi.Environment["PI_CONTROLLER"] = project.Controller.ToJsonString(); psi.Environment["PI_RESOURCE"] = project.Resource.ToJsonString();
         if (psi.Environment.Values.Any(value => value?.Length > 32760)) throw new InvalidDataException("environment too large");
         var process = Process.Start(psi) ?? throw new InvalidOperationException("project program start failed");
@@ -335,8 +327,6 @@ internal sealed class NativeSession : IDisposable
             MaaGlobal.Shared.SetOption_LogDir(_nativeLogDirectory);
             await _nativeLog.CompleteAsync(); _nativeLog = null;
         }
-        foreach (var log in _projectLogs) await log.CompleteAsync();
-        _projectLogs.Clear();
         await Stage("session.cleanup", "exit");
     }
 

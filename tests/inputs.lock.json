@@ -51,5 +51,11 @@
       "bindingRepository": "MaaXYZ/MaaFramework.Binding.CSharp",
       "bindingSourceCommit": "27c69a5b8ff41b6002ead71f403a16f442a7168e"
     }
-  ]
+  ],
+  "maaPythonBundle": {
+    "version": "4.12.1",
+    "url": "https://github.com/MAA1999/M9A/releases/download/v4.12.1/M9A-win-x86_64-v4.12.1-MXU.zip",
+    "sha256": "759f3977e2549b4470bfff42720163052728058046f192ea1d8628fe40c1d4b9",
+    "sizeBytes": 136569536
+  }
 }

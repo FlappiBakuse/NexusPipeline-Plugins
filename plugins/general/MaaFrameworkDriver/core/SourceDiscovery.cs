@@ -3,16 +3,20 @@ using System.Text.Json.Nodes;
 namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
 public sealed record ConfigurationSourceCandidate(string Id, string Kind, string RelativePath, string InstanceId, string Name);
-public sealed record ConfigurationSourceDiscovery(string InterfacePath, JsonObject Schema, ConfigurationSourceCandidate[] Candidates);
+public sealed record ConfigurationSourceDiscovery(string InterfacePath, JsonObject Schema, ConfigurationSourceCandidate[] Candidates)
+{
+    public string[] InterfaceCandidates { get; init; } = [];
+}
 
 public static class SourceDiscovery
 {
     public static ConfigurationSourceDiscovery Discover(string root, string interfacePath = "", CancellationToken token = default)
     {
         root = Path.GetFullPath(root).TrimEnd('\\', '/');
-        string[] interfaces = interfacePath.Length != 0 ? [interfacePath] : new[] { "interface.json", "assets/interface.json" }
+        string[] interfaces = interfacePath.Length != 0 ? [interfacePath] : new[] { "interface.json", "interface.jsonc", "assets/interface.json", "assets/interface.jsonc" }
             .Where(path => File.Exists(ProjectCompiler.ResolveScopedPath(root, root, path))).ToArray();
-        if (interfaces.Length != 1) throw new InvalidDataException("source.interface.explicit_selection_required");
+        if (interfaces.Length == 0) throw new InvalidDataException("maa.project.not_found");
+        if (interfaces.Length != 1) return new("", new(), []) { InterfaceCandidates = interfaces };
         var compiler = new ProjectCompiler(root, interfaces[0], cancellationToken: token);
         var candidates = new List<ConfigurationSourceCandidate>();
         void Add(string kind, string file, string id, string name)
@@ -24,6 +28,18 @@ public static class SourceDiscovery
         string config = compiler.Scope(root, "config");
         if (Directory.Exists(config))
         {
+            if (File.Exists(compiler.Scope(root, "config/multi_config.json")))
+            {
+                var main = compiler.ReadScopedFile("config/multi_config.json");
+                foreach (var idNode in main["config_list"]?.AsArray() ?? throw new InvalidDataException("import.cfa.config_list_required"))
+                {
+                    string id = idNode?.GetValue<string>() ?? throw new InvalidDataException("import.cfa.instance_identity");
+                    Add("cfa", "config/configs/" + id + ".json", id, id);
+                    var saved = compiler.ReadScopedFile("config/configs/" + id + ".json");
+                    string name = saved["name"]?.GetValue<string>() ?? id;
+                    candidates[^1] = candidates[^1] with { Name = name.Length <= 256 ? name : name[..256] };
+                }
+            }
             string[] mxuFiles = Directory.EnumerateFiles(config, "mxu-*.json", SearchOption.TopDirectoryOnly).Take(65).ToArray();
             if (mxuFiles.Length > 64) throw new InvalidDataException("source.candidates.file_limit");
             foreach (string file in mxuFiles.Order(StringComparer.OrdinalIgnoreCase))
@@ -47,6 +63,19 @@ public static class SourceDiscovery
                     Add("mfa", relative, Path.GetFileNameWithoutExtension(file), source["InstanceName"]?.GetValue<string>() ?? "MFA");
                 }
             }
+            if (File.Exists(compiler.Scope(root, "appsettings.json")))
+            {
+                var settings = compiler.ReadScopedFile("appsettings.json");
+                foreach (string id in ConfigurationSources.MfaFlatInstances(settings))
+                {
+                    if (candidates.Any(candidate => candidate.Kind == "mfa" && candidate.InstanceId == id)) continue;
+                    string path = ConfigurationSources.MfaFlatPath(settings, id);
+                    if (!File.Exists(compiler.Scope(root, path))) continue;
+                    var source = compiler.ReadScopedFile(path);
+                    if (source["Instance." + id + ".TaskItems"] is not JsonArray && source["TaskItems"] is not JsonArray) continue;
+                    Add("mfa", path, id, settings["Instance." + id + ".Name"]?.GetValue<string>() ?? id);
+                }
+            }
             if (File.Exists(compiler.Scope(root, "config/maa_pi_config.json")))
             {
                 compiler.ReadScopedFile("config/maa_pi_config.json");
@@ -63,7 +92,8 @@ public static class SourceDiscovery
     {
         var compiler = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token);
         DriverProfile mapped;
-        if (candidate.Kind == "mfa") mapped = ConfigurationSources.ReadMfa(compiler, profile, candidate.RelativePath, candidate.InstanceId);
+        if (candidate.Kind == "cfa") mapped = CfaConfigurationMapper.Read(compiler, profile, candidate.InstanceId);
+        else if (candidate.Kind == "mfa") mapped = ConfigurationSources.ReadMfa(compiler, profile, candidate.RelativePath, candidate.InstanceId);
         else if (candidate.Kind is "mxu" or "maapicli-v5.14.0")
         {
             var source = compiler.ReadScopedFile(candidate.RelativePath);
