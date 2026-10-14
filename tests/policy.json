@@ -245,7 +245,8 @@
         "maaend-callbacks",
         "maaend-gap-isolation",
         "maaend-unpaired-terminal",
-        "maaend-launch-unowned-missing"
+        "maaend-launch-unowned-missing",
+        "maaend-unrelated-import-not-required"
       ],
       "realScenario": "P-S-MaaEnd"
     },

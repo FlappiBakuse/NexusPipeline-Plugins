@@ -71,7 +71,8 @@
     "tasks/setting/Keymap.json": "interface-part-65",
     "tasks/setting/Zipline.json": "interface-part-66",
     "tasks/DecomposeWeaponEssence.json": "interface-part-67",
-    "tasks/SharedZiplineDelete.json": "interface-part-68"
+    "tasks/SharedZiplineDelete.json": "interface-part-68",
+    "tasks/AutoEssence/Location/ChooseLocation.json": "interface-part-69"
   },
   "locales": {
     "zh-CN": "locale-zh-CN",
@@ -267,7 +268,8 @@
     ],
     "tasks/SharedZiplineDelete.json": [
       "SharedZiplineDelete"
-    ]
+    ],
+    "tasks/AutoEssence/Location/ChooseLocation.json": []
   },
   "protocolVersion": "0.2.0",
   "dailyPolicy": {
