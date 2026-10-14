@@ -79,8 +79,9 @@ try {
   await page.getByRole("textbox", { name: "任务名称", exact: true }).fill("Browser edited task");
   await page.getByRole("button", { name: "保存", exact: true }).click();
   card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Browser edited task", exact: true }) });
-  await card.getByRole("button", { name: "签到并记录脱敏诊断", exact: true }).click();
-  await request("POST", "tasks/run", { taskId: tasks[1].id }, 202);
+  await request("POST", "tasks/run", { taskId: tasks[0].id, diagnostics: true }, 202);
+  card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: tasks[1].name, exact: true }) });
+  await card.getByRole("button", { name: "立即签到", exact: true }).click();
   await settled(tasks.slice(0, 2).map(task => task.id));
   await Promise.all(tasks.slice(2).map(task => request("POST", "tasks/run", { taskId: task.id }, 202)));
   const state = await settled(tasks.map(task => task.id));

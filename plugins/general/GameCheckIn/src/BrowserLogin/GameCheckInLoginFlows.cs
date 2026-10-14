@@ -8,8 +8,8 @@ internal sealed class GameCheckInLoginFlows : IDisposable
 {
     internal static readonly LoginProviderReadiness[] Readiness =
     [ new("cn", "passed", "3", "2"), new("os", "passed", "1", "1"), new("skland", "passed", "5", "3"),
-      new("skport", "passed", "7", "3"), new("kuro", "passed", "3", "2") ];
-    internal static bool IsReady(string platform) => Readiness.Any(p => p.Platform == platform);
+      new("skport", "passed", "7", "3"), new("kuro", "passed", "3", "2"), new("tajiduo", "passed", "2", "2") ];
+    internal static bool IsReady(string platform) => Readiness.Any(p => p.Platform == platform && p.Status == "passed");
     private readonly List<IDisposable> _registrations = [];
     private readonly Func<string, bool> _ready;
     internal bool Ready(string platform) => IsReady(platform) && _ready(platform);

@@ -358,7 +358,9 @@ public sealed class OtherLoginProviderTests
             Assert.True(flows.Ready("skland"));
             Assert.True(flows.Ready("skport"));
             Assert.False(flows.Ready("unknown"));
-            Assert.All(GameCheckInLoginFlows.Readiness, p => Assert.Equal("passed", p.Status));
+            Assert.All(GameCheckInLoginFlows.Readiness.Where(p => p.Platform != "tajiduo"), p => Assert.Equal("passed", p.Status));
+            Assert.Equal("passed", GameCheckInLoginFlows.Readiness.Single(p => p.Platform == "tajiduo").Status);
+            Assert.True(flows.Ready("tajiduo"));
         }
         Assert.Empty(context.BrowserLogin.Flows);
         using var existing = context.BrowserLogin.Register(KuroLoginProvider.Flow(false), (_, _, _) => ValueTask.FromResult(new PluginBrowserLoginResult(false)),

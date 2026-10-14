@@ -6,7 +6,7 @@ internal enum VerificationState { NoChallenge, ChallengeRequired, Incomplete, Un
 
 internal static class CheckInResponse
 {
-    internal static async Task<JsonDocument> ReadAsync(HttpResponseMessage response, CancellationToken token, Action<JsonElement>? inspect = null)
+    internal static async Task<JsonDocument> ReadAsync(HttpResponseMessage response, CancellationToken token, Action<JsonElement>? inspect = null, string codeProperty = "retcode")
     {
         response.EnsureSuccessStatusCode();
         string? mediaType = response.Content.Headers.ContentType?.MediaType;
@@ -24,13 +24,14 @@ internal static class CheckInResponse
             bytes.Write(buffer, 0, count);
         }
         JsonDocument document = JsonDocument.Parse(bytes.ToArray(), new JsonDocumentOptions { MaxDepth = 32 });
-        try { inspect?.Invoke(document.RootElement); Validate(document.RootElement); return document; }
+        try { inspect?.Invoke(document.RootElement); Validate(document.RootElement, codeProperty); return document; }
         catch { document.Dispose(); throw; }
     }
 
-    internal static void Validate(JsonElement root)
+    internal static void Validate(JsonElement root, string codeProperty = "retcode")
     {
-        if (root.ValueKind != JsonValueKind.Object || HoyoLabClient.ReadRetcode(root) == int.MinValue)
+        if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty(codeProperty, out var code)
+            || code.ValueKind != JsonValueKind.Number || !code.TryGetInt32(out _))
             throw new JsonException("checkin.response_schema");
         ValidateUnique(root);
     }

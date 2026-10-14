@@ -9,7 +9,7 @@ internal sealed partial class CheckInTaskService
     {
         foreach (var (method, route) in new[] { ("POST", "credentials/editors"), ("POST", "credentials/editors/state"),
             ("DELETE", "credentials/editors"), ("PUT", "credentials/draft"), ("POST", "credentials/lease"),
-            ("POST", "credentials/login/prepare"), ("POST", "tasks/credential/reveal/confirm") })
+            ("POST", "credentials/login/prepare"), ("POST", "credentials/login/tajiduo"), ("DELETE", "credentials/login/tajiduo"), ("POST", "tasks/credential/reveal/confirm") })
             _routes.Add(_context.WebApi.Register(new(method, route, PluginOperationAccess.General, CredentialApiAsync)));
     }
     private async ValueTask<PluginWebApiResponse> CredentialApiAsync(PluginWebApiRequest request, CancellationToken cancellationToken)
@@ -44,6 +44,7 @@ internal sealed partial class CheckInTaskService
             if (input.EditorSessionId is not { Length: > 0 and <= 64 } editor) return Error(400, "credential_editor_required");
             if (request.Route == "credentials/editors" && request.Method == "DELETE")
             {
+                _tajiduoLogin.CancelEditor(client, editor);
                 _credentials.Release(client, editor);
                 await _context.BrowserLogin.CancelEditorAsync(client, editor, cancellationToken).ConfigureAwait(false);
                 return PluginWebApiResponse.Empty();
@@ -52,6 +53,7 @@ internal sealed partial class CheckInTaskService
             if (request.Route == "credentials/lease") { _credentials.Lease(client, editor); return Json(_credentials.State(client, editor)); }
             if (request.Route == "credentials/draft")
             {
+                _tajiduoLogin.CancelEditor(client, editor);
                 var state = _credentials.Mutate(client, editor, input.Platform, input.ExpectedFieldGeneration, input.Mutation, input.Value);
                 await _context.BrowserLogin.CancelEditorAsync(client, editor, cancellationToken).ConfigureAwait(false);
                 return Json(state);
@@ -59,7 +61,15 @@ internal sealed partial class CheckInTaskService
             if (request.Route == "credentials/login/prepare")
             {
                 if (!_loginFlows.Ready(input.Platform)) return Error(409, "platform_not_ready");
-                return Json(_credentials.Prepare(client, editor, input.Platform, input.ExpectedFieldGeneration));
+                return Json(input.Platform == "tajiduo" ? _tajiduoLogin.Prepare(client, editor, input.ExpectedFieldGeneration)
+                    : _credentials.Prepare(client, editor, input.Platform, input.ExpectedFieldGeneration));
+            }
+            if (request.Route == "credentials/login/tajiduo")
+            {
+                if (request.Method == "DELETE") { _tajiduoLogin.CancelOperation(client, editor, input.Operation ?? ""); return PluginWebApiResponse.Empty(); }
+                if (!_loginFlows.Ready("tajiduo")) return Error(409, "platform_not_ready");
+                var state = await _tajiduoLogin.Submit(client, editor, input.Operation ?? "", input.Mode ?? "", input.Phone ?? "", input.Value ?? "", cancellationToken);
+                return Json(new { sent = state is null, editor = state });
             }
             return Error(404, "credential_route_invalid");
         }
@@ -80,5 +90,8 @@ internal sealed partial class CheckInTaskService
         public string Mutation { get; set; } = "";
         public string? Value { get; set; }
         public bool Confirm { get; set; }
+        public string? Operation { get; set; }
+        public string? Mode { get; set; }
+        public string? Phone { get; set; }
     }
 }
