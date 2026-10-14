@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "host": {
     "repository": "FlappiBakuse/NexusPipeline",
-    "commitSha": "3966d15776d99abfd308dabc7251bb3d9084335d",
+    "commitSha": "dfe5ca86d70f6717af89c609263fccf747d42709",
     "purpose": "SDK, finite TaskProtocol runner and asInvoker HTTP fixture Host",
     "status": "merged Host implementation commit"
   },
