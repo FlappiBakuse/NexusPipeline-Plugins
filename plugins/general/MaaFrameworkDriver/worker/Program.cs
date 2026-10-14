@@ -39,6 +39,15 @@ long sequence = 0;
 using var sendGate = new SemaphoreSlim(1, 1);
 async ValueTask Send(string kind, JsonObject payload)
 {
+    if (kind == "log")
+    {
+        string text = payload["text"]!.GetValue<string>();
+        foreach (string secret in new[] { bootstrap.Nonce }.Concat((bootstrap.Input["secrets"] as JsonObject ?? new())
+            .Select(pair => pair.Value?.GetValue<string>() ?? "")).Where(secret => secret.Length > 0))
+            text = text.Replace(secret, "[redacted]", StringComparison.Ordinal);
+        if (text.Length > 2048) throw new InvalidDataException("worker.log_frame_oversized");
+        payload = new() { ["text"] = text };
+    }
     await sendGate.WaitAsync();
     try
     {
@@ -74,11 +83,25 @@ try
     var compiled = bootstrap.Input["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
     var secrets = bootstrap.Input["secrets"] as JsonObject ?? new();
     var target = bootstrap.Input["hostLaunchTarget"]?.Deserialize<PluginProviderLaunchTarget>(DriverJson.Options);
-    await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target);
+    string mode = bootstrap.Input["mode"]?.GetValue<string>() ?? "run";
+    if (mode is not ("run" or "initialize_only")) throw new NativeStartupException("unsupported_mode");
+    string operationId = bootstrap.Input["operationId"]?.GetValue<string>() ?? "";
+    string revision = bootstrap.Input["revision"]?.GetValue<string>() ?? "";
+    if (mode == "initialize_only" && (operationId.Length is < 1 or > 64 || revision.Length is < 1 or > 128))
+        throw new NativeStartupException("initialization_identity_required");
+    if (mode == "run")
+    {
+        string[] selected = bootstrap.Input["selectedTaskIds"]!.Deserialize<string[]>(DriverJson.Options)!;
+        compiled = TaskSelection.Apply(compiled, selected);
+    }
+    bool succeeded = await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target,
+        mode == "initialize_only", operationId, revision, bootstrap.SessionArtifactsDirectory ?? "", bootstrap.Nonce);
     await session.CloseAsync();
     workspace.Complete();
-    await Send("completed", new() { ["status"] = cancelled.IsCancellationRequested ? "cancelled" : "succeeded" });
-    return cancelled.IsCancellationRequested ? 2 : 0;
+    cancelled.Token.ThrowIfCancellationRequested();
+    await Send("completed", new() { ["status"] = succeeded ? "succeeded" : "failed",
+        ["code"] = succeeded ? "maa.succeeded" : "maa.task_failed" });
+    return succeeded ? 0 : 3;
 }
 catch (Exception ex)
 {

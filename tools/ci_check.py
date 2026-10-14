@@ -13,16 +13,21 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.build_source import changed_paths, fingerprint, full_sha, git, snapshot, source_entries, tree_sha
 from tools.repository.source import discover_source_plugins
+from tools.repository.model import STABLE_METADATA_FILES
+from tools.repository.state import distribution_relocations
 
 
-def scope(root: Path, paths: list[str]) -> dict:
+def scope(root: Path, paths: list[str], *, base: str = "HEAD") -> dict:
     plugins = discover_source_plugins(root)
     selected = set()
     reasons = []
     deleted = set()
     production_helpers = {'tests/architecture/check.py', 'tests/support/managed_build.py'}
+    relocations = distribution_relocations(root, base)
     for path in paths:
-        if path.startswith(('catalog.json', '.release-state.json', 'packages/')):
+        if path in relocations:
+            continue
+        if path in STABLE_METADATA_FILES or path.startswith('packages/'):
             raise ValueError('PR source changes may not write stable distribution files')
         match = re.match(r'plugins/(general|specialized)/([^/]+)/', path)
         if match:
@@ -53,7 +58,7 @@ def plan(root: Path, base: str, head: str, checkout: str, partner_sha: str | Non
     paths = sorted(set(changed_paths(root, base, head))
                    | set(filter(None, git(root, 'diff', '--name-only', '-z', 'HEAD').split('\0')))
                    | set(filter(None, git(root, 'ls-files', '--others', '--exclude-standard', '-z').split('\0'))))
-    selected = scope(root, paths)
+    selected = scope(root, paths, base=base)
     deleted = []
     for artifact in selected['deletedArtifacts']:
         directories = {str(Path(path).parent).replace('\\', '/') for path in paths

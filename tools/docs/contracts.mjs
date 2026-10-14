@@ -15,9 +15,9 @@ export function checkContracts(root) {
   const results = [];
   const read = file => fs.readFileSync(repositoryPath(root, "", file), "utf8");
   try {
-    const lock = JSON.parse(read("host.lock.json"));
+    const lock = JSON.parse(read("contracts/host-compatibility.json"));
     if (![lock.hostApiVersion, lock.frontendApiVersion].every(value => /^\d+\.\d+$/.test(value)))
-      throw new Error("Cannot extract host.lock.json API facts");
+      throw new Error("Cannot extract contracts/host-compatibility.json API facts");
     const file = "docs/author/FRONTEND_PLUGIN.md", text = read(file);
     for (const [expression, expected] of [
       [/^# Frontend API ([\d.]+) 插件指南$/gm, lock.frontendApiVersion],

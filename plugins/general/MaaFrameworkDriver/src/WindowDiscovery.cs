@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using Microsoft.Win32.SafeHandles;
 using NexusPipeline.Plugin.Abstractions;
 
 namespace NexusPipeline.Plugin.MaaFrameworkDriver;
@@ -52,7 +53,7 @@ internal static class WindowDiscovery
         var classRegex = new Regex(classPattern, RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
         var results = new JsonArray();
         Exception? failure = null;
-        bool complete = EnumWindows((handle, _) =>
+        bool complete = EnumWindows((handle, parameter) =>
         {
             if (results.Count >= 256) return false;
             try
@@ -61,11 +62,16 @@ internal static class WindowDiscovery
                 GetWindowText(handle, title, title.Capacity); GetClassName(handle, cls, cls.Capacity);
                 if (!IsWindowVisible(handle) || !titleRegex.IsMatch(title.ToString()) || !classRegex.IsMatch(cls.ToString())) return true;
                 GetWindowThreadProcessId(handle, out uint pid);
-                using var process = Process.GetProcessById((int)pid);
-                string? executable = process.MainModule?.FileName;
-                if (string.IsNullOrEmpty(executable)) { failure = new InvalidDataException("window identity unavailable"); return false; }
+                // Module enumeration requires access that protected games can deny even when identity queries are allowed.
+                using var process = OpenProcess(0x1000, false, pid);
+                if (process.IsInvalid) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+                var executable = new StringBuilder(32768);
+                uint capacity = (uint)executable.Capacity;
+                if (!QueryFullProcessImageName(process, 0, executable, ref capacity)
+                    || !GetProcessTimes(process, out long creation, out _, out _, out _))
+                    throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
                 results.Add(new JsonObject { ["handle"] = handle.ToInt64(), ["pid"] = (int)pid,
-                    ["executable"] = executable, ["startedAtUtc"] = process.StartTime.ToUniversalTime().ToString("O"),
+                    ["executable"] = executable.ToString(), ["startedAtUtc"] = DateTime.FromFileTimeUtc(creation).ToString("O"),
                     ["title"] = title.ToString(), ["className"] = cls.ToString() });
             }
             catch (RegexMatchTimeoutException ex) { failure = ex; return false; }
@@ -79,6 +85,14 @@ internal static class WindowDiscovery
         return results;
     }
     private delegate bool Callback(nint handle, nint parameter);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern SafeProcessHandle OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint processId);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool QueryFullProcessImageName(SafeProcessHandle process, uint flags, StringBuilder image, ref uint size);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetProcessTimes(SafeProcessHandle process, out long creation, out long exit, out long kernel, out long user);
     [DllImport("user32.dll")] private static extern bool EnumWindows(Callback callback, nint parameter);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint handle);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint handle, StringBuilder text, int count);

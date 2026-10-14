@@ -49,6 +49,7 @@ export function gameCheckInTestState() {
       { id: "skland", name: "森空岛", games: [{ id: "ak", name: "明日方舟" }] },
       { id: "skport", name: "SKPORT", games: [{ id: "endfield", name: "Arknights: Endfield" }] },
       { id: "kuro", name: "库街区", games: [{ id: "ww", name: "鸣潮" }] },
+      { id: "tajiduo", name: "塔吉多", browserLogin:{ready:true,status:'controlled_fixture'}, games: [{ id: "nte", name: "异环" }] },
     ],
     timeZoneId: "Asia/Shanghai",
     localTime: "2026-09-16T09:00:00+08:00",
@@ -184,7 +185,13 @@ export function createMockHost(pluginName, registrations, metrics, state = defau
         if(gameCheckInPlugin&&route==='credentials/lease')return {};
         if(gameCheckInPlugin&&route==='credentials/login/prepare') {
           const field=getEditor(copiedBody.editorSessionId).fields[copiedBody.platform];field.fieldGeneration++;
-          return {flowId:'hoyolab',editorSessionId:copiedBody.editorSessionId,fieldGeneration:field.fieldGeneration,context:{}};
+          return {flowId:copiedBody.platform,editorSessionId:copiedBody.editorSessionId,fieldGeneration:field.fieldGeneration,context:{operation:'fixture-tajiduo-operation'}};
+        }
+        if(gameCheckInPlugin&&route==='credentials/login/tajiduo') {
+          if(copiedBody.mode==='send')return {sent:true,editor:null};
+          const editor=getEditor(copiedBody.editorSessionId),field=editor.fields.tajiduo;
+          if(copiedBody.mode!=='accept')Object.assign(field,{configured:true,source:'browser',intent:'set',candidateId:'fixture-tajiduo-candidate',value:'synthetic-tajiduo-secret',maskedAccount:'12****89',fieldGeneration:field.fieldGeneration+1});
+          return {sent:false,editor:{editorSessionId:copiedBody.editorSessionId,fields:Object.fromEntries(Object.entries(editor.fields).map(([key,value])=>[key,fieldState(value)]))}};
         }
         if(gameCheckInPlugin&&route==='tasks/credential/reveal/confirm'){revealConfirmed=true;return {expiresAt:new Date(Date.now()+86400000).toISOString()};}
         if (gameCheckInPlugin && route === "tasks/credential/read") {

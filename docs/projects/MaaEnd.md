@@ -4,6 +4,8 @@
 
 MaaEnd 保持官方发行实际使用的 MXU GUI。MaaStellaSora 的 MFA 迁移不改变 MaaEnd 或独立 MaaFrameworkDriver 的配置入口。
 
+MaaEnd v2.32.0 的 AutoEssence 地点选项导入已声明；仅选项导入不提供任务边界，不阻断无关任务的发现。
+
 发现使用唯一 autoStartInstanceId、实例任务稳定 ID、interface/import、customName/locale 和 controller/resource 兼容性。配置补丁定位实例与任务 ID，不按显示名称写入。DailyRewards 的五个一级开关以冻结说明展示，不制造缺少独立日志的必需子任务或重复业务分母。
 
 MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoch 配对。完成属于该外层任务的权威业务事实；普通框架 ERR 或无归属异步 focus 不可据此伪造子业务失败。缺口、未配对终态和缺少终态最终失败，不能回退未核验。

@@ -28,7 +28,10 @@
         "NexusPipeline.Plugin.CustomWallpaper.Tests.WallpaperServiceTests.InitializationPreservesUnsupportedAppearanceScope"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G02"
+      "realScenario": "P-G02",
+      "frontendCaseIds": [
+        "CustomWallpaper.frontend.lifecycle"
+      ]
     },
     "EmulatorSupport": {
       "root": "plugins/general/EmulatorSupport",
@@ -74,6 +77,8 @@
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SklandDeviceFingerprint_UsesNumberSmFieldMapping",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SklandSigner_MatchesKnownBodyAndHeaderVector",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.SkportClient_UsesIndependentAuthAndEndfieldProfile",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TajiduoLoginApiSavesCandidateWithoutReturningTokens",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TajiduoTaskPersistsRotatedCredentialAndDeduplicatesAfterRestart",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_BrowserCandidateSurvivesRollbackAndCommitsOnlyForOwner",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ClearAndKeepCommitOnlyOnSaveAndSurviveServiceReload",
         "NexusPipeline.Plugin.GameCheckIn.Tests.GameCheckInTests.TaskApi_ReadCredentialIsScopedAndDoesNotModifyTaskOrSecrets",
@@ -93,10 +98,30 @@
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.PassportValidationSeparatesRegionsExchangesRawTokenAndOnlyReadsIdentityAndBindings",
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ProviderCallbacksKeepCandidatesProvisionalAndCancelWithoutChangingExistingCredentials",
         "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.RegistrationEnablesQualifiedPlatformsAndDisposesBindings",
-        "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ValidationDiagnosticsIdentifyStageWithoutSecretsAndFailuresDoNotPublishCandidates"
+        "NexusPipeline.Plugin.GameCheckIn.Tests.OtherLoginProviderTests.ValidationDiagnosticsIdentifyStageWithoutSecretsAndFailuresDoNotPublishCandidates",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.AlreadySignedAndUnknownStatusNeverSubmit",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.DiagnosticsAreBoundedAndContainOnlyWhitelistedShapes",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.HttpContentSizeAndDuplicateFieldsFailClosed",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.PostSuccessRequiresReadOnlyConfirmationAndNeverRetriesPost",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.SharedResponseClassifiesKnownScopesWithoutGuessing",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.ResponseTests.SignedStateRequiresAnUnambiguousBoolean",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoLoginTests.CancellingUnacknowledgedLoginRestoresPriorCredential",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoLoginTests.ClosingEditorDuringAuthenticationRejectsLateSuccess",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoLoginTests.ForeignCancelledAndInvalidLoginCannotReplaceExistingDraft",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoLoginTests.PasswordLoginUsesOfficialProtocolAndPublishesOnlyMaskedDraft",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoLoginTests.SmsLoginRequiresExplicitSendAndThrottlesRepeatedMessages",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.AcceptedPostWithoutConfirmationIsNotSuccess",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.AmbiguousRoleRequiresSelection",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.DoesNotSubmitWithoutExplicitUnsignedState",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.FailedCredentialWritePreventsGameRequests",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.InvalidCredentialsNeverLeaveMachine",
+        "NexusPipeline.Plugin.GameCheckIn.Tests.TajiduoTests.SignsSelectedGameAfterDurableRefreshAndConfirmsState"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G01"
+      "realScenario": "P-G01",
+      "frontendCaseIds": [
+        "GameCheckIn.frontend.lifecycle"
+      ]
     },
     "LiveScreenshot": {
       "root": "plugins/general/LiveScreenshot",
@@ -110,7 +135,10 @@
         "NexusPipeline.Plugin.LiveScreenshot.Tests.LiveScreenshotConformanceTests.Lifecycle_IsStartableAndStopIsIdempotent"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G03"
+      "realScenario": "P-G03",
+      "frontendCaseIds": [
+        "LiveScreenshot.frontend.lifecycle"
+      ]
     },
     "MaaFrameworkDriver": {
       "root": "plugins/general/MaaFrameworkDriver",
@@ -123,6 +151,7 @@
       "testProject": "plugins/general/MaaFrameworkDriver/tests/NexusPipeline.Plugin.MaaFrameworkDriver.Tests.csproj",
       "expectedMethods": [
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PathInterpreterReplacementInvalidatesAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.MxuPretasksFollowSavedSelectionAndOptions",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.LinkedInterpreterAndLocalDependencyAreRejectedWithoutReadingOutside",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.OversizedInterfaceFailsWithLocatedBudgetBeforeParsing",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DirectExecutableSidecarCodeChangesRequireAuthorization",
@@ -139,10 +168,33 @@
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.InvalidDisplayExpansionCannotSilentlyUseAnotherDisplayMode",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.UnknownExecutionDeclarationsAreLocatedBeforePreviewOrRun",
         "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.DisplayTranslationCannotRenameTasksCasesOrRewritePipelineValues",
-        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PresetUsesDeclaredTaskOrderDisabledTasksAndPerTaskOverrides"
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.PresetUsesDeclaredTaskOrderDisabledTasksAndPerTaskOverrides",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.OccurrencesKeepIndependentOptionsRepeatOrdinalsAndStableIdsAcrossReorder",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.ProjectCompilerTests.LegacyProfileMigrationPreservesUnusedOptionsAndInvalidatesAuthorization",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.InstanceInheritanceUsesLocalScopedDefaultThenGlobalWithoutWrites",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.DuplicateTasksKeepOptionsRepeatDeletionHistoryAndIdentityAfterReorder",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.FourOptionLayersAndNestedCasesStayIndependentAndUnknownActionsFail",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.InactiveSoftwarePathPreservesTasksWithoutLaunchingAndActiveActionsFail",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.FlatMfaInstancesKeepSelectionAndIsolationWithoutWritingSource",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.MfaSourceReaderUsesSelectedGlobalConfigurationAndPreservesSourceBytes",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.SavedWin32MethodsOverridePiWithoutMutationAndRejectUnknownBits",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.GuiWaitActionsKeepOrderParametersAndRejectUnknownActions",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.NativeInputsUseLocalIdentityAndPreserveUnknownBytes",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.CliIdenticalEntriesKeepDistinctIdentityAndSourceReorderCreatesNewPlan",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.CfaConfigurationTests.PublicConfigPreservesIdentityOrderBranchesAndDisabledTasksWithoutWrites",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.DiscoveryAndSemanticMappingNeedNoNativeAndAdmissionRejectsChangedSource",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.UserProfileRebaseTests.RebaseInheritsSourceChangesPreservesUserEditsAndRejectsRemovedEditedTasks",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.UserProfileRebaseTests.EffectiveConfigurationChangesValuesButCannotRebindFrozenTaskIdentity",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.SessionLogReaderTests.SessionOffsetsExcludeHistoryDrainRenamedFilesAndExposeTruncationAndInvalidEncoding",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.LogTextFramerTests.StreamingLogsPreserveLargeOutputAndRedactAcrossFramesAndReads",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.PythonDependencyTests.LocalInterpreterAndScriptAreResolvedWithoutProjectRecipeOrSystemPath",
+        "NexusPipeline.Plugin.MaaFrameworkDriver.Tests.MfaConfigurationTests.SavedWindowHintsPreserveHostIdentityAndTaskSelection"
       ],
       "fixtureIds": [],
-      "realScenario": "P-X01"
+      "realScenario": "P-X01",
+      "frontendCaseIds": [
+        "MaaFrameworkDriver.frontend.lifecycle"
+      ]
     },
     "BAAH": {
       "root": "plugins/specialized/BAAH",
@@ -193,7 +245,8 @@
         "maaend-callbacks",
         "maaend-gap-isolation",
         "maaend-unpaired-terminal",
-        "maaend-launch-unowned-missing"
+        "maaend-launch-unowned-missing",
+        "maaend-unrelated-import-not-required"
       ],
       "realScenario": "P-S-MaaEnd"
     },
@@ -325,7 +378,10 @@
         "NexusPipeline.Plugin.GameActivities.Tests.StoreCancellationTests.FailedMergedWriteStillMarksMemoryStaleWhenFailureHealthCannotBePersisted"
       ],
       "fixtureIds": [],
-      "realScenario": "P-G05"
+      "realScenario": "P-G05",
+      "frontendCaseIds": [
+        "GameActivities.frontend.lifecycle"
+      ]
     }
   },
   "ciBatchPolicy": {

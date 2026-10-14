@@ -22,7 +22,7 @@ def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[
         repository_io._require(path.is_file(), f"候选目录包含特殊文件：{relative}")
         if relative in {"release-plan.json", "candidate.json"}:
             continue
-        repository_io._require(relative in {"catalog.json", repository_model.STATE_FILE} or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
+        repository_io._require(relative in repository_model.STABLE_METADATA_FILES or relative.startswith("packages/"), f"候选文件不在发布白名单：{relative}")
         if relative.startswith("packages/"):
             repository_io._require(path.suffix.lower() == ".zip", f"stable 候选 packages 只能包含 ZIP：{relative}")
         files[relative] = path
@@ -31,5 +31,5 @@ def _candidate_inventory(source_root: Path, generated_root: Path) -> tuple[dict[
         repository_io._require(total_bytes <= release_inventory.MAX_CANDIDATE_BYTES, "候选文件总大小超过上限")
     for package in sorted(path for relative, path in files.items() if relative.startswith("packages/") and path.suffix.lower() == ".zip"):
         release_inventory._validate_zip_limits(package)
-    repository_io._require("catalog.json" in files and repository_model.STATE_FILE in files, "候选缺少 catalog/state")
+    repository_io._require(set(repository_model.STABLE_METADATA_FILES) <= set(files), "候选缺少 catalog/state")
     return files, total_bytes

@@ -14,10 +14,21 @@
     "森空岛",
     "SKPORT",
     "库街区",
+    "塔吉多",
     "定时任务"
   ],
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
+    {
+      "version": "0.4.4",
+      "date": "2026-10-12",
+      "items": [
+        "严格校验签到响应，查询提交后的实际状态，并提供有界脱敏诊断。",
+        "统一任务编辑器的公共控件与确认行为。",
+        "新增塔吉多异环原生凭据、自动刷新、游戏签到与提交后状态确认。",
+        "塔吉多支持短信与密码网页登录，自动凭据保存前保持遮罩，取消保留原值。"
+      ]
+    },
     {
       "version": "0.4.3",
       "date": "2026-10-11",
@@ -32,13 +43,6 @@
         "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
       ],
       "date": "2026-10-08"
-    },
-    {
-      "version": "0.4.1",
-      "date": "2026-10-05",
-      "items": [
-        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-      ]
     }
   ],
   "locales": {
@@ -57,6 +61,16 @@
       ],
       "changelog": [
         {
+          "version": "0.4.4",
+          "date": "2026-10-12",
+          "items": [
+            "Validates check-in responses, confirms state after submission and provides bounded redacted diagnostics.",
+            "Aligns task editor controls and confirmation behavior with public frontend elements.",
+            "Adds Tajiduo native credentials, automatic refresh, NTE game check-in and state confirmation.",
+            "Adds Tajiduo SMS and password sign-in with masked credential drafts and cancellation that preserves existing credentials."
+          ]
+        },
+        {
           "version": "0.4.3",
           "date": "2026-10-11",
           "items": [
@@ -70,13 +84,6 @@
             "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
           ],
           "date": "2026-10-08"
-        },
-        {
-          "version": "0.4.1",
-          "date": "2026-10-05",
-          "items": [
-            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-          ]
         }
       ]
     }

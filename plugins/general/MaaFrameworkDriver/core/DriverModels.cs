@@ -14,6 +14,8 @@ public sealed record DriverProfile
     public string Resource { get; init; } = "";
     public string NativeDirectory { get; init; } = "";
     public string NativeVersion { get; init; } = "";
+    public JsonObject? DependencyLock { get; init; }
+    public RuntimeInputLock? RuntimeInputs { get; init; }
     public string AdbPath { get; init; } = "";
     public string AdbSerial { get; init; } = "";
     public long WindowHandle { get; init; }
@@ -26,18 +28,47 @@ public sealed record DriverProfile
     public int WindowWaitMilliseconds { get; init; } = 10000;
     public string Language { get; init; } = "zh_cn";
     public string[] SelectedTasks { get; init; } = [];
+    public TaskOccurrence[] TaskOccurrences { get; init; } = [];
     public JsonObject Options { get; init; } = new();
     public JsonObject ResourceOptions { get; init; } = new();
     public JsonObject ControllerOptions { get; init; } = new();
+    public JsonObject ControllerConfiguration { get; init; } = new();
+    public bool? AgentEmbedded { get; init; }
     public JsonObject TaskOptions { get; init; } = new();
     public string[] AttachResourcePaths { get; init; } = [];
     public string AuthorizedFingerprint { get; init; } = "";
     public JsonObject ImportProvenance { get; init; } = new();
+    public SourceBinding? SourceBinding { get; init; }
+    public SourceSnapshot? SourceSnapshot { get; init; }
 }
 
-public sealed record CompiledTask(string Name, string Label, string Entry, JsonObject Override);
+public sealed record SourceBinding(string RootIdentity, string InterfaceRelativePath, string SourceKind,
+    string SourceSchemaVersion, int MapperVersion, string SourceInstanceId, string[] SourceFiles, string TrustScopeId);
+public sealed record SourceSnapshot(string SourceHash, string PiHash, string EffectiveConfigHash, DateTimeOffset ReadAt,
+    string SourceRevision, string DependencyHash = "");
+
+public sealed record TaskOccurrence
+{
+    public string OccurrenceId { get; init; } = "";
+    public string SourceTaskId { get; init; } = "";
+    public string PiTaskName { get; init; } = "";
+    public string GuiAction { get; init; } = "";
+    public int Order { get; init; }
+    public bool Enabled { get; init; } = true;
+    public int RepeatCount { get; init; } = 1;
+    public JsonObject Options { get; init; } = new();
+    public JsonObject PipelineOverride { get; init; } = new();
+}
+
+public sealed record CompiledTask(string Name, string Label, string Entry, JsonObject Override,
+    string Id = "", string OccurrenceId = "", int ExecutionOrdinal = 1)
+{
+    public string GuiAction { get; init; } = "";
+}
 public sealed record CompiledProgram(string Name, string Executable, string[] Arguments, string? Identifier,
     long TimeoutMilliseconds = 10000, JsonObject? GeneratedOptionPayload = null);
+public sealed record SemanticProject(JsonObject Controller, JsonObject Resource, string[] ResourcePaths,
+    int BaseResourceCount, string[] ResourceHashes, CompiledTask[] Tasks, JsonObject PublicSchema);
 public sealed record CompiledProject(string Name, string Version, string InterfaceDirectory,
     JsonObject Controller, JsonObject Resource, string[] ResourcePaths, int BaseResourceCount, string[] ResourceHashes,
     CompiledTask[] Tasks, CompiledProgram[] Pretasks, CompiledProgram[] Agents,

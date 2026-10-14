@@ -245,6 +245,25 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if(errors()!==beforeCancel+1)fail('编辑器关闭后迟到登录结果弹出错误');
   metrics.pendingBrowserLogin=null;
 
+  clickPluginButton(view,'编辑签到');await flushDom();await flushDom();
+  const openTajiduo=()=>[...view.querySelectorAll('nxp-button')].find(control=>control.getAttribute('aria-label')==='塔吉多 · 网页登录').dispatchEvent(new window.MouseEvent('click',{bubbles:true}));
+  openTajiduo();await flushDom();await flushDom();
+  view.querySelector('#gci-tajiduo-phone').dispatchEvent(new window.CustomEvent('update:modelValue',{detail:['13812345678']}));
+  clickPluginButton(view,'发送验证码');await flushDom();await flushDom();
+  if(!metrics.apiCalls.some(call=>call.route==='credentials/login/tajiduo'&&call.body.mode==='send'&&call.body.phone==='13812345678'))fail('塔吉多没有显式发送验证码');
+  view.querySelector('#gci-tajiduo-value').dispatchEvent(new window.CustomEvent('update:modelValue',{detail:['123456']}));
+  clickPluginButton(view,'登录');await flushDom();await flushDom();await flushDom();
+  if(view.querySelector('#gci-tajiduo-value')||view.textContent.includes('synthetic-tajiduo-secret'))fail('塔吉多成功后未关闭表单或泄露令牌');
+  if(metrics.apiCalls.findLast(call=>call.route==='credentials/login/tajiduo'&&call.body.mode==='sms')?.body.value!=='123456')fail('塔吉多未提交用户验证码');
+  clickPluginButton(view,'保存');await flushDom();await flushDom();
+  const tajiduoSave=metrics.apiCalls.findLast(call=>call.method==='PUT'&&call.route==='tasks')?.body.secrets.tajiduo;
+  if(tajiduoSave?.candidateId!=='fixture-tajiduo-candidate'||'value' in tajiduoSave)fail('塔吉多没有仅保存后端凭据候选');
+  clickPluginButton(view,'编辑签到');await flushDom();await flushDom();openTajiduo();await flushDom();await flushDom();
+  const loginModal=[...view.querySelectorAll('nxp-modal')].find(control=>control.getAttribute('title')==='塔吉多登录');
+  loginModal.dispatchEvent(new window.CustomEvent('close'));await flushDom();await flushDom();
+  if(!metrics.apiCalls.some(call=>call.method==='DELETE'&&call.route==='credentials/login/tajiduo'&&call.body.operation==='fixture-tajiduo-operation'))fail('塔吉多取消未撤销对应操作');
+  clickPluginButton(view,'取消');await flushDom();
+
   clickPluginButton(view, "删除签到");
   await flushDom();
   clickPluginButton(view, "确定");

@@ -4,7 +4,7 @@ NexusPipeline-Plugins 的插件版本、发行包和 catalog 必须保持同一�
 
 ## 发行模型
 
-stable 发行物由受信 Publisher App 写入 `main`；develop preview 使用固定的 `plugins-develop` GitHub Release。两条通道的 catalog、缓存和来源元数据隔离，preview 不写 stable 的 `catalog.json`、`.release-state.json` 或 `packages/`。
+stable 发行物由受信 Publisher App 写入 `main`；develop preview 使用固定的 `plugins-develop` GitHub Release。两条通道的 catalog、缓存和来源元数据隔离，preview 不写 stable 的 `catalog.json`、`metadata/releases/stable-state.json` 或 `packages/`。
 
 每个插件最多保留最近三个受限版本包。版本格式为 `major.minor.patch`、`major.minor.patch-beta.N` 或 `major.minor.patch-rc.N`，排序遵循 `beta < rc < stable`。旧包保留在仓库中作为发行存档，插件平台只展示和安装 catalog 当前版本，不提供旧版本选择或降级入口。
 
@@ -74,7 +74,7 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 
 ## 增量发行流程
 
-发行工具入口为 `python tools/repo.py`。发布计划使用 `.release-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
+发行工具入口为 `python tools/repo.py`。发布计划使用 `metadata/releases/stable-state.json` 的 `sourceCommit` 作为基线，再读取当前提交到该基线之间的 Git 变更。`github.event.before` 不参与发行完整性判断。
 
 PR 用固定 Host checkout 运行选中的源码和 managed 检查；手动选择稳定 candidate 时，从受保护 main 历史中的可达提交取源码，并从同一受保护快照取 catalog/state/packages。工作流不扫描历史资格证明，也不为工具或文档改动自动提升插件版本。
 
@@ -102,7 +102,7 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
 
 `check source` 校验当前源码、JSON、分类目录和 Host 契约，不要求新版本已经出现在 stable catalog。`release validate --channel stable|preview` 校验生成候选及来源身份；正式发布完成后，`release audit --baseline <可信分发SHA>` 核对 catalog、state、包摘要和稳定字节不可变性。当前命令和必需参数见 [工具索引](../tools/README.md)。
 
-`host.lock.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`check host` 仍可作为独立诊断。
+`contracts/host-compatibility.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`check host` 仍可作为独立诊断。
 
 普通发行的处理边界如下：
 
@@ -115,7 +115,7 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
 
 新 ZIP 完成结构校验后统一生成 `PackageMetadata`，catalog、release state 和候选物校验复用同一份 SHA256 与大小事实。普通发行不会再次读取新 ZIP 计算 SHA；全仓重新计算仍由 `release audit --baseline <可信分发SHA>` 负责。
 
-工具、文档、工作流和兼容元数据变化会触发适用检查；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 写入候选清单。`catalog.json`、`packages/` 与 `.release-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
+工具、文档、工作流和兼容元数据变化会触发适用检查；既有 SemVer 包不会因此重建。SDK checkout 的来源 SHA 写入候选清单。`catalog.json`、`packages/` 与 `metadata/releases/stable-state.json` 由受信发布器生成，不手工填写包摘要或发行事实。
 
 ## 模拟器支持真实设备验证
 
@@ -129,7 +129,7 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
 
 ## 发行状态
 
-`.release-state.json` 使用当前 schema：
+`metadata/releases/stable-state.json` 使用当前 schema：
 
 ```json
 {
@@ -219,7 +219,7 @@ python tools/repo.py release audit
 
 Full Audit 只由手动入口触发，不参与每次 PR/main 快速检查。当前 catalog 包必须通过 SHA256、大小、ZIP 路径安全、manifest、store 和 retention 校验；历史存档包检查 ZIP 完整性、路径安全、文件名和 manifest，保留早期发行物的既有格式。发现损坏时报告失败，保留现场供人工调查。
 
-Pull Request 工作流拒绝直接提交 `catalog.json`、`.release-state.json` 和 `packages/`。stable publisher 使用 `.release-state.json.sourceCommit` 追踪已发布游标，写入前校验原候选 producer、不可变包、精确生成物白名单和远端快进；develop preview 使用不可变包名和最后切换 catalog 的顺序，不删除旧 preview 资产。
+Pull Request 工作流拒绝直接提交 `catalog.json`、`metadata/releases/stable-state.json` 和 `packages/`。stable publisher 使用 `metadata/releases/stable-state.json.sourceCommit` 追踪已发布游标，写入前校验原候选 producer、不可变包、精确生成物白名单和远端快进；develop preview 使用不可变包名和最后切换 catalog 的顺序，不删除旧 preview 资产。
 
 ## 校验工作流
 

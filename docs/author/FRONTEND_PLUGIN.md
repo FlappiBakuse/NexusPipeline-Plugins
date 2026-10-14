@@ -8,6 +8,8 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
 
+GameCheckIn 的塔吉多登录使用插件自有表单和固定官方账号接口，不采集社区 Cookie。表单通过已认证 API 提交本次手机号、短信或密码；令牌只保留在后端候选中，沿用 editor、客户端归属、代次和保存事务。验证码仅由用户显式发送，密码与验证码不保存，取消或迟到响应不能覆盖旧凭据。该表单不调用外站 browser flow，也不扩展 Host 的导航或采集权限。
+
 前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
@@ -247,3 +249,9 @@ Frontend API 1.7 的 `host.getCapabilities(signal?)` 返回冻结只读的 schem
 Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与 18 个公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
 
 官方外链经 `await host.navigation.openExternal(url)`；插件先验证官方域。Host 仅接受无用户信息的 HTTPS，桌面交给系统浏览器，Web 用户点击在独立标签打开并移除 opener/referrer。失败在插件界面可见，禁止在轮询或刷新时自动打开。
+
+## 布局与本机设计验收
+
+宿主页与官方插件统一遵循 [Host 前端设计规范](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/development/frontend-design.md)。语义卡片最多三层，第四层起违规；透明包装、字段和列表行不计层，深数据继续用缩进分组显示。公共卡片通过真实 DOM 祖先交替表面，light DOM host 不重复计数。间距使用现役 token，排序采用整体卡面、分隔线行及稳定 ID 把手，保留键盘排序。交互与弹窗使用公开元件，长文本、双语、双主题及 360/768/1280 视口保持可读可操作，离开页面释放全部资源。
+
+设计静态检查和真实浏览器专项在仓外本地执行，全 route/slot/配置入口必须有 coverage，动态结构由浏览器闭环。脚本、例外映射、报告和当次截图不提交、不加入 PR CI，也不加入核心功能门禁；排序持久化、公开事件、焦点和生命周期的实际功能验证仍按现役测试维护。未运行真实浏览器不能记为设计验收通过。

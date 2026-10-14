@@ -183,6 +183,9 @@
       ],
       "codePaths": [
         "catalog.json",
+        "metadata/catalog",
+        "metadata/releases",
+        "contracts/host-compatibility.json",
         "packages",
         "tools/repo.py"
       ],

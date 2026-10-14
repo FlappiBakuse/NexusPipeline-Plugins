@@ -15,6 +15,22 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-10-12",
+      "items": [
+        "发现 PI v2 与 MXU/MFA/CFA/MaaPiCli 来源，保留独立任务、重复次数和分层选项。",
+        "验证本地运行库和 Python 输入，保存初始化后提交修订；来源同步不重放项目程序。",
+        "按真实框架任务结果进行有限失败子集续跑，保留成功任务和每次尝试。",
+        "关闭 Maa 自定义判断入口，保留旧资产；使用独占原生日志和 Agent 标准输出。",
+        "兼容 CFA 保存的关闭状态速通元数据，启用状态明确阻断。",
+        "使用最小查询权限读取游戏窗口的进程路径与启动时间，兼容禁止模块枚举的游戏进程。",
+        "遵循 MXU 保存的预任务开关和选项，并向外部 Agent 提供已验证的原生运行库路径。",
+        "兼容 MFA 保存但未启用的游戏启动路径，保留来源配置并阻断未支持的启动及断线重试动作。",
+        "发现并读取 MFA 旧式共享配置中的已登记实例，隔离实例字段并保留任务选择和顺序。",
+        "兼容 MFA 保存的窗口提示与 Agent 通道偏好，保持 Host 已核验的进程身份和独占会话。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-10-11",
       "items": [
@@ -27,14 +43,50 @@
       "items": [
         "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
       ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-10-04",
-      "items": [
-        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
-        "独立 worker 使用 .NET 10.0.12 或更高的 10.0 补丁运行时，保留完整依赖与许可文件。"
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "MaaFramework Driver",
+      "gameName": "MaaFramework Project Interface projects",
+      "description": "Run MaaFramework Project Interface projects with isolated workers, verified dependencies and independent task options.",
+      "tags": [
+        "Framework driver",
+        "Win32",
+        "ADB"
+      ],
+      "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-10-12",
+          "items": [
+            "Discovers PI v2 and MXU/MFA/CFA/MaaPiCli sources with independent occurrences, repeat counts and layered options.",
+            "Verifies local native/Python inputs and initializes saved revisions; passive source synchronization starts no project programs.",
+            "Retries the failed suffix within Host limits using native task results, retaining successful tasks and per-attempt evidence.",
+            "Disables Maa custom judgement while preserving existing assets; captures session-owned native logs and Agent standard output.",
+            "Accepts inactive speedrun metadata saved by CFA and explicitly rejects enabled speedrun behavior.",
+            "Reads window process paths and creation times with limited query access, supporting games that deny module enumeration.",
+            "Honors saved MXU pretask selection and options, and supplies the verified native library path to external Agents.",
+            "Accepts saved inactive MFA software paths without launching programs or enabling unsupported startup and reconnect actions.",
+            "Discovers registered MFA instances in shared configuration files while isolating instance fields and preserving task selection and order.",
+            "Accepts MFA saved window hints and Agent transport preferences while retaining Host-verified process identity and session ownership."
+          ]
+        },
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."
+          ]
+        },
+        {
+          "version": "0.2.1",
+          "date": "2026-10-05",
+          "items": [
+            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+          ]
+        }
       ]
     }
-  ]
+  }
 }

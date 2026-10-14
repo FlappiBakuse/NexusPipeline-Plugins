@@ -10,7 +10,7 @@
     {
       "id": "interface",
       "format": "text",
-      "text": "{\"name\": \"MaaEnd\", \"task\": [], \"import\": [\"tasks/DeliveryJobs.json\", \"tasks/DailyRewards.json\"]}"
+      "text": "{\"name\": \"MaaEnd\", \"task\": [], \"import\": [\"tasks/DeliveryJobs.json\", \"tasks/DailyRewards.json\", \"tasks/AutoEssence/Location/ChooseLocation.json\"]}"
     },
     {
       "id": "interface-part-33",

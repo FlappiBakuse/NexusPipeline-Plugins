@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
@@ -62,8 +63,9 @@ internal sealed class MiyousheClient
         GameDefinition game,
         string cookie,
         string deviceId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, CheckInDiagnostics? diagnostics = null)
     {
+        bool submitted = false;
         try
         {
             using HttpClient client = _http.CreateClient(GameDefinitions.RolesEndpoint, TimeSpan.FromSeconds(30));
@@ -76,7 +78,7 @@ internal sealed class MiyousheClient
                 game.Cn.SignGame,
                 game.Cn.Referer,
                 null,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken, diagnostics: diagnostics, game: game.Code, phase: "roles").ConfigureAwait(false);
             CheckInResult? roleError = MapGeneralResponse(roles, game.Code);
             if (roleError is not null) return roleError;
             List<Role> roleList = ReadRoles(roles);
@@ -98,15 +100,18 @@ internal sealed class MiyousheClient
                     game.Cn.SignGame,
                     game.Cn.Referer,
                     null,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken, diagnostics: diagnostics, game: game.Code, phase: "info").ConfigureAwait(false);
                 CheckInResult? infoError = MapGeneralResponse(info, game.Code);
                 if (infoError is not null) return infoError;
-                if (HoyoLabClient.IsAlreadySigned(info)) continue;
+                bool? todaySigned = CheckInResponse.Signed(info);
+                if (todaySigned == true) continue;
                 if (HoyoLabClient.IsFirstBind(info))
                 {
                     return new CheckInResult("cn", game.Code, "first_bind", "尚未绑定签到活动", false);
                 }
 
+                if (todaySigned is null) return new CheckInResult("cn", game.Code, "verification_state_unknown", "签到状态格式未知", false);
+                submitted = true;
                 using JsonDocument sign = await SendAsync(
                     client,
                     game.Cn.SignEndpoint,
@@ -116,14 +121,16 @@ internal sealed class MiyousheClient
                     game.Cn.SignGame,
                     game.Cn.Referer,
                     JsonSerializer.Serialize(new { act_id = game.Cn.ActId, region = role.Region, uid = role.Uid }),
-                    cancellationToken).ConfigureAwait(false);
-                CheckInResult result = HoyoLabClient.MapSignResponse(sign, "cn", game.Code);
-                if (result.Code == "already")
-                {
-                    continue;
-                }
+                    cancellationToken, diagnostics: diagnostics, game: game.Code, phase: "sign").ConfigureAwait(false);
+                CheckInResult? result = MapGeneralResponse(sign, game.Code);
+                if (result is not null && result.Code != "success_unconfirmed") return result;
+                using JsonDocument confirmation = await SendAsync(client,
+                    BuildInfoUri(game.Cn.InfoEndpoint, game.Cn.ActId, role), HttpMethod.Get,
+                    cookie, deviceId, game.Cn.SignGame, game.Cn.Referer, null, cancellationToken, diagnostics: diagnostics, game: game.Code, phase: "confirm").ConfigureAwait(false);
+                if (MapGeneralResponse(confirmation, game.Code) is not null || CheckInResponse.Signed(confirmation) != true)
+                    return CheckInResponse.Unconfirmed("cn", game.Code);
+                submitted = false;
                 already = false;
-                if (!result.Success) return result;
                 signed = true;
             }
             return signed
@@ -134,7 +141,7 @@ internal sealed class MiyousheClient
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            return TransportError(game.Code);
+            return submitted ? CheckInResponse.Unconfirmed("cn", game.Code) : TransportError(game.Code);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -142,15 +149,15 @@ internal sealed class MiyousheClient
         }
         catch (HttpRequestException)
         {
-            return TransportError(game.Code);
+            return submitted ? CheckInResponse.Unconfirmed("cn", game.Code) : TransportError(game.Code);
         }
         catch (JsonException)
         {
-            return TransportError(game.Code);
+            return submitted ? CheckInResponse.Unconfirmed("cn", game.Code) : TransportError(game.Code);
         }
         catch
         {
-            return TransportError(game.Code);
+            return submitted ? CheckInResponse.Unconfirmed("cn", game.Code) : TransportError(game.Code);
         }
     }
 
@@ -164,8 +171,9 @@ internal sealed class MiyousheClient
         string referer,
         string? body,
         CancellationToken cancellationToken,
-        bool validateHttpStatus = false)
+        bool validateHttpStatus = false, CheckInDiagnostics? diagnostics = null, string game = "", string phase = "")
     {
+        long started = Stopwatch.GetTimestamp();
         using var request = new HttpRequestMessage(method, endpoint);
         if (body is not null)
         {
@@ -188,7 +196,21 @@ internal sealed class MiyousheClient
             request,
             HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        return await CredentialValidation.ReadResponseAsync(response, cancellationToken, validateHttpStatus, _trace).ConfigureAwait(false);
+        if (validateHttpStatus) return await CredentialValidation.ReadResponseAsync(response, cancellationToken, true, _trace).ConfigureAwait(false);
+        bool inspected = false;
+        try
+        {
+            return await CheckInResponse.ReadAsync(response, cancellationToken, root =>
+            {
+                inspected = true;
+                diagnostics?.Response("cn", game, phase, (int)response.StatusCode, root, (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            }).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (!inspected) diagnostics?.Response("cn", game, phase, (int)response.StatusCode, null, (long)Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+            throw;
+        }
     }
 
     internal static string GenerateDs()

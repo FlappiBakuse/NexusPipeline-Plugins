@@ -18,7 +18,7 @@ internal sealed partial class CheckInTaskService
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan StopDrainTimeout = TimeSpan.FromSeconds(16);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-    private static readonly string[] PlatformOrder = { "cn", "os", "skland", "skport", "kuro" };
+    private static readonly string[] PlatformOrder = { "cn", "os", "skland", "skport", "kuro", "tajiduo" };
 
     private readonly IPluginHostContext _context;
     private readonly Func<DateTimeOffset> _clock;
@@ -37,6 +37,7 @@ internal sealed partial class CheckInTaskService
     private bool _stopped;
     private readonly CredentialDraftService _credentials = new();
     private readonly BrowserLogin.GameCheckInLoginFlows _loginFlows;
+    private readonly BrowserLogin.TajiduoLoginSessions _tajiduoLogin;
 
     public CheckInTaskService(
         IPluginHostContext context,
@@ -50,6 +51,7 @@ internal sealed partial class CheckInTaskService
         _sklandClient = new SklandClient(context.Http, "skland");
         _skportClient = new SklandClient(context.Http, "skport");
         _kuroClient = new KuroClient(context.Http);
+        _tajiduoLogin = new(_credentials, context.Http);
         RegisterRoutes();
         RegisterCredentialRoutes();
         _loginFlows = new(context, _credentials, browserLoginReady);
@@ -94,6 +96,7 @@ internal sealed partial class CheckInTaskService
             _stopped = true;
             _lifetime.Cancel();
             _loginFlows.Dispose();
+            _tajiduoLogin.Dispose();
             _credentials.Dispose();
             active = _activeRuns.Values.ToArray();
             foreach (RunHandle run in active) run.Cancellation.Cancel();
@@ -399,7 +402,7 @@ internal sealed partial class CheckInTaskService
 
         try
         {
-            PluginWebApiResponse? response = await StartRunAsync(input.TaskId, "manual", cancellationToken).ConfigureAwait(false);
+            PluginWebApiResponse? response = await StartRunAsync(input.TaskId, "manual", cancellationToken, diagnostics: input.Diagnostics).ConfigureAwait(false);
             return response ?? Error(404, "task_not_found");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -417,7 +420,7 @@ internal sealed partial class CheckInTaskService
         string trigger,
         CancellationToken cancellationToken,
         IReadOnlyCollection<string>? dueScheduleIds = null,
-        string? occurrence = null)
+        string? occurrence = null, bool diagnostics = false)
     {
         RunHandle? handle = null;
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -470,7 +473,7 @@ internal sealed partial class CheckInTaskService
                 return Error(409, "task_running");
             }
 
-            RunSnapshot runSnapshot = new(snapshot, run.Id, credentialValues);
+            RunSnapshot runSnapshot = new(snapshot, run.Id, credentialValues, diagnostics ? new CheckInDiagnostics() : null);
             _ = Task.Run(() => ExecuteRunAsync(runSnapshot, handle), CancellationToken.None);
             return Json(new { runId = run.Id, status = "running" }, 202);
         }
@@ -573,7 +576,7 @@ internal sealed partial class CheckInTaskService
                             credential,
                             fingerprint,
                             handle.RunId,
-                            cancellationToken)
+                            cancellationToken, snapshot.Diagnostics)
                         .ConfigureAwait(false);
                     results.Add(result);
                 }
@@ -640,7 +643,7 @@ internal sealed partial class CheckInTaskService
         CredentialRecord? record,
         string fingerprint,
         string runId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, CheckInDiagnostics? diagnostics)
     {
         string? credential = record?.Value;
         var web = record?.WebContext;
@@ -666,12 +669,20 @@ internal sealed partial class CheckInTaskService
                 {
                     result = platform switch
                     {
-                        "cn" => await _cnClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, task.CnDeviceId, cancellationToken).ConfigureAwait(false),
-                        "os" => await _osClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, cancellationToken).ConfigureAwait(false),
+                        "cn" => await _cnClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, task.CnDeviceId, cancellationToken, diagnostics).ConfigureAwait(false),
+                        "os" => await _osClient.SignAsync(GameDefinitions.Find(gameCode)!, credential!, cancellationToken, diagnostics).ConfigureAwait(false),
                         "skland" => await _sklandClient.SignAsync(SklandGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
                         "skport" => await _skportClient.SignAsync(SkportGameDefinitions.Find(gameCode)!, credential!, cancellationToken, web).ConfigureAwait(false),
                         "kuro" => await _kuroClient.SignAsync(
                             KuroGameDefinitions.Find(gameCode)!, credential!, task.KuroDevCode, task.KuroDistinctId, cancellationToken, web).ConfigureAwait(false),
+                        "tajiduo" => await new TajiduoClient(_context.Http).SignAsync(credential!, async updated =>
+                        {
+                            var replacement = record! with { Value = updated };
+                            if (!await ReplaceTajiduoCredentialAsync(task.Id, record!, replacement)) return false;
+                            credential = updated;
+                            fingerprint = CredentialFingerprint(updated);
+                            return true;
+                        }, cancellationToken).ConfigureAwait(false),
                         _ => new CheckInResult(platform, gameCode, "invalid_game", "签到游戏无效", false),
                     };
                 }
@@ -693,7 +704,7 @@ internal sealed partial class CheckInTaskService
                     result.Success && IsValidCredential(credential)
                         ? new SuccessfulCheckIn(platform, gameCode, fingerprint, localDate)
                         : null,
-                    CancellationToken.None)
+                    CancellationToken.None, diagnostics)
                 .ConfigureAwait(false);
             return result;
         }
@@ -731,7 +742,7 @@ internal sealed partial class CheckInTaskService
         string? currentRunId,
         CheckInResult result,
         SuccessfulCheckIn? successfulCheckIn = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, CheckInDiagnostics? diagnostics = null)
     {
         await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
@@ -741,7 +752,15 @@ internal sealed partial class CheckInTaskService
             if (task is not null && currentRunId is not null)
             {
                 CheckInRun? run = task.Runs.FirstOrDefault(item => item.Id == currentRunId);
-                if (run is not null) run.Results.Add(result);
+                if (run is not null)
+                {
+                    run.Results.Add(result);
+                    if (diagnostics is not null)
+                    {
+                        run.Diagnostics = diagnostics.Entries.ToList();
+                        run.DiagnosticsVersion = typeof(CheckInTaskService).Assembly.GetName().Version?.ToString();
+                    }
+                }
             }
             if (successfulCheckIn is not null
                 && !store.SuccessfulCheckIns.Any(entry =>
@@ -793,6 +812,11 @@ internal sealed partial class CheckInTaskService
         if (store.SchemaVersion != 2 || store.Tasks is null || store.SuccessfulCheckIns is null)
         {
             throw new InvalidOperationException("Unsupported task store format");
+        }
+        foreach (CheckInRun run in store.Tasks.SelectMany(task => task.Runs).Where(run => run.StartedAt < _clock().AddDays(-7)))
+        {
+            run.Diagnostics = null;
+            run.DiagnosticsVersion = null;
         }
         return store;
     }
@@ -856,6 +880,7 @@ internal sealed partial class CheckInTaskService
             "skland" => SklandGameDefinitions.All.Select(game => (game.Code, game.DisplayName)).ToArray(),
             "skport" => SkportGameDefinitions.All.Select(game => (game.Code, game.DisplayName)).ToArray(),
             "kuro" => KuroGameDefinitions.All.Select(game => (game.Code, game.DisplayName)).ToArray(),
+            "tajiduo" => new[] { ("nte", "异环") },
             _ => Array.Empty<(string Code, string Name)>(),
         };
         return new
@@ -1006,12 +1031,13 @@ internal sealed partial class CheckInTaskService
         "skland" => "credential-skland",
         "skport" => "credential-skport",
         "kuro" => "credential-kuro",
+        "tajiduo" => "credential-tajiduo",
         _ => throw new InvalidOperationException("Unknown task secret field"),
     };
 
     private static readonly string[] SecretNames =
     {
-        "credential-cn", "credential-os", "credential-skland", "credential-skport", "credential-kuro",
+        "credential-cn", "credential-os", "credential-skland", "credential-skport", "credential-kuro", "credential-tajiduo",
     };
 
     internal static string SecretKey(Guid taskId, string name) =>
@@ -1038,6 +1064,7 @@ internal sealed partial class CheckInTaskService
                 "skland" => SklandGameDefinitions.IsKnown,
                 "skport" => SkportGameDefinitions.IsKnown,
                 "kuro" => KuroGameDefinitions.IsKnown,
+                "tajiduo" => game => game.Equals("nte", StringComparison.OrdinalIgnoreCase),
                 _ => null,
             };
             if (isKnown is null || games.Any(game => string.IsNullOrWhiteSpace(game) || !isKnown(game))) return "games_invalid";
@@ -1052,7 +1079,7 @@ internal sealed partial class CheckInTaskService
         }
         foreach ((string field, CheckInSecretInput value) in input.Secrets)
         {
-            if (field is null || value is null || field.ToLowerInvariant() is not ("cn" or "os" or "skland" or "skport" or "kuro")) return "secret_field_invalid";
+            if (field is null || value is null || field.ToLowerInvariant() is not ("cn" or "os" or "skland" or "skport" or "kuro" or "tajiduo")) return "secret_field_invalid";
             if (value.Action is null || value.Action.ToLowerInvariant() is not ("keep" or "set" or "clear")) return "secret_action_invalid";
             if (value.Action.Equals("set", StringComparison.OrdinalIgnoreCase)
                 && ((value.Value is null) == (value.CandidateId is null) || value.Value is not null && !IsValidCredential(value.Value)
@@ -1094,6 +1121,7 @@ internal sealed partial class CheckInTaskService
             "skland" => SklandGameDefinitions.Find(code)?.DisplayName ?? code,
             "skport" => SkportGameDefinitions.Find(code)?.DisplayName ?? code,
             "kuro" => KuroGameDefinitions.Find(code)?.DisplayName ?? code,
+            "tajiduo" => "异环",
             _ => code,
         };
         return _context.I18n.T("game." + code, fallback);
@@ -1103,6 +1131,22 @@ internal sealed partial class CheckInTaskService
     {
         Message = _context.I18n.T("result." + result.Code, result.Message),
     };
+
+    private async Task<bool> ReplaceTajiduoCredentialAsync(Guid taskId, CredentialRecord expected, CredentialRecord replacement)
+    {
+        await _storeGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            var store = await ReadStoreAsync(CancellationToken.None).ConfigureAwait(false);
+            if (!store.Tasks.Any(t => t.Id == taskId)) return false;
+            string key = SecretKey(taskId, SecretName("tajiduo"));
+            var current = CredentialRecord.Decode(await _context.Secrets.GetAsync(key, CancellationToken.None).ConfigureAwait(false));
+            if (current != expected) return false;
+            await _context.Secrets.SetAsync(key, replacement.Encode(), CancellationToken.None).ConfigureAwait(false);
+            return true;
+        }
+        finally { _storeGate.Release(); }
+    }
 
     internal static string CredentialFingerprint(string? credential)
     {
@@ -1141,8 +1185,8 @@ internal sealed partial class CheckInTaskService
         PluginWebApiResponse.Json(new JsonObject { ["error"] = code }, statusCode);
 
     private sealed record DeleteTaskRequest(Guid TaskId);
-    private sealed record RunTaskRequest(Guid TaskId);
-    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, CredentialRecord?> Secrets);
+    private sealed record RunTaskRequest(Guid TaskId, bool Diagnostics = false);
+    private sealed record RunSnapshot(CheckInTask Task, string RunId, Dictionary<string, CredentialRecord?> Secrets, CheckInDiagnostics? Diagnostics);
 
     private sealed class RunHandle
     {

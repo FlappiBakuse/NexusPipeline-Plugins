@@ -1,57 +1,39 @@
 # MaaFramework 项目直驱
 
-`MaaFrameworkDriver` 是独立 managed 插件，要求 Host v0.17.2、Plugin API 2.2 和 Frontend API 1.7。它不进入 Host 初始载荷，原有 MaaEnd、MaaStellaSora 专项和绑定配置不会自动迁移。
+`MaaFrameworkDriver` 要求 Host v0.17.3、Plugin API 2.2、Frontend API 1.7 和 Windows 11 x64。产品包不包含项目、游戏、运行库或用户数据。
 
-## 用户入口
+## 发现与配置
 
-安装并启用插件后重启 Host。在脚本编辑器选择 `maa-framework`，指定项目根目录，然后在插件区域读取项目。选择 Controller、Resource、任务及顺序；可显式应用 PI preset 或项目默认任务，group 负责分组展示。参数可在公共层填写，也可分别设置资源、控制器和逐任务 JSON 覆盖。
+从根目录或 assets 的 interface.json/interface.jsonc 读取 PI v2。多个 interface 必须显式选择。MXU schema 1.0、MFA 2.16、MaaPiCli v5.14.0 和 MFW-PyQt6/CFA v4 配置按真实来源实例绑定；未知来源、实例删除、歧义或无法映射的执行字段明确报错，不回退到其他配置。
 
-新 Win32 配置保存完整 EXE 路径与 PI 窗口条件，每次在 pretasks 完成后有界等待并重新解析唯一窗口，再冻结 HWND、PID、完整 EXE 路径和启动时间。可先“查找并选择 Win32 窗口”填写 EXE 约束；保存的旧 HWND/PID 不替代下次解析。多个匹配窗口或观测不完整会阻断，取消立即停止等待。若使用 Host 启动，候选还须匹配 Host 的进程及启动时间。旧 schema 1 配置继续核验原精确进程，在界面明确选择每次解析并重新授权后才转为 schema 2。ADB 填写实际 adb.exe 和精确 serial/address；控制器由官方 MaaToolkit 枚举并连接。目录、程序和资源变化需要重新预览、授权。
+schema 3 的 occurrenceId 独立于显示名，保留顺序、禁用状态、逐条选项、pipeline override 和 1–100 次重复。相同名称或参数的 CLI 条目也保持独立身份。MXU/MFA/CLI 选项按 global、resource、controller、task 层合并。CFA 按已保存的可见 setting/resource/controller 选项、任务声明、任务选项顺序深层合并，不注入未保存选项的默认值；数值输入按声明类型转换。CFA 读取 multi_config/configs 的实例、bundle、controller、resource、分支及子选项；Win32 程序路径、参数和等待时间映射到宿主启动设置。CFA 保存的关闭状态 speedrun 元数据不参与任务选项编译；启用状态、未知内置动作、未映射的 ADB 方法覆盖及额外前后动作会阻断，不能静默丢失语义。嵌入式 Agent 配置可读取任务语义，但保存初始化与执行明确拒绝 GUI 进程内注册模式；只有上游明确选择外部 Agent 且本地环境完整时才执行外部程序。来源原字节保持不变。
 
-依次执行“只读执行预览”与“确认授权并保存独立配置”，最后保存 Host 脚本。用户绑定页可以设置独立参数，绑定必须对应当前共享配置 revision；共享配置更新后重新读取并明确授权绑定。加入既有队列后使用原有开始、取消和历史入口。
+MFA 的 CountdownAction/TimedWaitAction 由 native custom action 执行；未知动作拒绝。MXU 的单个非 shell、非等待、skipIfRunning PC preAction 映射到宿主启动与就绪确认。Win32 以完整 EXE 和窗口约束解析唯一目标；HWND/PID/启动时间只代表本次观测。ADB 使用保存的路径和精确 serial/address。
 
-Agent / pretask 是项目代码，授权摘要包含执行声明、资源和程序身份。隔离 worker 不提供文件系统或网络沙箱。密码通过 Host 受保护密钥存储保存，配置和预览只包含引用；引用按 profile、用户和脚本绑定隔离。项目 stdout/stderr 不进入历史。
+MFA 保存的窗口类名、标题及 Agent TCP 偏好保留在导入来源信息中。窗口标签只是 GUI 的匹配提示，不能覆盖 Host 已核验的进程身份；Agent 通道由驱动独占会话管理，不继承 GUI 的通道生命周期。
 
-## 显式导入
+宿主“保存”负责冻结候选、共享资源准入、初始化、清理和 revision 联合提交。initialize_only 可以执行 pretask 和 Agent，但 formalTasksSubmitted=0。关闭编辑器不会重复初始化；取消必须等待清理。失败保留上一有效修订。用户覆盖以 parent revision 绑定，冲突不覆盖现有指针。
 
-填写批准项目根内的源文件相对路径，选择 MXU schema 1.0 或 MaaPiCli v5.14.0。MXU 必须选择精确实例 ID。先预览映射，再明确载入独立草稿，补齐运行目标后重新预览、授权和保存。源文件不写入，不启动 GUI，不隐式同步。
+## 本地运行输入
 
-导入保留任务身份与顺序、禁用选择和支持的选项层。未知执行字段、删除的任务或选项、控制器缓存冲突明确拒绝。密码需要受保护地重新输入。MXU 单个启用、无需 shell、无需等待退出的 PC EXE preAction 可只读映射到 Host 启动设置；先显示路径和参数，再明确确认应用到当前脚本，执行使用 Host 就绪后的强身份。多动作、命令脚本、shell 或改变语义的分支拒绝，不静默遗漏。普通保存设备配置与界面缓存分开解释。旧专项仍使用原 GUI，不自动迁移。
+驱动识别本地常见 native 目录，也支持显式目录。必需 DLL、x64 PE 架构、文件大小、SHA256 和物理根身份记录在 RuntimeInputs；原生进程加载后核对 v5 ABI。未知或多个候选必须处理。没有产品下载器、逐项目版本配方、pip 安装或系统 PATH 回退。
 
-## 编译及运行边界
+Python 使用发行包内解释器或显式路径；入口必须是可冻结的本地文件，保留原 argv。动态 -m/-c 拒绝。声明 uv run 时要求本地 uv.lock 与 .venv，启动设置 offline/no-sync。requirements、pyproject、uv.lock 及有界本地程序代码进入输入指纹。程序、资源或 DLL 改变后重新保存。旧 dependencyLock 保留读取，但不能代替新绑定。
 
-编译器只读 PI v2 JSON/JSONC、BOM、相对 import 和展示翻译；检查重复身份、过滤条件、引用、循环、根目录逃逸和 reparse point。当前能力锁定 PI v2.10.2：未知执行字段显示所在文件和字段并拒绝；telemetry 不执行。文件预算为每文件 8 MiB、总计 32 MiB、最多 128 文件。只翻译展示字段，任务身份、entry 与 pipeline 值保留原样；公开界面 schema 不携带整份 pipeline_override。任务覆盖按任务声明、global option、resource option、controller option、task option 顺序合并。checkbox 使用声明顺序；input 支持 string/int/bool、verify，hotkey 按 Win32/ADB 键码展开。
+PI 文件支持 JSON/JSONC、BOM、相对 import 和展示翻译；拒绝重复字段、循环、逃逸及 reparse point。单文件 8 MiB，总计 32 MiB，最多 128 文件。翻译不改变执行值。密码通过宿主受保护存储引用，普通配置和预览不返回明文。
 
-标准 Agent 使用官方 MaaAgentClient/server identifier 握手。pretask 在 interface 所在目录先执行，声明的选项以紧凑 JSON 放在最后一个参数。PI_* 环境按 PI v2.10.2 提供。pretask 超时范围为 1–120000 ms，默认 10000 ms；Agent RPC timeout 还接受官方项目使用的 -1。它不取消 Host 的 30 秒整体启动预算、总运行预算或取消边界。取消沿 Host 受控 IPC 传播，Host 独立确认写入进程已经停止后恢复配置。
+## 同步、结果与重试
 
-每次执行使用独立 x64 worker，仅从明确选择的原生目录加载 DLL。版本必须与配置声明一致；ABI 缺失、架构错配和握手失败拒绝执行。上游 resource hash 不一致显示警告。原生任务成功只证明引擎完成，没有项目业务证据时仍显示“流程已结束 · 有未核验项”。结构化事件通过 Host 历史模型保存，provider 使用 schema 1 / provider-execution-v1 独立报告；日常 taskProtocol 使用 schema 2 / daily-flow-v1。
+一个物理根共享文件 watcher。变更合并后，在空闲时只读重新编译来源并发布修订，不启动 native、Agent 或 pretask。没有变更时仅做低频文件元数据核验。运行计划不被后台同步替换；准入重新核对冻结输入。
 
-## 当前原生验证范围
+可选 SDK 字段 ResultBasis 默认为 legacy-provider；本驱动声明 framework-task-v1。worker 通过认证 IPC 上报本次真实 native job ID 和任务终态。普通任务失败在资源清理后发送 completed/maa.task_failed；加载、资源、IPC、取消及清理异常保持独立失败。宿主在同一 run 中保留有效成功结果和逐次报告，通过 SelectedTaskIds 续跑首个失败任务及后续未成功任务。原始顺序不变，空集合不启动 worker，最大尝试次数和总预算仍由宿主限制。
 
-固定 argv（包括花括号、JSON 外观、空字符串、引号、Unicode 与 `secret:` 字面值）原样传给程序；仅显式生成的 pretask 选项载荷展开秘密。Python 支持显式项目内 `.py` 文件入口及常规解释器选项；入口路径归一后连同项目内有界代码依赖、实际解释器、资源和 native 字节纳入授权。直接 EXE 同时校验其目录内有界代码与 `.deps.json`／`.runtimeconfig.json`。`-m`、`-c`、未知解释器选项、路径逃逸及链接拒绝。包外动态加载代码不属于已证明的支持范围。展示文案不改变执行授权，代码改变须重新授权。
+Maa 隐藏并拒绝新增/修改自定义判断，保留旧资产但不执行。框架任务成功显示“完成（框架）”，业务核验仍为 unverified。没有日志关键字猜测或判断配置替换重试。native 日志使用宿主独占会话目录，Agent stdout/stderr 经脱敏传递；不扫描项目私有日志。进程退出和资源清理未确认时保留隔离并阻止重试。
 
-worker 在 native 初始化前建立带本次 session 归属的独立临时目录，仅修改该 worker 的 TEMP/TMP，Agent 继承；Host、机器环境与输入锁不变。成功或已确认取消后清理本次目录，失败保留归属与不含项目输出的阶段诊断，后续 session 使用新目录。进程退出与输出管道 EOF 分别观察，pretask 拉起窗口不因窗口继续持有输出句柄而冒充 pretask 未退出。恢复隔离仅阻断相关项，人工取消停止整队；未知业务结果仍未核验。
+## 验证边界
 
-English boundaries: Win32 targets are resolved after pretasks on every run and must be unique, observable and constrained by the full executable identity. Fixed argv is preserved; only generated option payloads resolve secrets. Python file entries authorize bounded local code; dynamic `-m`/`-c` entries are rejected. Worker temporary environment changes are process-local. Native success does not prove business success.
+现役入口：`node tests/run.mjs plugin --plugin MaaFrameworkDriver --profile adapter --host-root <Host checkout>`。测试输入通过 `tests/bootstrap-native.py` 和 `tests/bootstrap-python.py` 准备到 Temp，并以官方资产大小、SHA256 和逐文件摘要固定；它们仅用于测试，不进入产品运行依赖。
 
-会话目录使用紧凑名称保留完整随机身份。启动时先检查 Windows CRT 生成的临时文件名确实位于本次目录；CRT 路径预算不足或缓存了其他目录时，在 `session.workspace.native_temp` 阶段报告 `worker.session_temp_unusable`，保留本次现场，不开始 native／Agent，也不转向未知共享目录。此错误可通过将软件安装在可写的较短普通目录后重新执行解决。
+组件回归覆盖 PI/来源/运行输入/任务选择等规则。受控 WinForms、官方 native 5.14.3 与发行包 Python Agent 验证真实初始化、有限任务、A/B/B/C 续跑和来源同步不重放预任务。它们不证明真实项目 Agent、设备或游戏业务成功。官方项目发行布局的只读发现不等于 GUI 配置等价或真机资格；缺少这些证据的项目继续保持待验收。
 
-The worker validates the CRT temporary name before native initialization. An unusable or foreign CRT directory produces `worker.session_temp_unusable` at `session.workspace.native_temp`, retains the owned failure record and starts no Agent. Install in a shorter writable ordinary directory to resolve a path-budget failure; no shared-directory fallback is used.
-
-已固定 C# binding 5.10.0（源码 commit `27c69a5b8ff41b6002ead71f403a16f442a7168e`）及官方 MaaFramework v5.14.0 x64 运行输入。MaaEnd v2.30.0 附带 v5.14.0，MaaStellaSora v1.4.4 附带 v5.13.0。测试只读编译真实 PI、使用真实任务 ID 对照普通 MXU 导入与有效计划，不执行官方项目 Agent 或 GUI。
-
-现有 fixture 只覆盖可控的编译与授权输入；原生 Win32／ADB controller、标准 Agent、pretask、任务成功/失败、取消和控制台脱敏须在真实环境人工验收。真实账号、真实游戏、真实模拟器和其他 runtime 组合的状态独立报告，不能据此宣称官方项目业务成功或全版本支持。
-
-## 构建和门禁
-
-在新建隔离 checkout 准备仓库 npm 依赖并构建现有前端。managed 测试仍由现役入口执行：
-
-```powershell
-npm ci --no-audit --no-fund
-npm run build:frontend
-node tests/run.mjs plugin --plugin MaaFrameworkDriver --host-root <显式 Host checkout>
-```
-
-门禁覆盖 PI 编译、授权、导入与配置评估等可离线判定的驱动逻辑；TRX 位于 `.generated/test-results/managed/run-*/`，缺依赖、零用例和失败都不算通过。真实账号、真实游戏、真实模拟器和真实设备须另行人工验收，其状态独立报告。
-
-现役 package builder 发布独立 worker，并验证 apphost、runtimeconfig、锁定 binding 版本及 LGPL/GPL 许可。包内没有项目 native、游戏、测试 EXE 或用户配置。构建输入与 SDK source 由验证/候选任务固定；本地 dirty 源码诊断包不等于发行候选或商店已上架。
+English scope: local PI v2 distributions and saved GUI configurations are frozen into immutable revisions. Runtime libraries and Python inputs are verified locally; the product does not download or install dependencies. Authenticated native task failures permit bounded suffix retries while preserving successful tasks. Passive source synchronization starts no project programs. Maa judgement assets remain stored but are not executed. Controlled native/Agent tests do not establish real-game compatibility or business success.

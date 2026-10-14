@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { Directive } from "vue";
 import type { PluginHost, PlatformOption, Schedule, Task, TaskDraft, TaskSavePayload, Translate } from "./types";
 import { createCredentialEditor } from './credentials';
+import TajiduoLogin from './TajiduoLogin.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -28,7 +29,7 @@ const draft = ref<TaskDraft | null>(null);
 const credentials = createCredentialEditor(props.host, code => {
   if (props.open) props.host.ui?.toast(t(`error.${code}`, {}, '凭据操作未完成，请检查后重试。'), 'error');
 });
-const {fields: secretFields, native, ready: credentialsReady, confirmation} = credentials;
+const {fields: secretFields, native, ready: credentialsReady, confirmation, tajiduo} = credentials;
 const credentialInputListeners = new WeakMap<HTMLElement, EventListener>();
 const vCredentialInput: Directive<HTMLElement, string> = {
   mounted(element, binding) {
@@ -489,6 +490,7 @@ async function submit() {
       <nxp-button :label="t('action.cancel', {}, '取消')" variant="ghost" :disabled="submitting" @click="emit('close')" />
     </div>
   </nxp-modal>
+  <TajiduoLogin v-if="tajiduo" :form="tajiduo" :translate="translate" @close="credentials.cancelTajiduo()" @submit="credentials.submitTajiduo($event)" />
   <nxp-modal v-if="confirmation" open footer :title="t('reveal.title', {}, '显示自动获取的凭据')" :close-label="t('action.close', {}, '关闭')" @close="confirmation = null">
     <p>{{ t('reveal.description', {}, '凭据可用于访问你的账号。确认后，本客户端在 24 小时内可主动显示自动凭据；其他客户端仍需单独确认。关闭服务后确认失效。') }}</p>
     <div slot="footer" class="gci-modal-footer-actions">

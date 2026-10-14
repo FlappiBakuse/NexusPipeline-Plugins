@@ -4,7 +4,7 @@ using NexusPipeline.Plugin.Abstractions;
 
 namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
-public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
+public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider, IPluginProviderConfigurationLifecycle, IPluginProviderConfigurationPreparation, IPluginProviderConfigurationSynchronization
 {
     private IPluginHostContext? _host;
     private readonly List<IDisposable> _registrations = [];
@@ -14,7 +14,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
     {
         _host = context;
         _registrations.Add(_host.ExecutionProviders.Register(this));
-        foreach (string route in new[] { "inspect", "profile", "preview", "save", "authorize", "secret", "import", "windows", "preset" })
+        foreach (string route in new[] { "inspect", "discover", "profile", "preview", "secret", "import", "windows", "preset" })
             _registrations.Add(_host.WebApi.Register(new("POST", route, PluginOperationAccess.General, (request, token) => HandleAsync(route, request, token))));
         return ValueTask.CompletedTask;
     }
@@ -37,15 +37,21 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
     public async ValueTask<PluginProviderPlan> PrepareAsync(PluginProviderPrepareRequest request, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
-        var shared = await ReadProfileAsync(host, Scope("", request.ProfileId), cancellationToken).ConfigureAwait(false)
+        var shared = await (request.ConfigRevision.Length == 0 ? ReadProfileAsync(host, Scope("", request.ProfileId), cancellationToken)
+            : ReadRevisionAsync(host, request.ProfileId, request.ConfigRevision, cancellationToken)).ConfigureAwait(false)
             ?? throw new InvalidDataException("driver.profile_missing");
         var profile = string.IsNullOrWhiteSpace(request.UserId) ? shared
-            : await ReadProfileAsync(host, UserScope(request.UserId, request.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
+            : request.UserConfigRevision.Length != 0
+                ? await ReadUserRevisionAsync(host, request.ProfileId, request.UserId, request.ScriptInstanceId, request.UserConfigRevision, cancellationToken).ConfigureAwait(false)
+                    ?? throw new InvalidDataException("driver.user_revision_missing")
+                : await ReadProfileAsync(host, UserScope(request.UserId, request.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
         if (profile.ProfileId != shared.ProfileId || !Path.GetFullPath(profile.PackageRoot).Equals(Path.GetFullPath(shared.PackageRoot), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("driver.binding_identity_changed");
         if (!ReferenceEquals(profile, shared)) ValidateBinding(profile, shared);
         if (!Path.GetFullPath(request.PackageRoot).Equals(Path.GetFullPath(profile.PackageRoot), StringComparison.OrdinalIgnoreCase))
             throw new InvalidDataException("driver.package_root_changed");
+        SourceDiscovery.RequireCurrent(profile, cancellationToken);
+        RuntimeInputs.Verify(profile, cancellationToken);
         var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (compiled.Tasks.Length == 0) throw new InvalidDataException("driver.task_selection_required");
         var resources = new List<PluginProviderResource> { new("writable_root", profile.PackageRoot) };
@@ -56,24 +62,41 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
         string planId = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(
             request.ProfileId + "\n" + request.UserId + "\n" + revision + "\n" + compiled.ExecutionFingerprint)));
         return new(planId, revision, compiled.ExecutionFingerprint, resources,
-            compiled.Tasks.Select((task, i) => new PluginProviderTask(task.Name, task.Label, i)).ToArray(),
+            compiled.Tasks.Select((task, i) => new PluginProviderTask(task.Id, task.Label, i)).ToArray(),
             new JsonObject { ["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options),
-                ["compiled"] = JsonSerializer.SerializeToNode(compiled with { PublicSchema = new() }, DriverJson.Options) });
+                ["committedRevision"] = request.ConfigRevision,
+                ["committedUserRevision"] = request.UserConfigRevision,
+                ["compiled"] = JsonSerializer.SerializeToNode(compiled with { PublicSchema = new() }, DriverJson.Options) })
+            { EffectiveConfiguration = EffectiveConfiguration.FromProfile(profile), ResultBasis = "framework-task-v1" };
     }
 
     public async Task<PluginProviderRunResult> RunAsync(PluginProviderRunContext context, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
         var profile = context.Plan.PrivatePlan["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
-        var shared = await ReadProfileAsync(host, Scope("", profile.ProfileId), cancellationToken).ConfigureAwait(false);
+        string committedRevision = context.Plan.PrivatePlan["committedRevision"]?.GetValue<string>() ?? "";
+        var shared = await (committedRevision.Length == 0 ? ReadProfileAsync(host, Scope("", profile.ProfileId), cancellationToken)
+            : ReadRevisionAsync(host, profile.ProfileId, committedRevision, cancellationToken)).ConfigureAwait(false);
         var saved = string.IsNullOrWhiteSpace(context.UserId) ? shared
-            : await ReadProfileAsync(host, UserScope(context.UserId, context.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
+            : context.Plan.PrivatePlan["committedUserRevision"]?.GetValue<string>() is { Length: > 0 } userRevision
+                ? await ReadUserRevisionAsync(host, profile.ProfileId, context.UserId, context.ScriptInstanceId, userRevision, cancellationToken).ConfigureAwait(false)
+                : await ReadProfileAsync(host, UserScope(context.UserId, context.ScriptInstanceId), cancellationToken).ConfigureAwait(false) ?? shared;
         if (shared is null || saved is null || shared.Revision + ":" + saved.Revision != context.Plan.ConfigRevision)
             throw new InvalidDataException("driver.profile_revision_changed");
+        SourceDiscovery.RequireCurrent(profile, cancellationToken);
+        RuntimeInputs.Verify(profile, cancellationToken);
         var fresh = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, cancellationToken).Compile(profile);
         if (fresh.ExecutionFingerprint != context.Plan.AuthorizationFingerprint
-            || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.authorization_required");
+            || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.source_changed");
         var input = context.Plan.PrivatePlan.DeepClone().AsObject();
+        input["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options);
+        var frozen = context.Plan.PrivatePlan["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
+        string[] selected = context.SelectedTaskIds?.ToArray() ?? context.Plan.Tasks.Select(task => task.Id).ToArray();
+        if (!frozen.Tasks.Select(task => task.Id).SequenceEqual(context.Plan.Tasks.Select(task => task.Id)))
+            throw new InvalidDataException("driver.plan_task_mismatch");
+        var selection = TaskSelection.Apply(frozen, selected);
+        if (selection.Tasks.Length == 0) return new("succeeded", "MaaFramework: no selected tasks", true);
+        input["selectedTaskIds"] = JsonSerializer.SerializeToNode(selected, DriverJson.Options);
         if (profile.HostLaunchRequired && context.LaunchTarget is null)
             throw new InvalidDataException("driver.host_launch_required: explicitly apply the reviewed Host launch settings");
         if (context.LaunchTarget is { } target)
@@ -106,7 +129,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
         }
         input["secrets"] = secrets;
         var result = await context.Worker.RunAsync(new("worker/NexusPipeline.MaaWorker.exe", [],
-            profile.PackageRoot, input), context.PublishEvent, cancellationToken).ConfigureAwait(false);
+            profile.PackageRoot, input) { UseSessionArtifacts = true }, context.PublishEvent, cancellationToken).ConfigureAwait(false);
         return new(result.ExitKind == "completed" && result.ExitCode == 0 ? "succeeded"
             : result.ExitKind == "cancelled" ? "cancelled" : "failed", "MaaFramework worker: " + result.ExitKind, result.CleanupConfirmed);
     }
@@ -119,6 +142,11 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
         try
         {
             var body = JsonNode.Parse(request.JsonBody ?? "{}")!.AsObject();
+            if (route == "discover")
+            {
+                var discovery = SourceDiscovery.Discover(body["packageRoot"]!.GetValue<string>(), body["interfacePath"]?.GetValue<string>() ?? "", token);
+                return new(200, JsonSerializer.SerializeToNode(discovery, DriverJson.Options));
+            }
             if (route == "inspect")
             {
                 var inspection = new ProjectCompiler(body["packageRoot"]!.GetValue<string>(), body["interfacePath"]?.GetValue<string>() ?? "interface.json", body["language"]?.GetValue<string>() ?? "zh_cn", token);
@@ -128,23 +156,32 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
             string profileId = body["profileId"]!.GetValue<string>();
             string user = body["userId"]?.GetValue<string>() ?? "";
             string scope = string.IsNullOrWhiteSpace(user) ? Scope(script, profileId) : UserScope(user, script);
+            string sharedRevision = body["revision"]?.GetValue<string>() ?? "";
+            async ValueTask<DriverProfile?> Parent() => sharedRevision.Length == 0
+                ? await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false)
+                : await ReadRevisionAsync(host, profileId, sharedRevision, token).ConfigureAwait(false);
             if (route == "profile")
             {
-                var current = await ReadProfileAsync(host, scope, token).ConfigureAwait(false);
+                string userRevision = body["userRevision"]?.GetValue<string>() ?? "";
+                var current = user.Length != 0 && userRevision.Length != 0
+                    ? await ReadUserRevisionAsync(host, profileId, user, script, userRevision, token).ConfigureAwait(false)
+                    : user.Length != 0 || sharedRevision.Length == 0 ? await ReadProfileAsync(host, scope, token).ConfigureAwait(false)
+                    : await Parent().ConfigureAwait(false);
                 if (!string.IsNullOrWhiteSpace(user))
                 {
-                    var parent = await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false);
+                    var parent = await Parent().ConfigureAwait(false);
                     if (parent is not null)
                         current = current is null || current.ProfileId != profileId
                             ? parent with { Revision = current?.Revision ?? "", ParentRevision = parent.Revision, AuthorizedFingerprint = "" }
-                            : current with { ParentRevision = parent.Revision,
-                                AuthorizedFingerprint = current.ParentRevision == parent.Revision ? current.AuthorizedFingerprint : "" };
+                            : current.ParentRevision == parent.Revision ? current
+                            : UserProfileRebase.Apply(await ReadRevisionAsync(host, profileId, current.ParentRevision, token).ConfigureAwait(false)
+                                ?? throw new InvalidDataException("driver.binding_previous_parent_missing"), parent, current);
                 }
                 return new(200, JsonSerializer.SerializeToNode(current, DriverJson.Options));
             }
             var profile = body["profile"]?.Deserialize<DriverProfile>(DriverJson.Options)
                 ?? await ReadProfileAsync(host, scope, token).ConfigureAwait(false)
-                ?? (string.IsNullOrWhiteSpace(user) ? null : await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false))
+                ?? (string.IsNullOrWhiteSpace(user) ? null : await Parent().ConfigureAwait(false))
                 ?? throw new InvalidDataException("profile required");
             RequireCurrentProfile(profile);
             if (profile.ProfileId != profileId) throw new InvalidDataException("profile identity mismatch");
@@ -161,11 +198,19 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
             }
             if (route == "import")
             {
-                var source = compiler.ReadScopedFile(body["sourcePath"]!.GetValue<string>());
+                string sourcePath = body["sourcePath"]!.GetValue<string>();
                 string kind = body["sourceKind"]!.GetValue<string>();
                 string instanceId = body["instanceId"]?.GetValue<string>() ?? "";
+                if (kind == "mfa")
+                {
+                    var mapped = ConfigurationSources.ReadMfa(compiler, profile, sourcePath, instanceId);
+                    return new(200, new JsonObject { ["profile"] = JsonSerializer.SerializeToNode(mapped, DriverJson.Options), ["sourceModified"] = false });
+                }
+                var source = compiler.ReadScopedFile(sourcePath);
                 if (kind == "mxu" && instanceId.Length == 0) return new(200, ConfigurationImporter.Instances(source));
-                var imported = ConfigurationImporter.Map(kind, source, compiler.Inspect(), profile, instanceId);
+                var imported = ConfigurationSources.Bind(compiler,
+                    ConfigurationImporter.Map(kind, source, compiler.Inspect(), profile, instanceId), kind,
+                    source["version"]?.GetValue<string>() ?? "5.14.0", instanceId, [sourcePath.Replace('\\', '/')]);
                 return new(200, new JsonObject { ["profile"] = JsonSerializer.SerializeToNode(imported, DriverJson.Options),
                     ["sourceModified"] = false, ["authorizationRequired"] = true });
             }
@@ -181,7 +226,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
                     return new(409, new JsonObject { ["error"] = "revision changed; preview again" });
                 if (!string.IsNullOrWhiteSpace(user))
                 {
-                    var parent = await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false);
+                    var parent = await Parent().ConfigureAwait(false);
                     if (parent is null || !Path.GetFullPath(parent.PackageRoot).Equals(Path.GetFullPath(profile.PackageRoot), StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("driver.binding_root_mismatch");
                     ValidateBinding(profile, parent);
@@ -202,12 +247,7 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
                     await host.Secrets.SetAsync(key, body["value"]!.GetValue<string>(), token).ConfigureAwait(false);
                     return new(200, new JsonObject { ["reference"] = "secret:" + key, ["configured"] = true });
                 }
-                if (route == "authorize" && body["confirmedFingerprint"]?.GetValue<string>() != project!.ExecutionFingerprint)
-                    return new(409, new JsonObject { ["error"] = "execution declarations changed; preview again" });
-                profile = profile with { Revision = Guid.NewGuid().ToString("N"), AuthorizedFingerprint = route == "authorize"
-                    ? project!.ExecutionFingerprint : old?.AuthorizedFingerprint == project!.ExecutionFingerprint ? project.ExecutionFingerprint : "" };
-                await host.ScopedData.WriteAsync(scope, profile, token).ConfigureAwait(false);
-                return new(200, JsonSerializer.SerializeToNode(profile, DriverJson.Options));
+                return new(404, new JsonObject { ["error"] = "driver.route_not_found" });
             }
             finally { _writes.Release(); }
         }
@@ -219,14 +259,16 @@ public sealed class EntryPoint : INexusPlugin, IPluginExecutionProvider
 
     private static void RequireCurrentProfile(DriverProfile profile)
     {
-        if (profile.SchemaVersion != 2) throw new InvalidDataException("driver.unsupported_profile_schema");
+        if (profile.SchemaVersion != 3) throw new InvalidDataException("driver.unsupported_profile_schema");
+        ProfileMigration.Validate(profile.TaskOccurrences);
     }
 
     private static async ValueTask<DriverProfile?> ReadProfileAsync(IPluginHostContext host, string scope, CancellationToken token)
     {
-        var profile = await host.ScopedData.ReadAsync<DriverProfile>(scope, token).ConfigureAwait(false);
-        if (profile is not null) RequireCurrentProfile(profile);
-        return profile;
+        var source = await host.ScopedData.ReadJsonAsync("schema-3/" + scope, token).ConfigureAwait(false)
+            ?? await host.ScopedData.ReadJsonAsync(scope, token).ConfigureAwait(false);
+        var profile = source?.Deserialize<DriverProfile>(DriverJson.Options);
+        return profile is null ? null : ProfileMigration.Upgrade(profile);
     }
 
     private static void ValidateBinding(DriverProfile profile, DriverProfile parent)

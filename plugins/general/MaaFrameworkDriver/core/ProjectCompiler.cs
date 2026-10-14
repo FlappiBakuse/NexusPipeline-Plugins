@@ -10,6 +10,7 @@ namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 /// <summary>Read-only PI v2 compiler; the same effective plan feeds preview and the worker.</summary>
 public sealed class ProjectCompiler
 {
+    public string Root => _root;
     private readonly string _root;
     private readonly string _directory;
     private readonly HashSet<string> _stack = new(StringComparer.OrdinalIgnoreCase);
@@ -24,6 +25,12 @@ public sealed class ProjectCompiler
     public long ParsedBytes { get; private set; }
     public int EntriesEnumerated { get; private set; }
     private JsonObject _authorizationManifest = new();
+    private readonly Dictionary<string, string> _readFiles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _readIdentities = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string _rootIdentity;
+    public IReadOnlyDictionary<string, string> ReadFiles => _readFiles;
+    public string[] DeclaredExecutables => Objects(_pi["agent"]).Select(entry => Required(entry, "child_exec"))
+        .Concat(Objects(_pi["pretask"]).Select(entry => Required(entry, "exec"))).ToArray();
 
     public ProjectCompiler(string packageRoot, string interfacePath, string language = "zh_cn", CancellationToken cancellationToken = default)
     {
@@ -31,6 +38,7 @@ public sealed class ProjectCompiler
         _token.ThrowIfCancellationRequested();
         _root = Path.GetFullPath(packageRoot).TrimEnd('\\', '/');
         string file = Scope(_root, interfacePath);
+        _rootIdentity = DirectoryIdentity.Read(_root);
         _directory = Path.GetDirectoryName(file)!;
         _pi = Load(file);
         if (_pi["interface_version"]?.GetValue<int>() != 2) throw Error("interface_version", "PI v2 required");
@@ -68,19 +76,36 @@ public sealed class ProjectCompiler
 
     public CompiledProject Compile(DriverProfile profile, CancellationToken cancellationToken = default)
     {
+        profile = ProfileMigration.Upgrade(profile);
+        var semantic = CompileSemantics(profile, cancellationToken);
+        if (semantic.ResourcePaths.Any(path => !Directory.Exists(path))) throw Error("resource.path", "directory missing");
+        var pretasks = Programs(_pi["pretask"], false, profile);
+        var agents = Programs(_pi["agent"], true, profile);
+        var fingerprint = ExecutionFingerprint(profile, semantic.Controller, semantic.Resource, semantic.ResourcePaths, pretasks, agents);
+        return new(Required(_pi, "name"), Text(_pi, "version"), _directory,
+            Display(semantic.Controller)!.AsObject(), Display(semantic.Resource)!.AsObject(), semantic.ResourcePaths,
+            semantic.BaseResourceCount, semantic.ResourceHashes, semantic.Tasks, pretasks, agents, fingerprint, semantic.PublicSchema, 2, _authorizationManifest);
+    }
+
+    public SemanticProject CompileSemantics(DriverProfile profile, CancellationToken cancellationToken = default)
+    {
         if (cancellationToken.CanBeCanceled) _token = cancellationToken;
         _token.ThrowIfCancellationRequested();
         BytesRead = 0; FilesHashed = 0; EntriesEnumerated = 0;
-        if (profile.SchemaVersion != 2 || Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
+        profile = ProfileMigration.Upgrade(profile);
+        ProfileMigration.Validate(profile.TaskOccurrences);
+        if (Path.GetFullPath(profile.PackageRoot).TrimEnd('\\', '/') != _root)
             throw Error("profile", "root or schema mismatch");
         if (profile.WindowSelection is not ("exact_process" or "executable")
             || profile.WindowWaitMilliseconds is < 1 or > 30000)
             throw Error("profile.windowSelection", "unsupported selector or wait bound");
-        var controller = Find("controller", profile.Controller);
+        var controller = ControllerConfiguration.Apply(Find("controller", profile.Controller), profile.ControllerConfiguration);
         var resource = Find("resource", profile.Resource);
         ValidateConfiguredOptions(profile);
         string type = Required(controller, "type");
         if (type is not ("Win32" or "Adb")) throw Error("controller.type", "unsupported " + type);
+        if (type == "Adb" && controller["adb"] is JsonObject adb && adb.Count > 0)
+            throw Error("controller.adb", "explicit method/config overrides unsupported; PI v2 uses Toolkit detection");
         if (type == "Win32" && profile.WindowSelection == "executable"
             && (!Path.IsPathFullyQualified(profile.WindowExecutable) || !File.Exists(profile.WindowExecutable)
                 || !profile.WindowExecutable.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)))
@@ -100,63 +125,115 @@ public sealed class ProjectCompiler
         int baseCount = paths.Length;
         paths = paths.Concat(Strings(controller["attach_resource_path"]).Concat(profile.AttachResourcePaths)
             .Select(path => Scope(_directory, path))).ToArray();
-        if (paths.Any(path => !Directory.Exists(path))) throw Error("resource.path", "directory missing");
         var tasks = new List<CompiledTask>();
-        if (profile.SelectedTasks.Distinct(StringComparer.Ordinal).Count() != profile.SelectedTasks.Length)
-            throw Error("selectedTasks", "duplicate identity");
-        foreach (string name in profile.SelectedTasks)
+        foreach (var occurrence in profile.TaskOccurrences.Where(item => item.Enabled))
         {
+            string name = occurrence.PiTaskName;
             _token.ThrowIfCancellationRequested();
+            if (ConfigurationImporter.IsMxu(profile) && name.StartsWith(ConfigurationImporter.MxuPretaskPrefix, StringComparison.Ordinal))
+            {
+                if (!Objects(_pi["pretask"]).Any(item => ConfigurationImporter.PretaskName(item) == name))
+                    throw Error("pretask." + name, "unknown reference");
+                continue;
+            }
+            if (occurrence.GuiAction.Length != 0)
+            {
+                GuiWaitActions.Validate(occurrence.GuiAction, occurrence.PipelineOverride);
+                for (int ordinal = 1; ordinal <= occurrence.RepeatCount; ordinal++)
+                    tasks.Add(new(name, name, occurrence.GuiAction, occurrence.PipelineOverride.DeepClone().AsObject(),
+                        occurrence.OccurrenceId + "_" + ordinal, occurrence.OccurrenceId, ordinal) { GuiAction = occurrence.GuiAction });
+                continue;
+            }
             var task = Find("task", name);
             if (!Active(task, profile)) throw Error("task." + name, "not applicable to selected controller/resource");
-            var pipeline = task["pipeline_override"]?.DeepClone().AsObject() ?? new();
-            foreach (var (declaration, configured) in new (JsonNode?, JsonObject?)[]
+            bool cfa = profile.SourceBinding?.SourceKind == "cfa";
+            var pipeline = cfa ? new JsonObject() : task["pipeline_override"]?.DeepClone().AsObject() ?? new();
+            if (cfa)
             {
-                (_pi["global_option"], null), (resource["option"], profile.ResourceOptions),
-                (controller["option"], profile.ControllerOptions), (task["option"], profile.TaskOptions[name] as JsonObject)
-            })
-            {
-                JsonObject values = profile.Options.DeepClone().AsObject();
-                if (configured is not null)
-                    foreach (var pair in configured) values[pair.Key] = pair.Value?.DeepClone();
-                ApplyOptions(Strings(declaration), profile, values, pipeline, new(), new HashSet<string>(StringComparer.Ordinal));
+                // CFA submits only saved visible options, then overlays the task definition.
+                foreach (var values in new[] { profile.Options, profile.ResourceOptions, profile.ControllerOptions })
+                    ApplyOptions(values.Select(pair => pair.Key), profile, values, pipeline, new(), new());
+                MergePipeline(pipeline, task["pipeline_override"] as JsonObject, true);
+                ApplyOptions(occurrence.Options.Select(pair => pair.Key), profile, occurrence.Options, pipeline, new(), new());
             }
-            tasks.Add(new(name, Label(task), Required(task, "entry"), pipeline));
+            else if (profile.SourceBinding?.SourceSchemaVersion == "mfa-flat-instance")
+            {
+                // Flat MFA submits saved options and does not synthesize missing child selections.
+                foreach (var values in new[] { profile.ResourceOptions, occurrence.Options })
+                    ApplyOptions(values.Select(pair => pair.Key), profile, values, pipeline, new(), new());
+            }
+            else
+            {
+                foreach (var (declaration, configured) in new (JsonNode?, JsonObject?)[]
+                {
+                    (_pi["global_option"], null), (resource["option"], profile.ResourceOptions),
+                    (controller["option"], profile.ControllerOptions), (task["option"], occurrence.Options)
+                })
+                {
+                    JsonObject values = profile.Options.DeepClone().AsObject();
+                    if (configured is not null)
+                        foreach (var pair in configured) values[pair.Key] = pair.Value?.DeepClone();
+                    ApplyOptions(Strings(declaration), profile, values, pipeline, new(), new HashSet<string>(StringComparer.Ordinal));
+                }
+            }
+            MergePipeline(pipeline, occurrence.PipelineOverride, cfa);
+            for (int ordinal = 1; ordinal <= occurrence.RepeatCount; ordinal++)
+                tasks.Add(new(name, Label(task), Required(task, "entry"), pipeline.DeepClone().AsObject(),
+                    occurrence.OccurrenceId + "_" + ordinal, occurrence.OccurrenceId, ordinal));
         }
-        var pretasks = Programs(_pi["pretask"], false, profile);
-        var agents = Programs(_pi["agent"], true, profile);
-        var fingerprint = ExecutionFingerprint(profile, controller, resource, paths, pretasks, agents);
-        return new(Required(_pi, "name"), Text(_pi, "version"), _directory,
-            Display(controller)!.AsObject(), Display(resource)!.AsObject(), paths, baseCount,
-            Strings(resource["hash"]), tasks.ToArray(), pretasks, agents, fingerprint, Inspect(), 2, _authorizationManifest);
+        return new(controller, resource, paths, baseCount, Strings(resource["hash"]), tasks.ToArray(), Inspect());
     }
 
     public DriverProfile ApplyPreset(DriverProfile profile, string presetName)
     {
         var preset = Find("preset", presetName);
-        var selected = new List<string>(); var options = profile.TaskOptions.DeepClone().AsObject();
+        var entries = new List<TaskOccurrence>();
         foreach (JsonObject task in Objects(preset["task"]))
         {
             string name = Required(task, "name"); Find("task", name);
-            if (task["enabled"]?.GetValue<bool>() != false) selected.Add(name);
-            if (task["option"] is JsonObject values) options[name] = values.DeepClone();
+            entries.Add(new() { OccurrenceId = ProfileMigration.Identity("preset", profile.ProfileId, presetName, name),
+                PiTaskName = name, Order = entries.Count, Enabled = task["enabled"]?.GetValue<bool>() != false,
+                Options = task["option"]?.DeepClone().AsObject() ?? new() });
         }
-        return profile with { SelectedTasks = selected.ToArray(), TaskOptions = options };
+        ProfileMigration.Validate(entries.ToArray());
+        return profile with { SchemaVersion = 3, SelectedTasks = [], TaskOptions = new(), TaskOccurrences = entries.ToArray(), AuthorizedFingerprint = "" };
     }
 
     private CompiledProgram[] Programs(JsonNode? declaration, bool agent, DriverProfile profile)
     {
         var list = new List<CompiledProgram>();
-        foreach (var entry in Objects(declaration))
+        IEnumerable<(JsonObject Entry, TaskOccurrence? Occurrence)> programs = Objects(declaration).Select(entry => (entry, (TaskOccurrence?)null));
+        if (!agent && ConfigurationImporter.IsMxu(profile))
+            programs = profile.TaskOccurrences.Where(item => item.Enabled
+                && item.PiTaskName.StartsWith(ConfigurationImporter.MxuPretaskPrefix, StringComparison.Ordinal))
+                .Select(item => (Objects(declaration).SingleOrDefault(entry => ConfigurationImporter.PretaskName(entry) == item.PiTaskName)
+                    ?? throw Error("pretask." + item.PiTaskName, "unknown reference"), (TaskOccurrence?)item));
+        foreach (var (entry, occurrence) in programs)
         {
             if (!agent && !Active(entry, profile)) continue;
-            string executable = ResolveExecutable(Required(entry, agent ? "child_exec" : "exec"));
+            if (agent && (profile.AgentEmbedded ?? entry["embedded"]?.GetValue<bool>() ?? false))
+                throw Error("agent.embedded", "maa.runtime.embedded_agent_unsupported: the GUI in-process Python registration requires its own runtime; select an upstream external Agent configuration and complete Python environment");
+            string declared = Required(entry, agent ? "child_exec" : "exec");
+            string executable = ResolveExecutable(declared);
             var arguments = Strings(entry[agent ? "child_args" : "args"]).ToList();
+            if (Regex.IsMatch(Path.GetFileNameWithoutExtension(executable), "^python(?:w|[0-9.]*)?$", RegexOptions.IgnoreCase))
+            {
+                int scriptIndex = PythonEntryIndex(arguments);
+                arguments[scriptIndex] = Scope(_directory, arguments[scriptIndex]);
+            }
+            else if (Path.GetFileNameWithoutExtension(executable).Equals("uv", StringComparison.OrdinalIgnoreCase))
+            {
+                if (arguments.Count < 3 || arguments[0] != "run" || arguments[1] != "python"
+                    || !File.Exists(Scope(_directory, "uv.lock")) || !File.Exists(Scope(_directory, ".venv/Scripts/python.exe")))
+                    throw Error("exec", "maa.runtime.incomplete_distribution: uv requires a locked local environment and explicit Python entry");
+                int scriptIndex = 2 + PythonEntryIndex(arguments.Skip(2).ToArray());
+                arguments[scriptIndex] = Scope(_directory, arguments[scriptIndex]);
+            }
             JsonObject? generatedOptions = null;
             if (!agent && Strings(entry["option"]).Length > 0)
             {
                 var effective = new JsonObject();
-                ApplyOptions(Strings(entry["option"]), profile, profile.Options, new(), effective, new());
+                ApplyOptions(Strings(entry["option"]), profile, occurrence?.Options ?? profile.Options, new(), effective, new());
                 generatedOptions = effective;
             }
             long timeout = entry["timeout"]?.GetValue<long>() ?? 10000;
@@ -173,6 +250,7 @@ public sealed class ProjectCompiler
     {
         foreach (string key in keys)
         {
+            if (profile.SourceBinding?.SourceSchemaVersion == "mfa-flat-instance" && !supplied.ContainsKey(key)) continue;
             var option = _pi["option"]?[key] as JsonObject ?? throw Error("option." + key, "unknown reference");
             if (!Active(option, profile)) continue;
             if (!visiting.Add(key) || visiting.Count > 32) throw Error("option." + key, "cycle/depth");
@@ -189,8 +267,9 @@ public sealed class ProjectCompiler
                 effective[key] = type == "checkbox" ? JsonSerializer.SerializeToNode(names) : JsonValue.Create(names[0]);
                 foreach (var item in cases.Where(item => names.Contains(Text(item, "name"), StringComparer.Ordinal)))
                 {
-                    MergePipeline(pipeline, item["pipeline_override"] as JsonObject);
-                    ApplyOptions(Strings(item["option"]), profile, supplied, pipeline, effective, visiting);
+                    MergePipeline(pipeline, item["pipeline_override"] as JsonObject, profile.SourceBinding?.SourceKind == "cfa");
+                    if (profile.SourceBinding?.SourceKind != "cfa")
+                        ApplyOptions(Strings(item["option"]), profile, supplied, pipeline, effective, visiting);
                 }
             }
             else if (type is "input" or "hotkey")
@@ -224,21 +303,29 @@ public sealed class ProjectCompiler
                     else fields[name] = secret ? JsonValue.Create(value)! : ConvertInput(value, Text(field, "pipeline_type", "string"));
                 }
                 effective[key] = saved;
-                MergePipeline(pipeline, Substitute(option["pipeline_override"], fields)?.AsObject());
+                MergePipeline(pipeline, Substitute(option["pipeline_override"], fields)?.AsObject(), profile.SourceBinding?.SourceKind == "cfa");
             }
             else throw Error("option." + key + ".type", "unsupported " + type);
             visiting.Remove(key);
         }
     }
 
-    public static void MergePipeline(JsonObject target, JsonObject? source)
+    public static void MergePipeline(JsonObject target, JsonObject? source, bool deep = false)
     {
         if (source is null) return;
         foreach (var node in source)
         {
             if (node.Value is not JsonObject fields) throw Error("pipeline_override." + node.Key, "node object required");
             if (target[node.Key] is not JsonObject existing) target[node.Key] = existing = new JsonObject();
-            foreach (var field in fields) existing[field.Key] = field.Value?.DeepClone();
+            foreach (var field in fields)
+                if (deep && field.Value is JsonObject next && existing[field.Key] is JsonObject previous) MergeObject(previous, next);
+                else existing[field.Key] = field.Value?.DeepClone();
+        }
+        static void MergeObject(JsonObject target, JsonObject source)
+        {
+            foreach (var pair in source)
+                if (pair.Value is JsonObject next && target[pair.Key] is JsonObject previous) MergeObject(previous, next);
+                else target[pair.Key] = pair.Value?.DeepClone();
         }
     }
 
@@ -327,7 +414,7 @@ public sealed class ProjectCompiler
         }
         if (imported) Known(pi, source, "task", "option", "preset", "group", "pretask", "global_option", "setting", "import");
         else Known(pi, source, "interface_version", "languages", "name", "label", "title", "custom_title", "icon",
-            "mirrorchyan_rid", "mirrorchyan_multiplatform", "github", "version", "contact", "license", "welcome",
+            "mirrorchyan_rid", "mirrorchyan_multiplatform", "github", "url", "version", "contact", "license", "welcome",
             "description", "telemetry", "controller", "resource", "group", "pretask", "agent", "task", "option",
             "global_option", "setting", "import", "preset");
         foreach (var item in Objects(pi["controller"]))
@@ -338,19 +425,23 @@ public sealed class ProjectCompiler
                 "macos", "playcover", "gamepad", "linux");
             if (item["win32"] is JsonObject win)
                 Known(win, location + ".win32", "class_regex", "window_regex", "screencap", "mouse", "keyboard");
-            if (item["adb"] is JsonObject adb && adb.Count > 0)
-                throw Error(location + ".adb", "explicit method/config overrides unsupported; PI v2 uses Toolkit detection");
+
         }
         foreach (var item in Objects(pi["resource"])) Known(item, source + ".resource." + Required(item, "name"),
             "name", "label", "description", "icon", "path", "controller", "option", "hash");
         foreach (var item in Objects(pi["task"])) Known(item, source + ".task." + Required(item, "name"),
             "name", "label", "entry", "default_check", "description", "doc", "desc", "icon", "group", "resource",
-            "controller", "pipeline_override", "option");
+            "controller", "pipeline_override", "option", "repeatable", "repeat_count");
         foreach (var item in Objects(pi["group"])) Known(item, source + ".group", "name", "label", "description", "icon", "default_expand");
         foreach (var item in Objects(pi["setting"])) Known(item, source + ".setting", "name", "label", "description", "icon", "option", "default_expand");
         foreach (var item in Objects(pi["pretask"])) Known(item, source + ".pretask", "name", "label", "description", "icon",
             "resource", "controller", "exec", "args", "option", "timeout");
-        foreach (var item in Objects(pi["agent"])) Known(item, source + ".agent", "child_exec", "child_args", "identifier", "timeout");
+        foreach (var item in Objects(pi["agent"]))
+        {
+            Known(item, source + ".agent", "child_exec", "child_args", "identifier", "timeout", "embedded");
+            if (item["embedded"] is { } embedded && (embedded is not JsonValue flag || !flag.TryGetValue<bool>(out _)))
+                throw Error(source + ".agent.embedded", "boolean required");
+        }
         foreach (var item in Objects(pi["preset"]))
         {
             Known(item, source + ".preset", "name", "label", "description", "icon", "task");
@@ -375,6 +466,7 @@ public sealed class ProjectCompiler
     private JsonObject Read(string file)
     {
         if (++_files > 128) throw Error("import", "file count");
+        string fileIdentity = DirectoryIdentity.Read(file);
         long size = new FileInfo(file).Length;
         // MaaEnd v2.30.0 has a 2.2 MB declaration import. Keep an explicit
         // bounded parser budget that includes the locked official projects.
@@ -394,6 +486,13 @@ public sealed class ProjectCompiler
         }
         _token.ThrowIfCancellationRequested();
         byte[] bytes = content.ToArray();
+        if (bytes.LongLength != size || DirectoryIdentity.Read(file) != fileIdentity) throw Error("source", "file changed during read");
+        string relative = Path.GetRelativePath(_root, file);
+        string digest = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
+        if (_readFiles.TryGetValue(relative, out string? prior) && (prior != digest || _readIdentities[relative] != fileIdentity))
+            throw Error("source." + relative, "file changed between reads");
+        _readFiles[relative] = digest;
+        _readIdentities[relative] = fileIdentity;
         var options = new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true, MaxDepth = 64 };
         using var document = JsonDocument.Parse(bytes.AsMemory(bytes.AsSpan().StartsWith(new byte[] { 239, 187, 191 }) ? 3 : 0), options);
         CheckDuplicates(document.RootElement);
@@ -421,6 +520,21 @@ public sealed class ProjectCompiler
             relative = relative[14..];
         }
         return ResolveScopedPath(_root, basis, relative);
+    }
+
+    public void VerifyReadSnapshot()
+    {
+        if (DirectoryIdentity.Read(_root) != _rootIdentity) throw Error("source.root", "directory identity changed");
+        foreach (var pair in _readFiles)
+        {
+            _token.ThrowIfCancellationRequested();
+            string file = Scope(_root, pair.Key);
+            if (DirectoryIdentity.Read(file) != _readIdentities[pair.Key]) throw Error("source." + pair.Key, "file identity changed");
+            if (new FileInfo(file).Length > 8 * 1024 * 1024) throw Error("source." + pair.Key, "file changed");
+            using var stream = File.OpenRead(file);
+            if (Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant() != pair.Value)
+                throw Error("source." + pair.Key, "file changed; read the source again");
+        }
     }
 
     public static string ResolveScopedPath(string packageRoot, string basis, string relative)
@@ -454,13 +568,36 @@ public sealed class ProjectCompiler
             if (!File.Exists(path) && File.Exists(path + ".exe")) path += ".exe";
             return File.Exists(path) ? path : throw Error("exec", "missing program");
         }
-        foreach (string path in (Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator))
+        var matches = new List<string>();
+        foreach (string basis in new[] { _directory, _root, Scope(_root, "python"), Scope(_root, "runtime/python"),
+            Scope(_root, ".venv/Scripts"), Scope(_root, "venv/Scripts") }.Distinct(StringComparer.OrdinalIgnoreCase))
             foreach (string ext in new[] { "", ".exe" })
             {
-                string candidate = Path.Combine(path, declaration + ext);
-                if (File.Exists(candidate) && Path.GetExtension(candidate).Equals(".exe", StringComparison.OrdinalIgnoreCase)) return Path.GetFullPath(candidate);
+                string candidate = Scope(basis, declaration + ext);
+                if (File.Exists(candidate) && Path.GetExtension(candidate).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+                    matches.Add(candidate);
             }
+        matches = matches.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (matches.Count == 1) return matches[0];
+        if (matches.Count > 1) throw Error("exec", "explicit interpreter selection required");
         throw Error("exec", "interpreter missing: " + declaration);
+    }
+
+    private static int PythonEntryIndex(IReadOnlyList<string> arguments)
+    {
+        int index = 0;
+        while (index < arguments.Count && arguments[index].StartsWith('-'))
+        {
+            string option = arguments[index++];
+            if (option == "--") break;
+            if (option is "-W" or "-X")
+            { if (index >= arguments.Count) throw Error("exec.args", "missing interpreter option value"); index++; }
+            else if (option is not ("-u" or "-B" or "-E" or "-I" or "-O" or "-OO" or "-s" or "-S" or "-q")
+                && !option.StartsWith("-W", StringComparison.Ordinal) && !option.StartsWith("-X", StringComparison.Ordinal))
+                throw Error("exec.args", "unsupported interpreter option; explicit script required");
+        }
+        if (index >= arguments.Count) throw Error("exec.args", "explicit project script entry required");
+        return index;
     }
 
     private string ExecutionFingerprint(DriverProfile profile, JsonObject controller, JsonObject resource, string[] resourcePaths,
@@ -471,7 +608,8 @@ public sealed class ProjectCompiler
         var identity = new StringBuilder();
         identity.Append(JsonSerializer.Serialize(new { root = _root, interfacePath = Scope(_root, profile.InterfacePath), profile.NativeVersion }));
         identity.Append(JsonSerializer.Serialize(new { profile.HostLaunchRequired, profile.HostLaunchConfiguration,
-            profile.WindowSelection, profile.WindowExecutable, profile.WindowWaitMilliseconds }));
+            profile.WindowSelection, profile.WindowExecutable, profile.WindowWaitMilliseconds, profile.AgentEmbedded }));
+        identity.Append(profile.RuntimeInputs?.LockHash ?? "");
         identity.Append(JsonSerializer.Serialize(new { type = controller["type"], win32 = controller["win32"], path = resource["path"] }));
         // Execution declarations are authorized as code; translated display-only
         // metadata does not invalidate that authorization.
@@ -479,37 +617,34 @@ public sealed class ProjectCompiler
             identity.Append(JsonSerializer.Serialize(new { field, value = ExecutionDeclaration(_pi[field]) }));
         if (!Directory.Exists(native)) throw Error("nativeDirectory", "missing");
         var files = Directory.EnumerateFiles(native, "*.dll").Order(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (string relative in new[] { "requirements.txt", "agent/requirements.txt", "pyproject.toml", "uv.lock" })
+        {
+            string declaration = Scope(_root, relative);
+            if (File.Exists(declaration)) files.Add(declaration);
+        }
         foreach (string path in resourcePaths) files.AddRange(ScopedTree(path));
+        string[]? localPythonFiles = null;
         foreach (var program in pretasks.Concat(agents))
         {
             files.Add(program.Executable);
             // Hash declarations, not expanded user values or secrets.
             var authorizedArguments = program.Arguments.ToArray();
             string interpreter = Path.GetFileNameWithoutExtension(program.Executable);
-            if (Regex.IsMatch(interpreter, "^python(?:w|[0-9.]*)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            bool uv = interpreter.Equals("uv", StringComparison.OrdinalIgnoreCase);
+            if (uv || Regex.IsMatch(interpreter, "^python(?:w|[0-9.]*)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
             {
-                int index = 0;
-                while (index < authorizedArguments.Length && authorizedArguments[index].StartsWith('-'))
-                {
-                    string option = authorizedArguments[index++];
-                    if (option is "--") break;
-                    if (option is "-W" or "-X")
-                    { if (index >= authorizedArguments.Length) throw Error("exec.args", "missing interpreter option value"); index++; }
-                    else if (option is "-m" or "-c" || option.StartsWith("-m", StringComparison.Ordinal) || option.StartsWith("-c", StringComparison.Ordinal))
-                        throw Error("exec.args", "dynamic -m/-c entry unsupported; use an explicit project script file");
-                    else if (option is not ("-u" or "-B" or "-E" or "-I" or "-O" or "-OO" or "-s" or "-S" or "-q")
-                        && !option.StartsWith("-W", StringComparison.Ordinal) && !option.StartsWith("-X", StringComparison.Ordinal))
-                        throw Error("exec.args", "unsupported interpreter option");
-                }
-                if (index >= authorizedArguments.Length) throw Error("exec.args", "explicit project script entry required");
-                string entry = Scope(_directory, authorizedArguments[index]);
+                int index = uv ? 2 + PythonEntryIndex(authorizedArguments.Skip(2).ToArray()) : PythonEntryIndex(authorizedArguments);
+                string entry = authorizedArguments[index];
+                if (!Path.IsPathFullyQualified(entry)) entry = Scope(_directory, entry);
+                Scope(_root, Path.GetRelativePath(_root, entry));
                 if (!File.Exists(entry) || !entry.EndsWith(".py", StringComparison.OrdinalIgnoreCase))
                     throw Error("exec.args", "explicit .py entry missing");
                 authorizedArguments[index] = entry;
                 files.Add(entry);
-                // Python's local imports can extend beyond the entry's directory.
-                // Authorize the package's bounded local Python code, never the interpreter installation.
-                files.AddRange(ScopedTree(_root).Where(IsLocalCode));
+                // Local imports can extend beyond the entry directory; all Python programs
+                // in this compilation share one bounded package enumeration.
+                string[] excluded = [Scope(_root, ".nexus")];
+                files.AddRange(localPythonFiles ??= ScopedTree(_root, excluded).Where(IsLocalCode).ToArray());
             }
             else if (program.Executable.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
                 files.AddRange(ScopedTree(Path.GetDirectoryName(program.Executable)!).Where(IsLocalCode));
@@ -554,6 +689,8 @@ public sealed class ProjectCompiler
             ["programs"] = programs, ["resourceRoots"] = new JsonArray(resourcePaths.Select(path => (JsonNode?)JsonValue.Create(path)).ToArray()),
             ["localCodeScope"] = "Bounded package-local code for Python; bounded executable-directory code and runtime metadata for direct EXE",
             ["fileCount"] = unique.Length, ["contentFingerprint"] = fingerprint,
+            ["inputFiles"] = new JsonArray(unique.Where(file => file.StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                .Select(file => (JsonNode?)JsonValue.Create(Path.GetRelativePath(_root, file).Replace('\\', '/'))).ToArray()),
             ["windowSelection"] = profile.WindowSelection, ["windowExecutable"] = profile.WindowExecutable };
         return fingerprint;
     }
@@ -562,7 +699,7 @@ public sealed class ProjectCompiler
         || path.EndsWith(".deps.json", StringComparison.OrdinalIgnoreCase)
         || path.EndsWith(".runtimeconfig.json", StringComparison.OrdinalIgnoreCase);
 
-    private IEnumerable<string> ScopedTree(string directory)
+    private IEnumerable<string> ScopedTree(string directory, string[]? excludedDirectories = null)
     {
         var pending = new Stack<string>(); pending.Push(directory);
         int entries = 0;
@@ -576,7 +713,10 @@ public sealed class ProjectCompiler
                 EntriesEnumerated++;
                 if (++entries > 50000) throw Error("resource", "file count limit");
                 Scope(_root, Path.GetRelativePath(_root, path));
-                if (Directory.Exists(path)) pending.Push(path);
+                if (Directory.Exists(path))
+                {
+                    if (excludedDirectories?.Contains(path, StringComparer.OrdinalIgnoreCase) != true) pending.Push(path);
+                }
                 else yield return path;
             }
         }
@@ -629,11 +769,21 @@ public sealed class ProjectCompiler
         Validate(profile.Options, "options");
         Validate(profile.ControllerOptions, "controllerOptions");
         Validate(profile.ResourceOptions, "resourceOptions");
-        foreach (var pair in profile.TaskOptions)
+        foreach (var occurrence in profile.TaskOccurrences)
         {
-            Find("task", pair.Key);
-            if (pair.Value is not JsonObject values) throw Error("taskOptions." + pair.Key, "object required");
-            Validate(values, "taskOptions." + pair.Key);
+            if (ConfigurationImporter.IsMxu(profile) && occurrence.PiTaskName.StartsWith(ConfigurationImporter.MxuPretaskPrefix, StringComparison.Ordinal))
+            {
+                if (!Objects(_pi["pretask"]).Any(item => ConfigurationImporter.PretaskName(item) == occurrence.PiTaskName)
+                    || occurrence.GuiAction.Length != 0 || occurrence.RepeatCount != 1 || occurrence.PipelineOverride.Count != 0)
+                    throw Error("pretask." + occurrence.PiTaskName, "unknown reference or unsupported task override");
+            }
+            else if (occurrence.GuiAction.Length == 0) Find("task", occurrence.PiTaskName);
+            else
+            {
+                GuiWaitActions.Validate(occurrence.GuiAction, occurrence.PipelineOverride);
+                if (occurrence.Options.Count != 0) throw Error("taskOccurrences.options", "unsupported special action options");
+            }
+            Validate(occurrence.Options, "taskOccurrences." + occurrence.OccurrenceId + ".options");
         }
     }
 

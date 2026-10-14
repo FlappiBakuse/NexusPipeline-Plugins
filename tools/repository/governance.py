@@ -8,7 +8,7 @@ import subprocess
 
 from tools.build_source import source_entries, fingerprint
 from tools.repository.git import _git, plugin_root_from_path
-from tools.repository.model import RepositoryError
+from tools.repository.model import RepositoryError, STABLE_METADATA_FILES
 from tools.repository.source import validate_source_plugin
 
 
@@ -26,8 +26,8 @@ def owner_of(file: str) -> str:
     if '/' not in file and file.endswith('.md') and file != 'AGENTS.md':
         return 'Docs'
     return {'adapters': 'Adapters', 'contracts': 'Contracts', 'docs': 'Docs', 'tests': 'Tests',
-            'tools': 'Tools', 'examples': 'Examples', 'packages': 'Distribution'}.get(file.split('/')[0],
-            'Distribution' if file in ('catalog.json', '.release-state.json') else 'Repository')
+            'tools': 'Tools', 'examples': 'Examples', 'packages': 'Distribution', 'metadata': 'Distribution'}.get(file.split('/')[0],
+            'Distribution' if file in STABLE_METADATA_FILES else 'Repository')
 
 
 def path_rule(root: Path, change: dict) -> dict:
@@ -43,7 +43,7 @@ def path_rule(root: Path, change: dict) -> dict:
                     'reason': 'Existing source/manifest/script boundary validator'}
         except (RepositoryError, ValueError, OSError) as error:
             return {**result, 'status': 'FAIL', 'reason': str(error)}
-    json_role = not file.endswith('.json') or file.startswith(('tests/fixtures/', 'contracts/', 'adapters/', 'examples/')) or file == 'docs/map.json'
+    json_role = not file.endswith('.json') or file.startswith(('tests/fixtures/', 'contracts/', 'adapters/', 'examples/', 'metadata/')) or file == 'docs/map.json'
     if result['owner'] == 'Repository' or not json_role:
         return {**result, 'status': 'REVIEW', 'reason': 'Confirm new resource role/Owner using docs/map.json and adjacent source'}
     return result
@@ -63,7 +63,7 @@ def context_for(root: Path, paths=(), keywords=(), owners=(), host_root: Path | 
                 if re.match(r'^## [234]\.', section)]
     result = {'agents': {'file': 'AGENTS.md', 'headings': [line for line in agents.splitlines() if line.startswith('#')], 'sections': sections},
               'topics': topics, 'testDomains': sorted({domain for topic in topics for domain in topic.get('testDomains', [])}),
-              'lock': json.loads(safe_path(root, '', 'host.lock.json').read_bytes()),
+              'lock': json.loads(safe_path(root, '', 'contracts/host-compatibility.json').read_bytes()),
               'partner': {'status': 'NOT_CHECKED', 'reason': 'No explicit Host path; public UI candidates/paired API not checked'}}
     if host_root is not None:
         host_root = host_root.resolve()
@@ -107,10 +107,10 @@ def check_changes(root: Path, evidence: dict, owners=(), host_root: Path | None 
                     rules.append({'rule': 'GOV-FS-02', 'status': 'FAIL', 'file': identity, 'reason': str(error)})
         if change['status'] in ('A', 'R', 'C'):
             rules.append(path_rule(root, change))
-        if file == 'host.lock.json' or file.endswith('/plugin.json'):
+        if file == 'contracts/host-compatibility.json' or file.endswith('/plugin.json'):
             rules.append({'rule': 'GOV-VER-01', 'status': 'REVIEW', 'file': file,
                           'reason': 'Verify explicit version/contract authorization; tool cannot infer it'})
-        if governance_only and (file.startswith(('plugins/', 'adapters/', 'contracts/')) or file == 'host.lock.json'):
+        if governance_only and (file.startswith(('plugins/', 'adapters/', 'contracts/')) or file == 'contracts/host-compatibility.json'):
             rules.append({'rule': 'GOV-VER-01', 'status': 'FAIL', 'file': file,
                           'reason': 'Explicit governance-only scope excludes product/contract/version source changes'})
     context = context_for(root, paths=[change['path'] for change in changes], host_root=host_root)
@@ -119,7 +119,7 @@ def check_changes(root: Path, evidence: dict, owners=(), host_root: Path | None 
         for actual, expected in ((context['lock']['hostApiVersion'], facts.get('pluginApi')),
                                  (context['lock']['frontendApiVersion'], facts.get('frontendApi'))):
             rules.append({'rule': 'GOV-DOC-01', 'status': 'NOT_CHECKED' if not expected else 'PASS' if actual == expected else 'FAIL',
-                          'file': 'host.lock.json', 'actual': actual, 'expected': expected})
+                          'file': 'contracts/host-compatibility.json', 'actual': actual, 'expected': expected})
     status = next((value for value in ('FAIL', 'NOT_CHECKED', 'REVIEW') if any(rule['status'] == value for rule in rules)), 'PASS')
     return {'schemaVersion': 1, 'repository': 'Plugins', **evidence, 'changes': changes,
             'workingTreeIncluded': working_tree, 'sourceFingerprint': fingerprint(source_entries(root)) if working_tree else None,

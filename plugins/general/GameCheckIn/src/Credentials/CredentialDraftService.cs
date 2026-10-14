@@ -10,7 +10,7 @@ internal sealed record LoginPreparation(string FlowId, string EditorSessionId, l
 
 internal sealed class CredentialDraftService : IDisposable
 {
-    private static readonly string[] Platforms = ["cn", "os", "skland", "skport", "kuro"];
+    private static readonly string[] Platforms = ["cn", "os", "skland", "skport", "kuro", "tajiduo"];
     private readonly TimeProvider _time;
     private readonly object _sync = new();
     private readonly Dictionary<string, Editor> _editors = new(StringComparer.Ordinal);

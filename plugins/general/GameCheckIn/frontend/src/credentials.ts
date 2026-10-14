@@ -11,6 +11,8 @@ const code = (error:unknown) => {
 
 export function createCredentialEditor(host:PluginHost,onError:(code:string)=>void) {
   const fields=ref<Record<string,Field>>({}),native=ref(false),ready=ref(false),busy=ref(0),confirmation=ref<string|null>(null);
+  const tajiduo=ref<{phone:string;value:string;mode:string;busy:boolean;sent:boolean;error:string}|null>(null);
+  let tajiduoOperation='',tajiduoController:AbortController|undefined;
   const queues=new Map<string,Promise<void>>();
   let id='',generation=0,controller=new AbortController(),lease:ReturnType<typeof setInterval>|undefined;
   let revealExpiry:ReturnType<typeof setTimeout>|undefined;
@@ -22,6 +24,7 @@ export function createCredentialEditor(host:PluginHost,onError:(code:string)=>vo
     if(current(session)) fields.value=Object.fromEntries(Object.entries(state.fields).map(([key,value])=>[key,project(value,fields.value[key])]));
   }
   function close() {
+    cancelTajiduo();
     generation++;controller.abort();controller=new AbortController();
     if(lease)clearInterval(lease);if(revealExpiry)clearTimeout(revealExpiry);
     const old=id;id='';ready.value=false;busy.value=0;fields.value={};confirmation.value=null;queues.clear();
@@ -113,6 +116,11 @@ export function createCredentialEditor(host:PluginHost,onError:(code:string)=>vo
       const preparation=await host.api.post('credentials/login/prepare',{editorSessionId:id,platform,expectedFieldGeneration:field.fieldGeneration},controller.signal) as {flowId:string;editorSessionId:string;fieldGeneration:number;context:Record<string,unknown>};
       if(!current(session))return;
       field.fieldGeneration=preparation.fieldGeneration;
+      if(platform==='tajiduo') {
+        tajiduoOperation=String(preparation.context.operation||'');
+        tajiduo.value={phone:'',value:'',mode:'sms',busy:false,sent:false,error:''};
+        return;
+      }
       const operation=await host.browserLogin.open(preparation,controller.signal);
       const result=await operation.completed;if(!current(session))return;
       const cancelled=!result.success&&['browser_operation_cancelled','credential_editor_closed'].includes(result.error||'');
@@ -122,12 +130,42 @@ export function createCredentialEditor(host:PluginHost,onError:(code:string)=>vo
     }catch(e){if(current(session)&&!(e instanceof DOMException&&e.name==='AbortError'))fail(e);}
     finally {if(current(session)){field.loading=false;const latest=fields.value[platform];if(latest)latest.loading=false;}}
   }
+  function cancelTajiduo() {
+    const operation=tajiduoOperation; tajiduoOperation='';
+    tajiduoController?.abort(); tajiduoController=undefined;
+    if(tajiduo.value){tajiduo.value.phone='';tajiduo.value.value='';tajiduo.value=null;}
+    if(operation&&id) {
+      const session=generation;
+      void host.api.delete('credentials/login/tajiduo',{editorSessionId:id,operation}).then(()=>{if(current(session)&&ready.value)return refresh(session);}).catch(()=>{});
+    }
+  }
+  async function submitTajiduo(send=false) {
+    const form=tajiduo.value,session=generation,operation=tajiduoOperation;
+    if(!form||form.busy||!operation)return;
+    form.busy=true;form.error='';
+    tajiduoController=new AbortController();
+    const signal=AbortSignal.any([controller.signal,tajiduoController.signal]);
+    const input={editorSessionId:id,operation,mode:send?'send':form.mode,phone:form.phone.trim(),value:send?'':form.value};
+    form.value='';
+    try {
+      const result=await host.api.post('credentials/login/tajiduo',input,signal) as {sent:boolean;editor:CredentialEditor|null};
+      if(!current(session)||tajiduoOperation!==operation)return;
+      if(result.sent){form.sent=true;return;}
+      if(!result.editor)throw new Error('credential_request_failed');
+      const accepted=await host.api.post('credentials/login/tajiduo',{editorSessionId:id,operation,mode:'accept'},signal) as {editor:CredentialEditor};
+      if(!current(session)||tajiduoOperation!==operation)return;
+      fields.value=Object.fromEntries(Object.entries(accepted.editor.fields).map(([key,value])=>[key,project(value,fields.value[key])]));
+      fields.value.tajiduo.visible=false;fields.value.tajiduo.inputValue='';
+      tajiduoOperation='';form.phone='';tajiduo.value=null;
+    }catch(e){if(current(session)&&tajiduoOperation===operation)form.error=code(e);}
+    finally {input.phone='';input.value='';form.busy=false;}
+  }
   async function payload():Promise<{editorSessionId:string;secrets:Record<string,SecretAction>}|null> {
-    await flush();if(!ready.value||Object.values(fields.value).some(f=>f.localError||f.error||f.loading))return null;
+    await flush();if(tajiduo.value||!ready.value||Object.values(fields.value).some(f=>f.localError||f.error||f.loading))return null;
     return {editorSessionId:id,secrets:Object.fromEntries(Object.entries(fields.value).map(([platform,field])=>[platform,{
       action:field.intent,fieldGeneration:field.fieldGeneration,
       ...(field.intent==='set'?(field.candidateId?{candidateId:field.candidateId}:{value:field.inputValue}):{}),
     }]))};
   }
-  return {fields,native,ready,busy,confirmation,open,close,read,retry,mutate,clear,visibility,confirm,login,payload};
+  return {fields,native,ready,busy,confirmation,tajiduo,submitTajiduo,cancelTajiduo,open,close,read,retry,mutate,clear,visibility,confirm,login,payload};
 }

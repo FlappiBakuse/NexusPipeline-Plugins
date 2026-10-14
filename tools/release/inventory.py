@@ -30,7 +30,7 @@ def _builder_fingerprint(source_root: Path, kind: str) -> str:
         file = controller / relative
         if file.is_file():
             entries["controller/" + relative] = file
-    for relative in ("Directory.Build.props", "Directory.Build.targets", "global.json", "host.lock.json",
+    for relative in ("Directory.Build.props", "Directory.Build.targets", "global.json", "contracts/host-compatibility.json",
                      "package.json", "package-lock.json"):
         file = source_root / relative
         if file.is_file():
@@ -52,7 +52,7 @@ def package_input_identities(root: Path, plan: dict[str, Any], partner_sha: str)
     head = repository_git.git_head(root)
     plugins = {plugin.artifact_name: plugin for plugin in repository_source.discover_source_plugins(root)}
     shared = []
-    for relative in ("host.lock.json", "package.json", "package-lock.json"):
+    for relative in ("contracts/host-compatibility.json", "package.json", "package-lock.json"):
         if (root / relative).exists():
             shared.append((relative, repository_git._git(root, ["rev-parse", f"{head}:{relative}"],
                                                f"读取 package input {relative}")))
@@ -154,11 +154,11 @@ def extract_candidate_artifact(archive_path: Path, output: Path, *, expected_dig
                               and (info.is_dir() or mode != 0o040000),
                               f"candidate artifact 禁止链接或特殊条目：{name}")
                 if info.is_dir():
-                    repository_io._require(name.rstrip("/") == "packages"
+                    repository_io._require(name.rstrip("/") in {"metadata", "metadata/catalog", "metadata/releases", "packages"}
                                   or (len(parts) == 2 and parts[0] == "packages"),
                                   f"candidate artifact 目录越界：{name}")
                     continue
-                repository_io._require(name in {"candidate.json", "catalog.json", repository_model.STATE_FILE,
+                repository_io._require(name in {"candidate.json", *repository_model.STABLE_METADATA_FILES,
                                       "release-plan.json"}
                               or (len(parts) == 3 and parts[0] == "packages"
                                   and name.endswith(".zip")),

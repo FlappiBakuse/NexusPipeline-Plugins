@@ -161,7 +161,7 @@ export function planForChanges(root, changes, registry, policy, lockChanges = nu
     if (name.startsWith("tests/support/") || name.startsWith("tests/runner/")) {
       fullCore(`execution adapter: ${reason}`); return;
     }
-    if (/^(catalog\.json|\.release-state\.json|packages\/)/.test(name)) { add("plugins.release-contract", reason); return; }
+    if (/^(catalog\.json$|metadata\/(?:catalog\/stable|releases\/stable-state)\.json$|packages\/)/.test(name)) { add("plugins.release-contract", reason); return; }
     if (name.startsWith("tools/repository/") || name === "tools/repo.py") {
       add("plugins.release-contract", reason); add("plugins.ci-policy", reason);
       for (const item of names) plugin("package", item, reason);
@@ -186,7 +186,7 @@ export function planForChanges(root, changes, registry, policy, lockChanges = nu
     if (name.startsWith("tests/architecture/")) {
       add("plugins.inventory", reason); return;
     }
-    if (name === "host.lock.json") {
+    if (name === "contracts/host-compatibility.json") {
       add("plugins.inventory", reason);
       fullCore(reason);
       return;
@@ -275,7 +275,7 @@ export function createScopePlan(root, options = {}) {
       const after = identity.dirty ? JSON.parse(fs.readFileSync(path.join(root, "tests/inputs.lock.json"), "utf8"))
         : JSON.parse(git(root, ["show", `${identity.headSha}:tests/inputs.lock.json`]).toString("utf8"));
       lockChanges = { host: JSON.stringify(before.host) !== JSON.stringify(after.host),
-        maaFramework: JSON.stringify(before.maaFramework) !== JSON.stringify(after.maaFramework) };
+        maaFramework: JSON.stringify([before.maaFramework, before.maaFrameworkPrevious]) !== JSON.stringify([after.maaFramework, after.maaFrameworkPrevious]) };
     } catch { lockChanges = null; }
   }
   const routing = planForChanges(root, identity.changes, registry, policy, lockChanges);

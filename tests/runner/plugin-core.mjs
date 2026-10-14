@@ -79,12 +79,14 @@ try {
   const specialized = selection.selected.some(name => policy.plugins[name].kind === "data-specialized");
   const hostBuild = path.join(runRoot, "test-host");
   const managedNames = selection.selected.filter(name => policy.plugins[name].kind === "managed-code");
+  const frontendModules = managedNames.filter(name => (!batch || wants(name,"frontend") || wants(name,"capability"))
+    && JSON.parse(fs.readFileSync(path.join(plugins.directory,policy.plugins[name].root,"plugin.json"))).frontend);
   const frontendNames = managedNames.filter(name => (!batch || wants(name,"frontend") || wants(name,"capability"))
     && fs.existsSync(path.join(plugins.directory,policy.plugins[name].root,"frontend")));
   const componentNames = managedNames.filter(name => !batch || wants(name,"component") || capability(name));
-  const bootstrapNative = managedNames.includes("MaaFrameworkDriver") && capability("MaaFrameworkDriver")
-    && (batch ? "adapter" : input.options["--profile"] || policy.plugins.MaaFrameworkDriver.defaultProfile) === "adapter"
-    && !env.NEXUS_MAA_NATIVE_ROOT;
+  const maaAdapter = managedNames.includes("MaaFrameworkDriver") && capability("MaaFrameworkDriver")
+    && (batch ? "adapter" : input.options["--profile"] || policy.plugins.MaaFrameworkDriver.defaultProfile) === "adapter";
+  const bootstrapNative = maaAdapter && !env.NEXUS_MAA_NATIVE_ROOT;
   if (bootstrapNative) env.NEXUS_MAA_NATIVE_ROOT = path.join(runRoot,"maa-native");
   const preparation = await Promise.allSettled([
     (async () => {
@@ -114,9 +116,10 @@ try {
       if (failed) throw failed.reason;
     })(),
     (async () => {
-      if (!frontendNames.length) return;
-      await step("shared plugin frontend dependencies",npm,["ci",...frontendNames.map(name=>`--workspace=${policy.plugins[name].root}/frontend`),
-        "--include-workspace-root","--no-audit","--no-fund"]);
+      if (!frontendModules.length) return;
+      await step("shared plugin frontend dependencies",npm,["ci",...(frontendNames.length
+        ? [...frontendNames.map(name=>`--workspace=${policy.plugins[name].root}/frontend`),"--include-workspace-root"] : ["--workspaces=false"]),
+        "--no-audit","--no-fund"]);
       for (const name of frontendNames) {
         const frontend = path.join(plugins.directory,policy.plugins[name].root,"frontend");
         await step(`${name}: frontend typecheck`,npm,["run","typecheck"],{cwd:frontend});
@@ -134,6 +137,10 @@ try {
     (async () => {
       if (bootstrapNative)
         await step("Maa native inputs",python,["tests/bootstrap-native.py","--output",env.NEXUS_MAA_NATIVE_ROOT]);
+      if (maaAdapter) {
+        env.NEXUS_MAA_PYTHON_ROOT ||= path.join(artifact, "cache", "maa-python-4.12.1");
+        await step("Maa local Python test input",python,["tests/bootstrap-python.py","--output",env.NEXUS_MAA_PYTHON_ROOT]);
+      }
     })(),
   ]);
   const preparationFailure = preparation.find(outcome => outcome.status === "rejected");
@@ -203,9 +210,25 @@ try {
           await runCapability();
         }
         })();
-        const work=await Promise.allSettled([componentWork,capabilityWork]);
+        let frontendEvidence = null;
+        const frontendWork = (async () => {
+          if (!frontendModules.includes(name)) return;
+          const reportPath = path.join(directory,"frontend.json");
+          await run("frontend lifecycle",process.execPath,["tests/frontend/run.mjs","--root",plugins.directory,
+            "--host-root",host.directory,"--artifact",name,"--report",reportPath]);
+          const evidence = JSON.parse(fs.readFileSync(reportPath,"utf8"));
+          if (evidence.status !== "PASS" || evidence.artifact !== name || evidence.failed || evidence.skipped || evidence.passed < 1
+            || JSON.stringify(evidence.caseIds) !== JSON.stringify(item.frontendCaseIds)) throw new Error("Frontend lifecycle evidence differs from policy");
+          frontendEvidence = evidence; result.artifacts.push(reportPath);
+        })();
+        const work=await Promise.allSettled([componentWork,capabilityWork,frontendWork]);
         const failed=work.find(outcome=>outcome.status==="rejected");
         if(failed) throw failed.reason;
+        if (frontendEvidence) {
+          result.expectedCaseIds.push(...item.frontendCaseIds); result.completedCaseIds.push(...frontendEvidence.caseIds);
+          result.counts.passed += frontendEvidence.passed; result.boundaries.real.push("current frontend module lifecycle contract");
+          result.boundaries.substituted.push("public Host frontend contract in jsdom; real browser layout tested separately");
+        }
       } else {
         result.expectedCaseIds = item.fixtureIds;
         result.expectedEditorCaseIds = ["BetterGI", "ZenlessZoneZeroOneDragon", "MaaStellaSora"].includes(name)

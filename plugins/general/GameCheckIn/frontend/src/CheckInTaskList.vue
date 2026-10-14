@@ -149,6 +149,10 @@ function reorderTasks(ids: string[]) {
                 <span>{{ result.message }}</span>
               </li>
             </ul>
+            <details v-if="task.recentRun.diagnostics?.length">
+              <summary>{{ t('diagnostics.title', {}, '本次脱敏诊断（保留七天）') }}</summary>
+              <pre class="gci-diagnostics">{{ JSON.stringify(task.recentRun.diagnostics, null, 2) }}</pre>
+            </details>
           </section>
         </div>
       </details>

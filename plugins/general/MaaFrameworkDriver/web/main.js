@@ -8,12 +8,26 @@ export function activate(host) {
     let draftVersion = 0;
     let disposed = false, schema = null, preview = null, previewProfile = '', pendingImport = null, importSelection = '';
     const validationErrors = new Map();
+    let pendingConfirmation;
+    const confirm = message => new Promise(resolve => {
+      if (disposed || pendingConfirmation) { resolve(false); return; }
+      const dialog = document.createElement('nxp-confirm-dialog');
+      dialog.open = true; dialog.title = text('确认', 'Confirm'); dialog.message = message;
+      dialog.confirmLabel = text('确认', 'Confirm'); dialog.cancelLabel = text('取消', 'Cancel');
+      const finish = accepted => { pendingConfirmation = null; dialog.remove(); resolve(accepted); };
+      pendingConfirmation = finish;
+      dialog.addEventListener('confirm', () => finish(true), { once: true });
+      dialog.addEventListener('cancel', () => finish(false), { once: true });
+      dialog.addEventListener('close', () => finish(false), { once: true });
+      element.append(dialog);
+    });
     const userId = context.mode === 'binding' ? context.secondaryId || '' : '';
     let importPath = '', importKind = 'mxu', importInstance = '', importMode = 'new', presetName = '';
-    let profile = { schemaVersion: 2, profileId: context.executionProviderConfigId || crypto.randomUUID().replaceAll('-', ''),
+    let explicitInterface = '', discovered = null, selectedSource = '', advanced = false;
+    let profile = { schemaVersion: 3, profileId: context.executionProviderConfigId || crypto.randomUUID().replaceAll('-', ''),
       revision: '', packageRoot: context.packageRoot || '', interfacePath: 'interface.json', controller: '', resource: '',
-      nativeDirectory: 'bin', nativeVersion: 'v5.14.0', language: 'zh_cn', selectedTasks: [], options: {}, resourceOptions: {}, controllerOptions: {}, taskOptions: {},
-      windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowSelection: 'executable', windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
+      nativeDirectory: '', nativeVersion: '', language: 'zh_cn', selectedTasks: [], taskOccurrences: [], options: {}, resourceOptions: {}, controllerOptions: {}, taskOptions: {},
+      windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowSelection: 'exact_process', windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
     const card = document.createElement('nxp-section-card'); card.title = 'MaaFramework';
     const fields = document.createElement('div'); fields.dataset.pluginMaaFields = 'true';
     const actions = document.createElement('div'); actions.dataset.pluginMaaActions = 'true';
@@ -32,21 +46,49 @@ export function activate(host) {
       item.addEventListener('update:modelValue', event => {
         const next = event.detail[0]; item.modelValue = next; preview = null;
         draftVersion += 1;
-        try { change(next); validationErrors.delete(label); }
+        try { change(next); validationErrors.delete(label); publishDraft(); }
         catch (error) { validationErrors.set(label, error.message || String(error)); fail(error); }
       }, { signal: abort.signal });
       row.append(item); fields.append(row); return item;
     }
     const options = list => (list || []).map(item => ({ value: item.name, label: item.label || item.name }));
+    function publishDraft() {
+      if (disposed) return;
+      if (userId) {
+        element.dispatchEvent(new CustomEvent('nxp-provider-user-draft', { bubbles: true }));
+        return;
+      }
+      element.dispatchEvent(new CustomEvent('nxp-provider-configured', { bubbles: true, detail: {
+        providerId: 'maa-framework', profileId: profile.profileId, packageRoot: profile.packageRoot,
+        configuration: { profile: structuredClone(profile), sourceId: selectedSource }
+      } }));
+    }
     function draw() {
       fields.replaceChildren();
+      if (!userId) {
+        if (discovered?.interfaceCandidates?.length > 1) {
+          field(text('项目接口', 'Project interface'), 'nxp-select', explicitInterface,
+            value => { explicitInterface = value; profile.interfacePath = value; discover().catch(fail); },
+            { options: discovered.interfaceCandidates.map(value => ({ value, label: value })) });
+          return;
+        }
+        const choices = discovered?.candidates || [];
+        if (choices.length > 1) field(text('来源配置', 'Source configuration'), 'nxp-select', selectedSource,
+          value => { selectedSource = value; profile.sourceBinding = null; profile.sourceSnapshot = null; },
+          { options: choices.map(item => ({ value: item.id, label: item.name + ' · ' + item.kind })) });
+        const summary = document.createElement('p');
+        summary.textContent = choices.length === 1 ? text('已发现来源配置：', 'Source configuration found: ') + choices[0].name
+          : choices.length > 1 ? text('请选择要同步的来源配置。', 'Choose the source configuration to synchronize.')
+          : text('正在查找项目及来源配置。', 'Looking for the project and source configuration.');
+        fields.append(summary);
+        if (!advanced) return;
+      }
       field(text('Interface 相对路径', 'Relative interface path'), 'nxp-text-input', profile.interfacePath, v => profile.interfacePath = v);
       field(text('原生 DLL 相对目录', 'Relative native DLL directory'), 'nxp-text-input', profile.nativeDirectory, v => profile.nativeDirectory = v);
-      field(text('原生库精确版本', 'Exact native version'), 'nxp-text-input', profile.nativeVersion, v => profile.nativeVersion = v);
       field(text('导入源相对路径（只读）', 'Relative import source path (read-only)'), 'nxp-text-input', importPath, v => importPath = v);
       field(text('导入格式', 'Import schema'), 'nxp-select', importKind, v => importKind = v,
-        { options: [{ value: 'mxu', label: 'MXU schema 1.0' }, { value: 'maapicli-v5.14.0', label: 'MaaPiCli v5.14.0' }] });
-      field(text('源实例精确 ID（MXU）', 'Exact source instance ID (MXU)'), 'nxp-text-input', importInstance, v => importInstance = v);
+        { options: [{ value: 'mxu', label: 'MXU schema 1.0' }, { value: 'mfa', label: 'MFAAvalonia' }, { value: 'maapicli-v5.14.0', label: 'MaaPiCli v5.14.0' }] });
+      field(text('源实例精确 ID', 'Exact source instance ID'), 'nxp-text-input', importInstance, v => importInstance = v);
       if (!userId) field(text('导入目标', 'Import target'), 'nxp-select', importMode, v => importMode = v,
         { options: [{ value: 'new', label: text('新建独立配置', 'New independent profile') }, { value: 'overwrite', label: text('覆盖此明确配置（CAS）', 'Overwrite this profile (CAS)') }] });
       if (!schema) return;
@@ -59,22 +101,49 @@ export function activate(host) {
         const groups = (item.group || []).map(name => (schema.group || []).find(group => group.name === name)?.label || name);
         return { value: item.name, label: (groups.length ? groups.join(' / ') + ' · ' : '') + (item.label || item.name) };
       });
-      field(text('任务（按选中顺序执行）', 'Tasks (selection order)'), 'nxp-select', profile.selectedTasks,
-        v => { profile.selectedTasks = v; draw(); }, { multiple: true, options: taskChoices });
-      const ordered = document.createElement('ol'); fields.append(ordered);
-      profile.selectedTasks.forEach((name, index) => {
-        const row = document.createElement('li'); row.textContent = name + ' ';
-        for (const [delta, label] of [[-1, '↑'], [1, '↓']]) {
-          const move = document.createElement('nxp-button'); move.textContent = label; move.ariaLabel = name + ' ' + label;
-          move.disabled = index + delta < 0 || index + delta >= profile.selectedTasks.length;
-          move.addEventListener('click', () => { const other = index + delta; [profile.selectedTasks[index], profile.selectedTasks[other]] = [profile.selectedTasks[other], profile.selectedTasks[index]]; draftVersion += 1; preview = null; draw(); }, { signal: abort.signal }); row.append(move);
-        }
-        ordered.append(row);
+      field(text('添加任务条目', 'Add task occurrence'), 'nxp-select', '', name => {
+        if (!taskChoices.some(item => item.value === name)) return;
+        profile.taskOccurrences.push({ occurrenceId: crypto.randomUUID().replaceAll('-', ''), sourceTaskId: '',
+          piTaskName: name, order: profile.taskOccurrences.length, enabled: true, repeatCount: 1, options: {}, pipelineOverride: {} });
+        draw();
+      }, { options: taskChoices });
+      const ordered = document.createElement('nxp-sortable-list'); fields.append(ordered);
+      ordered.addEventListener('reorder', event => {
+        const ids = event.detail[0];
+        if (ids.length !== profile.taskOccurrences.length || new Set(ids).size !== ids.length
+          || ids.some(id => !profile.taskOccurrences.some(item => item.occurrenceId === id))) return;
+        profile.taskOccurrences = ids.map((id, order) => ({ ...profile.taskOccurrences.find(item => item.occurrenceId === id), order }));
+        draftVersion += 1; preview = null; publishDraft(); draw();
+      }, { signal: abort.signal });
+      profile.taskOccurrences.forEach(occurrence => {
+        const name = occurrence.piTaskName;
+        const row = document.createElement('div'); row.dataset.dndId = occurrence.occurrenceId;
+        row.style.cssText = 'display:flex;align-items:center;gap:var(--nx-space-2);padding:var(--nx-space-3);border-bottom:1px solid var(--nx-color-border);min-width:0';
+        const handle = document.createElement('nxp-drag-handle');
+        handle.label = text('调整任务顺序：', 'Reorder task: ') + name;
+        const label = document.createElement('span'); label.textContent = name; label.style.overflowWrap = 'anywhere';
+        const enabled = document.createElement('nxp-switch'); enabled.modelValue = occurrence.enabled; enabled.ariaLabel = name;
+        enabled.addEventListener('update:modelValue', event => { occurrence.enabled = event.detail[0]; draftVersion++; preview = null; publishDraft(); }, { signal: abort.signal });
+        const remove = document.createElement('nxp-button'); remove.textContent = text('移除', 'Remove');
+        remove.addEventListener('click', () => {
+          profile.taskOccurrences = profile.taskOccurrences.filter(item => item !== occurrence).map((item, order) => ({ ...item, order }));
+          draftVersion++; preview = null; publishDraft(); draw();
+        }, { signal: abort.signal });
+        row.append(handle, enabled, label, remove); ordered.append(row);
+        field(name + text(' · 重复次数', ' · Repetitions'), 'nxp-text-input', String(occurrence.repeatCount), value => {
+          const count = Number(value); if (!Number.isInteger(count) || count < 1 || count > 100) throw new Error(text('次数须为 1–100', 'Count must be 1–100'));
+          occurrence.repeatCount = count;
+        });
+        field(name + ' · ' + occurrence.occurrenceId + text(' · 选项', ' · Options'), 'nxp-text-area', JSON.stringify(occurrence.options, null, 2), value => {
+          const parsed = JSON.parse(value);
+          if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') throw new Error(text('选项须为 JSON 对象', 'Options must be a JSON object'));
+          occurrence.options = parsed;
+        });
       });
       const controller = schema.controller.find(item => item.name === profile.controller);
       if (controller?.type === 'Win32') {
         field(text('运行时窗口选择', 'Runtime window selection'), 'nxp-select', profile.windowSelection || 'exact_process', v => {
-          profile.windowSelection = v; profile.schemaVersion = 2;
+          profile.windowSelection = v;
         }, { options: [
           { value: 'executable', label: text('每次按完整路径和项目窗口规则重新发现', 'Rediscover by full path and project window filters each run') },
           { value: 'exact_process', label: text('只使用已选进程生命期', 'Use the selected process lifetime only') },
@@ -101,7 +170,7 @@ export function activate(host) {
       }
       visit(schema.global_option); visit(controller?.option);
       visit(schema.resource.find(item => item.name === profile.resource)?.option);
-      for (const task of schema.task || []) if (profile.selectedTasks.includes(task.name) && applicable(task)) visit(task.option);
+      for (const task of schema.task || []) if (profile.taskOccurrences.some(item => item.enabled && item.piTaskName === task.name) && applicable(task)) visit(task.option);
       for (const task of [].concat(schema.pretask || [])) if (applicable(task)) visit(task.option);
       for (const setting of schema.setting || []) {
         visit(setting.option);
@@ -132,9 +201,6 @@ export function activate(host) {
           }
         }
       }
-      field(text('逐任务选项覆盖（JSON）', 'Per-task option overrides (JSON)'), 'nxp-text-area', JSON.stringify(profile.taskOptions || {}, null, 2), v => {
-        try { profile.taskOptions = JSON.parse(v); } catch { throw new Error(text('选项 JSON 无效', 'Invalid option JSON')); }
-      });
       for (const [key, zh, en] of [
         ['resourceOptions', '资源层选项覆盖（JSON）', 'Resource option overrides (JSON)'],
         ['controllerOptions', '控制器层选项覆盖（JSON）', 'Controller option overrides (JSON)'],
@@ -146,8 +212,8 @@ export function activate(host) {
     }
     async function call(route, body = {}) {
       const result = await host.api.post(route, { scriptId: context.primaryId || '', profileId: profile.profileId,
-        userId,
-        expectedRevision: profile.revision || '', profile, ...body }, abort.signal);
+        userId, userRevision: context.userConfigRevision || '',
+        expectedRevision: profile.revision || '', revision: context.executionProviderConfigRevision || '', profile, ...body }, abort.signal);
       if (disposed) throw new DOMException('Renderer disposed', 'AbortError');
       return result;
     }
@@ -181,9 +247,11 @@ export function activate(host) {
     });
     button(text('载入项目默认勾选任务', 'Load project default task selection'), () => {
       if (!schema) throw new Error(text('请先读取项目。', 'Inspect the project first.'));
-      profile.selectedTasks = (schema.task || []).filter(item => item.default_check
+      profile.taskOccurrences = (schema.task || []).filter(item => item.default_check
         && (!item.controller || item.controller.includes(profile.controller))
-        && (!item.resource || item.resource.includes(profile.resource))).map(item => item.name);
+        && (!item.resource || item.resource.includes(profile.resource))).map((item, order) => ({
+          occurrenceId: crypto.randomUUID().replaceAll('-', ''), sourceTaskId: '', piTaskName: item.name,
+          order, enabled: true, repeatCount: 1, options: {}, pipelineOverride: {} }));
       draftVersion += 1; preview = null; draw();
       notify(text('项目默认勾选任务已载入。', 'Project default task selection loaded.'));
     });
@@ -195,7 +263,7 @@ export function activate(host) {
       choose.addEventListener('update:modelValue', event => {
         choose.modelValue = event.detail[0]; const target = result.windows.find(item => String(item.handle) === choose.modelValue);
         if (!target) return; profile.windowHandle = target.handle; profile.windowProcessId = target.pid; profile.windowExecutable = target.executable; profile.windowStartedAtUtc = target.startedAtUtc;
-        profile.schemaVersion = 2; profile.windowSelection = 'executable';
+        profile.schemaVersion = 3; profile.windowSelection = 'executable';
         draftVersion += 1; preview = null; draw();
       }, { signal: abort.signal }); details.append(choose);
       notify(result.windows.length ? text('请选择下方匹配的窗口。', 'Select a matching window below.')
@@ -213,33 +281,61 @@ export function activate(host) {
     button(text('使用已预览映射', 'Use reviewed mapping'), async () => {
       if (!pendingImport || importSelection !== selectedImport())
         throw new Error(text('导入选择已变化，请重新预览。', 'The import selection changed; preview it again.'));
-      if (!window.confirm(text('确认将此映射载入独立草稿？源配置不会写入。保存前仍须预览和授权。', 'Load this mapping into the independent draft? The source stays unchanged. Preview and authorization are still required before saving.'))) return;
+      if (!await confirm(text('确认将此映射载入独立草稿？源配置不会写入。保存前仍须预览和授权。', 'Load this mapping into the independent draft? The source stays unchanged. Preview and authorization are still required before saving.'))) return;
       draftVersion += 1; profile = pendingImport.profile; pendingImport = null; preview = null; validationErrors.clear();
       if (!userId && importMode === 'new') { profile.profileId = crypto.randomUUID().replaceAll('-', ''); profile.revision = ''; }
       draw(); notify(text('映射已载入草稿；请补齐窗口/ADB 参数并预览。', 'Mapping loaded into draft; complete the window/ADB target and preview.'));
     });
-    button(text('确认授权并保存独立配置', 'Authorize and save independent profile'), async () => {
+    button(text('保存用户配置', 'Save user configuration'), async () => {
       requireValidDraft();
+      if (!userId) { publishDraft(); notify(text('请使用宿主的“保存”完成初始化和配置提交。', 'Use Save in the host to initialize and commit this configuration.')); return; }
       if (!preview || previewProfile !== JSON.stringify(profile))
         throw new Error(text('请先生成并核对当前配置的只读执行预览。', 'Generate and review the current read-only execution preview first.'));
       const hostLaunch = profile.hostLaunchRequired && !userId ? profile.hostLaunchConfiguration : null;
       const warning = text('Agent / pretask 是项目代码，进程隔离不是文件沙箱，可能访问网络或写项目根目录。请核对预览后确认授权。', 'Agent / pretask execute project code. Process isolation is not a filesystem sandbox; code may access the network or write the project root. Review this plan and confirm authorization.')
         + (hostLaunch ? '\n' + text('同时明确应用到 Host 游戏启动设置：', 'Also explicitly apply to Host game launch settings:') + '\n' + JSON.stringify(hostLaunch, null, 2) : '');
-      if (!window.confirm(warning)) return;
-      const version = draftVersion;
-      const saved = await call('authorize', { confirmedFingerprint: preview.project.executionFingerprint });
-      requireCurrent(version); draftVersion += 1; profile = saved;
-      preview = null; previewProfile = '';
-      element.dispatchEvent(new CustomEvent('nxp-provider-configured', { bubbles: true, detail: { providerId: 'maa-framework', profileId: profile.profileId, packageRoot: profile.packageRoot,
-        ...(hostLaunch ? { hostLaunchConfiguration: hostLaunch } : {}) } }));
-      notify(text('配置已保存；保存脚本后绑定用户并加入现有队列。', 'Profile saved; save the script, bind a user, and add it to the existing queue.')); draw();
+      if (!await confirm(warning)) return;
+      element.dispatchEvent(new CustomEvent('nxp-provider-user-save', { bubbles: true, detail: {
+        expectedUserRevision: context.userConfigRevision || '',
+        configuration: { profile: structuredClone(profile), sourceId: selectedSource }
+      } }));
     });
+    if (!userId) {
+      actions.replaceChildren();
+      details.hidden = true;
+      button(text('高级设置', 'Advanced settings'), () => { advanced = !advanced; draw(); });
+      button(text('重新查找来源', 'Refresh source configurations'), () => discover());
+    }
+    async function discover() {
+      if (!profile.packageRoot) return;
+      const version = draftVersion;
+      const result = await host.api.post('discover', { packageRoot: profile.packageRoot,
+        interfacePath: explicitInterface || (advanced ? profile.interfacePath : profile.sourceBinding?.interfaceRelativePath || '') }, abort.signal);
+      requireCurrent(version); discovered = result; schema = result.schema;
+      if (result.interfacePath) profile.interfacePath = result.interfacePath;
+      const binding = profile.sourceBinding;
+      const selected = binding ? result.candidates.find(item => item.kind === binding.sourceKind && item.instanceId === binding.sourceInstanceId)
+        : result.candidates.length === 1 ? result.candidates[0] : null;
+      selectedSource = selected?.id || '';
+      draw(); publishDraft();
+    }
     draw();
     const loadingVersion = draftVersion;
-    if (context.executionProviderConfigId) call('profile').then(saved => {
-      if (!disposed && draftVersion === loadingVersion && saved) { profile = saved; draw(); }
+    if (context.executionProviderConfigId) call('profile').then(async saved => {
+      if (disposed || draftVersion !== loadingVersion) return;
+      if (saved) {
+        profile = saved;
+        if (profile.packageRoot.toLowerCase() !== String(context.packageRoot || '').toLowerCase()) {
+          profile = { ...profile, packageRoot: context.packageRoot || '', sourceBinding: null, sourceSnapshot: null,
+            nativeDirectory: '', nativeVersion: '', dependencyLock: null, runtimeInputs: null, windowHandle: 0, windowProcessId: 0,
+            windowExecutable: '', windowStartedAtUtc: null, authorizedFingerprint: '' };
+        }
+        draw();
+      }
+      if (!userId) await discover();
     }).catch(fail);
-    const cleanup = () => { disposed = true; abort.abort(); card.remove(); active.delete(cleanup); };
+    else if (!userId) discover().catch(fail);
+    const cleanup = () => { disposed = true; pendingConfirmation?.(false); abort.abort(); card.remove(); active.delete(cleanup); };
     active.add(cleanup);
     return cleanup;
   };

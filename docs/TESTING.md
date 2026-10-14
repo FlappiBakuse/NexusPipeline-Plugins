@@ -31,7 +31,7 @@ node tests/run.mjs gate --id plugins.ci-policy --host-root <固定Host检出>
 | LiveScreenshot | 运行 ID 归属、八轮实际前端挂载卸载、两帧实际解码内容 | 受控 ADB 输出；像素只辨别数据内容，不做外观基线 |
 | EmulatorSupport | 实际 Host discovery/launch/close 接线和重复运行、各厂商窄解析 | 两实例的受控厂商 CLI/ADB |
 | 八专项 | 生产 Jint discover/observe/retry、12 次观察及新 run 隔离、固定日志轨迹；BetterGI/ZZZ 生产编辑脚本 | 合成配置、日志和账号 |
-| MaaFrameworkDriver | 18 项编译/授权规则、6 次预览、2 次实际 native worker 与拥有窗口 | 最小 DirectHit/DoNothing PI，不证明真实游戏任务 |
+| MaaFrameworkDriver | 35 项组件规则、6 次预览、真实 native/Python Agent 与拥有窗口，有限失败续跑及被动同步 | 最小 DirectHit/DoNothing PI，不证明真实游戏任务 |
 
 Host Test Host 与插件组件使用独立的恢复和输出图，可以并行准备；共享生产 SDK/TestKit 的组件工程仍串行构建。选中的插件前端共用一次 npm workspace 依赖安装，类型检查与构建逐插件执行。组件发现、原生测试、真实 Host 能力、包构建和清理继续逐项记录，并共享同一个父命令计时。
 

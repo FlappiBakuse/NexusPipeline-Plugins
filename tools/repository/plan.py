@@ -114,7 +114,8 @@ def build_plan(
 def check_pr(root: Path, base: str) -> int:
     records = repository_git.changed_paths(root, repository_git.git_commit(root, base), repository_git.git_head(root))
     changed = [path for _status, paths in records for path in paths]
-    generated = [path for path in changed if path == "catalog.json" or path == repository_model.STATE_FILE or path.startswith("packages/")]
+    relocations = repository_state.distribution_relocations(root, repository_git.git_commit(root, base), repository_git.git_head(root))
+    generated = [path for path in changed if path not in relocations and (path in repository_model.STABLE_METADATA_FILES or path.startswith("packages/"))]
     repository_io._require(not generated, "PR 不得直接提交生成物：" + ", ".join(sorted(set(generated))))
     print(f"[repository] PR 生成物路径检查通过：{len(changed)} 个变更文件", flush=True)
     return len(changed)

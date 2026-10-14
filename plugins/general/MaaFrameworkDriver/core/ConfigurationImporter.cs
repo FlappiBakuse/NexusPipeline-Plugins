@@ -2,16 +2,22 @@ using System.Text.Json.Nodes;
 
 namespace NexusPipeline.Plugin.MaaFrameworkDriver;
 
-/// <summary>Read-only, explicit mappings; no GUI synchronization or fallback task selection.</summary>
 public static class ConfigurationImporter
 {
+    internal const string MxuPretaskPrefix = "__MXU_PRETASK__";
+    internal static bool IsMxu(DriverProfile profile) => profile.SourceBinding?.SourceKind == "mxu"
+        || profile.ImportProvenance["sourceKind"]?.GetValue<string>() == "mxu";
+    internal static string PretaskName(JsonObject item) => MxuPretaskPrefix
+        + (item["name"]?.GetValue<string>() is { Length: > 0 } name ? name : Required(item, "exec"));
+    internal static IEnumerable<JsonObject> Pretasks(JsonObject schema) => schema["pretask"] switch
+    { JsonObject item => [item], JsonArray items => items.OfType<JsonObject>(), _ => [] };
     public static JsonObject Instances(JsonObject source) => new()
     { ["instances"] = new JsonArray((source["instances"]?.AsArray() ?? throw new InvalidDataException("import.mxu_instances_required"))
         .OfType<JsonObject>().Select(item => (JsonNode?)new JsonObject { ["id"] = item["id"]?.DeepClone(), ["name"] = item["name"]?.DeepClone() }).ToArray()) };
 
     public static DriverProfile Map(string kind, JsonObject source, JsonObject schema, DriverProfile target, string instanceId = "")
     {
-        JsonObject options = new(), resourceOptions = new(), controllerOptions = new(), taskOptions = new(); var tasks = new List<string>();
+        JsonObject options = new(), resourceOptions = new(), controllerOptions = new(); var entries = new List<TaskOccurrence>();
         string controller, resource;
         if (kind == "mxu")
         {
@@ -39,38 +45,57 @@ public static class ConfigurationImporter
             {
                 Known(task, ["id", "taskName", "enabled", "enabledByController", "optionValues", "expanded", "collapsedOptions", "customName"]);
                 string name = Required(task, "taskName"); bool enabled = task["enabled"]?.GetValue<bool>() ?? throw new InvalidDataException("import.task_enabled_required");
-                if (!enabled) continue;
                 if (task["enabledByController"] is JsonObject cache && cache[controller] is JsonValue cached && cached.GetValue<bool>() != enabled)
                     throw new InvalidDataException("import.controller_enabled_cache_conflict");
-                tasks.Add(name); var values = new JsonObject();
+                var values = new JsonObject();
                 if (task["optionValues"] is JsonObject configured) MapMxuOptions(configured, schema, values);
-                taskOptions[name] = values;
+                string id = Required(task, "id");
+                entries.Add(new() { OccurrenceId = ProfileMigration.Identity(kind, instanceId, id), SourceTaskId = id,
+                    PiTaskName = name, Order = entries.Count, Enabled = enabled, Options = values });
             }
         }
         else if (kind == "maapicli-v5.14.0")
         {
             Known(source, ["controller", "resource", "task", "adb", "win32", "macos", "playcover", "gamepad", "lnx", "global_option", "resource_option", "controller_option"]);
+            Known(source["controller"]!.AsObject(), ["name"]);
             controller = Required(source["controller"]!.AsObject(), "name"); resource = Required(source, "resource");
+            if (source["win32"] is JsonObject win)
+            {
+                Known(win, ["_placeholder"]);
+                if (win["_placeholder"] is { } placeholder && placeholder.GetValue<int>() != 0)
+                    throw new InvalidDataException("import.cli.win32.unsupported_placeholder");
+            }
             foreach (var (layer, destination) in new[] { ("global_option", options), ("resource_option", resourceOptions), ("controller_option", controllerOptions) })
                 foreach (var configured in source[layer]?.AsArray().OfType<JsonObject>() ?? []) MapCliOption(configured, schema, destination);
-            foreach (var task in source["task"]?.AsArray().OfType<JsonObject>() ?? [])
+            var savedTasks = source["task"]?.AsArray().Select(item => item?.AsObject() ?? throw new InvalidDataException("import.cli.task_shape")).ToArray() ?? [];
+            foreach (var task in savedTasks)
             {
-                Known(task, ["name", "option"]); string name = Required(task, "name"); tasks.Add(name); var values = new JsonObject();
+                Known(task, ["name", "option"]); string name = Required(task, "name"); var values = new JsonObject();
                 foreach (var configured in task["option"]?.AsArray().OfType<JsonObject>() ?? []) MapCliOption(configured, schema, values);
-                taskOptions[name] = values;
+                // CLI has no item ID; the source sequence identifies each occurrence, including identical entries.
+                string identity = ProfileMigration.Identity(kind, instanceId, ProfileMigration.Canonical(source["task"]!),
+                    entries.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                entries.Add(new() { OccurrenceId = identity, SourceTaskId = identity,
+                    PiTaskName = name, Order = entries.Count, Options = values });
             }
-            if (source["adb"] is JsonObject adb) target = target with { AdbPath = adb["adb_path"]?.GetValue<string>() ?? "", AdbSerial = adb["address"]?.GetValue<string>() ?? "" };
+            if (source["adb"] is JsonObject adb)
+            {
+                Known(adb, ["name", "adb_path", "address"]);
+                target = target with { AdbPath = adb["adb_path"]?.GetValue<string>() ?? "", AdbSerial = adb["address"]?.GetValue<string>() ?? "" };
+            }
         }
         else throw new InvalidDataException("import.unsupported_source_schema");
         if (!schema["controller"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == controller)
             || !schema["resource"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == resource))
             throw new InvalidDataException("import.controller_or_resource_removed");
-        if (tasks.Count == 0 || tasks.Distinct(StringComparer.Ordinal).Count() != tasks.Count
-            || tasks.Any(name => !schema["task"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == name)))
-            throw new InvalidDataException("import.task_selection_empty_duplicate_or_removed");
-        return target with { Controller = controller, Resource = resource, SelectedTasks = tasks.ToArray(), Options = options,
+        ProfileMigration.Validate(entries.ToArray());
+        if (!entries.Any(item => item.Enabled)
+            || entries.Any(entry => !schema["task"]!.AsArray().OfType<JsonObject>().Any(item => item["name"]!.GetValue<string>() == entry.PiTaskName)
+                && !(kind == "mxu" && Pretasks(schema).Any(item => PretaskName(item) == entry.PiTaskName))))
+            throw new InvalidDataException("import.task_selection_empty_or_removed");
+        return target with { SchemaVersion = 3, Controller = controller, Resource = resource, SelectedTasks = [], TaskOccurrences = entries.ToArray(), Options = options,
             ResourceOptions = resourceOptions, ControllerOptions = controllerOptions,
-            TaskOptions = taskOptions, AuthorizedFingerprint = "", ImportProvenance = new JsonObject {
+            TaskOptions = new(), AuthorizedFingerprint = "", ImportProvenance = new JsonObject {
                 ["sourceKind"] = kind, ["sourceSchemaVersion"] = source["version"]?.DeepClone(),
                 ["importedAt"] = DateTimeOffset.UtcNow.ToString("O"), ["sync"] = "none", ["sourceModified"] = false } };
     }

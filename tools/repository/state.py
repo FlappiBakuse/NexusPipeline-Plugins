@@ -10,6 +10,34 @@ import tools.repository.io as repository_io
 import tools.repository.model as repository_model
 import tools.repository.versions as repository_versions
 
+def distribution_relocations(root: Path, base: str, head: str | None = None) -> set[str]:
+    def blob(commit: str, relative: str) -> bytes | None:
+        result = subprocess.run(["git", "show", f"{commit}:{relative}"], cwd=root, capture_output=True, check=False)
+        return result.stdout if result.returncode == 0 else None
+
+    legacy_state = ".release-state.json"
+    if blob(base, repository_model.STATE_FILE) is not None or blob(base, repository_model.CATALOG_FILE) is not None:
+        return set()
+    original_state = blob(base, legacy_state)
+    original_catalog = blob(base, repository_model.CATALOG_PROJECTION)
+    if original_state is None or original_catalog is None:
+        return set()
+
+    def target(relative: str) -> bytes | None:
+        if head is not None:
+            return blob(head, relative)
+        file = root / relative
+        if not file.exists() or file.is_symlink():
+            return None
+        return file.read_bytes().replace(b"\r\n", b"\n")
+
+    if (target(legacy_state) is None and target(repository_model.STATE_FILE) == original_state
+            and target(repository_model.CATALOG_FILE) == original_catalog
+            and target(repository_model.CATALOG_PROJECTION) == original_catalog):
+        return {legacy_state, repository_model.STATE_FILE, repository_model.CATALOG_FILE}
+    return set()
+
+
 def load_state(root: Path) -> dict[str, Any]:
     path = root / repository_model.STATE_FILE
     repository_io._require(path.is_file(), f"缺少必需发行状态：{repository_model.STATE_FILE}")
@@ -22,15 +50,25 @@ def load_state(root: Path) -> dict[str, Any]:
     return state
 
 
+def state_path_at_commit(root: Path, commit: str) -> str:
+    for relative in (repository_model.STATE_FILE, ".release-state.json"):
+        probe = subprocess.run(["git", "cat-file", "-e", f"{commit}:{relative}"],
+                               cwd=root, check=False, capture_output=True)
+        if probe.returncode == 0:
+            return relative
+    raise repository_model.RepositoryError(f"基线缺少必需发行状态：{repository_model.STATE_FILE}")
+
+
 def _state_at_commit(root: Path, commit: str) -> dict[str, Any]:
+    relative = state_path_at_commit(root, commit)
     probe = subprocess.run(
-        ["git", "cat-file", "-e", f"{commit}:{repository_model.STATE_FILE}"],
+        ["git", "cat-file", "-e", f"{commit}:{relative}"],
         cwd=root,
         check=False,
         capture_output=True,
     )
     repository_io._require(probe.returncode == 0, f"基线缺少必需发行状态：{repository_model.STATE_FILE}")
-    raw = repository_git._git(root, ["show", f"{commit}:{repository_model.STATE_FILE}"], f"读取基线 {repository_model.STATE_FILE}")
+    raw = repository_git._git(root, ["show", f"{commit}:{relative}"], f"读取基线 {relative}")
     try:
         state = json.loads(raw)
     except json.JSONDecodeError as exc:
