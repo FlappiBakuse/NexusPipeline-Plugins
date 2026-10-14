@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "repository": "FlappiBakuse/NexusPipeline-Plugins",
-  "generatedAt": "2026-10-11T12:01:34Z",
+  "generatedAt": "2026-10-14T02:59:32Z",
   "plugins": [
     {
       "name": "custom-wallpaper",
@@ -163,19 +163,26 @@
         "概览"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
-      "updatedAt": "2026-10-09",
+      "updatedAt": "2026-10-12",
       "hasReadme": true,
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "managed-code",
       "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.17.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameActivities/GameActivities-0.1.0.zip",
-      "sha256": "e2ab2c9c71771468fdac054d1de9e177acac00a0eb1ce69f7f376190265ce230",
-      "sizeBytes": 245997,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameActivities/GameActivities-0.1.1.zip",
+      "sha256": "f49898946955833eedf59f35a3a75c182ec93417fe0df07a28cc446e4c0f6646",
+      "sizeBytes": 247787,
       "changelog": [
+        {
+          "version": "0.1.1",
+          "date": "2026-10-12",
+          "items": [
+            "调整活动卡表面、交互控件及前端生命周期验证。修复分页按钮重叠和 Emoji 图标裁切。"
+          ]
+        },
         {
           "version": "0.1.0",
           "date": "2026-10-09",
@@ -195,6 +202,13 @@
             "Dashboard"
           ],
           "changelog": [
+            {
+              "version": "0.1.1",
+              "date": "2026-10-12",
+              "items": [
+                "Updates activity card surfaces, controls and frontend lifecycle validation. Fixes overlapping page controls and clipped emoji icons."
+              ]
+            },
             {
               "version": "0.1.0",
               "date": "2026-10-09",
@@ -225,22 +239,33 @@
         "森空岛",
         "SKPORT",
         "库街区",
+        "塔吉多",
         "定时任务"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
-      "updatedAt": "2026-10-11",
+      "updatedAt": "2026-10-12",
       "hasReadme": true,
-      "version": "0.4.3",
+      "version": "0.4.4",
       "kind": "managed-code",
       "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
       "minHostVersion": "0.17.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.3.zip",
-      "sha256": "0ef1077e6ba6d2413e46c1d56aa41b909c09ce51bf73a4e83e90b71eb83a9b63",
-      "sizeBytes": 415838,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/GameCheckIn/GameCheckIn-0.4.4.zip",
+      "sha256": "92693bfe70108f94cd0bdf4b793e662b1cc4136c43fd347064e8380c3ae45f02",
+      "sizeBytes": 472612,
       "changelog": [
+        {
+          "version": "0.4.4",
+          "date": "2026-10-12",
+          "items": [
+            "严格校验签到响应，查询提交后的实际状态，并提供有界脱敏诊断。",
+            "统一任务编辑器的公共控件与确认行为。",
+            "新增塔吉多异环原生凭据、自动刷新、游戏签到与提交后状态确认。",
+            "塔吉多支持短信与密码网页登录，自动凭据保存前保持遮罩，取消保留原值。"
+          ]
+        },
         {
           "version": "0.4.3",
           "date": "2026-10-11",
@@ -255,13 +280,6 @@
             "已保存凭据支持安全回读和密码框显示；清除凭据在保存任务后生效。需要 Host 0.17.1。"
           ],
           "date": "2026-10-08"
-        },
-        {
-          "version": "0.4.1",
-          "date": "2026-10-05",
-          "items": [
-            "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-          ]
         }
       ],
       "locales": {
@@ -280,6 +298,16 @@
           ],
           "changelog": [
             {
+              "version": "0.4.4",
+              "date": "2026-10-12",
+              "items": [
+                "Validates check-in responses, confirms state after submission and provides bounded redacted diagnostics.",
+                "Aligns task editor controls and confirmation behavior with public frontend elements.",
+                "Adds Tajiduo native credentials, automatic refresh, NTE game check-in and state confirmation.",
+                "Adds Tajiduo SMS and password sign-in with masked credential drafts and cancellation that preserves existing credentials."
+              ]
+            },
+            {
               "version": "0.4.3",
               "date": "2026-10-11",
               "items": [
@@ -293,13 +321,6 @@
                 "Read saved credentials in password fields; clearing takes effect after saving the task. Requires Host 0.17.1."
               ],
               "date": "2026-10-08"
-            },
-            {
-              "version": "0.4.1",
-              "date": "2026-10-05",
-              "items": [
-                "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-              ]
             }
           ]
         }
@@ -413,19 +434,35 @@
         "ADB"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
-      "updatedAt": "2026-10-11",
+      "updatedAt": "2026-10-12",
       "hasReadme": true,
-      "version": "0.2.2",
+      "version": "0.2.3",
       "kind": "managed-code",
       "apiVersion": "2.2",
       "capabilities": [
         "frontend-module"
       ],
-      "minHostVersion": "0.17.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.2.2.zip",
-      "sha256": "c2508f0abf062b40fc704e4712ae98c6368175951a7db10288e52d9ab0e052ed",
-      "sizeBytes": 857713,
+      "minHostVersion": "0.17.3",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaFrameworkDriver/MaaFrameworkDriver-0.2.3.zip",
+      "sha256": "71b0345bc7f8f954520978894f6627db452fbbdcdb51cbcc1c4fe8b495d0c0a1",
+      "sizeBytes": 1117626,
       "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-10-12",
+          "items": [
+            "发现 PI v2 与 MXU/MFA/CFA/MaaPiCli 来源，保留独立任务、重复次数和分层选项。",
+            "验证本地运行库和 Python 输入，保存初始化后提交修订；来源同步不重放项目程序。",
+            "按真实框架任务结果进行有限失败子集续跑，保留成功任务和每次尝试。",
+            "关闭 Maa 自定义判断入口，保留旧资产；使用独占原生日志和 Agent 标准输出。",
+            "兼容 CFA 保存的关闭状态速通元数据，启用状态明确阻断。",
+            "使用最小查询权限读取游戏窗口的进程路径与启动时间，兼容禁止模块枚举的游戏进程。",
+            "遵循 MXU 保存的预任务开关和选项，并向外部 Agent 提供已验证的原生运行库路径。",
+            "兼容 MFA 保存但未启用的游戏启动路径，保留来源配置并阻断未支持的启动及断线重试动作。",
+            "发现并读取 MFA 旧式共享配置中的已登记实例，隔离实例字段并保留任务选择和顺序。",
+            "兼容 MFA 保存的窗口提示与 Agent 通道偏好，保持 Host 已核验的进程身份和独占会话。"
+          ]
+        },
         {
           "version": "0.2.2",
           "date": "2026-10-11",
@@ -439,16 +476,52 @@
           "items": [
             "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
           ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-10-04",
-          "items": [
-            "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
-            "独立 worker 使用 .NET 10.0.12 或更高的 10.0 补丁运行时，保留完整依赖与许可文件。"
+        }
+      ],
+      "locales": {
+        "en-US": {
+          "displayName": "MaaFramework Driver",
+          "gameName": "MaaFramework Project Interface projects",
+          "description": "Run MaaFramework Project Interface projects with isolated workers, verified dependencies and independent task options.",
+          "tags": [
+            "Framework driver",
+            "Win32",
+            "ADB"
+          ],
+          "changelog": [
+            {
+              "version": "0.2.3",
+              "date": "2026-10-12",
+              "items": [
+                "Discovers PI v2 and MXU/MFA/CFA/MaaPiCli sources with independent occurrences, repeat counts and layered options.",
+                "Verifies local native/Python inputs and initializes saved revisions; passive source synchronization starts no project programs.",
+                "Retries the failed suffix within Host limits using native task results, retaining successful tasks and per-attempt evidence.",
+                "Disables Maa custom judgement while preserving existing assets; captures session-owned native logs and Agent standard output.",
+                "Accepts inactive speedrun metadata saved by CFA and explicitly rejects enabled speedrun behavior.",
+                "Reads window process paths and creation times with limited query access, supporting games that deny module enumeration.",
+                "Honors saved MXU pretask selection and options, and supplies the verified native library path to external Agents.",
+                "Accepts saved inactive MFA software paths without launching programs or enabling unsupported startup and reconnect actions.",
+                "Discovers registered MFA instances in shared configuration files while isolating instance fields and preserving task selection and order.",
+                "Accepts MFA saved window hints and Agent transport preferences while retaining Host-verified process identity and session ownership."
+              ]
+            },
+            {
+              "version": "0.2.2",
+              "date": "2026-10-11",
+              "items": [
+                "Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."
+              ]
+            },
+            {
+              "version": "0.2.1",
+              "date": "2026-10-05",
+              "items": [
+                "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+              ]
+            }
           ]
         }
-      ]
+      }
     },
     {
       "name": "baah",
@@ -648,19 +721,26 @@
         "模拟器"
       ],
       "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
-      "updatedAt": "2026-10-11",
+      "updatedAt": "2026-10-13",
       "hasReadme": true,
-      "version": "0.4.2",
+      "version": "0.4.3",
       "kind": "data-specialized",
       "apiVersion": "2.2",
       "capabilities": [
         "emulator"
       ],
       "minHostVersion": "0.17.2",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.4.2.zip",
-      "sha256": "0c577e9f7cadf97a2f2bb77fcaa24874fce4644b9cf3201eff84e299a51c15ec",
-      "sizeBytes": 156132,
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/MaaEnd/MaaEnd-0.4.3.zip",
+      "sha256": "509501e63015613363405b6717294e779ccc22236ce888a56230e5a0826f3269",
+      "sizeBytes": 156640,
       "changelog": [
+        {
+          "version": "0.4.3",
+          "date": "2026-10-13",
+          "items": [
+            "修复 MaaEnd v2.32.0 新增选项导入导致已选任务配置无法读取的问题。"
+          ]
+        },
         {
           "version": "0.4.2",
           "date": "2026-10-11",
@@ -673,13 +753,6 @@
           "date": "2026-10-07",
           "items": [
             "声明官方上游脚本类型图标的固定源码地址与 SHA256，供宿主校验、缓存和展示。"
-          ]
-        },
-        {
-          "version": "0.4.0",
-          "date": "2026-10-04",
-          "items": [
-            "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
           ]
         }
       ],
@@ -695,6 +768,13 @@
           ],
           "changelog": [
             {
+              "version": "0.4.3",
+              "date": "2026-10-13",
+              "items": [
+                "Fix selected-task configuration discovery with the option-only import introduced in MaaEnd v2.32.0."
+              ]
+            },
+            {
               "version": "0.4.2",
               "date": "2026-10-11",
               "items": [
@@ -706,13 +786,6 @@
               "date": "2026-10-07",
               "items": [
                 "Declare the official upstream script type icon with a pinned source URL and SHA256 for Host validation, caching and display."
-              ]
-            },
-            {
-              "version": "0.4.0",
-              "date": "2026-10-04",
-              "items": [
-                "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
               ]
             }
           ]

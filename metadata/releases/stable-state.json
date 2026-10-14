@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "85d3818d0c41b81dbf0ae17d0bb861ccdcbe6d08",
+  "sourceCommit": "dab6e5cc114b4f85c982ff0f1308cbcc796896a7",
   "released": {
     "BAAH": {
       "name": "baah",
@@ -37,18 +37,18 @@
     "GameActivities": {
       "name": "game-activities",
       "artifactName": "GameActivities",
-      "version": "0.1.0",
-      "sha256": "e2ab2c9c71771468fdac054d1de9e177acac00a0eb1ce69f7f376190265ce230",
-      "sizeBytes": 245997,
-      "sourceTree": "13a92234eec6a9d73403e46ed176cb6e1d46819b"
+      "version": "0.1.1",
+      "sha256": "f49898946955833eedf59f35a3a75c182ec93417fe0df07a28cc446e4c0f6646",
+      "sizeBytes": 247787,
+      "sourceTree": "38cda40fba37fb337685f1afb1fb37226df5cabe"
     },
     "GameCheckIn": {
       "name": "game-checkin",
       "artifactName": "GameCheckIn",
-      "version": "0.4.3",
-      "sha256": "0ef1077e6ba6d2413e46c1d56aa41b909c09ce51bf73a4e83e90b71eb83a9b63",
-      "sizeBytes": 415838,
-      "sourceTree": "b8ba7ad44da9ec9f3240b1a886f6cffc7b49e5c9"
+      "version": "0.4.4",
+      "sha256": "92693bfe70108f94cd0bdf4b793e662b1cc4136c43fd347064e8380c3ae45f02",
+      "sizeBytes": 472612,
+      "sourceTree": "51726923e572ca382ffbcf25daa24c24a1d10553"
     },
     "LiveScreenshot": {
       "name": "live-screenshot",
@@ -61,18 +61,18 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.4.2",
-      "sha256": "0c577e9f7cadf97a2f2bb77fcaa24874fce4644b9cf3201eff84e299a51c15ec",
-      "sizeBytes": 156132,
-      "sourceTree": "787ba17701a1bacc4c64d56b361fedc25b607744"
+      "version": "0.4.3",
+      "sha256": "509501e63015613363405b6717294e779ccc22236ce888a56230e5a0826f3269",
+      "sizeBytes": 156640,
+      "sourceTree": "4128e10bd3d3b56203988db626a3bf495d01ea6c"
     },
     "MaaFrameworkDriver": {
       "name": "maa-framework",
       "artifactName": "MaaFrameworkDriver",
-      "version": "0.2.2",
-      "sha256": "c2508f0abf062b40fc704e4712ae98c6368175951a7db10288e52d9ab0e052ed",
-      "sizeBytes": 857713,
-      "sourceTree": "53b5cb017965033fc29e2e05c5ac57c62461808a"
+      "version": "0.2.3",
+      "sha256": "71b0345bc7f8f954520978894f6627db452fbbdcdb51cbcc1c4fe8b495d0c0a1",
+      "sizeBytes": 1117626,
+      "sourceTree": "fd603440ad2d44eea72fdff59421d6b9e24e3ad3"
     },
     "MaaStellaSora": {
       "name": "maas",
