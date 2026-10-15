@@ -12,7 +12,7 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"Daily\", \"label\": \"$missing.runtime.label\"}, {\"name\": \"Other\"}]}"
     }
   ],
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "tasks": {},
   "batches": [],
   "results": {},

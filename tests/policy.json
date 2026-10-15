@@ -210,7 +210,8 @@
         "baah-confirmed-reward",
         "baah-reward-safe-retry",
         "baah-gap-isolation",
-        "sup-actions-baah-pc-flags-0"
+        "sup-actions-baah-pc-flags-0",
+        "recognition-baah-unknown-selection"
       ],
       "realScenario": "P-S-BAAH"
     },
@@ -227,7 +228,8 @@
       "fixtureIds": [
         "bettergi-current-daily-retry",
         "bettergi-independent-safe-and-unsafe-failures",
-        "bettergi-no-inferred-success"
+        "bettergi-no-inferred-success",
+        "recognition-bettergi-unknown-selection"
       ],
       "realScenario": "P-S-BetterGI"
     },
@@ -246,7 +248,8 @@
         "maaend-gap-isolation",
         "maaend-unpaired-terminal",
         "maaend-launch-unowned-missing",
-        "maaend-unrelated-import-not-required"
+        "maaend-unrelated-import-not-required",
+        "recognition-maaend-unknown-selection"
       ],
       "realScenario": "P-S-MaaEnd"
     },
@@ -269,7 +272,8 @@
         "mfa-same-name-late-failure",
         "maastellasora-callbacks",
         "maastellasora-gap-isolation",
-        "maastellasora-unpaired-terminal"
+        "maastellasora-unpaired-terminal",
+        "recognition-maastellasora-unknown-selection"
       ],
       "realScenario": "P-S-MaaStellaSora"
     },
@@ -288,7 +292,8 @@
         "march-assets-lc-return",
         "march7th-completed-reward",
         "march7th-main-exception",
-        "march7th-no-score-proof"
+        "march7th-no-score-proof",
+        "recognition-march7thassistant-unknown-selection"
       ],
       "realScenario": "P-S-March7thAssistant"
     },
@@ -305,7 +310,8 @@
       "fixtureIds": [
         "r2-oknte-partial-failure-chunk3",
         "r2-oknte-gap-breaks-pair",
-        "r2-oknte-default-missing"
+        "r2-oknte-default-missing",
+        "recognition-oknte-unknown-selection"
       ],
       "realScenario": "P-S-OkNTE"
     },
@@ -322,7 +328,8 @@
       "fixtureIds": [
         "r2-okww-garden-satisfied",
         "r2-okww-caught-failures-chunk3",
-        "r2-okww-outer-completion-not-success"
+        "r2-okww-outer-completion-not-success",
+        "recognition-okwutheringwaves-unknown-selection"
       ],
       "realScenario": "P-S-OkWutheringWaves"
     },
@@ -342,7 +349,8 @@
         "zzz-outer-terminal",
         "zzz-run-failed",
         "zzz-group-is-not-run-end",
-        "r2-zzz-modern-empty-default"
+        "r2-zzz-modern-empty-default",
+        "recognition-zenlesszonezeroonedragon-unknown-selection"
       ],
       "realScenario": "P-S-ZenlessZoneZeroOneDragon"
     },

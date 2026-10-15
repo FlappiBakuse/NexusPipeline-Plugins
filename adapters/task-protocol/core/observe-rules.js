@@ -5,6 +5,7 @@ function observeRules(rule, finish) {
   const tasks = input.originalPlan.tasks.filter(t => input.attemptTaskIds.includes(t.id));
   const states = JSON.parse(JSON.stringify(input.acceptedState));
   function emit(task, status, line, ruleId, skipKind) {
+    if (task.recognition === 'opaque') return;
     const old = states[task.id] || { status: 'pending', executionOrdinal: 0 };
     let ordinal = old.executionOrdinal || 1;
     if (status === 'running' && old.executionOrdinal > 0 && !['running', 'pending'].includes(old.status)) ordinal++;

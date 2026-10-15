@@ -40,7 +40,7 @@
     },
     "chosen/special-6": {
       "enabled": false,
-      "role": "technical"
+      "role": "cleanup"
     }
   },
   "batches": [

@@ -12,7 +12,7 @@
       "text": "{\"name\": \"MaaStellaSora\", \"task\": [{\"name\": \"领取每日奖励\", \"label\": \"领取每日奖励\"}]}"
     }
   ],
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "tasks": {},
   "batches": [],
   "results": {},

@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "complete",
+  "coverage": "partial",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",
@@ -48,8 +48,8 @@
     "gift": {
       "enabled": false
     },
-    "future_task": {
-      "enabled": false,
+    "unknown/0/future_task": {
+      "enabled": true,
       "detection": "unsupported"
     }
   },

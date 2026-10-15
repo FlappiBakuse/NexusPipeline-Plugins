@@ -1,6 +1,6 @@
 {
   "artifact": "OkNTE",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "resources": [
     {
       "id": "config:DailyRoutineTask.json",

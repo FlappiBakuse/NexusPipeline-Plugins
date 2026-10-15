@@ -5,9 +5,9 @@
   "displayName": "三月七小助手",
   "gameName": "崩坏：星穹铁道",
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.2",
+  "minHostVersion": "0.17.4",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -18,7 +18,7 @@
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "taskProtocol": {
-    "version": "0.2.0",
+    "version": "0.3.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [],
@@ -33,17 +33,20 @@
       {
         "id": "march7th.game_target",
         "required": true,
-        "criticality": "advisory_or_contextual"
+        "criticality": "advisory_or_contextual",
+        "category": "known_configuration_issue"
       },
       {
         "id": "march7th.finish_action",
         "required": true,
-        "criticality": "critical_when_applicable"
+        "criticality": "critical_when_applicable",
+        "category": "safety"
       },
       {
         "id": "march7th.process_exit",
         "required": true,
-        "criticality": "advisory_or_contextual"
+        "criticality": "advisory_or_contextual",
+        "category": "known_configuration_issue"
       }
     ],
     "environmentChecks": [

@@ -16,7 +16,7 @@
     "type": "source_derived_control_flow",
     "note": "Synthetic anonymous focus after current start; no task ID, cannot assign failure or completion. Original async dispatch is exercised separately."
   },
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "tasks": {},
   "batches": [],
   "results": {},

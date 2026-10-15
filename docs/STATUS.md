@@ -14,14 +14,14 @@
 
 现役 Maa 配置、编译、原生输入、许可及验证入口见 [MaaFramework 框架指南](frameworks/MAAFRAMEWORK_DRIVER.md)。正式候选与商店发行资格由[发行指南](RELEASING.md)及对应运行记录判定。
 
-当前八专项采用 `taskProtocol` 0.2.0 / Host 0.17.2；只加载当前日常报告和显式 provider 语义。当前行为见 [任务协议](author/TASK_PROTOCOL.md)、[MFAAvalonia](frameworks/MFA_AVALONIA.md) 及各项目文档，发行发现固定在 [三版窗口](../adapters/task-protocol/upstream-window.json)。
+当前八专项采用 `taskProtocol` 0.3.0 / Host 0.17.4；只加载当前日常报告和显式 provider 语义。当前行为见 [任务协议](author/TASK_PROTOCOL.md)、[MFAAvalonia](frameworks/MFA_AVALONIA.md) 及各项目文档，发行发现固定在 [三版窗口](../adapters/task-protocol/upstream-window.json)。
 
 ## 专项适配的未验证范围
 
 - [ ] 完成八款最新及前两版的真实游戏资格。现有资格覆盖隔离 Host、真实 Jint、源码派生/合成日志和受控原生窗口；MaaEnd 与 MaaStellaSora 已执行选定真实任务，框架成功不代表奖励增量核验或其他版本、设备通过。
 - [ ] 扩展 MFAAvalonia 原生日常及单实例交接验证。已确认官方二进制启动和文件日志出口；同名异步失败缺少任务 ID 时保守失败，完整日常及多实例竞争尚未原生运行。旧 MXU 快照原地保留，并在新目录人工重新设置，编辑保存使用原有事务。
 - [ ] 补充 MaaEnd 匿名异步内部 focus 的可核实任务身份，不按最近任务推定归属。正式 MXU 外层任务终态与日常消费重试已有隔离回归。
-- [ ] 扩展 OK China/Global 安装的原生运行、更新竞争和依赖变体。当前使用结构兼容、官方来源和实际 worker/更新器身份冻结；版本或旧源码哈希变化不产生未核验占位。全解释器与依赖供应链不属于任务观察器的验证范围。
+- [ ] 扩展 OK China/Global 安装的原生运行、更新竞争和依赖变体。当前使用结构兼容、官方来源和实际 worker/更新器身份冻结；版本号不限制运行；无法识别的实现范围保持未核验。全解释器与依赖供应链不属于任务观察器的验证范围。
 - [ ] 扩展 March7th / ZZZ 原配置续跑的跨日真实样本。完成记录与配额保留已有事务回归；上游条件分支仍需真实日期、体力与账号样本，不用失败时间戳代替成功。
 - [ ] 继续增加可追溯的独立中文日志样本。0.2 已支持日常流程缺失结束、日志缺口或格式失配记为失败；业务闭环无未恢复错误记为完成。手工一次性入口及未知任务不能借此扩大支持范围。
 

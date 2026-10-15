@@ -1,6 +1,6 @@
 # MaaEnd 项目适配
 
-公共框架见[MXU](../frameworks/MXU.md)，结果契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0，最低 Host 0.16.15。
+公共框架见[MXU](../frameworks/MXU.md)，结果契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.3.0，最低 Host 0.17.4。
 
 MaaEnd 保持官方发行实际使用的 MXU GUI。MaaStellaSora 的 MFA 迁移不改变 MaaEnd 或独立 MaaFrameworkDriver 的配置入口。
 
@@ -16,13 +16,13 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.4.4`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v2.32.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.32.0) | `5501b27f3b3f552e8897a8839521dd36caf617a9` |
 | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) | `f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d` |
 | [v2.30.1](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.1) | `6e8f43c8fa9348b5e375358c6232cb40fc6e0e5a` |
-| [v2.30.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.0) | `f921c0165bd49ab62f9867419bd9ac6da4c92747` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -113,3 +113,5 @@ PC 模式下，项目游戏联动配置了有效启动目标、游戏窗口已�
 - 启动设置：缺少前置程序时建立首项 `preActions`；启用并关闭等待退出，路径使用项目游戏路径，保留参数、后续前置程序和原任务。旧 `preAction` 内容保留，并在当前实例生成原生优先读取的数组覆盖。
 
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

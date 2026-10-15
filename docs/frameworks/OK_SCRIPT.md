@@ -2,7 +2,7 @@
 
 项目日常范围见 [OkNTE](../projects/OkNTE.md)、[OkWutheringWaves](../projects/OkWutheringWaves.md)，协议见 [TASK_PROTOCOL](../author/TASK_PROTOCOL.md)。
 
-0.2.0 用官方安装来源、运行入口结构、配置结构和实际进程归属判断兼容。版本号及源码 hash 用于研究复现；相同结构的新版本生成真实日常任务，执行观察与消费失败重试，不进入“任务未核验”占位。旧 Nexus 0.1.x 包拒绝加载。
+0.3.0 用官方安装来源、运行入口结构、配置结构和实际进程归属判断兼容。版本号及源码 hash 用于研究复现；相同结构的新版本生成真实日常任务，执行观察与消费失败重试，不进入“任务未核验”占位。旧 Nexus 0.1.x 包拒绝加载。
 
 安装元数据须指向本款与本渠道，当前版本在安装器可用版本表中，更新器空闲，HEAD 为非零完整提交，origin 属于 metadata 声明的精确官方地址。China 与 Global 分开验证；Global NTE 使用 BnanZ0/ok-nte-update，Global WW 使用 ok-oldking/ok-ww-update。China 镜像仅接受声明的精确地址，不能扩展为域名通配。
 

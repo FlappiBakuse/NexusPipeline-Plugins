@@ -31,7 +31,7 @@ function observe(text, tasks, emit, result, line, states) {
       scope.current = null;
       return;
     }
-    const skip = log.message.match(/^任务不支持当前语言，跳过: ([a-z_]+)$/);
+    const skip = log.message.match(/^任务不支持当前语言[,，] ?跳过: ([a-z_]+)$/);
     if (skip) {
       const task = eligible.find(t => t.sourceKey === skip[1] && !scope.visited.includes(t.id));
       if (task) {

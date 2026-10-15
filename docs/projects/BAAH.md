@@ -1,6 +1,6 @@
 # BAAH 项目适配
 
-公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.2.0 / daily-flow-v1，最低 Host 0.16.15。
+公共契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.3.0 / daily-flow-v1，最低 Host 0.17.4。
 
 发现以活动流水线、任务序号和名称作身份，TASK_ONOFF 平行数组以完整 TASK_PIPELINE 为 guard。自动登录和收尾独立建模，不进入业务分母。选择重试映射只取流水线任务，不能把自动登录的数组位置误用于 TASK_ONOFF。
 
@@ -16,7 +16,7 @@ TARGET_EMULATOR_PATH、TARGET_IP_PATH、TARGET_PORT 从当前绑定用户主配�
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.3.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.3.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
@@ -82,3 +82,5 @@ TARGET_EMULATOR_PATH、TARGET_IP_PATH、TARGET_PORT 从当前绑定用户主配�
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
 
 软件设置修复：附加快照 `software_config.json/SAVE_LOG_TO_FILE` 缺失或为 false 时可预览设为 true，对应“是否输出日志到 /DATA/LOGS/ 目录”。已开启不重复建议，其他类型不猜测转换；应用到当前用户快照，下一次编辑/运行由配置交换使用。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

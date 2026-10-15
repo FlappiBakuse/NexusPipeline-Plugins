@@ -1,0 +1,52 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "partial",
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"other\", \"tasks\": []}, {\"id\": \"chosen\", \"tasks\": [{\"id\": \"one\", \"taskName\": \"Daily\", \"enabled\": true}, {\"id\": \"closed\", \"taskName\": \"Other\", \"enabled\": false}, {\"id\": \"future_feature\", \"taskName\": \"future_feature\", \"enabled\": true}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"\\u6bcf\\u65e5\\u4efb\\u52a1\"}, {\"name\": \"Other\"}]}"
+    }
+  ],
+  "tasks": {
+    "chosen/one": {
+      "enabled": true
+    },
+    "chosen/closed": {
+      "enabled": false
+    },
+    "chosen/future_feature": {
+      "enabled": true,
+      "detection": "unsupported"
+    }
+  },
+  "batches": [
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务开始: 每日任务"
+      ]
+    },
+    {
+      "lines": [
+        "[2026-09-21 10:00:00.123] 任务失败: 每日任务"
+      ]
+    }
+  ],
+  "results": {
+    "chosen/one": "failed",
+    "chosen/future_feature": "unknown"
+  },
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "note": "Known reviewed entry with an explicitly synthetic future task; exercises original selection preservation, not actual upstream execution."
+  },
+  "readFailureResourceIds": [
+    "locale-zh-CN"
+  ]
+}

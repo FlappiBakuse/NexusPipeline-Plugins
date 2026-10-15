@@ -4,7 +4,7 @@ function discover() {
   if (object(d.notify_template) && Object.prototype.hasOwnProperty.call(d.notify_template, 'InstanceNotCompleted'))
     plan.behaviorFields.push({ resourceId: config.id, selector: ['notify_template', 'InstanceNotCompleted'] });
   const defaults = ADAPTER.defaults;
-  behavior(plan, config, Object.keys(d).filter(k => /^(power_|universe_|weekly_|currencywars_|fight_|forgottenhall_|purefiction_|apocalyptic_|asset_|activity_|echo_)/.test(k)
+  behavior(plan, config, Object.keys(ADAPTER.defaults).filter(k => /^(power_|universe_|weekly_|currencywars_|fight_|forgottenhall_|purefiction_|apocalyptic_|asset_|activity_|echo_)/.test(k)
     && !/(?:_time|_timestamp|_last_run|_completed_count|_progress)$/.test(k) && !k.endsWith('_enable')));
   const value = key => Object.prototype.hasOwnProperty.call(d, key) ? d[key] : defaults[key];
   const roots = [

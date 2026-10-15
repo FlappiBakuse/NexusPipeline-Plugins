@@ -11,6 +11,15 @@
     },
     {
       "$ref": "#/$defs/retry"
+    },
+    {
+      "$ref": "#/$defs/discovery3"
+    },
+    {
+      "$ref": "#/$defs/observation3"
+    },
+    {
+      "$ref": "#/$defs/retry3"
     }
   ],
   "$defs": {
@@ -1116,6 +1125,834 @@
         "filePatches",
         "targetTaskIds",
         "launchScopeTaskIds"
+      ]
+    },
+    "selectionField3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resourceId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "selector": {
+          "$ref": "#/$defs/selector"
+        },
+        "purpose": {
+          "enum": [
+            "selection",
+            "cursor"
+          ]
+        },
+        "taskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "taskIndices": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1024,
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023
+          }
+        }
+      },
+      "required": [
+        "resourceId",
+        "selector",
+        "purpose",
+        "taskIds"
+      ]
+    },
+    "task3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "sourceKey": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "parentId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "role": {
+          "enum": [
+            "business",
+            "technical",
+            "cleanup"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "countsAsUnit": {
+          "type": "boolean"
+        },
+        "requiredForParent": {
+          "type": "boolean"
+        },
+        "retryUnitId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "retryRisk": {
+          "enum": [
+            "safe",
+            "conditional",
+            "unsafe",
+            "unknown"
+          ]
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 128
+        },
+        "detection": {
+          "enum": [
+            "supported",
+            "limited",
+            "unsupported"
+          ]
+        },
+        "configRef": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nameText": {
+          "$ref": "#/$defs/textRef"
+        },
+        "completionPolicy": {
+          "anyOf": [
+            {
+              "enum": [
+                "flow",
+                "authoritative"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "workflowRole": {
+          "anyOf": [
+            {
+              "enum": [
+                "daily",
+                "technical",
+                "manual_only"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observationContract": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "ruleSetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 512
+                },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "maxItems": 8,
+                  "minItems": 1,
+                  "uniqueItems": true
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      },
+                      "kind": {
+                        "enum": [
+                          "scope_started",
+                          "flow_ended",
+                          "business_succeeded",
+                          "business_failed",
+                          "upstream_cancelled",
+                          "normal_skip",
+                          "not_executed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind"
+                    ]
+                  },
+                  "maxItems": 64,
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "ruleSetId",
+                "sources",
+                "rules"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "retryPolicy": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "selective_config",
+                    "native_resume"
+                  ]
+                },
+                "resourceConsumption": {
+                  "type": "boolean"
+                },
+                "limitRefs": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "maxItems": 32,
+                  "uniqueItems": true
+                }
+              },
+              "required": [
+                "mode",
+                "resourceConsumption",
+                "limitRefs"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recognition": {
+          "enum": [
+            "known",
+            "opaque"
+          ]
+        },
+        "lifecycleRole": {
+          "enum": [
+            "prepare",
+            "business",
+            "finalize"
+          ]
+        },
+        "selectionPolicy": {
+          "enum": [
+            "managed",
+            "preserve"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "sourceKey",
+        "name",
+        "parentId",
+        "role",
+        "enabled",
+        "order",
+        "countsAsUnit",
+        "requiredForParent",
+        "retryUnitId",
+        "retryRisk",
+        "dependencies",
+        "detection",
+        "recognition",
+        "lifecycleRole",
+        "selectionPolicy"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "recognition": {
+                "const": "known"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "completionPolicy",
+              "workflowRole",
+              "observationContract",
+              "retryPolicy"
+            ],
+            "properties": {
+              "completionPolicy": {
+                "enum": [
+                  "flow",
+                  "authoritative"
+                ]
+              },
+              "workflowRole": {
+                "enum": [
+                  "daily",
+                  "technical",
+                  "manual_only"
+                ]
+              },
+              "observationContract": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ruleSetId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "maxItems": 8,
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        },
+                        "kind": {
+                          "enum": [
+                            "scope_started",
+                            "flow_ended",
+                            "business_succeeded",
+                            "business_failed",
+                            "upstream_cancelled",
+                            "normal_skip",
+                            "not_executed"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "kind"
+                      ]
+                    },
+                    "maxItems": 64,
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "ruleSetId",
+                  "sources",
+                  "rules"
+                ]
+              },
+              "retryPolicy": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "selective_config",
+                      "native_resume"
+                    ]
+                  },
+                  "resourceConsumption": {
+                    "type": "boolean"
+                  },
+                  "limitRefs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "maxItems": 32,
+                    "uniqueItems": true
+                  }
+                },
+                "required": [
+                  "mode",
+                  "resourceConsumption",
+                  "limitRefs"
+                ]
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "completionPolicy": {
+                "type": "null"
+              },
+              "workflowRole": {
+                "type": "null"
+              },
+              "observationContract": {
+                "type": "null"
+              },
+              "retryPolicy": {
+                "type": "null"
+              },
+              "configRef": {
+                "type": "null"
+              },
+              "selectionPolicy": {
+                "const": "preserve"
+              },
+              "countsAsUnit": {
+                "const": false
+              },
+              "requiredForParent": {
+                "const": false
+              },
+              "detection": {
+                "const": "unsupported"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "countsAsUnit": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "recognition": {
+                "const": "known"
+              },
+              "lifecycleRole": {
+                "const": "business"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "recognition": {
+                "const": "known"
+              },
+              "lifecycleRole": {
+                "const": "business"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "role": {
+                "const": "business"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "opaqueScopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "resourceId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "reasonCode": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 512
+              }
+            },
+            "required": [
+              "id",
+              "resourceId",
+              "enabled",
+              "reasonCode"
+            ]
+          },
+          "maxItems": 1024
+        }
+      },
+      "required": [
+        "opaqueScopes"
+      ]
+    },
+    "configAssessment3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "2"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configCheck"
+          },
+          "maxItems": 128,
+          "minItems": 1
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "checks"
+      ]
+    },
+    "discovery3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocolVersion": {
+          "const": "0.3.0"
+        },
+        "type": {
+          "const": "discovery"
+        },
+        "coverage": {
+          "enum": [
+            "complete",
+            "partial",
+            "opaque"
+          ]
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task3"
+          },
+          "maxItems": 1024
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "maxItems": 128
+        },
+        "selectionFields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/selectionField3"
+          },
+          "maxItems": 2048
+        },
+        "behaviorFields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/behaviorField"
+          },
+          "maxItems": 2048
+        },
+        "configAssessment": {
+          "$ref": "#/$defs/configAssessment3"
+        },
+        "verification": {
+          "$ref": "#/$defs/verification"
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "type",
+        "coverage",
+        "tasks",
+        "diagnostics",
+        "configAssessment",
+        "verification"
+      ]
+    },
+    "observation3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocolVersion": {
+          "const": "0.3.0"
+        },
+        "type": {
+          "const": "observation"
+        },
+        "runId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "attemptId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/observationItem"
+          },
+          "maxItems": 2048
+        },
+        "runBoundary": {
+          "enum": [
+            "open",
+            "ended",
+            "aborted",
+            "unknown"
+          ]
+        },
+        "boundaryEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 8
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/diagnostic"
+          },
+          "maxItems": 128
+        },
+        "cursorState": {
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "incidents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/incident"
+          },
+          "maxItems": 2048
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "type",
+        "runId",
+        "attemptId",
+        "observations",
+        "runBoundary",
+        "boundaryEvidence",
+        "diagnostics"
+      ]
+    },
+    "retry3": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "protocolVersion": {
+          "const": "0.3.0"
+        },
+        "type": {
+          "const": "retry"
+        },
+        "decision": {
+          "enum": [
+            "stop",
+            "selective",
+            "native_resume",
+            "original_rerun"
+          ]
+        },
+        "reasonCode": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "reasonText": {
+          "$ref": "#/$defs/textRef"
+        },
+        "includedTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024
+        },
+        "prerequisiteTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024
+        },
+        "expandedUnitIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024
+        },
+        "filePatches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/patch"
+          },
+          "maxItems": 32
+        },
+        "targetTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "launchScopeTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "preservedLifecycleTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "preservedOpaqueTaskIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "uniqueItems": true
+        },
+        "preservedOpaqueScopeIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "maxItems": 1024,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "protocolVersion",
+        "type",
+        "decision",
+        "reasonCode",
+        "includedTaskIds",
+        "prerequisiteTaskIds",
+        "expandedUnitIds",
+        "filePatches",
+        "targetTaskIds",
+        "launchScopeTaskIds",
+        "preservedLifecycleTaskIds",
+        "preservedOpaqueTaskIds",
+        "preservedOpaqueScopeIds"
       ]
     }
   }

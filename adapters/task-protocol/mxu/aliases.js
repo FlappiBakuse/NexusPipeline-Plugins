@@ -1,24 +1,39 @@
 function mxuAliases(tasks) {
   if (mxuAliasCache) return mxuAliasCache;
   const pi = resource('interface'), definitions = (pi.task || []).slice(), locales = [];
-  const configured = tasks.length ? nexus.readConfig(tasks[0].configRef).document : { instances: [] };
+  const known = tasks.find(task => task.configRef);
+  const configured = known ? nexus.readConfig(known.configRef).document : { instances: [] };
   const wanted = configured.instances.flatMap(i => i.tasks || []).filter(t => tasks.some(task => task.sourceKey.endsWith('/' + t.id))).map(t => t.taskName);
   for (const path of pi.import || []) {
     const declaredTasks = ADAPTER.importTasks[path];
     if (declaredTasks && !wanted.some(name => declaredTasks.includes(name))) continue;
     const id = ADAPTER.imports[path];
-    if (id) { try { definitions.push(...(resource(id).task || [])); } catch { /* unavailable imports stay unsupported */ } }
+    if (id) {
+      try { definitions.push(...(resource(id).task || [])); }
+      catch (error) {
+        if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+      }
+    }
   }
   const configs = {};
   mxuAliasCache = {};
   for (const task of tasks) {
+    if (!task.configRef) {
+      mxuAliasCache[task.id] = [task.name.replace(/<[^>]*>/g, '').trimEnd()];
+      continue;
+    }
     const document = configs[task.configRef] || (configs[task.configRef] = nexus.readConfig(task.configRef).document);
     const selected = document.instances.flatMap(instance => (instance.tasks || []).filter(t => instance.id + '/' + t.id === task.sourceKey));
     const names = [task.name];
     if (selected.length === 1 && !selected[0].customName && document.settings.language === 'system') {
       const special = ADAPTER.specialTasks?.[selected[0].taskName];
       if (special) names.push(...Object.values(special.labels));
-      if (!locales.length) for (const id of Object.values(ADAPTER.locales)) { try { locales.push(resource(id)); } catch { /* optional language */ } }
+      if (!locales.length) for (const id of Object.values(ADAPTER.locales)) {
+        try { locales.push(resource(id)); }
+        catch (error) {
+          if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+        }
+      }
       const defs = definitions.filter(d => d.name === selected[0].taskName);
       if (defs.length === 1 && typeof defs[0].label === 'string' && defs[0].label.startsWith('$'))
         for (const locale of locales) if (typeof locale[defs[0].label.slice(1)] === 'string') names.push(locale[defs[0].label.slice(1)]);

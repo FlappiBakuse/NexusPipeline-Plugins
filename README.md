@@ -10,18 +10,18 @@
 | --- | --- | --- |
 | [自定义壁纸](plugins/general/CustomWallpaper/README.md) | 0.3.2 | 通用功能 |
 | [模拟器支持扩展](plugins/general/EmulatorSupport/README.md) | 0.2.2 | 通用功能 |
-| [游戏活动](plugins/general/GameActivities/README.md) | 0.1.0 | 通用功能 |
-| [游戏签到](plugins/general/GameCheckIn/README.md) | 0.4.3 | 通用功能 |
+| [游戏活动](plugins/general/GameActivities/README.md) | 0.1.1 | 通用功能 |
+| [游戏签到](plugins/general/GameCheckIn/README.md) | 0.4.4 | 通用功能 |
 | [实时截图窗口](plugins/general/LiveScreenshot/README.md) | 0.3.2 | 通用功能 |
-| [MaaFramework 框架直驱](plugins/general/MaaFrameworkDriver/README.md) | 0.2.2 | 通用功能 |
-| [蔚蓝档案爱丽丝助手](plugins/specialized/BAAH/README.md) | 0.3.2 | 专项脚本接入 |
-| [更好的原神](plugins/specialized/BetterGI/README.md) | 0.4.2 | 专项脚本接入 |
-| [终末地小助手](plugins/specialized/MaaEnd/README.md) | 0.4.2 | 专项脚本接入 |
-| [星塔助手](plugins/specialized/MaaStellaSora/README.md) | 0.3.2 | 专项脚本接入 |
-| [三月七小助手](plugins/specialized/March7thAssistant/README.md) | 0.4.2 | 专项脚本接入 |
-| [ok-nte 日常](plugins/specialized/OkNTE/README.md) | 0.2.2 | 专项脚本接入 |
-| [ok-ww 日常](plugins/specialized/OkWutheringWaves/README.md) | 0.2.2 | 专项脚本接入 |
-| [绝区零一条龙](plugins/specialized/ZenlessZoneZeroOneDragon/README.md) | 0.4.2 | 专项脚本接入 |
+| [MaaFramework 框架直驱](plugins/general/MaaFrameworkDriver/README.md) | 0.2.3 | 通用功能 |
+| [蔚蓝档案爱丽丝助手](plugins/specialized/BAAH/README.md) | 0.3.3 | 专项脚本接入 |
+| [更好的原神](plugins/specialized/BetterGI/README.md) | 0.4.3 | 专项脚本接入 |
+| [终末地小助手](plugins/specialized/MaaEnd/README.md) | 0.4.4 | 专项脚本接入 |
+| [星塔助手](plugins/specialized/MaaStellaSora/README.md) | 0.3.3 | 专项脚本接入 |
+| [三月七小助手](plugins/specialized/March7thAssistant/README.md) | 0.4.3 | 专项脚本接入 |
+| [ok-nte 日常](plugins/specialized/OkNTE/README.md) | 0.2.3 | 专项脚本接入 |
+| [ok-ww 日常](plugins/specialized/OkWutheringWaves/README.md) | 0.2.3 | 专项脚本接入 |
+| [绝区零一条龙](plugins/specialized/ZenlessZoneZeroOneDragon/README.md) | 0.4.3 | 专项脚本接入 |
 
 ## 安装与使用
 
@@ -39,3 +39,5 @@
 ## License
 
 本仓库自有代码与文档采用 [MIT 许可证](LICENSE)。第三方依赖和资源遵循各自的许可证；MaaFramework 相关许可与声明见 [LICENSES](plugins/general/MaaFrameworkDriver/LICENSES/NOTICE.md)。
+
+官方八专项使用任务协议 0.3.0，最低 NexusPipeline 0.17.4。识别降级时保留原入口与未知选择，并在整体成功结果中披露未逐项核验范围。

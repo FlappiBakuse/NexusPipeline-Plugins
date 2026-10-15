@@ -1,22 +1,32 @@
 function retryPlan(discover) {
   let candidates = [];
+  const recognition = ADAPTER.protocolVersion === '0.3.0';
+  const tasks = input.originalPlan.tasks;
   const finish = value => {
     value.targetTaskIds = candidates.filter(t => value.includedTaskIds.includes(t.id)).map(t => t.id);
     value.launchScopeTaskIds = value.includedTaskIds.slice();
+    if (recognition) {
+      const active = value.decision !== 'stop';
+      value.preservedLifecycleTaskIds = active ? tasks.filter(t => t.enabled && t.recognition === 'known' && ['prepare','finalize'].includes(t.lifecycleRole)).map(t => t.id) : [];
+      value.preservedOpaqueTaskIds = active ? tasks.filter(t => t.enabled && t.recognition === 'opaque').map(t => t.id) : [];
+      value.preservedOpaqueScopeIds = active ? input.originalPlan.verification.opaqueScopes.filter(s => s.enabled).map(s => s.id) : [];
+    }
     return value;
   };
   const stop = reason => finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'stop', reasonCode: reason,
     includedTaskIds: [], prerequisiteTaskIds: [], expandedUnitIds: [], filePatches: [] });
   if (input.cancelled || input.budgetExhausted || input.attemptsUsed >= input.maxAttempts) return stop('retry.budget_exhausted');
-  const tasks = input.originalPlan.tasks;
+  if (recognition && !tasks.some(t => t.enabled && t.recognition === 'known') && input.executionCompletion?.status === 'failed')
+    return finish({protocolVersion:ADAPTER.protocolVersion,type:'retry',decision:'original_rerun',reasonCode:'retry.original_rerun',
+      includedTaskIds:tasks.filter(t => t.enabled).map(t => t.id),prerequisiteTaskIds:[],expandedUnitIds:[],filePatches:[]});
   const protectedScope = id => {
     for (let t = tasks.find(t => t.id === id); t; t = tasks.find(p => p.id === t.parentId))
       if (input.taskStates[t.id] === 'partial') return true;
     return false;
   };
-  candidates = tasks.filter(t => t.enabled && ['failed', 'blocked'].includes(input.taskStates[t.id]) && !protectedScope(t.id));
+  candidates = tasks.filter(t => t.enabled && (!recognition || t.recognition === 'known') && ['failed', 'blocked'].includes(input.taskStates[t.id]) && !protectedScope(t.id));
   if (!candidates.length) return stop('retry.no_verified_candidate');
-  if (tasks.filter(t => t.enabled).every(t => t.retryPolicy.mode === 'native_resume')) {
+  if (tasks.filter(t => t.enabled && (!recognition || t.recognition === 'known')).every(t => t.retryPolicy.mode === 'native_resume')) {
     if (tasks.some(t => t.enabled && protectedScope(t.id))) return stop('retry.protected_scope');
     return finish({ protocolVersion: ADAPTER.protocolVersion, type: 'retry', decision: 'native_resume', reasonCode: 'retry.unfinished',
       includedTaskIds: tasks.filter(t => t.enabled).map(t => t.id), prerequisiteTaskIds: [], expandedUnitIds: [], filePatches: [] });
@@ -25,6 +35,7 @@ function retryPlan(discover) {
   const prerequisites = new Set(), expanded = new Set();
   for (const candidate of candidates) {
     const unitSelection = new Set([candidate.id]), unitPrerequisites = new Set(), unitExpanded = new Set();
+    if (recognition) tasks.filter(t => t.enabled && t.recognition === 'known' && ['prepare','finalize'].includes(t.lifecycleRole)).forEach(t => unitSelection.add(t.id));
     let changed = true;
     while (changed) {
       const count = unitSelection.size;
@@ -36,7 +47,9 @@ function retryPlan(discover) {
       }
       changed = unitSelection.size !== count;
     }
-    if (tasks.some(t => unitSelection.has(t.id) && (protectedScope(t.id) || !['daily','technical'].includes(t.workflowRole) || (!t.enabled && t.role === 'business')))
+    if (tasks.some(t => unitSelection.has(t.id) && (protectedScope(t.id)
+        || !(recognition && t.recognition === 'opaque') && !['daily','technical'].includes(t.workflowRole)
+        || !t.enabled && (recognition || t.role === 'business')))
         || Array.from(unitSelection).some(id => !tasks.some(t => t.id === id))) continue;
     unitSelection.forEach(id => selected.add(id));
     unitPrerequisites.forEach(id => prerequisites.add(id));
@@ -44,7 +57,14 @@ function retryPlan(discover) {
   }
   if (!selected.size) return stop('retry.risk_not_verified');
   const included = [], remaining = new Set(selected);
-  while (remaining.size) {
+  if (recognition) {
+    tasks.filter(t => t.enabled && t.recognition === 'opaque').forEach(t => selected.add(t.id));
+    tasks.filter(t => t.enabled && selected.has(t.id)).forEach(t => included.push(t.id));
+    if (included.some(id => protectedScope(id))) return stop('retry.partial_scope_protected');
+    if (included.some(id => tasks.find(t => t.id === id).dependencies.some(d => included.indexOf(d) > included.indexOf(id))))
+      return stop('retry.dependency_order_conflict');
+  }
+  while (!recognition && remaining.size) {
     const ready = tasks.filter(t => remaining.has(t.id) && !t.dependencies.some(d => remaining.has(d))).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
     requireValue(ready.length > 0); ready.forEach(t => { included.push(t.id); remaining.delete(t.id); });
   }
@@ -55,6 +75,7 @@ function retryPlan(discover) {
       prerequisiteTaskIds: included.filter(id => prerequisites.has(id)), expandedUnitIds: Array.from(expanded).sort(), filePatches: custom });
   }
   for (const task of tasks) {
+    if (recognition && task.recognition === 'opaque') continue;
     const slot = current.slots[task.id];
     if (!slot) { if (selected.has(task.id) && !task.enabled) return stop('retry.no_selection_field'); continue; }
     const r = nexus.readConfig(slot.resourceId), expected = select(r.document, slot.selector);

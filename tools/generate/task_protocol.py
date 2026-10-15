@@ -42,7 +42,7 @@ def load_adapters(source: Path):
 
 def validate_adapter_metadata(adapter, artifact):
     """Validate metadata facts consumed by generated configuration diagnostics."""
-    if adapter.get('protocolVersion') != '0.2.0':
+    if adapter.get('protocolVersion') not in {'0.2.0', '0.3.0'}:
         raise ValueError(f'{artifact}: unsupported task protocol version')
     if 'dailyTaskKeys' in adapter:
         raise ValueError(f'{artifact}: dailyTaskKeys is not an authoritative field')
@@ -152,6 +152,19 @@ def bundle(root: Path, adapter, phase, *, scaffold=False):
             raise ValueError('Unsafe phase module path: ' + name)
         content += path.read_text(encoding='utf-8') + '\n'
     if phase == 'discover':
+        if adapter['protocolVersion'] == '0.3.0':
+            content += '''let result;
+try { result = finalizePlan(discover()); }
+catch (error) {
+  if (error.message !== 'unsupported_schema') throw error;
+  result = createPlan(); result.coverage = 'unsupported';
+  result.diagnostics.push({code:'unsupported_schema', message:'Task structure is not recognized; original execution remains unchanged.'});
+  result = finalizePlan(result);
+}
+result.configAssessment = finalizeAssessment(result); delete result.slots;
+console.log(result);
+'''
+            return content
         content += '''let result;
 try { result = discover(); result.configAssessment = finalizeAssessment(result); delete result.slots; }
 catch { result = { protocolVersion: ADAPTER.protocolVersion, type: 'discovery', coverage: 'unsupported', tasks: [], selectionFields: [],

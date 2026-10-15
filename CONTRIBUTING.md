@@ -142,3 +142,5 @@ Pull Request 应包含：
 `python tools/repo.py check docs` 同时检查指定前端指南声明及 manifest 示例与 `contracts/host-compatibility.json`；历史旧数字不扫描，模糊表述为 REVIEW，提取失败为 NOT_CHECKED 且非零。路径允许规范化后仍在仓库内的 `../CONTRIBUTING.md`，拒绝不存在或真正仓库外的目标。治理工具不替代 A06、ZIP 检查、生产 PR 检查或功能测试，也不更改发布 writer 权限。工具自测沿用 `python -m unittest discover -s tests/tooling -v`，将隔离输出定位到已登记的外部测试根。
 
 当前公开契约为 Plugin API 2.2 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。插件 README 面向用户，统一说明用途、开始使用、使用范围和常见问题；开发协议与测试入口放入作者指南或插件 docs，不将构建通过写作真实平台验收通过。
+
+官方专项任务协议 0.3.0 使用分类配置检查、known/opaque 识别和原启用生命周期保留。源 metadata、生成器、wire schema 与 Host 校验须同步；源文件修改后执行 generate tasks/editors/schema，使用真实 Jint 与选择事务验证未知值、顺序、重复项和恢复。0.2.0 示例保持明确兼容回归用途。

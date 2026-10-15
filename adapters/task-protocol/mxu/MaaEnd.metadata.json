@@ -271,7 +271,7 @@
     ],
     "tasks/AutoEssence/Location/ChooseLocation.json": []
   },
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "dailyPolicy": {
     "completionPolicy": "authoritative",
     "workflowRole": "daily",
@@ -317,7 +317,8 @@
           "autoStartInstanceId"
         ]
       },
-      "reasonKey": "diagnostic.mxu.launch_owner"
+      "reasonKey": "diagnostic.mxu.launch_owner",
+      "category": "safety"
     },
     {
       "id": "mxu.autostart_target",
@@ -335,7 +336,8 @@
           "settings",
           "autoStartInstanceId"
         ]
-      }
+      },
+      "category": "safety"
     },
     {
       "id": "mxu.controller_resource",
@@ -351,7 +353,8 @@
           "settings",
           "autoStartInstanceId"
         ]
-      }
+      },
+      "category": "known_configuration_issue"
     },
     {
       "id": "mxu.finish_action",
@@ -371,7 +374,8 @@
           "autoStartInstanceId"
         ]
       },
-      "defaultAction": "shutdown"
+      "defaultAction": "shutdown",
+      "category": "safety"
     }
   ],
   "taskTextKeys": {},
@@ -520,5 +524,11 @@
         "ko-KR": "⚡ PC 작업"
       }
     }
-  }
+  },
+  "finalizeTasks": [
+    "CloseGame",
+    "CloseGamePC",
+    "关闭游戏",
+    "__MXU_POWER__"
+  ]
 }

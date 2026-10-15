@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "complete",
+  "coverage": "partial",
   "resources": [
     {
       "id": "config:one_dragon/_group.yml",
@@ -27,7 +27,7 @@
   "batches": [],
   "results": {
     "one_dragon/email": "failed",
-    "one_dragon/future": "failed"
+    "one_dragon/future": "unknown"
   },
   "displayNames": {
     "en-US": {
@@ -54,6 +54,5 @@
     "D07",
     "D17"
   ],
-  "admissionError": "protocol_error: daily task needs observable boundaries",
   "observableScopeCase": "daily-sup-actions-zzz-3.json"
 }

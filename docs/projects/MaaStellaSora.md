@@ -12,13 +12,13 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.3.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.3.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v1.6.0](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.6.0) | `6f36282ecf7464f27870f58121ef4ac02c503b1f` |
 | [v1.5.1](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.1) | `ee9f3c9b65011d1b7649202328c0914af7910c81` |
 | [v1.5.0](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.0) | `ea7890883b4001bb2d5aed3d0866ba0f49aeada6` |
-| [v1.4.4](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.4.4) | `4009bc79591ad189d80f8f5d74d34d78bb8508cd` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -91,3 +91,5 @@ manifest 的 `configurationRevision` 固定为 `mfa-avalonia.instances.v1`，驱
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
 
 任务备注使用原生 `remark`，非空时优先于 `display_name_override`；显示原任务标签加备注，日志匹配使用原生实际名称。空白备注回退到旧昵称或原标签。备注/昵称随计划冻结，不借显示文字推定同名日志归属。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

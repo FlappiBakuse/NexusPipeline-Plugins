@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-05",
-  "qualification": "DISCOVERY_ONLY",
+  "checkedAt": "2026-10-14",
+  "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
   "nativeExecution": "NOT_RUN",
   "projects": [
     {
       "project": "BAAH",
       "repository": "BlueArchiveArisHelper/BAAH",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
         {
           "tag": "BAAH2.4.13",
@@ -30,8 +30,7 @@
               "digest": "sha256:845cc6e017fe72f60b668503dd49aa8187b5350595ec814e3ee95321dc8636bd",
               "browser_download_url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/download/BAAH2.4.13/BAAH2.4.13_update.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "BAAH2.4.11",
@@ -54,8 +53,7 @@
               "digest": "sha256:95f9a3fc916fb67ee15e268eadbfcaeaa1fecf2977131581d53001e04a6a20e3",
               "browser_download_url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/download/BAAH2.4.11/BAAH2.4.11_update.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "BAAH2.4.10",
@@ -78,15 +76,14 @@
               "digest": "sha256:4d9fbc2d4e6fa4a80d7eac02607cd1a70a8bfbe4783e156a3ec7ba2614666a36",
               "browser_download_url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/download/BAAH2.4.10/BAAH2.4.10_update.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
     {
       "project": "BetterGI",
       "repository": "babalae/better-genshin-impact",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
         {
           "tag": "0.66.0",
@@ -109,8 +106,7 @@
               "digest": "sha256:28d4756e55f32637538bf84427f5f31afd5b153bf996530c5975bd9c8c0b9343",
               "browser_download_url": "https://github.com/babalae/better-genshin-impact/releases/download/0.66.0/BetterGI_v0.66.0.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "0.65.0",
@@ -133,8 +129,7 @@
               "digest": "sha256:c23c8731fe36ad86f262d4d490cb6483882b1f5c783ad81bac539a30b4315cfc",
               "browser_download_url": "https://github.com/babalae/better-genshin-impact/releases/download/0.65.0/BetterGI_v0.65.0.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "0.64.0",
@@ -157,16 +152,87 @@
               "digest": "sha256:c12fceef6ea629c74dea74d95f2947dcdad07c8959893be6569662b781f0f589",
               "browser_download_url": "https://github.com/babalae/better-genshin-impact/releases/download/0.64.0/BetterGI_v0.64.0.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
     {
       "project": "MaaEnd",
       "repository": "MaaEnd/MaaEnd",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
+        {
+          "tag": "v2.32.0",
+          "commit": "5501b27f3b3f552e8897a8839521dd36caf617a9",
+          "prerelease": false,
+          "publishedAt": "2026-10-09T18:47:55Z",
+          "url": "https://github.com/MaaEnd/MaaEnd/releases/tag/v2.32.0",
+          "assets": [
+            {
+              "id": 625891105,
+              "name": "MaaEnd-android-arm64-v8a-v2.32.0.apk",
+              "size": 289303057,
+              "digest": "sha256:24cf74357fc9e629fa18cfcc6f5bbf2a4dc7070a72be429e04b8047ae793e1a2",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-android-arm64-v8a-v2.32.0.apk"
+            },
+            {
+              "id": 625891107,
+              "name": "MaaEnd-android-universal-v2.32.0.apk",
+              "size": 318714729,
+              "digest": "sha256:2b263976b664c0a8932ecf6b77f5e2d39873a66fbb854604d3c53743dfd99db0",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-android-universal-v2.32.0.apk"
+            },
+            {
+              "id": 625891102,
+              "name": "MaaEnd-android-x86_64-v2.32.0.apk",
+              "size": 291293659,
+              "digest": "sha256:0f550dbb765546ba820e62f159de7b8b41987f203f58d91dd07c0148ad18b9eb",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-android-x86_64-v2.32.0.apk"
+            },
+            {
+              "id": 625891101,
+              "name": "MaaEnd-linux-aarch64-v2.32.0.tar.gz",
+              "size": 301528702,
+              "digest": "sha256:9c069fcb12b20f4a85c7105268914cffd0fcf3efa83ae4de3bd46aad74165a32",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-linux-aarch64-v2.32.0.tar.gz"
+            },
+            {
+              "id": 625891106,
+              "name": "MaaEnd-linux-x86_64-v2.32.0.tar.gz",
+              "size": 440121664,
+              "digest": "sha256:38a3bb4c1380369209cb60238465d615c9de77efd870afb1bad7bee37d075d92",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-linux-x86_64-v2.32.0.tar.gz"
+            },
+            {
+              "id": 625891100,
+              "name": "MaaEnd-macos-aarch64-v2.32.0.dmg",
+              "size": 299256903,
+              "digest": "sha256:398bf0b2358dc266df111b586d62926d316a95fa6f14958b315017cc93d58c52",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-macos-aarch64-v2.32.0.dmg"
+            },
+            {
+              "id": 625891104,
+              "name": "MaaEnd-macos-x86_64-v2.32.0.dmg",
+              "size": 304909497,
+              "digest": "sha256:27e6ade3cc3053c73b306a6b610ec6f317e93767263f338dfd10d8a023b7db9e",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-macos-x86_64-v2.32.0.dmg"
+            },
+            {
+              "id": 625891099,
+              "name": "MaaEnd-win-aarch64-v2.32.0.zip",
+              "size": 305560352,
+              "digest": "sha256:71cd1ed41a948bfa368727c48b66c203057215afade98d1c012ea18d5895429c",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-win-aarch64-v2.32.0.zip"
+            },
+            {
+              "id": 625891103,
+              "name": "MaaEnd-win-x86_64-v2.32.0.zip",
+              "size": 309547928,
+              "digest": "sha256:f335b1c260f8719bf4e527519ee64026c8c2aeb80f462aac58abbb5d2a671328",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.32.0/MaaEnd-win-x86_64-v2.32.0.zip"
+            }
+          ]
+        },
         {
           "tag": "v2.31.0",
           "commit": "f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d",
@@ -237,8 +303,7 @@
               "digest": "sha256:a371dd33eacf8195ad683201e11314c6ad854b41c8dac81f545f6fc3d19d2bf0",
               "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.31.0/MaaEnd-win-x86_64-v2.31.0.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v2.30.1",
@@ -289,68 +354,66 @@
               "digest": "sha256:919aed5b9774e3bb237f3d58ee230a19a8f21699d636788d8df5fa73e1b77993",
               "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-win-x86_64-v2.30.1.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
-        },
-        {
-          "tag": "v2.30.0",
-          "commit": "f921c0165bd49ab62f9867419bd9ac6da4c92747",
-          "prerelease": false,
-          "publishedAt": "2026-09-25T17:32:24Z",
-          "url": "https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.0",
-          "assets": [
-            {
-              "id": 588893696,
-              "name": "MaaEnd-linux-aarch64-v2.30.0.tar.gz",
-              "size": 298120634,
-              "digest": "sha256:2902c95f67686352cfb2b9a9040c3ca9f682aa18439faeee40c64e5c8e37d682",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-linux-aarch64-v2.30.0.tar.gz"
-            },
-            {
-              "id": 588893692,
-              "name": "MaaEnd-linux-x86_64-v2.30.0.tar.gz",
-              "size": 436695155,
-              "digest": "sha256:c056318adcdd64d2eb35a6559a2c5f8643affe244629dd4352585e5a42b7ef00",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-linux-x86_64-v2.30.0.tar.gz"
-            },
-            {
-              "id": 588893695,
-              "name": "MaaEnd-macos-aarch64-v2.30.0.dmg",
-              "size": 296575769,
-              "digest": "sha256:282bba4bdf6c3677ee26b609f200bfd3569d1119f933390db0ed761ae7837015",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-macos-aarch64-v2.30.0.dmg"
-            },
-            {
-              "id": 588893694,
-              "name": "MaaEnd-macos-x86_64-v2.30.0.dmg",
-              "size": 302100393,
-              "digest": "sha256:cd79a41581707c62b5710ce65c906a20867641630a335b3badac500ab0571cbd",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-macos-x86_64-v2.30.0.dmg"
-            },
-            {
-              "id": 588893693,
-              "name": "MaaEnd-win-aarch64-v2.30.0.zip",
-              "size": 302855660,
-              "digest": "sha256:7be53361488dd9535dbbb0210fbcc51828164f55143dcfbb75edfe1352d68ebc",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-win-aarch64-v2.30.0.zip"
-            },
-            {
-              "id": 588893697,
-              "name": "MaaEnd-win-x86_64-v2.30.0.zip",
-              "size": 306830947,
-              "digest": "sha256:ac5745bd689df1831e7a07c73ce5afed1f2fbacb9908f90fc2cbb183d6625a47",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.0/MaaEnd-win-x86_64-v2.30.0.zip"
-            }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
     {
       "project": "MaaStellaSora",
       "repository": "MaaStellaSora/MaaStellaSora",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
+        {
+          "tag": "v1.6.0",
+          "commit": "6f36282ecf7464f27870f58121ef4ac02c503b1f",
+          "prerelease": false,
+          "publishedAt": "2026-10-10T06:05:55Z",
+          "url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.6.0",
+          "assets": [
+            {
+              "id": 627160975,
+              "name": "MaaStellaSora-linux-aarch64-v1.6.0.tar.gz",
+              "size": 150575843,
+              "digest": "sha256:a850519d2d991b0ee6f07e0225a624b0e6b3c4838cd0cf4abe3b982449863137",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-linux-aarch64-v1.6.0.tar.gz"
+            },
+            {
+              "id": 627160976,
+              "name": "MaaStellaSora-linux-x86_64-v1.6.0.tar.gz",
+              "size": 157323094,
+              "digest": "sha256:451bf852a7180533428bcf9784caadc1c40959658e668fda9ac9cce6b1c5f802",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-linux-x86_64-v1.6.0.tar.gz"
+            },
+            {
+              "id": 627160971,
+              "name": "MaaStellaSora-macos-aarch64-v1.6.0.tar.gz",
+              "size": 202816694,
+              "digest": "sha256:b1fc776752d7ad2ad7a73101a994538335af8adfb202ce4aba5f6e97e841b2e0",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-macos-aarch64-v1.6.0.tar.gz"
+            },
+            {
+              "id": 627160974,
+              "name": "MaaStellaSora-macos-x86_64-v1.6.0.tar.gz",
+              "size": 218022881,
+              "digest": "sha256:0f4987dd9fbc12cbfd54ebbcba340df3e704090dfd6260d91a85c0f3d402a8cd",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-macos-x86_64-v1.6.0.tar.gz"
+            },
+            {
+              "id": 627160972,
+              "name": "MaaStellaSora-win-aarch64-v1.6.0.zip",
+              "size": 214971270,
+              "digest": "sha256:8c0383a64c09d516f9ef2008eb67aeaa22207cd83ff254d9e6e1ed75e56ee492",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-win-aarch64-v1.6.0.zip"
+            },
+            {
+              "id": 627160973,
+              "name": "MaaStellaSora-win-x86_64-v1.6.0.zip",
+              "size": 222752878,
+              "digest": "sha256:6016b937ff0235805998aa6f6f1316ae4e578b3303e26a30e209f59cb4c65b5b",
+              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.6.0/MaaStellaSora-win-x86_64-v1.6.0.zip"
+            }
+          ]
+        },
         {
           "tag": "v1.5.1",
           "commit": "ee9f3c9b65011d1b7649202328c0914af7910c81",
@@ -400,8 +463,7 @@
               "digest": "sha256:eaa5f09e6085d69021a4851359dd671007d65c232ab5a0ce4d073bdfcbe4cae7",
               "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.5.1/MaaStellaSora-win-x86_64-v1.5.1.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v1.5.0",
@@ -452,74 +514,14 @@
               "digest": "sha256:bae0b0e2fc8d163611743add5d43345da85e33ca332701c86ed0912ade69aff9",
               "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.5.0/MaaStellaSora-win-x86_64-v1.5.0.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
-        },
-        {
-          "tag": "v1.4.4",
-          "commit": "4009bc79591ad189d80f8f5d74d34d78bb8508cd",
-          "prerelease": false,
-          "publishedAt": "2026-09-13T14:54:14Z",
-          "url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.4.4",
-          "assets": [
-            {
-              "id": 561392575,
-              "name": "MaaStellaSora-linux-aarch64-v1.4.4.tar.gz",
-              "size": 150477374,
-              "digest": "sha256:8f6ef54deb159bb2f9555db8abc4513488a6423833116a1b896bc487ba6a149c",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-linux-aarch64-v1.4.4.tar.gz"
-            },
-            {
-              "id": 561392576,
-              "name": "MaaStellaSora-linux-x86_64-v1.4.4.tar.gz",
-              "size": 157223606,
-              "digest": "sha256:f00c3ebb0f695d6cb0f954c8bf09bcf4642ac82d2e51930d7491d4040e4ed848",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-linux-x86_64-v1.4.4.tar.gz"
-            },
-            {
-              "id": 561392578,
-              "name": "MaaStellaSora-macos-aarch64-v1.4.4.tar.gz",
-              "size": 196222649,
-              "digest": "sha256:edf08d8e6111b6392d3b6c0946774c04cafc31a5ec977a4318343267a3d2b1ea",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-macos-aarch64-v1.4.4.tar.gz"
-            },
-            {
-              "id": 561392573,
-              "name": "MaaStellaSora-macos-x86_64-v1.4.4.tar.gz",
-              "size": 204174707,
-              "digest": "sha256:3202d2c55cd6fe88df387df193736333c0c3f883ca79a9a504d1c831077f071a",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-macos-x86_64-v1.4.4.tar.gz"
-            },
-            {
-              "id": 561392581,
-              "name": "MaaStellaSora-mxu-win-amd64-v1.4.4.zip",
-              "size": 163605702,
-              "digest": "sha256:3c450762c33312eaf4c4bd8630f6a75c15ae730458a066516e49484ee5efff01",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-mxu-win-amd64-v1.4.4.zip"
-            },
-            {
-              "id": 561392570,
-              "name": "MaaStellaSora-win-aarch64-v1.4.4.zip",
-              "size": 224223351,
-              "digest": "sha256:569b8700f37c4aa184e04afcf6668e609576f29a914690cf4d38963de9916e6a",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-win-aarch64-v1.4.4.zip"
-            },
-            {
-              "id": 561392572,
-              "name": "MaaStellaSora-win-x86_64-v1.4.4.zip",
-              "size": 232169070,
-              "digest": "sha256:18128cedee93e2e92b825808d4c5fc402a7e161b510a6a123bd6f6cb159c2831",
-              "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.4.4/MaaStellaSora-win-x86_64-v1.4.4.zip"
-            }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
     {
       "project": "March7thAssistant",
       "repository": "moesnow/March7thAssistant",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
         {
           "tag": "v2026.10.3",
@@ -549,8 +551,7 @@
               "digest": "sha256:00f1e0637b41fa3ad1ff2b9cb940afe8139b77cc730ee88818e26cf8d469a2ce",
               "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.10.3/update.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v2026.9.30",
@@ -580,8 +581,7 @@
               "digest": "sha256:3b91d475157d5ab8e79a8d9002a53af49e05e11b3a605e7f9e96c76a8c3aa182",
               "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.9.30/update.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v2026.9.25",
@@ -611,8 +611,7 @@
               "digest": "sha256:812ba74db297970a53439c674f47472aeb687d6c0c7fa48090f5d4766204ebe9",
               "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.9.25/update.7z"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
@@ -980,137 +979,788 @@
     {
       "project": "OkNTE",
       "repository": "BnanZ0/ok-nte",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
         {
-          "tag": "v1.4.8",
-          "commit": "0b1867f35cd30cb9b063ce40152295490c6274a3",
+          "tag": "v1.4.13",
+          "commit": "3958f471702f504fe36cfb4f8b9e564bdf734bf0",
           "prerelease": false,
-          "publishedAt": "2026-10-04T15:22:25Z",
-          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.8",
+          "publishedAt": "2026-10-14T12:41:00Z",
+          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.13",
           "assets": [
             {
-              "id": 610117966,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640348228",
+              "id": 640348228,
+              "node_id": "RA_kwDOReXYdM4mKvBE",
+              "name": "ok-nte-win-x86_64-v1.4.13-body.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 323528285,
+              "digest": "sha256:c40432b7621846f4464af6b1917bca1e8e6b062bfbfd1a0a6e8b967de4924a8b",
+              "download_count": 1,
+              "created_at": "2026-10-14T12:41:03Z",
+              "updated_at": "2026-10-14T12:41:16Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win-x86_64-v1.4.13-body.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640348226",
+              "id": 640348226,
+              "node_id": "RA_kwDOReXYdM4mKvBC",
+              "name": "ok-nte-win-x86_64-v1.4.13-full.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 329448102,
+              "digest": "sha256:4588a532ccb98581464b1b50472a37aaf3d2595d14e3a4d410170153cca5c66c",
+              "download_count": 4,
+              "created_at": "2026-10-14T12:41:03Z",
+              "updated_at": "2026-10-14T12:41:14Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win-x86_64-v1.4.13-full.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640404176",
+              "id": 640404176,
+              "node_id": "RA_kwDOReXYdM4mK8rQ",
               "name": "ok-nte-win32-China-setup.exe",
-              "size": 342259298,
-              "digest": "sha256:9b1e8553d4f5cc1ea8708509cac7a745a5f05074b38a3f40ead6a40206336c68",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.8/ok-nte-win32-China-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 343339758,
+              "digest": "sha256:b20c077611e7969697c9d867c417c1a162d6c9e796d5be09f093e8d16e31b704",
+              "download_count": 10,
+              "created_at": "2026-10-14T13:03:06Z",
+              "updated_at": "2026-10-14T13:03:18Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win32-China-setup.exe"
             },
             {
-              "id": 610117968,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640404170",
+              "id": 640404170,
+              "node_id": "RA_kwDOReXYdM4mK8rK",
               "name": "ok-nte-win32-Global-setup.exe",
-              "size": 379338528,
-              "digest": "sha256:726c07b0b148cb3d36e6742351270d5cd313d6d3fac56d42f6b7a19ad12f8661",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.8/ok-nte-win32-Global-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 380503793,
+              "digest": "sha256:15302fcd219ccff6225e37978da0b94b8b42bf6ade7ed6b9096604dce8befcc5",
+              "download_count": 0,
+              "created_at": "2026-10-14T13:03:06Z",
+              "updated_at": "2026-10-14T13:03:25Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win32-Global-setup.exe"
             },
             {
-              "id": 610117965,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640404175",
+              "id": 640404175,
+              "node_id": "RA_kwDOReXYdM4mK8rP",
               "name": "ok-nte-win32-online-setup.exe",
-              "size": 4502477,
-              "digest": "sha256:31ac0ff75cdb6fd3a43a742bb0ea703f74127b23a54f38a97a4e112cdf0a5a48",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.8/ok-nte-win32-online-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 4916033,
+              "digest": "sha256:676c1d28e8154fb94b39107cbeff88699fbd79469510e09dc1ce10917ab40163",
+              "download_count": 6,
+              "created_at": "2026-10-14T13:03:06Z",
+              "updated_at": "2026-10-14T13:03:07Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win32-online-setup.exe"
             },
             {
-              "id": 610117967,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640404180",
+              "id": 640404180,
+              "node_id": "RA_kwDOReXYdM4mK8rU",
               "name": "ok-nte-win32.zip",
-              "size": 5241362,
-              "digest": "sha256:e7c8105cc66a854cdc4769c92731d1f00318d9e566424c1812640143de867f69",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.8/ok-nte-win32.zip"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 5819323,
+              "digest": "sha256:9f5e6e508550bc19336d2f38a0bd10a4fddfeb7c149b13fbd27864119f26a81d",
+              "download_count": 0,
+              "created_at": "2026-10-14T13:03:06Z",
+              "updated_at": "2026-10-14T13:03:07Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/ok-nte-win32.zip"
             },
             {
-              "id": 610117969,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/640404179",
+              "id": 640404179,
+              "node_id": "RA_kwDOReXYdM4mK8rT",
               "name": "win32_sha256.txt",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "text/plain",
+              "state": "uploaded",
               "size": 64,
-              "digest": "sha256:5d59bc2915e7d07d0686ca4bcfa941af3a78c98b4d2a667feb2a617736677d82",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.8/win32_sha256.txt"
+              "digest": "sha256:8b378dc3d538f2c6f465f028648f6df16b4ad7a0f2e02b63d9fda6c881e596cb",
+              "download_count": 0,
+              "created_at": "2026-10-14T13:03:06Z",
+              "updated_at": "2026-10-14T13:03:07Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.13/win32_sha256.txt"
             }
           ]
         },
         {
-          "tag": "v1.4.7",
-          "commit": "29fce6bad94625d6cdf7183773324cda3c553b7b",
+          "tag": "v1.4.12",
+          "commit": "23df0cb47f92ea4da79c19b42970fb120ee1cf13",
           "prerelease": false,
-          "publishedAt": "2026-10-02T17:07:05Z",
-          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7",
+          "publishedAt": "2026-10-13T04:24:08Z",
+          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.12",
           "assets": [
             {
-              "id": 606121317,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635874205",
+              "id": 635874205,
+              "node_id": "RA_kwDOReXYdM4l5qud",
+              "name": "ok-nte-win-x86_64-v1.4.12-body.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 323526514,
+              "digest": "sha256:d446aab466ca413da32d9ba360ecd52efc6e80ae8ad06019d31b36d608473a24",
+              "download_count": 35,
+              "created_at": "2026-10-13T04:24:11Z",
+              "updated_at": "2026-10-13T04:24:27Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win-x86_64-v1.4.12-body.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635874206",
+              "id": 635874206,
+              "node_id": "RA_kwDOReXYdM4l5que",
+              "name": "ok-nte-win-x86_64-v1.4.12-full.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 329446281,
+              "digest": "sha256:feaec3da6a0a7e109b82ba72750a4f7a63aa6c32582aa147aa59fb33b91bb076",
+              "download_count": 38,
+              "created_at": "2026-10-13T04:24:11Z",
+              "updated_at": "2026-10-13T04:24:21Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win-x86_64-v1.4.12-full.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635915137",
+              "id": 635915137,
+              "node_id": "RA_kwDOReXYdM4l50uB",
               "name": "ok-nte-win32-China-setup.exe",
-              "size": 342137717,
-              "digest": "sha256:e2e1322386e56689a5b2f3573a7ea1758e676c98a2ec9fdc161bf1e73a81850d",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.7/ok-nte-win32-China-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 343272361,
+              "digest": "sha256:6d5dbb672aac78da7f2ebcef8a07e021e0e19ba262f15741b8b20a0981cc1e31",
+              "download_count": 237,
+              "created_at": "2026-10-13T04:45:54Z",
+              "updated_at": "2026-10-13T04:46:06Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win32-China-setup.exe"
             },
             {
-              "id": 606121315,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635915135",
+              "id": 635915135,
+              "node_id": "RA_kwDOReXYdM4l50t_",
               "name": "ok-nte-win32-Global-setup.exe",
-              "size": 378700373,
-              "digest": "sha256:9eb3f3aeec7969df109bc8d5499a692da82ced7dc10d3f381e7cb8cc8f950609",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.7/ok-nte-win32-Global-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 380316469,
+              "digest": "sha256:8bf2f1ea494ed3c7fd5eb901ea6ea7e0812c017f3bea7455e51b6e515e270c9b",
+              "download_count": 48,
+              "created_at": "2026-10-13T04:45:54Z",
+              "updated_at": "2026-10-13T04:46:09Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win32-Global-setup.exe"
             },
             {
-              "id": 606121323,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635915138",
+              "id": 635915138,
+              "node_id": "RA_kwDOReXYdM4l50uC",
               "name": "ok-nte-win32-online-setup.exe",
-              "size": 4500404,
-              "digest": "sha256:81a1af5afb279dd19ff6cb8c1d8de71bb4af961dbd60f77f676924a5d4bb778d",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.7/ok-nte-win32-online-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 4917838,
+              "digest": "sha256:ba31a82b4037b880780c995c11962f0e6e21a05a92844d377056ddf7328d3529",
+              "download_count": 10,
+              "created_at": "2026-10-13T04:45:54Z",
+              "updated_at": "2026-10-13T04:45:54Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win32-online-setup.exe"
             },
             {
-              "id": 606121322,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635915134",
+              "id": 635915134,
+              "node_id": "RA_kwDOReXYdM4l50t-",
               "name": "ok-nte-win32.zip",
-              "size": 5241362,
-              "digest": "sha256:e7c8105cc66a854cdc4769c92731d1f00318d9e566424c1812640143de867f69",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.7/ok-nte-win32.zip"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 5819323,
+              "digest": "sha256:9f5e6e508550bc19336d2f38a0bd10a4fddfeb7c149b13fbd27864119f26a81d",
+              "download_count": 1,
+              "created_at": "2026-10-13T04:45:54Z",
+              "updated_at": "2026-10-13T04:45:54Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/ok-nte-win32.zip"
             },
             {
-              "id": 606121324,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/635915136",
+              "id": 635915136,
+              "node_id": "RA_kwDOReXYdM4l50uA",
               "name": "win32_sha256.txt",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "text/plain",
+              "state": "uploaded",
               "size": 64,
-              "digest": "sha256:5d59bc2915e7d07d0686ca4bcfa941af3a78c98b4d2a667feb2a617736677d82",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.7/win32_sha256.txt"
+              "digest": "sha256:8b378dc3d538f2c6f465f028648f6df16b4ad7a0f2e02b63d9fda6c881e596cb",
+              "download_count": 0,
+              "created_at": "2026-10-13T04:45:54Z",
+              "updated_at": "2026-10-13T04:45:54Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.12/win32_sha256.txt"
             }
           ]
         },
         {
-          "tag": "v1.4.6",
-          "commit": "7f4c05f4b035e58c6ade25375fdd7881640afcfe",
+          "tag": "v1.4.11",
+          "commit": "87640281bd91809f740bbdb917e34b8834cadc66",
           "prerelease": false,
-          "publishedAt": "2026-09-30T15:59:22Z",
-          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.6",
+          "publishedAt": "2026-10-12T07:01:47Z",
+          "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.11",
           "assets": [
             {
-              "id": 601339758,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/632999387",
+              "id": 632999387,
+              "node_id": "RA_kwDOReXYdM4lus3b",
+              "name": "ok-nte-win-x86_64-v1.4.11-body.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 323519730,
+              "digest": "sha256:18c360e5c107ee63a61608080436ea554898cd1dfa57dd094dcaa493b02b27fa",
+              "download_count": 18,
+              "created_at": "2026-10-12T07:17:12Z",
+              "updated_at": "2026-10-12T07:17:22Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win-x86_64-v1.4.11-body.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/632999388",
+              "id": 632999388,
+              "node_id": "RA_kwDOReXYdM4lus3c",
+              "name": "ok-nte-win-x86_64-v1.4.11-full.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 329439497,
+              "digest": "sha256:6d52e63c5f0fe89ce77d8387571f9d8d269d6203dace1538280b6eac3231c121",
+              "download_count": 22,
+              "created_at": "2026-10-12T07:17:12Z",
+              "updated_at": "2026-10-12T07:17:23Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win-x86_64-v1.4.11-full.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/633048216",
+              "id": 633048216,
+              "node_id": "RA_kwDOReXYdM4lu4yY",
               "name": "ok-nte-win32-China-setup.exe",
-              "size": 341914739,
-              "digest": "sha256:883f2ff7820e377581ebe42b9411921a1038abda06d3c1e7523e8a4eb85ff1de",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.6/ok-nte-win32-China-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 343100645,
+              "digest": "sha256:31b972dec4ab0031a7362ef932d88778313ea73bd6dd8d25a5616c44db008824",
+              "download_count": 198,
+              "created_at": "2026-10-12T07:38:30Z",
+              "updated_at": "2026-10-12T07:38:42Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win32-China-setup.exe"
             },
             {
-              "id": 601339753,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/633048217",
+              "id": 633048217,
+              "node_id": "RA_kwDOReXYdM4lu4yZ",
               "name": "ok-nte-win32-Global-setup.exe",
-              "size": 378370400,
-              "digest": "sha256:11a5321d085326846ffad4fc12f0276407aeff8997c3945b352ddd779364af43",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.6/ok-nte-win32-Global-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 379936583,
+              "digest": "sha256:04ac7e5849077b23ea7f9dcdb380c02095b4d83ce4d5ec4172681d3b1a3d705c",
+              "download_count": 35,
+              "created_at": "2026-10-12T07:38:30Z",
+              "updated_at": "2026-10-12T07:38:43Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win32-Global-setup.exe"
             },
             {
-              "id": 601339757,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/633048218",
+              "id": 633048218,
+              "node_id": "RA_kwDOReXYdM4lu4ya",
               "name": "ok-nte-win32-online-setup.exe",
-              "size": 4503050,
-              "digest": "sha256:b4f88069222b3dfc15a0a1b634ffc7c5c61b9ed82b5016997e2749a51f53e8eb",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.6/ok-nte-win32-online-setup.exe"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 4915082,
+              "digest": "sha256:9990e6ce79f5a0880c4c63f3cc80fab625b62c709b4dd1eb61c073c296812fc2",
+              "download_count": 9,
+              "created_at": "2026-10-12T07:38:30Z",
+              "updated_at": "2026-10-12T07:38:31Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win32-online-setup.exe"
             },
             {
-              "id": 601339755,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/632967129",
+              "id": 632967129,
+              "node_id": "RA_kwDOReXYdM4luk_Z",
               "name": "ok-nte-win32.zip",
-              "size": 5241362,
-              "digest": "sha256:e7c8105cc66a854cdc4769c92731d1f00318d9e566424c1812640143de867f69",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.6/ok-nte-win32.zip"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 5864119,
+              "digest": "sha256:e3702104f563251116ee03c905ecb308fb4b2531588b336cc75d8a45b85cd95b",
+              "download_count": 5786,
+              "created_at": "2026-10-12T07:01:50Z",
+              "updated_at": "2026-10-12T07:01:51Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/ok-nte-win32.zip"
             },
             {
-              "id": 601339752,
+              "url": "https://api.github.com/repos/BnanZ0/ok-nte/releases/assets/632967123",
+              "id": 632967123,
+              "node_id": "RA_kwDOReXYdM4luk_T",
               "name": "win32_sha256.txt",
-              "size": 64,
-              "digest": "sha256:5d59bc2915e7d07d0686ca4bcfa941af3a78c98b4d2a667feb2a617736677d82",
-              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.6/win32_sha256.txt"
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "text/plain",
+              "state": "uploaded",
+              "size": 66,
+              "digest": "sha256:81e4c5bb54959873d947e505fb26d78a215e2e4d605a3a95cb090cb3e363c2f2",
+              "download_count": 1,
+              "created_at": "2026-10-12T07:01:50Z",
+              "updated_at": "2026-10-12T07:01:50Z",
+              "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.11/win32_sha256.txt"
             }
           ]
         }
@@ -1119,8 +1769,197 @@
     {
       "project": "OkWutheringWaves",
       "repository": "ok-oldking/ok-wuthering-waves",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
+        {
+          "tag": "v3.7.4",
+          "commit": "2243d465d58c74f52765b658174bff76165656ee",
+          "prerelease": false,
+          "publishedAt": "2026-10-05T10:23:36Z",
+          "url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.4",
+          "assets": [
+            {
+              "url": "https://api.github.com/repos/ok-oldking/ok-wuthering-waves/releases/assets/612226952",
+              "id": 612226952,
+              "node_id": "RA_kwDOMGlPsM4kfdeI",
+              "name": "ok-ww-win32-China-setup.exe",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 386573256,
+              "digest": "sha256:bb13daecc82ed653fdd503276ab0889aae14ac2063fc07162131d6bb11bad136",
+              "download_count": 3217,
+              "created_at": "2026-10-05T10:23:15Z",
+              "updated_at": "2026-10-05T10:23:31Z",
+              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.4/ok-ww-win32-China-setup.exe"
+            },
+            {
+              "url": "https://api.github.com/repos/ok-oldking/ok-wuthering-waves/releases/assets/612226951",
+              "id": 612226951,
+              "node_id": "RA_kwDOMGlPsM4kfdeH",
+              "name": "ok-ww-win32-Global-setup.exe",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 528133086,
+              "digest": "sha256:6484ce13b08dfd8cf15fcc2d122ef204564eedc096cb2136c70c282dcf181c1f",
+              "download_count": 414,
+              "created_at": "2026-10-05T10:23:15Z",
+              "updated_at": "2026-10-05T10:23:35Z",
+              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.4/ok-ww-win32-Global-setup.exe"
+            },
+            {
+              "url": "https://api.github.com/repos/ok-oldking/ok-wuthering-waves/releases/assets/612226950",
+              "id": 612226950,
+              "node_id": "RA_kwDOMGlPsM4kfdeG",
+              "name": "ok-ww-win32-online-setup.exe",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/x-msdos-program",
+              "state": "uploaded",
+              "size": 4024933,
+              "digest": "sha256:233b9c566cb8ee916d9ab9273c008318cf7123ec4011366aa1314f2c4b641391",
+              "download_count": 78,
+              "created_at": "2026-10-05T10:23:15Z",
+              "updated_at": "2026-10-05T10:23:16Z",
+              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.4/ok-ww-win32-online-setup.exe"
+            },
+            {
+              "url": "https://api.github.com/repos/ok-oldking/ok-wuthering-waves/releases/assets/612226949",
+              "id": 612226949,
+              "node_id": "RA_kwDOMGlPsM4kfdeF",
+              "name": "ok-ww-win32.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 4980764,
+              "digest": "sha256:487fc22e90d0206d33a44fb591db790f5ba916d4ce69a062a5b7dd4f32697795",
+              "download_count": 92,
+              "created_at": "2026-10-05T10:23:15Z",
+              "updated_at": "2026-10-05T10:23:16Z",
+              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.4/ok-ww-win32.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/ok-oldking/ok-wuthering-waves/releases/assets/612226948",
+              "id": 612226948,
+              "node_id": "RA_kwDOMGlPsM4kfdeE",
+              "name": "win32_sha256.txt",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "text/plain",
+              "state": "uploaded",
+              "size": 64,
+              "digest": "sha256:5e7b52d52a5f550a98800a5148e6053aa046acaf97f76faf39860035edf86b13",
+              "download_count": 96,
+              "created_at": "2026-10-05T10:23:15Z",
+              "updated_at": "2026-10-05T10:23:15Z",
+              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.4/win32_sha256.txt"
+            }
+          ]
+        },
         {
           "tag": "v3.7.3",
           "commit": "f5f38c8d9e2b7f7e91edad77bd5fab14df3f162d",
@@ -1163,8 +2002,7 @@
               "digest": "sha256:31695665e053eb80d9f7bedd067ada53641fb9c837688ec3e7bac9e1ec1cc2cf",
               "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.3/win32_sha256.txt"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v3.7.2",
@@ -1208,61 +2046,312 @@
               "digest": "sha256:f23f038bec76676c5b174e3e64e23e16dda67482441a3f00740148608e796cec",
               "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.2/win32_sha256.txt"
             }
-          ],
-          "runtime": "NOT_RUN"
-        },
-        {
-          "tag": "v3.6.7",
-          "commit": "7df910be3b91e73be0f7a96d34fb4091510f7fac",
-          "prerelease": false,
-          "publishedAt": "2026-09-06T11:52:05Z",
-          "url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.6.7",
-          "assets": [
-            {
-              "id": 547135645,
-              "name": "ok-ww-win32-China-setup.exe",
-              "size": 386232920,
-              "digest": "sha256:ac5838bdc5980add4cd651cca5647bdd550071d8bacb8c23f3dc6499833d287b",
-              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.6.7/ok-ww-win32-China-setup.exe"
-            },
-            {
-              "id": 547135641,
-              "name": "ok-ww-win32-Global-setup.exe",
-              "size": 527430923,
-              "digest": "sha256:0fc55135fae5c2bb138c346808a94f35631f59a88c6976fed2ff94d075416fd0",
-              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.6.7/ok-ww-win32-Global-setup.exe"
-            },
-            {
-              "id": 547135643,
-              "name": "ok-ww-win32-online-setup.exe",
-              "size": 4023412,
-              "digest": "sha256:571e2348a29ce9edbec5fac7485f977bfacffa176b2ad5672822cdbf8c3f1873",
-              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.6.7/ok-ww-win32-online-setup.exe"
-            },
-            {
-              "id": 547135644,
-              "name": "ok-ww-win32.zip",
-              "size": 4981214,
-              "digest": "sha256:2e766254006b7006691935cc910d9a4cf8064fdc1c732b48dc1e3e967cebb33d",
-              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.6.7/ok-ww-win32.zip"
-            },
-            {
-              "id": 547135640,
-              "name": "win32_sha256.txt",
-              "size": 64,
-              "digest": "sha256:19654f8104f83e2ee061382e0f3bd1f0e84cd03874b2aa3bd165f079ee3cc88c",
-              "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.6.7/win32_sha256.txt"
-            }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     },
     {
       "project": "ZenlessZoneZeroOneDragon",
       "repository": "OneDragon-Anything/ZenlessZoneZero-OneDragon",
-      "qualification": "DISCOVERY_ONLY",
+      "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
+        {
+          "tag": "v2.5.3",
+          "commit": "1029cb76c7507069701a641d70525290f6496a7d",
+          "prerelease": false,
+          "publishedAt": "2026-10-11T17:11:48Z",
+          "url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.3",
+          "assets": [
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317438",
+              "id": 631317438,
+              "node_id": "RA_kwDOMGN2Ws4loSO-",
+              "name": "ZenlessZoneZero-OneDragon-Environment.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 469344092,
+              "digest": "sha256:a78968d9f61533923d6b40010fc6fd3f839d0403b145f25707b5894510f4a057",
+              "download_count": 148,
+              "created_at": "2026-10-11T17:11:51Z",
+              "updated_at": "2026-10-11T17:12:02Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-Environment.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317425",
+              "id": 631317425,
+              "node_id": "RA_kwDOMGN2Ws4loSOx",
+              "name": "ZenlessZoneZero-OneDragon-Launcher.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 18873699,
+              "digest": "sha256:d4e81e7f25876b2c844c3cc22bb263c81157a716a239b6c6bea9c58fff42e34e",
+              "download_count": 1123,
+              "created_at": "2026-10-11T17:11:50Z",
+              "updated_at": "2026-10-11T17:11:51Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-Launcher.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317447",
+              "id": 631317447,
+              "node_id": "RA_kwDOMGN2Ws4loSPH",
+              "name": "ZenlessZoneZero-OneDragon-RuntimeLauncher.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 207914941,
+              "digest": "sha256:188d58f7188d71c5f4e077211742917b472eede85a46f221543512e9b7edd9e4",
+              "download_count": 330,
+              "created_at": "2026-10-11T17:11:51Z",
+              "updated_at": "2026-10-11T17:11:57Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-RuntimeLauncher.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317410",
+              "id": 631317410,
+              "node_id": "RA_kwDOMGN2Ws4loSOi",
+              "name": "ZenlessZoneZero-OneDragon-v2.5.3-Full-Environment.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 748121618,
+              "digest": "sha256:28ee79da7d4e5e36e62a41468b2bd92675c8c09b06993a029901d51b05b06ba2",
+              "download_count": 334,
+              "created_at": "2026-10-11T17:11:50Z",
+              "updated_at": "2026-10-11T17:12:13Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-v2.5.3-Full-Environment.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317401",
+              "id": 631317401,
+              "node_id": "RA_kwDOMGN2Ws4loSOZ",
+              "name": "ZenlessZoneZero-OneDragon-v2.5.3-Full.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 278556566,
+              "digest": "sha256:5cb52425fa1fa38f0442f70e4c582b32806776a60113e46b901ae655694f91ba",
+              "download_count": 70,
+              "created_at": "2026-10-11T17:11:49Z",
+              "updated_at": "2026-10-11T17:11:57Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-v2.5.3-Full.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317415",
+              "id": 631317415,
+              "node_id": "RA_kwDOMGN2Ws4loSOn",
+              "name": "ZenlessZoneZero-OneDragon-v2.5.3-Installer.exe",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/octet-stream",
+              "state": "uploaded",
+              "size": 102030896,
+              "digest": "sha256:1fab205509d6f55fb9b47b388a00788e3e6a0a865e506e2688588e408caadbdb",
+              "download_count": 140,
+              "created_at": "2026-10-11T17:11:50Z",
+              "updated_at": "2026-10-11T17:11:53Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-v2.5.3-Installer.exe"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317419",
+              "id": 631317419,
+              "node_id": "RA_kwDOMGN2Ws4loSOr",
+              "name": "ZenlessZoneZero-OneDragon-v2.5.3-WithRuntime-Full.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 281872780,
+              "digest": "sha256:55e7ea5486bbf2cba12c892df79560334fbaa000b303cfeb96a3fd8c1d44bbfc",
+              "download_count": 300,
+              "created_at": "2026-10-11T17:11:50Z",
+              "updated_at": "2026-10-11T17:11:57Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-v2.5.3-WithRuntime-Full.zip"
+            },
+            {
+              "url": "https://api.github.com/repos/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/assets/631317428",
+              "id": 631317428,
+              "node_id": "RA_kwDOMGN2Ws4loSO0",
+              "name": "ZenlessZoneZero-OneDragon-v2.5.3-WithRuntime.zip",
+              "label": "",
+              "uploader": {
+                "login": "github-actions[bot]",
+                "id": 41898282,
+                "node_id": "MDM6Qm90NDE4OTgyODI=",
+                "avatar_url": "https://avatars.githubusercontent.com/in/15368?v=4",
+                "gravatar_id": "",
+                "url": "https://api.github.com/users/github-actions%5Bbot%5D",
+                "html_url": "https://github.com/apps/github-actions",
+                "followers_url": "https://api.github.com/users/github-actions%5Bbot%5D/followers",
+                "following_url": "https://api.github.com/users/github-actions%5Bbot%5D/following{/other_user}",
+                "gists_url": "https://api.github.com/users/github-actions%5Bbot%5D/gists{/gist_id}",
+                "starred_url": "https://api.github.com/users/github-actions%5Bbot%5D/starred{/owner}{/repo}",
+                "subscriptions_url": "https://api.github.com/users/github-actions%5Bbot%5D/subscriptions",
+                "organizations_url": "https://api.github.com/users/github-actions%5Bbot%5D/orgs",
+                "repos_url": "https://api.github.com/users/github-actions%5Bbot%5D/repos",
+                "events_url": "https://api.github.com/users/github-actions%5Bbot%5D/events{/privacy}",
+                "received_events_url": "https://api.github.com/users/github-actions%5Bbot%5D/received_events",
+                "type": "Bot",
+                "user_view_type": "public",
+                "site_admin": false
+              },
+              "content_type": "application/zip",
+              "state": "uploaded",
+              "size": 209538389,
+              "digest": "sha256:8604db775f6bb971118bffeea5d9b096ae3aec8b5e6f958134d41e80f13dd8f5",
+              "download_count": 23,
+              "created_at": "2026-10-11T17:11:50Z",
+              "updated_at": "2026-10-11T17:11:57Z",
+              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.3/ZenlessZoneZero-OneDragon-v2.5.3-WithRuntime.zip"
+            }
+          ]
+        },
         {
           "tag": "v2.5.2",
           "commit": "a2789666e6a0175b33969ec61d3c27dce517ff14",
@@ -1326,8 +2415,7 @@
               "digest": "sha256:fcdd4b99cde81d6df2ecf0bc7ecad8ef3bf6cbcc35db0a686f3c708d82d9fb71",
               "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.2/ZenlessZoneZero-OneDragon-v2.5.2-WithRuntime.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         },
         {
           "tag": "v2.5.1",
@@ -1392,74 +2480,7 @@
               "digest": "sha256:b5276e56e6302601c45904cac2fe92ebcd83c7858ef65b7f8b4c6734f3cd2474",
               "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.1/ZenlessZoneZero-OneDragon-v2.5.1-WithRuntime.zip"
             }
-          ],
-          "runtime": "NOT_RUN"
-        },
-        {
-          "tag": "v2.4.7",
-          "commit": "55926ffbdde06ab6643886d2fb6a841f8707af57",
-          "prerelease": false,
-          "publishedAt": "2026-08-02T10:30:21Z",
-          "url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.4.7",
-          "assets": [
-            {
-              "id": 498806037,
-              "name": "ZenlessZoneZero-OneDragon-Environment.zip",
-              "size": 410003396,
-              "digest": "sha256:c57330bc2fc9eb506ae5a8c584dfb9c20ebbe8a2e8d125131587198c90e57800",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-Environment.zip"
-            },
-            {
-              "id": 498806034,
-              "name": "ZenlessZoneZero-OneDragon-Launcher.zip",
-              "size": 17309255,
-              "digest": "sha256:3c5bce3e1756291f16ed4165a0f46df7ff4aec4d8e3c6a509f70366347d60196",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-Launcher.zip"
-            },
-            {
-              "id": 498806041,
-              "name": "ZenlessZoneZero-OneDragon-RuntimeLauncher.zip",
-              "size": 188826340,
-              "digest": "sha256:0fb42cbdfc422e582f9287a56915b6302f288b45872474304f28967a1f06bd81",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-RuntimeLauncher.zip"
-            },
-            {
-              "id": 498806036,
-              "name": "ZenlessZoneZero-OneDragon-v2.4.7-Full-Environment.zip",
-              "size": 684532788,
-              "digest": "sha256:6f01a2d151fa49d697282276089b93dc223bfedb5f138eac1a41d95ec4cef688",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-v2.4.7-Full-Environment.zip"
-            },
-            {
-              "id": 498806035,
-              "name": "ZenlessZoneZero-OneDragon-v2.4.7-Full.zip",
-              "size": 274330172,
-              "digest": "sha256:117a65f79a06220f5bf6a5d68446fa1ce6233d6764b63fcc9d0114a61e58e7dd",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-v2.4.7-Full.zip"
-            },
-            {
-              "id": 498806040,
-              "name": "ZenlessZoneZero-OneDragon-v2.4.7-Installer.exe",
-              "size": 101836328,
-              "digest": "sha256:451359cb698fbb0e6bca13e14e5a2dd73c0d1ebaf1f9bf0b21219a5a042b0516",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-v2.4.7-Installer.exe"
-            },
-            {
-              "id": 498806038,
-              "name": "ZenlessZoneZero-OneDragon-v2.4.7-WithRuntime-Full.zip",
-              "size": 262726375,
-              "digest": "sha256:c9a8115e3fbc183523b22a66426af58c0d0bb5c960da69e975f61c25e300923c",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-v2.4.7-WithRuntime-Full.zip"
-            },
-            {
-              "id": 498806043,
-              "name": "ZenlessZoneZero-OneDragon-v2.4.7-WithRuntime.zip",
-              "size": 190391984,
-              "digest": "sha256:bba8029375035d3a62293faff591be4921da06c29a3f7ede09c983f1b4a6ef58",
-              "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.4.7/ZenlessZoneZero-OneDragon-v2.4.7-WithRuntime.zip"
-            }
-          ],
-          "runtime": "NOT_RUN"
+          ]
         }
       ]
     }

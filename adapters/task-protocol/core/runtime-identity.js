@@ -6,6 +6,8 @@ function runtimeIdentity(app, head, origin, runtimeActivity) {
   const failure = (reason, fallback) => ({ ready: false, reasonText: {
     kind: 'plugin', key: 'diagnostic.runtime.' + reason, args: { channel, version }, fallback
   } });
+  const structure = () => ({...failure('code', '无法逐项识别当前上游实现；将保留原入口与配置。'),
+    ready: ADAPTER.protocolVersion === '0.3.0', recognized: false});
   if (!app || app.name !== ADAPTER.runtimeName || app.installed !== true || channel === 'unknown')
     return failure('installation', '无法确认官方安装身份（{channel} / {version}），请初始化受支持的官方渠道。');
   if (app.update_state !== 'idle' || app.update_target_version || app.update_error
@@ -28,7 +30,10 @@ function runtimeIdentity(app, head, origin, runtimeActivity) {
       const source = nexus.readResource(contract.id).document;
       return typeof source === 'string' && source.length <= 2097152
         && contract.patterns.every(pattern => new RegExp(pattern, 'm').test(source));
-    })) return failure('code', '当前运行入口、日常任务或执行器结构不兼容，请检查安装。');
-  } catch { return failure('code', '关键运行文件缺失或无法读取，请修复安装。'); }
+    })) return structure();
+  } catch (error) {
+    if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+    return structure();
+  }
   return {ready:true};
 }

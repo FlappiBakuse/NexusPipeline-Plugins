@@ -13,9 +13,12 @@ function discover() {
   }
   for (const diagnostic of normalized.diagnostics) {
     plan.diagnostics.push({ code: diagnostic.code, message: 'Unrecognized routine item: ' + String(diagnostic.id) });
-    if (diagnostic.id && !plan.tasks.some(t => t.sourceKey === diagnostic.id))
-      addTask(plan, config.id, diagnostic.id, diagnostic.id, false, null, 'unknown', 'unsupported');
   }
+  const raw = config.document['Routine Items'];
+  if (Array.isArray(raw)) raw.forEach((item,index) => {
+    if (item && typeof item.id === 'string' && !ADAPTER.entries.some(entry => entry.id === item.id))
+      addTask(plan, config.id, 'unknown/'+index+'/'+item.id, item.id, !!item.enabled, null, 'unknown', 'unsupported');
+  });
   // Only the dedicated routine store governs child behavior. Standalone task pages
   // must not enter its behavior signature or receive retry selection patches.
   const stores = input.configResources.filter(r => r.id === 'config:DailyRoutineTaskConfigs.json');
