@@ -77,7 +77,11 @@ try {
   let card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: tasks[0].name, exact: true }) });
   await card.getByRole("button", { name: "编辑签到", exact: true }).click();
   await page.getByRole("textbox", { name: "任务名称", exact: true }).fill("Browser edited task");
+  const saved = page.waitForResponse(response => response.request().method() === "PUT"
+    && new URL(response.url()).pathname === "/api/plugin-api/game-checkin/tasks");
   await page.getByRole("button", { name: "保存", exact: true }).click();
+  assert.equal((await saved).status(), 200);
+  await page.getByRole("textbox", { name: "任务名称", exact: true }).waitFor({ state: "hidden" });
   card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: "Browser edited task", exact: true }) });
   await request("POST", "tasks/run", { taskId: tasks[0].id, diagnostics: true }, 202);
   card = page.getByRole("listitem").filter({ has: page.getByRole("heading", { name: tasks[1].name, exact: true }) });

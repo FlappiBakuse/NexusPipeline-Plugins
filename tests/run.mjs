@@ -1,3 +1,6 @@
+import { reserveLocalResources } from "./support/local-resources.mjs";
+import { getProcessRunnerState } from "./support/process-runner.mjs";
+await reserveLocalResources({ cleanup: () => getProcessRunnerState().cleanupComplete });
 import fs from "node:fs";
 import path from "node:path";
 import { parseArguments, validateInventory } from "./runner/selection.mjs";
