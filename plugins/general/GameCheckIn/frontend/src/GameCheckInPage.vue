@@ -4,10 +4,14 @@ import CheckInTaskEditor from "./CheckInTaskEditor.vue";
 import CheckInTaskList from "./CheckInTaskList.vue";
 import type { PluginHost, Task, TaskSavePayload, TaskState, Translate } from "./types";
 
-const props = defineProps<{ host: PluginHost }>();
+const props = defineProps<{ host: PluginHost; initialState?: Partial<TaskState>; deferPolling?: boolean; signal?: AbortSignal }>();
 
-const state = ref<TaskState | null>(null);
-const loading = ref(true);
+const state = ref<TaskState | null>(props.initialState ? {
+  tasks: Array.isArray(props.initialState.tasks) ? props.initialState.tasks : [],
+  platforms: Array.isArray(props.initialState.platforms) ? props.initialState.platforms : [],
+  timeZoneId: typeof props.initialState.timeZoneId === 'string' ? props.initialState.timeZoneId : '',
+} : null);
+const loading = ref(!props.initialState);
 const saving = ref(false);
 const editorOpen = ref(false);
 const editorTask = ref<Task | null>(null);
@@ -148,13 +152,21 @@ async function deleteTask() {
   }
 }
 
+function startPolling() {
+  if (!disposed && !pollTimer) pollTimer = setInterval(() => void loadState(), 5000);
+}
+const abortRequests = () => requestController.abort();
+props.signal?.addEventListener('abort', abortRequests, { once: true });
+if (props.signal?.aborted) abortRequests();
+defineExpose({ startPolling });
 onMounted(() => {
-  void loadState(true);
-  pollTimer = setInterval(() => void loadState(), 5000);
+  if (!props.initialState) void loadState(true);
+  if (!props.deferPolling) startPolling();
 });
 
 onBeforeUnmount(() => {
   disposed = true;
+  props.signal?.removeEventListener('abort', abortRequests);
   requestController.abort();
   if (pollTimer) clearInterval(pollTimer);
 });

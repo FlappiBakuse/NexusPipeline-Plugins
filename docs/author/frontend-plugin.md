@@ -232,7 +232,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 后端为每个路由和动作声明访问类，前端通过 host.getCapabilities 呈现可用状态；服务端仍逐次鉴权。完整分类、拒绝原因和缓存生命周期见[Host 访问契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/access.md)。不能靠隐藏按钮或自报客户端身份获得本机权限。
 
-路由 renderer 只在给定 element 中挂载，离开后取消请求并返回清理函数；完整 surface 见[Frontend API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/frontend.md)。公开 slot 与元素以 Host 注册表及[UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md)为准，不依赖私有页面容器。
+路由 renderer 只在给定 element 中挂载，返回清理函数或最终返回清理函数的 Promise。宿主可以先在尚未连接文档的 element 中准备目标页面；先完成首屏读取再结束异步 handler，使用 surface.signal 取消请求，连接文档后才启动可见页轮询。多个 surface 分别管理组件，旧页全局通知不能清理候选页面；离开和取消按各自 signal/cleanup 释放；完整 surface 见[Frontend API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/frontend.md)。公开 slot 与元素以 Host 注册表及[UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md)为准，不依赖私有页面容器。
 
 ## 紧凑长文字
 
