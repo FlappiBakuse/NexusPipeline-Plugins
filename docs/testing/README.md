@@ -45,7 +45,6 @@ python tests/bootstrap-native.py --output <新的外部目录> [--archive <已�
 
 随后设置进程环境 `NEXUS_MAA_NATIVE_ROOT` 指向该目录。版本、URL、大小和 SHA256 在 `tests/inputs.lock.json`；测试不自动下载或忽略未知版本。受控 WinForms 窗口必须实际可见，以供 Win32 controller 绑定；场景结束必须退出。
 
-
 生产检查复现入口：
 
 ```text
@@ -60,7 +59,6 @@ python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输�
 GameCheckIn 凭据改动按专用读取范围、keep/set/clear 持久结果、运行中 409、写盘恢复及迟到响应选择验证；普通 DTO 不含明文。前端 conformance 使用已构建插件与实际 Host 公开元素；mock 结果不代表真实远端认证撤销。
 
 GameActivities 核心入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，覆盖11组SRA接口映射、时间/身份、快照替换、空列表、失败恢复、设置/取消/原子保存/图片替换，并执行前端类型检查和构建。单一观察器与共享图片会话的前端行为合同由tests/frontend/run.mjs的runPlugin和contract.mjs的resolvePublicElements执行。P-G05实际Test Host场景验证空订阅设置与生命周期，不替代真实外部接口验收。真实响应记录获取时间及SHA。实际Host SHA与tests/inputs.lock.json的locked gate分别报告。
-
 
 ## 本机资源控制
 

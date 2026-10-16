@@ -8,43 +8,14 @@ stable 发行物由受信 Publisher App 写入 `main`；develop preview 使用�
 
 每个插件最多保留最近三个受限版本包。版本格式为 `major.minor.patch`、`major.minor.patch-beta.N` 或 `major.minor.patch-rc.N`，排序遵循 `beta < rc < stable`。旧包保留在仓库中作为发行存档，插件平台只展示和安装 catalog 当前版本，不提供旧版本选择或降级入口。
 
-机器标识与发行 artifact 分离：
-
-| 机器标识 | artifactName |
-|---|---|
-| `baah` | `BAAH` |
-| `bettergi` | `BetterGI` |
-| `maaend` | `MaaEnd` |
-| `maas` | `MaaStellaSora` |
-| `march7th` | `March7thAssistant` |
-| `zzzonedragon` | `ZenlessZoneZeroOneDragon` |
-| `emulator-support` | `EmulatorSupport` |
-| `maa-framework` | `MaaFrameworkDriver` |
-| `okww` | `OkWutheringWaves` |
-| `oknte` | `OkNTE` |
-| `game-checkin` | `GameCheckIn` |
-| `custom-wallpaper` | `CustomWallpaper` |
-| `live-screenshot` | `LiveScreenshot` |
+机器标识、artifactName 和当前插件集合以[源码 manifest](../../plugins/)与[稳定 catalog](../../metadata/catalog/stable.json)为准。
 
 `plugin.json` 与运行时数据继续使用稳定的小写机器标识；源码目录按类型位于 `plugins/general/<ArtifactName>/` 或 `plugins/specialized/<ArtifactName>/`，宿主安装目录保持 `plugins/<ArtifactName>/`，`packages/` 下的目录和 ZIP 使用 artifactName 的正式大小写。schema 2 manifest 的 `artifactName` 必须与分类源码目录的末级目录完全一致。
 
 ## 发行包布局
 
 ```text
-packages/
-├── BAAH/BAAH-<version>.zip
-├── BetterGI/BetterGI-<version>.zip
-├── CustomWallpaper/CustomWallpaper-<version>.zip
-├── GameCheckIn/GameCheckIn-<version>.zip
-├── LiveScreenshot/LiveScreenshot-<version>.zip
-├── MaaEnd/MaaEnd-<version>.zip
-├── MaaStellaSora/MaaStellaSora-<version>.zip
-├── March7thAssistant/March7thAssistant-<version>.zip
-├── EmulatorSupport/EmulatorSupport-<version>.zip
-├── MaaFrameworkDriver/MaaFrameworkDriver-<version>.zip
-├── OkWutheringWaves/OkWutheringWaves-<version>.zip
-├── OkNTE/OkNTE-<version>.zip
-└── ZenlessZoneZeroOneDragon/ZenlessZoneZeroOneDragon-<version>.zip
+packages/<ArtifactName>/<ArtifactName>-<version>.zip
 ```
 
 每个 artifact 目录保留该插件最近三个受限版本包；`catalog.json` 只描述当前版本，归档包不提供安装入口。
@@ -68,7 +39,7 @@ web/style.css                       # 仅 managed-code 且声明 frontend 时
 - `plugin.json` 的 `name`、`version`、`kind` 与目标条目一致；
 - managed-code 插件的 `entryAssembly`、`entryType`、API 版本和依赖输出有效；
 - `frontend-module` 的入口、样式和 Frontend API 版本有效，公开资源位于 `web/`；
-- data-specialized 插件的 resolve、judgeScript 以及可选 configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；taskProtocol 0.2.0 要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，禁止已退役的 configValidator；公开 configEditor 字段不变，官方资产使用 `data/editor.js`；
+- data-specialized 插件的 resolve、judgeScript 以及可选 configEditor 均位于 `data/`，能力仅来自三个 Host 白名单且无 `frontend` 字段；当前任务协议要求 `data/i18n/` 词典、声明式 `configRules`/`environmentChecks`，禁止已退役的 configValidator；公开 configEditor 字段不变，官方资产使用 `data/editor.js`；
 - ZIP 不包含账号、Token、Cookie、用户配置、日志、缓存或仓库外文件；
 - catalog 的 `artifactName`、版本、raw packageUrl、SHA256、大小和 changelog 与包一致。
 
@@ -89,7 +60,6 @@ python tools/repo.py release candidate --host-root $env:HOST_ROOT --sdk-sha $env
 # develop preview，只生成并校验本地候选，不写 stable
 python tools/repo.py release plan --channel preview --host-root <显式Host路径> --sdk-sha <完整HostSHA> --output <新plan-phase.json>
 # 根据 plan 为每个 artifact 执行 package，再执行 release assemble；见 tools/README.md。
-python tools/repo.py release publish --channel preview --generated-root <外部preview目录> --producer <外部producer.json> --source-root . --source-sha <develop source SHA> --run-id 1 --run-attempt 1 --workflow-sha <main 控制提交 SHA>
 ```
 
 上述 run ID 为本地诊断值，不能当作 GitHub Actions 成功 producer。正式稳定候选在 `publish-stable.yml` 的 `candidate-verify` job 末尾上传；`NO_CHANGES` 不上传候选、不写空提交。手动入口明确选择 `operation=candidate` 或 `operation=publish-only`：candidate 可从受保护 main 历史固定 source，且不持有发布令牌；publish-only 必须给出原 candidate run ID，只消费下载并复核过的 artifact，不运行源码、单测或构建。恢复命令为 `gh workflow run publish-stable.yml --ref main -f operation=publish-only -f candidate_run_id=<原 run ID>`；同一 run 有多个成功候选时还需 `-f candidate_artifact_id=<artifact ID>`。Publisher App 令牌只在独立 writer 完成验证后创建；同版本不同字节与旧候选覆盖新源码都必须失败。main push 不触发候选或 writer；candidate 只生成候选，publish-only 仅消费明确指定的原成功候选。
@@ -100,7 +70,7 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
 
 分发基线变化后应显式运行新的 candidate。新候选以最新 catalog/state/packages 重算计划，按固定 package input identity（插件源码、Host lock/API 输入、构建器、SDK 与平台）构建受影响的包。writer 不执行源码或重新编译。
 
-`check source` 校验当前源码、JSON、分类目录和 Host 契约，不要求新版本已经出现在 stable catalog。`release validate --channel stable|preview` 校验生成候选及来源身份；正式发布完成后，`release audit --baseline <可信分发SHA>` 核对 catalog、state、包摘要和稳定字节不可变性。当前命令和必需参数见 [工具索引](../tools/README.md)。
+`check source` 校验当前源码、JSON、分类目录和 Host 契约，不要求新版本已经出现在 stable catalog。`release validate --channel stable|preview` 校验生成候选及来源身份；正式发布完成后，`release audit --baseline <可信分发SHA>` 核对 catalog、state、包摘要和稳定字节不可变性。当前命令和必需参数见 [工具索引](../../tools/README.md)。
 
 `contracts/host-compatibility.json` 只记录 `hostApiVersion`、`frontendApiVersion` 和 `supportedLocales`。PR 与 candidate 的 preflight 各自一次固定官方 Host 的完整 `sdkSourceSha`，本次 job 的所有检查使用同一隔离 checkout；不接受旧的 repository/ref 锁或任意 URL。`check host` 仍可作为独立诊断。
 
@@ -121,11 +91,7 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
 
 雷电、夜神和 BlueStacks 的厂商探测及驱动属于 `EmulatorSupport` 插件。发行该插件前，须在真实设备上逐项验证实例身份与 ADB 端点关联、应用启动、前台查询、截图、应用停止和实例安全关闭；host System Smoke 的 managed-code fixture 只验证宿主 API/provider 跨边界调用。
 
-| 模拟器 | 设备验证范围 | 当前状态 |
-|---|---|---|
-| 雷电 | 实例枚举与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
-| 夜神 | VM/实例身份与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
-| BlueStacks | 实例身份与 ADB 端点映射；启动、前台查询、截图、应用停止与安全关闭 | 待真实设备 |
+当前缺失资格及完成条件见[项目状态](../status.md)。
 
 ## 发行状态
 
@@ -171,10 +137,10 @@ python tools/repo.py release publish --channel preview --generated-root <外部p
       "hasReadme": true,
       "version": "<version>",
       "kind": "managed-code",
-      "apiVersion": "1.6",
+      "apiVersion": "2.2",
       "capabilities": ["frontend-module"],
-      "minHostVersion": "0.15.9",
-      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-0.2.2.zip",
+      "minHostVersion": "0.17.2",
+      "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-<version>.zip",
       "sha256": "<64 位小写十六进制>",
       "sizeBytes": 30783,
       "changelog": [
@@ -227,7 +193,7 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`metadata/releases/sta
 
 完整 stable candidate 与 publish-only 均由 `workflow_dispatch` 发起；main push 不自动构建或发布。candidate 按已发布 source cursor 计算累计差异，不重复项目测试；无发行变化返回 `NO_CHANGES`。writer 继续严格验证原候选、服务端 job、digest、不可变字节、生成物白名单与快进，不重新构建。preview 保持显式 candidate/restore 和 publish 参数。
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](author/TASK_PROTOCOL.md)。
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](../author/task-protocol.md)。
 
 未提交源码本机验收可由 Host 的 `tools/local_acceptance.py build --host-root <Host源码> --plugins-root <本仓源码> --output <外部独占目录>` 装配全部现役插件。该流程不写稳定 catalog/state/packages，本机 receipt 不能用于正式 publisher。
 

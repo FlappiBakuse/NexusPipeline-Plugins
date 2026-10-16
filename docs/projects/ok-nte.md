@@ -1,6 +1,6 @@
 # OkNTE 项目适配
 
-公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [ok-script](../frameworks/ok-script.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 当前 0.3.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
 
@@ -8,11 +8,11 @@
 |---|---|---|---|
 | OkNTE | DailyRoutineTask 的 Routine Items，按上游顺序去重、补默认和处理互斥；子配置只取 DailyRoutineTaskConfigs | 日常范围内开始/完成/失败配对；语言不支持跳过；异常归当前项及后续 blocked | 所有日常失败参与有限重试；完整显式选择列表可选择重试，否则耦合日常范围，不写进度 |
 
-## 当前版本与发行窗口
+## 上游核对记录与兼容窗口
 
-核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.2.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/OkNTE/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
-| 最新及前两次稳定发行 | 源码 SHA |
+| 核对时最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
 | [v1.4.13](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.13) | `3958f471702f504fe36cfb4f8b9e564bdf734bf0` |
 | [v1.4.12](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.12) | `23df0cb47f92ea4da79c19b42970fb120ee1cf13` |
@@ -47,6 +47,6 @@
 - 完成动作：无可修复的有限完成动作字段；保留框架退出参数。
 - 启动任务：非 MAA，无插入任务；仍由脚本负责启动器。
 
-仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+修复事务及账号保护见[配置编辑](../author/config-editor.md)，跨项目字段索引见[覆盖表](../frameworks/completion-actions.md)。
 
-当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。
+公共识别、重试及证据边界见[任务协议](../author/task-protocol.md)；本页只定义项目特有规则。

@@ -1,13 +1,13 @@
 # 专项配置编辑与修复
 
-本页负责 `configEditor` 的输入、权限、生成和写入责任。任务发现、配置检查与日志观察见 [任务协议](TASK_PROTOCOL.md)；各项目字段见 [修复覆盖表](../frameworks/COMPLETION_ACTIONS.md#当前配置修复覆盖)。官方资产固定为 `data/editor.js`，文件名不改变 manifest 公共字段。
+本页负责 `configEditor` 的输入、权限、生成和写入责任。任务发现、配置检查与日志观察见 [任务协议](task-protocol.md)；各项目字段见 [修复覆盖表](../frameworks/completion-actions.md#当前配置修复覆盖)。官方资产固定为 `data/editor.js`，文件名不改变 manifest 公共字段。
 
-## 两种调用
+## 调用阶段与写入责任
 
 | 调用 | 输入与 API | 写入责任 |
 |---|---|---|
-| `config-edit-commit` | 编辑进程退出后的冻结 input 与附加工作副本；与准备阶段相同的受限文件 API | 保存快照前清除临时编辑设置；失败保留会话，取消不调用；当前 0.2.0 编辑器支持，旧协议不调用 |
 | `config-edit-preparation` | `nexus.input` 的 mode、configInputName、configInputValue、extras；现役 listFiles/readFile/writeFile/exists/toast/notify | Host 隔离后的附加工作副本；主配置禁止写入；失败回滚，不启动上游 |
+| `config-edit-commit` | 编辑进程退出后的冻结 input 与附加工作副本；与准备阶段相同的受限文件 API | 保存快照前清除临时编辑设置；失败保留会话，取消不调用；taskProtocol 0.2.0 与 0.3.0 均支持，旧协议不调用 |
 | `config-repair` | `nexus.input` 的 rule、document、context；只读 `nexus.readConfig(id)` 与 `nexus.proposeRepair(value)` | 脚本只返回建议，无文件、进程、网络或 CLR 权限；Host 校验、预览、确认后提交用户快照 |
 
 修复 context 包含当前 `configInputValue`、`pc`、Host 的绝对 `gamePath` 与 `gameArguments`，不合格路径传空值。rule 是当前冻结的 manifest 规则；document 是这一条规则对应的配置对象，MFA 的继承优先级由 editor 按稳定实例 ID 读取当前用户主/附加快照计算。readConfig 只接受当前用户主快照内 config:<相对路径> 或 extra:0，每次提案最多读取 32 次、累计 8 MiB，逐文件限制 2 MiB、禁止路径逃逸和重解析点，不访问上游现场。不能将此输入或提案当作原生运行日志。
@@ -16,7 +16,7 @@
 
 ## 规则及默认策略
 
-`taskProtocol 0.2.0` 最多声明 8 条 repairRules，关联已声明的 configRules。资源为 `config:$main`、主快照内相对 `config:<文件>` 或 `extra:0`；`{instance}` 仅展开已验证稳定实例 ID。preconditions 约束快照种类、独占资源和附加配置条件，skipWhen 为单字段布尔条件。
+受支持的 taskProtocol 最多声明 8 条 repairRules，关联已声明的 configRules。资源为 `config:$main`、主快照内相对 `config:<文件>` 或 `extra:0`；`{instance}` 仅展开已验证稳定实例 ID。preconditions 约束快照种类、独占资源和附加配置条件，skipWhen 为单字段布尔条件。
 
 | kind | editor 策略 |
 |---|---|
@@ -30,7 +30,7 @@
 
 MXU 启动使用连接窗口前的前置程序；MFA 使用实例 SoftwarePath/BeforeTask 启动设置，修复为启动软件并运行脚本。共享字段只建立当前实例覆盖。MFA 编辑准备设置一次性 NoAutoStart，提交阶段清除；实例启动配置保留，取消和恢复使用原字节。提交源码使用同名 .commit.js，由生成器合成；未提供提交代码的编辑器该阶段为空操作。BAAH 日志开关位于附加软件配置 SAVE_LOG_TO_FILE，应用后下次配置交换使用该快照。
 
-0.2.0 插件未提供 editor 时没有可用修复；不根据插件名称或旧字段猜测修复动作。
+插件未提供 editor 时没有可用修复；不根据插件名称或旧字段猜测修复动作。
 
 ## 事务与账号保护
 

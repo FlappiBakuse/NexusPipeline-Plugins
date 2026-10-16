@@ -1,16 +1,23 @@
 # Frontend API 1.7 插件指南
 
+<!-- contract:versions -->
+| Contract | Version |
+|---|---|
+| plugin-api | 2.2 |
+| frontend-api | 1.7 |
+<!-- /contract:versions -->
+
 NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。插件可以通过声明式 UI 贡献接入稳定 slot，也可以在启用且 Frontend API 精确匹配后加载同源资源，增加页面、导航、路由、主题、背景表面和运行画面预览能力。插件源码推荐使用 Vue 3、TypeScript 和 Vite；运行宿主只需要 `web/` 静态资源。
 
 ## 适用范围
 
-`host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或提交临时外站脚本。后端可通过 flow 的可选 `PageBootstrap` 注册随包维护的固定页面初始化函数，限定 origin/path，在隔离世界检查登录状态并点击页头入口；不读取凭据。返回等待、已点击、已有登录框或已登录状态，Host 管加载代次、250 ms 轮询、30 秒上限和取消；同一 origin/path 的页内 history 更新保持等待，离开登记路径停止任务。后端通过 `IPluginHostContext.BrowserLogin` 注册限定采集规则、只读验证和终态补偿。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+
+## 客户端会话与秘密输入
+
+`host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或提交临时外站脚本。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
 
 秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
-
-GameCheckIn 的塔吉多登录使用插件自有表单和固定官方账号接口，不采集社区 Cookie。表单通过已认证 API 提交本次手机号、短信或密码；令牌只保留在后端候选中，沿用 editor、客户端归属、代次和保存事务。验证码仅由用户显式发送，密码与验证码不保存，取消或迟到响应不能覆盖旧凭据。该表单不调用外站 browser flow，也不扩展 Host 的导航或采集权限。
-
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 目录与 manifest
 
@@ -20,8 +27,7 @@ GameCheckIn 的塔吉多登录使用插件自有表单和固定官方账号接�
 plugins/general/Example/
 ├── plugin.json
 ├── store.json
-├── data/                         # data-specialized 可选
-├── ExamplePlugin.dll             # managed-code 可选
+├── ExamplePlugin.dll             # manifest.entryAssembly
 ├── i18n/                          # 可选 zh-CN/en-US 资源
 └── web/
     ├── main.js                   # frontend.entry
@@ -41,7 +47,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "description": "提供额外的管理页面功能",
   "version": "0.1.0",
   "kind": "managed-code",
-  "minHostVersion": "0.17.0",
+  "minHostVersion": "0.17.2",
   "apiVersion": "2.2",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
@@ -113,15 +119,9 @@ export function activate(host) {
 
 公共复合元件包括 `nxp-action-group`、`nxp-date-range-picker`、`nxp-drag-handle`、`nxp-entity-row`、`nxp-sortable-list`、`nxp-tabs`、`nxp-confirm-dialog`、`nxp-dialog-popover` 和 `nxp-page-header`。属性、事件和插槽以宿主 [公共 UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md) 为准。公开清单来自实际宿主检出的 `frontend/src/ui/register.ts`；插件构建产物由 `tests/frontend/run.mjs` 校验，宿主 `npm exec -- vitest run --config vitest.contract.config.ts`（在 frontend 目录并设置 NEXUS_OFFICIAL_PLUGINS_ROOT） 注册真实公共元素验证装配与清理。
 
-使用这些元件的插件在 manifest 中将 `minHostVersion` 设置为 `0.17.0`。宿主只保证当前注册表中声明的元素和公开属性/事件，插件应通过公开 `nxp-*` Native Custom Elements 接入，不依赖宿主私有 Vue 组件或内部 class。
+`minHostVersion` 应覆盖实际使用的元素和 API 首次受支持的宿主版本，并与当前声明的 API 兼容；新增能力后重新核对，不统一填写固定最低版本。宿主只保证当前注册表中声明的元素和公开属性/事件，插件应通过公开 `nxp-*` Native Custom Elements 接入，不依赖宿主私有 Vue 组件或内部 class。
 
-| 元件 | 主要用途 | 关键契约 |
-|---|---|---|
-| `nxp-action-group` | 对齐一组操作 | 默认插槽承载操作；由宿主处理间距与换行 |
-| `nxp-date-range-picker` | 选择日期范围 | `open`、`from`、`to`、`max-date` 属性；`apply` 的 `CustomEvent.detail[0]` 为 `{ from, to }`，另有 `open`/`close` 事件 |
-| `nxp-drag-handle` | 表达可排序把手 | `label`、`disabled` 属性；与同一 `nxp-sortable-list` 的 `data-dnd-id` 子项配合接收键盘/拖拽操作 |
-| `nxp-entity-row` | 统一实体行结构 | `leading`、默认和 `actions` 插槽；操作区使用公开按钮元件 |
-| `nxp-sortable-list` | 提供拖拽与键盘排序 | 子项设置 `data-dnd-id`；`reorder` 的 `detail[0]` 为完整新 key 数组，`detail[1]` 为移动项 key |
+按布局需求选择卡片、实体行或排序容器，属性、插槽与事件负载统一查阅 [Host 布局与列表契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/layout-lists.md)。插件负责业务身份、保存与失败恢复，元件负责结构和交互。
 
 ## 前端 host 能力
 
@@ -230,13 +230,9 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 请求来源与本机交互
 
-Plugin API 2.2 只定义 `General`、`HostFilePicker`、`NativeConfigEditor` 三类访问。每条 `PluginWebApiRoute` 必须显式设置 `Access`；声明式 UI 的读取、保存和每个动作分别显式设置访问类，缺失或未知值使注册失败。`PluginWebApiRequest.ConnectionKind` 由实际传输对端确定为 `Local`、`Remote` 或 `Unknown`，不采信 Host、Origin、Referer 或转发头。General 在三种来源均可用；后两类只允许 Local，在读取参数、请求体或执行回调前拒绝 Remote/Unknown。SDK 包及程序集继续为 2.0.0，与接口 2.2 独立治理。
+后端为每个路由和动作声明访问类，前端通过 host.getCapabilities 呈现可用状态；服务端仍逐次鉴权。完整分类、拒绝原因和缓存生命周期见[Host 访问契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/access.md)。不能靠隐藏按钮或自报客户端身份获得本机权限。
 
-Frontend API 1.7 的 `host.getCapabilities(signal?)` 返回冻结只读的 schema 1 对象：`connectionKind` 为 local/remote/unknown，`operations` 精确包含 general、hostFilePicker、nativeConfigEditor，每项有 allowed 与 denyReason。拒绝原因分别为 host_file_picker_requires_local、native_config_editor_requires_local、client_origin_unverified。缓存绑定同源、认证和当前 Host 实例；重连或重启使旧读取失效。它用于呈现界面，后端每次操作仍重新判断来源。
-
-原生文件选择只能禁用“浏览”按钮，路径输入仍可编辑并保存。普通账号、脚本、队列、计划、运行、历史、插件安装与诊断是 General；诊断 ZIP 写入宿主受控 staging，返回明确路径。脚本文件读取只在已批准脚本根、配置位置及游戏程序父目录范围内，拒绝链接与路径穿越，不枚举宿主磁盘。
-
-路由处理器接收 `RouteSurface`：`element`、`routeToken`、`segments`、`signal`。必须在 element 内挂载，返回清理函数（或最终返回函数的 Promise）；路由离开、替换或插件停止时先中止 signal，再执行清理。不得查询宿主私有页面容器。公开 18 个 slot 与 40 个元素保持既有名称。
+路由 renderer 只在给定 element 中挂载，离开后取消请求并返回清理函数；完整 surface 见[Frontend API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/frontend.md)。公开 slot 与元素以 Host 注册表及[UI 目录](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/ui/README.md)为准，不依赖私有页面容器。
 
 ## 紧凑长文字
 
@@ -246,12 +242,12 @@ Frontend API 1.7 的 `host.getCapabilities(signal?)` 返回冻结只读的 schem
 
 后端通过 Plugin API 2.2 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
 
-Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与 18 个公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
+Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
 
 官方外链经 `await host.navigation.openExternal(url)`；插件先验证官方域。Host 仅接受无用户信息的 HTTPS，桌面交给系统浏览器，Web 用户点击在独立标签打开并移除 opener/referrer。失败在插件界面可见，禁止在轮询或刷新时自动打开。
 
 ## 布局与本机设计验收
 
-宿主页与官方插件统一遵循 [Host 前端设计规范](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/development/frontend-design.md)。语义卡片最多三层，第四层起违规；透明包装、字段和列表行不计层，深数据继续用缩进分组显示。公共卡片通过真实 DOM 祖先交替表面，light DOM host 不重复计数。间距使用现役 token，排序采用整体卡面、分隔线行及稳定 ID 把手，保留键盘排序。交互与弹窗使用公开元件，长文本、双语、双主题及 360/768/1280 视口保持可读可操作，离开页面释放全部资源。
+遵循[Host 前端设计规范](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/development/frontend-design.md)的表面层级、公共元件、可访问性、响应式和例外规则。开发时先完成类型检查与构建，再在仓外进行真实浏览器验收；报告记录实际覆盖的路由、slot、语言、主题和视口。
 
-设计静态检查和真实浏览器专项在仓外本地执行，全 route/slot/配置入口必须有 coverage，动态结构由浏览器闭环。脚本、例外映射、报告和当次截图不提交、不加入 PR CI，也不加入核心功能门禁；排序持久化、公开事件、焦点和生命周期的实际功能验证仍按现役测试维护。未运行真实浏览器不能记为设计验收通过。
+专项脚本、截图与报告不提交、不加入 PR CI 或核心功能门禁。排序持久化、公开事件和生命周期使用现役功能回归；真实浏览器未运行的范围明确记为未验证。

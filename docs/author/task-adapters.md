@@ -1,6 +1,6 @@
 # 官方专项任务适配边界
 
-公共协议见 [TASK_PROTOCOL](TASK_PROTOCOL.md)，框架见 [MXU](../frameworks/MXU.md)、[ok-script](../frameworks/OK_SCRIPT.md) 和 [MaaFrameworkDriver](../frameworks/MAAFRAMEWORK_DRIVER.md)，项目规则与历史资格见 [项目索引](../projects/README.md)。本页维护适配审查、生成与夹具规则。
+公共协议见 [任务协议](task-protocol.md)，框架见 [MXU](../frameworks/mxu.md)、[ok-script](../frameworks/ok-script.md) 和 [MaaFrameworkDriver](../frameworks/maa-framework-driver.md)，项目规则与历史资格见 [项目索引](../projects/README.md)。本页维护适配审查、生成与夹具规则。
 
 ## 作者审查清单
 
@@ -30,10 +30,10 @@ Host 联调工具的 `--runtime-installations <matrix.json>` 从显式 `cases`�
 
 ## BAAH 顺序和错误恢复
 
-[BAAH 顺序和错误恢复](../projects/BAAH.md)。
+[BAAH 顺序和错误恢复](../projects/baah.md)。
 
 ## ZZZ 应用组和体力子范围
 
-[ZZZ 应用组和体力子范围](../projects/ZenlessZoneZeroOneDragon.md)。
+[ZZZ 应用组和体力子范围](../projects/zenless-zone-zero-one-dragon.md)。
 
-配置编辑脚本由 `tools/generate/config_editors.py` 生成，账号准备和修复不进入三阶段观察 bundle；见 [配置编辑契约](CONFIG_EDITOR.md)。
+配置编辑脚本由 `tools/generate/config_editors.py` 生成，账号准备和修复不进入三阶段观察 bundle；见 [配置编辑契约](config-editor.md)。

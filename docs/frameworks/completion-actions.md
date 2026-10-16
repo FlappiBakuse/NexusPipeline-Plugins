@@ -13,7 +13,7 @@
 | ZenlessZoneZeroOneDragon | `after_done=无`；无、关闭游戏、关机 | 无允许；关闭游戏按后继依赖检查；关机阻断。 |
 | BAAH | `CLOSE_GAME_FINISH`、`CLOSE_EMULATOR_FINISH`、`CLOSE_BAAH_FINISH` 均默认 false；`POST_COMMAND` 默认空 | PC 模式忽略 CLOSE_GAME_FINISH，CLOSE_EMULATOR_FINISH 会关闭 PC 游戏；CLOSE_BAAH_FINISH 是程序退出。模拟器关闭可能影响共享实例，后继风险未证明时警告。POST_COMMAND 非空是未知外部命令。真实 Jint 覆盖 PC 三开关全部 8 种组合和同目标保持运行的阻断。 |
 | MaaEnd | MXU 实例的完成动作列表；空列表不执行动作。`__MXU_POWER__` 的 operation：shutdown、restart、screenoff、sleep、mute、unmute；缺失 operation 默认 shutdown | 关机/重启/睡眠阻断；关屏因屏幕依赖未确认而警告；静音/解除静音不阻断。其他程序或 pretask 不推断成安全；使用 MXU 共同规则。 |
-| MaaStellaSora | MFA `AfterTask` 默认 None；None、CloseMFA、CloseEmulator、CloseEmulatorAndMFA、ShutDown、ShutDownOnce、CloseEmulatorAndRestartMFA、RestartPC | None/CloseMFA 允许；关机、一次关机、重启电脑及关闭目标后重启 MFA 阻断；关闭游戏/模拟器检查后继依赖，详见 [项目说明](../projects/MaaStellaSora.md)。 |
+| MaaStellaSora | MFA `AfterTask` 默认 None；None、CloseMFA、CloseEmulator、CloseEmulatorAndMFA、ShutDown、ShutDownOnce、CloseEmulatorAndRestartMFA、RestartPC | None/CloseMFA 允许；关机、一次关机、重启电脑及关闭目标后重启 MFA 阻断；关闭游戏/模拟器检查后继依赖，详见 [项目说明](../projects/maa-stella-sora.md)。 |
 | OkNTE | 项目配置没有有限完成动作枚举；官方启动器转发 `-a true -u manual -t … -e` | `-e` 控制框架收尾，不证明业务成功，不要求 PyAppify GUI 自动退出。按官方来源、配置及运行结构准入；结构兼容的新版本仍识别真实日常任务，不因版本变化生成未核验占位。 |
 | OkWutheringWaves | 同一 ok-script 有限 CLI，项目任务索引独立 | 不套用异环任务或旧版本规则；框架/项目身份按各自锁定来源核验。 |
 
@@ -27,10 +27,10 @@
 - March7thAssistant：[默认配置和十项动作](https://github.com/moesnow/March7thAssistant/blob/7423dea64552f71332cc71f3c02481695aaec151/config.example.yaml)。
 - ZZZ：[动作枚举和默认值](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/blob/a91a606b4726a335af1556dd47f54e9249f9ea2a/src/one_dragon/base/config/one_dragon_config.py)。
 - BAAH：[默认值](https://github.com/BlueArchiveArisHelper/BAAH/blob/c008a8f3eac90acacac6da49ebb10c061f44fc24/modules/configs/defaultSettings.py)；[PC、模拟器关闭与外部命令](https://github.com/BlueArchiveArisHelper/BAAH/blob/c008a8f3eac90acacac6da49ebb10c061f44fc24/BAAH.py)。
-- MXU：[v2.6.1 特殊任务定义](https://github.com/MistEO/MXU/blob/a7fdd0b32bfadc1df1bf8c6293bf2395676542b8/src/types/specialTasks.ts)。项目输入和日志归属见 [MaaEnd](../projects/MaaEnd.md)、[MaaStellaSora](../projects/MaaStellaSora.md)。
-- OK：[框架锁定与 CLI 验证方法](OK_SCRIPT.md)；项目独立的 [异环配置](https://github.com/BnanZ0/ok-nte/blob/0339cfc44a9827ad8cd1ebeabe432660e87f2acb/src/config.py)和[鸣潮配置](https://github.com/ok-oldking/ok-wuthering-waves/blob/016c19e807fcc16800c42c89fdb3b01ea6947ee9/config.py)。
+- MXU：[v2.6.1 特殊任务定义](https://github.com/MistEO/MXU/blob/a7fdd0b32bfadc1df1bf8c6293bf2395676542b8/src/types/specialTasks.ts)。项目输入和日志归属见 [MaaEnd](../projects/maa-end.md)、[MaaStellaSora](../projects/maa-stella-sora.md)。
+- OK：[框架锁定与 CLI 验证方法](ok-script.md)；项目独立的 [异环配置](https://github.com/BnanZ0/ok-nte/blob/0339cfc44a9827ad8cd1ebeabe432660e87f2acb/src/config.py)和[鸣潮配置](https://github.com/ok-oldking/ok-wuthering-waves/blob/016c19e807fcc16800c42c89fdb3b01ea6947ee9/config.py)。
 
-公共日志协议和结构化 provider 的边界见 [TASK_PROTOCOL](../author/TASK_PROTOCOL.md)；Maa 独立直驱的授权及原生生命周期见 [框架指南](MAAFRAMEWORK_DRIVER.md)。
+公共日志协议和结构化 provider 的边界见 [任务协议](../author/task-protocol.md)；Maa 独立直驱的授权及原生生命周期见 [框架指南](maa-framework-driver.md)。
 
 ## 当前配置修复覆盖
 
@@ -47,4 +47,4 @@
 
 上述修复仅作用于用户快照，预览后逐项确认，并保留原字节备份。Maa 多个自定义程序不猜测启动归属；非字符串动作、未声明字段、未保存快照不自动修复。主/附加快照遵守相同 CAS、journal 与账号隔离；不会直接改上游现场配置。
 
-BAAH 另有日志输出修复：`extra:0/SAVE_LOG_TO_FILE` 缺失或 false → true。修复实现和声明边界统一见 [配置编辑契约](../author/CONFIG_EDITOR.md)。
+BAAH 另有日志输出修复：`extra:0/SAVE_LOG_TO_FILE` 缺失或 false → true。修复实现和声明边界统一见 [配置编辑契约](../author/config-editor.md)。

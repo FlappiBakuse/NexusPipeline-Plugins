@@ -5,7 +5,7 @@
   "displayName": "ok-ww 日常",
   "gameName": "鸣潮",
   "description": "单账号日常任务计划、配置隔离与任务结果判定",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "kind": "data-specialized",
   "minHostVersion": "0.17.4",
   "resolve": "data/resolve.json",

@@ -179,7 +179,7 @@ export async function runBatch(root,args) {
           await run(python,["tests/architecture/check.py","--root",workspace.directory,"--report",path.join(directory,"architecture.json")],workspace.directory);
           await run(python,["-m","tests.tooling.unittest_runner","--root",workspace.directory,"--suite","architecture","--report",path.join(directory,"python-architecture.json")],workspace.directory);
         } else if(unit.id==="plugins.docs") {
-          for(const file of ["README.md","docs/TESTING.md"]) if(!fs.statSync(path.join(workspace.directory,file)).size) throw new Error("Missing documentation");
+          for(const file of ["README.md","docs/testing/README.md"]) if(!fs.statSync(path.join(workspace.directory,file)).size) throw new Error("Missing documentation");
           await run(process.execPath,["tools/docs/check-links.mjs"],workspace.directory);
         } else if(unit.id==="plugins.ci-policy") {
           await run(process.execPath,["--test","tests/runner/selection.test.mjs","tests/runner/scope-plan.test.mjs","tests/runner/core-plan.test.mjs","tests/runner/batch-plan.test.mjs","tests/runner/component-discovery.test.mjs","tests/runner/runtime-evidence.test.mjs","tests/support/budget.test.mjs"],workspace.directory);

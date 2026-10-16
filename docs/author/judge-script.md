@@ -1,6 +1,6 @@
 # 旧式判断脚本接口
 
-本页适用于未声明 taskProtocol 的旧式 judge 和通用脚本。八个现役专项使用 [任务协议](TASK_PROTOCOL.md)，其 judge.js 是 observe 阶段；配置编辑与修复使用 [配置编辑契约](CONFIG_EDITOR.md)，不使用本页的写文件或 replaceConfigs 接口。
+本页适用于未声明 taskProtocol 的旧式 judge 和通用脚本。八个现役专项使用 [任务协议](task-protocol.md)，其 judge.js 是 observe 阶段；配置编辑与修复使用 [配置编辑契约](config-editor.md)，不使用本页的写文件或 replaceConfigs 接口。
 
 旧式判断脚本用于在脚本进程运行期间判断任务是否完成、部分完成，或在失败时请求下一次尝试使用替换配置。它会被宿主周期调用，并接收当前尝试的累计日志与文件清单。
 
@@ -11,7 +11,7 @@
 
 运行时语义以 [NexusPipeline Plugin API](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/README.md) 和宿主对应版本的 JudgeScriptRunner、SessionJudge 实现为准。
 
-## 三种结果
+## 等待与终态
 
 ### 继续等待
 
@@ -401,4 +401,4 @@ BetterGI 的 TaskEnabledList 是 map 型参考；MaaEnd 的 instances[id=...].ta
 7. 保证多次调用幂等。
 8. reason 写成用户可理解的结果，调试细节留在必要的日志中。
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](task-protocol.md)。

@@ -3,7 +3,7 @@
   "topics": [
     {
       "id": "testing.core",
-      "path": "TESTING.md",
+      "path": "testing/README.md",
       "summary": "插件本机能力轨迹、固定输入与生产 PR 打包检查",
       "topics": [
         "测试",
@@ -23,18 +23,18 @@
         "tests/support/npm-inputs.mjs",
         "tests/support/workspace.mjs"
       ],
-      "testDomains": [
-        "managed",
-        "repository-tools"
-      ],
       "authorityFor": [
         "core-testing"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "framework.maafw",
-      "path": "frameworks/MAAFRAMEWORK_DRIVER.md",
+      "path": "frameworks/maa-framework-driver.md",
       "summary": "MaaFramework 独立配置、PI 编译、原生 worker、Agent 与发行输入",
       "topics": [
         "MaaFramework",
@@ -51,19 +51,18 @@
       "codePaths": [
         "plugins/general/MaaFrameworkDriver"
       ],
-      "testDomains": [
-        "managed",
-        "frontend-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "maa-framework-driver"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "authoring.frontend",
-      "path": "author/FRONTEND_PLUGIN.md",
+      "path": "author/frontend-plugin.md",
       "summary": "Frontend API 1.7、公共 nxp-* 元件、slot 和生命周期",
       "topics": [
         "frontend",
@@ -80,18 +79,18 @@
         "plugins/general/GameCheckIn/frontend",
         "tests/frontend/run.mjs"
       ],
-      "testDomains": [
-        "frontend-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "plugin-frontend-authoring"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "authoring.data-specialized",
-      "path": "author/DATA_SPECIALIZED_PLUGIN.md",
+      "path": "author/data-specialized-plugin.md",
       "summary": "数据化插件 manifest、resolve、配置和脚本边界",
       "topics": [
         "data-specialized",
@@ -106,18 +105,18 @@
         "plugins/specialized",
         "tools/repo.py"
       ],
-      "testDomains": [
-        "repository-tools",
-        "data-contract"
-      ],
       "authorityFor": [
         "plugin-data-authoring"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "authoring.judge",
-      "path": "author/JUDGE_SCRIPT.md",
+      "path": "author/judge-script.md",
       "summary": "完成判定、失败判定、超时和配置脚本审查",
       "topics": [
         "judge",
@@ -133,14 +132,14 @@
         "plugins/specialized",
         "tools/repository"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "plugin-script-authoring"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "repository.contributing",
@@ -162,17 +161,18 @@
         "tools/docs/contracts.mjs",
         "tests/tooling/test_governance.py"
       ],
-      "testDomains": [
-        "repository-tools"
-      ],
       "authorityFor": [
         "plugin-repository-contributing"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "repository.releasing",
-      "path": "RELEASING.md",
+      "path": "development/release.md",
       "summary": "增量计划、包校验、catalog 和发行状态",
       "topics": [
         "release",
@@ -192,18 +192,18 @@
         "packages",
         "tools/repo.py"
       ],
-      "testDomains": [
-        "repository-tools",
-        "release-contract"
-      ],
       "authorityFor": [
         "plugin-releasing"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "authoring.task-protocol",
-      "path": "author/TASK_PROTOCOL.md",
+      "path": "author/task-protocol.md",
       "summary": "专项任务协议、只读发现、日志事实和安全选择补丁",
       "topics": [
         "taskProtocol",
@@ -219,18 +219,18 @@
         "tools/generate/task_plugin.py",
         "contracts/config-repair.schema.json"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "task-protocol-authoring"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "framework.mxu",
-      "path": "frameworks/MXU.md",
+      "path": "frameworks/mxu.md",
       "summary": "MXU 框架或项目适配边界",
       "topics": [
         "MXU"
@@ -239,18 +239,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "framework.mxu-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "framework.ok_script",
-      "path": "frameworks/OK_SCRIPT.md",
+      "path": "frameworks/ok-script.md",
       "summary": "OK_SCRIPT 框架或项目适配边界",
       "topics": [
         "OK_SCRIPT"
@@ -259,18 +259,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "framework.ok_script-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.bettergi",
-      "path": "projects/BetterGI.md",
+      "path": "projects/better-gi.md",
       "summary": "BetterGI 框架或项目适配边界",
       "topics": [
         "BetterGI"
@@ -279,18 +279,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.bettergi-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.march7thassistant",
-      "path": "projects/March7thAssistant.md",
+      "path": "projects/march7th-assistant.md",
       "summary": "March7thAssistant 框架或项目适配边界",
       "topics": [
         "March7thAssistant"
@@ -299,18 +299,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.march7thassistant-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.zenlesszonezeroonedragon",
-      "path": "projects/ZenlessZoneZeroOneDragon.md",
+      "path": "projects/zenless-zone-zero-one-dragon.md",
       "summary": "ZenlessZoneZeroOneDragon 框架或项目适配边界",
       "topics": [
         "ZenlessZoneZeroOneDragon"
@@ -319,18 +319,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.zenlesszonezeroonedragon-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.baah",
-      "path": "projects/BAAH.md",
+      "path": "projects/baah.md",
       "summary": "BAAH 框架或项目适配边界",
       "topics": [
         "BAAH"
@@ -339,18 +339,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.baah-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.maaend",
-      "path": "projects/MaaEnd.md",
+      "path": "projects/maa-end.md",
       "summary": "MaaEnd 框架或项目适配边界",
       "topics": [
         "MaaEnd"
@@ -359,18 +359,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.maaend-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.maastellasora",
-      "path": "projects/MaaStellaSora.md",
+      "path": "projects/maa-stella-sora.md",
       "summary": "MaaStellaSora 框架或项目适配边界",
       "topics": [
         "MaaStellaSora"
@@ -379,18 +379,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.maastellasora-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.oknte",
-      "path": "projects/OkNTE.md",
+      "path": "projects/ok-nte.md",
       "summary": "OkNTE 框架或项目适配边界",
       "topics": [
         "OkNTE"
@@ -399,18 +399,18 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.oknte-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "project.okwutheringwaves",
-      "path": "projects/OkWutheringWaves.md",
+      "path": "projects/ok-wuthering-waves.md",
       "summary": "OkWutheringWaves 框架或项目适配边界",
       "topics": [
         "OkWutheringWaves"
@@ -419,38 +419,38 @@
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
         "project.okwutheringwaves-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
-      "id": "project.readme",
+      "id": "projects.index",
       "path": "projects/README.md",
-      "summary": "README 框架或项目适配边界",
+      "summary": "项目适配与来源索引",
       "topics": [
-        "README"
+        "项目索引"
       ],
       "aliases": [],
       "codePaths": [
         "adapters/task-protocol"
       ],
-      "testDomains": [
-        "data-contract",
-        "repository-tools"
-      ],
       "authorityFor": [
-        "project.readme-adaptation"
+        "project-navigation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "framework.completion-actions",
-      "path": "frameworks/COMPLETION_ACTIONS.md",
+      "path": "frameworks/completion-actions.md",
       "summary": "八款专项上游默认值、有限动作、CLI 与后继依赖",
       "topics": [
         "completion",
@@ -462,17 +462,18 @@
         "adapters/task-protocol/core/config-assessment.js",
         "tests/fixtures/task-protocol"
       ],
-      "testDomains": [
-        "data-contract"
-      ],
       "authorityFor": [
         "finite-completion-actions"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "framework.mfa-avalonia",
-      "path": "frameworks/MFA_AVALONIA.md",
+      "path": "frameworks/mfa-avalonia.md",
       "summary": "MFA稳定实例、配置契约迁移、原生日志与重试边界",
       "topics": [
         "MFAAvalonia",
@@ -484,17 +485,18 @@
         "adapters/task-protocol/mfa",
         "adapters/task-protocol/upstream-window.json"
       ],
-      "testDomains": [
-        "data-contract"
-      ],
       "authorityFor": [
         "mfa-avalonia-adaptation"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "author.config-editor",
-      "path": "author/CONFIG_EDITOR.md",
+      "path": "author/config-editor.md",
       "summary": "编辑准备、受限修复提案、生成源与账号事务边界",
       "topics": [
         "配置编辑",
@@ -509,13 +511,14 @@
         "adapters/config-editor",
         "tests/config-editors/run.mjs"
       ],
-      "testDomains": [
-        "repository-tools"
-      ],
       "authorityFor": [
         "configuration-editing"
       ],
-      "status": "current"
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
     },
     {
       "id": "plugin.game-activities",
@@ -530,12 +533,126 @@
       "codePaths": [
         "plugins/general/GameActivities"
       ],
-      "testDomains": [
-        "managed",
-        "frontend-contract"
-      ],
       "authorityFor": [
         "game-activities"
+      ],
+      "status": "current",
+      "validationPaths": [
+        "tools/docs/check-links.mjs",
+        "tests/policy.json"
+      ]
+    },
+    {
+      "id": "author.task-adapters",
+      "path": "author/task-adapters.md",
+      "summary": "官方专项任务适配边界",
+      "topics": [
+        "官方专项任务适配边界"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.author.task-adapters"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "development.documentation",
+      "path": "development/documentation.md",
+      "summary": "文档维护规范",
+      "topics": [
+        "文档维护规范"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.development.documentation"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "development.index",
+      "path": "development/README.md",
+      "summary": "开发与发行",
+      "topics": [
+        "开发与发行"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.development.index"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "development.workflow",
+      "path": "development/workflow.md",
+      "summary": "插件开发流程",
+      "topics": [
+        "插件开发流程"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.development.workflow"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "index",
+      "path": "README.md",
+      "summary": "NexusPipeline-Plugins 文档门户",
+      "topics": [
+        "NexusPipeline-Plugins 文档门户"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.index"
+      ],
+      "status": "current"
+    },
+    {
+      "id": "status",
+      "path": "status.md",
+      "summary": "项目状态（Status）",
+      "topics": [
+        "项目状态（Status）"
+      ],
+      "aliases": [],
+      "codePaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "validationPaths": [
+        "tools/docs/check-links.mjs"
+      ],
+      "authorityFor": [
+        "document.status"
       ],
       "status": "current"
     }

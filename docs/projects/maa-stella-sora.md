@@ -1,6 +1,6 @@
 # MaaStellaSora 项目适配
 
-真实插件 ID 保持 `maas`，当前使用 MFAAvalonia 的稳定实例入口。MaaEnd 继续使用官方 MXU。协议见 [TASK_PROTOCOL](../author/TASK_PROTOCOL.md)，框架与配置责任见 [MFAAvalonia](../frameworks/MFA_AVALONIA.md)。
+真实插件 ID 保持 `maas`，当前使用 MFAAvalonia 的稳定实例入口。MaaEnd 继续使用官方 MXU。协议见 [任务协议](../author/task-protocol.md)，框架与配置责任见 [MFAAvalonia](../frameworks/mfa-avalonia.md)。
 
 发现按实例 TaskItems、CurrentTasks 删除记录、PI import/preset、控制器和资源兼容条件冻结任务顺序；任务选项、重复次数和全局/资源/控制器选项均属于行为字段。新默认任务可投影，但没有持久选择字段时重试只能使用耦合范围，不能创造用户选择。
 
@@ -10,11 +10,11 @@
 
 创建脚本时可以暂不选择实例；使用前先在 MFA 中保存原生实例，再通过 Host 的“编辑配置”复用并明确选择该实例。插件声明 `no-fresh-config`，不通过 Host 创建没有实例归属的空配置。复用候选只有一个时自动选中并继续编辑；多个候选才请求用户选择，保存前不确认用户快照。
 
-## 当前版本与发行窗口
+## 上游核对记录与兼容窗口
 
-核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.3.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/MaaStellaSora/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
-| 最新及前两次稳定发行 | 源码 SHA |
+| 核对时最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
 | [v1.6.0](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.6.0) | `6f36282ecf7464f27870f58121ef4ac02c503b1f` |
 | [v1.5.1](https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.5.1) | `ee9f3c9b65011d1b7649202328c0914af7910c81` |
@@ -88,8 +88,8 @@ manifest 的 `configurationRevision` 固定为 `mfa-avalonia.instances.v1`，驱
 - 完成动作：`AfterTask` 保留 None/CloseMFA/CloseEmulator/CloseEmulatorAndMFA，其余字符串改 None；关闭 ComputerOperationAction。
 - 启动后操作：设为 `StartupSoftwareAndScript`，保留任务顺序、参数、额度及进度；不插入 CustomProgramAction。进入编辑时原生一次性 NoAutoStart 屏蔽启动动作，保存前恢复正常启动。
 
-仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+修复事务及账号保护见[配置编辑](../author/config-editor.md)，跨项目字段索引见[覆盖表](../frameworks/completion-actions.md)。
 
 任务备注使用原生 `remark`，非空时优先于 `display_name_override`；显示原任务标签加备注，日志匹配使用原生实际名称。空白备注回退到旧昵称或原标签。备注/昵称随计划冻结，不借显示文字推定同名日志归属。
 
-当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。
+公共识别、重试及证据边界见[任务协议](../author/task-protocol.md)；本页只定义项目特有规则。

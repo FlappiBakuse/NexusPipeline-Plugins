@@ -1,6 +1,6 @@
 # March7thAssistant 项目适配
 
-公共规则见 [公共任务协议](../author/TASK_PROTOCOL.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
+公共规则见 [公共任务协议](../author/task-protocol.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
@@ -18,18 +18,17 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 
 - March7th `InstanceNotCompleted` 从有效配置模板经 `Base.send_notification_with_screenshot` 逐行写入 INFO，随后才截图和发送 ERROR 级通知。四个已核实失败分支记录当前 source/epoch、父任务、目标副本和内部执行序号；首次失败保留 open 问题事件，不提前重启整项任务。连续三次重试耗尽且退出范围才形成失败；相同目标的显式重试、完整轮次和目标次数证据才能恢复对应事件。另一副本成功、通用完成横幅、历史时间戳不能洗掉失败。历战余响与活动调用独立归属；无法确定范围时保留 unattributed_error，不猜给清体力。
 
-
 ## 日常入口与资源范围
 
 当前 Host 启动默认 main：`game.start → Daily.start → reward.start → game.stop`。`routine` 只执行 `prepare_daily(ignore_refresh=True)` 和奖励，不包含全部资产、周常及挑战；不能把两种入口视为等价。原配置续跑保留时间戳、完成次数和体力计划，不重置每日额度；上游尚未刷新的任务以正常跳过记录。错误时间戳本身不证明完成。
 
 资源观察覆盖自塑尘脂合成的完成/失败/上限、余烬商品的购买/售罄/未完成、光锥叠加异常与 Daily.start 返回。光锥单轮“继续查找”不作为整个任务终态。资产未结束、缺少适用子任务收尾或显式失败会失败并允许原配置续跑。活动日历通知属于技术步骤；活动检测的正常返回可以闭合条件检查，未检测到活动记为不适用。
 
-## 当前版本与发行窗口
+## 上游核对记录与兼容窗口
 
-核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.4.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/March7thAssistant/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
-| 最新及前两次稳定发行 | 源码 SHA |
+| 核对时最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
 | [v2026.10.3](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.10.3) | `04b14f43570a361a5289f5ad7982e06ffe1f72d7` |
 | [v2026.9.30](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.9.30) | `5bbe11c4a1e799b89258dd01cf8d30837eadb32f` |
@@ -86,6 +85,6 @@ M7 云游戏模式不比较本地游戏路径。`after_finish: Loop` 会使上�
 - 完成动作：`after_finish` 保留 None/Exit 及已识别中文无操作/退出，其余字符串（包括 RunScript）改 None。
 - 启动任务：非 MAA，无插入任务。
 
-仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+修复事务及账号保护见[配置编辑](../author/config-editor.md)，跨项目字段索引见[覆盖表](../frameworks/completion-actions.md)。
 
-当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。
+公共识别、重试及证据边界见[任务协议](../author/task-protocol.md)；本页只定义项目特有规则。

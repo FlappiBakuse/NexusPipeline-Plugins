@@ -18,6 +18,10 @@ Host 新写报告 schema 3 / daily-flow-v2，旧 schema 2 继续只读。报告�
 
 正式 wire schema 见 [task-protocol.schema.json](../../contracts/task-protocol.schema.json)。现有 `examples/task-protocol/` 保留 0.2.0 的兼容回归输入；八个生产专项及识别夹具验证 0.3.0。
 
+## 兼容 manifest 示例（0.2.0）
+
+以下是兼容分支的字段示意，完整可执行输入位于 examples；新生产专项使用前述 0.3.0。
+
 ```json
 {
   "minHostVersion": "0.16.15",
@@ -34,6 +38,8 @@ Host 新写报告 schema 3 / daily-flow-v2，旧 schema 2 继续只读。报告�
 }
 ```
 
+## 三阶段执行环境
+
 三个脚本均在宿主 Jint 内执行，一次只能 `console.log` 一个 JSON 结果。`input` 与 `nexus.input` 相同。仅提供 `nexus.readConfig(id)` 和 `nexus.readResource(id)`，返回 `{document, format, revision}`；缺失资源抛出可捕获的 `config_unavailable`。没有任意文件读写、进程、网络、截图或 CLR 接口。
 
 ## 兼容日常协议 0.2.0
@@ -46,15 +52,15 @@ Host 新写报告 schema 3 / daily-flow-v2，旧 schema 2 继续只读。报告�
 
 重试输出保留已有 included/prerequisite/expanded/filePatches，并增加 `targetTaskIds` 和 `launchScopeTaskIds`。stop 的动作数组必须全空。native_resume 的目标是未完成任务、启动范围是全部原启用任务，补丁及扩展数组为空；Host 复核行为未变化，不通过写时间戳或重置次数实现续跑。selective 继续使用最小选择字段补丁，保留预算、额度、进度和账号隔离；资源消耗不是新日常协议的拒绝原因。partial 子树禁止重试。
 
-模板命令 `python tools/repo.py scaffold task-plugin --help` 只生成当前协议。可执行例子为 `examples/task-protocol/json-id-array`；Host 联调工具的 `--daily-protocol <新的外部目录>` 实际验证 Jint 三阶段、失败重试、选择恢复、计数及其他账号字节、报告2保存/重读。该测试不代表上游发行已实测。
+模板命令 `python tools/repo.py scaffold task-plugin --help` 生成 0.2.0 兼容脚手架；生成后仍须按目标协议实现并验证，不能当作已完成的 0.3.0 适配。可执行例子为 `examples/task-protocol/json-id-array`；Host 联调工具的 `--daily-protocol <新的外部目录>` 实际验证 Jint 三阶段、失败重试、选择恢复、计数及其他账号字节、报告2保存/重读。该测试不代表上游发行已实测。
 
 ## 文本与包版本兼容
 
 `0.2.0` manifest 必须声明 `localization`，例如 `{ "defaultLocale": "zh-CN", "messages": { "zh-CN": "data/i18n/zh-CN.json", "en-US": "data/i18n/en-US.json" } }`。文件是 key 到字符串的平面 JSON 对象；最多 16 种语言、各 4096 项、总计 256 KiB。词条最长 2048 字符。源码、ZIP 与 Host 都校验路径、重复成员、类型和预算。旧开发版的 `1.0`、`1.1`、`1.2` 声明均不再加载。
 
-0.2.0 的修复权限由 `repairRules` 声明，策略由 `configEditor` 生成提案，Host 负责验证与事务。详见 [配置编辑契约](CONFIG_EDITOR.md)。discover 仅做只读配置诊断。
+0.2.0 的修复权限由 `repairRules` 声明，策略由 `configEditor` 生成提案，Host 负责验证与事务。详见 [配置编辑契约](config-editor.md)。discover 仅做只读配置诊断。
 
-所有阶段精确使用 `input.protocolVersion = "0.2.0"`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
+本节的 0.2.0 兼容分支各阶段使用 `input.protocolVersion = "0.2.0"`。任务保留原始 `name`，可增加 `nameText`；观察、诊断和重试可增加 `reasonText`。两种严格形态为：
 
 ```json
 {"kind":"plugin","key":"task.daily.name","args":{},"fallback":"每日任务"}
@@ -171,7 +177,7 @@ python tools/repo.py check source --base <完整PR基线SHA>
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 
-八个官方适配器的源码分支、保守支持范围和作者审查清单见 [专项适配边界](TASK_ADAPTERS.md)。
+八个官方适配器的源码分支、保守支持范围和作者审查清单见 [专项适配边界](task-adapters.md)。
 
 ## 固定运行资源的完整性
 

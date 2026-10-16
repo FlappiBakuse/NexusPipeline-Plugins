@@ -1,6 +1,6 @@
 # MaaEnd 项目适配
 
-公共框架见[MXU](../frameworks/MXU.md)，结果契约见[任务协议](../author/TASK_PROTOCOL.md)。本适配器使用 0.3.0，最低 Host 0.17.4。
+公共框架见[MXU](../frameworks/mxu.md)，结果契约见[任务协议](../author/task-protocol.md)。本适配器使用 0.3.0，最低 Host 0.17.4。
 
 MaaEnd 保持官方发行实际使用的 MXU GUI。MaaStellaSora 的 MFA 迁移不改变 MaaEnd 或独立 MaaFrameworkDriver 的配置入口。
 
@@ -14,11 +14,11 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 
 源码生成模块仍为 adapters/task-protocol/mxu，不因其他插件更换 GUI 删除 MXU 分支。
 
-## 当前版本与发行窗口
+## 上游核对记录与兼容窗口
 
-核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.4.4`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/MaaEnd/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
-| 最新及前两次稳定发行 | 源码 SHA |
+| 核对时最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
 | [v2.32.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.32.0) | `5501b27f3b3f552e8897a8839521dd36caf617a9` |
 | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) | `f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d` |
@@ -91,7 +91,7 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 
 上述任务均由唯一自动执行实例的稳定 task ID 选择。定位/目标/预设/前置设置等只有 option 或 preset 的 import 不独立建业务任务。AccountSwitch、DevTest、导入、实时辅助等在 PI 中可发现，不代表这些手工操作的内部业务已单独核验。任务定义缺失、控制器/资源不兼容、名称归属歧义与日志缺口保持明确限制。资源控制器缓存选择随事务恢复。[生产模块](../../adapters/task-protocol/mxu)。
 
-## 最新发行新增入口与阻断边界
+## 任务差异与阻断边界
 
 v2.31.0 新增 DecomposeWeaponEssence、SharedZiplineDelete 两个任务文件，当前 manifest 已登记；其启用任务参与发现和范围归属，未知 import 仍明确限制。下表补全最新发行的已知任务差集；旧表中的 DevTest 等定义存在不代表当前发行已启用。
 
@@ -112,6 +112,6 @@ PC 模式下，项目游戏联动配置了有效启动目标、游戏窗口已�
 - 完成动作：关闭当前实例所有 `__MXU_POWER__` 并关闭其控制器启用缓存。
 - 启动设置：缺少前置程序时建立首项 `preActions`；启用并关闭等待退出，路径使用项目游戏路径，保留参数、后续前置程序和原任务。旧 `preAction` 内容保留，并在当前实例生成原生优先读取的数组覆盖。
 
-仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+修复事务及账号保护见[配置编辑](../author/config-editor.md)，跨项目字段索引见[覆盖表](../frameworks/completion-actions.md)。
 
-当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。
+公共识别、重试及证据边界见[任务协议](../author/task-protocol.md)；本页只定义项目特有规则。

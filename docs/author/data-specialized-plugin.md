@@ -18,7 +18,7 @@ plugins/specialized/Example/
 
 上例中的 `Example` 仅是文档占位标识；实际插件目录必须使用正式大小写的 `artifactName`，`plugin.json` 的 `name` 使用仓库内唯一的小写机器标识。
 
-上例是目录示意。当前官方日常专项使用 `taskProtocol` 0.3.0、`minHostVersion` 0.17.4 和报告 3 / daily-flow-v2，把任务/原因/诊断词典放在 `data/i18n/`。Host 保留 0.2.0 的明确兼容分支；有限修复声明使用 `repairRules`，详见 [任务协议](TASK_PROTOCOL.md)。公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
+上例是目录示意。当前官方日常专项使用 `taskProtocol` 0.3.0、`minHostVersion` 0.17.4 和报告 3 / daily-flow-v2，把任务/原因/诊断词典放在 `data/i18n/`。Host 保留 0.2.0 的明确兼容分支；有限修复声明使用 `repairRules`，详见 [任务协议](task-protocol.md)。公开的 `configEditor` 字段保持不变，资产路径使用 `data/editor.js`。配置检查由 discover 的 `configAssessment` 提供。
 
 `plugin.json` 引用的文件必须位于插件目录内，并随发行 ZIP 一起提供。
 
@@ -92,11 +92,11 @@ plugins/specialized/Example/
 
 `zh-CN` 与 `en-US` 资源必须使用相同的 key 集合和占位符集合。key 使用 ASCII 字母、数字、`.`、`_`、`-`，资源值不能为空；输入字段可通过 `labelKey` 与 `descriptionKey` 引用这些资源，`label` 与 `description` 作为回退文本保留。宿主按请求语言返回解析后的 `label` 与 `description`，持久化输入名、默认值和校验规则保持不变。
 
-Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例保存后的检查统一由 `discover.configAssessment` 提供，只读取已声明配置资源；保存成功后检查失败不回滚保存。关键阻断会影响运行准入，但不影响保存；普通路径不一致或可由上游接管的情形应返回 warning。具体字段、规则 ID、环境目标和 `nexus.inspectDeclaredTarget(id)` 权限见[专项任务协议](TASK_PROTOCOL.md)。
+Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例保存后的检查统一由 `discover.configAssessment` 提供，只读取已声明配置资源；保存成功后检查失败不回滚保存。关键阻断会影响运行准入，但不影响保存；普通路径不一致或可由上游接管的情形应返回 warning。具体字段、规则 ID、环境目标和 `nexus.inspectDeclaredTarget(id)` 权限见[专项任务协议](task-protocol.md)。
 
 ### 配置编辑脚本
 
-`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。编辑准备与修复提案的输入/API 不同；完整契约和生成入口见 [配置编辑契约](CONFIG_EDITOR.md)。
+`configEditor` 在编辑会话启动、目标软件进程拉起前执行。宿主先把 `configEdit.isolateSiblingCandidates` 指定的同级配置文件或配置目录移入 `edit-isolation` 事务隔离区，再准备附加配置工作副本。脚本通过 `nexus.input.mode`、`nexus.input.configInputName`、`nexus.input.configInputValue` 和 `nexus.input.extras` 读取当前编辑目标；`@extra<序号>/` 工作副本允许写入，主配置根保持受限只读。脚本错误、超时或写入失败会阻断目标软件启动，并回滚本次准备动作。编辑准备与修复提案的输入/API 不同；完整契约和生成入口见 [配置编辑契约](config-editor.md)。
 
 能力由宿主统一投影：`emulator` 只开启现役模拟器选择语义，厂商 provider 仍由 managed-code `EmulatorSupport` 提供；`self-managed-pc-launch` 只收紧宿主 PC 启动计划且保留用户已保存参数；`no-fresh-config` 关闭 fresh 配置模式但保留 reuse 与恢复流程。专项插件只声明能力和 `resolve.inputs` 数据，不实现第二套 UI。
 
@@ -247,7 +247,7 @@ Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例�
 - 用户首次编辑配置且尚无快照时，宿主要求其选择「全新配置文件」（移走原配置，由目标软件生成全新配置）或「复用配置文件」（直接编辑现有配置）；插件无需携带默认配置资产。
 - 首次运行时宿主自动把现场配置复制为初始快照。
 - 运行后的自动更新按文件差异写入唯一权威快照；失败时保留旧快照与事务恢复现场，不创建完整重试快照。
-- 需要选择性重试时，请使用 `replaceConfigs` 和 `config-restore.json`，详见 [JUDGE_SCRIPT.md](JUDGE_SCRIPT.md)。
+- 声明 taskProtocol 的插件使用[任务协议](task-protocol.md)的冻结选择和 retry 阶段；只有未声明 taskProtocol 的旧式 judge 使用 `replaceConfigs` 与 `config-restore.json`，详见[判断脚本](judge-script.md)。
 
 ## 发布前检查
 
@@ -256,9 +256,9 @@ Host v0.16.9 不执行旧 `configValidator`。配置编辑提交和脚本实例�
 - 所有 `require` 在目标软件目录中都能找到，向上搜索不超过 4 层。
 - `mainExe` 能解析到真实文件。
 - `configPath` 与 `logPath` 的相对位置和日期/通配规则符合目标软件。
-- judge 的语言扩展名、输入读取方式和输出 JSON 符合 [判断脚本指南](JUDGE_SCRIPT.md)。
+- judge 的语言扩展名、输入读取方式和输出 JSON 符合 [判断脚本指南](judge-script.md)。
 
-专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](TASK_PROTOCOL.md)。
+专项任务三阶段协议、作者模板、生成脚本和真实 Host Jint 门禁见[专项任务协议](task-protocol.md)。
 
 ## 破坏性配置修订
 
@@ -268,4 +268,4 @@ Host 比较脚本已确认修订和插件当前修订，显示“需重新设置
 
 MaaStellaSora 声明 `"configurationRevision":"mfa-avalonia.instances.v1"`；该行为由上述通用契约驱动，不以插件 ID 硬编码。
 
-`taskProtocol 0.2.0` 的配置修复声明限定字段权限，由生成的 `editor.js` 提出修复，Host 验证并提交，支持当前用户主/附加快照的游戏路径、完成动作和 MXU/MFA 原生任务。声明及事务边界见 [任务协议](TASK_PROTOCOL.md)，各专项范围见 [覆盖表](../frameworks/COMPLETION_ACTIONS.md#当前配置修复覆盖)。
+`taskProtocol 0.2.0` 的配置修复声明限定字段权限，由生成的 `editor.js` 提出修复，Host 验证并提交，支持当前用户主/附加快照的游戏路径、完成动作和 MXU/MFA 原生任务。声明及事务边界见 [任务协议](task-protocol.md)，各专项范围见 [覆盖表](../frameworks/completion-actions.md#当前配置修复覆盖)。

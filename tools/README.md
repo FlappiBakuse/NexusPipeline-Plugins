@@ -57,6 +57,6 @@ python tools/repo.py release publish --channel stable --root <原源码checkout>
 python tools/repo.py release publish --channel preview --source-root <原源码checkout> --generated-root <候选目录> --producer <producer.json> --source-sha <源码SHA> --workflow-sha <原控制SHA> --run-id <原run> --run-attempt <原attempt>
 ```
 
-来源查询使用 Actions read token。writer 执行代码来自已审核 main 控制 checkout；源码根是独立输入。`publish` 默认验证并输出可审查结果，获授权实际发布才增加 `--remote-write --token-env PLUGIN_PUBLISHER_TOKEN`。preview 先上传并下载核验包，再切换 catalog；stable 仅写回白名单生成物并正常快进。完整发布规则见[发行指南](../docs/RELEASING.md)。
+来源查询使用 Actions read token。writer 执行代码来自已审核 main 控制 checkout；源码根是独立输入。`publish` 默认验证并输出可审查结果，获授权实际发布才增加 `--remote-write --token-env PLUGIN_PUBLISHER_TOKEN`。preview 先上传并下载核验包，再切换 catalog；stable 仅写回白名单生成物并正常快进。完整发布规则见[发行指南](../docs/development/release.md)。
 
 显式低层诊断为 `node tests/config-editors/run.mjs`、`node tests/frontend/run.mjs --host-root <Host>` 与 `python -m unittest discover -s tests/tooling -p "test_*.py" -v`。正式 Python gate 使用 `tests/tooling/unittest_runner.py` 的原生计数报告，拒绝零用例、skip、失败和错误。

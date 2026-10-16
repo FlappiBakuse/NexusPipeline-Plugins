@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
   "changelog": [
     {
+      "version": "0.2.4",
+      "date": "2026-10-16",
+      "items": [
+        "更新随包使用说明的文档链接，指向规范化后的项目与框架指南。"
+      ]
+    },
+    {
       "version": "0.2.3",
       "date": "2026-10-12",
       "items": [
@@ -36,13 +43,6 @@
       "items": [
         "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
       ]
-    },
-    {
-      "version": "0.2.1",
-      "date": "2026-10-05",
-      "items": [
-        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-      ]
     }
   ],
   "locales": {
@@ -56,6 +56,13 @@
         "ADB"
       ],
       "changelog": [
+        {
+          "version": "0.2.4",
+          "date": "2026-10-16",
+          "items": [
+            "Update bundled documentation links to the canonical project and framework guides."
+          ]
+        },
         {
           "version": "0.2.3",
           "date": "2026-10-12",
@@ -77,13 +84,6 @@
           "date": "2026-10-11",
           "items": [
             "Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."
-          ]
-        },
-        {
-          "version": "0.2.1",
-          "date": "2026-10-05",
-          "items": [
-            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
           ]
         }
       ]

@@ -2,7 +2,7 @@
 
 将 绝区零一条龙 接入 NexusPipeline 的用户绑定、队列、计划和运行历史。插件不包含上游软件或游戏，需要先自行安装。
 
-当前版本 0.4.3，需要 NexusPipeline 0.17.4 或更高的兼容版本，运行环境为 Windows 11 x64。
+当前版本 0.4.4，需要 NexusPipeline 0.17.4 或更高的兼容版本，运行环境为 Windows 11 x64。
 
 ## 开始使用
 
@@ -21,6 +21,6 @@
 
 无法识别安装目录时，确认已完成上游安装、目录中存在上述程序且没有正在更新。配置或运行准入提示不兼容时，按提示检查版本、目录及任务选择，不要绕过校验或在运行中替换配置。
 
-上游升级后请重新核对绑定与预览。支持的任务、配置及版本限制见 [项目支持说明](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/main/docs/projects/ZenlessZoneZeroOneDragon.md)；发行发现或打包成功不等于全部真实游戏任务已验证。
+上游升级后请重新核对绑定与预览。支持的任务、配置及版本限制见 [项目支持说明](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/main/docs/projects/zenless-zone-zero-one-dragon.md)；发行发现或打包成功不等于全部真实游戏任务已验证。
 
 任务重试保留原启用的未知项、准备与收尾，原禁用项保持禁用；不重置额度、日期或上游进度。版本前进和无关配置字段不会单独阻断运行。
