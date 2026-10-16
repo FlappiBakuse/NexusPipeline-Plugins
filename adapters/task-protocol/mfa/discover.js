@@ -13,8 +13,14 @@ function discover() {
   requireValue(Array.isArray(d.TaskItems) && Array.isArray(d.CurrentTasks) && pi.name === ADAPTER.project);
   const definitions = (pi.task || []).slice(), presets = (pi.preset || []).slice();
   for (const path of pi.import || []) {
-    requireValue(ADAPTER.imports[path]);
-    const part = resource(ADAPTER.imports[path]);
+    if (!ADAPTER.imports[path]) { plan.diagnostics.push({code:'mfa.unknown_import',message:'Unrecognized interface import: '+path}); continue; }
+    let part;
+    try { part = resource(ADAPTER.imports[path]); }
+    catch (error) {
+      if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+      plan.diagnostics.push({code:'mfa.unavailable_import',message:'Interface import is unavailable: '+path});
+      continue;
+    }
     if (Array.isArray(part.task)) definitions.push(...part.task);
     if (Array.isArray(part.preset)) presets.push(...part.preset);
   }
@@ -23,8 +29,8 @@ function discover() {
   const specialActions = ['CountdownAction', 'TimedWaitAction', 'SystemNotificationAction', 'CustomProgramAction',
     'KillProcessAction', 'ComputerOperationAction', 'WebhookAction', 'SwitchInstanceAction'];
   const persisted = d.TaskItems.map((t, index) => ({ saved: t, index,
-    def: byKey.get(t.name + '<|||>' + t.entry) || byEntry.get(t.entry) || (specialActions.includes(t.entry) ? t : undefined) })).filter(t => t.def);
-  const existing = new Set(persisted.map(t => t.def.name + '<|||>' + t.def.entry));
+    def: byKey.get(t.name + '<|||>' + t.entry) || byEntry.get(t.entry) || (specialActions.includes(t.entry) ? t : undefined) }));
+  const existing = new Set(persisted.filter(t => t.def).map(t => t.def.name + '<|||>' + t.def.entry));
   const preset = d.InstancePresetKey ? presets.find(p => p.name === d.InstancePresetKey) : null;
   for (const def of byKey.values()) {
     const key = def.name + '<|||>' + def.entry;
@@ -47,6 +53,10 @@ function discover() {
   const selectedResource = resources.find(r => same(r.name,d.Resource))?.name || resources[0]?.name || 'Default';
   for (const { saved, index, def } of persisted) {
     requireValue(typeof saved.name === 'string' && typeof saved.entry === 'string');
+    if (!def) {
+      addTask(plan, config.id, id+'/'+saved.entry+'/'+index, saved.name, saved.default_check !== false, null, 'unknown', 'unsupported');
+      continue;
+    }
     const enabled = saved.default_check !== false && compatible(def.resource, selectedResource)
       && compatible(def.controller, controller.name);
     const count = def.repeatable === true ? saved.repeat_count ?? 1 : 1;
@@ -57,7 +67,8 @@ function discover() {
       + (count > 1 ? '~repeat' + count : '');
     const nickname = [saved.remark, saved.display_name_override].find(value => typeof value === 'string' && value.trim());
     const task = addTask(plan, index < 0 ? config.id : taskOrigin.resourceId, key, nickname || def.label || def.name, enabled, selector,
-      'safe', 'supported', specialActions.includes(saved.entry) || ADAPTER.technical.includes(def.name) ? 'technical' : 'business');
+      'safe', 'supported', ADAPTER.finalizeTasks?.includes(def.name) ? 'cleanup'
+        : specialActions.includes(saved.entry) || ADAPTER.technical.includes(def.name) ? 'technical' : 'business');
     if (nickname) {
       const key = ADAPTER.taskNameTextKeys?.[def.name];
       task.nameText = key && nickname.length <= 256

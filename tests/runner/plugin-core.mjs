@@ -1,3 +1,5 @@
+import { reserveLocalResources } from "../support/local-resources.mjs";
+import { ensureNpmInputs } from "../support/npm-inputs.mjs";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -22,6 +24,7 @@ try {
 } catch (error) { console.error(`Host test input is missing required runner capabilities: ${error.message}`); throw Object.assign(error,{exitCode:7}); }
 const budget = parentBudget ?? new Budget("Plugins invocation", policy.invocationBudgetMs,
   { reserveMs: policy.cleanupReserveMs, qualificationMs: policy.qualificationMs });
+await reserveLocalResources({ cleanup: () => getProcessRunnerState().cleanupComplete });
 const artifact = path.resolve(process.env.NEXUS_TEST_ARTIFACT_ROOT || path.join(process.env.RUNNER_TEMP || os.tmpdir(), "NexusPipeline.Tests"));
 const marker = path.join(artifact, ".nxp-test-artifact-root.json");
 if (!fs.existsSync(artifact)) {
@@ -40,6 +43,8 @@ process.once("SIGINT", abort); process.once("SIGTERM", abort);
 const temporary = path.join(artifact, "tmp"); fs.mkdirSync(temporary, { recursive: true });
 const env = { ...process.env, TEMP: temporary, TMP: temporary,
   NUGET_PACKAGES: process.env.NUGET_PACKAGES || path.join(artifact, "cache/nuget"),
+  NUGET_HTTP_CACHE_PATH: process.env.NUGET_HTTP_CACHE_PATH || path.join(artifact, "cache/nuget-http"),
+  NUGET_PLUGINS_CACHE_PATH: process.env.NUGET_PLUGINS_CACHE_PATH || path.join(artifact, "cache/nuget-plugins"),
   npm_config_cache: process.env.npm_config_cache || path.join(artifact, "cache/npm"),
   DOTNET_CLI_HOME: process.env.DOTNET_CLI_HOME || path.join(artifact, "cache/dotnet"),
   DOTNET_GENERATE_ASPNET_CERTIFICATE: "false", DOTNET_CLI_USE_MSBUILD_SERVER: "0", DOTNET_CLI_UI_LANGUAGE: "en",
@@ -94,12 +99,10 @@ try {
       const frontend = path.join(host.directory,"frontend");
       const frontendReady = (async () => {
           if (!withUi) return;
-          if (!fs.existsSync(path.join(frontend,"node_modules/.package-lock.json")))
-            await step("Host frontend dependencies",npm,["ci","--no-audit","--no-fund"],{cwd:frontend});
+          await ensureNpmInputs(frontend, async (cmd, args, options) => { await step("Host frontend dependencies", cmd, args, options); return 0; });
           await step("Host frontend build",npm,["run","build"],{cwd:frontend});
           const browser = path.join(host.directory,"tests/e2e");
-          if (!fs.existsSync(path.join(browser,"node_modules/playwright/package.json")))
-            await step("shared browser bindings",npm,["ci","--no-audit","--no-fund"],{cwd:browser});
+          await ensureNpmInputs(browser, async (cmd, args, options) => { await step("shared browser bindings", cmd, args, options); return 0; });
         })();
       const hostSteps = await Promise.allSettled([
         frontendReady,
@@ -117,9 +120,8 @@ try {
     })(),
     (async () => {
       if (!frontendModules.length) return;
-      await step("shared plugin frontend dependencies",npm,["ci",...(frontendNames.length
-        ? [...frontendNames.map(name=>`--workspace=${policy.plugins[name].root}/frontend`),"--include-workspace-root"] : ["--workspaces=false"]),
-        "--no-audit","--no-fund"]);
+      await ensureNpmInputs(plugins.directory, async (cmd, args, options) => { await step("shared plugin frontend dependencies", cmd, args, options); return 0; },
+        frontendNames.length ? [...frontendNames.map(name=>`--workspace=${policy.plugins[name].root}/frontend`),"--include-workspace-root"] : ["--workspaces=false"]);
       for (const name of frontendNames) {
         const frontend = path.join(plugins.directory,policy.plugins[name].root,"frontend");
         await step(`${name}: frontend typecheck`,npm,["run","typecheck"],{cwd:frontend});
@@ -276,7 +278,7 @@ try {
     }
     if (result.exitCode) throw Object.assign(new Error(`${name}: ${result.status}`), { exitCode: result.exitCode });
   };
-  const parallel=selection.selected.every(name=>policy.plugins[name].kind==="managed-code")?2:1;
+  const parallel=process.env.NEXUS_TEST_LOW_RESOURCE === "1" ? 1 : selection.selected.every(name=>policy.plugins[name].kind==="managed-code")?2:1;
   let next=0;
   const outcomes=await Promise.allSettled(Array.from({length:Math.min(parallel,selection.selected.length)},async()=>{
     while(next<selection.selected.length)await executePlugin(selection.selected[next++]);
@@ -304,7 +306,10 @@ finally {
     runId, inputPair:batch?.plan.inputPair??null, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,
     localDevelopmentInput: Boolean(host?.source.workingTreeDirty), status: code ? "FAIL" : selection.selected.length ? "PASS" : "NOT_APPLICABLE",
     exitCode: code, failure, budgetMs: policy.invocationBudgetMs, qualificationMs: policy.qualificationMs,
-    elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup }, null, 2));
+    elapsedMs: budget.elapsedMs, phases, plugins: reports, cleanup,
+    resources: { hostStaging: host?.staging, pluginStaging: plugins?.staging,
+      invocationQueueMs: Number(process.env.NEXUS_TEST_QUEUE_MS || 0),
+      invocationElapsedMs: budget.elapsedMs + Number(process.env.NEXUS_TEST_QUEUE_MS || 0) } }, null, 2));
   fs.closeSync(log); process.removeListener("SIGINT", abort); process.removeListener("SIGTERM", abort);
 }
 return {code,reports,runRoot,host,plugins,phases,cleanup:getProcessRunnerState()};

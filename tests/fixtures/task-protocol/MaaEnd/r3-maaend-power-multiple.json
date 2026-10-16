@@ -17,11 +17,11 @@
   "tasks": {
     "chosen/power": {
       "enabled": true,
-      "role": "technical"
+      "role": "cleanup"
     },
     "chosen/power2": {
       "enabled": true,
-      "role": "technical"
+      "role": "cleanup"
     }
   },
   "configChecks": [

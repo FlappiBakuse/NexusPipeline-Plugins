@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "resources": [
     {
       "id": "config:DailyTask.json",

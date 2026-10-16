@@ -19,22 +19,29 @@ function discover() {
     (Array.isArray(pi.task) || (pi.task === undefined && Array.isArray(pi.import) && pi.import.length > 0)));
   const definitions = Array.isArray(pi.task) ? pi.task.slice() : [];
   let options = object(pi.option) ? { ...pi.option } : {};
-  let importsComplete = true;
   for (const path of pi.import || []) {
     const declaredTasks = ADAPTER.importTasks[path];
     if (declaredTasks && !instance.tasks.some(t => declaredTasks.includes(t.taskName))) continue;
     const id = ADAPTER.imports[path];
-    if (!id) { importsComplete = false; continue; }
+    if (!id) { plan.diagnostics.push({code:'mxu.unknown_import',message:'Unrecognized interface import: '+path}); continue; }
     try {
       const imported = resource(id);
       if (Array.isArray(imported.task)) definitions.push(...imported.task);
       if (object(imported.option)) options = { ...options, ...imported.option };
     }
-    catch { importsComplete = false; }
+    catch (error) {
+      if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+      plan.diagnostics.push({code:'mxu.unavailable_import',message:'Interface import is unavailable: '+path});
+    }
   }
   const language = d.settings.language === "system" ? (input.locale || "zh-CN") : d.settings.language;
   let translations = {};
-  if (ADAPTER.locales[language]) { try { translations = resource(ADAPTER.locales[language]); } catch { /* ID fallback remains visible */ } }
+  if (ADAPTER.locales[language]) {
+    try { translations = resource(ADAPTER.locales[language]); }
+    catch (error) {
+      if (!String(error.message).includes('config_unavailable') && error.message !== 'unsupported_schema') throw error;
+    }
+  }
   // importConfig clears removed names; Toolbar then chooses the first current definition.
   const controller = (pi.controller || []).some(c => c.name === instance.controllerName)
     ? instance.controllerName : (pi.controller || [])[0]?.name;
@@ -61,12 +68,13 @@ function discover() {
     const technical = ADAPTER.technical.includes(task.taskName);
     const safe = ADAPTER.safe.includes(task.taskName) && (!object(task.enabledByController) || cached === undefined);
     const created = addTask(plan, config.id, instance.id + '/' + task.id, name, enabled, selector,
-      safe ? 'safe' : 'unknown', def && importsComplete ? ('supported') : 'unsupported', technical ? 'technical' : 'business');
+      safe ? 'safe' : 'unknown', def ? 'supported' : 'unsupported',
+      technical ? ADAPTER.finalizeTasks?.includes(task.taskName) ? 'cleanup' : 'technical' : 'business');
     if (created.role === 'business')
       created.dependencies = plan.tasks.filter(t => t.enabled && t.role === 'technical'
         && instance.tasks.find(saved => instance.id + '/' + saved.id === t.sourceKey)?.taskName === '__MXU_LAUNCH__').map(t => t.id);
-    if (typeof cached === 'boolean') {
-      const field = {resourceId:config.id, selector:selector.slice(0,-1).concat('enabledByController',controller), purpose:'selection'};
+    if (typeof cached === 'boolean' && created.recognition !== 'opaque') {
+      const field = {resourceId:config.id, selector:selector.slice(0,-1).concat('enabledByController',controller), purpose:'selection',taskIds:[created.id]};
       plan.selectionFields.push(field);
       plan.slots[created.id + ':controller'] = field;
     }

@@ -10,13 +10,13 @@ function discover() {
   const extras = d['Additional Tasks to Run After Daily Task'] === undefined
     ? ['Check Weekly Garden'] : d['Additional Tasks to Run After Daily Task'];
   const echo = d['Farm Nightmare Nest for Daily Echo'] === undefined ? true : d['Farm Nightmare Nest for Daily Echo'];
-  requireValue(Array.isArray(extras) && unique(extras) && extras.every(v => typeof v === 'string') && typeof echo === 'boolean');
+  requireValue(Array.isArray(extras) && extras.every(v => typeof v === 'string') && typeof echo === 'boolean');
   const allNightmares = extras.includes('Auto Farm all Nightmare Nest');
   const daily = addTask(plan, config.id, 'daily', '日常任务', true, null, 'safe', 'supported');
   const add = (key, name, enabled = true, detection = 'limited') => {
     const task = addTask(plan, config.id, key, name, enabled, null, 'unknown',
       daily && detection === 'limited' ? 'supported' : detection, undefined, daily?.id);
-    if (daily) {
+    if (daily && task.recognition !== 'opaque') {
       task.completionPolicy = 'flow';
       task.observationContract.rules = task.observationContract.rules.filter(r => r.kind !== 'business_succeeded');
       task.observationContract.rules.push({id:'okww.step.completed',kind:'flow_ended'});
@@ -35,8 +35,9 @@ function discover() {
   add('merge', '丢弃声骸合成', extras.includes('Merge Echo If discarded > 1000'));
   add('farm_4c', '日常附加传送刷 4C', extras.includes('Teleport and Farm 4C Echo'));
   const known = ['Check Weekly Garden', 'Auto Farm all Nightmare Nest', 'Merge Echo If discarded > 1000', 'Teleport and Farm 4C Echo'];
-  for (const extra of extras.filter(v => !known.includes(v))) {
-    add('extra:' + extra, extra, true, 'unsupported');
+  for (const [index, extra] of extras.entries()) {
+    if (known.includes(extra)) continue;
+    add('extra:' + index + ':' + extra, extra, true, 'unsupported');
     plan.diagnostics.push({ code: 'okww.unknown_extra', message: 'Unrecognized daily extra: ' + extra });
   }
   behavior(plan, config, ['Which to Farm', 'Which Tacet Suppression to Farm', 'Which Forgery Challenge to Farm',

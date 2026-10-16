@@ -522,13 +522,21 @@
         "core/object",
         "core/runtime-identity"
       ]
+    },
+    "core/finalize-plan": {
+      "file": "core/finalize-plan.js",
+      "requires": [],
+      "provides": [
+        "finalizePlan"
+      ]
     }
   },
   "entries": {
     "bettergi": {
       "discover": [
         "bettergi/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -542,7 +550,8 @@
     "march7th": {
       "discover": [
         "march7th/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -556,7 +565,8 @@
     "baah": {
       "discover": [
         "baah/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -572,7 +582,8 @@
     "zzz": {
       "discover": [
         "zzz/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -586,7 +597,8 @@
     "mxu": {
       "discover": [
         "mxu/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -601,7 +613,8 @@
     "example": {
       "discover": [
         "example/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -616,7 +629,8 @@
     "oknte": {
       "discover": [
         "oknte/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -630,7 +644,8 @@
     "okww": {
       "discover": [
         "okww/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",
@@ -644,7 +659,8 @@
     "mfa": {
       "discover": [
         "mfa/discover",
-        "core/config-assessment"
+        "core/config-assessment",
+        "core/finalize-plan"
       ],
       "observe": [
         "core/observe-rules",

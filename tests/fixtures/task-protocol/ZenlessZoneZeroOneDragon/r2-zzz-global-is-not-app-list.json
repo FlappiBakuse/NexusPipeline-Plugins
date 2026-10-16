@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "resources": [
     {
       "id": "config:one_dragon.yml",
@@ -19,5 +19,6 @@
       "src/one_dragon/base/config/one_dragon_app_config.py",
       "src/one_dragon/base/operation/application/application_group_manager.py"
     ]
-  }
+  },
+  "admissionError": "binding_identity: configuration target is not unique"
 }

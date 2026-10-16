@@ -1,0 +1,61 @@
+{
+  "artifact": "BetterGI",
+  "coverage": "partial",
+  "source": {
+    "type": "source_derived_control_flow",
+    "split": "development",
+    "note": "Known reviewed entry with an explicitly synthetic future task; exercises original selection preservation, not actual upstream execution."
+  },
+  "resources": [
+    {
+      "id": "config:config.json",
+      "format": "json",
+      "text": "{\"TaskDefinitions\": {\"mail\": \"领取邮件\", \"daily\": \"领取每日奖励\", \"teapot\": \"领取尘歌壶奖励\"}, \"TaskOrder\": [\"mail\", \"daily\", \"teapot\", \"future_feature\"], \"TaskEnabledList\": {\"mail\": true, \"daily\": true, \"teapot\": true, \"future_feature\": true}, \"NextTaskId\": \"\"}"
+    }
+  ],
+  "tasks": {
+    "mail": {
+      "enabled": true
+    },
+    "daily": {
+      "enabled": true
+    },
+    "teapot": {
+      "enabled": true
+    },
+    "future_feature": {
+      "enabled": true,
+      "detection": "unsupported"
+    }
+  },
+  "batches": [
+    {
+      "source": "file",
+      "lines": [
+        "[13:20:00.000] [INF] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel",
+        "一条龙任务执行: 1/3",
+        "[13:20:01.000] [INF] BetterGenshinImpact.GameTask.TaskRunner",
+        "→ 任务启动！",
+        "[13:20:02.000] [INF] BetterGenshinImpact.GameTask.AutoMail.AutoMailTask",
+        "邮件：全部领取",
+        "[13:20:03.000] [INF] BetterGenshinImpact.GameTask.TaskRunner",
+        "→ 任务结束",
+        "[13:20:04.000] [INF] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel",
+        "一条龙任务执行: 2/3",
+        "[13:20:05.000] [ERR] BetterGenshinImpact.GameTask.Common.Job.GoToAdventurersGuildTask",
+        "前往冒险家协会领取奖励执行异常：传送失败",
+        "[13:20:06.000] [INF] BetterGenshinImpact.GameTask.TaskRunner",
+        "→ 任务结束",
+        "[13:20:07.000] [INF] BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel",
+        "一条龙和配置组任务结束"
+      ]
+    }
+  ],
+  "results": {
+    "mail": "succeeded",
+    "daily": "failed",
+    "teapot": "failed",
+    "future_feature": "unknown"
+  },
+  "boundary": "ended"
+}

@@ -1,6 +1,6 @@
 {
   "artifact": "ZenlessZoneZeroOneDragon",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "resources": [
     {
       "id": "config:one_dragon_app.yml",

@@ -4,7 +4,10 @@ function finalizeAssessment(plan) {
   const checks = [];
   const read = (kind, id) => {
     try { return (kind === 'resource' ? nexus.readResource(id) : nexus.readConfig(id)).document; }
-    catch { return undefined; }
+    catch (error) {
+      if (['resource_limit','safety_conflict','integrity_mismatch'].includes(error.message)) throw error;
+      return undefined;
+    }
   };
   const select = (document, selector) => {
     let current = document;
@@ -87,6 +90,10 @@ function finalizeAssessment(plan) {
     return declared.filter(item => item.source !== 'config' || available.has(item.resourceId));
   };
   const push = (rule, evaluation, severity, effect, locations, reason, actions) => {
+    if (ADAPTER.protocolVersion === '0.3.0' && rule.category === 'compatibility') {
+      if (effect === 'block') effect = 'warn';
+      if (severity === 'error') severity = 'warning';
+    }
     const value = { ruleId: rule.id, evaluation, severity, executionEffect: effect,
       scope: rule.scope || { kind: 'binding' }, locations: locations || [], actions: actions || [] };
     if (reason) value.reasonText = reason;
@@ -114,7 +121,10 @@ function finalizeAssessment(plan) {
     if (!inspectionId) return push(rule, 'unknown', rule.severity || 'warning', rule.effect || 'warn', location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     let inspection;
     try { inspection = nexus.inspectDeclaredTarget(inspectionId); }
-    catch { inspection = { status: 'not_checked' }; }
+    catch (error) {
+      if (['resource_limit','safety_conflict','integrity_mismatch'].includes(error.message)) throw error;
+      inspection = { status: 'not_checked' };
+    }
     const base = location(rule).concat([{ source: 'environment', inspectionId }]);
     if (inspection.status === 'present' && inspection.matchesContext === true)
       return push(rule, 'satisfied', 'info', 'none', base);
@@ -345,6 +355,10 @@ function finalizeAssessment(plan) {
   for (const rule of ADAPTER.configRules || []) {
     try {
       if (rule.kind === 'mfa_instance') {
+        if (plan.diagnostics.some(diagnostic => diagnostic.code === 'mfa.migration_required')) {
+          push(rule, 'unknown', 'error', 'block', [], text(rule), [{kind:'open_binding_editor'}]);
+          continue;
+        }
         const id = input.executionContext?.configInputValue;
         const effective = instanceConfig(id);
         const config = effective.document;
@@ -373,11 +387,16 @@ function finalizeAssessment(plan) {
         push(rule, 'unknown', critical ? 'error' : (rule.severity || 'warning'), critical ? 'block' : (rule.effect || 'warn'),
           location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
       }
-    } catch {
+    } catch (error) {
+      if (['resource_limit','safety_conflict','integrity_mismatch'].includes(error.message)) throw error;
+      if (ADAPTER.protocolVersion === '0.3.0' && error.message === 'unsupported_schema') {
+        push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+        continue;
+      }
       const critical = rule.required === true && rule.criticality === 'critical_when_applicable';
       push(rule, 'unknown', critical ? 'error' : (rule.severity || 'warning'), critical ? 'block' : (rule.effect || 'warn'),
         location(rule), text(rule), rule.actions || [{ kind: 'refresh_plan' }]);
     }
   }
-  return { schemaVersion: '1', checks };
+  return { schemaVersion: ADAPTER.protocolVersion === '0.3.0' ? '2' : '1', checks };
 }

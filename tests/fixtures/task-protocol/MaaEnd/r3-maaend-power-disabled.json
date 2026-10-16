@@ -17,7 +17,7 @@
   "tasks": {
     "chosen/power": {
       "enabled": false,
-      "role": "technical"
+      "role": "cleanup"
     }
   },
   "configChecks": [

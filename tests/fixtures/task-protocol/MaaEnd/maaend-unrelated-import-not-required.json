@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "complete",
+  "coverage": "partial",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",

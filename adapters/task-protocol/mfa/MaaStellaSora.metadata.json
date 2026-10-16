@@ -148,14 +148,15 @@
     "interface/tasks/climb_tower_shop_enhance.json": [],
     "interface/tasks/climb_tower_target.json": []
   },
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "configRules": [
     {
       "id": "mfa.instance",
       "kind": "mfa_instance",
       "required": true,
       "criticality": "critical_when_applicable",
-      "fallback": "请确认 MFA 稳定实例及有限的任务重复次数。"
+      "fallback": "请确认 MFA 稳定实例及有限的任务重复次数。",
+      "category": "known_configuration_issue"
     },
     {
       "id": "mfa.launch_owner",
@@ -163,7 +164,8 @@
       "required": true,
       "criticality": "critical_when_applicable",
       "reasonKey": "diagnostic.mfa.launch_owner",
-      "fallback": "请在脚本设置 → 启动设置中填写游戏启动器路径，并选择启动软件并运行脚本；项目已启动游戏时可选择仅运行脚本。普通自定义程序任务无法在连接窗口前启动游戏。"
+      "fallback": "请在脚本设置 → 启动设置中填写游戏启动器路径，并选择启动软件并运行脚本；项目已启动游戏时可选择仅运行脚本。普通自定义程序任务无法在连接窗口前启动游戏。",
+      "category": "safety"
     },
     {
       "id": "mfa.finish_action",
@@ -171,7 +173,8 @@
       "required": true,
       "criticality": "critical_when_applicable",
       "reasonKey": "diagnostic.mfa.finish_action",
-      "fallback": "请检查 MFA 启动设置中的任务后动作；关机、重启或关闭后继依赖的目标会中断配置恢复或队列。"
+      "fallback": "请检查 MFA 启动设置中的任务后动作；关机、重启或关闭后继依赖的目标会中断配置恢复或队列。",
+      "category": "safety"
     }
   ],
   "taskTextKeys": {},
@@ -230,5 +233,11 @@
       "resourceConsumption": true,
       "limitRefs": []
     }
-  }
+  },
+  "finalizeTasks": [
+    "CloseGame",
+    "CloseGamePC",
+    "关闭游戏",
+    "__MXU_POWER__"
+  ]
 }

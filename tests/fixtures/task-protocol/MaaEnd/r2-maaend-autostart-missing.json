@@ -1,6 +1,6 @@
 {
   "artifact": "MaaEnd",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "resources": [
     {
       "id": "config:mxu-MaaEnd.json",

@@ -14,6 +14,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/OkWutheringWaves",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-10-14",
+      "items": [
+        "支持 Host 0.17.4 任务协议：保留未知任务与原启用准备/收尾，结果说明披露未逐项核验范围。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-10-11",
       "items": [
@@ -25,13 +32,6 @@
       "date": "2026-10-07",
       "items": [
         "声明官方上游脚本类型图标的固定源码地址与 SHA256，供宿主校验、缓存和展示。"
-      ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-10-04",
-      "items": [
-        "需要 Host 0.16.15；仅使用当前任务协议 0.2.0，保留受支持上游版本的配置与日志适配。"
       ]
     }
   ],
@@ -46,6 +46,13 @@
       ],
       "changelog": [
         {
+          "version": "0.2.3",
+          "date": "2026-10-14",
+          "items": [
+            "Supports Host 0.17.4 task recognition and retries, preserving unknown selections and enabled lifecycle tasks with truthful verification coverage."
+          ]
+        },
+        {
           "version": "0.2.2",
           "date": "2026-10-11",
           "items": [
@@ -57,13 +64,6 @@
           "date": "2026-10-07",
           "items": [
             "Declare the official upstream script type icon with a pinned source URL and SHA256 for Host validation, caching and display."
-          ]
-        },
-        {
-          "version": "0.2.0",
-          "date": "2026-10-04",
-          "items": [
-            "Requires Host 0.16.15 and current task protocol 0.2.0; retains configuration and log adapters for supported upstream versions."
           ]
         }
       ]

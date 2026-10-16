@@ -209,7 +209,7 @@
     "长期签到",
     "每日免费奖励"
   ],
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "configRules": [
     {
       "id": "baah.finish_flags",
@@ -222,7 +222,8 @@
         "source": "context",
         "field": "completionAction"
       },
-      "reasonKey": "diagnostic.baah.finish_flags"
+      "reasonKey": "diagnostic.baah.finish_flags",
+      "category": "safety"
     },
     {
       "id": "baah.game_target",
@@ -250,7 +251,8 @@
         "reasonKey": "diagnostic.baah.adb_serial_unverified",
         "fallback": "当前配置直接使用 ADB 序列号，无法与绑定的网络端点确认一致。",
         "requireBoolean": true
-      }
+      },
+      "category": "known_configuration_issue"
     },
     {
       "id": "baah.file_logging",
@@ -266,7 +268,8 @@
         "selector": [
           "SAVE_LOG_TO_FILE"
         ]
-      }
+      },
+      "category": "safety"
     }
   ],
   "taskTextKeys": {

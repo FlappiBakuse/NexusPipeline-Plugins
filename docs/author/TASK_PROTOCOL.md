@@ -1,6 +1,22 @@
 # 专项任务协议
 
-`data-specialized` 插件可以通过 `taskProtocol` 显式启用任务计划、日志事实与选择性重试。最低宿主版本为 `0.16.15`；旧式 judge 仍使用原有接口。声明错误、缺失脚本或未知协议版本会被拒绝，不能回退到旧 judge。
+`data-specialized` 插件可以通过 `taskProtocol` 显式启用任务计划、日志事实与选择性重试。当前官方专项使用 `0.3.0`，最低 Host `0.17.4`；`0.2.0` 保留明确兼容分支。声明错误、缺失脚本或未知协议版本会被拒绝，不能回退到旧 judge。
+
+## 识别协议 0.3.0
+
+三个阶段和 manifest 精确声明 `0.3.0`。`configRules` 每项增加 `category`：compatibility、known_configuration_issue、safety 或 protocol_fault；compatibility 只提供建议，不能声明 critical 或阻断。`configAssessment.schemaVersion` 为 `"2"`。路径、账号、入口、活动进程与恢复冲突仍按真实安全检查处理。
+
+discover 的任务增加 `recognition: known|opaque`、`lifecycleRole: prepare|business|finalize`、`selectionPolicy: managed|preserve`。opaque 任务没有 configRef、观察合同、完成策略或重试策略，不计业务分母、不生成选择字段。无法列出任务时返回 `verification.opaqueScopes: [{id,resourceId,enabled,reasonCode}]`。coverage 为 complete、partial 或 opaque，与任务/范围的实际识别情况一致。未知普通字段或无关 import 不否定已知任务。
+
+安全读取返回 `readOutcome: parsed|opaque|integrity_mismatch`，另保留 document/format/revision。未知 JSON/YAML 结构可降级；完整性冲突、读取预算、路径越界和协议错误不由 blanket catch 改成兼容提示。
+
+selectionFields 必须包含唯一的已知 managed `taskIds`。布尔平行数组可声明 `taskIndices: {taskId:index}`，并使用完整数组身份 guard；Host 只允许这些位置改变，未知位置、数组长度和值保持不变。平面字符串选择数组保留未知子序列的值、顺序和重复次数。重试禁止重置 cursor、日期、额度和进度。
+
+retry 增加 `preservedLifecycleTaskIds`、`preservedOpaqueTaskIds` 和 `preservedOpaqueScopeIds`，全部由 Host 独立复核。原启用 prepare/finalize/opaque 随重试保留，原禁用项不擅自开启，按原顺序投影并闭合已知依赖。native_resume 不写选择或进度，报告实际完整启动范围。仅完全 opaque 且实际执行失败时允许有限预算的 original_rerun；混合已知成功业务不能借此原样重跑。取消、预算、partial 保护和恢复优先。
+
+Host 新写报告 schema 3 / daily-flow-v2，旧 schema 2 继续只读。报告包含识别覆盖、未核验范围和实际拥有 worker 的完成证据。已知任务无失败、实际 worker 正常退出且恢复成功时整体结果为 Success，未知项保持未核验；非零退出、已知失败、协议故障、取消和恢复失败不能被最终完成文本覆盖。外层启动器仍在运行时，只接受本次拥有且身份已核实的实际 worker 退出证明。
+
+正式 wire schema 见 [task-protocol.schema.json](../../contracts/task-protocol.schema.json)。现有 `examples/task-protocol/` 保留 0.2.0 的兼容回归输入；八个生产专项及识别夹具验证 0.3.0。
 
 ```json
 {
@@ -20,7 +36,7 @@
 
 三个脚本均在宿主 Jint 内执行，一次只能 `console.log` 一个 JSON 结果。`input` 与 `nexus.input` 相同。仅提供 `nexus.readConfig(id)` 和 `nexus.readResource(id)`，返回 `{document, format, revision}`；缺失资源抛出可捕获的 `config_unavailable`。没有任意文件读写、进程、网络、截图或 CLR 接口。
 
-## 日常协议 0.2.0
+## 兼容日常协议 0.2.0
 
 `0.2.0` 要求 `minHostVersion >= 0.16.15`，三阶段线版本保持 `0.2.0`，manifest 包含 `repairRules` 数组。旧 `0.1.0/0.1.1` 声明和旧报告明确拒绝，原文件保留。
 
@@ -151,7 +167,7 @@ python tools/repo.py check source --base <完整PR基线SHA>
 
 `--example` 生成完整的合成协议示例。[TaskProtocolExample](../../examples/task-protocol/json-id-array/README.md) 由模板生成并经过真实宿主 Jint、重试与恢复测试；它不在发行 catalog 中，也不代表任何真实游戏。生成器拒绝覆盖已有输出；`--check` 用于验证示例与模板一致。
 
-默认生成当前 `0.2.0` 日常协议、`data/i18n/` 中英文词典、`configRules`、`environmentChecks` 和空的 `repairRules`，最低 Host 为 `0.16.15`。实际规则须完成上游源码审查。用户自定义名称使用 literal，不按名称猜测词典键。
+作者兼容模板生成 `0.2.0` 日常协议、`data/i18n/` 中英文词典、`configRules`、`environmentChecks` 和空的 `repairRules`，最低 Host 为 `0.16.15`。实际规则须完成上游源码审查。用户自定义名称使用 literal，不按名称猜测词典键。
 
 生成器支持 `--preset json-id-array|json-map|json-parallel-array|yaml|mxu` 五种可执行合成结构，以及 `ok-script-daily` 待适配骨架。后者拒绝 `--example`，必须先审查实际发行包、日常注册入口、框架队列、日志与配置存储。`examples/` 中每种预设都有确定性生成的合成示例和真实 Host 夹具；这些安全重试规则只适用于虚构任务，不能直接用于游戏。默认模板仍须完成源码审查后才能打包。
 

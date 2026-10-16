@@ -1,7 +1,7 @@
 {
   "id": "okww",
   "implementation": "okww",
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "configRules": [
     {
       "id": "okscript.distribution",
@@ -16,7 +16,8 @@
         "selector": [
           "current_profile"
         ]
-      }
+      },
+      "category": "safety"
     },
     {
       "id": "okscript.single_daily",
@@ -39,7 +40,8 @@
       "location": {
         "source": "context",
         "field": "effectiveLaunch.entryId"
-      }
+      },
+      "category": "safety"
     },
     {
       "id": "okww.finite_additions",
@@ -56,7 +58,8 @@
         "selector": [
           "Teleport to Boss"
         ]
-      }
+      },
+      "category": "safety"
     },
     {
       "id": "okscript.game_target",
@@ -64,7 +67,8 @@
       "criticality": "advisory_or_contextual",
       "kind": "target_compare",
       "inspectionId": "okscript-game-target",
-      "fallback": "脚本中的游戏路径与项目绑定目标不一致。"
+      "fallback": "脚本中的游戏路径与项目绑定目标不一致。",
+      "category": "known_configuration_issue"
     }
   ],
   "configDependencies": [

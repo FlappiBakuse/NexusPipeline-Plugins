@@ -54,7 +54,7 @@
     "drive_disc_dismantle",
     "notify"
   ],
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "configRules": [
     {
       "id": "zzz.game_target",
@@ -70,7 +70,8 @@
         "selector": [
           "game_path"
         ]
-      }
+      },
+      "category": "known_configuration_issue"
     },
     {
       "id": "zzz.finish_action",
@@ -91,7 +92,8 @@
         "selector": [
           "after_done"
         ]
-      }
+      },
+      "category": "safety"
     }
   ],
   "taskTextKeys": {

@@ -2,7 +2,7 @@
 
 公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
-当前 0.2.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
+当前 0.3.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
 
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
@@ -10,13 +10,13 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.2.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.2.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
-| [v1.4.8](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.8) | `0b1867f35cd30cb9b063ce40152295490c6274a3` |
-| [v1.4.7](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.7) | `29fce6bad94625d6cdf7183773324cda3c553b7b` |
-| [v1.4.6](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.6) | `7f4c05f4b035e58c6ade25375fdd7881640afcfe` |
+| [v1.4.13](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.13) | `3958f471702f504fe36cfb4f8b9e564bdf734bf0` |
+| [v1.4.12](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.12) | `23df0cb47f92ea4da79c19b42970fb120ee1cf13` |
+| [v1.4.11](https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.11) | `87640281bd91809f740bbdb917e34b8834cadc66` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -48,3 +48,5 @@
 - 启动任务：非 MAA，无插入任务；仍由脚本负责启动器。
 
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

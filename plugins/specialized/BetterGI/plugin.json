@@ -5,9 +5,9 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.2",
+  "minHostVersion": "0.17.4",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configEditor": "data/editor.js",
@@ -19,7 +19,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.2.0",
+    "version": "0.3.0",
     "repairRules": [
       {
         "id": "game_path",
@@ -89,12 +89,14 @@
       {
         "id": "bettergi.game_target",
         "required": true,
-        "criticality": "advisory_or_contextual"
+        "criticality": "advisory_or_contextual",
+        "category": "known_configuration_issue"
       },
       {
         "id": "bettergi.finish_action",
         "required": true,
-        "criticality": "critical_when_applicable"
+        "criticality": "critical_when_applicable",
+        "category": "safety"
       }
     ],
     "environmentChecks": [

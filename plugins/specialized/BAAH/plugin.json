@@ -5,9 +5,9 @@
   "displayName": "蔚蓝档案爱丽丝助手",
   "gameName": "蔚蓝档案",
   "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.2",
+  "minHostVersion": "0.17.4",
   "capabilities": [
     "emulator",
     "self-managed-pc-launch"
@@ -22,7 +22,7 @@
     }
   },
   "taskProtocol": {
-    "version": "0.2.0",
+    "version": "0.3.0",
     "discoverScript": "data/discover.js",
     "retryScript": "data/retry.js",
     "readResources": [
@@ -45,17 +45,20 @@
       {
         "id": "baah.finish_flags",
         "required": true,
-        "criticality": "critical_when_applicable"
+        "criticality": "critical_when_applicable",
+        "category": "safety"
       },
       {
         "id": "baah.game_target",
         "required": true,
-        "criticality": "advisory_or_contextual"
+        "criticality": "advisory_or_contextual",
+        "category": "known_configuration_issue"
       },
       {
         "id": "baah.file_logging",
         "required": true,
-        "criticality": "critical_when_applicable"
+        "criticality": "critical_when_applicable",
+        "category": "safety"
       }
     ],
     "environmentChecks": [

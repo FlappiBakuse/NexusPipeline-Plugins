@@ -352,15 +352,19 @@ def _validate_task_protocol_selector(selector: Any) -> None:
             )
 
 
-def _validate_task_protocol_config_rules(value: Any) -> None:
+def _validate_task_protocol_config_rules(value: Any, version: str = "0.2.0") -> None:
     repository_io._require(isinstance(value, list) and 0 < len(value) <= 32, "taskProtocol.configRules must contain 1..32 rules")
     identifiers: set[str] = set()
     for rule in value:
-        repository_io._require(isinstance(rule, dict) and set(rule) == {"id", "required", "criticality"}, "taskProtocol config rule fields invalid")
+        fields = {"id", "required", "criticality"} | ({"category"} if version == "0.3.0" else set())
+        repository_io._require(isinstance(rule, dict) and set(rule) == fields, "taskProtocol config rule fields invalid")
         identifier = rule.get("id")
         repository_io._require(isinstance(identifier, str) and re.fullmatch(r"[A-Za-z0-9_.:-]{1,160}", identifier) and identifier not in identifiers, "taskProtocol config rule id invalid")
         identifiers.add(identifier)
         repository_io._require(type(rule.get("required")) is bool and rule.get("criticality") in {"critical_when_applicable", "advisory_or_contextual"}, "taskProtocol config rule invalid")
+        if version == "0.3.0":
+            repository_io._require(rule["category"] in {"compatibility", "known_configuration_issue", "safety", "protocol_fault"}, "taskProtocol config rule category invalid")
+            repository_io._require(rule["category"] != "compatibility" or rule["criticality"] == "advisory_or_contextual", "compatibility cannot be critical")
 
 
 def _validate_task_protocol_environment_checks(value: Any) -> None:
@@ -463,12 +467,12 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
         return {}
     protocol = manifest["taskProtocol"]
     repository_io._require(manifest.get("kind") == "data-specialized", "taskProtocol requires data-specialized")
-    repository_io._require(isinstance(protocol, dict) and protocol.get("version") == "0.2.0", "unsupported taskProtocol.version")
+    repository_io._require(isinstance(protocol, dict) and protocol.get("version") in {"0.2.0", "0.3.0"}, "unsupported taskProtocol.version")
     fields = {"version", "discoverScript", "retryScript", "readResources", "localization", "configRules", "environmentChecks"}
     fields.add("repairRules")
     repository_io._require("configValidator" not in manifest, "taskProtocol cannot declare configValidator")
     repository_io._require(set(protocol) == fields, "taskProtocol fields invalid")
-    required_host = "0.16.15"
+    required_host = "0.17.4" if protocol["version"] == "0.3.0" else "0.16.15"
     repository_io._require(repository_versions.is_semver(manifest.get("minHostVersion", "")) and repository_versions.parse_semver(manifest["minHostVersion"]) >= repository_versions.parse_semver(required_host), f"taskProtocol requires minHostVersion >= {required_host}")
 
     def safe_path(value: Any) -> bool:
@@ -482,7 +486,7 @@ def _task_protocol_scripts(manifest: dict[str, Any]) -> dict[str, Any]:
     for locale, path in messages.items():
         repository_io._require(re.fullmatch(r"[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*", locale) is not None, "task locale invalid")
         repository_io._require(safe_path(path) and path.startswith("data/i18n/") and path.endswith(".json"), "task localization requires safe data/i18n/*.json")
-    _validate_task_protocol_config_rules(protocol["configRules"])
+    _validate_task_protocol_config_rules(protocol["configRules"], protocol["version"])
     _validate_task_protocol_environment_checks(protocol["environmentChecks"])
     _validate_task_protocol_repair_rules(protocol["repairRules"], protocol["configRules"])
 

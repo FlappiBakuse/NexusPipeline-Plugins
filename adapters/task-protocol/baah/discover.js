@@ -23,8 +23,10 @@ function discover() {
   });
   if (login?.enabled) plan.tasks.filter(t => t.role === 'business').forEach(t => t.dependencies.push(login.id));
   if (typeof d.DO_POST_ALL_TASK === 'boolean') addTask(plan, config.id, 'automatic-cleanup', '运行收尾', d.DO_POST_ALL_TASK, ['DO_POST_ALL_TASK'], 'unknown', 'supported', 'cleanup');
-  plan.selectionFields.push({ resourceId: config.id, purpose: 'selection', selector: ['TASK_ORDER_GROUP', 'ALL_PIPELINES',
-    { index, guardKey: 'TASK_PIPELINE', guardValue: pipeline.TASK_PIPELINE }, 'TASK_ONOFF'] });
+  const pipelineTasks = plan.tasks.filter(t => /^\d+\//.test(t.sourceKey) && t.recognition !== 'opaque');
+  if (pipelineTasks.length) plan.selectionFields.push({ resourceId: config.id, purpose: 'selection', selector: ['TASK_ORDER_GROUP', 'ALL_PIPELINES',
+    { index, guardKey: 'TASK_PIPELINE', guardValue: pipeline.TASK_PIPELINE }, 'TASK_ONOFF'],
+    taskIds: pipelineTasks.map(t => t.id), taskIndices: Object.fromEntries(pipelineTasks.map(t => [t.id, Number(t.sourceKey.split('/')[1])])) });
   plan.coverage = 'complete';
   return plan;
 }

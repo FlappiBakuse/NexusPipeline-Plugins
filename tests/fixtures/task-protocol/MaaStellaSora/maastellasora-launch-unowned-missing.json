@@ -22,7 +22,7 @@
     "gameTarget": "C:\\Games\\game.exe",
     "ready": false
   },
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "tasks": {},
   "batches": [],
   "results": {},

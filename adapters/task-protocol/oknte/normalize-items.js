@@ -30,8 +30,9 @@ function normalizeItems(raw, entries) {
   }
   // Scalar retry selectors require a complete, unique, explicitly boolean list.
   // Otherwise normalization could re-enable an absent default after the patch.
-  const canPatchSelection = Array.isArray(raw) && raw.length === entries.length
-    && diagnostics.length === 0 && new Set(raw.map(i => i && i.id)).size === entries.length
-    && raw.every(i => i && entries.some(e => e.id === i.id) && typeof i.enabled === 'boolean');
+  const canPatchSelection = Array.isArray(raw) && entries.every(entry => {
+    const found = raw.filter(item => item && item.id === entry.id);
+    return found.length === 1 && typeof found[0].enabled === 'boolean';
+  });
   return { items, diagnostics, canPatchSelection };
 }

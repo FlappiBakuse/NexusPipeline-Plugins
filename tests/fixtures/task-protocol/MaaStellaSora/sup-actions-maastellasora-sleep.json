@@ -16,7 +16,7 @@
     "type": "synthetic",
     "note": "Finite actions and defaults from pinned independent sources in docs/frameworks/COMPLETION_ACTIONS.md; no system/game action executed."
   },
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "tasks": {},
   "batches": [],
   "results": {},

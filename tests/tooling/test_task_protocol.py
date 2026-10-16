@@ -33,6 +33,34 @@ def retained_fixture_directory(prefix):
 
 
 class TaskProtocolTests(unittest.TestCase):
+    def test_recognition_protocol_requires_host_and_classified_rules(self):
+        manifest = self.manifest()
+        manifest['taskProtocol']['version'] = '0.3.0'
+        rule = manifest['taskProtocol']['configRules'][0]
+        rule['category'] = 'safety'
+        with self.assertRaises(repository_model.RepositoryError):
+            repository_source._task_protocol_scripts(manifest)
+        manifest['minHostVersion'] = '0.17.4'
+        repository_source._task_protocol_scripts(manifest)
+        for category in ('safety', 'protocol_fault', 'known_configuration_issue'):
+            rule['category'] = category
+            repository_source._task_protocol_scripts(manifest)
+        rule['category'] = 'compatibility'
+        with self.assertRaises(repository_model.RepositoryError):
+            repository_source._task_protocol_scripts(manifest)
+        rule['criticality'] = 'advisory_or_contextual'
+        repository_source._task_protocol_scripts(manifest)
+        for category in ('unknown', None):
+            rule['category'] = category
+            with self.assertRaises(repository_model.RepositoryError):
+                repository_source._task_protocol_scripts(manifest)
+        rule['category'] = 'compatibility'
+        manifest['taskProtocol']['version'] = '0.2.0'
+        with self.assertRaises(repository_model.RepositoryError):
+            repository_source._task_protocol_scripts(manifest)
+        del rule['category']
+        repository_source._task_protocol_scripts(manifest)
+
     def test_author_current_protocol_and_blocked_daily_preset(self):
         current = author.generate(AUTHOR_ROOT, 'ExampleTask', 'example-task', True)
         protocol = json.loads(current['plugin.json'])['taskProtocol']

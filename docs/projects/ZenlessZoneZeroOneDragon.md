@@ -28,13 +28,13 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.4.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.4.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v2.5.3](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.3) | `1029cb76c7507069701a641d70525290f6496a7d` |
 | [v2.5.2](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.2) | `a2789666e6a0175b33969ec61d3c27dce517ff14` |
 | [v2.5.1](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.1) | `a75973a368d21efcb3c92ccf209eee35eed835b9` |
-| [v2.4.7](https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.4.7) | `55926ffbdde06ab6643886d2fb6a841f8707af57` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -84,3 +84,5 @@
 - 启动任务：非 MAA，无插入任务。
 
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

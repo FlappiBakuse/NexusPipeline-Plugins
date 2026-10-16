@@ -1,5 +1,6 @@
 """Generate the protocol wire schema; cross-field safety remains enforced by Host validators."""
 import json
+from copy import deepcopy
 from pathlib import Path
 
 def obj(properties, optional=()):
@@ -81,9 +82,44 @@ defs['retry']['properties']['decision'] = enum('stop','selective','native_resume
 for field in ['targetTaskIds','launchScopeTaskIds']:
     defs['retry']['properties'][field] = {**arr(text,1024),'uniqueItems':True}
     defs['retry']['required'].append(field)
+defs['selectionField3'] = obj({'resourceId':text,'selector':ref('selector'),'purpose':enum('selection','cursor'),
+    'taskIds':{**arr(text,1024),'minItems':1,'uniqueItems':True},
+    'taskIndices':{'type':'object','minProperties':1,'maxProperties':1024,
+        'additionalProperties':{'type':'integer','minimum':0,'maximum':1023}}}, ['taskIndices'])
+defs['task3'] = deepcopy(defs['task'])
+defs['task3']['properties'].update({'recognition':enum('known','opaque'),
+    'lifecycleRole':enum('prepare','business','finalize'),'selectionPolicy':enum('managed','preserve')})
+defs['task3']['required'] = [key for key in defs['task3']['required'] if key not in daily_fields] + ['recognition','lifecycleRole','selectionPolicy']
+for key, value in daily_fields.items():
+    defs['task3']['properties'][key] = nullable(value)
+defs['task3']['allOf'] = [
+    {'if':{'properties':{'recognition':{'const':'known'}}},'then':{'required':list(daily_fields),
+        'properties':daily_fields},'else':{'properties':{
+            **{key:{'type':'null'} for key in daily_fields},'configRef':{'type':'null'},
+            'selectionPolicy':{'const':'preserve'},'countsAsUnit':{'const':False},
+            'requiredForParent':{'const':False},'detection':{'const':'unsupported'}}}},
+    {'if':{'properties':{'countsAsUnit':{'const':True}}},'then':{'properties':{
+        'recognition':{'const':'known'},'lifecycleRole':{'const':'business'}}}},
+    {'if':{'properties':{'recognition':{'const':'known'},'lifecycleRole':{'const':'business'}}},
+        'then':{'properties':{'role':{'const':'business'}}}},
+]
+defs['verification'] = obj({'opaqueScopes':arr(obj({'id':text,'resourceId':text,'enabled':boolean,'reasonCode':text}),1024)})
+defs['configAssessment3'] = deepcopy(defs['configAssessment'])
+defs['configAssessment3']['properties']['schemaVersion'] = {'const':'2'}
+for phase in ['discovery','observation','retry']:
+    defs[phase+'3'] = deepcopy(defs[phase])
+    defs[phase+'3']['properties']['protocolVersion'] = {'const':'0.3.0'}
+defs['discovery3']['properties'].update({'coverage':enum('complete','partial','opaque'),
+    'tasks':arr(ref('task3'),1024),'selectionFields':arr(ref('selectionField3')),
+    'verification':ref('verification'),'configAssessment':ref('configAssessment3')})
+defs['discovery3']['required'].append('verification')
+defs['retry3']['properties']['decision'] = enum('stop','selective','native_resume','original_rerun')
+for field in ['preservedLifecycleTaskIds','preservedOpaqueTaskIds','preservedOpaqueScopeIds']:
+    defs['retry3']['properties'][field] = {**arr(text,1024),'uniqueItems':True}
+    defs['retry3']['required'].append(field)
 schema={'$schema':'https://json-schema.org/draft/2020-12/schema','$id':'urn:nxp:task-protocol',
     'title':'NexusPipeline current task protocol outputs',
-    'oneOf':[ref(name) for name in ['discovery','observation','retry']],'$defs':defs}
+    'oneOf':[ref(name+suffix) for suffix in ['', '3'] for name in ['discovery','observation','retry']],'$defs':defs}
 
 def generate(root: Path, check: bool = False):
     path=root/'contracts/task-protocol.schema.json';content=json.dumps(schema,ensure_ascii=False,indent=2)+'\n'

@@ -1,6 +1,6 @@
 {
   "artifact": "OkWutheringWaves",
-  "coverage": "unsupported",
+  "coverage": "opaque",
   "configChecks": [
     {
       "ruleId": "okww.finite_additions",

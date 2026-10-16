@@ -60,3 +60,12 @@ python tools/ci_check.py run --plan <同一plan.json> --output <新的外部输�
 GameCheckIn 凭据改动按专用读取范围、keep/set/clear 持久结果、运行中 409、写盘恢复及迟到响应选择验证；普通 DTO 不含明文。前端 conformance 使用已构建插件与实际 Host 公开元素；mock 结果不代表真实远端认证撤销。
 
 GameActivities 核心入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，覆盖11组SRA接口映射、时间/身份、快照替换、空列表、失败恢复、设置/取消/原子保存/图片替换，并执行前端类型检查和构建。单一观察器与共享图片会话的前端行为合同由tests/frontend/run.mjs的runPlugin和contract.mjs的resolvePublicElements执行。P-G05实际Test Host场景验证空订阅设置与生命周期，不替代真实外部接口验收。真实响应记录获取时间及SHA。实际Host SHA与tests/inputs.lock.json的locked gate分别报告。
+
+
+## 本机资源控制
+
+设置进程级 `NEXUS_TEST_LOW_RESOURCE=1`、绝对路径 `NEXUS_TEST_RESOURCE_ROOT` 与 `NEXUS_TEST_ARTIFACT_ROOT`，继续使用现役 plugin/daily/gate/batch 命令。resource root 与 Host 相同，独立调用排队；继承 reservation 的子入口不会重复加锁。未知或中断锁须先核对所属进程与现场，不能自动抢占。
+
+核心插件测试复用 Host 提供的独占增量源码槽位，仅同步变化字节；依赖或工程输入改变时隔离构建图。前端安装以 package/lock、Node/npm、平台、配置及 workspace 选择的收据决定复用。重型 dotnet/npm/Python 子命令串行，插件执行槽位一个，子进程处理器计数两个；原生预期用例、场景、失败、取消和清理规则保持不变。每次测试仍产生新原生报告，缓存仅复用准备输入。
+
+完整应用及验收软件的准备和低负载包装入口见所固定 Host 的 `docs/testing/commands.md`；最终仍构建全部现役插件并执行适用验证。本机缓存、报告和验收软件均放本轮外部目录，不以清空缓存再重建作为日常清理。

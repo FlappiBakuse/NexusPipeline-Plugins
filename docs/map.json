@@ -18,7 +18,10 @@
         "tests/run.mjs",
         "tests/policy.json",
         "tests/ci/gate.py",
-        "tools/ci_check.py"
+        "tools/ci_check.py",
+        "tests/support/local-resources.mjs",
+        "tests/support/npm-inputs.mjs",
+        "tests/support/workspace.mjs"
       ],
       "testDomains": [
         "managed",

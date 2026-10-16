@@ -146,7 +146,7 @@
     "activity_planarfissure_enable": "位面分裂",
     "activity_journey_highlights_notification_enable": "旅途拾忆通知"
   },
-  "protocolVersion": "0.2.0",
+  "protocolVersion": "0.3.0",
   "configRules": [
     {
       "id": "march7th.game_target",
@@ -169,7 +169,8 @@
           "cloud_game_enable"
         ],
         "equals": true
-      }
+      },
+      "category": "known_configuration_issue"
     },
     {
       "id": "march7th.finish_action",
@@ -189,7 +190,8 @@
         "selector": [
           "after_finish"
         ]
-      }
+      },
+      "category": "safety"
     },
     {
       "id": "march7th.process_exit",
@@ -222,7 +224,8 @@
             "exit_after_failure"
           ]
         }
-      ]
+      ],
+      "category": "known_configuration_issue"
     }
   ],
   "taskTextKeys": {

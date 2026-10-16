@@ -2,7 +2,7 @@
 
 公共规则见 [ok-script](../frameworks/OK_SCRIPT.md)；源码身份见 [source-lock](../../adapters/task-protocol/source-lock.json)。本页不将引擎完成或进程退出推断为业务成功。
 
-当前 0.2.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
+当前 0.3.0 按结构兼容与实际执行归属准入，新版本保持真实日常任务。冻结后的结构变化、活跃 worker/updater 或不可读身份阻断。
 
 | 插件 | 发现身份与选择 | 当前日志事实 | 自动重试边界 |
 |---|---|---|---|
@@ -10,13 +10,13 @@
 
 ## 当前版本与发行窗口
 
-核对日期：2026-10-05（Asia/Shanghai）。专项源码版本 `0.2.0`，协议 `0.2.0`，最低 Host `0.16.15`。插件版本与下表上游版本独立。
+核对日期：2026-10-14（Asia/Shanghai）。专项源码版本 `0.2.3`，协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v3.7.4](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.4) | `2243d465d58c74f52765b658174bff76165656ee` |
 | [v3.7.3](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.3) | `f5f38c8d9e2b7f7e91edad77bd5fab14df3f162d` |
 | [v3.7.2](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.2) | `b2c3af8025c28f0a128f73f8cbee77404bb1baf8` |
-| [v3.6.7](https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.6.7) | `7df910be3b91e73be0f7a96d34fb4091510f7fac` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -51,3 +51,5 @@
 仅对已保存的当前用户快照逐项预览、确认和备份。字段类型错误不猜测转换；生成的 `data/editor.js` 提供修复策略；详细事务及不适用边界见 [配置编辑契约](../author/CONFIG_EDITOR.md) 与 [八专项覆盖表](../frameworks/COMPLETION_ACTIONS.md)。
 
 单一日常检查包含唯一 `daily` 父任务及其已知子任务，所有启用子任务必须归属于该父任务。正常保存的默认 DailyTask 组合可通过；未知附加任务、结构不兼容及无法确认的 4C 次数仍阻断。
+
+当前任务协议为 0.3.0，最低 Host 0.17.4。未知任务只读保留并披露未核验范围；已知任务无失败且实际 worker 正常结束时整体为 Success。选择重试保留原启用准备、收尾和未知项，遵守原顺序、账号范围与有限预算。上述源码审读和合成合同回归不代表本版真实游戏验收。

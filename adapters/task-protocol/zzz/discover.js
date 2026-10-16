@@ -25,8 +25,6 @@ function discover() {
       && (app.enabled === undefined || typeof app.enabled === 'boolean'));
     const enabled = app.enabled === undefined ? false : app.enabled;
     const known = modern.length || ADAPTER.defaultAppIds.includes(app.app_id) ? ADAPTER.apps[app.app_id] : undefined;
-    behavior(plan, { id: config.id, document: app }, Object.keys(app).filter(k => !['app_id', 'enabled'].includes(k)),
-      ['app_list', { by: 'app_id', value: app.app_id }]);
     const task = addTask(plan, config.id, 'one_dragon/' + app.app_id, known || app.app_id, enabled,
       modern.length && app.enabled !== undefined ? ['app_list', { by: 'app_id', value: app.app_id }, 'enabled'] : null,
       modern.length && app.app_id === 'email' ? 'safe' : 'unknown', known ? ('supported') : 'unsupported');
