@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "dab6e5cc114b4f85c982ff0f1308cbcc796896a7",
+  "sourceCommit": "d0bd4c880470bd93ca075d3f3a0ab66ae96bb9c5",
   "released": {
     "BAAH": {
       "name": "baah",
       "artifactName": "BAAH",
-      "version": "0.3.2",
-      "sha256": "5a8d5c932e7bffc80b13cc6e01179ce55e14946bcaf5da0af60a3637d22d1c16",
-      "sizeBytes": 112125,
-      "sourceTree": "669e010d650bc798e5e1fb75be4d52ea77c0e71b"
+      "version": "0.3.3",
+      "sha256": "d348b91d319a95a80a134600dfb66a32fac55412278c5eb1b629b381060012b1",
+      "sizeBytes": 119862,
+      "sourceTree": "d4279d3212bd7fb9f46de627867fd5475d36014a"
     },
     "BetterGI": {
       "name": "bettergi",
       "artifactName": "BetterGI",
-      "version": "0.4.2",
-      "sha256": "bb9ea2ad506951fa4b40998d882cb44e419435215a4ac92bb0dd3bbf181da814",
-      "sizeBytes": 77853,
-      "sourceTree": "a80e223c6220a7f314f9a0b7ae05e7d6e82c2693"
+      "version": "0.4.3",
+      "sha256": "e1c45a2dcd580f967782dd97729f32493c7e189b14ccd7019d5b934b73b64da8",
+      "sizeBytes": 90370,
+      "sourceTree": "ac8f4af209554c549d69532232163e33d67b049a"
     },
     "CustomWallpaper": {
       "name": "custom-wallpaper",
@@ -61,10 +61,10 @@
     "MaaEnd": {
       "name": "maaend",
       "artifactName": "MaaEnd",
-      "version": "0.4.3",
-      "sha256": "509501e63015613363405b6717294e779ccc22236ce888a56230e5a0826f3269",
-      "sizeBytes": 156640,
-      "sourceTree": "4128e10bd3d3b56203988db626a3bf495d01ea6c"
+      "version": "0.4.4",
+      "sha256": "1bcc15e63e1b6ff301743adb92d14c7cbee6abf26f80dd68e952ab6b2232c0a6",
+      "sizeBytes": 166267,
+      "sourceTree": "5d711f4596af1f4bcbca39c55c9ce1df494f63ba"
     },
     "MaaFrameworkDriver": {
       "name": "maa-framework",
@@ -77,42 +77,42 @@
     "MaaStellaSora": {
       "name": "maas",
       "artifactName": "MaaStellaSora",
-      "version": "0.3.2",
-      "sha256": "1388ab4d4bbbff7300dd518beba8ac3f622bba924665a7d4d79b4fe7934c6349",
-      "sizeBytes": 113763,
-      "sourceTree": "78f755e166265e4ad5785efb38954a0043ab6824"
+      "version": "0.3.3",
+      "sha256": "06af4d2e203149a21b60cb664ab2517aefc5bffe3389800d09e2073ac6e940fd",
+      "sizeBytes": 122912,
+      "sourceTree": "9566c50722f9ecc8239aa925032d036a0f3444ab"
     },
     "March7thAssistant": {
       "name": "march7th",
       "artifactName": "March7thAssistant",
-      "version": "0.4.2",
-      "sha256": "5859e83cef7cbe386cbdd21ea30a14fca33f5dabd34c00ce80121b836399de21",
-      "sizeBytes": 130823,
-      "sourceTree": "25ce907942ef2a4549b007f43158238c1bf5b147"
+      "version": "0.4.3",
+      "sha256": "7d1ace553239f60a56b8265733908149eb43dc680bda1a44f8ab89b754ce4485",
+      "sizeBytes": 138025,
+      "sourceTree": "1dafd5701f16885cbeed362ed4783d0d0917c2dd"
     },
     "OkNTE": {
       "name": "oknte",
       "artifactName": "OkNTE",
-      "version": "0.2.2",
-      "sha256": "8886dc2a8501be40e415ffa91664bb009f4da289eb70761c9d897a9d965036fb",
-      "sizeBytes": 93952,
-      "sourceTree": "9af4a47ed69202b61c7f24b4809c1dbe7ac38210"
+      "version": "0.2.3",
+      "sha256": "13984409acd7800883faa404e59e87748fef69f40a73ca4ed377846c7dafdc71",
+      "sizeBytes": 103081,
+      "sourceTree": "67bca3626d4d02033a3516151cd8f30e9cb08366"
     },
     "OkWutheringWaves": {
       "name": "okww",
       "artifactName": "OkWutheringWaves",
-      "version": "0.2.2",
-      "sha256": "a87a15fd82fc9459562a38a736a2a083632b3bdf9085963cd1d48d5895667f9b",
-      "sizeBytes": 98606,
-      "sourceTree": "1d803165d69cba7c0cd152c14167cfd5f5f444b7"
+      "version": "0.2.3",
+      "sha256": "844cedb38626f8a0a7e56cdaf94e99ae6460c525033183275a5e51a20a140bd5",
+      "sizeBytes": 107571,
+      "sourceTree": "c20b726d5bc82c40c1e97dfcce1fa358746e6eed"
     },
     "ZenlessZoneZeroOneDragon": {
       "name": "zzzonedragon",
       "artifactName": "ZenlessZoneZeroOneDragon",
-      "version": "0.4.2",
-      "sha256": "d314a6b4f295ca8a57bb15681db18bc163a22338c4f5297994b61551b853bd33",
-      "sizeBytes": 100188,
-      "sourceTree": "7a660c8b63efb26dc725559a83363f2bcebccf8c"
+      "version": "0.4.3",
+      "sha256": "415f698a4ffb689f0566cd8ab6ef115431bccf561e25ce5ccb41966cf067eb2f",
+      "sizeBytes": 106840,
+      "sourceTree": "1a52538bd1d1abcd5e2fd309375452681d851c3b"
     }
   }
 }
