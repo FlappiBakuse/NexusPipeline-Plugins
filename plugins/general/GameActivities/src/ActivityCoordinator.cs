@@ -11,7 +11,7 @@ internal sealed class ActivityCoordinator(IPluginHostContext context, TimeProvid
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource _selection = new();
-    private ActivitySettingsState _settings = new(0, new());
+    private ActivitySettingsState _settings = new(0, GameSources.Validate(new()));
     private readonly Dictionary<string, JsonObject> _feeds = new(), _emptyHealth = new();
     private readonly Dictionary<string, DateTimeOffset> _next = new(), _manual = new();
     private readonly Dictionary<string, int> _failures = new();

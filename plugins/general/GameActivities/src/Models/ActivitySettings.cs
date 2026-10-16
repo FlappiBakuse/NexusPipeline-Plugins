@@ -4,6 +4,7 @@ internal sealed record ActivitySettings
 {
     public int FormatVersion { get; init; } = 1;
     public bool OnboardingCompleted { get; init; }
+    public string[]? GameOrder { get; init; }
     public string[] SelectedGames { get; init; } = [];
     public Dictionary<string, string> Progressions { get; init; } = new() { ["blue-archive"] = "cn", ["neverness-to-everness"] = "cn" };
     public int CarouselIntervalSeconds { get; init; } = 30;
@@ -37,7 +38,11 @@ internal static class GameSources
         Resolve("blue-archive", settings.Progressions["blue-archive"]);
         Resolve("neverness-to-everness", settings.Progressions["neverness-to-everness"]);
         Selected(settings);
-        return settings with { SelectedGames = settings.SelectedGames.ToArray(), Progressions = new(settings.Progressions) };
+        string[] games = All.Select(source => source.GameId).Distinct().ToArray();
+        string[] order = settings.GameOrder ?? settings.SelectedGames.Concat(games.Except(settings.SelectedGames)).ToArray();
+        if (order.Length != games.Length || order.Distinct().Count() != games.Length || order.Except(games).Any())
+            throw new ActivityException("invalid_settings", 400);
+        return settings with { GameOrder = order.ToArray(), SelectedGames = order.Where(settings.SelectedGames.Contains).ToArray(), Progressions = new(settings.Progressions) };
     }
 }
 internal sealed class ActivityException(string code, int status, DateTimeOffset? retryAfter = null) : Exception(code)

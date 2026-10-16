@@ -145,9 +145,9 @@ export function activate(host) {
 
 公开元素在 light DOM 下渲染，元素标签自身不产生额外布局盒（结构卡片与 `nxp-switch-list` 内的开关都是如此），因此插件卡片与宿主卡片共享同一套栅格与展开置顶规则。把多个 `nxp-switch-setting` 放进 `nxp-switch-list` 即可得到与设置页一致的开关列表外观。文本类元素（`nxp-button`、`nxp-badge`）用 `label` 属性传文案：属性写法不产生插槽子节点，父级重渲染不会影响元素自身的 DOM 与交互。
 
-`settings.cards` 中的 `nxp-collapsible-card` 通过唯一的 `data-settings-panel` 与当前 `title` 自动提供设置分类入口，按钮与下方卡片顺序一致，并沿用 `nxp-settings-panel-toggle`／`nxp-settings-panel-state` 协调展开。输入类元素的 `update:modelValue`（Custom Element 也发出 `update:model-value`）用于同步编辑值，`change` 用于提交。Vue 消费者用元素 ref 的 `addEventListener` 订阅 `update:modelValue`，并在卸载时移除监听；Vue 的 DOM 事件处理会忽略模板中的 `onUpdate:*`。滑块可以在拖动中显示数值，在提交时保存。
+`settings.cards` 中的 `nxp-collapsible-card` 通过唯一的 `data-settings-panel` 与当前 `title` 自动提供设置分类入口，按钮沿用卡片的原始顺序。宿主直接同步 `expanded` 并接收 `toggle`，插件无需保存展开状态或转发全局事件；顶部按钮置顶展开、再次点击收起复位，直接点击卡片原位切换。动态插入、移除及标题变化由宿主同步入口和订阅。输入类元素的 `update:modelValue`（Custom Element 也发出 `update:model-value`）用于同步编辑值，`change` 用于提交。Vue 消费者用元素 ref 的 `addEventListener` 订阅 `update:modelValue`，并在卸载时移除监听；Vue 的 DOM 事件处理会忽略模板中的 `onUpdate:*`。滑块可以在拖动中显示数值，在提交时保存。
 
-结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`、`surface`；`surface` 可取 `default` 或 `secondary`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页的折叠协调协议对插件开放：插件展开自己的卡片时向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
+结构组件 `nxp-section-card`（props：`title`、`description`、`variant`；默认插槽为 body，具名插槽 `header`、`description`、`actions`）与 `nxp-collapsible-card`（props：`title`、`description`、`expanded`、`panel-id`、`surface`；`surface` 可取 `default` 或 `secondary`；展开变化 emit `toggle`，负载在 `CustomEvent.detail[0]`；body 为默认插槽，header 右侧为 `actions` 具名插槽）用于与宿主设置页保持一致的卡片外观。设置页公开卡片自动接入宿主协调；需要观察或主动请求面板变化的消费者可向 window 派发 `nxp-settings-panel-toggle`（`detail` 为 `{ panelId }`，收起时 `panelId` 为 `null`），并监听 `nxp-settings-panel-state`（`detail` 为 `{ panelId }`）以收起其它卡片。字段帮助文案在控件容器上设置 `data-help="说明文字"`，由宿主工具提示呈现。
 
 ## 稳定 UI slot
 

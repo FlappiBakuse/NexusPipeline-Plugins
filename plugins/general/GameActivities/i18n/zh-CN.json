@@ -2,7 +2,7 @@
   "card.title": "游戏活动",
   "card.description": "查看 SRA 版本信息与活动",
   "settings.title": "活动设置",
-  "settings.help": "开启游戏后可拖动把手调整轮播顺序；把手聚焦后也可按上下方向键。保存后生效，显示语言不会改变区服。",
+  "settings.help": "所有游戏均可拖动把手排序，未订阅游戏也可调整；把手聚焦后可按上下方向键。保存后生效，显示语言不会改变区服。",
   "settings.games": "游戏订阅",
   "settings.drag": "排序：{game}",
   "settings.dragHelp": "拖动排序，或聚焦后按上下方向键。",

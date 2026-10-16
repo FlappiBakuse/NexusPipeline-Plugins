@@ -12,6 +12,7 @@ const props = defineProps<{ host: ActivityHost; state: ActivityStateModel; cover
 const t = translator(props.host);
 const { current, feeds, index, error, busy, refreshing, manualRefreshing, now, result, zone: displayZone, saveSettings, refresh } = props.state;
 const settingsOpen = ref(false);
+const settingsEditor = ref<InstanceType<typeof ActivitySettings> | null>(null);
 const detailsOpen = ref(false);
 const hovered = ref(false);
 const focused = ref(false);
@@ -129,8 +130,8 @@ onBeforeUnmount(() => {
           <nxp-button type="button" class="ga-icon-button" :aria-label="t('refresh')" :title="t('refresh')" :disabled="manualRefreshing" @click="covers.retryFailed(); refresh()"><span class="ga-button-glyph" aria-hidden="true">🔄</span></nxp-button>
           <nxp-button type="button" class="ga-icon-button" :aria-label="t('settings.title')" :title="t('settings.title')" @click="openSettings"><span class="ga-button-glyph" aria-hidden="true">⚙️</span></nxp-button>
         </div>
-        <nxp-button type="button" class="ga-page-button ga-previous" :disabled="slides.length < 2" :aria-label="t('carousel.previous')" @click="step(-1)"><span class="ga-page-glyph" aria-hidden="true">‹</span></nxp-button>
-        <nxp-button type="button" class="ga-page-button ga-next" :disabled="slides.length < 2" :aria-label="t('carousel.next')" @click="step(1)"><span class="ga-page-glyph" aria-hidden="true">›</span></nxp-button>
+        <nxp-button v-if="slides.length > 1" type="button" class="ga-page-button ga-previous" :disabled="slides.length < 2" :aria-label="t('carousel.previous')" @click="step(-1)"><span class="ga-page-glyph" aria-hidden="true">‹</span></nxp-button>
+        <nxp-button v-if="slides.length > 1" type="button" class="ga-page-button ga-next" :disabled="slides.length < 2" :aria-label="t('carousel.next')" @click="step(1)"><span class="ga-page-glyph" aria-hidden="true">›</span></nxp-button>
         <div class="ga-carousel-controls"><span class="ga-refresh-status" role="status" aria-live="polite">{{ refreshing ? t('state.loading') : result ? t(`refreshResult.${result.status}`, result as unknown as Record<string, unknown>) : '' }}</span>
           <div class="ga-indicators">
             <nxp-button v-for="(slide, position) in slides" :key="slide.id" type="button" :aria-label="`${t('carousel.show')} ${t(`game.${slide.summary.gameId}`)}`" :aria-current="position === index ? 'true' : undefined" :class="{ 'ga-current': position === index }" @click="selectSlide(position)"><span class="ga-indicator-bar" aria-hidden="true"></span></nxp-button>
@@ -138,10 +139,14 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </template>
-    <nxp-modal v-if="settingsOpen && current" :open="settingsOpen" :title="t('settings.title')" size="wide" surface="secondary" :locked="busy" @close="settingsOpen = false">
-      <ActivitySettings :settings="current.settings" :host="host" :busy="busy" :error="error" @save="save" @cancel="settingsOpen = false">
+    <nxp-modal v-if="settingsOpen && current" :open="settingsOpen" footer :title="t('settings.title')" size="wide" surface="secondary" :locked="busy" @close="settingsOpen = false">
+      <ActivitySettings ref="settingsEditor" :settings="current.settings" :host="host" :busy="busy" :error="error" @save="save" @cancel="settingsOpen = false">
         <span v-if="selected">{{ t(`cache.${selected.health.cacheState}`) }}<template v-if="feed?.health.lastGoodAt"> · {{ t('state.lastGood') }} {{ lastGoodTime(feed.health.lastGoodAt) }} ({{ displayZone }})</template></span>
       </ActivitySettings>
+      <div slot="footer" class="ga-actions">
+        <nxp-button :disabled="busy" @click="settingsOpen = false">{{ t('cancel') }}</nxp-button>
+        <nxp-button tone="primary" :disabled="busy || !settingsEditor?.intervalValid" @click="settingsEditor?.save()">{{ t('save') }}</nxp-button>
+      </div>
     </nxp-modal>
     <nxp-modal v-if="detailsOpen" :open="detailsOpen" :title="t('details.title')" size="wide" @close="detailsOpen = false">
       <ActivityDetails v-if="feed" :feed="feed" :host="host" :now="now" :covers="covers" :zone="displayZone" />

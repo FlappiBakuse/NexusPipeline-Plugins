@@ -2,7 +2,7 @@
   "card.title": "Game activities",
   "card.description": "View SRA version information and activities",
   "settings.title": "Activity settings",
-  "settings.help": "Enable games, then drag their handles to set the carousel order, or focus a handle and use the up/down arrow keys. Changes apply after saving. Display language does not change progression.",
+  "settings.help": "Reorder any game with its drag handle, including unsubscribed games, or focus the handle and use the arrow keys. Changes apply after saving; display language does not change progression.",
   "settings.progression": "Progression",
   "settings.games": "Game subscriptions",
   "settings.drag": "Reorder: {game}",

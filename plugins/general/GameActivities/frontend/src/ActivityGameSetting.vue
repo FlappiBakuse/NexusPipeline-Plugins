@@ -14,7 +14,7 @@ const options = computed(() => progressions.value.map(value => ({ value, label: 
 <template>
   <article class="ga-game-setting">
     <div class="ga-game-handle">
-      <nxp-drag-handle v-if="enabled" :disabled="busy" :label="t('settings.drag', { game: t(`game.${game}`) })"
+      <nxp-drag-handle :disabled="busy" :label="t('settings.drag', { game: t(`game.${game}`) })"
         :title="t('settings.dragHelp')" />
     </div>
     <div class="ga-game-copy">

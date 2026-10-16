@@ -8,10 +8,10 @@ function e(e) {
 var t = {}, n = [], r = () => {}, i = () => !1, a = (e) => e.charCodeAt(0) === 111 && e.charCodeAt(1) === 110 && (e.charCodeAt(2) > 122 || e.charCodeAt(2) < 97), o = (e) => e.startsWith("onUpdate:"), s = Object.assign, c = (e, t) => {
 	let n = e.indexOf(t);
 	n > -1 && e.splice(n, 1);
-}, l = Object.prototype.hasOwnProperty, u = (e, t) => l.call(e, t), d = Array.isArray, f = (e) => x(e) === "[object Map]", p = (e) => x(e) === "[object Set]", m = (e) => x(e) === "[object Date]", h = (e) => typeof e == "function", g = (e) => typeof e == "string", _ = (e) => typeof e == "symbol", v = (e) => typeof e == "object" && !!e, y = (e) => (v(e) || h(e)) && h(e.then) && h(e.catch), b = Object.prototype.toString, x = (e) => b.call(e), S = (e) => x(e).slice(8, -1), C = (e) => x(e) === "[object Object]", w = (e) => g(e) && e !== "NaN" && e[0] !== "-" && "" + parseInt(e, 10) === e, T = /* @__PURE__ */ e(",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"), E = (e) => {
+}, l = Object.prototype.hasOwnProperty, u = (e, t) => l.call(e, t), d = Array.isArray, f = (e) => x(e) === "[object Map]", p = (e) => x(e) === "[object Set]", m = (e) => x(e) === "[object Date]", h = (e) => typeof e == "function", g = (e) => typeof e == "string", _ = (e) => typeof e == "symbol", v = (e) => typeof e == "object" && !!e, y = (e) => (v(e) || h(e)) && h(e.then) && h(e.catch), b = Object.prototype.toString, x = (e) => b.call(e), S = (e) => x(e).slice(8, -1), C = (e) => x(e) === "[object Object]", w = (e) => g(e) && e !== "NaN" && e[0] !== "-" && "" + parseInt(e, 10) === e, T = /* @__PURE__ */ e(",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"), ee = (e) => {
 	let t = /* @__PURE__ */ Object.create(null);
 	return ((n) => t[n] || (t[n] = e(n)));
-}, ee = /-\w/g, D = E((e) => e.replace(ee, (e) => e.slice(1).toUpperCase())), te = /\B([A-Z])/g, O = E((e) => e.replace(te, "-$1").toLowerCase()), ne = E((e) => e.charAt(0).toUpperCase() + e.slice(1)), re = E((e) => e ? `on${ne(e)}` : ""), k = (e, t) => !Object.is(e, t), ie = (e, ...t) => {
+}, E = /-\w/g, D = ee((e) => e.replace(E, (e) => e.slice(1).toUpperCase())), te = /\B([A-Z])/g, O = ee((e) => e.replace(te, "-$1").toLowerCase()), ne = ee((e) => e.charAt(0).toUpperCase() + e.slice(1)), re = ee((e) => e ? `on${ne(e)}` : ""), k = (e, t) => !Object.is(e, t), ie = (e, ...t) => {
 	for (let n = 0; n < e.length; n++) e[n](...t);
 }, A = (e, t, n, r = !1) => {
 	Object.defineProperty(e, t, {
@@ -1329,7 +1329,7 @@ var gr = !0;
 function _r(e) {
 	let t = xr(e), n = e.proxy, i = e.ctx;
 	gr = !1, t.beforeCreate && yr(t.beforeCreate, e, "bc");
-	let { data: a, computed: o, methods: s, watch: c, provide: l, inject: u, created: f, beforeMount: p, mounted: m, beforeUpdate: g, updated: _, activated: y, deactivated: b, beforeDestroy: x, beforeUnmount: S, destroyed: C, unmounted: w, render: T, renderTracked: E, renderTriggered: ee, errorCaptured: D, serverPrefetch: te, expose: O, inheritAttrs: ne, components: re, directives: k, filters: ie } = t;
+	let { data: a, computed: o, methods: s, watch: c, provide: l, inject: u, created: f, beforeMount: p, mounted: m, beforeUpdate: g, updated: _, activated: y, deactivated: b, beforeDestroy: x, beforeUnmount: S, destroyed: C, unmounted: w, render: T, renderTracked: ee, renderTriggered: E, errorCaptured: D, serverPrefetch: te, expose: O, inheritAttrs: ne, components: re, directives: k, filters: ie } = t;
 	if (u && vr(u, i, null), s) for (let e in s) {
 		let t = s[e];
 		h(t) && (i[e] = t.bind(n));
@@ -1361,7 +1361,7 @@ function _r(e) {
 	function A(e, t) {
 		d(t) ? t.forEach((t) => e(t.bind(n))) : t && e(t.bind(n));
 	}
-	if (A(Zn, p), A(Qn, m), A($n, g), A(er, _), A(Gn, y), A(Kn, b), A(or, D), A(ar, E), A(ir, ee), A(tr, S), A(nr, w), A(rr, te), d(O)) {
+	if (A(Zn, p), A(Qn, m), A($n, g), A(er, _), A(Gn, y), A(Kn, b), A(or, D), A(ar, ee), A(ir, E), A(tr, S), A(nr, w), A(rr, te), d(O)) {
 		if (O.length) {
 			let t = e.exposed ||= {};
 			O.forEach((e) => {
@@ -1841,7 +1841,7 @@ function di(e, i) {
 		for (; e && e !== t;) n = h(e), s(e), e = n;
 		s(t);
 	}, w = (e, t, n, r, i, a, o, s, c) => {
-		if (t.type === "svg" ? o = "svg" : t.type === "math" && (o = "mathml"), e == null) E(t, n, r, i, a, o, s, c);
+		if (t.type === "svg" ? o = "svg" : t.type === "math" && (o = "mathml"), e == null) ee(t, n, r, i, a, o, s, c);
 		else {
 			let n = e.el && e.el._isVueCE ? e.el : null;
 			try {
@@ -1850,9 +1850,9 @@ function di(e, i) {
 				n && n._endPatch();
 			}
 		}
-	}, E = (e, t, n, r, i, a, s, u) => {
+	}, ee = (e, t, n, r, i, a, s, u) => {
 		let d, f, { props: m, shapeFlag: h, transition: g, dirs: _ } = e;
-		if (d = e.el = l(e.type, a, m && m.is, m), h & 8 ? p(d, e.children) : h & 16 && D(e.children, d, null, r, i, fi(e, a), s, u), _ && Sn(e, null, r, "created"), ee(d, e, e.scopeId, s, r), m) {
+		if (d = e.el = l(e.type, a, m && m.is, m), h & 8 ? p(d, e.children) : h & 16 && D(e.children, d, null, r, i, fi(e, a), s, u), _ && Sn(e, null, r, "created"), E(d, e, e.scopeId, s, r), m) {
 			for (let e in m) e !== "value" && !T(e) && c(d, e, null, m[e], a, r);
 			"value" in m && c(d, "value", null, m.value, a), (f = m.onVnodeBeforeMount) && Wi(f, r, e);
 		}
@@ -1863,13 +1863,13 @@ function di(e, i) {
 				f && Wi(f, r, e), v && g.enter(d), _ && Sn(e, null, r, "mounted");
 			} finally {}
 		}, i);
-	}, ee = (e, t, n, r, i) => {
+	}, E = (e, t, n, r, i) => {
 		if (n && g(e, n), r) for (let t = 0; t < r.length; t++) g(e, r[t]);
 		if (i) {
 			let n = i.subTree;
 			if (t === n || bi(n.type) && (n.ssContent === t || n.ssFallback === t)) {
 				let t = i.vnode;
-				ee(e, t, t.scopeId, t.slotScopeIds, i.parent);
+				E(e, t, t.scopeId, t.slotScopeIds, i.parent);
 			}
 		}
 	}, D = (e, t, n, r, i, a, o, s, c = 0) => {
@@ -2976,12 +2976,11 @@ var lo = { class: "ga-event-copy" }, uo = {
 			label: i(`progression.${e}`)
 		})));
 		return (t, n) => (J(), Y("article", Mo, [
-			X("div", No, [e.enabled ? (J(), Y("nxp-drag-handle", {
-				key: 0,
+			X("div", No, [X("nxp-drag-handle", {
 				disabled: e.busy,
 				label: B(i)("settings.drag", { game: B(i)(`game.${e.game}`) }),
 				title: B(i)("settings.dragHelp")
-			}, null, 8, Po)) : Z("", !0)]),
+			}, null, 8, Po)]),
 			X("div", Fo, [X("strong", null, M(B(i)(`game.${e.game}`)), 1)]),
 			o.value.length ? (J(), Y("div", {
 				key: 0,
@@ -3031,7 +3030,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 	key: 0,
 	role: "alert",
 	class: "ga-error"
-}, $o = { class: "ga-muted" }, es = { class: "ga-actions" }, ts = ["disabled"], ns = ["disabled"], rs = /* @__PURE__ */ Ln({
+}, $o = { class: "ga-muted" }, es = /* @__PURE__ */ Ln({
 	__name: "ActivitySettings",
 	props: {
 		settings: {},
@@ -3044,147 +3043,131 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 		"cancel",
 		"refresh"
 	],
-	setup(e, { emit: t }) {
-		let n = e, r = t, i = oo(n.host), a = /* @__PURE__ */ z(structuredClone(n.settings)), o = /* @__PURE__ */ z(a.value.carouselIntervalSeconds), s = $(() => typeof o.value == "number" && Number.isInteger(o.value) && (o.value === -1 || o.value >= 10 && o.value <= 120)), c = $(() => Bo.filter((e) => !a.value.selectedGames.includes(e)));
-		function l(e, t) {
-			t && !a.value.selectedGames.includes(e) ? a.value.selectedGames.push(e) : t || (a.value.selectedGames = a.value.selectedGames.filter((t) => t !== e));
+	setup(e, { expose: t, emit: n }) {
+		let r = e, i = n, a = oo(r.host), o = /* @__PURE__ */ z(structuredClone(r.settings)), s = /* @__PURE__ */ z(o.value.carouselIntervalSeconds), c = $(() => typeof s.value == "number" && Number.isInteger(s.value) && (s.value === -1 || s.value >= 10 && s.value <= 120)), l = /* @__PURE__ */ z([...o.value.gameOrder || o.value.selectedGames, ...Bo.filter((e) => !(o.value.gameOrder || o.value.selectedGames).includes(e))]);
+		function u(e, t) {
+			t && !o.value.selectedGames.includes(e) ? o.value.selectedGames.push(e) : t || (o.value.selectedGames = o.value.selectedGames.filter((t) => t !== e));
 		}
-		function u(e) {
-			n.busy || (a.value.selectedGames = e.detail[0]);
+		function d(e) {
+			r.busy || (l.value = e.detail[0]);
 		}
-		function d() {
-			!n.busy && s.value && r("save", {
-				...a.value,
-				carouselIntervalSeconds: Number(o.value)
+		function f() {
+			!r.busy && c.value && i("save", {
+				...o.value,
+				gameOrder: l.value,
+				selectedGames: l.value.filter((e) => o.value.selectedGames.includes(e)),
+				carouselIntervalSeconds: Number(s.value)
 			});
 		}
-		return (t, n) => (J(), Y("div", Ho, [
+		return t({
+			save: f,
+			intervalValid: c
+		}), (t, n) => (J(), Y("div", Ho, [
 			X("section", {
-				"aria-label": B(i)("settings.games"),
-				"data-help": B(i)("settings.help")
-			}, [X("h3", Wo, M(B(i)("settings.games")), 1), X("div", Go, [a.value.selectedGames.length ? (J(), Y("nxp-sortable-list", {
-				key: 0,
+				"aria-label": B(a)("settings.games"),
+				"data-help": B(a)("settings.help")
+			}, [X("h3", Wo, M(B(a)("settings.games")), 1), X("div", Go, [X("nxp-sortable-list", {
 				disabled: e.busy,
-				onReorder: u
-			}, [(J(!0), Y(K, null, cr(a.value.selectedGames, (t) => (J(), Ai(zo, {
+				onReorder: d
+			}, [(J(!0), Y(K, null, cr(l.value, (t) => (J(), Ai(zo, {
 				key: t,
 				"data-dnd-id": t,
 				game: t,
 				host: e.host,
-				enabled: !0,
+				enabled: o.value.selectedGames.includes(t),
 				busy: e.busy,
-				progression: a.value.progressions[t],
-				onToggle: (e) => l(t, e),
-				onProgression: (e) => a.value.progressions[t] = e
+				progression: o.value.progressions[t],
+				onToggle: (e) => u(t, e),
+				onProgression: (e) => o.value.progressions[t] = e
 			}, null, 8, [
 				"data-dnd-id",
 				"game",
 				"host",
+				"enabled",
 				"busy",
 				"progression",
 				"onToggle",
 				"onProgression"
-			]))), 128))], 40, Ko)) : Z("", !0), (J(!0), Y(K, null, cr(c.value, (t) => (J(), Ai(zo, {
-				key: t,
-				game: t,
-				host: e.host,
-				enabled: !1,
-				busy: e.busy,
-				progression: a.value.progressions[t],
-				onToggle: (e) => l(t, e),
-				onProgression: (e) => a.value.progressions[t] = e
-			}, null, 8, [
-				"game",
-				"host",
-				"busy",
-				"progression",
-				"onToggle",
-				"onProgression"
-			]))), 128))])], 8, Uo),
+			]))), 128))], 40, Ko)])], 8, Uo),
 			X("div", {
 				class: "ga-interval-setting",
-				"data-help": B(i)("settings.intervalHelp")
+				"data-help": B(a)("settings.intervalHelp")
 			}, [
-				X("label", Jo, [zi(M(B(i)("settings.interval")) + " ", 1), X("span", Yo, "(" + M(B(i)("settings.seconds")) + ")", 1)]),
+				X("label", Jo, [zi(M(B(a)("settings.interval")) + " ", 1), X("span", Yo, "(" + M(B(a)("settings.seconds")) + ")", 1)]),
 				X("nxp-number-input", {
 					id: "ga-carousel-interval",
-					"model-value": o.value,
+					"model-value": s.value,
 					min: -1,
 					max: 120,
 					step: 1,
-					"aria-label": B(i)("settings.interval"),
+					"aria-label": B(a)("settings.interval"),
 					disabled: e.busy,
-					onChange: n[0] ||= (e) => o.value = e.detail[0]
+					onChange: n[0] ||= (e) => s.value = e.detail[0]
 				}, null, 40, Xo),
-				s.value ? Z("", !0) : (J(), Y("p", Zo, M(B(i)("settings.intervalInvalid")), 1))
+				c.value ? Z("", !0) : (J(), Y("p", Zo, M(B(a)("settings.intervalInvalid")), 1))
 			], 8, qo),
 			e.error ? (J(), Y("p", Qo, M(e.error), 1)) : Z("", !0),
-			X("div", $o, [lr(t.$slots, "default")]),
-			X("div", es, [X("nxp-button", {
-				disabled: e.busy,
-				onClick: n[1] ||= (e) => r("cancel")
-			}, M(B(i)("cancel")), 9, ts), X("nxp-button", {
-				tone: "primary",
-				disabled: e.busy || !s.value,
-				onClick: d
-			}, M(B(i)("save")), 9, ns)])
+			X("div", $o, [lr(t.$slots, "default")])
 		]));
 	}
-}), is = { class: "ga-sr-only" }, as = {
+}), ts = { class: "ga-sr-only" }, ns = {
 	key: 0,
 	role: "alert",
 	class: "ga-error"
-}, os = {
+}, rs = {
 	key: 1,
 	class: "ga-empty-carousel"
-}, ss = [
+}, is = [
 	"disabled",
 	"aria-label",
 	"title"
-], cs = ["aria-label"], ls = { class: "ga-viewport" }, us = [
+], as = ["aria-label"], os = { class: "ga-viewport" }, ss = [
 	"aria-label",
 	"aria-hidden",
 	"inert"
-], ds = ["src", "alt"], fs = {
+], cs = ["src", "alt"], ls = {
 	key: 1,
 	class: "ga-cover-fallback",
 	"aria-hidden": "true"
-}, ps = { class: "ga-slide-copy" }, ms = { class: "ga-slide-meta" }, hs = { class: "ga-game-name" }, gs = {
+}, us = { class: "ga-slide-copy" }, ds = { class: "ga-slide-meta" }, fs = { class: "ga-game-name" }, ps = {
 	key: 0,
 	class: "ga-version"
-}, _s = {
+}, ms = {
 	key: 1,
 	class: "ga-progression"
-}, vs = {
+}, hs = {
 	key: 0,
 	class: "ga-deadline"
-}, ys = ["datetime"], bs = {
+}, gs = ["datetime"], _s = {
 	key: 1,
 	class: "ga-description"
-}, xs = ["disabled", "aria-label"], Ss = { class: "ga-tools" }, Cs = [
+}, vs = ["disabled", "aria-label"], ys = { class: "ga-tools" }, bs = [
 	"aria-label",
 	"title",
 	"aria-pressed"
-], ws = {
+], xs = {
 	class: "ga-button-glyph",
 	"aria-hidden": "true"
-}, Ts = [
+}, Ss = [
 	"aria-label",
 	"title",
 	"disabled"
-], Es = ["aria-label", "title"], Ds = ["disabled", "aria-label"], Os = ["disabled", "aria-label"], ks = { class: "ga-carousel-controls" }, As = {
+], Cs = ["aria-label", "title"], ws = ["disabled", "aria-label"], Ts = ["disabled", "aria-label"], Es = { class: "ga-carousel-controls" }, Ds = {
 	class: "ga-refresh-status",
 	role: "status",
 	"aria-live": "polite"
-}, js = { class: "ga-indicators" }, Ms = [
+}, Os = { class: "ga-indicators" }, ks = [
 	"aria-label",
 	"aria-current",
 	"onClick"
-], Ns = [
+], As = [
 	"open",
 	"title",
 	"locked"
-], Ps = { key: 0 }, Fs = ["open", "title"], Is = /* @__PURE__ */ Ln({
+], js = { key: 0 }, Ms = {
+	slot: "footer",
+	class: "ga-actions"
+}, Ns = ["disabled"], Ps = ["disabled"], Fs = ["open", "title"], Is = /* @__PURE__ */ Ln({
 	__name: "ActivityCarousel",
 	props: {
 		host: {},
@@ -3192,7 +3175,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 		covers: {}
 	},
 	setup(e) {
-		let t = e, n = oo(t.host), { current: r, feeds: i, index: a, error: o, busy: s, refreshing: c, manualRefreshing: l, now: u, result: d, zone: f, saveSettings: p, refresh: m } = t.state, h = /* @__PURE__ */ z(!1), g = /* @__PURE__ */ z(!1), _ = /* @__PURE__ */ z(!1), v = /* @__PURE__ */ z(!1), y = /* @__PURE__ */ z(!1), b = /* @__PURE__ */ z(!1), x = $(() => r.value?.selectedFeeds[a.value]), S = $(() => x.value ? i.value[Vo(x.value.gameId, x.value.progressionId)] : null), C = $(() => (r.value?.selectedFeeds ?? []).map((e) => {
+		let t = e, n = oo(t.host), { current: r, feeds: i, index: a, error: o, busy: s, refreshing: c, manualRefreshing: l, now: u, result: d, zone: f, saveSettings: p, refresh: m } = t.state, h = /* @__PURE__ */ z(!1), g = /* @__PURE__ */ z(null), _ = /* @__PURE__ */ z(!1), v = /* @__PURE__ */ z(!1), y = /* @__PURE__ */ z(!1), b = /* @__PURE__ */ z(!1), x = /* @__PURE__ */ z(!1), S = $(() => r.value?.selectedFeeds[a.value]), C = $(() => S.value ? i.value[Vo(S.value.gameId, S.value.progressionId)] : null), w = $(() => (r.value?.selectedFeeds ?? []).map((e) => {
 			let t = Vo(e.gameId, e.progressionId), n = i.value[t];
 			return {
 				id: t,
@@ -3200,114 +3183,114 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				feed: n,
 				overview: n?.overview
 			};
-		})), { images: w } = t.covers, T = window.matchMedia?.("(prefers-reduced-motion: reduce)"), E = $(() => (r.value?.settings.carouselIntervalSeconds ?? 30) * 1e3), ee = performance.now() + E.value, D;
-		function te(e) {
-			a.value = e, ee = performance.now() + E.value;
+		})), { images: T } = t.covers, ee = window.matchMedia?.("(prefers-reduced-motion: reduce)"), E = $(() => (r.value?.settings.carouselIntervalSeconds ?? 30) * 1e3), D = performance.now() + E.value, te;
+		function O(e) {
+			a.value = e, D = performance.now() + E.value;
 		}
 		Dn(E, () => {
-			ee = performance.now() + E.value;
+			D = performance.now() + E.value;
 		});
-		function O(e) {
-			let t = C.value.length;
-			t > 1 && te((a.value + e + t) % t);
-		}
 		function ne(e) {
-			e.target === e.currentTarget && ["ArrowLeft", "ArrowRight"].includes(e.key) && (e.preventDefault(), O(e.key === "ArrowLeft" ? -1 : 1));
+			let t = w.value.length;
+			t > 1 && O((a.value + e + t) % t);
 		}
 		function re(e) {
+			e.target === e.currentTarget && ["ArrowLeft", "ArrowRight"].includes(e.key) && (e.preventDefault(), ne(e.key === "ArrowLeft" ? -1 : 1));
+		}
+		function k(e) {
 			let t = no(e);
 			if (t === null) return n("time.unverified");
 			let r = io(t - u.value);
 			return r.unit === "ended" ? n("state.ended") : n(`countdown.${r.unit}`, r);
 		}
-		function k(e) {
+		function ie(e) {
 			return new Intl.DateTimeFormat(t.host.i18n.locale, {
 				dateStyle: "medium",
 				timeStyle: "short"
 			}).format(new Date(e));
 		}
-		function ie() {
+		function A() {
 			r.value && (h.value = !0, o.value = "");
 		}
-		async function A(e) {
+		async function ae(e) {
 			await p(e) && (h.value = !1);
 		}
-		function ae() {
-			y.value = T?.matches ?? !1;
+		function oe() {
+			b.value = ee?.matches ?? !1;
 		}
-		function oe(e) {
-			v.value = !!e.currentTarget.contains(e.relatedTarget);
+		function se(e) {
+			y.value = !!e.currentTarget.contains(e.relatedTarget);
 		}
 		return Qn(() => {
-			ae(), T?.addEventListener("change", ae), D = setInterval(() => {
-				if (E.value < 0 || document.hidden || y.value || b.value || _.value || v.value || h.value || g.value) {
-					ee = performance.now() + E.value;
+			oe(), ee?.addEventListener("change", oe), te = setInterval(() => {
+				if (E.value < 0 || document.hidden || b.value || x.value || v.value || y.value || h.value || _.value) {
+					D = performance.now() + E.value;
 					return;
 				}
-				performance.now() >= ee && O(1);
+				performance.now() >= D && ne(1);
 			}, 250);
 		}), tr(() => {
-			clearInterval(D), T?.removeEventListener("change", ae);
+			clearInterval(te), ee?.removeEventListener("change", oe);
 		}), (t, i) => (J(), Y("nxp-card", {
 			class: "game-activities",
 			unstyled: !0,
-			onMouseenter: i[8] ||= (e) => _.value = !0,
-			onMouseleave: i[9] ||= (e) => _.value = !1,
-			onFocusin: i[10] ||= (e) => v.value = !0,
-			onFocusout: oe
+			onMouseenter: i[10] ||= (e) => v.value = !0,
+			onMouseleave: i[11] ||= (e) => v.value = !1,
+			onFocusin: i[12] ||= (e) => y.value = !0,
+			onFocusout: se
 		}, [
-			X("h2", is, M(B(n)("card.title")), 1),
-			B(o) && !h.value ? (J(), Y("p", as, M(B(o)), 1)) : Z("", !0),
-			!B(r) || !B(r).selectedFeeds.length ? (J(), Y("div", os, [X("p", null, M(B(n)(B(r) ? "state.select" : "state.loading")), 1), X("nxp-button", {
+			X("h2", ts, M(B(n)("card.title")), 1),
+			B(o) && !h.value ? (J(), Y("p", ns, M(B(o)), 1)) : Z("", !0),
+			!B(r) || !B(r).selectedFeeds.length ? (J(), Y("div", rs, [X("p", null, M(B(n)(B(r) ? "state.select" : "state.loading")), 1), X("nxp-button", {
 				type: "button",
 				class: "ga-icon-button ga-empty-settings",
 				disabled: !B(r),
 				"aria-label": B(n)("settings.title"),
 				title: B(n)("settings.title"),
-				onClick: ie
-			}, [...i[11] ||= [X("span", {
+				onClick: A
+			}, [...i[13] ||= [X("span", {
 				class: "ga-button-glyph",
 				"aria-hidden": "true"
-			}, "⚙️", -1)]], 8, ss)])) : x.value ? (J(), Y("div", {
+			}, "⚙️", -1)]], 8, is)])) : S.value ? (J(), Y("div", {
 				key: 2,
 				class: "ga-carousel",
 				role: "region",
 				"aria-roledescription": "carousel",
 				"aria-label": B(n)("carousel.label"),
 				tabindex: "0",
-				onKeydown: ne
+				onKeydown: re
 			}, [
-				X("div", ls, [X("div", {
+				X("div", os, [X("div", {
 					class: "ga-track",
 					style: ce({ transform: `translateX(-${B(a) * 100}%)` })
-				}, [(J(!0), Y(K, null, cr(C.value, (t, r) => (J(), Y("article", {
+				}, [(J(!0), Y(K, null, cr(w.value, (t, r) => (J(), Y("article", {
 					key: t.id,
 					class: "ga-slide",
 					role: "group",
 					"aria-roledescription": "slide",
-					"aria-label": `${r + 1}/${C.value.length} · ${B(n)(`game.${t.summary.gameId}`)}`,
+					"aria-label": `${r + 1}/${w.value.length} · ${B(n)(`game.${t.summary.gameId}`)}`,
 					"aria-hidden": r !== B(a),
 					inert: r !== B(a) || void 0
 				}, [
-					B(w)["overview/" + t.id] ? (J(), Y("img", {
+					B(T)["overview/" + t.id] ? (J(), Y("img", {
 						key: 0,
 						class: "ga-cover",
-						src: B(w)["overview/" + t.id],
+						src: B(T)["overview/" + t.id],
 						alt: t.overview?.cover?.alt ?? ""
-					}, null, 8, ds)) : (J(), Y("div", fs, [X("span", null, M(B(n)(`game.${t.summary.gameId}`)), 1)])),
-					i[12] ||= X("div", { class: "ga-shade" }, null, -1),
-					X("div", ps, [
-						X("div", ms, [
-							X("span", hs, M(B(n)(`game.${t.summary.gameId}`)), 1),
-							t.overview?.number ? (J(), Y("span", gs, M(B(co)(t.feed, e.host)), 1)) : Z("", !0),
-							t.summary.progressionId === "default" ? Z("", !0) : (J(), Y("span", _s, M(B(n)(`progression.${t.summary.progressionId}`)), 1))
+					}, null, 8, cs)) : (J(), Y("div", ls, [X("span", null, M(B(n)(`game.${t.summary.gameId}`)), 1)])),
+					i[14] ||= X("div", { class: "ga-shade" }, null, -1),
+					X("div", us, [
+						X("div", ds, [
+							X("span", fs, M(B(n)(`game.${t.summary.gameId}`)), 1),
+							t.overview?.number ? (J(), Y("span", ps, M(B(co)(t.feed, e.host)), 1)) : Z("", !0),
+							t.summary.progressionId === "default" ? Z("", !0) : (J(), Y("span", ms, M(B(n)(`progression.${t.summary.progressionId}`)), 1))
 						]),
 						X("h3", null, M(t.overview?.title || B(n)("state.overview")), 1),
-						t.overview?.end ? (J(), Y("div", vs, [
+						t.overview?.end ? (J(), Y("div", hs, [
 							X("span", null, M(B(n)("time.overviewEnd")), 1),
-							X("time", { datetime: t.overview.end.instantUtc || void 0 }, M(B(so)(t.overview.end, e.host, B(f))), 9, ys),
-							X("strong", null, M(re(t.overview.end)), 1)
-						])) : t.feed ? Z("", !0) : (J(), Y("p", bs, M(B(n)(t.summary.health.diagnostics.length ? "state.unavailable" : "state.loading")), 1))
+							X("time", { datetime: t.overview.end.instantUtc || void 0 }, M(B(so)(t.overview.end, e.host, B(f))), 9, gs),
+							X("strong", null, M(k(t.overview.end)), 1)
+						])) : t.feed ? Z("", !0) : (J(), Y("p", _s, M(B(n)(t.summary.health.diagnostics.length ? "state.unavailable" : "state.loading")), 1))
 					]),
 					X("nxp-button", {
 						class: "ga-open-details",
@@ -3315,19 +3298,19 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						disabled: !t.feed,
 						"aria-label": B(n)("details.open", { game: B(n)(`game.${t.summary.gameId}`) }),
 						"aria-haspopup": "dialog",
-						onClick: i[0] ||= (e) => g.value = !0
-					}, null, 8, xs)
-				], 8, us))), 128))], 4)]),
-				X("div", Ss, [
-					E.value > 0 && C.value.length > 1 ? (J(), Y("nxp-button", {
+						onClick: i[0] ||= (e) => _.value = !0
+					}, null, 8, vs)
+				], 8, ss))), 128))], 4)]),
+				X("div", ys, [
+					E.value > 0 && w.value.length > 1 ? (J(), Y("nxp-button", {
 						key: 0,
 						type: "button",
 						class: "ga-icon-button",
-						"aria-label": B(n)(b.value ? "carousel.resume" : "carousel.pause"),
-						title: B(n)(b.value ? "carousel.resume" : "carousel.pause"),
-						"aria-pressed": b.value,
-						onClick: i[1] ||= (e) => b.value = !b.value
-					}, [X("span", ws, M(b.value ? "▶️" : "⏸️"), 1)], 8, Cs)) : Z("", !0),
+						"aria-label": B(n)(x.value ? "carousel.resume" : "carousel.pause"),
+						title: B(n)(x.value ? "carousel.resume" : "carousel.pause"),
+						"aria-pressed": x.value,
+						onClick: i[1] ||= (e) => x.value = !x.value
+					}, [X("span", xs, M(x.value ? "▶️" : "⏸️"), 1)], 8, bs)) : Z("", !0),
 					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
@@ -3337,86 +3320,98 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						onClick: i[2] ||= (t) => {
 							e.covers.retryFailed(), B(m)();
 						}
-					}, [...i[13] ||= [X("span", {
+					}, [...i[15] ||= [X("span", {
 						class: "ga-button-glyph",
 						"aria-hidden": "true"
-					}, "🔄", -1)]], 8, Ts),
+					}, "🔄", -1)]], 8, Ss),
 					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
 						"aria-label": B(n)("settings.title"),
 						title: B(n)("settings.title"),
-						onClick: ie
-					}, [...i[14] ||= [X("span", {
+						onClick: A
+					}, [...i[16] ||= [X("span", {
 						class: "ga-button-glyph",
 						"aria-hidden": "true"
-					}, "⚙️", -1)]], 8, Es)
+					}, "⚙️", -1)]], 8, Cs)
 				]),
-				X("nxp-button", {
+				w.value.length > 1 ? (J(), Y("nxp-button", {
+					key: 0,
 					type: "button",
 					class: "ga-page-button ga-previous",
-					disabled: C.value.length < 2,
+					disabled: w.value.length < 2,
 					"aria-label": B(n)("carousel.previous"),
-					onClick: i[3] ||= (e) => O(-1)
-				}, [...i[15] ||= [X("span", {
+					onClick: i[3] ||= (e) => ne(-1)
+				}, [...i[17] ||= [X("span", {
 					class: "ga-page-glyph",
 					"aria-hidden": "true"
-				}, "‹", -1)]], 8, Ds),
-				X("nxp-button", {
+				}, "‹", -1)]], 8, ws)) : Z("", !0),
+				w.value.length > 1 ? (J(), Y("nxp-button", {
+					key: 1,
 					type: "button",
 					class: "ga-page-button ga-next",
-					disabled: C.value.length < 2,
+					disabled: w.value.length < 2,
 					"aria-label": B(n)("carousel.next"),
-					onClick: i[4] ||= (e) => O(1)
-				}, [...i[16] ||= [X("span", {
+					onClick: i[4] ||= (e) => ne(1)
+				}, [...i[18] ||= [X("span", {
 					class: "ga-page-glyph",
 					"aria-hidden": "true"
-				}, "›", -1)]], 8, Os),
-				X("div", ks, [X("span", As, M(B(c) ? B(n)("state.loading") : B(d) ? B(n)(`refreshResult.${B(d).status}`, B(d)) : ""), 1), X("div", js, [(J(!0), Y(K, null, cr(C.value, (e, t) => (J(), Y("nxp-button", {
+				}, "›", -1)]], 8, Ts)) : Z("", !0),
+				X("div", Es, [X("span", Ds, M(B(c) ? B(n)("state.loading") : B(d) ? B(n)(`refreshResult.${B(d).status}`, B(d)) : ""), 1), X("div", Os, [(J(!0), Y(K, null, cr(w.value, (e, t) => (J(), Y("nxp-button", {
 					key: e.id,
 					type: "button",
 					"aria-label": `${B(n)("carousel.show")} ${B(n)(`game.${e.summary.gameId}`)}`,
 					"aria-current": t === B(a) ? "true" : void 0,
 					class: j({ "ga-current": t === B(a) }),
-					onClick: (e) => te(t)
-				}, [...i[17] ||= [X("span", {
+					onClick: (e) => O(t)
+				}, [...i[19] ||= [X("span", {
 					class: "ga-indicator-bar",
 					"aria-hidden": "true"
-				}, null, -1)]], 10, Ms))), 128))])])
-			], 40, cs)) : Z("", !0),
+				}, null, -1)]], 10, ks))), 128))])])
+			], 40, as)) : Z("", !0),
 			h.value && B(r) ? (J(), Y("nxp-modal", {
 				key: 3,
 				open: h.value,
+				footer: "",
 				title: B(n)("settings.title"),
 				size: "wide",
 				surface: "secondary",
 				locked: B(s),
-				onClose: i[6] ||= (e) => h.value = !1
-			}, [Fi(rs, {
+				onClose: i[8] ||= (e) => h.value = !1
+			}, [Fi(es, {
+				ref_key: "settingsEditor",
+				ref: g,
 				settings: B(r).settings,
 				host: e.host,
 				busy: B(s),
 				error: B(o),
-				onSave: A,
+				onSave: ae,
 				onCancel: i[5] ||= (e) => h.value = !1
 			}, {
-				default: xn(() => [x.value ? (J(), Y("span", Ps, [zi(M(B(n)(`cache.${x.value.health.cacheState}`)), 1), S.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + M(B(n)("state.lastGood")) + " " + M(k(S.value.health.lastGoodAt)) + " (" + M(B(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
+				default: xn(() => [S.value ? (J(), Y("span", js, [zi(M(B(n)(`cache.${S.value.health.cacheState}`)), 1), C.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + M(B(n)("state.lastGood")) + " " + M(ie(C.value.health.lastGoodAt)) + " (" + M(B(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
 				_: 1
 			}, 8, [
 				"settings",
 				"host",
 				"busy",
 				"error"
-			])], 40, Ns)) : Z("", !0),
-			g.value ? (J(), Y("nxp-modal", {
+			]), X("div", Ms, [X("nxp-button", {
+				disabled: B(s),
+				onClick: i[6] ||= (e) => h.value = !1
+			}, M(B(n)("cancel")), 9, Ns), X("nxp-button", {
+				tone: "primary",
+				disabled: B(s) || !g.value?.intervalValid,
+				onClick: i[7] ||= (e) => g.value?.save()
+			}, M(B(n)("save")), 9, Ps)])], 40, As)) : Z("", !0),
+			_.value ? (J(), Y("nxp-modal", {
 				key: 4,
-				open: g.value,
+				open: _.value,
 				title: B(n)("details.title"),
 				size: "wide",
-				onClose: i[7] ||= (e) => g.value = !1
-			}, [S.value ? (J(), Ai(jo, {
+				onClose: i[9] ||= (e) => _.value = !1
+			}, [C.value ? (J(), Ai(jo, {
 				key: 0,
-				feed: S.value,
+				feed: C.value,
 				host: e.host,
 				now: B(u),
 				covers: e.covers,
@@ -3509,7 +3504,7 @@ function Ls(e) {
 			g = null, C();
 		}), g));
 	}
-	async function E(n) {
+	async function ee(n) {
 		if (!t.value || a.value) return !1;
 		a.value = !0;
 		try {
@@ -3528,7 +3523,7 @@ function Ls(e) {
 			a.value = !1;
 		}
 	}
-	async function ee() {
+	async function E() {
 		if (!(l.value || p)) {
 			o.value = !0;
 			try {
@@ -3570,8 +3565,8 @@ function Ls(e) {
 		now: s,
 		result: c,
 		zone: u,
-		saveSettings: E,
-		refresh: ee,
+		saveSettings: ee,
+		refresh: E,
 		load: T,
 		dispose: O
 	};

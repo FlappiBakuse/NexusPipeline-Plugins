@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
   "changelog": [
     {
+      "version": "0.1.2",
+      "date": "2026-10-16",
+      "items": [
+        "活动设置使用公共固定操作栏，所有游戏均可排序并保存顺序；单游戏订阅隐藏翻页按钮。"
+      ]
+    },
+    {
       "version": "0.1.1",
       "date": "2026-10-12",
       "items": [
@@ -40,6 +47,13 @@
         "Dashboard"
       ],
       "changelog": [
+        {
+          "version": "0.1.2",
+          "date": "2026-10-16",
+          "items": [
+            "Use the shared fixed modal footer, persist ordering for all games including disabled subscriptions, and hide paging buttons for a single subscription."
+          ]
+        },
         {
           "version": "0.1.1",
           "date": "2026-10-12",
