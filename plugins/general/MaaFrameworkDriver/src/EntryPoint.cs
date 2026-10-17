@@ -70,6 +70,16 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
             { EffectiveConfiguration = EffectiveConfiguration.FromProfile(profile), ResultBasis = "framework-task-v1" };
     }
 
+    private static string ReadHostVersion()
+    {
+        // Compatible Plugin API 2.2 hosts expose product identity through their managed entry assembly.
+        var assembly = System.Reflection.Assembly.GetEntryAssembly()
+            ?? throw new InvalidOperationException("driver.host_identity_missing");
+        var informational = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(assembly)?.InformationalVersion;
+        return informational?.Split('+', 2)[0] ?? assembly.GetName().Version?.ToString(3)
+            ?? throw new InvalidOperationException("driver.host_identity_missing");
+    }
+
     public async Task<PluginProviderRunResult> RunAsync(PluginProviderRunContext context, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
@@ -89,6 +99,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         if (fresh.ExecutionFingerprint != context.Plan.AuthorizationFingerprint
             || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.source_changed");
         var input = context.Plan.PrivatePlan.DeepClone().AsObject();
+        input["hostVersion"] = ReadHostVersion();
         input["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options);
         var frozen = context.Plan.PrivatePlan["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
         string[] selected = context.SelectedTaskIds?.ToArray() ?? context.Plan.Tasks.Select(task => task.Id).ToArray();

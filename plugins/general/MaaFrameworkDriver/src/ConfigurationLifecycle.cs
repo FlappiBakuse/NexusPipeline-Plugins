@@ -161,6 +161,7 @@ public sealed partial class EntryPoint
         var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token).Compile(profile);
         if (compiled.ExecutionFingerprint != candidate.AuthorizationFingerprint) throw new InvalidDataException("configuration.inputs_changed");
         var input = candidate.PrivateCandidate.DeepClone().AsObject();
+        input["hostVersion"] = ReadHostVersion();
         input["mode"] = "initialize_only"; input["operationId"] = candidate.OperationId; input["revision"] = candidate.Revision;
         if (context.LaunchTarget is { } launch) input["hostLaunchTarget"] = JsonSerializer.SerializeToNode(launch, DriverJson.Options);
         var host = _host ?? throw new InvalidOperationException("provider disabled");

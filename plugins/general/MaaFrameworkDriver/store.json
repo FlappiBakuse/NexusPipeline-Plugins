@@ -18,7 +18,8 @@
       "version": "0.2.4",
       "date": "2026-10-16",
       "items": [
-        "更新随包使用说明的文档链接，指向规范化后的项目与框架指南。"
+        "更新随包使用说明的文档链接，指向规范化后的项目与框架指南。",
+        "向 pretask 和 Agent 传递实际 Host 产品版本，独立保留 PI 协议、原生运行库与项目版本。"
       ]
     },
     {
@@ -60,7 +61,8 @@
           "version": "0.2.4",
           "date": "2026-10-16",
           "items": [
-            "Update bundled documentation links to the canonical project and framework guides."
+            "Update bundled documentation links to the canonical project and framework guides.",
+            "Pass the actual Host product version to pretasks and Agents while keeping PI, native runtime and project versions independent."
           ]
         },
         {

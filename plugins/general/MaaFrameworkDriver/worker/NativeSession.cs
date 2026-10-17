@@ -29,6 +29,7 @@ internal sealed class NativeSession : IDisposable
     private NativeLogSource? _nativeLog;
     private string _nativeLogDirectory = "";
     private string _nativeDirectory = "";
+    private string _clientVersion = "";
 
     private async ValueTask Stage(string phase, string state)
     {
@@ -44,9 +45,13 @@ internal sealed class NativeSession : IDisposable
 
     internal async Task<bool> RunAsync(DriverProfile profile, CompiledProject project, JsonObject secrets,
         Func<string, JsonObject, ValueTask> send, CancellationToken token, PluginProviderLaunchTarget? hostTarget = null,
-        bool initializeOnly = false, string operationId = "", string revision = "", string artifactsDirectory = "", string nonce = "")
+        bool initializeOnly = false, string operationId = "", string revision = "", string artifactsDirectory = "", string nonce = "",
+        string hostVersion = "")
     {
         if (!Environment.Is64BitProcess || !OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(hostVersion, @"^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$", System.Text.RegularExpressions.RegexOptions.CultureInvariant))
+            throw new NativeStartupException("host_version_invalid");
+        _clientVersion = "v" + hostVersion;
         _send = send;
         _logSecrets = secrets.Select(pair => pair.Value?.GetValue<string>() ?? "").Append(nonce).ToArray();
         if (profile.RuntimeInputs is not null) RuntimeInputs.Verify(profile, token);
@@ -273,7 +278,7 @@ internal sealed class NativeSession : IDisposable
             psi.Environment["UV_PROJECT_ENVIRONMENT"] = Path.Combine(project.InterfaceDirectory, ".venv");
         }
         psi.Environment["PI_INTERFACE_VERSION"] = "v2.10.2";
-        psi.Environment["PI_CLIENT_NAME"] = "NexusPipeline"; psi.Environment["PI_CLIENT_VERSION"] = "v0.17.3";
+        psi.Environment["PI_CLIENT_NAME"] = "NexusPipeline"; psi.Environment["PI_CLIENT_VERSION"] = _clientVersion;
         psi.Environment["PI_CLIENT_LANGUAGE"] = profile.Language; psi.Environment["PI_CLIENT_MAAFW_VERSION"] = nativeVersion;
         psi.Environment["PI_VERSION"] = project.Version;
         // Native DLL search registrations are local to the worker; external C++ Agents need the verified directory too.
