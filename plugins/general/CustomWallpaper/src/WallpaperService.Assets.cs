@@ -85,13 +85,14 @@ internal sealed partial class WallpaperService
                 PaletteVersion = 0,
                 Palette = new Dictionary<string, string>(StringComparer.Ordinal),
             };
-            bool written = false;
+            using var existing = await _assets.OpenAsync(AssetScope, assetId, cancellationToken).ConfigureAwait(false);
+            bool ownsNewAsset = existing is null;
+            if (ownsNewAsset) await RecordCleanupAsync(assetId, cancellationToken).ConfigureAwait(false);
             try
             {
                 await using var source = new MemoryStream(bytes, writable: false);
                 PluginAssetInfo info = await _assets.WriteAsync(AssetScope, ExtensionFor(mime).TrimStart('.'), source, cancellationToken)
                     .ConfigureAwait(false);
-                written = true;
                 if (!string.Equals(info.Id, assetId, StringComparison.OrdinalIgnoreCase))
                 {
                     throw new WallpaperException("storage_mismatch", "资产存储返回的内容标识与内容不一致");
@@ -108,12 +109,13 @@ internal sealed partial class WallpaperService
             }
             catch
             {
-                if (written)
+                if (ownsNewAsset)
                 {
-                    await _assets.DeleteAsync(AssetScope, assetId, cancellationToken).ConfigureAwait(false);
+                    await TryRecoverAssetCleanupAsync(assetId).ConfigureAwait(false);
                 }
                 throw;
             }
+            if (ownsNewAsset) await TryRecoverAssetCleanupAsync(assetId).ConfigureAwait(false);
             WallpaperCurrentState currentId = await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
             return new JsonObject
             {
@@ -135,7 +137,15 @@ internal sealed partial class WallpaperService
         try
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
+            if (!config.Assets.Any(asset => string.Equals(asset.Id, assetId, StringComparison.OrdinalIgnoreCase))
+                && (await ReadCleanupAsync(cancellationToken).ConfigureAwait(false)).AssetIds.Contains(assetId, StringComparer.Ordinal))
+            {
+                using var retryDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await RecoverAssetCleanupAsync(assetId, retryDeadline.Token).ConfigureAwait(false);
+                return BuildState(config, await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false));
+            }
             WallpaperAssetRecord asset = FindAsset(config, assetId);
+            await RecordCleanupAsync(asset.Id, cancellationToken).ConfigureAwait(false);
             config.Assets.Remove(asset);
             config.Order.RemoveAll(id => string.Equals(id, asset.Id, StringComparison.OrdinalIgnoreCase));
             if (string.Equals(config.SelectedId, asset.Id, StringComparison.OrdinalIgnoreCase))
@@ -145,7 +155,8 @@ internal sealed partial class WallpaperService
             config.Revision = Math.Max(1, config.Revision + 1);
             config.UpdatedAt = _utcNow();
             await SaveConfigAsync(config, cancellationToken).ConfigureAwait(false);
-            await _assets.DeleteAsync(AssetScope, asset.Id, cancellationToken).ConfigureAwait(false);
+            using var cleanupDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            await RecoverAssetCleanupAsync(asset.Id, cleanupDeadline.Token).ConfigureAwait(false);
             WallpaperCurrentState currentId = await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
             return BuildState(config, currentId);
         }

@@ -66,6 +66,8 @@ internal sealed partial class WallpaperService
         try
         {
             WallpaperConfig config = await LoadConfigAsync(cancellationToken).ConfigureAwait(false);
+            foreach (string assetId in (await ReadCleanupAsync(cancellationToken).ConfigureAwait(false)).AssetIds.ToArray())
+                await RecoverAssetCleanupAsync(assetId, cancellationToken).ConfigureAwait(false);
             await SaveConfigAsync(config, cancellationToken).ConfigureAwait(false);
             await ResolveCurrentAsync(config, cancellationToken).ConfigureAwait(false);
         }
