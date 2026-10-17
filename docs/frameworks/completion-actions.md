@@ -40,7 +40,7 @@
 | BetterGI | 附加快照 `genshinStartConfig.installPath` | 主快照 `CompletionAction` 保留空/无/关闭游戏/关闭软件/关闭游戏和软件，其余字符串改无 | 非 MAA，无插入任务 |
 | March7thAssistant | `config.yaml/game_path`；云游戏启用时不改 | `after_finish` 保留 None/Exit 及已识别中文无操作/退出，其余字符串（包括 RunScript）改 None | 非 MAA，无插入任务 |
 | ZenlessZoneZeroOneDragon | `game_account.yml/game_path` | 附加 `one_dragon.yml/after_done` 保留无/关闭游戏，其余字符串改无 | 非 MAA，无插入任务 |
-| MaaEnd | 当前自动执行实例的首项 `preActions.program` | 关闭当前实例所有 `__MXU_POWER__` 并关闭其控制器启用缓存 | 建立或修正当前实例的首项前置程序，启用且不等待退出，保留参数和后续程序 |
+| MaaEnd | 不自动修改，由上游启动预任务管理启动器 | 关闭当前实例所有 `__MXU_POWER__` 并关闭其控制器启用缓存 | 在 MaaEnd 中配置启动预任务，不自动创建前置程序 |
 | MaaStellaSora | 选定实例的 `SoftwarePath` | `AfterTask` 保留 None/CloseMFA/CloseEmulator/CloseEmulatorAndMFA，其余字符串改 None；关闭 ComputerOperationAction | `BeforeTask` 设为 StartupSoftwareAndScript；共享字段只生成当前实例覆盖，编辑期间屏蔽自动启动 |
 | OkNTE | `devices.json/pc_full_path`；不覆盖独立的 Launcher Path | 无可修复的有限完成动作字段；保留框架退出参数 | 非 MAA，无插入任务；仍由脚本负责启动器 |
 | OkWutheringWaves | `devices.json/pc_full_path` | 无可修复的有限完成动作字段；保留框架退出参数 | 非 MAA，无插入任务 |

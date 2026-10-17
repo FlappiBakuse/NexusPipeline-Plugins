@@ -82,7 +82,8 @@
       ],
       "requires": [
         "core/runtime-identity",
-        "oknte/normalize-items"
+        "oknte/normalize-items",
+        "core/resource"
       ]
     },
     "core/behavior": {

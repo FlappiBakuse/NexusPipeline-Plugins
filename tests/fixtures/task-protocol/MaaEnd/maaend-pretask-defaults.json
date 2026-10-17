@@ -1,0 +1,50 @@
+{
+  "artifact": "MaaEnd",
+  "coverage": "complete",
+  "executionContext": {
+    "mode": "pc",
+    "launchOwner": "upstream",
+    "ready": false
+  },
+  "resources": [
+    {
+      "id": "config:mxu-MaaEnd.json",
+      "format": "json",
+      "text": "{\"settings\": {\"autoStartInstanceId\": \"chosen\", \"language\": \"zh-CN\"}, \"instances\": [{\"id\": \"chosen\", \"controllerName\": \"Win32-Front\", \"resourceName\": \"Official\", \"tasks\": [{\"id\": \"launch\", \"taskName\": \"__MXU_PRETASK__LaunchGamePC\", \"enabled\": true, \"optionValues\": {\"LaunchGamePCLauncherPath\": {\"type\": \"select\", \"caseName\": \"Removed\"}, \"LaunchGamePCRegion\": {\"type\": \"input\", \"values\": {\"Region\": \"obsolete\"}}}}, {\"id\": \"daily\", \"taskName\": \"Daily\", \"enabled\": true}]}]}"
+    },
+    {
+      "id": "interface",
+      "format": "text",
+      "text": "{\"name\": \"MaaEnd\", \"task\": [{\"name\": \"Daily\", \"label\": \"Daily\"}], \"controller\": [{\"name\": \"Win32-Front\"}, {\"name\": \"ADB\"}], \"resource\": [{\"name\": \"Official\"}], \"import\": [\"tasks/pretasks/LaunchGamePC.json\"]}"
+    },
+    {
+      "id": "interface-part-70",
+      "format": "text",
+      "text": "{\"pretask\": {\"controller\": [\"Win32-Front\"], \"exec\": \"agent/go-service\", \"args\": [\"--pretask\", \"LaunchGamePC\"], \"name\": \"LaunchGamePC\", \"label\": \"$pretask.LaunchGamePC.label\", \"option\": [\"LaunchGamePCRegion\", \"LaunchGamePCLauncherPath\"]}, \"option\": {\"LaunchGamePCRegion\": {\"type\": \"select\", \"label\": \"$option.LaunchGamePCRegion.label\", \"cases\": [{\"name\": \"CN\", \"label\": \"$option.LaunchGamePCRegion.cases.CN.label\"}, {\"name\": \"Global\", \"label\": \"$option.LaunchGamePCRegion.cases.Global.label\"}, {\"name\": \"Bilibili\", \"label\": \"$option.LaunchGamePCRegion.cases.Bilibili.label\"}], \"default_case\": \"CN\"}, \"LaunchGamePCLauncherPath\": {\"type\": \"select\", \"label\": \"$option.LaunchGamePCLauncherPath.label\", \"cases\": [{\"name\": \"Auto\", \"label\": \"$option.LaunchGamePCLauncherPath.cases.Auto.label\"}, {\"name\": \"Manual\", \"label\": \"$option.LaunchGamePCLauncherPath.cases.Manual.label\", \"option\": [\"LaunchGamePCLauncherExe\"]}], \"default_case\": \"Auto\"}, \"LaunchGamePCLauncherExe\": {\"type\": \"input\", \"label\": \"$option.LaunchGamePCLauncherExe.label\", \"inputs\": [{\"name\": \"LauncherExe\", \"label\": \"$option.LaunchGamePCLauncherExe.LauncherExe.label\", \"default\": \"\", \"pipeline_type\": \"string\", \"verify\": \"^\\\"?.+[\\\\\\\\/][Ll]auncher\\\\.exe\\\"?$\", \"pattern_msg\": \"$option.LaunchGamePCLauncherExe.LauncherExe.pattern_msg\"}]}}}"
+    }
+  ],
+  "tasks": {
+    "chosen/launch": {
+      "enabled": true,
+      "role": "technical",
+      "detection": "supported"
+    },
+    "chosen/daily": {
+      "enabled": true
+    }
+  },
+  "configChecks": [
+    {
+      "ruleId": "mxu.launch_owner",
+      "evaluation": "satisfied",
+      "executionEffect": "none"
+    }
+  ],
+  "batches": [],
+  "results": {},
+  "source": {
+    "type": "source_derived_control_flow",
+    "upstreamCommit": "39a22f9176a2484c38c10d256b8f595d4370f6a9",
+    "note": "Synthetic MXU pretask configuration and launcher selections; no program executed."
+  }
+}

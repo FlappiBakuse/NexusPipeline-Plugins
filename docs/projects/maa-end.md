@@ -16,13 +16,13 @@ MXU stdout 中当前任务的开始与完成/失败必须在同一来源和 epoc
 
 ## 上游核对记录与兼容窗口
 
-核对日期：2026-10-14（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/MaaEnd/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
+核对日期：2026-10-17（Asia/Shanghai）。插件当前版本以[源码 manifest](../../plugins/specialized/MaaEnd/plugin.json)为准；协议 `0.3.0`，最低 Host `0.17.4`。插件版本与下表上游版本独立。
 
 | 核对时最新及前两次稳定发行 | 源码 SHA |
 | --- | --- |
+| [v2.33.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.33.0) | `39a22f9176a2484c38c10d256b8f595d4370f6a9` |
 | [v2.32.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.32.0) | `5501b27f3b3f552e8897a8839521dd36caf617a9` |
 | [v2.31.0](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.31.0) | `f6e3b5f8b27a8f84391bb73d85a296dabaddfb5d` |
-| [v2.30.1](https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.1) | `6e8f43c8fa9348b5e375358c6232cb40fc6e0e5a` |
 
 资产 URL、大小和发布方摘要见 [上游窗口](../../adapters/task-protocol/upstream-window.json)。
 
@@ -104,13 +104,16 @@ v2.31.0 新增 DecomposeWeaponEssence、SharedZiplineDelete 两个任务文件�
 
 ## 启动责任检查
 
-PC 模式下，项目游戏联动配置了有效启动目标、游戏窗口已就绪，或当前自动执行实例的首项 `preActions`（旧配置读取 `preAction`）已启用、路径非空且 `waitForExit=false`，可以确认启动已安排。前置程序在连接窗口前执行；普通 `__MXU_LAUNCH__` 自定义程序任务在连接后执行，不能替代前置程序。窗口未就绪且未配置前述方式时阻断；窗口状态未知时提示核对。检查不证明启动器或窗口实际成功。原生特殊任务显示 MXU 对应的双语名称及自定义昵称，原生日志名称独立匹配，七种特殊任务均归为技术任务，不增加业务分母。
+PC 模式声明 `self-managed-pc-launch`：宿主禁用直接启动游戏，保留用户已保存的游戏参数；模拟器模式沿用现役能力。MaaEnd v2.33.0 的 `__MXU_PRETASK__LaunchGamePC` 在连接控制器前运行 `agent/go-service --pretask LaunchGamePC`，通过启动器进入游戏。检查读取唯一自动执行实例的启用状态、实际控制器兼容性、预任务定义与启动选项。自动模式由上游按区服查找启动器；手动模式必须填写 `Launcher.exe`。过期或类型变化的选择按 MXU 当前选项默认值解释。
+
+游戏已就绪时允许继续；否则缺少、禁用或不兼容的启动预任务，以及空白或指向游戏主程序的手动启动器路径会阻断。旧 `preActions`、普通 `__MXU_LAUNCH__` 任务和宿主保存的游戏路径不能替代此预任务。旧版本配置与任务发现仍保留，但新版游戏的自动启动需要升级上游并配置启动预任务。检查只确认启动安排，不证明自动查找、文件存在或实际启动成功。
+
+公开 pretask 声明作为准备步骤发现，保留名称、控制器限制、选项与重试选择，不计入业务任务分母，也不要求普通 Tasker 的业务完成日志。真实游戏启动仍由上游执行，不由配置检查执行。
 
 ## 配置修复
 
-- 游戏路径：当前自动执行实例的首项 `preActions.program`。
 - 完成动作：关闭当前实例所有 `__MXU_POWER__` 并关闭其控制器启用缓存。
-- 启动设置：缺少前置程序时建立首项 `preActions`；启用并关闭等待退出，路径使用项目游戏路径，保留参数、后续前置程序和原任务。旧 `preAction` 内容保留，并在当前实例生成原生优先读取的数组覆盖。
+- 启动器设置由用户在 MaaEnd 中配置；不把项目游戏路径写入前置程序或启动器路径，不自动修改已有启动配置。
 
 修复事务及账号保护见[配置编辑](../author/config-editor.md)，跨项目字段索引见[覆盖表](../frameworks/completion-actions.md)。
 

@@ -18,6 +18,7 @@ function discover() {
   requireValue(pi.name === ADAPTER.project &&
     (Array.isArray(pi.task) || (pi.task === undefined && Array.isArray(pi.import) && pi.import.length > 0)));
   const definitions = Array.isArray(pi.task) ? pi.task.slice() : [];
+  const pretasks = Array.isArray(pi.pretask) ? pi.pretask.slice() : object(pi.pretask) ? [pi.pretask] : [];
   let options = object(pi.option) ? { ...pi.option } : {};
   for (const path of pi.import || []) {
     const declaredTasks = ADAPTER.importTasks[path];
@@ -26,6 +27,8 @@ function discover() {
     if (!id) { plan.diagnostics.push({code:'mxu.unknown_import',message:'Unrecognized interface import: '+path}); continue; }
     try {
       const imported = resource(id);
+      if (Array.isArray(imported.pretask)) pretasks.push(...imported.pretask);
+      else if (object(imported.pretask)) pretasks.push(imported.pretask);
       if (Array.isArray(imported.task)) definitions.push(...imported.task);
       if (object(imported.option)) options = { ...options, ...imported.option };
     }
@@ -34,6 +37,9 @@ function discover() {
       plan.diagnostics.push({code:'mxu.unavailable_import',message:'Interface import is unavailable: '+path});
     }
   }
+  for (const pretask of pretasks)
+    if (typeof pretask.exec === 'string' && pretask.exec.trim())
+      definitions.push({ ...pretask, name: '__MXU_PRETASK__' + (pretask.name || pretask.exec), entry: 'MXU_PRETASK' });
   const language = d.settings.language === "system" ? (input.locale || "zh-CN") : d.settings.language;
   let translations = {};
   if (ADAPTER.locales[language]) {
@@ -65,7 +71,7 @@ function discover() {
     behavior(plan, { id: config.id, document: task }, ['optionValues'], selector.slice(0, -1));
     // Startup uses enabled; a persisted controller cache makes selective retry unsafe to patch.
     const cached = task.enabledByController?.[controller];
-    const technical = ADAPTER.technical.includes(task.taskName);
+    const technical = ADAPTER.technical.includes(task.taskName) || def?.entry === 'MXU_PRETASK';
     const safe = ADAPTER.safe.includes(task.taskName) && (!object(task.enabledByController) || cached === undefined);
     const created = addTask(plan, config.id, instance.id + '/' + task.id, name, enabled, selector,
       safe ? 'safe' : 'unknown', def ? 'supported' : 'unsupported',

@@ -162,6 +162,78 @@
       "qualification": "SOURCE_REVIEW_AND_SYNTHETIC_CONTRACTS",
       "releases": [
         {
+          "tag": "v2.33.0",
+          "commit": "39a22f9176a2484c38c10d256b8f595d4370f6a9",
+          "prerelease": false,
+          "publishedAt": "2026-10-16T14:41:19Z",
+          "url": "https://github.com/MaaEnd/MaaEnd/releases/tag/v2.33.0",
+          "assets": [
+            {
+              "id": 647661256,
+              "name": "MaaEnd-android-arm64-v8a-v2.33.0.apk",
+              "size": 288534543,
+              "digest": "sha256:22250d0652f6fa8fd8112fff584742db247de8fda4d5ca05300b805a70070978",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-android-arm64-v8a-v2.33.0.apk"
+            },
+            {
+              "id": 647661252,
+              "name": "MaaEnd-android-universal-v2.33.0.apk",
+              "size": 317965706,
+              "digest": "sha256:ddc3643c344c76ea11ad7c73766e1b64d7d46824d622f9acb37259d50b8bdd2b",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-android-universal-v2.33.0.apk"
+            },
+            {
+              "id": 647661257,
+              "name": "MaaEnd-android-x86_64-v2.33.0.apk",
+              "size": 293247962,
+              "digest": "sha256:c98c8da2adc5f0e5f4e7f3e344e54496d8eb2d55592ac35d9d2c85911ab40287",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-android-x86_64-v2.33.0.apk"
+            },
+            {
+              "id": 647661254,
+              "name": "MaaEnd-linux-aarch64-v2.33.0.tar.gz",
+              "size": 298613809,
+              "digest": "sha256:4826a9c555dcf170f939b80803c5ff2a94c74006a147ab61859577068fd1498d",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-linux-aarch64-v2.33.0.tar.gz"
+            },
+            {
+              "id": 647661262,
+              "name": "MaaEnd-linux-x86_64-v2.33.0.tar.gz",
+              "size": 438975609,
+              "digest": "sha256:e99cabeada90482bf00831e2445114c3e1704e40e585a89fa9f12b6f0d6ad0ec",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-linux-x86_64-v2.33.0.tar.gz"
+            },
+            {
+              "id": 647661260,
+              "name": "MaaEnd-macos-aarch64-v2.33.0.dmg",
+              "size": 293884974,
+              "digest": "sha256:294c8baf299afff8fc1097b3bba10b87053c80bb01df714dd1b4d5e78454741d",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-macos-aarch64-v2.33.0.dmg"
+            },
+            {
+              "id": 647661255,
+              "name": "MaaEnd-macos-x86_64-v2.33.0.dmg",
+              "size": 300042717,
+              "digest": "sha256:4a513d2a706754751b147258ea7d480a77932d95a29a9565fcf160b502e94782",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-macos-x86_64-v2.33.0.dmg"
+            },
+            {
+              "id": 647661253,
+              "name": "MaaEnd-win-aarch64-v2.33.0.zip",
+              "size": 311204780,
+              "digest": "sha256:8279a5feab70596643b0f6e3b242a3a42c12e76be84971e919318f8ea23bbdc4",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-win-aarch64-v2.33.0.zip"
+            },
+            {
+              "id": 647661259,
+              "name": "MaaEnd-win-x86_64-v2.33.0.zip",
+              "size": 313697097,
+              "digest": "sha256:951dde70897d86b166400ef9dc40ddad078f5255fc85ead8808d874d9b59ca31",
+              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.33.0/MaaEnd-win-x86_64-v2.33.0.zip"
+            }
+          ]
+        },
+        {
           "tag": "v2.32.0",
           "commit": "5501b27f3b3f552e8897a8839521dd36caf617a9",
           "prerelease": false,
@@ -302,57 +374,6 @@
               "size": 309291269,
               "digest": "sha256:a371dd33eacf8195ad683201e11314c6ad854b41c8dac81f545f6fc3d19d2bf0",
               "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.31.0/MaaEnd-win-x86_64-v2.31.0.zip"
-            }
-          ]
-        },
-        {
-          "tag": "v2.30.1",
-          "commit": "6e8f43c8fa9348b5e375358c6232cb40fc6e0e5a",
-          "prerelease": false,
-          "publishedAt": "2026-09-26T06:47:26Z",
-          "url": "https://github.com/MaaEnd/MaaEnd/releases/tag/v2.30.1",
-          "assets": [
-            {
-              "id": 590129785,
-              "name": "MaaEnd-linux-aarch64-v2.30.1.tar.gz",
-              "size": 298114493,
-              "digest": "sha256:7f7265f83d1ac36b873f029979442eb3a128d247a3ee0f49b87c5d0705d791ff",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-linux-aarch64-v2.30.1.tar.gz"
-            },
-            {
-              "id": 590129781,
-              "name": "MaaEnd-linux-x86_64-v2.30.1.tar.gz",
-              "size": 436692062,
-              "digest": "sha256:ead69f887a0abe26b2b2107330d12dbdd365965f1d7e1e1f8f651f60a48d0da0",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-linux-x86_64-v2.30.1.tar.gz"
-            },
-            {
-              "id": 590129787,
-              "name": "MaaEnd-macos-aarch64-v2.30.1.dmg",
-              "size": 296540727,
-              "digest": "sha256:73d1cd0fab6110d39a3364c7e0ad43778ebcc80896653b436d7760a1c4a9b8a7",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-macos-aarch64-v2.30.1.dmg"
-            },
-            {
-              "id": 590129783,
-              "name": "MaaEnd-macos-x86_64-v2.30.1.dmg",
-              "size": 302131150,
-              "digest": "sha256:81de3a2435423bb3e1cd1ac8fa332ed8ce0c9bd7092152f8adeffb1dd0a39d50",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-macos-x86_64-v2.30.1.dmg"
-            },
-            {
-              "id": 590129780,
-              "name": "MaaEnd-win-aarch64-v2.30.1.zip",
-              "size": 302853296,
-              "digest": "sha256:74650d66ad8c938447331241584dc903d0129424f2d067f494c8596e2bff34d3",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-win-aarch64-v2.30.1.zip"
-            },
-            {
-              "id": 590129779,
-              "name": "MaaEnd-win-x86_64-v2.30.1.zip",
-              "size": 306828575,
-              "digest": "sha256:919aed5b9774e3bb237f3d58ee230a19a8f21699d636788d8df5fa73e1b77993",
-              "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.30.1/MaaEnd-win-x86_64-v2.30.1.zip"
             }
           ]
         }

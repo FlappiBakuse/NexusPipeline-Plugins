@@ -63,7 +63,7 @@
   "task.WeaponUpgrade.label": "🔫升级武器",
   "task.WebEvent202605.label": "🎁自动共贺庆典网页活动",
   "task.ZiplineImport.label": "🚡导入/更新滑索坐标",
-  "diagnostic.mxu.launch_owner": "请将首项前置程序设置为游戏启动器并关闭等待退出，或在项目游戏联动中启用启动游戏；普通自定义程序任务在连接窗口后执行。",
+  "diagnostic.mxu.launch_owner": "请在 MaaEnd 当前自动执行实例中启用“启动游戏”前置任务，选择正确区服及自动查找或手动填写 Launcher.exe；宿主不会直接启动游戏。",
   "option.summary.DailyRewards": "日常奖励领取选项：{enabled} 项开启、{disabled} 项关闭、{unknown} 项待确认，仅随整项任务判断完成。",
   "task.AccountSwitch.label.custom_name": "🔑自动切换账号（“{nickname}”）",
   "task.AeroSalvage.label.custom_name": "🎈浮空回收（“{nickname}”）",
@@ -121,5 +121,7 @@
   "task.special.notify.custom_name": "💬 系统通知（“{nickname}”）",
   "task.special.webhook.custom_name": "🔔 Webhook（“{nickname}”）",
   "task.special.killProc.custom_name": "⛔ 结束进程（“{nickname}”）",
-  "task.special.power.custom_name": "⚡ 电脑操作（“{nickname}”）"
+  "task.special.power.custom_name": "⚡ 电脑操作（“{nickname}”）",
+  "task.mxu.LaunchGamePC": "启动游戏",
+  "task.mxu.LaunchGamePC.custom_name": "启动游戏（“{nickname}”）"
 }

@@ -63,7 +63,7 @@
   "task.WeaponUpgrade.label": "🔫Weapon Upgrade",
   "task.WebEvent202605.label": "🎁 Auto Celebration Web Event",
   "task.ZiplineImport.label": "🚡 Import / Update Zipline Coordinates",
-  "diagnostic.mxu.launch_owner": "Set the first pre-launch program to the game launcher and disable waiting for exit, or enable game launch in the project. Custom Program tasks run after window connection.",
+  "diagnostic.mxu.launch_owner": "Enable the Launch game pre-task in the MaaEnd automatic-run instance, select the correct region and automatic launcher discovery or a manual Launcher.exe path. The host does not launch the game directly.",
   "option.summary.DailyRewards": "Daily reward options: {enabled} enabled, {disabled} disabled, {unknown} unconfirmed; completion is assessed for the whole task.",
   "task.AccountSwitch.label.custom_name": "🔑 Auto Account Switch (“{nickname}”)",
   "task.AeroSalvage.label.custom_name": "🎈Aerial Salvage (“{nickname}”)",
@@ -121,5 +121,7 @@
   "task.special.notify.custom_name": "💬 System Notification (“{nickname}”)",
   "task.special.webhook.custom_name": "🔔 Webhook (“{nickname}”)",
   "task.special.killProc.custom_name": "⛔ Kill Process (“{nickname}”)",
-  "task.special.power.custom_name": "⚡ Power Action (“{nickname}”)"
+  "task.special.power.custom_name": "⚡ Power Action (“{nickname}”)",
+  "task.mxu.LaunchGamePC": "Launch game",
+  "task.mxu.LaunchGamePC.custom_name": "Launch game (“{nickname}”)"
 }

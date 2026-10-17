@@ -249,7 +249,19 @@
         "maaend-unpaired-terminal",
         "maaend-launch-unowned-missing",
         "maaend-unrelated-import-not-required",
-        "recognition-maaend-unknown-selection"
+        "recognition-maaend-unknown-selection",
+        "maaend-pretask-auto",
+        "maaend-pretask-manual",
+        "maaend-pretask-manual-empty",
+        "maaend-pretask-manual-game-exe",
+        "maaend-pretask-disabled",
+        "maaend-pretask-controller-mismatch",
+        "maaend-pretask-missing-definition",
+        "maaend-pretask-already-running",
+        "maaend-pretask-host-forbidden",
+        "maaend-pretask-android",
+        "maaend-pretask-defaults",
+        "maaend-pretask-retry-preserves"
       ],
       "realScenario": "P-S-MaaEnd"
     },
