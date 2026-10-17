@@ -72,7 +72,9 @@
     "tasks/setting/Zipline.json": "interface-part-66",
     "tasks/DecomposeWeaponEssence.json": "interface-part-67",
     "tasks/SharedZiplineDelete.json": "interface-part-68",
-    "tasks/AutoEssence/Location/ChooseLocation.json": "interface-part-69"
+    "tasks/AutoEssence/Location/ChooseLocation.json": "interface-part-69",
+    "tasks/pretasks/LaunchGamePC.json": "interface-part-70",
+    "tasks/LaunchGameLinux.json": "interface-part-71"
   },
   "locales": {
     "zh-CN": "locale-zh-CN",
@@ -100,7 +102,8 @@
     "__MXU_WAITUNTIL__",
     "__MXU_NOTIFY__",
     "__MXU_WEBHOOK__",
-    "__MXU_KILLPROC__"
+    "__MXU_KILLPROC__",
+    "LaunchGameLinux"
   ],
   "safe": [],
   "importTasks": {
@@ -269,7 +272,13 @@
     "tasks/SharedZiplineDelete.json": [
       "SharedZiplineDelete"
     ],
-    "tasks/AutoEssence/Location/ChooseLocation.json": []
+    "tasks/AutoEssence/Location/ChooseLocation.json": [],
+    "tasks/pretasks/LaunchGamePC.json": [
+      "__MXU_PRETASK__LaunchGamePC"
+    ],
+    "tasks/LaunchGameLinux.json": [
+      "LaunchGameLinux"
+    ]
   },
   "protocolVersion": "0.3.0",
   "dailyPolicy": {
@@ -308,7 +317,7 @@
       "criticality": "critical_when_applicable",
       "kind": "mxu_launch_owner",
       "resourceId": "config:mxu-MaaEnd.json",
-      "fallback": "请将首项前置程序设置为游戏启动器并关闭等待退出，或在项目游戏联动中启用启动游戏；普通自定义程序任务在连接窗口后执行。",
+      "fallback": "请在 MaaEnd 当前自动执行实例中启用“启动游戏”前置任务，选择正确区服及自动查找或手动填写 Launcher.exe；宿主不会直接启动游戏。",
       "location": {
         "source": "config",
         "resourceId": "config:mxu-MaaEnd.json",
@@ -429,7 +438,8 @@
     "__MXU_NOTIFY__": "task.special.notify",
     "__MXU_WEBHOOK__": "task.special.webhook",
     "__MXU_KILLPROC__": "task.special.killProc",
-    "__MXU_POWER__": "task.special.power"
+    "__MXU_POWER__": "task.special.power",
+    "__MXU_PRETASK__LaunchGamePC": "task.mxu.LaunchGamePC"
   },
   "reasonTexts": {
     "mxu.task.running": "外层任务已开始",

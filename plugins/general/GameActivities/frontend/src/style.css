@@ -20,7 +20,8 @@
 .ga-empty-settings { position: absolute !important; right: 10px; top: 10px; }
 .ga-viewport { overflow: hidden; border-radius: inherit; isolation: isolate; }
 .ga-track { display: flex; transition: transform .45s cubic-bezier(.22, .68, 0, 1); will-change: transform; }
-.ga-slide { position: relative; flex: 0 0 100%; min-width: 0; aspect-ratio: 2.7; min-height: 300px; color: #fff; overflow: hidden; }
+.ga-slide { position: relative; flex: 0 0 100%; min-width: 0; aspect-ratio: 2.7; min-height: 300px; color: #fff; overflow: hidden; transition: aspect-ratio .45s cubic-bezier(.22, .68, 0, 1); }
+.ga-carousel-expanded .ga-slide { aspect-ratio: 16 / 9; }
 .ga-cover, .ga-cover-fallback, .ga-shade { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ga-cover { object-fit: cover; object-position: center; }
 .ga-cover-fallback { display: grid; place-items: center; background: radial-gradient(ellipse at 75% 20%, #536b88 0%, #283c54 38%, #111c2d 100%); }
@@ -94,9 +95,10 @@
 nxp-button.ga-page-button.ga-previous { left: 12px; }
 nxp-button.ga-page-button.ga-next { right: 12px; }
 .ga-carousel-controls { position: absolute; z-index: 3; bottom: 8px; left: 50%; transform: translateX(-50%); }
-.ga-indicators { display: flex; justify-content: center; gap: 4px; }
-.game-activities .ga-indicators nxp-button { display: inline-flex; width: clamp(24px, 3vw, 34px); height: 32px; --nx-button-width: 100%; --nx-button-min-height: 32px; --nx-button-padding: 0 2px; --nx-button-radius: 3px; --nx-button-border-color: transparent; --nx-button-background: transparent; --nx-button-hover-background: transparent; }
-.ga-indicator-bar { display: block; width: 100%; height: 3px; border-radius: 2px; background: #fff6; transition: background .2s, transform .2s; }
+.ga-indicators { display: flex; justify-content: center; gap: 0; }
+.game-activities .ga-indicators nxp-button { display: inline-flex; width: 40px; height: 40px; --nx-button-width: 100%; --nx-button-min-height: 40px; --nx-button-padding: 0 2px; --nx-button-radius: 3px; --nx-button-border-color: transparent; --nx-button-background: transparent; --nx-button-hover-background: transparent; }
+/* An empty glyph has no intrinsic width inside the public button's text slot. */
+.ga-indicator-bar { display: block; width: 32px; height: 3px; border-radius: 2px; background: #ffffff80; transition: background .2s, transform .2s; }
 .ga-indicators nxp-button.ga-current .ga-indicator-bar { background: #fff; transform: scaleY(1.3); }
 .ga-indicators nxp-button:hover .ga-indicator-bar { background: #fffc; }
 
@@ -183,12 +185,11 @@ nxp-button.ga-page-button.ga-next { right: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ga-track { transition: none; }
+  .ga-track, .ga-slide { transition: none; }
 }
 
 .ga-tools nxp-icon-button { color: white; --icon-button-size: 42px; }
 .ga-tools nxp-icon { width: 20px; height: 20px; }
-.ga-refresh-status { color: white; font-size: 12px; text-shadow: 0 1px 3px #000; }
 .ga-event-card { display: grid; grid-template-columns: minmax(0,3fr) minmax(140px,2fr); min-width:0; overflow:hidden; background:var(--content-card-soft); color:var(--text); text-decoration:none; padding:0; }
 .ga-event-copy { min-width:0; padding:20px; }
 .ga-event-copy h4 { margin:0 0 8px; line-height:1.5; overflow-wrap:anywhere; }

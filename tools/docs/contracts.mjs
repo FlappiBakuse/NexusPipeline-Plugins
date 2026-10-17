@@ -18,15 +18,14 @@ export function checkContracts(root) {
     const lock = JSON.parse(read("contracts/host-compatibility.json"));
     if (![lock.hostApiVersion, lock.frontendApiVersion].every(value => /^\d+\.\d+$/.test(value)))
       throw new Error("Cannot extract contracts/host-compatibility.json API facts");
-    const file = "docs/author/FRONTEND_PLUGIN.md", text = read(file);
+    const file = "docs/author/frontend-plugin.md", text = read(file);
     for (const [expression, expected] of [
-      [/^# Frontend API ([\d.]+) 插件指南$/gm, lock.frontendApiVersion],
-      [/当前 Plugin API 精确为 ([\d.]+)/g, lock.hostApiVersion],
-      [/Frontend API 只接受精确版本 `([\d.]+)`/g, lock.frontendApiVersion],
+      [/^\| plugin-api \| ([\d.]+) \|$/gm, lock.hostApiVersion],
+      [/^\| frontend-api \| ([\d.]+) \|$/gm, lock.frontendApiVersion],
     ]) {
       const matches = [...text.matchAll(expression)];
       results.push(matches.length !== 1
-        ? { rule: "GOV-DOC-01", status: "REVIEW", file, expected, reason: "Designated current claim is ambiguous/missing; inspect its wording" }
+        ? { rule: "GOV-DOC-01", status: "REVIEW", file, expected, reason: "Designated contract row is ambiguous/missing" }
         : { rule: "GOV-DOC-01", status: matches[0][1] === expected ? "PASS" : "FAIL", file,
           line: text.slice(0, matches[0].index).split("\n").length, actual: matches[0][1], expected });
     }

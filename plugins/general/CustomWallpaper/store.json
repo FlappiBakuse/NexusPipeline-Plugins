@@ -15,6 +15,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.3.3",
+      "date": "2026-10-17",
+      "items": [
+        "上传取消或存储失败时保留原始错误，按精确清理记录回收本次新建资产，并在重启后重试未完成清理。",
+        "删除壁纸后继续完成资产清理，始终保留仍被已保存配置引用的图片。"
+      ]
+    },
+    {
       "version": "0.3.2",
       "date": "2026-10-11",
       "items": [
@@ -26,14 +34,6 @@
       "date": "2026-10-05",
       "items": [
         "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
-      ]
-    },
-    {
-      "version": "0.3.0",
-      "date": "2026-10-04",
-      "items": [
-        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。",
-        "旧外观数据保持原位，新实例使用当前插件资源重新配置。"
       ]
     }
   ],
@@ -49,6 +49,14 @@
       ],
       "changelog": [
         {
+          "version": "0.3.3",
+          "date": "2026-10-17",
+          "items": [
+            "Preserve the original upload error and recover newly owned assets after cancellation or storage failure; retry pending cleanup after restart.",
+            "Finish pending asset deletion while protecting images still referenced by saved configuration."
+          ]
+        },
+        {
           "version": "0.3.2",
           "date": "2026-10-11",
           "items": [
@@ -60,14 +68,6 @@
           "date": "2026-10-05",
           "items": [
             "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
-          ]
-        },
-        {
-          "version": "0.3.0",
-          "date": "2026-10-04",
-          "items": [
-            "Targets .NET 10 and Plugin API 2.0 with SDK 2.0.0; requires Host 0.16.15.",
-            "Leaves old appearance data untouched; configure current plugin resources in the new instance."
           ]
         }
       ]

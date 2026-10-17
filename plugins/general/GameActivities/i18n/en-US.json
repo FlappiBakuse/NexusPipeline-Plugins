@@ -2,7 +2,7 @@
   "card.title": "Game activities",
   "card.description": "View SRA version information and activities",
   "settings.title": "Activity settings",
-  "settings.help": "Enable games, then drag their handles to set the carousel order, or focus a handle and use the up/down arrow keys. Changes apply after saving. Display language does not change progression.",
+  "settings.help": "Reorder any game with its drag handle, including unsubscribed games, or focus the handle and use the arrow keys. Changes apply after saving; display language does not change progression.",
   "settings.progression": "Progression",
   "settings.games": "Game subscriptions",
   "settings.drag": "Reorder: {game}",
@@ -13,7 +13,6 @@
   "settings.intervalHelp": "Enter 10–120 seconds, or -1 to disable automatic slides.",
   "settings.intervalInvalid": "Enter an integer from 10 to 120, or -1.",
   "settings.refreshHelp": "Refresh saved subscriptions without saving this draft.",
-  "state.loading": "Loading",
   "state.select": "Select games to subscribe.",
   "state.overview": "Current activities",
   "state.empty": "No valid snapshot. Refresh or try later.",
@@ -66,11 +65,11 @@
   "progression.jp": "Japan server",
   "progression.global": "Global server",
   "details.summaryMissing": "No activity description",
-  "refreshResult.succeeded": "Checked; {changedFeedCount} feeds updated",
-  "refreshResult.partial": "Partially failed; previous data retained",
-  "refreshResult.failed": "Refresh failed; previous data retained",
-  "refreshResult.cancelled": "Cancelled",
   "source.sra": "Data source: SRA",
   "sra.cached": "Showing the last successfully retrieved data.",
-  "state.unavailable": "Activity information is unavailable. Please refresh to try again."
+  "state.unavailable": "Activity information is unavailable. Please refresh to try again.",
+  "carousel.expand": "Expand card",
+  "carousel.collapse": "Shrink card",
+  "refreshResult.partial": "Partially failed; previous data retained",
+  "refreshResult.failed": "Refresh failed; previous data retained"
 }

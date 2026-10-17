@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/MaaEnd",
   "changelog": [
     {
+      "version": "0.4.5",
+      "date": "2026-10-16",
+      "items": [
+        "更新随包使用说明的文档链接，指向规范化后的项目与框架指南。"
+      ]
+    },
+    {
       "version": "0.4.4",
       "date": "2026-10-14",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-10-13",
       "items": [
         "修复 MaaEnd v2.32.0 新增选项导入导致已选任务配置无法读取的问题。"
-      ]
-    },
-    {
-      "version": "0.4.2",
-      "date": "2026-10-11",
-      "items": [
-        "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
       ]
     }
   ],
@@ -48,6 +48,13 @@
       ],
       "changelog": [
         {
+          "version": "0.4.5",
+          "date": "2026-10-16",
+          "items": [
+            "Update bundled documentation links to the canonical project and framework guides."
+          ]
+        },
+        {
           "version": "0.4.4",
           "date": "2026-10-14",
           "items": [
@@ -59,13 +66,6 @@
           "date": "2026-10-13",
           "items": [
             "Fix selected-task configuration discovery with the option-only import introduced in MaaEnd v2.32.0."
-          ]
-        },
-        {
-          "version": "0.4.2",
-          "date": "2026-10-11",
-          "items": [
-            "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
           ]
         }
       ]

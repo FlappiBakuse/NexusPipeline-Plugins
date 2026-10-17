@@ -1,6 +1,6 @@
 # MaaFramework 框架直驱
 
-读取本地 MaaFramework PI v2 项目及已保存配置，在 NexusPipeline 中运行任务。当前版本 0.2.3，需要兼容的 NexusPipeline 0.17.3，运行环境为 Windows 11 x64。
+读取本地 MaaFramework PI v2 项目及已保存配置，在 NexusPipeline 中运行任务。当前版本 0.2.4，需要兼容的 NexusPipeline 0.17.3，运行环境为 Windows 11 x64。
 
 ## 开始使用
 
@@ -23,6 +23,6 @@ Maa 不提供自定义判断入口。历史显示框架任务结果及每次尝�
 
 Agent 和 pretask 执行项目代码，请使用可信项目。真实项目 Agent、游戏任务和奖励需独立验收；受控窗口测试不代表游戏资格。
 
-[详细配置、限制与验证](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/main/docs/frameworks/MAAFRAMEWORK_DRIVER.md)。
+[详细配置、限制与验证](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/main/docs/frameworks/maa-framework-driver.md)。
 
 MFA 配置中未启用启动动作及断线启动重试的 `SoftwarePath` 可原样保留，不据此启动游戏；启用的 GUI 启动或重试动作仍明确阻断，需使用已审查的 Host 启动设置。

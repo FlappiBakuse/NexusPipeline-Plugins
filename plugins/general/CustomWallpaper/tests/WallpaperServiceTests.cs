@@ -8,6 +8,112 @@ namespace NexusPipeline.Plugin.CustomWallpaper.Tests;
 
 public sealed class WallpaperServiceTests
 {
+    [Fact]
+    public async Task AssetCleanupProtectsExistingContentAndRecoversFailedDeletion()
+    {
+        foreach (string raw in new[] { "{}", "{\"schemaVersion\":1}", "{\"assetIds\":[]}",
+            "{\"schemaVersion\":1,\"assetIds\":[],\"futureState\":\"preserve\"}" })
+        {
+            var isolated = new FakePluginHostContext("custom-wallpaper");
+            await isolated.ScopedData.WriteJsonAsync("asset-cleanup", JsonNode.Parse(raw)!.AsObject());
+            string before = (await isolated.ScopedData.ReadJsonAsync("asset-cleanup"))!.ToJsonString();
+            var blocked = CreateService(isolated, () => DateTimeOffset.UtcNow);
+            var error = await Assert.ThrowsAsync<WallpaperException>(() => blocked.InitializeAsync());
+            Assert.Equal("unsupported_cleanup_state", error.Code);
+            Assert.Equal(before, (await isolated.ScopedData.ReadJsonAsync("asset-cleanup"))!.ToJsonString());
+            Assert.Empty(await isolated.Assets.ListAsync(WallpaperService.AssetScope));
+            Assert.Null(await isolated.Config.ReadAsync<JsonObject>());
+        }
+        var context = new FakePluginHostContext("custom-wallpaper");
+        using var cancellation = new CancellationTokenSource();
+        var config = new FailingConfig(context.Config, cancellation, false);
+        var assets = new FailingAssets(context.Assets);
+        var service = new WallpaperService(config, context.ScopedData, assets, context.Logger, () => DateTimeOffset.UtcNow);
+        byte[] existing = PngBytes(9);
+        var retained = await context.Assets.WriteAsync(WallpaperService.AssetScope, "png", new MemoryStream(existing));
+        await Assert.ThrowsAsync<IOException>(() => UploadAsync(service, existing));
+        Assert.NotNull(await context.Assets.OpenAsync(WallpaperService.AssetScope, retained.Id));
+        config.Fail = false;
+        string deleting = await UploadIdAsync(service, PngBytes(7));
+        assets.FailDelete = true;
+        await Assert.ThrowsAsync<IOException>(() => service.DeleteAsync(deleting));
+        Assert.Empty((await service.GetStateAsync())["assets"]!.AsArray());
+        assets.FailDelete = false;
+        await service.DeleteAsync(deleting);
+        string afterRestart = await UploadIdAsync(service, PngBytes(8));
+        assets.FailDelete = true;
+        await Assert.ThrowsAsync<IOException>(() => service.DeleteAsync(afterRestart));
+        assets.FailDelete = false;
+        await new WallpaperService(config, context.ScopedData, assets, context.Logger).InitializeAsync();
+        Assert.Equal(retained.Id, Assert.Single(await context.Assets.ListAsync(WallpaperService.AssetScope)).Id);
+    }
+
+    [Fact]
+    public async Task ReportedConfigFailureCannotDeleteAnAssetThatWasDurablyCommitted()
+    {
+        var context = new FakePluginHostContext("custom-wallpaper");
+        using var cancellation = new CancellationTokenSource();
+        var config = new FailingConfig(context.Config, cancellation, false) { CommitThenFail = true };
+        var service = new WallpaperService(config, context.ScopedData, context.Assets, context.Logger);
+        var error = await Assert.ThrowsAsync<IOException>(() => UploadAsync(service, PngBytes()));
+        Assert.Same(config.Failure, error);
+        Assert.Single(await context.Assets.ListAsync(WallpaperService.AssetScope));
+        Assert.Single((await service.GetStateAsync())["assets"]!.AsArray());
+        config.Fail = false;
+        await service.InitializeAsync();
+        Assert.Single(await context.Assets.ListAsync(WallpaperService.AssetScope));
+    }
+
+    [Fact]
+    public async Task UploadFailurePreservesOriginalErrorAndRetriesOwnedCleanupAfterCancellationOrDeleteFailure()
+    {
+        foreach (bool cancelled in new[] { true, false })
+        {
+            var context = new FakePluginHostContext("custom-wallpaper");
+            using var cancellation = new CancellationTokenSource();
+            var config = new FailingConfig(context.Config, cancellation, cancelled);
+            var assets = new FailingAssets(context.Assets) { FailDelete = !cancelled };
+            var service = new WallpaperService(config, context.ScopedData, assets, context.Logger, () => DateTimeOffset.UtcNow);
+            byte[] bytes = PngBytes();
+            var error = await Assert.ThrowsAsync<IOException>(() => service.UploadAsync(new MemoryStream(bytes), "image/png", "fixture.png", bytes.Length, cancellation.Token));
+            Assert.Same(config.Failure, error);
+            if (cancelled) Assert.Empty(await context.Assets.ListAsync(WallpaperService.AssetScope));
+            config.Fail = false;
+            assets.FailDelete = false;
+            var restarted = new WallpaperService(config, context.ScopedData, assets, context.Logger, () => DateTimeOffset.UtcNow);
+            await restarted.InitializeAsync();
+            Assert.Empty(await context.Assets.ListAsync(WallpaperService.AssetScope));
+            Assert.Empty((await restarted.GetStateAsync())["assets"]!.AsArray());
+        }
+    }
+
+    private sealed class FailingConfig(IPluginConfigStore inner, CancellationTokenSource cancellation, bool cancel) : IPluginConfigStore
+    {
+        internal IOException Failure { get; } = new("injected config failure");
+        internal bool Fail { get; set; } = true;
+        internal bool CommitThenFail { get; set; }
+        public ValueTask<T?> ReadAsync<T>(CancellationToken token = default) => inner.ReadAsync<T>(token);
+        public async ValueTask WriteAsync<T>(T value, CancellationToken token = default)
+        {
+            if (Fail)
+            {
+                if (CommitThenFail) await inner.WriteAsync(value, token);
+                if (cancel) cancellation.Cancel();
+                throw Failure;
+            }
+            await inner.WriteAsync(value, token);
+        }
+    }
+
+    private sealed class FailingAssets(IPluginAssetStore inner) : IPluginAssetStore
+    {
+        internal bool FailDelete { get; set; }
+        public ValueTask<PluginAssetInfo> WriteAsync(string scope, string extension, Stream content, CancellationToken token = default) => inner.WriteAsync(scope, extension, content, token);
+        public ValueTask<PluginAssetContent?> OpenAsync(string scope, string id, CancellationToken token = default) => inner.OpenAsync(scope, id, token);
+        public ValueTask<IReadOnlyList<PluginAssetInfo>> ListAsync(string scope, CancellationToken token = default) => inner.ListAsync(scope, token);
+        public ValueTask<bool> DeleteAsync(string scope, string id, CancellationToken token = default) => FailDelete ? throw new IOException("injected cleanup failure") : inner.DeleteAsync(scope, id, token);
+    }
+
     private static byte[] PngBytes(byte seed = 0) =>
         new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, seed, 0x01, 0x02, 0x03, 0x04 };
 

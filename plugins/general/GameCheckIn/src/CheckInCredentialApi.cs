@@ -94,4 +94,35 @@ internal sealed partial class CheckInTaskService
         public string? Mode { get; set; }
         public string? Phone { get; set; }
     }
+    private async ValueTask<PluginWebApiResponse> ReadCredentialAsync(PluginWebApiRequest request, CancellationToken cancellationToken)
+    {
+        if (!TryDeserialize(request.JsonBody, out CheckInCredentialReadRequest? input) || input is null) return Error(400, "task_id_required");
+        if (!PlatformOrder.Contains(input.Platform, StringComparer.Ordinal)) return Error(400, "credential_platform_invalid");
+        if (input.EditorSessionId is { } editor)
+        {
+            try
+            {
+                var read = _credentials.Read(Client(request), editor, input.Platform, input.FieldGeneration);
+                return Json(new { input.Platform, input.FieldGeneration, read.State.Configured, read.State.Source, value = read.Value,
+                    revealRemainingSeconds = read.State.Source == "browser" ? _credentials.RevealRemainingSeconds(Client(request)) : (double?)null });
+            }
+            catch (CredentialException ex) { return CredentialError(ex); }
+        }
+        if (input.TaskId == Guid.Empty) return Error(400, "task_id_required");
+        await _storeGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_stopped) return Error(503, "service_stopping");
+            CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
+            if (!store.Tasks.Any(task => task.Id == input.TaskId)) return Error(404, "task_not_found");
+            var record = CredentialRecord.Decode(await _context.Secrets.GetAsync(SecretKey(input.TaskId, SecretName(input.Platform)), cancellationToken).ConfigureAwait(false));
+            if (record?.Source == "browser") return Error(403, "credential_editor_required");
+            string? value = record?.Value;
+            return Json(new { input.TaskId, input.Platform, configured = !string.IsNullOrWhiteSpace(value), value });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (CredentialException ex) { return CredentialError(ex); }
+        catch { return Error(500, "credential_read_failed"); }
+        finally { _storeGate.Release(); }
+    }
 }

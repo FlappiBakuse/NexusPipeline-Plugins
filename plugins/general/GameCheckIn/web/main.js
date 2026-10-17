@@ -3827,148 +3827,161 @@ var to = ["title", "aria-label"], no = { class: "gci-checkin-fields" }, ro = ["l
 	class: "gci-modal-footer-actions"
 }, Zs = ["label", "disabled"], Qs = ["label", "busy"], $s = /* @__PURE__ */ In({
 	__name: "GameCheckInPage",
-	props: { host: {} },
-	setup(e) {
-		let t = e, n = /* @__PURE__ */ B(null), r = /* @__PURE__ */ B(!0), i = /* @__PURE__ */ B(!1), a = /* @__PURE__ */ B(!1), o = /* @__PURE__ */ B(null), s = /* @__PURE__ */ B(""), c = /* @__PURE__ */ B(""), l = /* @__PURE__ */ B(""), u = /* @__PURE__ */ B(null), d = /* @__PURE__ */ B(!1), f = new AbortController(), p = null, m = !1, h = !1, g = oa(() => n.value?.tasks || []), _ = oa(() => n.value?.platforms || []), v = (e, n = {}, r = "") => t.host.i18n.t(e, n, r);
-		function y(e, t = {}, n = "") {
-			return v(e, t, n);
+	props: {
+		host: {},
+		initialState: {},
+		deferPolling: { type: Boolean },
+		signal: {}
+	},
+	setup(e, { expose: t }) {
+		let n = e, r = /* @__PURE__ */ B(n.initialState ? {
+			tasks: Array.isArray(n.initialState.tasks) ? n.initialState.tasks : [],
+			platforms: Array.isArray(n.initialState.platforms) ? n.initialState.platforms : [],
+			timeZoneId: typeof n.initialState.timeZoneId == "string" ? n.initialState.timeZoneId : ""
+		} : null), i = /* @__PURE__ */ B(!n.initialState), a = /* @__PURE__ */ B(!1), o = /* @__PURE__ */ B(!1), s = /* @__PURE__ */ B(null), c = /* @__PURE__ */ B(""), l = /* @__PURE__ */ B(""), u = /* @__PURE__ */ B(""), d = /* @__PURE__ */ B(null), f = /* @__PURE__ */ B(!1), p = new AbortController(), m = null, h = !1, g = !1, _ = oa(() => r.value?.tasks || []), v = oa(() => r.value?.platforms || []), y = (e, t = {}, r = "") => n.host.i18n.t(e, t, r);
+		function b(e, t = {}, n = "") {
+			return y(e, t, n);
 		}
-		function b(e) {
+		function x(e) {
 			let t = e;
 			if (typeof t?.code == "string" && t.code) return t.code;
 			let n = t?.data;
 			return typeof n?.code == "string" && n.code ? n.code : typeof n?.error == "string" ? n.error : "";
 		}
-		function x(e, t) {
-			let n = b(e);
-			return n ? y(`error.${n}`, {}, t) : t;
+		function S(e, t) {
+			let n = x(e);
+			return n ? b(`error.${n}`, {}, t) : t;
 		}
-		async function S(e = !1) {
-			if (!(h || m)) {
-				h = !0;
+		async function C(e = !1) {
+			if (!(g || h)) {
+				g = !0;
 				try {
-					let e = await t.host.api.get("state", f.signal);
-					if (m) return;
-					n.value = {
+					let e = await n.host.api.get("state", p.signal);
+					if (h) return;
+					r.value = {
 						tasks: Array.isArray(e?.tasks) ? e.tasks : [],
 						platforms: Array.isArray(e?.platforms) ? e.platforms : [],
 						timeZoneId: typeof e?.timeZoneId == "string" ? e.timeZoneId : ""
-					}, s.value = "";
+					}, c.value = "";
 				} catch (t) {
-					!m && e && (s.value = x(t, y("error.state_failed", {}, "签到任务读取失败，请稍后重试。")));
+					!h && e && (c.value = S(t, b("error.state_failed", {}, "签到任务读取失败，请稍后重试。")));
 				} finally {
-					h = !1, e && !m && (r.value = !1);
+					g = !1, e && !h && (i.value = !1);
 				}
 			}
 		}
-		function C(e = null) {
-			l.value = "", o.value = e, c.value = "", a.value = !0;
+		function w(e = null) {
+			u.value = "", s.value = e, l.value = "", o.value = !0;
 		}
-		function w() {
-			i.value || (a.value = !1, o.value = null, c.value = "");
-		}
-		async function ee(e) {
-			if (!i.value) {
-				i.value = !0, c.value = "";
-				try {
-					e.id ? await t.host.api.put("tasks", e, f.signal) : await t.host.api.post("tasks", e, f.signal), a.value = !1, o.value = null, await S(), t.host.ui?.toast(y("toast.saved", {}, "签到任务已保存。"), "success");
-				} catch (e) {
-					let n = b(e), r = x(e, y("error.save_failed", {}, "任务保存失败，请检查填写内容后重试。"));
-					["task_name_invalid", "task_name_duplicate"].includes(n) ? (l.value = r, c.value = "") : c.value = r, n === "task_save_unconfirmed" && await S(), t.host.ui?.toast(r, "error");
-				} finally {
-					i.value = !1;
-				}
-			}
+		function ee() {
+			a.value || (o.value = !1, s.value = null, l.value = "");
 		}
 		async function T(e) {
-			if (!n.value || e.length !== n.value.tasks.length) return;
-			let r = new Map(n.value.tasks.map((e) => [e.id, e]));
-			if (new Set(e).size !== e.length || e.some((e) => !r.has(e))) return;
-			let i = n.value.tasks;
-			n.value = {
-				...n.value,
-				tasks: e.map((e) => r.get(e))
-			};
-			try {
-				await t.host.api.put("tasks/order", { taskIds: e }, f.signal), await S();
-			} catch (e) {
-				n.value = {
-					...n.value,
-					tasks: i
-				}, s.value = x(e, y("error.task_order_save_failed", {}, "任务顺序保存失败。"));
+			if (!a.value) {
+				a.value = !0, l.value = "";
+				try {
+					e.id ? await n.host.api.put("tasks", e, p.signal) : await n.host.api.post("tasks", e, p.signal), o.value = !1, s.value = null, await C(), n.host.ui?.toast(b("toast.saved", {}, "签到任务已保存。"), "success");
+				} catch (e) {
+					let t = x(e), r = S(e, b("error.save_failed", {}, "任务保存失败，请检查填写内容后重试。"));
+					["task_name_invalid", "task_name_duplicate"].includes(t) ? (u.value = r, l.value = "") : l.value = r, t === "task_save_unconfirmed" && await C(), n.host.ui?.toast(r, "error");
+				} finally {
+					a.value = !1;
+				}
 			}
 		}
 		async function te(e) {
+			if (!r.value || e.length !== r.value.tasks.length) return;
+			let t = new Map(r.value.tasks.map((e) => [e.id, e]));
+			if (new Set(e).size !== e.length || e.some((e) => !t.has(e))) return;
+			let i = r.value.tasks;
+			r.value = {
+				...r.value,
+				tasks: e.map((e) => t.get(e))
+			};
 			try {
-				await t.host.api.post("tasks/run", { taskId: e.id }, f.signal), await S(), t.host.ui?.toast(y("toast.run_started", {}, "签到已开始。"), "info");
+				await n.host.api.put("tasks/order", { taskIds: e }, p.signal), await C();
 			} catch (e) {
-				s.value = x(e, y("error.run_failed", {}, "签到启动失败，请稍后重试。"));
+				r.value = {
+					...r.value,
+					tasks: i
+				}, c.value = S(e, b("error.task_order_save_failed", {}, "任务顺序保存失败。"));
 			}
 		}
-		async function E() {
-			let e = u.value;
-			if (e && !d.value) {
-				d.value = !0;
+		async function E(e) {
+			try {
+				await n.host.api.post("tasks/run", { taskId: e.id }, p.signal), await C(), n.host.ui?.toast(b("toast.run_started", {}, "签到已开始。"), "info");
+			} catch (e) {
+				c.value = S(e, b("error.run_failed", {}, "签到启动失败，请稍后重试。"));
+			}
+		}
+		async function ne() {
+			let e = d.value;
+			if (e && !f.value) {
+				f.value = !0;
 				try {
-					await t.host.api.delete("tasks", { taskId: e.id }, f.signal), u.value = null, o.value?.id === e.id && w(), await S(), t.host.ui?.toast(y("toast.deleted", {}, "签到任务已删除。"), "success");
+					await n.host.api.delete("tasks", { taskId: e.id }, p.signal), d.value = null, s.value?.id === e.id && ee(), await C(), n.host.ui?.toast(b("toast.deleted", {}, "签到任务已删除。"), "success");
 				} catch (e) {
-					s.value = x(e, y("error.delete_failed", {}, "任务删除失败。")), t.host.ui?.toast(s.value, "error");
+					c.value = S(e, b("error.delete_failed", {}, "任务删除失败。")), n.host.ui?.toast(c.value, "error");
 				} finally {
-					d.value = !1;
+					f.value = !1;
 				}
 			}
 		}
-		return Zn(() => {
-			S(!0), p = setInterval(() => void S(), 5e3);
+		function D() {
+			!h && !m && (m = setInterval(() => void C(), 5e3));
+		}
+		let re = () => p.abort();
+		return n.signal?.addEventListener("abort", re, { once: !0 }), n.signal?.aborted && re(), t({ startPolling: D }), Zn(() => {
+			n.initialState || C(!0), n.deferPolling || D();
 		}), er(() => {
-			m = !0, f.abort(), p && clearInterval(p);
-		}), (f, p) => (Y(), X("section", Ls, [
+			h = !0, n.signal?.removeEventListener("abort", re), p.abort(), m && clearInterval(m);
+		}), (t, p) => (Y(), X("section", Ls, [
 			Z("header", Rs, [Z("div", zs, [
-				Z("div", Bs, j(y("page.title", {}, "签到")), 1),
-				Z("h2", null, j(y("page.title", {}, "签到")), 1),
-				Z("p", Vs, j(y("page.description", {}, "管理多平台签到任务和运行计划。")), 1)
+				Z("div", Bs, j(b("page.title", {}, "签到")), 1),
+				Z("h2", null, j(b("page.title", {}, "签到")), 1),
+				Z("p", Vs, j(b("page.description", {}, "管理多平台签到任务和运行计划。")), 1)
 			]), Z("div", Hs, [Z("nxp-button", {
-				label: y("action.add_task", {}, "添加签到任务"),
+				label: b("action.add_task", {}, "添加签到任务"),
 				tone: "primary",
 				type: "button",
-				onClick: p[0] ||= (e) => C()
+				onClick: p[0] ||= (e) => w()
 			}, null, 8, Us)])]),
-			s.value ? (Y(), X("p", Ws, j(s.value), 1)) : r.value ? (Y(), X("p", Gs, j(y("status.loading", {}, "正在读取…")), 1)) : Q("", !0),
-			g.value.length ? (Y(), Di(Is, {
+			c.value ? (Y(), X("p", Ws, j(c.value), 1)) : i.value ? (Y(), X("p", Gs, j(b("status.loading", {}, "正在读取…")), 1)) : Q("", !0),
+			_.value.length ? (Y(), Di(Is, {
 				key: 2,
-				tasks: g.value,
-				platforms: _.value,
-				translate: v,
-				onRun: te,
-				onEdit: C,
-				onRemove: p[1] ||= (e) => u.value = e,
-				onReorder: T
-			}, null, 8, ["tasks", "platforms"])) : !r.value && !s.value ? (Y(), X("nxp-empty-state", {
+				tasks: _.value,
+				platforms: v.value,
+				translate: y,
+				onRun: E,
+				onEdit: w,
+				onRemove: p[1] ||= (e) => d.value = e,
+				onReorder: te
+			}, null, 8, ["tasks", "platforms"])) : !i.value && !c.value ? (Y(), X("nxp-empty-state", {
 				key: 3,
-				title: y("empty.title", {}, "还没有签到任务"),
-				description: y("empty.description", {}, "创建任务后设置游戏、凭据和定时计划。")
+				title: b("empty.title", {}, "还没有签到任务"),
+				description: b("empty.description", {}, "创建任务后设置游戏、凭据和定时计划。")
 			}, [Z("nxp-button", {
-				label: y("action.add_task", {}, "添加签到任务"),
+				label: b("action.add_task", {}, "添加签到任务"),
 				tone: "primary",
 				type: "button",
-				onClick: p[2] ||= (e) => C()
+				onClick: p[2] ||= (e) => w()
 			}, null, 8, qs)], 8, Ks)) : Q("", !0),
 			Mi(cs, {
-				open: a.value,
-				task: o.value,
-				tasks: n.value?.tasks || [],
-				platforms: _.value,
-				"time-zone-id": n.value?.timeZoneId || "",
-				submitting: i.value,
-				error: c.value,
-				"name-error": l.value,
-				translate: v,
+				open: o.value,
+				task: s.value,
+				tasks: r.value?.tasks || [],
+				platforms: v.value,
+				"time-zone-id": r.value?.timeZoneId || "",
+				submitting: a.value,
+				error: l.value,
+				"name-error": u.value,
+				translate: y,
 				host: e.host,
-				onClose: w,
-				onSave: ee,
-				onInvalid: p[3] ||= (e) => t.host.ui?.toast(e, "error"),
+				onClose: ee,
+				onSave: T,
+				onInvalid: p[3] ||= (e) => n.host.ui?.toast(e, "error"),
 				onNameChange: p[4] ||= (e) => {
-					l.value = "", c.value = "";
+					u.value = "", l.value = "";
 				}
 			}, null, 8, [
 				"open",
@@ -3981,25 +3994,25 @@ var to = ["title", "aria-label"], no = { class: "gci-checkin-fields" }, ro = ["l
 				"name-error",
 				"host"
 			]),
-			u.value ? (Y(), X("nxp-modal", {
+			d.value ? (Y(), X("nxp-modal", {
 				key: 4,
 				open: "",
 				footer: "",
-				title: y("action.delete", {}, "删除签到"),
-				locked: d.value,
-				closeable: !d.value,
-				"close-label": y("action.close", {}, "关闭"),
-				onClose: p[6] ||= (e) => !d.value && (u.value = null)
-			}, [Z("p", Ys, j(y("task.delete_confirm", {}, "删除此任务、计划和凭据？")) + " — " + j(u.value.name), 1), Z("div", Xs, [Z("nxp-button", {
-				label: y("action.cancel", {}, "取消"),
+				title: b("action.delete", {}, "删除签到"),
+				locked: f.value,
+				closeable: !f.value,
+				"close-label": b("action.close", {}, "关闭"),
+				onClose: p[6] ||= (e) => !f.value && (d.value = null)
+			}, [Z("p", Ys, j(b("task.delete_confirm", {}, "删除此任务、计划和凭据？")) + " — " + j(d.value.name), 1), Z("div", Xs, [Z("nxp-button", {
+				label: b("action.cancel", {}, "取消"),
 				variant: "ghost",
-				disabled: d.value,
-				onClick: p[5] ||= (e) => u.value = null
+				disabled: f.value,
+				onClick: p[5] ||= (e) => d.value = null
 			}, null, 8, Zs), Z("nxp-button", {
-				label: y("action.confirm", {}, "确定"),
+				label: b("action.confirm", {}, "确定"),
 				tone: "danger",
-				busy: d.value,
-				onClick: E
+				busy: f.value,
+				onClick: ne
 			}, null, 8, Qs)])], 40, Js)) : Q("", !0)
 		]));
 	}
@@ -4007,14 +4020,27 @@ var to = ["title", "aria-label"], no = { class: "gci-checkin-fields" }, ro = ["l
 //#endregion
 //#region src/main.ts
 function ec(e) {
-	let t = null, n = () => {}, r = e.routes.register("tasks", (r, i) => {
-		n();
-		let a = r.element;
-		t = Xa($s, { host: i || e }), t.mount(a);
-		let o = t, s = !1;
-		return n = () => {
-			s || (s = !0, o.unmount(), t === o && (t = null));
-		}, n;
+	let t = /* @__PURE__ */ new Set(), n = () => {
+		for (let e of [...t]) e();
+	}, r = e.routes.register("tasks", async (n, r) => {
+		let i = r || e, a = await i.api.get("state", n.signal);
+		if (n.signal.aborted) throw new DOMException("", "AbortError");
+		let o = n.element, s = Xa($s, {
+			host: i,
+			initialState: a || {},
+			deferPolling: !0,
+			signal: n.signal
+		}), c = s.mount(o), l = !1, u, d = () => {
+			o.isConnected && !l && (u?.disconnect(), c.startPolling());
+		};
+		o.isConnected ? d() : (u = new MutationObserver(d), u.observe(document.documentElement, {
+			childList: !0,
+			subtree: !0
+		}));
+		let f = () => {
+			l || (l = !0, u?.disconnect(), n.signal.removeEventListener("abort", f), s.unmount(), t.delete(f));
+		};
+		return t.add(f), n.signal.addEventListener("abort", f, { once: !0 }), n.signal.aborted && f(), f;
 	}), i = e.nav.register({
 		id: "check-in-tasks",
 		title: e.i18n.t("nav.title", {}, "签到"),
@@ -4022,11 +4048,9 @@ function ec(e) {
 		route: "tasks",
 		icon: "check",
 		order: -100
-	}), a = e.lifecycle.onDispose(() => {
-		n();
 	});
 	return { dispose() {
-		n(), a?.dispose?.(), r?.dispose?.(), i?.dispose?.();
+		n(), r?.dispose?.(), i?.dispose?.();
 	} };
 }
 //#endregion

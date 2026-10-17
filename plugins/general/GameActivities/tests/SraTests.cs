@@ -159,6 +159,16 @@ public sealed class SraTests
         var service=new ActivityCoordinator(context,new Clock(Now));await service.InitializeAsync(default);
         try
         {
+            string[] order = GameSources.All.Select(source => source.GameId).Distinct().Reverse().ToArray();
+            await service.SettingsAsync(0, new() { SelectedGames = ["blue-archive"], GameOrder = order }, default);
+            var saved = await context.Config.ReadAsync<ActivitySettingsState>();
+            Assert.Equal(order, saved!.Settings.GameOrder);
+            Assert.Equal(new[] { "blue-archive" }, saved.Settings.SelectedGames);
+            Assert.Throws<ActivityException>(() => GameSources.Validate(saved.Settings with { GameOrder = ["blue-archive"] }));
+            var reopened = new ActivityCoordinator(context, new Clock(Now));
+            await reopened.InitializeAsync(default);
+            try { Assert.Equal(order, (await reopened.StateAsync(default))["settings"]!["gameOrder"]!.AsArray().Select(node => node!.GetValue<string>())); }
+            finally { await reopened.StopAsync(default); }
             await Done(service);
             Assert.Equal("refresh_rate_limited",(await Assert.ThrowsAsync<ActivityException>(()=>service.QueueAsync(true,default))).Code);
             Assert.Equal("settings_conflict",(await Assert.ThrowsAsync<ActivityException>(()=>service.SettingsAsync(9,new(),default))).Code);

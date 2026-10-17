@@ -145,12 +145,15 @@ try {
   profile = { ...profile, packageRoot: project };
   fs.cpSync(path.join(pythonRoot, 'python'), path.join(project, 'python'), { recursive: true });
   fs.mkdirSync(path.join(project, 'agent'));
-  fs.writeFileSync(path.join(project, 'agent/pre.py'), `from pathlib import Path
+  fs.writeFileSync(path.join(project, 'agent/pre.py'), `import os, json
+from pathlib import Path
+Path('pretask-environment.json').write_text(json.dumps({k: v for k, v in os.environ.items() if k.startswith('PI_')}))
 p=Path('initializations.txt')
 with p.open('a') as f: f.write('initialized\\n')
 `);
   fs.writeFileSync(path.join(project, 'agent/main.py'), `import os, sys, json
 from pathlib import Path
+Path('agent-environment.json').write_text(json.dumps({k: v for k, v in os.environ.items() if k.startswith('PI_')}))
 os.environ['MAAFW_BINARY_PATH']=str(Path('native').resolve())
 from maa.agent.agent_server import AgentServer
 from maa.custom_action import CustomAction
@@ -176,6 +179,15 @@ AgentServer.shut_down()
   fs.writeFileSync(sourceFile, JSON.stringify({ InstanceName: 'Owned retry', TaskItems: ['A','B','C'].map(name => ({name, entry:name, default_check:true})) }));
   const retried = await save('Owned native retry', { ...profile, profileId: 'retry-local', runtimeInputs: null, sourceBinding: null, sourceSnapshot: null });
   assert.equal(retried.operation.state, 'ready', JSON.stringify(retried.operation));
+  const hostVersion = (await (await runtime.api('GET', 'api/status')).json()).version;
+  for (const file of ['pretask-environment.json', 'agent-environment.json']) {
+    const environment = JSON.parse(fs.readFileSync(path.join(project, file), 'utf8'));
+    assert.equal(environment.PI_CLIENT_NAME, 'NexusPipeline');
+    assert.equal(environment.PI_CLIENT_VERSION, `v${hostVersion.replace(/^v/, '')}`);
+    assert.equal(environment.PI_INTERFACE_VERSION, 'v2.10.2');
+    assert.equal(environment.PI_VERSION, 'different-version');
+    assert.equal(environment.PI_CLIENT_MAAFW_VERSION.replace(/^v/, ''), prepared.source.version.replace(/^v/, ''));
+  }
   assert.equal(fs.existsSync(path.join(project, 'submitted.txt')), false, 'Initialization cannot submit formal tasks');
   await runtime.createUserBinding(retried.operation.scriptId, 'Owned retry user');
   const result = await dispatch(retried.operation.scriptId);

@@ -39,6 +39,7 @@ export interface Settings {
   formatVersion: number;
   onboardingCompleted: boolean;
   selectedGames: string[];
+  gameOrder?: string[];
   progressions: Record<string, string>;
   carouselIntervalSeconds: number;
   pauseOnInteraction: boolean;

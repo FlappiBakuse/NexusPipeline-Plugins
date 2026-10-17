@@ -11,12 +11,15 @@ import { feedKey, type ActivityHost, type Settings, type TimePoint } from "./typ
 const props = defineProps<{ host: ActivityHost; state: ActivityStateModel; covers: CoverAssetsModel }>();
 const t = translator(props.host);
 const { current, feeds, index, error, busy, refreshing, manualRefreshing, now, result, zone: displayZone, saveSettings, refresh } = props.state;
+const refreshError = computed(() => !refreshing.value && ["partial", "failed"].includes(result.value?.status ?? "") ? t(`refreshResult.${result.value!.status}`) : "");
 const settingsOpen = ref(false);
+const settingsEditor = ref<InstanceType<typeof ActivitySettings> | null>(null);
 const detailsOpen = ref(false);
 const hovered = ref(false);
 const focused = ref(false);
 const reduced = ref(false);
 const paused = ref(false);
+const expanded = ref(false);
 const selected = computed(() => current.value?.selectedFeeds[index.value]);
 const feed = computed(() => selected.value ? feeds.value[feedKey(selected.value.gameId, selected.value.progressionId)] : null);
 const slides = computed(() => (current.value?.selectedFeeds ?? []).map(summary => {
@@ -100,10 +103,10 @@ onBeforeUnmount(() => {
 <template>
   <nxp-card class="game-activities" :unstyled="true" @mouseenter="hovered = true" @mouseleave="hovered = false" @focusin="focused = true" @focusout="focusChanged">
     <h2 class="ga-sr-only">{{ t('card.title') }}</h2>
-    <p v-if="error && !settingsOpen" role="alert" class="ga-error">{{ error }}</p>
-    <div v-if="!current || !current.selectedFeeds.length" class="ga-empty-carousel"><p>{{ t(current ? 'state.select' : 'state.loading') }}</p><nxp-button type="button" class="ga-icon-button ga-empty-settings" :disabled="!current" :aria-label="t('settings.title')" :title="t('settings.title')" @click="openSettings"><span class="ga-button-glyph" aria-hidden="true">⚙️</span></nxp-button></div>
+    <p v-if="(error || refreshError) && !settingsOpen" role="alert" class="ga-error">{{ error || refreshError }}</p>
+    <div v-if="!current || !current.selectedFeeds.length" class="ga-empty-carousel" :aria-busy="!current"><p v-if="current">{{ t('state.select') }}</p><nxp-button type="button" class="ga-icon-button ga-empty-settings" :disabled="!current" :aria-label="t('settings.title')" :title="t('settings.title')" @click="openSettings"><span class="ga-button-glyph" aria-hidden="true">⚙️</span></nxp-button></div>
     <template v-else-if="selected">
-      <div class="ga-carousel" role="region" aria-roledescription="carousel" :aria-label="t('carousel.label')" tabindex="0" @keydown="carouselKey">
+      <div class="ga-carousel" :class="{ 'ga-carousel-expanded': expanded }" role="region" aria-roledescription="carousel" :aria-label="t('carousel.label')" :aria-busy="refreshing" tabindex="0" @keydown="carouselKey">
         <div class="ga-viewport">
           <div class="ga-track" :style="{ transform: `translateX(-${index * 100}%)` }">
             <article v-for="(slide, position) in slides" :key="slide.id" class="ga-slide" role="group" aria-roledescription="slide" :aria-label="`${position + 1}/${slides.length} · ${t(`game.${slide.summary.gameId}`)}`" :aria-hidden="position !== index" :inert="position !== index ? true : undefined">
@@ -118,30 +121,35 @@ onBeforeUnmount(() => {
                 </div>
                 <h3>{{ slide.overview?.title || t('state.overview') }}</h3>
                 <div v-if="slide.overview?.end" class="ga-deadline"><span>{{ t('time.overviewEnd') }}</span><time :datetime="slide.overview.end.instantUtc || undefined">{{ formatTime(slide.overview.end, host, displayZone) }}</time><strong>{{ remaining(slide.overview.end) }}</strong></div>
-                <p v-else-if="!slide.feed" class="ga-description">{{ t(slide.summary.health.diagnostics.length ? 'state.unavailable' : 'state.loading') }}</p>
+                <p v-else-if="!slide.feed && slide.summary.health.diagnostics.length" class="ga-description">{{ t('state.unavailable') }}</p>
               </div>
               <nxp-button class="ga-open-details" type="button" :disabled="!slide.feed" :aria-label="t('details.open', { game: t(`game.${slide.summary.gameId}`) })" aria-haspopup="dialog" @click="detailsOpen = true"></nxp-button>
             </article>
           </div>
         </div>
         <div class="ga-tools">
+          <nxp-button type="button" class="ga-icon-button" :aria-label="t(expanded ? 'carousel.collapse' : 'carousel.expand')" :title="t(expanded ? 'carousel.collapse' : 'carousel.expand')" :aria-pressed="expanded" @click="expanded = !expanded"><span class="ga-button-glyph" aria-hidden="true">{{ expanded ? '⤡' : '⤢' }}</span></nxp-button>
           <nxp-button v-if="intervalMs > 0 && slides.length > 1" type="button" class="ga-icon-button" :aria-label="t(paused ? 'carousel.resume' : 'carousel.pause')" :title="t(paused ? 'carousel.resume' : 'carousel.pause')" :aria-pressed="paused" @click="paused = !paused"><span class="ga-button-glyph" aria-hidden="true">{{ paused ? '▶️' : '⏸️' }}</span></nxp-button>
           <nxp-button type="button" class="ga-icon-button" :aria-label="t('refresh')" :title="t('refresh')" :disabled="manualRefreshing" @click="covers.retryFailed(); refresh()"><span class="ga-button-glyph" aria-hidden="true">🔄</span></nxp-button>
           <nxp-button type="button" class="ga-icon-button" :aria-label="t('settings.title')" :title="t('settings.title')" @click="openSettings"><span class="ga-button-glyph" aria-hidden="true">⚙️</span></nxp-button>
         </div>
-        <nxp-button type="button" class="ga-page-button ga-previous" :disabled="slides.length < 2" :aria-label="t('carousel.previous')" @click="step(-1)"><span class="ga-page-glyph" aria-hidden="true">‹</span></nxp-button>
-        <nxp-button type="button" class="ga-page-button ga-next" :disabled="slides.length < 2" :aria-label="t('carousel.next')" @click="step(1)"><span class="ga-page-glyph" aria-hidden="true">›</span></nxp-button>
-        <div class="ga-carousel-controls"><span class="ga-refresh-status" role="status" aria-live="polite">{{ refreshing ? t('state.loading') : result ? t(`refreshResult.${result.status}`, result as unknown as Record<string, unknown>) : '' }}</span>
+        <nxp-button v-if="slides.length > 1" type="button" class="ga-page-button ga-previous" :disabled="slides.length < 2" :aria-label="t('carousel.previous')" @click="step(-1)"><span class="ga-page-glyph" aria-hidden="true">‹</span></nxp-button>
+        <nxp-button v-if="slides.length > 1" type="button" class="ga-page-button ga-next" :disabled="slides.length < 2" :aria-label="t('carousel.next')" @click="step(1)"><span class="ga-page-glyph" aria-hidden="true">›</span></nxp-button>
+        <div class="ga-carousel-controls">
           <div class="ga-indicators">
             <nxp-button v-for="(slide, position) in slides" :key="slide.id" type="button" :aria-label="`${t('carousel.show')} ${t(`game.${slide.summary.gameId}`)}`" :aria-current="position === index ? 'true' : undefined" :class="{ 'ga-current': position === index }" @click="selectSlide(position)"><span class="ga-indicator-bar" aria-hidden="true"></span></nxp-button>
           </div>
         </div>
       </div>
     </template>
-    <nxp-modal v-if="settingsOpen && current" :open="settingsOpen" :title="t('settings.title')" size="wide" surface="secondary" :locked="busy" @close="settingsOpen = false">
-      <ActivitySettings :settings="current.settings" :host="host" :busy="busy" :error="error" @save="save" @cancel="settingsOpen = false">
+    <nxp-modal v-if="settingsOpen && current" :open="settingsOpen" footer :title="t('settings.title')" size="wide" surface="secondary" :locked="busy" @close="settingsOpen = false">
+      <ActivitySettings ref="settingsEditor" :settings="current.settings" :host="host" :busy="busy" :error="error" @save="save" @cancel="settingsOpen = false">
         <span v-if="selected">{{ t(`cache.${selected.health.cacheState}`) }}<template v-if="feed?.health.lastGoodAt"> · {{ t('state.lastGood') }} {{ lastGoodTime(feed.health.lastGoodAt) }} ({{ displayZone }})</template></span>
       </ActivitySettings>
+      <div slot="footer" class="ga-actions">
+        <nxp-button :disabled="busy" @click="settingsOpen = false">{{ t('cancel') }}</nxp-button>
+        <nxp-button tone="primary" :disabled="busy || !settingsEditor?.intervalValid" @click="settingsEditor?.save()">{{ t('save') }}</nxp-button>
+      </div>
     </nxp-modal>
     <nxp-modal v-if="detailsOpen" :open="detailsOpen" :title="t('details.title')" size="wide" @close="detailsOpen = false">
       <ActivityDetails v-if="feed" :feed="feed" :host="host" :now="now" :covers="covers" :zone="displayZone" />

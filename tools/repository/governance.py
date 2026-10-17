@@ -62,7 +62,7 @@ def context_for(root: Path, paths=(), keywords=(), owners=(), host_root: Path | 
     sections = [section for section in re.split(r'(?=^## )', agents, flags=re.MULTILINE)
                 if re.match(r'^## [234]\.', section)]
     result = {'agents': {'file': 'AGENTS.md', 'headings': [line for line in agents.splitlines() if line.startswith('#')], 'sections': sections},
-              'topics': topics, 'testDomains': sorted({domain for topic in topics for domain in topic.get('testDomains', [])}),
+              'topics': topics, 'validationPaths': sorted({domain for topic in topics for domain in topic.get('validationPaths', [])}),
               'lock': json.loads(safe_path(root, '', 'contracts/host-compatibility.json').read_bytes()),
               'partner': {'status': 'NOT_CHECKED', 'reason': 'No explicit Host path; public UI candidates/paired API not checked'}}
     if host_root is not None:

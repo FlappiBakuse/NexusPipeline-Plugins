@@ -2,7 +2,7 @@
   "card.title": "游戏活动",
   "card.description": "查看 SRA 版本信息与活动",
   "settings.title": "活动设置",
-  "settings.help": "开启游戏后可拖动把手调整轮播顺序；把手聚焦后也可按上下方向键。保存后生效，显示语言不会改变区服。",
+  "settings.help": "所有游戏均可拖动把手排序，未订阅游戏也可调整；把手聚焦后可按上下方向键。保存后生效，显示语言不会改变区服。",
   "settings.games": "游戏订阅",
   "settings.drag": "排序：{game}",
   "settings.dragHelp": "拖动排序，或聚焦后按上下方向键。",
@@ -13,7 +13,6 @@
   "settings.intervalHelp": "填写 10–120 秒；填写 -1 关闭自动轮播。",
   "settings.intervalInvalid": "请输入 10–120 之间的整数，或 -1。",
   "settings.refreshHelp": "刷新当前已保存的订阅，不会保存本窗口的草稿。",
-  "state.loading": "加载中",
   "state.select": "请选择要订阅的游戏。",
   "state.overview": "当前活动概览",
   "state.empty": "暂无有效快照，可刷新或稍后重试。",
@@ -66,11 +65,11 @@
   "progression.jp": "日服",
   "progression.global": "国际服",
   "details.summaryMissing": "暂无活动描述",
-  "refreshResult.succeeded": "已检查，更新 {changedFeedCount} 组",
-  "refreshResult.partial": "部分失败，保留原数据",
-  "refreshResult.failed": "刷新失败，保留原数据",
-  "refreshResult.cancelled": "已取消",
   "source.sra": "数据来源：SRA",
   "sra.cached": "当前显示上次成功获取的数据。",
-  "state.unavailable": "暂未获取到活动信息，请刷新重试。"
+  "state.unavailable": "暂未获取到活动信息，请刷新重试。",
+  "carousel.expand": "放大卡片",
+  "carousel.collapse": "缩小卡片",
+  "refreshResult.partial": "部分失败，保留原数据",
+  "refreshResult.failed": "刷新失败，保留原数据"
 }

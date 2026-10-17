@@ -11,7 +11,7 @@ const draft = ref(structuredClone(props.settings));
 const interval = ref<number | string>(draft.value.carouselIntervalSeconds);
 const intervalValid = computed(() => typeof interval.value === "number" && Number.isInteger(interval.value)
   && (interval.value === -1 || interval.value >= 10 && interval.value <= 120));
-const available = computed(() => gameIds.filter(game => !draft.value.selectedGames.includes(game)));
+const order = ref([...(draft.value.gameOrder || draft.value.selectedGames), ...gameIds.filter(game => !(draft.value.gameOrder || draft.value.selectedGames).includes(game))]);
 
 function toggleGame(game: string, enabled: boolean) {
   if (enabled && !draft.value.selectedGames.includes(game)) draft.value.selectedGames.push(game);
@@ -19,12 +19,13 @@ function toggleGame(game: string, enabled: boolean) {
 }
 
 function reorder(event: CustomEvent<[string[], string]>) {
-  if (!props.busy) draft.value.selectedGames = event.detail[0];
+  if (!props.busy) order.value = event.detail[0];
 }
 
 function save() {
-  if (!props.busy && intervalValid.value) emit('save', { ...draft.value, carouselIntervalSeconds: Number(interval.value) });
+  if (!props.busy && intervalValid.value) emit('save', { ...draft.value, gameOrder: order.value, selectedGames: order.value.filter(game => draft.value.selectedGames.includes(game)), carouselIntervalSeconds: Number(interval.value) });
 }
+defineExpose({ save, intervalValid });
 </script>
 
 <template>
@@ -32,14 +33,11 @@ function save() {
     <section :aria-label="t('settings.games')" :data-help="t('settings.help')">
       <h3 class="ga-settings-heading">{{ t('settings.games') }}</h3>
       <div class="ga-settings-card">
-        <nxp-sortable-list v-if="draft.selectedGames.length" :disabled="busy" @reorder="reorder">
-          <ActivityGameSetting v-for="game in draft.selectedGames" :key="game" :data-dnd-id="game"
-            :game="game" :host="host" :enabled="true" :busy="busy" :progression="draft.progressions[game]"
+        <nxp-sortable-list :disabled="busy" @reorder="reorder">
+          <ActivityGameSetting v-for="game in order" :key="game" :data-dnd-id="game"
+            :game="game" :host="host" :enabled="draft.selectedGames.includes(game)" :busy="busy" :progression="draft.progressions[game]"
             @toggle="toggleGame(game, $event)" @progression="draft.progressions[game] = $event" />
         </nxp-sortable-list>
-        <ActivityGameSetting v-for="game in available" :key="game" :game="game" :host="host" :enabled="false"
-          :busy="busy" :progression="draft.progressions[game]" @toggle="toggleGame(game, $event)"
-          @progression="draft.progressions[game] = $event" />
       </div>
     </section>
     <div class="ga-interval-setting" :data-help="t('settings.intervalHelp')">
@@ -50,6 +48,5 @@ function save() {
     </div>
     <p v-if="error" role="alert" class="ga-error">{{ error }}</p>
     <div class="ga-muted"><slot /></div>
-    <div class="ga-actions"><nxp-button :disabled="busy" @click="emit('cancel')">{{ t('cancel') }}</nxp-button><nxp-button tone="primary" :disabled="busy || !intervalValid" @click="save">{{ t('save') }}</nxp-button></div>
   </div>
 </template>

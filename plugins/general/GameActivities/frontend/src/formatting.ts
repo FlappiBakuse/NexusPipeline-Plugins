@@ -21,10 +21,6 @@ export function formatTime(time: TimePoint | null | undefined, host: ActivityHos
   return `${formatted} · ${host.i18n.t("time.sourceDefault", { zone: sourceZone })}`;
 }
 
-export function formatStart(time: TimePoint | null | undefined, host: ActivityHost, zone?: string): string {
-  return formatTime(time, host, zone);
-}
-
 export function versionLabel(feed: Feed | undefined | null, host: ActivityHost): string {
   const t = translator(host);
   if (feed?.overview?.number) return `${t("version.label")} ${feed.overview.number}`;

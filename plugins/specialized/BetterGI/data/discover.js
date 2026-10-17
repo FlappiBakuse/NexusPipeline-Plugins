@@ -345,32 +345,45 @@ function finalizeAssessment(plan) {
     const context = input.executionContext || {};
     if (context.mode !== 'pc')
       return push(rule, 'not_applicable', 'info', 'none', location(rule));
-    if (context.launchOwner === 'host')
-      return typeof context.gameTarget?.value === 'string' && context.gameTarget.value.trim()
-        ? push(rule, 'not_applicable', 'info', 'none', location(rule))
-        : push(rule, 'violated', 'error', 'block', location(rule), text(rule),
-          [{ kind: 'open_script_settings' }, { kind: 'refresh_plan' }]);
-    if (context.launchOwner !== 'already_running')
-      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    const fail = (evaluation = 'violated') => push(rule, evaluation, 'error', 'block', location(rule), text(rule),
+      [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    if (context.launchOwner === 'host') return fail();
     if (context.gameTarget?.ready === true)
       return push(rule, 'satisfied', 'info', 'none', location(rule));
     const document = read('config', rule.resourceId);
     const target = document?.settings?.autoStartInstanceId;
     const instances = Array.isArray(document?.instances) ? document.instances.filter(i => i && i.id === target) : [];
-    if (instances.length !== 1 || !Array.isArray(instances[0].tasks))
-      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'refresh_plan' }]);
+    if (instances.length !== 1 || !Array.isArray(instances[0].tasks)) return fail('unknown');
     const instance = instances[0];
-    const configuredProgram = value => typeof value === 'string' && value.trim().length > 0;
-    const actions = Array.isArray(instance.preActions) && instance.preActions.length
-      ? instance.preActions : instance.preAction ? [instance.preAction] : [];
-    const first = actions[0];
-    if (first?.enabled === true && configuredProgram(first.program) && first.waitForExit === false)
-      return push(rule, 'satisfied', 'info', 'none', location(rule));
-    if (context.gameTarget?.ready !== false)
-      return push(rule, 'unknown', 'warning', 'warn', location(rule), text(rule), [{ kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
-    return push(rule, 'violated', 'error', 'block', location(rule), text(rule),
-      [{ kind: 'open_script_settings' }, { kind: 'open_binding_editor' }, { kind: 'refresh_plan' }]);
+    const task = instance.tasks.filter(t => t.taskName === '__MXU_PRETASK__LaunchGamePC' && t.enabled === true);
+    if (task.length !== 1) return fail();
+    const planned = plan.tasks.find(t => t.sourceKey === instance.id + '/' + task[0].id);
+    if (!planned || !planned.enabled || planned.recognition !== 'known' || planned.lifecycleRole !== 'prepare') return fail();
+    const pi = resource('interface');
+    if (!pi.import?.includes('tasks/pretasks/LaunchGamePC.json')) return fail('unknown');
+    const launch = resource('interface-part-70');
+    if (launch.pretask?.name !== 'LaunchGamePC' || launch.pretask.exec !== 'agent/go-service'
+      || JSON.stringify(launch.pretask.args) !== JSON.stringify(['--pretask', 'LaunchGamePC'])) return fail('unknown');
+    const values = task[0].optionValues || {};
+    const selected = key => {
+      const definition = launch.option?.[key];
+      if (definition?.type !== 'select' || !Array.isArray(definition.cases)) return undefined;
+      const value = values[key];
+      // MXU replaces missing, obsolete or type-mismatched selections with the declared default.
+      return value?.type === 'select' && definition.cases.some(c => c.name === value.caseName)
+        ? value.caseName : definition.default_case || definition.cases[0]?.name;
+    };
+    if (!['CN', 'Global', 'Bilibili'].includes(selected('LaunchGamePCRegion'))) return fail('unknown');
+    const pathMode = selected('LaunchGamePCLauncherPath');
+    if (!['Auto', 'Manual'].includes(pathMode)) return fail('unknown');
+    if (pathMode === 'Manual') {
+      const option = values.LaunchGamePCLauncherExe;
+      const path = option?.type === 'input' ? option.values?.LauncherExe : '';
+      if (typeof path !== 'string' || !/^"?.+[\\/][Ll]auncher\.exe"?$/.test(path)) return fail();
+    }
+    return push(rule, 'satisfied', 'info', 'none', location(rule));
   };
+
   const inspectLogging = rule => {
     const document = read('resource', rule.resourceId);
     if (!document || typeof document !== 'object')

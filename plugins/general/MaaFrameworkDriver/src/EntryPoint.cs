@@ -37,7 +37,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
     public async ValueTask<PluginProviderPlan> PrepareAsync(PluginProviderPrepareRequest request, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
-        var shared = await (request.ConfigRevision.Length == 0 ? ReadProfileAsync(host, Scope("", request.ProfileId), cancellationToken)
+        var shared = await (request.ConfigRevision.Length == 0 ? ReadProfileAsync(host, Scope(request.ProfileId), cancellationToken)
             : ReadRevisionAsync(host, request.ProfileId, request.ConfigRevision, cancellationToken)).ConfigureAwait(false)
             ?? throw new InvalidDataException("driver.profile_missing");
         var profile = string.IsNullOrWhiteSpace(request.UserId) ? shared
@@ -70,12 +70,22 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
             { EffectiveConfiguration = EffectiveConfiguration.FromProfile(profile), ResultBasis = "framework-task-v1" };
     }
 
+    private static string ReadHostVersion()
+    {
+        // Compatible Plugin API 2.2 hosts expose product identity through their managed entry assembly.
+        var assembly = System.Reflection.Assembly.GetEntryAssembly()
+            ?? throw new InvalidOperationException("driver.host_identity_missing");
+        var informational = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(assembly)?.InformationalVersion;
+        return informational?.Split('+', 2)[0] ?? assembly.GetName().Version?.ToString(3)
+            ?? throw new InvalidOperationException("driver.host_identity_missing");
+    }
+
     public async Task<PluginProviderRunResult> RunAsync(PluginProviderRunContext context, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
         var profile = context.Plan.PrivatePlan["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
         string committedRevision = context.Plan.PrivatePlan["committedRevision"]?.GetValue<string>() ?? "";
-        var shared = await (committedRevision.Length == 0 ? ReadProfileAsync(host, Scope("", profile.ProfileId), cancellationToken)
+        var shared = await (committedRevision.Length == 0 ? ReadProfileAsync(host, Scope(profile.ProfileId), cancellationToken)
             : ReadRevisionAsync(host, profile.ProfileId, committedRevision, cancellationToken)).ConfigureAwait(false);
         var saved = string.IsNullOrWhiteSpace(context.UserId) ? shared
             : context.Plan.PrivatePlan["committedUserRevision"]?.GetValue<string>() is { Length: > 0 } userRevision
@@ -89,6 +99,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         if (fresh.ExecutionFingerprint != context.Plan.AuthorizationFingerprint
             || profile.AuthorizedFingerprint != fresh.ExecutionFingerprint) throw new InvalidDataException("driver.source_changed");
         var input = context.Plan.PrivatePlan.DeepClone().AsObject();
+        input["hostVersion"] = ReadHostVersion();
         input["profile"] = JsonSerializer.SerializeToNode(profile, DriverJson.Options);
         var frozen = context.Plan.PrivatePlan["compiled"]!.Deserialize<CompiledProject>(DriverJson.Options)!;
         string[] selected = context.SelectedTaskIds?.ToArray() ?? context.Plan.Tasks.Select(task => task.Id).ToArray();
@@ -155,10 +166,10 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
             string script = body["scriptId"]!.GetValue<string>();
             string profileId = body["profileId"]!.GetValue<string>();
             string user = body["userId"]?.GetValue<string>() ?? "";
-            string scope = string.IsNullOrWhiteSpace(user) ? Scope(script, profileId) : UserScope(user, script);
+            string scope = string.IsNullOrWhiteSpace(user) ? Scope(profileId) : UserScope(user, script);
             string sharedRevision = body["revision"]?.GetValue<string>() ?? "";
             async ValueTask<DriverProfile?> Parent() => sharedRevision.Length == 0
-                ? await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false)
+                ? await ReadProfileAsync(host, Scope(profileId), token).ConfigureAwait(false)
                 : await ReadRevisionAsync(host, profileId, sharedRevision, token).ConfigureAwait(false);
             if (route == "profile")
             {
@@ -285,7 +296,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         return "driver-v1-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(identity)).ToLowerInvariant() + "-";
     }
 
-    internal static string Scope(string script, string profile)
+    internal static string Scope(string profile)
     {
         static bool Safe(string value) => value.Length is >= 1 and <= 128 && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
         if (!Safe(profile)) throw new InvalidDataException("invalid configuration identity");
@@ -295,7 +306,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
 
     private static string UserScope(string user, string script)
     {
-        Scope("", user); Scope("", script);
+        Scope(user); Scope(script);
         return "user-script/" + user + "/" + script;
     }
 

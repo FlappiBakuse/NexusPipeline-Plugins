@@ -28,8 +28,8 @@
   "configChecks": [
     {
       "ruleId": "mxu.launch_owner",
-      "evaluation": "satisfied",
-      "executionEffect": "none"
+      "evaluation": "violated",
+      "executionEffect": "block"
     }
   ],
   "batches": [],

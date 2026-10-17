@@ -95,7 +95,8 @@ try
         compiled = TaskSelection.Apply(compiled, selected);
     }
     bool succeeded = await session.RunAsync(profile, compiled, secrets, Send, cancelled.Token, target,
-        mode == "initialize_only", operationId, revision, bootstrap.SessionArtifactsDirectory ?? "", bootstrap.Nonce);
+        mode == "initialize_only", operationId, revision, bootstrap.SessionArtifactsDirectory ?? "", bootstrap.Nonce,
+        bootstrap.Input["hostVersion"]?.GetValue<string>() ?? "");
     await session.CloseAsync();
     workspace.Complete();
     cancelled.Token.ThrowIfCancellationRequested();

@@ -16,7 +16,7 @@ public sealed partial class EntryPoint
     public async ValueTask<PluginProviderConfigurationCandidate> StageAsync(PluginProviderConfigurationRequest request, CancellationToken token)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
-        Scope("", request.OperationId); Scope("", request.ProfileId);
+        Scope(request.OperationId); Scope(request.ProfileId);
         DriverProfile? userDraft = null, userParent = null, oldUserParent = null;
         if (request.UserId.Length != 0)
         {
@@ -35,7 +35,7 @@ public sealed partial class EntryPoint
         }
         var target = request.Configuration["profile"]?.Deserialize<DriverProfile>(DriverJson.Options)
             ?? (request.ExpectedRevision.Length != 0 ? await ReadRevisionAsync(host, request.ProfileId, request.ExpectedRevision, token).ConfigureAwait(false)
-                : await ReadProfileAsync(host, Scope("", request.ProfileId), token).ConfigureAwait(false))
+                : await ReadProfileAsync(host, Scope(request.ProfileId), token).ConfigureAwait(false))
             ?? new DriverProfile { SchemaVersion = 3, ProfileId = request.ProfileId, PackageRoot = request.PackageRoot };
         if (userParent is not null) target = userParent;
         if (target.ProfileId != request.ProfileId || !Path.GetFullPath(target.PackageRoot).Equals(Path.GetFullPath(request.PackageRoot), StringComparison.OrdinalIgnoreCase))
@@ -161,6 +161,7 @@ public sealed partial class EntryPoint
         var compiled = new ProjectCompiler(profile.PackageRoot, profile.InterfacePath, profile.Language, token).Compile(profile);
         if (compiled.ExecutionFingerprint != candidate.AuthorizationFingerprint) throw new InvalidDataException("configuration.inputs_changed");
         var input = candidate.PrivateCandidate.DeepClone().AsObject();
+        input["hostVersion"] = ReadHostVersion();
         input["mode"] = "initialize_only"; input["operationId"] = candidate.OperationId; input["revision"] = candidate.Revision;
         if (context.LaunchTarget is { } launch) input["hostLaunchTarget"] = JsonSerializer.SerializeToNode(launch, DriverJson.Options);
         var host = _host ?? throw new InvalidOperationException("provider disabled");
@@ -228,7 +229,7 @@ public sealed partial class EntryPoint
 
     private static string RevisionScope(string profile, string revision)
     {
-        Scope("", profile); Scope("", revision);
+        Scope(profile); Scope(revision);
         return "schema-3/profile-revisions/" + profile + "/" + revision;
     }
 
@@ -237,7 +238,7 @@ public sealed partial class EntryPoint
 
     private static string UserRevisionScope(string profile, string user, string script, string revision)
     {
-        Scope("", profile); Scope("", revision);
+        Scope(profile); Scope(revision);
         return UserScope(user, script) + "/revisions/" + profile + "/" + revision;
     }
     private static async ValueTask<DriverProfile?> ReadUserRevisionAsync(IPluginHostContext host, string profile, string user, string script, string revision, CancellationToken token)

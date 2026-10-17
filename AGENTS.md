@@ -12,10 +12,10 @@
 |---|---|
 | 插件分组、使用与源码目录 | `README.md` |
 | 作者开发与验证 | `CONTRIBUTING.md` |
-| data-specialized 数据/能力/脚本 | `docs/author/DATA_SPECIALIZED_PLUGIN.md` |
-| managed 浏览器扩展与公共元素 | `docs/author/FRONTEND_PLUGIN.md` |
-| 判断脚本 | `docs/author/JUDGE_SCRIPT.md` |
-| Preview、stable 候选与发布 | `docs/RELEASING.md` |
+| data-specialized 数据/能力/脚本 | `docs/author/data-specialized-plugin.md` |
+| managed 浏览器扩展与公共元素 | `docs/author/frontend-plugin.md` |
+| 判断脚本 | `docs/author/judge-script.md` |
+| Preview、stable 候选与发布 | `docs/development/release.md` |
 | 文档导航 | `docs/README.md`、`docs/map.json` |
 
 修改公共契约时同时读取 Host 的 `docs/reference/plugin-api/README.md` 和公开元素注册表。不要根据某台机器的相邻目录或旧 commit 猜测当前 API。CI 在一个运行中固定 SDK source SHA；本地联调显式提供 Host 路径。
@@ -45,7 +45,7 @@
 
 自动化测试从当前终端直接运行并继承权限。普通或管理员终端均可，不主动 UAC、降权或按权限跳过。Windows managed/宿主运行测试仍需要 Windows；平台缺失写明 NOT_RUN，不冒称普通权限导致无法测试。Host 功能联调使用其 asInvoker Test Host，正式发行 EXE 的管理员要求保持。
 
-日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。完整耗时记录、真实能力边界、原生输入和报告见 `docs/TESTING.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/RELEASING.md`：
+日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。完整耗时记录、真实能力边界、原生输入和报告见 `docs/testing/README.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/development/release.md`：
 
 ```text
 python tools/repo.py check source
@@ -55,7 +55,7 @@ python -m unittest discover -s tests/tooling -v
 python tools/repo.py check source --base <完整PR基线SHA>
 python tools/repo.py check host --host-root <显式Host路径> --sdk-sha <完整HostSHA>
 node tests/run.mjs daily --changed --base <完整PR基线SHA> --host-root <显式Host路径>
-python tools/repo.py release candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output .generated/stable-candidate
+python tools/repo.py release candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output <新的外部stable-candidate目录>
 ```
 
 PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享输入保守扩大。合并后稳定候选使用当前受保护 main 的 catalog/state/packages 快照，按已发布游标覆盖累计未发行变更。没有发行变化返回 `NO_CHANGES`，不得制造新版本或空生成物提交。本地合成 run ID 只用于诊断，不能用于远端发布。
@@ -88,6 +88,8 @@ dry-run 不写远端。实际写入入口必须有可测试实现，不能以永
 
 正式支持与验收范围为 Windows 11 x64，现役 Plugin API 精确为 2.2，Frontend API 为 1.7，自有 .NET 工程使用 .NET 10。持续清理无调用的旧 Nexus 协议、别名和工具入口；受支持的自动迁移必须具有明确路线、身份校验和应用／数据恢复，稳定发现入口及必要桥接保持可达；外部上游最新稳定及前两版适配独立维护。旧配置、外观、历史及未知恢复现场原字节保留；已实现并验证恢复的迁移路线可以自动升级，未知 schema、缺失路线和未知恢复 journal 必须阻断。未支持的破坏性来源使用新目录人工迁移，独立升级屏障须先于资产公开生效。
 
-GameCheckIn 的专用凭据回读只接受当前任务与固定平台；默认遮罩，清除须保存任务才生效。普通 DTO、轮询、配置和诊断保持脱敏。本机未提交源码装配入口和正式 publisher 边界见 `docs/RELEASING.md`。
+GameCheckIn 的专用凭据回读只接受当前任务与固定平台；默认遮罩，清除须保存任务才生效。普通 DTO、轮询、配置和诊断保持脱敏。本机未提交源码装配入口和正式 publisher 边界见 `docs/development/release.md`。
 
 前端设计专项仅在仓外本地执行，覆盖全部宿主页与官方插件页面；语义卡片最多三层，第四层违规，深数据不截断。真实浏览器专项为本机验收必要条件，不加入 PR CI 或核心功能门禁，不提交专项脚本、截图或报告。公共规范与必要功能回归按产品代码维护。
+
+文档名称、职责、格式、权威来源与验证遵循[文档维护规范](docs/development/documentation.md)。

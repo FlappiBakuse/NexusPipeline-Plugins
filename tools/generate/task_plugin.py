@@ -31,7 +31,7 @@ def generate(root: Path, artifact, name, example=False, preset="json-id-array"):
       'data/resolve.json':{'inputs':[],'require':[{'var':'main','file':'TaskFixture.exe'}],
         'paths':{'mainExe':'{main}','args':'','configPath':'config.yaml' if preset=='yaml' else 'config.json','logPath':''}},
       **scripts,
-      'README.md':'# '+artifact+'\n\nStructure preset: '+preset+'\n\n'+('Synthetic protocol fixture; config.tasks entries are {id,name,enabled}. Logs use TASK <id> START|OK|FAIL. Run via the Host task protocol integration tool.\n' if example else
+      'README.md':'# '+artifact+'\n\nStructure preset: '+preset+'\n\n'+('Synthetic protocol 0.2.0 compatibility fixture. Configuration shape is defined by the '+preset+' discover adapter. Logs use TASK <id> START|OK|FAIL. Run via the Host task protocol integration tool.\n' if example else
         'Replace the adaptation marker after reviewing upstream task selection, current-log evidence, risk and retry units. Add positive and negative fixtures before packaging.\n')}
     text_root = 'data/i18n/'
     files['plugin.json']['taskProtocol']['localization']={'defaultLocale':'zh-CN','messages':{

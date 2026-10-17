@@ -14,6 +14,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/EmulatorSupport",
   "changelog": [
     {
+      "version": "0.2.3",
+      "date": "2026-10-17",
+      "items": [
+        "按解析、路径发现与厂商驱动职责组织实现，保留现有识别、启动、截图和关闭行为。"
+      ]
+    },
+    {
       "version": "0.2.2",
       "date": "2026-10-11",
       "items": [
@@ -26,13 +33,40 @@
       "items": [
         "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
       ]
-    },
-    {
-      "version": "0.2.0",
-      "date": "2026-10-04",
-      "items": [
-        "迁移到 .NET 10 与 Plugin API 2.0，使用 SDK 2.0.0；需要 Host 0.16.15。"
+    }
+  ],
+  "locales": {
+    "en-US": {
+      "displayName": "Emulator Support",
+      "gameName": "Android emulators",
+      "description": "Provides detection, startup, screenshots and shutdown for LDPlayer, Nox and BlueStacks emulators.",
+      "tags": [
+        "Emulator",
+        "Runtime support"
+      ],
+      "changelog": [
+        {
+          "version": "0.2.3",
+          "date": "2026-10-17",
+          "items": [
+            "Organize parsing, path discovery and vendor drivers while preserving detection, startup, screenshots and shutdown behavior."
+          ]
+        },
+        {
+          "version": "0.2.2",
+          "date": "2026-10-11",
+          "items": [
+            "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
+          ]
+        },
+        {
+          "version": "0.2.1",
+          "date": "2026-10-05",
+          "items": [
+            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
+          ]
+        }
       ]
     }
-  ]
+  }
 }
