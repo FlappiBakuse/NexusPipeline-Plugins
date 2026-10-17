@@ -37,7 +37,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
     public async ValueTask<PluginProviderPlan> PrepareAsync(PluginProviderPrepareRequest request, CancellationToken cancellationToken)
     {
         var host = _host ?? throw new InvalidOperationException("provider disabled");
-        var shared = await (request.ConfigRevision.Length == 0 ? ReadProfileAsync(host, Scope("", request.ProfileId), cancellationToken)
+        var shared = await (request.ConfigRevision.Length == 0 ? ReadProfileAsync(host, Scope(request.ProfileId), cancellationToken)
             : ReadRevisionAsync(host, request.ProfileId, request.ConfigRevision, cancellationToken)).ConfigureAwait(false)
             ?? throw new InvalidDataException("driver.profile_missing");
         var profile = string.IsNullOrWhiteSpace(request.UserId) ? shared
@@ -75,7 +75,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         var host = _host ?? throw new InvalidOperationException("provider disabled");
         var profile = context.Plan.PrivatePlan["profile"]!.Deserialize<DriverProfile>(DriverJson.Options)!;
         string committedRevision = context.Plan.PrivatePlan["committedRevision"]?.GetValue<string>() ?? "";
-        var shared = await (committedRevision.Length == 0 ? ReadProfileAsync(host, Scope("", profile.ProfileId), cancellationToken)
+        var shared = await (committedRevision.Length == 0 ? ReadProfileAsync(host, Scope(profile.ProfileId), cancellationToken)
             : ReadRevisionAsync(host, profile.ProfileId, committedRevision, cancellationToken)).ConfigureAwait(false);
         var saved = string.IsNullOrWhiteSpace(context.UserId) ? shared
             : context.Plan.PrivatePlan["committedUserRevision"]?.GetValue<string>() is { Length: > 0 } userRevision
@@ -155,10 +155,10 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
             string script = body["scriptId"]!.GetValue<string>();
             string profileId = body["profileId"]!.GetValue<string>();
             string user = body["userId"]?.GetValue<string>() ?? "";
-            string scope = string.IsNullOrWhiteSpace(user) ? Scope(script, profileId) : UserScope(user, script);
+            string scope = string.IsNullOrWhiteSpace(user) ? Scope(profileId) : UserScope(user, script);
             string sharedRevision = body["revision"]?.GetValue<string>() ?? "";
             async ValueTask<DriverProfile?> Parent() => sharedRevision.Length == 0
-                ? await ReadProfileAsync(host, Scope("", profileId), token).ConfigureAwait(false)
+                ? await ReadProfileAsync(host, Scope(profileId), token).ConfigureAwait(false)
                 : await ReadRevisionAsync(host, profileId, sharedRevision, token).ConfigureAwait(false);
             if (route == "profile")
             {
@@ -285,7 +285,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
         return "driver-v1-" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(identity)).ToLowerInvariant() + "-";
     }
 
-    internal static string Scope(string script, string profile)
+    internal static string Scope(string profile)
     {
         static bool Safe(string value) => value.Length is >= 1 and <= 128 && value.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_');
         if (!Safe(profile)) throw new InvalidDataException("invalid configuration identity");
@@ -295,7 +295,7 @@ public sealed partial class EntryPoint : INexusPlugin, IPluginExecutionProvider,
 
     private static string UserScope(string user, string script)
     {
-        Scope("", user); Scope("", script);
+        Scope(user); Scope(script);
         return "user-script/" + user + "/" + script;
     }
 
