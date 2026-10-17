@@ -12,6 +12,67 @@ namespace NexusPipeline.Plugin.GameCheckIn.Tests;
 public sealed partial class GameCheckInTests
 {
     [Fact]
+    public async Task TaskDeleteCancellationAndStoreFailurePreserveRetryAndTaskIsolation()
+    {
+        var context = new FakePluginHostContext("game-check-in");
+        using var data = new ControlledScopedDataStore(context.ScopedData);
+        var secrets = new ControlledSecrets(context.Secrets);
+        var service = new CheckInTaskService(new ScopedDataHostContext(context, data, secrets));
+        try
+        {
+            Guid id = await CreateKuroTaskAsync(context, "cancel-cleanup", "credential");
+            Guid other = await CreateKuroTaskAsync(context, "preserve-other", "other-credential");
+            var body = new JsonObject { ["taskId"] = id.ToString() };
+            data.FailNextWrite();
+            Assert.Equal(500, (await InvokeAsync(context, "DELETE", "tasks", body)).StatusCode);
+            Assert.NotNull(await GetTaskStateAsync(context, id));
+            Assert.NotNull(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+            using var cancelled = new CancellationTokenSource();
+            secrets.CancelOnDelete = cancelled;
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => InvokeAsync(context, "DELETE", "tasks", body, cancellationToken: cancelled.Token));
+            Assert.Single((await GetStateAsync(context))["tasks"]!.AsArray());
+            secrets.CancelOnDelete = null;
+            Assert.Equal(204, (await InvokeAsync(context, "DELETE", "tasks", body)).StatusCode);
+            Assert.Null(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+            Assert.Equal("other-credential", CredentialRecord.Decode(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(other, "credential-kuro")))!.Value);
+        }
+        finally { secrets.CancelOnDelete = null; await service.StopAsync(CancellationToken.None); }
+    }
+
+    [Fact]
+    public async Task TaskDeleteRetriesPendingSecretCleanupAfterFailureAndServiceRestart()
+    {
+        var context = new FakePluginHostContext("game-check-in");
+        using var data = new ControlledScopedDataStore(context.ScopedData);
+        var secrets = new ControlledSecrets(context.Secrets);
+        var host = new ScopedDataHostContext(context, data, secrets);
+        var service = new CheckInTaskService(host);
+        Guid id = await CreateKuroTaskAsync(context, "delete-retry", "credential");
+        await context.Secrets.SetAsync("unrelated/account", "preserve");
+        var body = new JsonObject { ["taskId"] = id.ToString() };
+        try
+        {
+            secrets.FailDeleteAt = 2;
+            Assert.Equal(500, (await InvokeAsync(context, "DELETE", "tasks", body)).StatusCode);
+            Assert.Empty((await GetStateAsync(context))["tasks"]!.AsArray());
+            secrets.FailDeleteAt = null;
+            Assert.Equal(204, (await InvokeAsync(context, "DELETE", "tasks", body)).StatusCode);
+            Assert.Null(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(id, "credential-kuro")));
+
+            Guid second = await CreateKuroTaskAsync(context, "delete-restart", "credential-two");
+            secrets.FailDeleteAt = secrets.DeleteCount + 1;
+            Assert.Equal(500, (await InvokeAsync(context, "DELETE", "tasks", new JsonObject { ["taskId"] = second.ToString() })).StatusCode);
+            await service.StopAsync(CancellationToken.None);
+            secrets.FailDeleteAt = null;
+            service = new CheckInTaskService(host);
+            await service.StartAsync(CancellationToken.None);
+            Assert.Null(await context.Secrets.GetAsync(CheckInTaskService.SecretKey(second, "credential-kuro")));
+            Assert.Equal("preserve", await context.Secrets.GetAsync("unrelated/account"));
+        }
+        finally { await service.StopAsync(CancellationToken.None); }
+    }
+
+    [Fact]
     public async Task TaskApi_SavesPlatformSecretsMaskedAndDeletesItsV2Scope()
     {
         var context = new FakePluginHostContext("game-check-in");

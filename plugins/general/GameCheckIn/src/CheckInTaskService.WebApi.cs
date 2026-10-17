@@ -207,17 +207,17 @@ internal sealed partial class CheckInTaskService
             if (_activeRuns.ContainsKey(input.TaskId)) return Error(409, "task_running");
             CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
             CheckInTask? task = store.Tasks.FirstOrDefault(item => item.Id == input.TaskId);
-            if (task is null) return Error(404, "task_not_found");
-            store.Tasks.Remove(task);
+            if (task is null && !store.PendingSecretDeletions.Contains(input.TaskId)) return Error(404, "task_not_found");
             try
             {
-                await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
-                _credentials.ReleaseTask(task.Id);
-                foreach (string secretName in SecretNames)
+                if (task is not null)
                 {
-                    await _context.Secrets.SetAsync(SecretKey(task.Id, secretName), null, cancellationToken)
-                        .ConfigureAwait(false);
+                    store.Tasks.Remove(task);
+                    // The task removal and exact cleanup identity commit together, so failure remains retryable after restart.
+                    store.PendingSecretDeletions.Add(task.Id);
+                    await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
                 }
+                await CompleteSecretDeletionAsync(store, input.TaskId, cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -225,7 +225,7 @@ internal sealed partial class CheckInTaskService
             }
             catch
             {
-                _context.Logger.Warn("已删除签到任务，但部分任务凭据清理失败。");
+                _context.Logger.Warn("签到任务删除或凭据清理未完成；已提交的清理记录可重试，并在重启后继续处理。");
                 return Error(500, "task_delete_failed");
             }
             return PluginWebApiResponse.Empty();

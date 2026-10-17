@@ -61,11 +61,12 @@ public sealed partial class GameCheckInTests
         string method,
         string route,
         JsonObject? body = null,
-        PluginClientSessionContext? client = null)
+        PluginClientSessionContext? client = null,
+        CancellationToken cancellationToken = default)
     {
         PluginWebApiRoute registration = context.WebApi.Routes.Single(item => item.Method == method && item.Route == route);
         var request = new PluginWebApiRequest(method, route, new Dictionary<string, string>(), body?.ToJsonString(), PluginClientConnectionKind.Local) { ClientSession = client };
-        return await registration.Handler(request, CancellationToken.None);
+        return await registration.Handler(request, cancellationToken);
     }
 
     private static async Task<JsonObject> GetTaskStateAsync(FakePluginHostContext context, Guid id)
@@ -177,6 +178,9 @@ public sealed partial class GameCheckInTests
 
     private sealed class ControlledSecrets(IPluginSecretStore inner) : IPluginSecretStore
     {
+        public int? FailDeleteAt { get; set; }
+        public int DeleteCount { get; private set; }
+        public CancellationTokenSource? CancelOnDelete { get; set; }
         public string? FailSetValue { get; set; }
         public bool FailReadsAfterSet { get; set; }
         public bool ReadFailure { get; set; }
@@ -186,6 +190,8 @@ public sealed partial class GameCheckInTests
 
         public async ValueTask SetAsync(string key, string? value, CancellationToken cancellationToken = default)
         {
+            if (value is null && ++DeleteCount == FailDeleteAt) throw new IOException("Injected secret deletion failure");
+            if (value is null && CancelOnDelete is { } cancellation) { cancellation.Cancel(); cancellationToken.ThrowIfCancellationRequested(); }
             if (value is not null && value == FailSetValue) throw new IOException("Injected secret rollback failure");
             await inner.SetAsync(key, value, cancellationToken);
             if (FailReadsAfterSet) ReadFailure = true;

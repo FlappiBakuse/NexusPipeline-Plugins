@@ -22,7 +22,10 @@ internal sealed partial class CheckInTaskService
     {
         CheckInTaskStore? store = await _context.ScopedData.ReadAsync<CheckInTaskStore>(StoreScope, cancellationToken).ConfigureAwait(false);
         if (store is null) return new CheckInTaskStore();
-        if (store.SchemaVersion != 2 || store.Tasks is null || store.SuccessfulCheckIns is null)
+        if (store.SchemaVersion != 2 || store.Tasks is null || store.SuccessfulCheckIns is null
+            || store.PendingSecretDeletions is null || store.PendingSecretDeletions.Any(id => id == Guid.Empty)
+            || store.PendingSecretDeletions.Distinct().Count() != store.PendingSecretDeletions.Count
+            || store.PendingSecretDeletions.Any(id => store.Tasks.Any(task => task.Id == id)))
         {
             throw new InvalidOperationException("Unsupported task store format");
         }
@@ -36,6 +39,15 @@ internal sealed partial class CheckInTaskService
 
     private ValueTask WriteStoreAsync(CheckInTaskStore store, CancellationToken cancellationToken) =>
         _context.ScopedData.WriteAsync(StoreScope, store, cancellationToken);
+
+    private async Task CompleteSecretDeletionAsync(CheckInTaskStore store, Guid taskId, CancellationToken cancellationToken)
+    {
+        _credentials.ReleaseTask(taskId);
+        foreach (string secretName in SecretNames)
+            await _context.Secrets.SetAsync(SecretKey(taskId, secretName), null, cancellationToken).ConfigureAwait(false);
+        store.PendingSecretDeletions.Remove(taskId);
+        await WriteStoreAsync(store, cancellationToken).ConfigureAwait(false);
+    }
 
     private async Task ApplySecretChangesAsync(
         Guid taskId,

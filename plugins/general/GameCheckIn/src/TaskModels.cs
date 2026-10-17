@@ -12,6 +12,9 @@ internal sealed class CheckInTaskStore
 
     [JsonPropertyName("successfulCheckIns")]
     public List<SuccessfulCheckIn> SuccessfulCheckIns { get; set; } = new();
+
+    [JsonPropertyName("pendingSecretDeletions")]
+    public List<Guid> PendingSecretDeletions { get; set; } = new();
 }
 
 internal sealed class CheckInTask

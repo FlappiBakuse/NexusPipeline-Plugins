@@ -24,7 +24,8 @@
       "date": "2026-10-17",
       "items": [
         "进入签到页面前先读取首屏任务状态，页面就绪后再完成切换。",
-        "快速切换页面会取消过期读取，并在页面正式可见后启动定期刷新。"
+        "快速切换页面会取消过期读取，并在页面正式可见后启动定期刷新。",
+        "任务删除与待清理凭据身份一同持久化；失败后可重试删除或重启继续清理，不影响其他任务。"
       ]
     },
     {
@@ -66,7 +67,8 @@
           "date": "2026-10-17",
           "items": [
             "Loads the initial task state before entering the check-in page and switches only after the page is ready.",
-            "Cancels superseded reads during rapid navigation and starts periodic refresh only after the page becomes visible."
+            "Cancels superseded reads during rapid navigation and starts periodic refresh only after the page becomes visible.",
+            "Persist task deletion together with exact pending credential cleanup; retry after failure or restart without touching other tasks."
           ]
         },
         {

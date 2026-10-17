@@ -65,6 +65,8 @@ internal sealed partial class CheckInTaskService
         {
             if (_stopped) throw new InvalidOperationException("签到任务服务已停止");
             CheckInTaskStore store = await ReadStoreAsync(cancellationToken).ConfigureAwait(false);
+            foreach (Guid taskId in store.PendingSecretDeletions.ToArray())
+                await CompleteSecretDeletionAsync(store, taskId, cancellationToken).ConfigureAwait(false);
             bool recovered = false;
             foreach (CheckInRun run in store.Tasks.SelectMany(task => task.Runs).Where(run => run.Status == "running"))
             {
