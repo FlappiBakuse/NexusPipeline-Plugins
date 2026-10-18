@@ -19,6 +19,8 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
 
+宿主路径字段使用公开 `nxp-path-picker`；组件根据宿主认证的连接能力统一显示本机文件、文件夹选择入口。远程或连接来源未确认时，按钮完全隐藏，文本框恢复完整宽度和圆角，仍可手工填写宿主路径；插件不用另行保留禁用按钮或为隐藏按钮预留空间。
+
 ## 目录与 manifest
 
 前端公开资源必须位于插件根目录的 `web/` 下：
@@ -193,7 +195,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 插件 Web API 的最终路径为 `/api/plugin-api/<plugin>/<route>`。每次调用最多执行 30 秒，请求体上限 16 MiB，JSON 响应上限 2 MiB，二进制响应上限 16 MiB；插件异常使用 `code: "plugin_error"` 返回。二进制响应只允许 `image/png`、`image/jpeg`、`image/webp`、`image/gif`、`image/avif` 和 `application/octet-stream`，并附带 `X-Content-Type-Options: nosniff` 与 `Cache-Control: no-store`。UI 处理器和历史处理器也有独立超时，超限内容会被宿主丢弃。
 
-`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。宿主公开的拖拽把手 token 为 `--nx-drag-handle-size`（常规尺寸）、`--nx-drag-handle-touch-size`（触控命中区）和 `--nx-drag-handle-glyph-size`（`⠿` 字形）；插件自有排序控件可使用这些变量统一视觉与触控尺寸。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
+`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。宿主公开的拖拽把手 token 为 `--nx-drag-handle-size`（24px 布局占位）、`--nx-drag-handle-touch-size`（触控命中区）和 `--nx-drag-handle-glyph-size`（`⠿` 字形）；公共把手保留至少 40px 命中区域，通过左右空白减少布局占位；排序行在把手与下一项之间保留至少 8px 间距，避免命中区域重叠。鼠标悬停不高亮，键盘焦点仍可辨认。插件自有排序控件可使用这些变量统一视觉与触控尺寸。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
 
 壁纸配置、配额、文件校验、去重、轮换与配色属于插件业务：插件用 `context.Assets` 保存资产，用插件 Web API 提供状态与二进制读取，再通过 `host.appearance` 应用背景与 token。宿主不再提供服务端壁纸存储。
 
