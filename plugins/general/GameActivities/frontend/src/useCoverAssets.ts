@@ -6,7 +6,8 @@ interface Binding { entityId: string | null; desired: string | null; displayed: 
 export function createCoverAssets(host: ActivityHost, slides: ComputedRef<CoverSlide[]>) {
   const images = shallowRef<Record<string, string>>({});
   const entries = new Map<string, Entry>(), bindings = new Map<string, Binding>();
-  let disposed = false, running = 0, timer: ReturnType<typeof setTimeout> | undefined;
+  let disposed = false, running = 0, groupSequence = 0, timer: ReturnType<typeof setTimeout> | undefined;
+  function createGroup() { return `details/${++groupSequence}/`; }
   function collect() {
     for (const entry of entries.values()) entry.references.clear();
     for (const [id, binding] of bindings) for (const asset of [binding.desired, binding.displayed]) if (asset) entries.get(asset)?.references.add(id);
@@ -55,6 +56,6 @@ export function createCoverAssets(host: ActivityHost, slides: ComputedRef<CoverS
   }
   const stop = watch(() => slides.value.map(s => `${s.id}:${s.entityId ?? ""}:${s.cover?.assetId ?? ""}`).join("|"), () => bindMany("overview/", slides.value), { immediate: true });
   function dispose() { if (disposed) return; disposed = true; stop(); clearTimeout(timer); for (const entry of entries.values()) { entry.request?.abort(); if (entry.url) URL.revokeObjectURL(entry.url); } entries.clear(); bindings.clear(); images.value = {}; }
-  return { images, bindMany, releaseImage, releaseGroup, retryFailed, dispose };
+  return { images, createGroup, bindMany, releaseImage, releaseGroup, retryFailed, dispose };
 }
 export type CoverAssetsModel = ReturnType<typeof createCoverAssets>;

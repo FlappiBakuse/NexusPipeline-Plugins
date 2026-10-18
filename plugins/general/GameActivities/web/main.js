@@ -2876,7 +2876,7 @@ var lo = { class: "ga-event-copy" }, uo = {
 		zone: {}
 	},
 	setup(e) {
-		let t = e, n = oo(t.host), r = `details/${crypto.randomUUID()}/`, i = /* @__PURE__ */ B(/* @__PURE__ */ new Set([
+		let t = e, n = oo(t.host), r = t.covers.createGroup(), i = /* @__PURE__ */ B(/* @__PURE__ */ new Set([
 			"ongoing",
 			"upcoming",
 			"unknown"
@@ -2929,7 +2929,7 @@ var lo = { class: "ga-event-copy" }, uo = {
 			]), X("div", Ao, [(J(!0), Y(K, null, cr(t.items, (t) => (J(), Ai(go, {
 				key: t.eventId,
 				item: t,
-				image: e.covers.images.value[r + t.eventId],
+				image: e.covers.images.value[V(r) + t.eventId],
 				host: e.host,
 				now: e.now,
 				zone: e.zone
@@ -3143,31 +3143,37 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 	"title",
 	"aria-pressed"
 ], Ss = {
-	class: "ga-button-glyph",
+	class: "ga-size-glyph",
+	viewBox: "0 0 24 24",
+	fill: "none",
+	stroke: "currentColor",
+	"stroke-width": "2",
+	"stroke-linecap": "round",
+	"stroke-linejoin": "round",
 	"aria-hidden": "true"
-}, Cs = [
+}, Cs = ["d"], ws = [
 	"aria-label",
 	"title",
 	"aria-pressed"
-], ws = {
+], Ts = {
 	class: "ga-button-glyph",
 	"aria-hidden": "true"
-}, Ts = [
+}, Es = [
 	"aria-label",
 	"title",
 	"disabled"
-], Es = ["aria-label", "title"], Ds = ["disabled", "aria-label"], Os = ["disabled", "aria-label"], ks = { class: "ga-carousel-controls" }, As = { class: "ga-indicators" }, js = [
+], Ds = ["aria-label", "title"], Os = ["disabled", "aria-label"], ks = ["disabled", "aria-label"], As = { class: "ga-carousel-controls" }, js = { class: "ga-indicators" }, Ms = [
 	"aria-label",
 	"aria-current",
 	"onClick"
-], Ms = [
+], Ns = [
 	"open",
 	"title",
 	"locked"
-], Ns = { key: 0 }, Ps = {
+], Ps = { key: 0 }, Fs = {
 	slot: "footer",
 	class: "ga-actions"
-}, Fs = ["disabled"], Is = ["disabled"], Ls = ["open", "title"], Rs = /* @__PURE__ */ Ln({
+}, Is = ["disabled"], Ls = ["disabled"], Rs = ["open", "title"], zs = /* @__PURE__ */ Ln({
 	__name: "ActivityCarousel",
 	props: {
 		host: {},
@@ -3314,7 +3320,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						title: V(n)(C.value ? "carousel.collapse" : "carousel.expand"),
 						"aria-pressed": C.value,
 						onClick: i[1] ||= (e) => C.value = !C.value
-					}, [X("span", Ss, N(C.value ? "⤡" : "⤢"), 1)], 8, xs),
+					}, [(J(), Y("svg", Ss, [X("path", { d: C.value ? "M3 8h5V3M8 8 3 3m18 13h-5v5m0-5 5 5" : "M8 3H3v5m0-5 7 7m6 11h5v-5m0 5-7-7" }, null, 8, Cs)]))], 8, xs),
 					O.value > 0 && E.value.length > 1 ? (J(), Y("nxp-button", {
 						key: 0,
 						type: "button",
@@ -3323,7 +3329,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 						title: V(n)(S.value ? "carousel.resume" : "carousel.pause"),
 						"aria-pressed": S.value,
 						onClick: i[2] ||= (e) => S.value = !S.value
-					}, [X("span", ws, N(S.value ? "▶️" : "⏸️"), 1)], 8, Cs)) : Z("", !0),
+					}, [X("span", Ts, N(S.value ? "▶️" : "⏸️"), 1)], 8, ws)) : Z("", !0),
 					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
@@ -3336,7 +3342,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 					}, [...i[16] ||= [X("span", {
 						class: "ga-button-glyph",
 						"aria-hidden": "true"
-					}, "🔄", -1)]], 8, Ts),
+					}, "🔄", -1)]], 8, Es),
 					X("nxp-button", {
 						type: "button",
 						class: "ga-icon-button",
@@ -3346,7 +3352,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 					}, [...i[17] ||= [X("span", {
 						class: "ga-button-glyph",
 						"aria-hidden": "true"
-					}, "⚙️", -1)]], 8, Es)
+					}, "⚙️", -1)]], 8, Ds)
 				]),
 				E.value.length > 1 ? (J(), Y("nxp-button", {
 					key: 0,
@@ -3358,7 +3364,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				}, [...i[18] ||= [X("span", {
 					class: "ga-page-glyph",
 					"aria-hidden": "true"
-				}, "‹", -1)]], 8, Ds)) : Z("", !0),
+				}, "‹", -1)]], 8, Os)) : Z("", !0),
 				E.value.length > 1 ? (J(), Y("nxp-button", {
 					key: 1,
 					type: "button",
@@ -3369,8 +3375,8 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				}, [...i[19] ||= [X("span", {
 					class: "ga-page-glyph",
 					"aria-hidden": "true"
-				}, "›", -1)]], 8, Os)) : Z("", !0),
-				X("div", ks, [X("div", As, [(J(!0), Y(K, null, cr(E.value, (e, t) => (J(), Y("nxp-button", {
+				}, "›", -1)]], 8, ks)) : Z("", !0),
+				X("div", As, [X("div", js, [(J(!0), Y(K, null, cr(E.value, (e, t) => (J(), Y("nxp-button", {
 					key: e.id,
 					type: "button",
 					"aria-label": `${V(n)("carousel.show")} ${V(n)(`game.${e.summary.gameId}`)}`,
@@ -3380,7 +3386,7 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				}, [...i[20] ||= [X("span", {
 					class: "ga-indicator-bar",
 					"aria-hidden": "true"
-				}, null, -1)]], 10, js))), 128))])])
+				}, null, -1)]], 10, Ms))), 128))])])
 			], 42, os)) : Z("", !0),
 			g.value && V(r) ? (J(), Y("nxp-modal", {
 				key: 3,
@@ -3401,21 +3407,21 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				onSave: oe,
 				onCancel: i[6] ||= (e) => g.value = !1
 			}, {
-				default: xn(() => [w.value ? (J(), Y("span", Ns, [zi(N(V(n)(`cache.${w.value.health.cacheState}`)), 1), T.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + N(V(n)("state.lastGood")) + " " + N(ie(T.value.health.lastGoodAt)) + " (" + N(V(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
+				default: xn(() => [w.value ? (J(), Y("span", Ps, [zi(N(V(n)(`cache.${w.value.health.cacheState}`)), 1), T.value?.health.lastGoodAt ? (J(), Y(K, { key: 0 }, [zi(" · " + N(V(n)("state.lastGood")) + " " + N(ie(T.value.health.lastGoodAt)) + " (" + N(V(f)) + ")", 1)], 64)) : Z("", !0)])) : Z("", !0)]),
 				_: 1
 			}, 8, [
 				"settings",
 				"host",
 				"busy",
 				"error"
-			]), X("div", Ps, [X("nxp-button", {
+			]), X("div", Fs, [X("nxp-button", {
 				disabled: V(s),
 				onClick: i[7] ||= (e) => g.value = !1
-			}, N(V(n)("cancel")), 9, Fs), X("nxp-button", {
+			}, N(V(n)("cancel")), 9, Is), X("nxp-button", {
 				tone: "primary",
 				disabled: V(s) || !_.value?.intervalValid,
 				onClick: i[8] ||= (e) => _.value?.save()
-			}, N(V(n)("save")), 9, Is)])], 40, Ms)) : Z("", !0),
+			}, N(V(n)("save")), 9, Ls)])], 40, Ns)) : Z("", !0),
 			v.value ? (J(), Y("nxp-modal", {
 				key: 4,
 				open: v.value,
@@ -3435,13 +3441,13 @@ var Ho = { class: "ga-settings" }, Uo = ["aria-label", "data-help"], Wo = { clas
 				"now",
 				"covers",
 				"zone"
-			])) : Z("", !0)], 40, Ls)) : Z("", !0)
+			])) : Z("", !0)], 40, Rs)) : Z("", !0)
 		], 32));
 	}
 });
 //#endregion
 //#region src/useActivityState.ts
-function zs(e) {
+function Bs(e) {
 	let t = /* @__PURE__ */ Bt(null), n = /* @__PURE__ */ Bt({}), r = /* @__PURE__ */ B(0), i = /* @__PURE__ */ B(""), a = /* @__PURE__ */ B(!1), o = /* @__PURE__ */ B(!1), s = /* @__PURE__ */ B(Date.now()), c = /* @__PURE__ */ Bt(null), l = $(() => o.value || ["queued", "running"].includes(c.value?.status ?? "")), u = /* @__PURE__ */ B(Intl.DateTimeFormat().resolvedOptions().timeZone), d = $(() => o.value || !!t.value?.refreshing || ["queued", "running"].includes(c.value?.status ?? "")), f = new AbortController(), p = !1, m = 0, h = !1, g = null, _ = null, v, y = Date.now(), b = performance.now(), x = /* @__PURE__ */ new Map();
 	function S(e) {
 		p || (i.value = e instanceof Error ? e.message : String(e));
@@ -3586,9 +3592,12 @@ function zs(e) {
 }
 //#endregion
 //#region src/useCoverAssets.ts
-function Bs(e, t) {
-	let n = /* @__PURE__ */ Bt({}), r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = !1, o = 0, s;
-	function c() {
+function Vs(e, t) {
+	let n = /* @__PURE__ */ Bt({}), r = /* @__PURE__ */ new Map(), i = /* @__PURE__ */ new Map(), a = !1, o = 0, s = 0, c;
+	function l() {
+		return `details/${++s}/`;
+	}
+	function u() {
 		for (let e of r.values()) e.references.clear();
 		for (let [e, t] of i) for (let n of [t.desired, t.displayed]) n && r.get(n)?.references.add(e);
 		for (let [e, t] of r) t.references.size || (t.request?.abort(), t.url && URL.revokeObjectURL(t.url), r.delete(e));
@@ -3597,7 +3606,7 @@ function Bs(e, t) {
 			return n ? [[e, n]] : [];
 		}));
 	}
-	function l(e, t) {
+	function d(e, t) {
 		let n = new Set(t.map((t) => e + t.id));
 		for (let t of i.keys()) t.startsWith(e) && !n.has(t) && i.delete(t);
 		for (let n of t) {
@@ -3615,33 +3624,33 @@ function Bs(e, t) {
 				retryAt: 0
 			}), o && r.get(o)?.state === "ready" && (c.displayed = o);
 		}
-		c(), p();
+		u(), h();
 	}
-	function u(e) {
-		i.delete(e), c(), p();
+	function f(e) {
+		i.delete(e), u(), h();
 	}
-	function d(e) {
+	function p(e) {
 		for (let t of i.keys()) t.startsWith(e) && i.delete(t);
-		c(), p();
+		u(), h();
 	}
-	function f() {
+	function m() {
 		for (let e of r.values()) e.state === "failed" && (e.retryAt = 0, e.attempts = 0);
-		p();
+		h();
 	}
-	function p() {
-		if (clearTimeout(s), a) return;
+	function h() {
+		if (clearTimeout(c), a) return;
 		for (let e of r.values()) {
 			if (o >= 4) break;
-			e.references.size && e.state === "failed" && e.attempts < 4 && e.retryAt <= Date.now() && h(e);
+			e.references.size && e.state === "failed" && e.attempts < 4 && e.retryAt <= Date.now() && _(e);
 		}
 		let e = [...r.values()].filter((e) => e.references.size && e.state === "failed" && e.attempts < 4).map((e) => e.retryAt);
-		e.length && o < 4 && (s = setTimeout(p, Math.max(50, Math.min(...e) - Date.now())));
+		e.length && o < 4 && (c = setTimeout(h, Math.max(50, Math.min(...e) - Date.now())));
 	}
-	async function m(e) {
+	async function g(e) {
 		let t = new Image();
 		t.src = e, await t.decode();
 	}
-	async function h(t) {
+	async function _(t) {
 		t.state = "loading", t.attempts++, o++;
 		let n = new AbortController();
 		t.request = n;
@@ -3651,7 +3660,7 @@ function Bs(e, t) {
 				query: { assetId: t.assetId },
 				signal: n.signal
 			});
-			if (s = URL.createObjectURL(o), await m(s), a || n.signal.aborted || r.get(t.assetId) !== t) return;
+			if (s = URL.createObjectURL(o), await g(s), a || n.signal.aborted || r.get(t.assetId) !== t) return;
 			t.url = s, s = void 0, t.state = "ready";
 			for (let e of i.values()) e.desired === t.assetId && (e.displayed = t.assetId);
 		} catch (e) {
@@ -3662,30 +3671,31 @@ function Bs(e, t) {
 				6e5
 			][Math.min(t.attempts - 1, 3)], /401|403/.test(String(e)) && (t.attempts = 4));
 		} finally {
-			s && URL.revokeObjectURL(s), o--, t.request = void 0, c(), p();
+			s && URL.revokeObjectURL(s), o--, t.request = void 0, u(), h();
 		}
 	}
-	let g = Dn(() => t.value.map((e) => `${e.id}:${e.entityId ?? ""}:${e.cover?.assetId ?? ""}`).join("|"), () => l("overview/", t.value), { immediate: !0 });
-	function _() {
+	let v = Dn(() => t.value.map((e) => `${e.id}:${e.entityId ?? ""}:${e.cover?.assetId ?? ""}`).join("|"), () => d("overview/", t.value), { immediate: !0 });
+	function y() {
 		if (!a) {
-			a = !0, g(), clearTimeout(s);
+			a = !0, v(), clearTimeout(c);
 			for (let e of r.values()) e.request?.abort(), e.url && URL.revokeObjectURL(e.url);
 			r.clear(), i.clear(), n.value = {};
 		}
 	}
 	return {
 		images: n,
-		bindMany: l,
-		releaseImage: u,
-		releaseGroup: d,
-		retryFailed: f,
-		dispose: _
+		createGroup: l,
+		bindMany: d,
+		releaseImage: f,
+		releaseGroup: p,
+		retryFailed: m,
+		dispose: y
 	};
 }
 //#endregion
 //#region src/main.ts
-function Vs(e) {
-	let t = zs(e), n = Bs(e, $(() => (t.current.value?.selectedFeeds ?? []).map((e) => {
+function Hs(e) {
+	let t = Bs(e), n = Vs(e, $(() => (t.current.value?.selectedFeeds ?? []).map((e) => {
 		let n = Vo(e.gameId, e.progressionId);
 		return {
 			id: n,
@@ -3693,7 +3703,7 @@ function Vs(e) {
 			cover: t.feeds.value[n]?.overview?.cover ?? null
 		};
 	}))), r = e.dashboard.registerCard("carousel", (r) => {
-		let i = Qa(Rs, {
+		let i = Qa(zs, {
 			host: e,
 			state: t,
 			covers: n
@@ -3707,4 +3717,4 @@ function Vs(e) {
 	} };
 }
 //#endregion
-export { Vs as activate };
+export { Hs as activate };

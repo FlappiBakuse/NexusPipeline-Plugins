@@ -63,6 +63,14 @@ export async function assertGameActivitiesBehavior(plugin) {
     assert.equal(calls, 1); assert.equal(covers.images.value["overview/slide"], undefined);
     fail = false; covers.retryFailed(); await settle();
     const oldUrl = covers.images.value["overview/slide"]; assert.ok(oldUrl);
+    const firstGroup = covers.createGroup(), secondGroup = covers.createGroup();
+    assert.notEqual(firstGroup, secondGroup);
+    covers.bindMany(firstGroup, [{ id: "item", entityId: "entity", cover: { assetId: "one" } }]);
+    covers.bindMany(secondGroup, [{ id: "item", entityId: "entity", cover: { assetId: "one" } }]); await settle();
+    covers.releaseGroup(firstGroup);
+    assert.equal(covers.images.value[firstGroup + "item"], undefined);
+    assert.equal(covers.images.value[secondGroup + "item"], oldUrl);
+    covers.releaseGroup(secondGroup);
     covers.bindMany("details/", [{ id: "item", entityId: "entity", cover: { assetId: "one" } }]); await settle();
     assert.equal(calls, 2); assert.equal(covers.images.value["details/item"], oldUrl);
     slides.value = [{ id: "slide", entityId: "entity", cover: { assetId: "two" } }]; await settle();
