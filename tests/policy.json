@@ -216,7 +216,9 @@
         "baah-reward-safe-retry",
         "baah-gap-isolation",
         "sup-actions-baah-pc-flags-0",
-        "recognition-baah-unknown-selection"
+        "recognition-baah-unknown-selection",
+        "baah-login-optional-popup",
+        "baah-login-required-child-failure"
       ],
       "realScenario": "P-S-BAAH"
     },

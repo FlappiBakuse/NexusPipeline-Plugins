@@ -17,6 +17,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/BAAH",
   "changelog": [
     {
+      "version": "0.3.5",
+      "date": "2026-10-18",
+      "items": [
+        "修复登录流程中没有社区弹窗时被误判失败并触发重试的问题；真正的登录失败仍保留。"
+      ]
+    },
+    {
       "version": "0.3.4",
       "date": "2026-10-16",
       "items": [
@@ -28,13 +35,6 @@
       "date": "2026-10-14",
       "items": [
         "支持 Host 0.17.4 任务协议：保留未知任务与原启用准备/收尾，结果说明披露未逐项核验范围。"
-      ]
-    },
-    {
-      "version": "0.3.2",
-      "date": "2026-10-11",
-      "items": [
-        "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
       ]
     }
   ],
@@ -51,6 +51,13 @@
       ],
       "changelog": [
         {
+          "version": "0.3.5",
+          "date": "2026-10-18",
+          "items": [
+            "Treat the optional login popup as absent when it is not shown, avoiding false login failures and retries while preserving real failures."
+          ]
+        },
+        {
           "version": "0.3.4",
           "date": "2026-10-16",
           "items": [
@@ -63,16 +70,9 @@
           "items": [
             "Supports Host 0.17.4 task recognition and retries, preserving unknown selections and enabled lifecycle tasks with truthful verification coverage."
           ]
-        },
-        {
-          "version": "0.3.2",
-          "date": "2026-10-11",
-          "items": [
-            "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
-          ]
         }
       ]
     }
   },
-  "updatedAt": "2026-10-07"
+  "updatedAt": "2026-10-18"
 }
