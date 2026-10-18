@@ -103,7 +103,7 @@ public sealed partial class GameCheckInTests
         Assert.All(platforms, platform => Assert.True(view["credentials"]![platform]!.GetValue<bool>()));
         Assert.Equal("", view["remark"]!.GetValue<string>());
         Assert.False(view["notification"]!["enabled"]!.GetValue<bool>());
-        Assert.Equal("", view["notification"]!["smtpTo"]!.GetValue<string>());
+        Assert.Empty(view["notification"]!["notificationTaskIds"]!.AsArray());
         Assert.Null(view["webhookSecrets"]);
         Assert.Null(view["smtpSecrets"]);
         string serialized = view.ToJsonString();

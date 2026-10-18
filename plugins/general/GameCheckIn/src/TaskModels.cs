@@ -5,7 +5,7 @@ namespace NexusPipeline.Plugin.GameCheckIn;
 internal sealed class CheckInTaskStore
 {
     [JsonPropertyName("schemaVersion")]
-    public int SchemaVersion { get; set; } = 2;
+    public int SchemaVersion { get; set; } = 3;
 
     [JsonPropertyName("tasks")]
     public List<CheckInTask> Tasks { get; set; } = new();
@@ -76,8 +76,8 @@ internal sealed class CheckInNotification
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
 
-    [JsonPropertyName("smtpTo")]
-    public string SmtpTo { get; set; } = "";
+    [JsonPropertyName("notificationTaskIds")]
+    public List<string> NotificationTaskIds { get; set; } = [];
 }
 
 internal sealed class CheckInRun
@@ -161,8 +161,8 @@ internal sealed class CheckInNotificationInput
     [JsonPropertyName("enabled")]
     public bool Enabled { get; set; }
 
-    [JsonPropertyName("smtpTo")]
-    public string SmtpTo { get; set; } = "";
+    [JsonPropertyName("notificationTaskIds")]
+    public List<string> NotificationTaskIds { get; set; } = [];
 }
 
 internal sealed class CheckInTaskOrderRequest

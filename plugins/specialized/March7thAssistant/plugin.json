@@ -5,9 +5,9 @@
   "displayName": "三月七小助手",
   "gameName": "崩坏：星穹铁道",
   "description": "March7th Assistant 专项脚本实例配置接管（Launcher 编辑配置 / Assistant 运行脚本，自动推导主程序、启动目标、配置与日志路径）",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.4",
+  "minHostVersion": "0.17.6",
   "localization": {
     "defaultLocale": "zh-CN",
     "locales": {
@@ -125,5 +125,5 @@
     "sha256": "7c0c67608f1902a21d4a8dbac223d648828fe01c384e2d93fca321fea6a8f0b8",
     "contentType": "image/x-icon"
   },
-  "apiVersion": "2.2"
+  "apiVersion": "2.3"
 }

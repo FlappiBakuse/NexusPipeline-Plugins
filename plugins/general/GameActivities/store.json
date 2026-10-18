@@ -19,7 +19,8 @@
       "date": "2026-10-18",
       "items": [
         "修复局域网 HTTP 访问活动详情空白，详情图片分组保持独立；缩放按钮使用矢量图标以适配手机字体。",
-        "活动设置的排序把手使用紧凑占位，增加窄屏文字空间。"
+        "活动设置的排序把手使用紧凑占位，增加窄屏文字空间。",
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
       ]
     },
     {
@@ -53,7 +54,8 @@
           "date": "2026-10-18",
           "items": [
             "Fix blank activity details over LAN HTTP with independent image groups, and use vector resize icons across mobile fonts.",
-            "Compact reorder handle spacing in activity settings to provide more room on narrow screens."
+            "Compact reorder handle spacing in activity settings to provide more room on narrow screens.",
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
           ]
         },
         {

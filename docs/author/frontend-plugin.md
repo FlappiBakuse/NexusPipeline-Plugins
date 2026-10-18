@@ -3,7 +3,7 @@
 <!-- contract:versions -->
 | Contract | Version |
 |---|---|
-| plugin-api | 2.2 |
+| plugin-api | 2.3 |
 | frontend-api | 1.7 |
 <!-- /contract:versions -->
 
@@ -11,7 +11,7 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.3，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 客户端会话与秘密输入
 
@@ -50,7 +50,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "version": "0.1.0",
   "kind": "managed-code",
   "minHostVersion": "0.17.2",
-  "apiVersion": "2.2",
+  "apiVersion": "2.3",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
@@ -170,9 +170,9 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API 2.2 配合方式
+## Plugin API 2.3 配合方式
 
-`PluginNotification.SmtpTo` 指定可选 SMTP 收件人。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。插件通过 `IPluginHostContext.Notifications` 发送通知。
+插件通过 `IPluginHostContext.Notifications.ListAsync` 读取脱敏通知任务，通过 `ValidateTargets` 校验所选 ID，并以 `PluginNotification.NotificationTaskIds` 发送。空选择不发送；禁用及已删除任务跳过。编辑时传入原引用以保留已删除目标。任务配置与密钥由宿主管理，不提供收件人覆盖。旧数据通过 `IPluginNotificationDataMigration` 在宿主迁移事务中转换，插件不直接读写宿主通知文件。
 
 managed-code 插件初始化接收唯一的 `IPluginHostContext`，按需使用：
 
@@ -224,7 +224,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件声明精确 Plugin API 2.2，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.7；
+- managed-code 插件声明精确 Plugin API 2.3，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.7；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
@@ -242,7 +242,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 独立今日概览卡片
 
-后端通过 Plugin API 2.2 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
+后端通过 Plugin API 2.3 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
 
 Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
 

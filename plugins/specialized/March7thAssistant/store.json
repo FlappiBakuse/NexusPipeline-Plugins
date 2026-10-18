@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/specialized/March7thAssistant",
   "changelog": [
     {
+      "version": "0.4.5",
+      "date": "2026-10-18",
+      "items": [
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
+      ]
+    },
+    {
       "version": "0.4.4",
       "date": "2026-10-16",
       "items": [
@@ -26,13 +33,6 @@
       "date": "2026-10-14",
       "items": [
         "支持 Host 0.17.4 任务协议：保留未知任务与原启用准备/收尾，结果说明披露未逐项核验范围。"
-      ]
-    },
-    {
-      "version": "0.4.2",
-      "date": "2026-10-11",
-      "items": [
-        "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
       ]
     }
   ],
@@ -48,6 +48,13 @@
       ],
       "changelog": [
         {
+          "version": "0.4.5",
+          "date": "2026-10-18",
+          "items": [
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
+          ]
+        },
+        {
           "version": "0.4.4",
           "date": "2026-10-16",
           "items": [
@@ -59,13 +66,6 @@
           "date": "2026-10-14",
           "items": [
             "Supports Host 0.17.4 task recognition and retries, preserving unknown selections and enabled lifecycle tasks with truthful verification coverage."
-          ]
-        },
-        {
-          "version": "0.4.2",
-          "date": "2026-10-11",
-          "items": [
-            "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
           ]
         }
       ]

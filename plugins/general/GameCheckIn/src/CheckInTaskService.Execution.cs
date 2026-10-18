@@ -124,9 +124,7 @@ internal sealed partial class CheckInTaskService
                     await _context.Notifications.SendAsync(
                         new PluginNotification(title, body)
                         {
-                            SmtpTo = string.IsNullOrWhiteSpace(task.Notification.SmtpTo)
-                                ? null
-                                : task.Notification.SmtpTo.Trim(),
+                            NotificationTaskIds = task.Notification.NotificationTaskIds.ToArray(),
                         },
                         cancellationToken).ConfigureAwait(false);
                 }

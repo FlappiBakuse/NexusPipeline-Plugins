@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import type { Directive } from "vue";
-import type { PluginHost, PlatformOption, Schedule, Task, TaskDraft, TaskSavePayload, Translate } from "./types";
+import type { NotificationTask, PluginHost, PlatformOption, Schedule, Task, TaskDraft, TaskSavePayload, Translate } from "./types";
 import { createCredentialEditor } from './credentials';
 import TajiduoLogin from './TajiduoLogin.vue';
 
@@ -10,6 +10,7 @@ const props = defineProps<{
   task: Task | null;
   tasks: Task[];
   platforms: PlatformOption[];
+  notificationTasks: NotificationTask[];
   timeZoneId: string;
   submitting: boolean;
   error: string;
@@ -44,6 +45,13 @@ const vCredentialInput: Directive<HTMLElement, string> = {
     credentialInputListeners.delete(element);
   },
 };
+const notificationOptions = computed(() => {
+  const options = props.notificationTasks.map(task => ({ value: task.id, label: `${task.name} · ${task.type.toUpperCase()}${!task.configured ? ` · ${t('status.notification_invalid', {}, '配置异常')}` : !task.enabled ? ` · ${t('status.notification_disabled', {}, '已禁用')}` : ''}` }));
+  for (const id of draft.value?.notification.notificationTaskIds || []) {
+    if (!options.some(option => option.value === id)) options.push({ value: id, label: t('status.notification_deleted', {}, '已删除的通知任务') });
+  }
+  return options;
+});
 const settingsExpanded = ref(true);
 const expandedScheduleIds = ref<string[]>([]);
 const localError = ref("");
@@ -100,14 +108,14 @@ function resetDraft() {
     enabled: task.enabled,
     games: Object.fromEntries(Object.entries(task.games || {}).map(([platform, games]) => [platform, [...games]])),
     schedules: (task.schedules || []).map(schedule => ({ ...schedule, days: [...schedule.days] })),
-    notification: { enabled: task.notification?.enabled === true, smtpTo: task.notification?.smtpTo || "" },
+    notification: { enabled: task.notification?.enabled === true, notificationTaskIds: [...(task.notification?.notificationTaskIds || [])] },
   } : {
     name: "",
     remark: "",
     enabled: true,
     games: {},
     schedules: [],
-    notification: { enabled: false, smtpTo: "" },
+    notification: { enabled: false, notificationTaskIds: [] },
   };
   void credentials.open(task?.id);
   settingsExpanded.value = true;
@@ -236,10 +244,6 @@ async function submit() {
     localError.value = t("error.schedule_settings_invalid", {}, "请检查计划时间和执行星期。");
     return;
   }
-  if (value.notification.smtpTo.length > 4096) {
-    localError.value = t("error.smtp_recipient_invalid", {}, "SMTP 收件人内容过长。");
-    return;
-  }
   localError.value = "";
   const credentialPayload = await credentials.payload();
   if (!credentialPayload) { localError.value = t('error.credential_draft_unconfirmed', {}, '凭据草稿尚未确认，请检查错误后再保存。'); return; }
@@ -249,7 +253,7 @@ async function submit() {
     name: value.name.trim(),
     remark: value.remark.trim(),
     schedules: value.schedules.map(schedule => ({ ...schedule, days: [...schedule.days] })),
-    notification: { ...value.notification, smtpTo: value.notification.smtpTo.trim() },
+    notification: { ...value.notification, notificationTaskIds: [...value.notification.notificationTaskIds] },
     ...credentialPayload,
   });
 }
@@ -385,21 +389,14 @@ async function submit() {
             id="gci-notification-enabled"
             :model-value="draft.notification.enabled"
             :label="t('field.notifications_enabled', {}, '启用通知')"
-            :description="t('field.notifications_help', {}, '使用宿主全局 Webhook 与 SMTP 设置。')"
+            :description="t('field.notifications_help', {}, '选择通知任务；不选则不发送。')"
             :aria-label="t('field.notifications_enabled', {}, '启用通知')"
             @change="draft.notification.enabled = eventValue<boolean>($event)"
           />
-          <nxp-field
-            :label="t('field.smtp_to', {}, 'SMTP 收件人')"
-            :help="t('field.smtp_to_help', {}, '留空时继承宿主全局 SMTP 收件人。')"
-          >
-            <nxp-text-input
-              id="gci-smtp-to"
-              :model-value="draft.notification.smtpTo"
-              autocomplete="email"
-              :aria-label="t('field.smtp_to', {}, 'SMTP 收件人')"
-              @change="draft.notification.smtpTo = String(eventValue($event) || '')"
-            />
+          <nxp-field :label="t('field.notification_tasks', {}, '通知任务')" :help="t('field.notifications_help', {}, '选择通知任务；不选则不发送。')">
+            <nxp-select id="gci-notification-tasks" :model-value="draft.notification.notificationTaskIds" :options="notificationOptions" :multiple="true"
+              :aria-label="t('field.notification_tasks', {}, '通知任务')"
+              @change="draft.notification.notificationTaskIds = eventValue<string[]>($event)" />
           </nxp-field>
         </section>
         </div>

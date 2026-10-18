@@ -44,7 +44,7 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   changePublicControl(view, "nxp-select#gci-games-cn", ["gi"]);
   changePublicControl(view, "nxp-switch-setting#gci-notification-enabled", true);
   changePublicControl(view, "nxp-text-input#gci-secret-cn", "task-cookie-secret");
-  changePublicControl(view, "nxp-text-input#gci-smtp-to", "task@example.test");
+  changePublicControl(view, "nxp-select#gci-notification-tasks", ["notification-fixture"]);
   const previousCrypto = Object.getOwnPropertyDescriptor(globalThis, "crypto");
   Object.defineProperty(globalThis, "crypto", {
     configurable: true,
@@ -81,7 +81,7 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (created.body.schedules?.[0]?.time !== "06:30") fail("新增任务没有提交固定时间设置");
   if (!created.body.schedules?.[0]?.id) fail("新增任务没有提交计划标识");
   if (created.body.secrets?.cn?.action !== "set") fail("新增任务没有提交平台凭据");
-  if (!created.body.notification?.enabled || created.body.notification?.smtpTo !== "task@example.test") fail("新增任务没有提交宿主通知设置和 SMTP 收件人");
+  if (!created.body.notification?.enabled || created.body.notification?.notificationTaskIds?.[0] !== "notification-fixture") fail("新增任务没有提交宿主通知设置和 通知任务选择");
   if ("cnDeviceId" in created.body || "kuroDevCode" in created.body || "kuroDistinctId" in created.body) fail("任务保存请求暴露了内部设备标识");
   if ("notifications" in created.body || "webhookUrl" in (created.body.secrets || {}) || "smtpPassword" in (created.body.secrets || {})) fail("任务保存请求仍包含旧版独立通知字段");
   if (![...view.querySelectorAll("nxp-overflow-text")].some(element => element.getAttribute("label") === "晨间签到")) fail(`新建任务保存后没有显示在签到任务列表：${JSON.stringify(state.tasks)}；${view.textContent}`);
@@ -114,7 +114,7 @@ export async function assertGameCheckInRoute(host, metrics, state) {
   if (!updated?.body || updated.body.name !== "晨间签到（更新）") fail("编辑任务没有提交修改后的设置");
   if (updated.body.secrets?.cn?.action !== "keep") fail("编辑时留空凭据没有提交保留动作");
   const saved = state.tasks.find(task => task.id === "task-check-in-1");
-  if (!saved?.credentials?.cn || saved.notification?.smtpTo !== "task@example.test") fail("留空凭据保留或 SMTP 收件人保存语义不正确");
+  if (!saved?.credentials?.cn || saved.notification?.notificationTaskIds?.[0] !== "notification-fixture") fail("留空凭据保留或 通知任务选择保存语义不正确");
 
   clickPluginButton(view, "编辑签到");
   await flushDom();

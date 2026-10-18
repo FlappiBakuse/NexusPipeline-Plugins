@@ -18,7 +18,8 @@
       "version": "0.3.4",
       "date": "2026-10-18",
       "items": [
-        "收紧排序把手的横向占位与卡片间距，保持窄屏信息空间和触控范围。"
+        "收紧排序把手的横向占位与卡片间距，保持窄屏信息空间和触控范围。",
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
       ]
     },
     {
@@ -52,7 +53,8 @@
           "version": "0.3.4",
           "date": "2026-10-18",
           "items": [
-            "Compact reorder handle spacing while preserving narrow-screen content space and touch targets."
+            "Compact reorder handle spacing while preserving narrow-screen content space and touch targets.",
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
           ]
         },
         {

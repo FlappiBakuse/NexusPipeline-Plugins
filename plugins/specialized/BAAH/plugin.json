@@ -7,7 +7,7 @@
   "description": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务",
   "version": "0.3.5",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.4",
+  "minHostVersion": "0.17.6",
   "capabilities": [
     "emulator",
     "self-managed-pc-launch"
@@ -164,5 +164,5 @@
     "sha256": "9c36c0cd7257ddde201d57a72cad096f6616b30d9b08e3686a948b25a29788b3",
     "contentType": "image/x-icon"
   },
-  "apiVersion": "2.2"
+  "apiVersion": "2.3"
 }

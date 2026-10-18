@@ -7,6 +7,7 @@ import type { PluginHost, Task, TaskSavePayload, TaskState, Translate } from "./
 const props = defineProps<{ host: PluginHost; initialState?: Partial<TaskState>; deferPolling?: boolean; signal?: AbortSignal }>();
 
 const state = ref<TaskState | null>(props.initialState ? {
+  notificationTasks: props.initialState.notificationTasks || [],
   tasks: Array.isArray(props.initialState.tasks) ? props.initialState.tasks : [],
   platforms: Array.isArray(props.initialState.platforms) ? props.initialState.platforms : [],
   timeZoneId: typeof props.initialState.timeZoneId === 'string' ? props.initialState.timeZoneId : '',
@@ -55,6 +56,7 @@ async function loadState(initial = false) {
     const result = await props.host.api.get("state", requestController.signal) as Partial<TaskState> | null;
     if (disposed) return;
     state.value = {
+      notificationTasks: result?.notificationTasks || [],
       tasks: Array.isArray(result?.tasks) ? result.tasks : [],
       platforms: Array.isArray(result?.platforms) ? result.platforms : [],
       timeZoneId: typeof result?.timeZoneId === "string" ? result.timeZoneId : "",
@@ -192,6 +194,7 @@ onBeforeUnmount(() => {
       v-if="tasks.length"
       :tasks="tasks"
       :platforms="platforms"
+      :notification-tasks="state?.notificationTasks || []"
       :translate="translate"
       @run="runTask"
       @edit="openEditor"
@@ -211,6 +214,7 @@ onBeforeUnmount(() => {
       :task="editorTask"
       :tasks="state?.tasks || []"
       :platforms="platforms"
+      :notification-tasks="state?.notificationTasks || []"
       :time-zone-id="state?.timeZoneId || ''"
       :submitting="saving"
       :error="editorError"
@@ -226,7 +230,7 @@ onBeforeUnmount(() => {
       <p class="gci-confirm-message">{{ t('task.delete_confirm', {}, '删除此任务、计划和凭据？') }} — {{ deleteTarget.name }}</p>
       <div slot="footer" class="gci-modal-footer-actions">
         <nxp-button :label="t('action.cancel', {}, '取消')" variant="ghost" :disabled="deleting" @click="deleteTarget = null" />
-        <nxp-button :label="t('action.confirm', {}, '确定')" tone="danger" :busy="deleting" @click="deleteTask" />
+        <nxp-button class="solid" :label="t('action.confirm', {}, '确定')" tone="danger" :busy="deleting" @click="deleteTask" />
       </div>
     </nxp-modal>
   </section>

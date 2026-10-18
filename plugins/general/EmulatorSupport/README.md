@@ -2,7 +2,7 @@
 
 为 NexusPipeline 增加雷电、夜神和 BlueStacks 模拟器的识别、启动、截图及关闭支持。
 
-当前版本 0.2.3，需要 NexusPipeline 0.17.2 或更高的兼容版本，运行环境为 Windows 11 x64。
+当前版本 0.2.4，需要 NexusPipeline 0.17.6 或更高的兼容版本，运行环境为 Windows 11 x64。
 
 ## 开始使用
 

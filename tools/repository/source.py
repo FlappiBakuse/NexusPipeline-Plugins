@@ -816,7 +816,7 @@ def validate_source_plugin(root: Path, *, supported_locales: frozenset[str] = re
         repository_io._require(bool(projects), f"managed-code 插件 {artifact} 缺少 src/*.csproj")
         repository_io._require(host_version >= repository_versions.parse_semver("0.17.0"), f"managed-code 插件 {artifact} 的 minHostVersion 必须至少为 0.17.0")
         api_version = manifest.get("apiVersion")
-        repository_io._require(api_version == "2.2", f"managed-code 插件 {artifact} 必须使用 Plugin API 2.2")
+        repository_io._require(api_version == "2.3", f"managed-code 插件 {artifact} 必须使用 Plugin API 2.3")
     if "configEditor" in manifest:
         repository_io._require(kind == "data-specialized", f"插件 {artifact} 的配置脚本仅支持 data-specialized")
     _validate_frontend_contract(root, manifest)

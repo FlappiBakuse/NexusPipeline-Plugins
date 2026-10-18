@@ -4,7 +4,7 @@ export type Schedule = { id: string; days: number[]; enabled: boolean; time: str
 export type RunResult = { platform: string; gameCode: string; success: boolean; code: string; message: string };
 export type Diagnostic = { platform: string; game: string; phase: string; httpStatus: number | null; retcode: number | null; isSign: boolean | null; classification: string; elapsedMs: number; attempt: number; scopes: unknown[] };
 export type Run = { diagnostics?: Diagnostic[]; diagnosticsVersion?: string; id: string; trigger: string; startedAt: string; completedAt: string | null; status: string; results: RunResult[] };
-export type CheckInNotification = { enabled: boolean; smtpTo: string };
+export type CheckInNotification = { enabled: boolean; notificationTaskIds: string[] };
 export type Task = {
   id: string;
   name: string;
@@ -20,7 +20,8 @@ export type Task = {
   nextRunAt: string | null;
   recentRun: Run | null;
 };
-export type TaskState = { tasks: Task[]; platforms: PlatformOption[]; timeZoneId: string };
+export type NotificationTask = { id: string; name: string; type: string; enabled: boolean; configured: boolean };
+export type TaskState = { notificationTasks: NotificationTask[]; tasks: Task[]; platforms: PlatformOption[]; timeZoneId: string };
 export type TaskDraft = {
   id?: string;
   name: string;

@@ -22,7 +22,6 @@
   "task.delete_confirm": "删除此任务、计划和凭据？",
   "field.name": "任务名称",
   "field.credential": "{platform} 凭据",
-  "field.smtp_to": "SMTP 收件人",
   "field.secret_configured": "已配置，点击眼睛显示",
   "field.secret_clear": "清除已保存凭据",
   "field.schedule": "定时列表",
@@ -137,8 +136,7 @@
   "field.kuroToken_description": "从库街区 APP 请求中获取 token；签到范围为游戏内签到。",
   "field.kuroToken_placeholder": "库街区 APP 抓包获取的 token",
   "field.notifications_enabled": "启用通知",
-  "field.notifications_help": "使用宿主全局 Webhook 与 SMTP 设置。",
-  "field.smtp_to_help": "留空时继承宿主全局 SMTP 收件人。",
+  "field.notifications_help": "选择通知任务；不选则不发送。",
   "field.schedule_help": "默认收起；展开后编辑周期与执行时间，拖拽左侧把手排序。按本机时区 {zone} 执行，应用关闭期间错过的时间不会补跑。",
   "schedule.no_days": "未选星期",
   "schedule.summary": "定时 {index} {time} · {days} 天",
@@ -203,5 +201,9 @@
   "tajiduo.sign_in": "登录",
   "error.tajiduo_login_input_invalid": "请填写 11 位手机号及有效密码或 4–8 位短信验证码。",
   "error.tajiduo_login_busy": "当前登录请求尚未结束，请稍候。",
-  "error.tajiduo_sms_cooldown": "发送验证码后请等待 60 秒再试。"
+  "error.tajiduo_sms_cooldown": "发送验证码后请等待 60 秒再试。",
+  "field.notification_tasks": "通知任务",
+  "status.notification_invalid": "配置异常",
+  "status.notification_disabled": "已禁用",
+  "status.notification_deleted": "已删除的通知任务"
 }

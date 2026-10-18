@@ -31,7 +31,8 @@ exchange("zzz-b-sign", "zzz", 1, true, { retcode: 0 });
 exchange("zzz-b-confirm", "zzz", 1, false, { retcode: 0, data: { is_sign: true } });
 const request = async (method, route, body, status = 200) => {
   const response = await runtime.api(method, `api/plugin-api/game-checkin/${route}`, body);
-  const result = await response.json();
+  const text = await response.text();
+  const result = text ? JSON.parse(text) : null;
   assert.equal(response.status, status, `${method} ${route}: ${JSON.stringify(result)}`);
   for (const cookie of cookies) assert.ok(!JSON.stringify(result).includes(cookie));
   return result;
@@ -57,15 +58,39 @@ try {
   const settings = JSON.parse(fs.readFileSync(settingsPath));
   Object.assign(settings, { UpdateCheckEnabled: false, PluginAutoUpdateEnabled: false, LightweightMode: true, OpenDesktopOnStartup: false,
     PluginPreferences: { "game-checkin": { Enabled: true } } });
+  Object.assign(settings, { smtpEnabled: false, smtpHost: "smtp.example.invalid", smtpUser: "synthetic@example.invalid",
+    smtpPassword: "migration-only-secret", smtpTo: "default@example.invalid" });
   fs.writeFileSync(settingsPath, JSON.stringify(settings));
+  const legacyId = "8d56cb32-9824-4f5d-ad85-04a5d063ca9b";
+  const legacyPath = path.join(runtime.runtimeDir, "config/plugins/game-checkin/scopes/tasks-v2/task-store.json");
+  fs.mkdirSync(path.dirname(legacyPath), { recursive: true });
+  const legacyBytes = JSON.stringify({ schemaVersion: 2, tasks: [{ id: legacyId, name: "Migrated disabled task",
+    remark: "retained remark", enabled: false, games: { os: ["gi"] }, schedules: [], runs: [], cnDeviceId: "retained-device",
+    notification: { enabled: true, smtpTo: "checkin@example.invalid" } }], successfulCheckIns: [], pendingSecretDeletions: [] });
+  fs.writeFileSync(legacyPath, legacyBytes);
   const plan = path.join(runtime.runtimeDir, "http-plan.json");
   fs.writeFileSync(plan, JSON.stringify({ runId: runtime.runId, exchanges }));
   prepareProcessIdentity();
   runtime.startRuntime(["service"], { NEXUS_TEST_HTTP_PLAN: plan }); await runtime.waitForService(null, 5000);
+  const migratedState = await request("GET", "state");
+  const migrated = migratedState.tasks.find(task => task.id === legacyId);
+  assert.ok(migrated); assert.equal(migrated.enabled, false); assert.equal(migrated.remark, "retained remark");
+  assert.equal(migrated.notification.notificationTaskIds.length, 1);
+  const notificationResponse = await runtime.api("GET", "api/notifications");
+  assert.equal(notificationResponse.status, 200);
+  const notifications = await notificationResponse.json(); assert.equal(notifications.length, 2);
+  assert.equal(notifications.find(task => task.id === migrated.notification.notificationTaskIds[0]).configuration.smtpTo, "checkin@example.invalid");
+  assert.ok(!JSON.stringify(notifications).includes("migration-only-secret"));
+  assert.equal(JSON.parse(fs.readFileSync(legacyPath, "utf8").replace(/^\uFEFF/, "")).schemaVersion, 3);
+  const journal = JSON.parse(fs.readFileSync(path.join(runtime.runtimeDir, ".nxp/state/notifications/migration.json"), "utf8").replace(/^\uFEFF/, ""));
+  assert.equal(journal.Committed, true);
+  const original = journal.Files.find(file => file.RelativePath.replaceAll("\\", "/").endsWith("tasks-v2/task-store.json"));
+  assert.equal(Buffer.from(original.Before, "base64").toString("utf8"), legacyBytes);
+  await request("DELETE", "tasks", { taskId: legacyId }, 204);
   const tasks = [];
   for (const [index, game, credential] of [[0, "gi", 0], [1, "gi", 1], [2, "hsr", 0], [3, "zzz", 1]]) {
     tasks.push(await request("POST", "tasks", { name: `Owned task ${index}`, remark: "", enabled: true,
-      games: { os: [game] }, schedules: [], notification: { enabled: false, smtpTo: "" },
+      games: { os: [game] }, schedules: [], notification: { enabled: false, notificationTaskIds: [] },
       secrets: { os: { action: "set", value: cookies[credential] } } }, 201));
   }
   assert.equal(new Set(tasks.map(task => task.id)).size, 4);

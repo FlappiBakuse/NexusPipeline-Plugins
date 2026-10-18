@@ -1,5 +1,5 @@
 {
-  "hostApiVersion": "2.2",
+  "hostApiVersion": "2.3",
   "frontendApiVersion": "1.7",
   "supportedLocales": [
     "zh-CN",

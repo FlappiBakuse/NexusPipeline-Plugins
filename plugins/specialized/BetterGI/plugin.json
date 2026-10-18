@@ -5,9 +5,9 @@
   "displayName": "更好的原神",
   "gameName": "原神",
   "description": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "kind": "data-specialized",
-  "minHostVersion": "0.17.4",
+  "minHostVersion": "0.17.6",
   "resolve": "data/resolve.json",
   "judgeScript": "data/judge.js",
   "configEditor": "data/editor.js",
@@ -123,5 +123,5 @@
     "sha256": "b0a24e99613f6b64665e62bd019852701b64d5d36c0b79c89eaeacfc66882454",
     "contentType": "image/x-icon"
   },
-  "apiVersion": "2.2"
+  "apiVersion": "2.3"
 }

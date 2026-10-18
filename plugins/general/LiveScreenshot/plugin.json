@@ -4,10 +4,10 @@
   "artifactName": "LiveScreenshot",
   "displayName": "实时截图窗口",
   "description": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "kind": "managed-code",
-  "minHostVersion": "0.17.2",
-  "apiVersion": "2.2",
+  "minHostVersion": "0.17.6",
+  "apiVersion": "2.3",
   "entryAssembly": "NexusPipeline.Plugin.LiveScreenshot.dll",
   "entryType": "NexusPipeline.Plugin.LiveScreenshot.EntryPoint",
   "capabilities": [
