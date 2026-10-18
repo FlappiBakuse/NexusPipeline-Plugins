@@ -20,6 +20,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameCheckIn",
   "changelog": [
     {
+      "version": "0.4.6",
+      "date": "2026-10-18",
+      "items": [
+        "收紧排序把手的横向占位与卡片间距，保持窄屏信息空间和触控范围。"
+      ]
+    },
+    {
       "version": "0.4.5",
       "date": "2026-10-17",
       "items": [
@@ -36,14 +43,6 @@
         "统一任务编辑器的公共控件与确认行为。",
         "新增塔吉多异环原生凭据、自动刷新、游戏签到与提交后状态确认。",
         "塔吉多支持短信与密码网页登录，自动凭据保存前保持遮罩，取消保留原值。"
-      ]
-    },
-    {
-      "version": "0.4.3",
-      "date": "2026-10-11",
-      "items": [
-        "开放五个平台网页登录，自动打开登录界面，并修复凭据认证、取消和保存重启恢复。",
-        "完善凭据提示及游戏选择框布局；任务运行记录只显示最近一次签到结果。"
       ]
     }
   ],
@@ -63,6 +62,13 @@
       ],
       "changelog": [
         {
+          "version": "0.4.6",
+          "date": "2026-10-18",
+          "items": [
+            "Compact reorder handle spacing while preserving narrow-screen content space and touch targets."
+          ]
+        },
+        {
           "version": "0.4.5",
           "date": "2026-10-17",
           "items": [
@@ -79,14 +85,6 @@
             "Aligns task editor controls and confirmation behavior with public frontend elements.",
             "Adds Tajiduo native credentials, automatic refresh, NTE game check-in and state confirmation.",
             "Adds Tajiduo SMS and password sign-in with masked credential drafts and cancellation that preserves existing credentials."
-          ]
-        },
-        {
-          "version": "0.4.3",
-          "date": "2026-10-11",
-          "items": [
-            "Enables browser login for all five platforms, opens login dialogs automatically, and improves credential validation, cancellation, and persistence.",
-            "Refines credential hints and game selection layout; each task displays only its latest sign-in run."
           ]
         }
       ]
