@@ -15,6 +15,15 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/GameActivities",
   "changelog": [
     {
+      "version": "0.1.3",
+      "date": "2026-10-18",
+      "items": [
+        "修复局域网 HTTP 访问活动详情空白，详情图片分组保持独立；缩放按钮使用矢量图标以适配手机字体。",
+        "活动设置的排序把手使用紧凑占位，增加窄屏文字空间。",
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
+      ]
+    },
+    {
       "version": "0.1.2",
       "date": "2026-10-16",
       "items": [
@@ -26,13 +35,6 @@
       "date": "2026-10-12",
       "items": [
         "调整活动卡表面、交互控件及前端生命周期验证。修复分页按钮重叠和 Emoji 图标裁切。"
-      ]
-    },
-    {
-      "version": "0.1.0",
-      "date": "2026-10-09",
-      "items": [
-        "提供独立活动卡、进度选择、缓存与来源诊断。"
       ]
     }
   ],
@@ -48,6 +50,15 @@
       ],
       "changelog": [
         {
+          "version": "0.1.3",
+          "date": "2026-10-18",
+          "items": [
+            "Fix blank activity details over LAN HTTP with independent image groups, and use vector resize icons across mobile fonts.",
+            "Compact reorder handle spacing in activity settings to provide more room on narrow screens.",
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
+          ]
+        },
+        {
           "version": "0.1.2",
           "date": "2026-10-16",
           "items": [
@@ -59,13 +70,6 @@
           "date": "2026-10-12",
           "items": [
             "Updates activity card surfaces, controls and frontend lifecycle validation. Fixes overlapping page controls and clipped emoji icons."
-          ]
-        },
-        {
-          "version": "0.1.0",
-          "date": "2026-10-09",
-          "items": [
-            "Adds a dashboard card, progression selection, cached feeds and source diagnostics."
           ]
         }
       ]

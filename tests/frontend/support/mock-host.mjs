@@ -42,6 +42,7 @@ export function defaultTestState() {
 
 export function gameCheckInTestState() {
   return {
+    notificationTasks: [{ id: "notification-fixture", name: "Test mail", type: "smtp", enabled: true, configured: true }],
     tasks: [],
     platforms: [
       { id: "cn", name: "米游社", games: [{ id: "gi", name: "原神" }] },
@@ -70,7 +71,7 @@ export function gameCheckInTask(input, id, previous = null) {
     enabled: input.enabled,
     games: structuredClone(input.games || {}),
     schedules: structuredClone(input.schedules || []),
-    notification: structuredClone(input.notification || { enabled: false, smtpTo: "" }),
+    notification: structuredClone(input.notification || { enabled: false, notificationTaskIds: [] }),
     runs: structuredClone(previous?.runs || []),
     credentials: {
       cn: configured("cn", previous?.credentials?.cn),

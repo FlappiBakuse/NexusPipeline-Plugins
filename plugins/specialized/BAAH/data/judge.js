@@ -137,7 +137,10 @@ function observe(text, tasks, emit, result, line, states) {
   if (skip) {
     if (cursor.stack.at(-1) === (skip[1] || skip[2])) {
       const owner = tasks.find(t => t.id === cursor.owners[0]);
-      if (owner && states[owner.id]?.status !== 'skipped') {
+      // CloseInform is optional inside EnterGame: no login popup means there is nothing to dismiss.
+      const optionalPopup = cursor.stack.length === 2 && cursor.stack[0] === 'EnterGame'
+        && (skip[1] || skip[2]) === 'CloseInform';
+      if (owner && !optionalPopup && states[owner.id]?.status !== 'skipped') {
         emit(owner, 'failed', 'baah.task.precondition_failed'); recordFailure(owner, 'baah.task.precondition_failed');
       }
       pop();

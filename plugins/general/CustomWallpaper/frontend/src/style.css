@@ -23,7 +23,7 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 .cw-item {
   display: grid;
   grid-template-columns: var(--nx-drag-handle-size) 72px minmax(0, 1fr) auto;
-  gap: var(--nx-space-3);
+  gap: var(--nx-space-2);
   align-items: center;
   padding: var(--nx-space-3);
   border: 0;
@@ -50,14 +50,8 @@ nxp-number-input, nxp-range, nxp-select { display: block; width: 100%; min-width
 
 @media (max-width: 600px) {
   .cw-controls, .cw-effects { grid-template-columns: minmax(0, 1fr); }
-  .cw-item { grid-template-columns: var(--nx-drag-handle-touch-size) 64px minmax(0, 1fr); }
-  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); --nx-drag-handle-size: var(--nx-drag-handle-touch-size); --nx-control-height: var(--nx-drag-handle-touch-size); }
+  .cw-item { grid-template-columns: var(--nx-drag-handle-size) 64px minmax(0, 1fr); }
   .cw-item img, .cw-thumb-placeholder { width: 64px; }
   .cw-item > nxp-button { grid-column: 3 / -1; justify-self: end; }
   .cw-card-footer { align-items: stretch; flex-direction: column; }
-}
-
-@media (pointer: coarse) and (min-width: 601px) {
-  .cw-item { grid-template-columns: var(--nx-drag-handle-touch-size) 72px minmax(0, 1fr) auto; }
-  .cw-item > nxp-drag-handle.cw-drag-handle { width: var(--nx-drag-handle-touch-size); min-width: var(--nx-drag-handle-touch-size); min-height: var(--nx-drag-handle-touch-size); --nx-drag-handle-size: var(--nx-drag-handle-touch-size); --nx-control-height: var(--nx-drag-handle-touch-size); }
 }

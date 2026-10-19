@@ -7,7 +7,7 @@ import type { CoverAssetsModel } from "./useCoverAssets";
 import type { ActivityHost, Feed } from "./types";
 const props = defineProps<{ feed: Feed; now: number; host: ActivityHost; covers: CoverAssetsModel; zone: string }>();
 const t = translator(props.host);
-const groupPrefix = `details/${crypto.randomUUID()}/`;
+const groupPrefix = props.covers.createGroup();
 const expanded = ref(new Set(["ongoing", "upcoming", "unknown"]));
 watch(() => props.feed.activities.filter(item => expanded.value.has(status(item, props.now))).map(item => ({ id: item.eventId, entityId: item.eventId, cover: item.cover })),
   values => props.covers.bindMany(groupPrefix, values), { immediate: true });

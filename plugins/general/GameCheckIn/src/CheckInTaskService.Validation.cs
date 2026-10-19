@@ -55,7 +55,7 @@ internal sealed partial class CheckInTaskService
             Notification = new CheckInNotification
             {
                 Enabled = input.Notification.Enabled,
-                SmtpTo = input.Notification.SmtpTo?.Trim() ?? "",
+                NotificationTaskIds = input.Notification.NotificationTaskIds.Distinct(StringComparer.Ordinal).ToList(),
             },
             Runs = existing?.Runs ?? new List<CheckInRun>(),
         };
@@ -68,10 +68,10 @@ internal sealed partial class CheckInTaskService
             || input.Schedules is null
             || input.Secrets is null
             || input.Notification is null
-            || input.Notification.SmtpTo is null) return "task_fields_invalid";
+            || input.Notification.NotificationTaskIds is null) return "task_fields_invalid";
         if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Trim().Length > 100) return "task_name_invalid";
         if (input.Remark is null || Encoding.UTF8.GetByteCount(input.Remark) > 512) return "task_remark_invalid";
-        if (input.Notification.SmtpTo.Length > 4096) return "smtp_recipient_invalid";
+        if (input.Notification.NotificationTaskIds.Count > 99 || input.Notification.NotificationTaskIds.Any(string.IsNullOrWhiteSpace)) return "notification_targets_invalid";
         if (input.Schedules.Count > 30) return "schedule_limit";
         foreach ((string platform, List<string> games) in input.Games)
         {

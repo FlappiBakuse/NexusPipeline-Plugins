@@ -24,7 +24,7 @@ public sealed partial class GameCheckInTests
             ["enabled"] = true,
             ["time"] = time,
         }),
-        ["notification"] = new JsonObject { ["enabled"] = false, ["smtpTo"] = "" },
+        ["notification"] = new JsonObject { ["enabled"] = false, ["notificationTaskIds"] = new JsonArray() },
         ["secrets"] = new JsonObject(),
     };
 

@@ -56,6 +56,7 @@ let host, plugins, code = 0, failure = null, selection;
 const reports = [];
 const phases = [];
 const cleaned = new Set();
+const generatedSources = new Map();
 async function step(label, command, args, { cwd = plugins?.directory || root, activeBudget = budget, extraEnv = {}, capture = null } = {}) {
   activeBudget.check(); const started = budget.elapsedMs;
   console.error(`[Plugins] ${label}`); fs.writeSync(log, `${label}\n${JSON.stringify([command, ...args])}\n`);
@@ -125,7 +126,15 @@ try {
       for (const name of frontendNames) {
         const frontend = path.join(plugins.directory,policy.plugins[name].root,"frontend");
         await step(`${name}: frontend typecheck`,npm,["run","typecheck"],{cwd:frontend});
+        // Vite writes tracked web assets; retain input bytes so the incremental source identity remains reusable.
+        const web = path.join(frontend, "..", "web");
+        for (const file of fs.readdirSync(web)) {
+          const target = path.join(web, file);
+          if (!fs.statSync(target).isFile() || fs.lstatSync(target).isSymbolicLink()) throw new Error("Invalid plugin web input");
+          generatedSources.set(target, fs.readFileSync(target));
+        }
         await step(`${name}: frontend build`,npm,["run","build"],{cwd:frontend});
+        fs.cpSync(web, path.join(runRoot, "generated-web", name), { recursive: true });
       }
     })(),
     (async () => {
@@ -300,7 +309,13 @@ finally {
   const cleanup = getProcessRunnerState(); if (!cleanup.cleanupComplete) code ||= 6;
   if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   if (budget.remainingMs({ cleanup: true }) <= 0) code ||= 5;
-  if (cleanup.cleanupComplete) { plugins?.release(); host?.release(); }
+  if (cleanup.cleanupComplete) {
+    for (const [file, bytes] of generatedSources) {
+      if (fs.lstatSync(file).isSymbolicLink()) throw new Error("Linked plugin web output");
+      fs.writeFileSync(file, bytes);
+    }
+    plugins?.release(); host?.release();
+  }
   if (policy.qualificationMs !== null && budget.elapsedMs > policy.qualificationMs) code ||= 5;
   fs.writeFileSync(path.join(runRoot, "summary.json"), JSON.stringify({ evidenceType: "actual", repository: "FlappiBakuse/NexusPipeline-Plugins",
     runId, inputPair:batch?.plan.inputPair??null, source: plugins?.source ?? null, partner: host?.source ?? null, policySha256: sha256(policyBytes.toString("utf8").replaceAll("\r\n", "\n")), selection,

@@ -1,6 +1,6 @@
 # 游戏活动实现与维护
 
-版本0.1.2，要求Host0.17.2、Plugin API2.2、Frontend API1.7。默认无订阅。活动设置通过公共 Modal footer 固定保存/取消操作，gameOrder 保存全部八个游戏的顺序（旧设置按已选游戏及默认剩余顺序补全），selectedGames 仅保存启用订阅。活动设置保存游戏顺序、区服与轮播间隔；设置v1使用revision CAS，订阅改变后立即获取数据。显示语言不改变区服。
+版本0.1.3，要求Host0.17.2、Plugin API2.2、Frontend API1.7。默认无订阅。活动设置通过公共 Modal footer 固定保存/取消操作，gameOrder 保存全部八个游戏的顺序（旧设置按已选游戏及默认剩余顺序补全），selectedGames 仅保存启用订阅。活动设置保存游戏顺序、区服与轮播间隔；设置v1使用revision CAS，订阅改变后立即获取数据。显示语言不改变区服。
 
 ## 内容与来源
 
@@ -8,7 +8,7 @@
 
 走马灯展示根层version、versionName、endTime、cover，保留版本倒计时。详情仅展示activities数组的name、description、可选kind、起止时间和封面，不追加卡池、其他集合或推导活动。描述按原文显示，无公告链接。活动按进行中、即将开始、已结束、时间未知分组，已结束默认折叠；组内按截止或开始时间排列，同时间保持来源顺序。进行中优先临近截止，已结束优先最近截止。
 
-底部指示横线提供直接翻页，使用明确宽度适配公共按钮插槽。右上角⤢/⤡、⏸️/▶️、🔄、⚙️控制比例、暂停、刷新和设置。比例按钮在原比例与16:9间切换，以aspect-ratio动画调整高度，减少动态偏好禁用该动画；窄屏沿用最低可读高度。卡片不显示加载或刷新状态小字，刷新状态通过aria-busy提供；获取失败仍保留错误提示。轮播间隔10–120秒或-1；悬停、焦点、弹窗、后台与减少动态偏好暂停自动轮播。
+底部指示横线提供直接翻页，使用明确宽度适配公共按钮插槽。右上角缩放图标、⏸️/▶️、🔄、⚙️控制比例、暂停、刷新和设置。比例按钮在原比例与16:9间切换，以aspect-ratio动画调整高度，减少动态偏好禁用该动画；窄屏沿用最低可读高度。卡片不显示加载或刷新状态小字，刷新状态通过aria-busy提供；获取失败仍保留错误提示。轮播间隔10–120秒或-1；悬停、焦点、弹窗、后台与减少动态偏好暂停自动轮播。
 
 活动卡默认顺序为-100，首次加入今日概览布局及恢复默认时位于顶部；已保存的顺序由宿主布局管理。
 
@@ -37,3 +37,7 @@ GET state；GET feed(gameId/progressionId/contentLocale)；PUT settings(expected
 `ActivityCoordinator`负责设置、代次和原子快照；`SraActivityProvider`读取JSON；`ActivityNormalizer`映射与生成身份；`ActivityAssetCache`管理图片。前端源码在frontend，web为构建输出。私有feed合同见contracts/activity-feed.schema.json。
 
 现役入口：`node tests/run.mjs plugin --plugin GameActivities --host-root <Host路径>`，包含xUnit、前端类型检查/构建及Test Host场景。前端行为合同通过tests/frontend/run.mjs的runPlugin和contract.mjs的resolvePublicElements执行。受控回归、11组真实API核验、构建与人工验收分别报告；本地core不等于locked gate或正式发布。
+
+局域网 HTTP 访问可直接查看活动详情；图片分组由当前资源会话分配独立标识，不依赖安全上下文 API。缩放按钮使用矢量图标，窄屏不依赖字体字形。
+
+活动设置的排序行使用公共把手的紧凑布局尺寸，保留 40px 命中区域及 8px 相邻间距；左右内边距一致。

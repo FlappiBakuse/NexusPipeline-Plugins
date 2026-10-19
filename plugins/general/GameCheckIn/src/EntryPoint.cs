@@ -2,7 +2,7 @@ using NexusPipeline.Plugin.Abstractions;
 
 namespace NexusPipeline.Plugin.GameCheckIn;
 
-public sealed class EntryPoint : INexusPlugin
+public sealed partial class EntryPoint : INexusPlugin
 {
     private CheckInTaskService? _service;
 

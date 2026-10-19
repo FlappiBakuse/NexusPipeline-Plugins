@@ -1,6 +1,6 @@
 # MaaFramework 框架直驱
 
-读取本地 MaaFramework PI v2 项目及已保存配置，在 NexusPipeline 中运行任务。当前版本 0.2.4，需要兼容的 NexusPipeline 0.17.3，运行环境为 Windows 11 x64。
+读取本地 MaaFramework PI v2 项目及已保存配置，在 NexusPipeline 中运行任务。当前版本 0.2.5，需要兼容的 NexusPipeline 0.17.3，运行环境为 Windows 11 x64。
 
 ## 开始使用
 

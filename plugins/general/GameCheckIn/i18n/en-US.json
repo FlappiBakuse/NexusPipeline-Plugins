@@ -22,7 +22,6 @@
   "task.delete_confirm": "Delete this task, its schedules, and credentials?",
   "field.name": "Task name",
   "field.credential": "{platform} credential",
-  "field.smtp_to": "SMTP recipient",
   "field.secret_configured": "Configured; use the eye to reveal",
   "field.secret_clear": "Clear saved credential",
   "field.schedule": "Schedule list",
@@ -137,8 +136,7 @@
   "field.kuroToken_description": "Copy the token from a Kuro app request; check-in covers in-game rewards.",
   "field.kuroToken_placeholder": "Token captured from the Kuro app",
   "field.notifications_enabled": "Enable notifications",
-  "field.notifications_help": "Uses the host global Webhook and SMTP settings.",
-  "field.smtp_to_help": "Leave blank to inherit the host global SMTP recipient.",
+  "field.notifications_help": "Select notification tasks. Leave empty to send nothing.",
   "field.schedule_help": "Collapsed by default. Expand to edit days and run time, or drag the handle to reorder. Uses the local time zone ({zone}); missed runs are skipped while the app is closed.",
   "schedule.no_days": "No days selected",
   "schedule.summary": "Schedule {index} {time} · {days} days",
@@ -203,5 +201,9 @@
   "tajiduo.sign_in": "Sign in",
   "error.tajiduo_login_input_invalid": "Enter an 11-digit phone number and a valid password or 4–8 digit SMS code.",
   "error.tajiduo_login_busy": "A sign-in request is still in progress. Please wait.",
-  "error.tajiduo_sms_cooldown": "Wait 60 seconds after sending a verification code."
+  "error.tajiduo_sms_cooldown": "Wait 60 seconds after sending a verification code.",
+  "field.notification_tasks": "Notification tasks",
+  "status.notification_invalid": "Configuration incomplete",
+  "status.notification_disabled": "Disabled",
+  "status.notification_deleted": "Deleted notification task"
 }

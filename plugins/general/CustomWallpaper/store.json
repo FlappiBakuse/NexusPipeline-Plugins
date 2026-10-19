@@ -15,6 +15,14 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/CustomWallpaper",
   "changelog": [
     {
+      "version": "0.3.4",
+      "date": "2026-10-18",
+      "items": [
+        "收紧排序把手的横向占位与卡片间距，保持窄屏信息空间和触控范围。",
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
+      ]
+    },
+    {
       "version": "0.3.3",
       "date": "2026-10-17",
       "items": [
@@ -27,13 +35,6 @@
       "date": "2026-10-11",
       "items": [
         "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
-      ]
-    },
-    {
-      "version": "0.3.1",
-      "date": "2026-10-05",
-      "items": [
-        "适配 Host 0.17.0 与 Plugin API 2.1，保持现役业务和数据隔离。"
       ]
     }
   ],
@@ -49,6 +50,14 @@
       ],
       "changelog": [
         {
+          "version": "0.3.4",
+          "date": "2026-10-18",
+          "items": [
+            "Compact reorder handle spacing while preserving narrow-screen content space and touch targets.",
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
+          ]
+        },
+        {
           "version": "0.3.3",
           "date": "2026-10-17",
           "items": [
@@ -61,13 +70,6 @@
           "date": "2026-10-11",
           "items": [
             "Targets Host 0.17.2 and Plugin API 2.2, with user instructions for installation, configuration, and use."
-          ]
-        },
-        {
-          "version": "0.3.1",
-          "date": "2026-10-05",
-          "items": [
-            "Targets Host 0.17.0 and Plugin API 2.1 while preserving current behavior and data isolation."
           ]
         }
       ]

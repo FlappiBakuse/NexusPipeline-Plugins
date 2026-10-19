@@ -4,10 +4,10 @@
   "artifactName": "CustomWallpaper",
   "displayName": "自定义壁纸",
   "description": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "kind": "managed-code",
-  "minHostVersion": "0.17.2",
-  "apiVersion": "2.2",
+  "minHostVersion": "0.17.6",
+  "apiVersion": "2.3",
   "entryAssembly": "NexusPipeline.Plugin.CustomWallpaper.dll",
   "entryType": "NexusPipeline.Plugin.CustomWallpaper.EntryPoint",
   "capabilities": [

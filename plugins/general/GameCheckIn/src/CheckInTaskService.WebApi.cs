@@ -36,6 +36,7 @@ internal sealed partial class CheckInTaskService
             {
                 tasks,
                 platforms = BuildPlatformOptions(),
+                notificationTasks = await _context.Notifications.ListAsync(cancellationToken).ConfigureAwait(false),
                 timeZoneId = TimeZoneInfo.Local.Id,
                 localTime = _clock().ToLocalTime(),
             };
@@ -134,6 +135,9 @@ internal sealed partial class CheckInTaskService
             if (store.Tasks.Any(task => task.Id != id
                 && string.Equals(task.Name, input!.Name.Trim(), StringComparison.OrdinalIgnoreCase)))
                 return Error(409, "task_name_duplicate");
+
+            string? targetError = _context.Notifications.ValidateTargets(input!.Notification.NotificationTaskIds, existing?.Notification.NotificationTaskIds);
+            if (targetError is not null) return Error(400, targetError);
 
             CheckInTask task = BuildTask(input!, id, existing);
             var current = new Dictionary<string, string?>(StringComparer.Ordinal);

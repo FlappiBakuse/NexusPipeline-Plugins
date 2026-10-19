@@ -1,6 +1,6 @@
 # MaaFramework 项目直驱
 
-`MaaFrameworkDriver` 要求 Host v0.17.3、Plugin API 2.2、Frontend API 1.7 和 Windows 11 x64。产品包不包含项目、游戏、运行库或用户数据。
+`MaaFrameworkDriver` 要求 Host v0.17.6、Plugin API 2.3、Frontend API 1.7 和 Windows 11 x64。产品包不包含项目、游戏、运行库或用户数据。
 
 pretask 与 Agent 的 `PI_CLIENT_VERSION` 从实际 Host 的入口程序集产品元数据读取，经认证 worker 会话输入传递，不取插件或 worker 的程序集版本。`PI_INTERFACE_VERSION`、`PI_CLIENT_MAAFW_VERSION` 与 `PI_VERSION` 分别表示 PI 协议、原生运行库与项目版本，独立维护。
 

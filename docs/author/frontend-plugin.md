@@ -3,7 +3,7 @@
 <!-- contract:versions -->
 | Contract | Version |
 |---|---|
-| plugin-api | 2.2 |
+| plugin-api | 2.3 |
 | frontend-api | 1.7 |
 <!-- /contract:versions -->
 
@@ -11,13 +11,15 @@ NexusPipeline 的前端插件运行时加载插件构建后的 ES module/CSS。�
 
 ## 适用范围
 
-前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.2，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
+前端能力只对 `managed-code` 开放。`data-specialized` 不得声明 `frontend`（即使值为 `null`），不得声明 `frontend-module`，不得包含 `frontend/`、`web/` 或浏览器资源；它只使用宿主声明能力和后端脚本契约。需要 C# UI、作用域数据、二进制资产、历史展示、插件 Web API 或插件本地化的插件按需使用宿主 Plugin API；当前 Plugin API 精确为 2.3，不接受较早或未声明的未来 minor。Frontend API 1.7 提供调度中心运行卡片的 `dispatch.running.sidecar` slot、受控实时画面、通用外观表面（主题、token、背景表面）和插件自有词典访问。
 
 ## 客户端会话与秘密输入
 
 `host.clientSessions.get()` 返回宿主认证的当前客户端事实，`nativeBrowserAvailable` 只由已验证桌面 IPC 绑定产生。插件使用 `host.browserLogin.open(preparation, signal)` 打开已注册的固定登录 flow，通过 operation 的 `completed` 取得脱敏结果并在离开编辑器时取消。不得直接调用桌面私有 IPC、自报 native 身份、传递任意导航 URL 或提交临时外站脚本。完整接口与生命周期见 [Host 公共契约](https://github.com/FlappiBakuse/NexusPipeline/blob/main/docs/reference/plugin-api/browser-login.md)。
 
 秘密输入使用公开 `nxp-text-input` 的 `passwordVisibilityControlled`、`passwordVisible`、`secretConfigured` 及 `password-visibility-request` 事件。未授权读取时值保持空字符串；元件只请求切换，调用方完成确认和专用回读后再显示。不要用假遮罩字符充当原始值，也不要在初始化或普通状态请求中读取自动来源秘密。
+
+宿主路径字段使用公开 `nxp-path-picker`；组件根据宿主认证的连接能力统一显示本机文件、文件夹选择入口。远程或连接来源未确认时，按钮完全隐藏，文本框恢复完整宽度和圆角，仍可手工填写宿主路径；插件不用另行保留禁用按钮或为隐藏按钮预留空间。
 
 ## 目录与 manifest
 
@@ -48,7 +50,7 @@ manifest 需要同时声明 capability 和 `frontend` 对象：
   "version": "0.1.0",
   "kind": "managed-code",
   "minHostVersion": "0.17.2",
-  "apiVersion": "2.2",
+  "apiVersion": "2.3",
   "entryAssembly": "ExamplePlugin.dll",
   "entryType": "ExamplePlugin.EntryPoint",
   "capabilities": ["frontend-module", "ui-contributions"],
@@ -168,9 +170,9 @@ shell.nav
 
 slot 的上下文包含 `mode`、`primaryId`、`secondaryId`。页面重绘时，插件通过 `onPageUpdated` 接收更新通知；slot renderer 应允许同一容器被重复渲染。
 
-## Plugin API 2.2 配合方式
+## Plugin API 2.3 配合方式
 
-`PluginNotification.SmtpTo` 指定可选 SMTP 收件人。插件传入空值时使用宿主全局 SMTP 收件人；其他 SMTP 服务器与身份配置、Webhook 渠道仍由宿主管理。插件通过 `IPluginHostContext.Notifications` 发送通知。
+插件通过 `IPluginHostContext.Notifications.ListAsync` 读取脱敏通知任务，通过 `ValidateTargets` 校验所选 ID，并以 `PluginNotification.NotificationTaskIds` 发送。空选择不发送；禁用及已删除任务跳过。编辑时传入原引用以保留已删除目标。任务配置与密钥由宿主管理，不提供收件人覆盖。旧数据通过 `IPluginNotificationDataMigration` 在宿主迁移事务中转换，插件不直接读写宿主通知文件。
 
 managed-code 插件初始化接收唯一的 `IPluginHostContext`，按需使用：
 
@@ -193,7 +195,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 插件 Web API 的最终路径为 `/api/plugin-api/<plugin>/<route>`。每次调用最多执行 30 秒，请求体上限 16 MiB，JSON 响应上限 2 MiB，二进制响应上限 16 MiB；插件异常使用 `code: "plugin_error"` 返回。二进制响应只允许 `image/png`、`image/jpeg`、`image/webp`、`image/gif`、`image/avif` 和 `application/octet-stream`，并附带 `X-Content-Type-Options: nosniff` 与 `Cache-Control: no-store`。UI 处理器和历史处理器也有独立超时，超限内容会被宿主丢弃。
 
-`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。宿主公开的拖拽把手 token 为 `--nx-drag-handle-size`（常规尺寸）、`--nx-drag-handle-touch-size`（触控命中区）和 `--nx-drag-handle-glyph-size`（`⠿` 字形）；插件自有排序控件可使用这些变量统一视觉与触控尺寸。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
+`host.appearance` 提供 `registerTheme(name, definition)`、`applyTheme(name)`、`setTokens(tokens)`、`clearTokens()`、`setBackground(surface)` 和 `clearBackground()`。`setTokens` 的 token 名必须匹配 `--[A-Za-z0-9_-]{1,96}`，值不超过 4096 字符且不含控制字符；token 应用在 `body` 上，跨主题切换保持有效，直到显式清除或替换。宿主公开的拖拽把手 token 为 `--nx-drag-handle-size`（24px 布局占位）、`--nx-drag-handle-touch-size`（触控命中区）和 `--nx-drag-handle-glyph-size`（`⠿` 字形）；公共把手保留至少 40px 命中区域，通过左右空白减少布局占位；排序行在把手与下一项之间保留至少 8px 间距，避免命中区域重叠。鼠标悬停不高亮，键盘焦点仍可辨认。插件自有排序控件可使用这些变量统一视觉与触控尺寸。`setBackground` 接受 `url`（仅 `http`、`https`、`blob`、`data`）、`blurPx`（0–40）、`dimPercent`（0–80）、`surfaceTransparencyPercent`（0–50）和 `secondarySurfaceTransparency`（默认 `true`）；背景地址交给 `setBackground` 后由宿主外观表面托管，替换或清除时宿主回收上一个 `blob:` Object URL。外观变化由宿主广播 `nexus:appearance-changed`。
 
 壁纸配置、配额、文件校验、去重、轮换与配色属于插件业务：插件用 `context.Assets` 保存资产，用插件 Web API 提供状态与二进制读取，再通过 `host.appearance` 应用背景与 token。宿主不再提供服务端壁纸存储。
 
@@ -222,7 +224,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 - `plugin.json` 的 `frontend-module`、`frontend.apiVersion`、entry 和 styles 一致；使用本地化时，`localization.defaultLocale` 必须存在，所有资源文件必须使用相同 key 集合，并随 ZIP 放在 `i18n/` 目录；
 - entry、styles 和其引用的静态资源全部位于 `web/`，ZIP 解压根目录可以直接找到 `plugin.json`；
-- managed-code 插件声明精确 Plugin API 2.2，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.7；
+- managed-code 插件声明精确 Plugin API 2.3，入口使用 .NET 10 与当前 SDK；前端声明精确 Frontend API 1.7；
 - `activate(host)` 在宿主页面加载，停用和页面切换时无残留定时器、监听器或节点；
 - 已验证 `GET /api/plugin-runtime/frontend`、插件 Web API（含二进制传输）、UI slot、主题/背景表面和错误隔离行为；
 - ZIP 不含账号、Token、Cookie、配置、密钥、日志、`obj/`、调试符号或仓库外文件；
@@ -240,7 +242,7 @@ POST /api/plugin-contributions/ui/<plugin>/<contribution>/action/<action>
 
 ## 独立今日概览卡片
 
-后端通过 Plugin API 2.2 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
+后端通过 Plugin API 2.3 的 `context.DashboardCards.Register(new(localId, titleKey, descriptionKey, defaultVisible, defaultOrder))` 声明权威卡片。Host 根据真实插件 name 生成 owner ID；只有实际运行的插件进入目录。句柄在 StopAsync 释放，Host 也在上下文销毁时兜底释放。
 
 Frontend API 1.7 使用 `host.dashboard.registerCard(localId, surface => cleanup)` 注册 renderer。surface 提供 element、cardId、signal 和只读 context；普通状态刷新不会重新 mount。取消后结束请求、ticker、监听和 ObjectURL；异步完成晚于取消也必须返回 cleanup。插件 dispose 注销注册。该入口与公开 slots 分开，不向 slots 白名单添加独立卡片 ID。
 

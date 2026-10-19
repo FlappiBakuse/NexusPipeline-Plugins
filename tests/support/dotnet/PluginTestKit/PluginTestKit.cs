@@ -223,6 +223,9 @@ public sealed class RecordingPluginLocalization : IPluginLocalization
 
 public sealed class RecordingPluginNotificationService : IPluginNotificationService
 {
+    public List<PluginNotificationTask> Tasks { get; } = new();
+    public ValueTask<IReadOnlyList<PluginNotificationTask>> ListAsync(CancellationToken cancellationToken = default) => ValueTask.FromResult<IReadOnlyList<PluginNotificationTask>>(Tasks.ToArray());
+    public string? ValidateTargets(IReadOnlyList<string> ids, IReadOnlyList<string>? previous = null) => ids.All(id => Tasks.Any(task => task.Id == id) || previous?.Contains(id) == true) ? null : "notification_target_not_found";
     private readonly List<PluginNotification> _notifications = new();
     public IReadOnlyList<PluginNotification> Notifications => _notifications;
     public ValueTask SendAsync(PluginNotification notification, CancellationToken cancellationToken = default)

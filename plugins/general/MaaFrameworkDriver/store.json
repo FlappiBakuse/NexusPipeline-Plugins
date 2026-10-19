@@ -15,6 +15,13 @@
   "homepage": "https://github.com/FlappiBakuse/NexusPipeline-Plugins/tree/main/plugins/general/MaaFrameworkDriver",
   "changelog": [
     {
+      "version": "0.2.5",
+      "date": "2026-10-18",
+      "items": [
+        "适配 Host 0.17.6 与 Plugin API 2.3 通知任务契约。"
+      ]
+    },
+    {
       "version": "0.2.4",
       "date": "2026-10-16",
       "items": [
@@ -37,13 +44,6 @@
         "发现并读取 MFA 旧式共享配置中的已登记实例，隔离实例字段并保留任务选择和顺序。",
         "兼容 MFA 保存的窗口提示与 Agent 通道偏好，保持 Host 已核验的进程身份和独占会话。"
       ]
-    },
-    {
-      "version": "0.2.2",
-      "date": "2026-10-11",
-      "items": [
-        "适配 Host 0.17.2 与 Plugin API 2.2，完善面向用户的安装、配置和使用说明。"
-      ]
     }
   ],
   "locales": {
@@ -57,6 +57,13 @@
         "ADB"
       ],
       "changelog": [
+        {
+          "version": "0.2.5",
+          "date": "2026-10-18",
+          "items": [
+            "Target Host 0.17.6 and the Plugin API 2.3 notification task contract."
+          ]
+        },
         {
           "version": "0.2.4",
           "date": "2026-10-16",
@@ -79,13 +86,6 @@
             "Accepts saved inactive MFA software paths without launching programs or enabling unsupported startup and reconnect actions.",
             "Discovers registered MFA instances in shared configuration files while isolating instance fields and preserving task selection and order.",
             "Accepts MFA saved window hints and Agent transport preferences while retaining Host-verified process identity and session ownership."
-          ]
-        },
-        {
-          "version": "0.2.2",
-          "date": "2026-10-11",
-          "items": [
-            "Targets Host 0.17.2 and Plugin API 2.2 with installation, configuration and usage documentation."
           ]
         }
       ]

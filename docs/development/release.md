@@ -137,7 +137,7 @@ python tools/repo.py release plan --channel preview --host-root <显式Host路�
       "hasReadme": true,
       "version": "<version>",
       "kind": "managed-code",
-      "apiVersion": "2.2",
+      "apiVersion": "2.3",
       "capabilities": ["frontend-module"],
       "minHostVersion": "0.17.2",
       "packageUrl": "https://raw.githubusercontent.com/FlappiBakuse/NexusPipeline-Plugins/main/packages/CustomWallpaper/CustomWallpaper-<version>.zip",
@@ -197,4 +197,4 @@ Pull Request 工作流拒绝直接提交 `catalog.json`、`metadata/releases/sta
 
 未提交源码本机验收可由 Host 的 `tools/local_acceptance.py build --host-root <Host源码> --plugins-root <本仓源码> --output <外部独占目录>` 装配全部现役插件。该流程不写稳定 catalog/state/packages，本机 receipt 不能用于正式 publisher。
 
-当前公开契约为 Plugin API 2.2 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。实际业务验证与打包结果分别记录。
+当前公开契约为 Plugin API 2.3 / Frontend API 1.7；managed 包和前端须与该 Host 源输入同时构建。实际业务验证与打包结果分别记录。
