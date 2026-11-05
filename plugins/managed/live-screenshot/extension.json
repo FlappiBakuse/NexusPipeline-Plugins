@@ -1,0 +1,42 @@
+{
+  "extensionId": "live-screenshot",
+  "artifactName": "LiveScreenshot",
+  "displayName": "实时截图窗口",
+  "packageVersion": "0.5.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "media.capture",
+    "ui.contribute"
+  ],
+  "permissions": {},
+  "frontend": {
+    "entry": "frontend/main.js",
+    "styles": [
+      "frontend/main.css"
+    ],
+    "sdkVersion": "0.1.0"
+  },
+  "managed": {
+    "entryAssembly": "NexusPipeline.Extensions.LiveScreenshot.dll",
+    "entryType": "NexusPipeline.Extensions.LiveScreenshot.LiveScreenshotExtension"
+  },
+  "gameName": "通用游戏与安卓模拟器",
+  "summary": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "实时预览",
+    "模拟器",
+    "运行卡片",
+    "Live preview",
+    "Emulator",
+    "Run card"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+.plugin-panel.maa-editor {
+  padding: 0;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 12px;
+  background: var(--content-card, var(--nx-color-surface));
+  line-height: 1.5;
+}
+.maa-editor [data-maa-preview] details {
+  margin: 8px 0 8px 12px;
+}
+.maa-editor [data-maa-preview] pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.maa-editor > h3 {
+  margin: 0;
+  padding: 16px 24px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.maa-editor > .plugin-status:empty {
+  display: none;
+}
+.maa-editor > .plugin-body {
+  display: block;
+  padding: 0 24px 24px;
+}
+.maa-editor > .plugin-status:not(:empty) {
+  margin: 0 24px 12px;
+}
+.maa-fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.maa-fields > .plugin-field {
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.maa-fields > .plugin-field > nexus-text-input {
+  --nx-input-weight: 600;
+}
+.maa-fields nexus-select {
+  font-size: 13px;
+}
+.maa-fields nexus-text-area {
+  --nx-control-height: 98px;
+  --nx-input-font-size: 12px;
+  --nx-input-weight: 600;
+  --nx-textarea-padding: 12px;
+}
+.maa-source-summary {
+  margin: 14px 0;
+  font-size: 14px;
+}
+.maa-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.maa-actions > nexus-button {
+  --nx-color-border: var(--border-strong);
+}
+.maa-secret-action {
+  display: grid;
+}
+.maa-secret-action > nexus-button {
+  width: 100%;
+}
+.maa-occurrences {
+  display: block;
+  min-width: 0;
+}
+.maa-occurrences:empty {
+  display: none;
+}
+.maa-occurrence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border-bottom: 1px solid var(--nx-color-border);
+}
+.maa-occurrence > span {
+  overflow-wrap: anywhere;
+}
+.maa-output {
+  max-height: 16rem;
+  overflow: auto;
+  margin: 12px 24px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+.maa-output:empty {
+  margin-bottom: 12px;
+}
+.maa-output[hidden] {
+  display: none;
+}

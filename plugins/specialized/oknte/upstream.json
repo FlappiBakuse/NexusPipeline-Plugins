@@ -1,0 +1,73 @@
+{
+  "repository": "BnanZ0/ok-nte",
+  "tag": "v1.4.21",
+  "commit": "460a7687faa7dc928f7a9c4593d7031e21df493c",
+  "tree": "48613442f32b4e4d1fdee64ab9489c7228f909c9",
+  "releaseId": 425951958,
+  "publishedAt": "2026-10-27T20:30:06Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/BnanZ0/ok-nte/releases/tag/v1.4.21",
+  "assets": [
+    {
+      "id": 682798152,
+      "name": "ok-nte-win-x86_64-v1.4.21-body.zip",
+      "size": 324058145,
+      "digest": "sha256:30938a4eebce771490c63dba307da91f7b1f7bfae16b9032f83f67bc0c623f32",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win-x86_64-v1.4.21-body.zip"
+    },
+    {
+      "id": 682798153,
+      "name": "ok-nte-win-x86_64-v1.4.21-full.zip",
+      "size": 329982328,
+      "digest": "sha256:6713c5a074c80701bffcf1e4ec3e6b5d0d9443045c9ff2f79698c0a6b192c0d8",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win-x86_64-v1.4.21-full.zip"
+    },
+    {
+      "id": 682841960,
+      "name": "ok-nte-win32-China-setup.exe",
+      "size": 345541482,
+      "digest": "sha256:6f5f9b9441cf56b1285034c79ae79e6c7ce5924d03874c0c581e518ad1c9e363",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win32-China-setup.exe"
+    },
+    {
+      "id": 682841962,
+      "name": "ok-nte-win32-Global-setup.exe",
+      "size": 385076929,
+      "digest": "sha256:c6a29fe632a3bdc6c708cae6f5adbc67852607cd0fd83ce5aa016980da022912",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win32-Global-setup.exe"
+    },
+    {
+      "id": 682841966,
+      "name": "ok-nte-win32-online-setup.exe",
+      "size": 4918388,
+      "digest": "sha256:124d34a3d364fa3a0a8f6f77637149ada69a2ef5afdc39d4653339a0414e6d18",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win32-online-setup.exe"
+    },
+    {
+      "id": 682841963,
+      "name": "ok-nte-win32.zip",
+      "size": 5819593,
+      "digest": "sha256:05de5778de66e146eae7d2d9914fe6ff1c109551111fee2af698c540acdbf622",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/ok-nte-win32.zip"
+    },
+    {
+      "id": 682841959,
+      "name": "win32_sha256.txt",
+      "size": 64,
+      "digest": "sha256:57ddd0e726da7000e77033cb2e0307d454ed9c26d269f01f724373270f0c170c",
+      "browser_download_url": "https://github.com/BnanZ0/ok-nte/releases/download/v1.4.21/win32_sha256.txt"
+    }
+  ],
+  "okScriptSource": {
+    "version": "2.0.17",
+    "officialWheelSha256": "49720827f267297620208bc5fe6981203eb6472868fe2de59d12329ed7494e44",
+    "qualification": "fixed official PyPI wheel source inspection"
+  },
+  "qualification": {
+    "sourceIntegrity": "PASS",
+    "upstreamBinary": "NOT_RUN",
+    "installedHost": "NOT_RUN",
+    "pyappifyRuntimeOwnership": "NOT_RUN"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "repository": "moesnow/March7thAssistant",
+  "tag": "v2026.10.16",
+  "commit": "34c6e4aba914bb8c0cbe1a27e49151cce26f94b4",
+  "tree": "aa55b8013e4f9a1caeabe05acb1a6e5a13138d02",
+  "releaseId": 415128218,
+  "publishedAt": "2026-10-16T15:49:46Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/moesnow/March7thAssistant/releases/tag/v2026.10.16",
+  "assets": [
+    {
+      "id": 647803004,
+      "name": "March7thAssistant_full.7z",
+      "size": 476063495,
+      "digest": "sha256:49739e5fc4a30d45ff4e046d7f8e6d69d29c627454c2268dd5ccddbc601894da",
+      "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.10.16/March7thAssistant_full.7z"
+    },
+    {
+      "id": 647803021,
+      "name": "March7thAssistant_full.zip",
+      "size": 734203266,
+      "digest": "sha256:fd6408a0c285a9b9e9acfd56dca9777d0f53827779ef7391dc9954e61bcd1bc5",
+      "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.10.16/March7thAssistant_full.zip"
+    },
+    {
+      "id": 647803005,
+      "name": "update.7z",
+      "size": 158135017,
+      "digest": "sha256:2a8528a489b344ff2d41ab33ca2de475cadc6f6037f0655678d0faf6d779d964",
+      "browser_download_url": "https://github.com/moesnow/March7thAssistant/releases/download/v2026.10.16/update.7z"
+    }
+  ],
+  "qualification": {
+    "sourceIntegrity": "PASS",
+    "upstreamBinary": "NOT_RUN",
+    "installedHost": "NOT_RUN",
+    "yamlOwnerBinding": "NOT_RUN"
+  }
+}

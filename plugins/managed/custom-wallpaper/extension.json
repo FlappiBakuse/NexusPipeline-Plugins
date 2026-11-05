@@ -1,0 +1,45 @@
+{
+  "extensionId": "custom-wallpaper",
+  "artifactName": "CustomWallpaper",
+  "displayName": "自定义壁纸",
+  "packageVersion": "0.5.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "ui.contribute"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "instance-data"
+    ]
+  },
+  "frontend": {
+    "entry": "frontend/main.js",
+    "styles": [
+      "frontend/main.css"
+    ],
+    "sdkVersion": "0.1.0"
+  },
+  "managed": {
+    "entryAssembly": "NexusPipeline.Extensions.CustomWallpaper.dll",
+    "entryType": "NexusPipeline.Extensions.CustomWallpaper.WallpaperExtension"
+  },
+  "gameName": "通用外观",
+  "summary": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "外观",
+    "壁纸",
+    "主题",
+    "Appearance",
+    "Wallpaper",
+    "Theme"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

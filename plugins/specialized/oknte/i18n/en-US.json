@@ -1,0 +1,53 @@
+{
+  "manifest": {
+    "displayName": "ok-nte daily",
+    "gameName": "Neverness to Everness",
+    "summary": "Single-account daily task plans and observations."
+  },
+  "tasks": {
+    "cinema_date": {
+      "title": "Cinema date"
+    },
+    "coffee": {
+      "title": "Coffee"
+    },
+    "daily_anomaly": {
+      "title": "Anomaly Realm"
+    },
+    "daily_anomaly_hunter": {
+      "title": "Anomaly Hunt"
+    },
+    "daily_claim": {
+      "title": "Daily rewards"
+    },
+    "fountain": {
+      "title": "Fountain check-in"
+    },
+    "furniture": {
+      "title": "Anomaly furniture"
+    },
+    "gift": {
+      "title": "Gifts"
+    }
+  },
+  "diagnostics": {
+    "runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
+    "oknte_item_completed": "Daily item reported completion",
+    "oknte_item_failed": "Daily item reported failure",
+    "oknte_item_language_unsupported": "This task is unavailable in the current language",
+    "oknte_item_started": "Daily item started",
+    "oknte_item_unhandled_exception": "The current item stopped with an unhandled exception",
+    "oknte_routine_aborted_before_item": "The routine aborted before this item ran",
+    "runtime_installation": "Cannot confirm the official installation ({channel} / {version}). Initialize a supported official channel.",
+    "runtime_version": "This release has not been qualified ({channel} / {version}). Check the installed version.",
+    "runtime_restricted": "The newer official release {channel} / {version} has not qualified for advanced task interpretation. Only the base run is available; task results remain unverified.",
+    "runtime_base_unqualified": "Cannot confirm the official origin or base entry for this newer release ({channel} / {version}). Finish updating or repair the installation.",
+    "runtime_busy": "The updater or application is not ready ({channel} / {version}). Finish updating and close it before checking again.",
+    "runtime_repository": "Local HEAD/tag differs from the qualified release ({channel} / {version}). Check the official installation.",
+    "runtime_code": "Required runtime files are missing or differ from the qualified release ({channel} / {version}). Repair the official installation and check again.",
+    "oknte_unknown_enabled_routine_item_preserved": "Enabled unknown routine items are preserved. Safe retry is unavailable.",
+    "oknte_dedicated_routine_config_defaults_used": "Dedicated routine settings are absent. Upstream defaults are used and the original configuration is preserved.",
+    "oknte_complete_explicit_selection_required_for_retry": "The routine configuration does not contain every task switch. Safe retry requires a complete explicit selection.",
+    "oknte_game_target_path_required": "Set the game path in the device configuration."
+  }
+}

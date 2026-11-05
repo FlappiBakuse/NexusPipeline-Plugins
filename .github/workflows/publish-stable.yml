@@ -1,392 +1,140 @@
-name: Plugins 稳定发布
-
+name: Plugins 稳定发行
 on:
   workflow_dispatch:
     inputs:
       operation:
-        description: 构建只读候选或发布已有候选
-        required: true
-        default: candidate
         type: choice
-        options:
-          - candidate
-          - publish-only
-      source_ref:
-        description: 候选模式使用的 main 可达源码提交或引用
-        required: false
-        default: main
+        options: [candidate, publish-only]
+        default: candidate
+        required: true
+      source_commit:
+        description: 完整插件源码 SHA
+        type: string
+      host_commit:
+        description: 完整 Host main 来源 SHA
+        type: string
+      distribution_commit:
+        description: 完整 Plugins main 发行状态 SHA
         type: string
       candidate_run_id:
-        description: 仅发布恢复使用的原始成功稳定候选运行 ID
-        required: false
+        description: 原成功候选运行 ID
         type: string
       candidate_artifact_id:
-        description: 运行包含多个成功候选时使用的产物 ID
-        required: false
+        description: 原候选 artifact ID
         type: string
-
+      publish:
+        description: 写入已验证的原候选
+        type: boolean
+        default: false
 permissions:
   contents: read
-
 concurrency:
-  group: plugin-stable-publish
+  group: plugins-stable-publication
   cancel-in-progress: false
-
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
 jobs:
-  source-plan:
-    name: Plugins / 候选输入
-    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'candidate'
-    runs-on: windows-latest
-    permissions:
-      actions: read
-      contents: read
-    outputs:
-      source_sha: ${{ steps.plan.outputs.source_sha }}
-      partner_sha: ${{ steps.plan.outputs.partner_sha }}
-      needs_build: ${{ steps.plan.outputs.needs_build }}
-      package_count: ${{ steps.plan.outputs.package_count }}
-      matrix: ${{ steps.plan.outputs.matrix }}
-      managed: ${{ steps.plan.outputs.managed }}
-    defaults:
-      run:
-        working-directory: NexusPipeline-Plugins
+  candidate:
+    name: Plugins / 发行装配
+    if: github.ref == 'refs/heads/main' && inputs.operation == 'candidate'
+    runs-on: windows-2025
+    timeout-minutes: 60
     steps:
-      - name: 校验候选操作参数
-        working-directory: ${{ github.workspace }}
+      - name: 校验输入
         shell: pwsh
         env:
-          SOURCE_REF: ${{ inputs.source_ref }}
-          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
-          CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
+          SOURCE: ${{ inputs.source_commit }}
+          HOST: ${{ inputs.host_commit }}
+          DISTRIBUTION: ${{ inputs.distribution_commit }}
+          RUN: ${{ inputs.candidate_run_id }}
+          ARTIFACT: ${{ inputs.candidate_artifact_id }}
+          PUBLISH: ${{ inputs.publish }}
         run: |
-          if ($env:GITHUB_REF -ne 'refs/heads/main' -or -not $env:SOURCE_REF) { throw 'Invalid candidate source' }
-          if ($env:CANDIDATE_RUN_ID -or $env:CANDIDATE_ARTIFACT_ID) { throw 'Candidate mode does not accept publish inputs' }
-      - name: 检出候选控制源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+          foreach ($value in @($env:SOURCE, $env:HOST, $env:DISTRIBUTION)) {
+            if ($value -cnotmatch '^[0-9a-f]{40}$') { throw 'Full source SHA required' }
+          }
+          if ($env:RUN -or $env:ARTIFACT -or $env:PUBLISH -eq 'true') { throw 'Candidate does not publish' }
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.workflow_sha }}
-          path: Plugins-Control
+          path: Control
           persist-credentials: false
-      - name: 检出候选源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ inputs.source_ref }}
-          path: NexusPipeline-Plugins
+          ref: ${{ inputs.source_commit }}
+          path: Source
           fetch-depth: 0
           persist-credentials: false
-      - name: 固定受保护源码
-        shell: pwsh
-        run: |
-          git fetch origin main --no-tags
-          if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve protected main' }
-          git merge-base --is-ancestor HEAD origin/main
-          if ($LASTEXITCODE -ne 0) { throw 'Candidate source is not reachable from main' }
-      - name: 准备 Python 工具链
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: "3.13"
-      - name: 固定官方宿主 SDK
-        id: host
-        shell: pwsh
-        run: |
-          $line = @(git ls-remote https://github.com/FlappiBakuse/NexusPipeline.git refs/heads/main)
-          if ($LASTEXITCODE -ne 0 -or $line.Count -ne 1) { throw 'Cannot resolve official Host main' }
-          $sha = ($line[0] -split '\s+')[0]
-          if ($sha -notmatch '^[0-9a-f]{40}$') { throw 'Invalid Host SHA' }
-          "sha=$sha" >> $env:GITHUB_OUTPUT
-      - name: 检出固定宿主 SDK
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           repository: FlappiBakuse/NexusPipeline
-          ref: ${{ steps.host.outputs.sha }}
-          path: NexusPipeline
+          ref: ${{ inputs.host_commit }}
+          path: Host
+          fetch-depth: 0
           persist-credentials: false
-      - name: 生成累计发行计划
-        id: plan
-        shell: pwsh
-        run: >-
-          python ../Plugins-Control/tools/repo.py release plan --channel stable --root .
-          --host-root ../NexusPipeline --sdk-sha '${{ steps.host.outputs.sha }}'
-          --output .generated/plan-phase.json --github-output $env:GITHUB_OUTPUT
-      - name: 上传固定发行计划
-        if: steps.plan.outputs.needs_build == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/plan-phase.json
-          if-no-files-found: error
-
-  build-package:
-    name: Plugins / 插件构建 · ${{ matrix.artifact }}
-    needs: source-plan
-    if: needs.source-plan.outputs.needs_build == 'true' && needs.source-plan.outputs.package_count != '0'
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.source-plan.outputs.matrix) }}
-    runs-on: windows-latest
-    permissions:
-      actions: read
-      contents: read
-    defaults:
-      run:
-        working-directory: NexusPipeline-Plugins
-    steps:
-      - name: 检出候选控制源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: Plugins-Control
+          ref: ${{ inputs.distribution_commit }}
+          path: Distribution
+          fetch-depth: 0
           persist-credentials: false
-      - name: 检出固定插件源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ needs.source-plan.outputs.source_sha }}
-          path: NexusPipeline-Plugins
-          persist-credentials: false
-      - name: 检出固定宿主 SDK
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: FlappiBakuse/NexusPipeline
-          ref: ${{ needs.source-plan.outputs.partner_sha }}
-          path: NexusPipeline
-          persist-credentials: false
-      - name: 准备 Python 工具链
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: 准备受影响插件 Node 工具链
-        if: contains(fromJSON(needs.source-plan.outputs.managed), matrix.artifact)
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: "24"
-      - name: 准备受影响插件 .NET 工具链
-        if: contains(fromJSON(needs.source-plan.outputs.managed), matrix.artifact)
-        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
-          global-json-file: NexusPipeline-Plugins/global.json
-      - name: 下载固定发行计划
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/plan-phase
-      - name: 构建并验证单插件包
-        shell: pwsh
-        run: >-
-          python ../Plugins-Control/tools/repo.py package --root . --host-root ../NexusPipeline
-          --artifact '${{ matrix.artifact }}'
-          --sdk-sha '${{ needs.source-plan.outputs.partner_sha }}'
-          --plan-phase .generated/plan-phase/plan-phase.json
-          --output '.generated/package-phase/${{ matrix.artifact }}'
-          --report '.generated/package-phase/${{ matrix.artifact }}/report.json'
-      - name: 上传单插件包
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: plugin-package-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.artifact }}
-          path: NexusPipeline-Plugins/.generated/package-phase/
-          if-no-files-found: error
-          retention-days: 14
-
-  catalog-assembly:
-    name: Plugins / 发行装配
-    needs: [source-plan, build-package]
-    if: always() && needs.source-plan.result == 'success' && needs.source-plan.outputs.needs_build == 'true' && (needs.build-package.result == 'success' || (needs.build-package.result == 'skipped' && needs.source-plan.outputs.package_count == '0'))
-    runs-on: windows-latest
-    permissions:
-      actions: read
-      contents: read
-    defaults:
-      run:
-        working-directory: NexusPipeline-Plugins
-    steps:
-      - name: 检出候选控制源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: Plugins-Control
-          persist-credentials: false
-      - name: 检出固定插件源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ needs.source-plan.outputs.source_sha }}
-          path: NexusPipeline-Plugins
-          fetch-depth: 0
-          persist-credentials: false
-      - name: 检出固定宿主 SDK
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: FlappiBakuse/NexusPipeline
-          ref: ${{ needs.source-plan.outputs.partner_sha }}
-          path: NexusPipeline
-          persist-credentials: false
-      - name: 准备 Python 工具链
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: "3.13"
-      - name: 下载固定发行计划
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: plugins-plan-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/plan-phase
-      - name: 下载逐插件包
-        if: needs.source-plan.outputs.package_count != '0'
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          pattern: plugin-package-${{ github.run_id }}-${{ github.run_attempt }}-*
-          path: NexusPipeline-Plugins/.generated/package-phases
-          merge-multiple: true
-      - name: 核验输入并装配稳定候选
+          global-json-file: Host/global.json
+      - name: 构建原始候选
         id: build
         shell: pwsh
-        run: >-
-          python ../Plugins-Control/tools/repo.py release assemble --channel stable --root .
-          --host-root ../NexusPipeline
-          --plan-phase .generated/plan-phase/plan-phase.json
-          --package-phases .generated/package-phases
-          --sdk-sha '${{ needs.source-plan.outputs.partner_sha }}'
-          --workflow-sha '${{ github.workflow_sha }}'
-          --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
-          --output .generated/stable-candidate --github-output $env:GITHUB_OUTPUT
-      - name: 上传装配候选供独立校验
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: plugins-assembled-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/stable-candidate/
-          include-hidden-files: true
-          if-no-files-found: error
-
-  candidate:
-    name: Plugins / 候选校验
-    needs: [source-plan, catalog-assembly]
-    if: needs.catalog-assembly.result == 'success'
-    runs-on: windows-latest
-    permissions:
-      actions: read
-      contents: read
-    outputs:
-      status: ${{ steps.verify.outputs.status }}
-      source_sha: ${{ needs.source-plan.outputs.source_sha }}
-    defaults:
-      run:
-        working-directory: NexusPipeline-Plugins
-    steps:
-      - name: 检出候选控制源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ github.workflow_sha }}
-          path: Plugins-Control
-          persist-credentials: false
-      - name: 检出固定插件源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ needs.source-plan.outputs.source_sha }}
-          path: NexusPipeline-Plugins
-          fetch-depth: 0
-          persist-credentials: false
-      - name: 准备 Python 工具链
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: "3.13"
-      - name: 下载装配候选
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: plugins-assembled-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/stable-candidate
-      - name: 核验候选源码与包字节
-        id: verify
-        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE: ${{ inputs.source_commit }}
+          HOST: ${{ inputs.host_commit }}
+          DISTRIBUTION: ${{ inputs.distribution_commit }}
         run: |
-          python ../Plugins-Control/tools/repo.py release validate --channel stable --root . --generated-root .generated/stable-candidate --source-sha '${{ needs.source-plan.outputs.source_sha }}' --workflow-sha '${{ github.workflow_sha }}' --run-id '${{ github.run_id }}' --run-attempt '${{ github.run_attempt }}'
-          if ($LASTEXITCODE -ne 0) { throw 'Stable candidate validation failed' }
-          "status=VALIDATED" >> $env:GITHUB_OUTPUT
-      - name: 上传原始候选
+          python Control/tooling/plugin_release_build.py --channel stable --source-root "$env:GITHUB_WORKSPACE/Source" --host-root "$env:GITHUB_WORKSPACE/Host" --distribution-root "$env:GITHUB_WORKSPACE/Distribution" --source-commit $env:SOURCE --host-commit $env:HOST --distribution-commit $env:DISTRIBUTION --output "$env:RUNNER_TEMP/release"
+          exit $LASTEXITCODE
+      - name: 保存原候选
+        if: steps.build.outputs.candidate == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: plugins-stable-candidate-${{ github.run_id }}-${{ github.run_attempt }}
-          path: NexusPipeline-Plugins/.generated/stable-candidate/
-          include-hidden-files: true
+          path: ${{ runner.temp }}/release/candidate/
           if-no-files-found: error
           retention-days: 14
-
-  publish-only:
-    name: Plugins / 原包发布
-    needs: candidate
-    if: always() && github.event_name == 'workflow_dispatch' && inputs.operation == 'publish-only'
-    runs-on: windows-latest
-    environment: plugin-stable-publish
+      - name: 保存构建证据
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stable-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/release/build.json
+            ${{ runner.temp }}/release/*.log
+          if-no-files-found: warn
+  publisher:
+    name: Plugins / 稳定发布
+    if: github.ref == 'refs/heads/main' && inputs.operation != 'candidate'
+    runs-on: windows-2025
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read
-    defaults:
-      run:
-        working-directory: NexusPipeline-Plugins
+    environment: plugin-stable-publish
     steps:
-      - name: 检出发布控制源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: ${{ github.workflow_sha }}
-          path: NexusPipeline-Plugins
+          path: Control
           fetch-depth: 0
           persist-credentials: false
-      - name: 准备 Python 工具链
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.13"
-      - name: 定位原始成功构建与候选产物
-        id: source
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          CANDIDATE_RUN_ID: ${{ inputs.candidate_run_id }}
-          CANDIDATE_ARTIFACT_ID: ${{ inputs.candidate_artifact_id }}
-        run: |
-          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Publisher control must run from main' }
-          if (-not $env:CANDIDATE_RUN_ID) { throw 'publish-only requires candidate_run_id' }
-          $arguments = @('--candidate-run-id', $env:CANDIDATE_RUN_ID, '--current-run-id', $env:GITHUB_RUN_ID, '--github-output', $env:GITHUB_OUTPUT)
-          if ($env:CANDIDATE_ARTIFACT_ID) { $arguments += @('--artifact-id', $env:CANDIDATE_ARTIFACT_ID) }
-          python tools/repo.py release source --channel stable @arguments
-          if ($LASTEXITCODE -ne 0) { throw 'Original candidate source was not verifiable' }
-      - name: 下载候选并核验服务端摘要
-        shell: pwsh
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          ARTIFACT_ID: ${{ steps.source.outputs.artifact_id }}
-          ARTIFACT_DIGEST: ${{ steps.source.outputs.artifact_digest }}
-        run: |
-          New-Item -ItemType Directory -Path '.generated' -Force | Out-Null
-          $uri = "https://api.github.com/repos/FlappiBakuse/NexusPipeline-Plugins/actions/artifacts/$env:ARTIFACT_ID/zip"
-          curl.exe -fsSL --connect-timeout 10 --max-time 60 --retry 2 -H "Authorization: Bearer $env:GITHUB_TOKEN" -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2026-03-10' --output '.generated/stable-candidate-artifact.zip' $uri
-          if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact download failed' }
-          python tools/repo.py release extract --channel stable --artifact-zip '.generated/stable-candidate-artifact.zip' --expected-digest $env:ARTIFACT_DIGEST --output '.generated/stable-candidate'
-          if ($LASTEXITCODE -ne 0) { throw 'Candidate artifact failed server digest or path validation' }
-      - name: 核验原始候选来源
-        id: candidate
-        shell: pwsh
-        run: >-
-          python tools/repo.py release inspect --channel stable
-          --generated-root .generated/stable-candidate
-          --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
-          --run-id '${{ steps.source.outputs.run_id }}'
-          --run-attempt '${{ steps.source.outputs.run_attempt }}'
-          --github-output $env:GITHUB_OUTPUT
-      - name: 检出原始候选源码
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: ${{ steps.candidate.outputs.source_sha }}
-          path: NexusPipeline-Plugins-Source
-          fetch-depth: 0
-          persist-credentials: false
-      - name: 核验源码、构建、分发与包字节
-        shell: pwsh
-        run: >-
-          python tools/repo.py release validate --channel stable
-          --root ../NexusPipeline-Plugins-Source
-          --generated-root .generated/stable-candidate
-          --source-sha '${{ steps.candidate.outputs.source_sha }}'
-          --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
-          --run-id '${{ steps.source.outputs.run_id }}'
-          --run-attempt '${{ steps.source.outputs.run_attempt }}'
-      - name: 创建发布 App 令牌
-        id: app-token
+      - name: 创建 Publisher App 令牌
+        if: inputs.publish
+        id: publisher-token
         uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
         with:
           app-id: ${{ vars.PLUGIN_PUBLISHER_APP_ID }}
@@ -394,16 +142,35 @@ jobs:
           owner: FlappiBakuse
           repositories: NexusPipeline-Plugins
           permission-contents: write
-      - name: 发布已核验的不可变原包
+      - name: 验证并应用原候选
         shell: pwsh
         env:
-          PLUGIN_PUBLISHER_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: >-
-          python tools/repo.py release publish --channel stable
-          --root ../NexusPipeline-Plugins-Source
-          --generated-root .generated/stable-candidate
-          --source-sha '${{ steps.candidate.outputs.source_sha }}'
-          --workflow-sha '${{ steps.source.outputs.workflow_sha }}'
-          --run-id '${{ steps.source.outputs.run_id }}'
-          --run-attempt '${{ steps.source.outputs.run_attempt }}'
-          --remote-write --token-env PLUGIN_PUBLISHER_TOKEN
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ inputs.candidate_run_id }}
+          ARTIFACT: ${{ inputs.candidate_artifact_id }}
+          PUBLISH: ${{ inputs.publish }}
+          SOURCE: ${{ inputs.source_commit }}
+          HOST: ${{ inputs.host_commit }}
+          DISTRIBUTION: ${{ inputs.distribution_commit }}
+          NEXUS_PUBLISHER_TOKEN: ${{ steps.publisher-token.outputs.token }}
+        run: |
+          if ($env:SOURCE -or $env:HOST -or $env:DISTRIBUTION) { throw 'Writer accepts original candidate identities only' }
+          if ($env:RUN -notmatch '^[1-9][0-9]*$') { throw 'Original run ID required' }
+          $arguments = @('Control/tooling/plugin_release_check.py', '--run-id', $env:RUN, '--writer-id', $env:GITHUB_RUN_ID, '--output', "$env:RUNNER_TEMP/publication")
+          if ($env:ARTIFACT) {
+            if ($env:ARTIFACT -notmatch '^[1-9][0-9]*$') { throw 'Invalid artifact ID' }
+            $arguments += @('--artifact-id', $env:ARTIFACT)
+          }
+          if ($env:PUBLISH -eq 'true') { $arguments += '--publish' }
+          python @arguments
+          exit $LASTEXITCODE
+      - name: 保存发布回执
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stable-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/publication/provenance.json
+            ${{ runner.temp }}/publication/result.json
+          if-no-files-found: warn
+

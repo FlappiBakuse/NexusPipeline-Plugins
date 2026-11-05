@@ -1,0 +1,87 @@
+{
+  "repository": "MaaEnd/MaaEnd",
+  "tag": "v2.35.0",
+  "commit": "00cd200f786f907f2b54276212df2461a7a841ab",
+  "tree": "9c8b13b97da36f8d7a4f618c5fd7bb22a8ab1b34",
+  "releaseId": 422054436,
+  "publishedAt": "2026-10-23T16:16:14Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/MaaEnd/MaaEnd/releases/tag/v2.35.0",
+  "assets": [
+    {
+      "id": 669723506,
+      "name": "MaaEnd-android-arm64-v8a-v2.35.0.apk",
+      "size": 288659075,
+      "digest": "sha256:9af77254a35ecaa99cd1fa72a9e385fdef9b9ba92fed26988d7aae3fd8ea12cb",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-android-arm64-v8a-v2.35.0.apk"
+    },
+    {
+      "id": 669723504,
+      "name": "MaaEnd-android-universal-v2.35.0.apk",
+      "size": 318113678,
+      "digest": "sha256:98c1d3ca00c89b6ca6f7888f1c264590f1c65331a5ce22c37d17f4b976591d4e",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-android-universal-v2.35.0.apk"
+    },
+    {
+      "id": 669723503,
+      "name": "MaaEnd-android-x86_64-v2.35.0.apk",
+      "size": 293376238,
+      "digest": "sha256:76c684d75b6b6b424dc6310c098cc6da4d338b98e11d6752a3e1cec81c99b5eb",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-android-x86_64-v2.35.0.apk"
+    },
+    {
+      "id": 669723502,
+      "name": "MaaEnd-linux-aarch64-v2.35.0.tar.gz",
+      "size": 298830825,
+      "digest": "sha256:a6c2da87122b7b05e2463467ae3f50bdb04c1eb238803c15d87d88a57319e77e",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-linux-aarch64-v2.35.0.tar.gz"
+    },
+    {
+      "id": 669723497,
+      "name": "MaaEnd-linux-x86_64-v2.35.0.tar.gz",
+      "size": 439189823,
+      "digest": "sha256:ffa3e3bee28a5bc421eb395660e8e5f933c4272897463dbb1cd8a98590bb1589",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-linux-x86_64-v2.35.0.tar.gz"
+    },
+    {
+      "id": 669723505,
+      "name": "MaaEnd-macos-aarch64-v2.35.0.dmg",
+      "size": 294008269,
+      "digest": "sha256:9e03657fc3e57a6825171e35bccfe640e9c346ec0f6642e1e8d8d94a9954736c",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-macos-aarch64-v2.35.0.dmg"
+    },
+    {
+      "id": 669723500,
+      "name": "MaaEnd-macos-x86_64-v2.35.0.dmg",
+      "size": 300207114,
+      "digest": "sha256:c5331ebac15378cb6bffb6940ba8534ae33b118eeebeb33ae4ba857d4d61dcf6",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-macos-x86_64-v2.35.0.dmg"
+    },
+    {
+      "id": 669723501,
+      "name": "MaaEnd-win-aarch64-v2.35.0.zip",
+      "size": 311340996,
+      "digest": "sha256:dba278fd7fb19b7f66e1216c3297b94760bf6ed952affc86d86a8d427a2436b0",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-win-aarch64-v2.35.0.zip"
+    },
+    {
+      "id": 669723498,
+      "name": "MaaEnd-win-x86_64-v2.35.0.zip",
+      "size": 313835054,
+      "digest": "sha256:6f5ee18b9a3af9ac9e315461615896f21f188af53d09d87b97d14dd0d86e9b52",
+      "browser_download_url": "https://github.com/MaaEnd/MaaEnd/releases/download/v2.35.0/MaaEnd-win-x86_64-v2.35.0.zip"
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceArchiveSha256": "1380ba120f26f59ba9be7d3cc60bc7a02480398d3c02f787dbd0afdd0b11ce0a",
+  "sourceQualification": "PASS",
+  "binaryQualification": "NOT_RUN",
+  "runtimeCombination": {
+    "gui": "MXU",
+    "guiReferenceSource": "MistEO/MXU@5e923e83b30a102fb78da35c30ee2e1559aea682",
+    "guiBundledBinary": "NOT_RUN",
+    "nativeFrameworkBundledBinary": "NOT_RUN",
+    "reason": "The project install workflow resolves latest at package build time; source release identity alone does not prove its bundled versions."
+  }
+}

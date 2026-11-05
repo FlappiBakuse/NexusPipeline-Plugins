@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="native-session/**/*.cs" />
+    <PackageReference Include="NexusPipeline.Extensibility" Version="[0.1.0]" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Domain/**/*.cs" Link="Product/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectImport.cs" Link="Product/MaaProjectImport.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaMfaImport.cs" Link="Product/MaaMfaImport.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCfaImport.cs" Link="Product/MaaCfaImport.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectDiscovery.cs" Link="Product/MaaProjectDiscovery.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSelectedFiles.cs" Link="Product/MaaSelectedFiles.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaConfigMounts.cs" Link="Product/MaaConfigMounts.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCompilerChoice.cs" Link="Product/MaaCompilerChoice.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSourceDiscovery.cs" Link="Product/MaaSourceDiscovery.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSourceCapture.cs" Link="Product/MaaSourceCapture.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProgramSources.cs" Link="Product/MaaProgramSources.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCompilerAssets.cs" Link="Product/MaaCompilerAssets.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectCompiler.cs" Link="Product/MaaProjectCompiler.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectInputs.cs" Link="Product/MaaProjectInputs.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaWorkerProject.cs" Link="Product/MaaWorkerProject.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaResourceSource.cs" Link="Product/MaaResourceSource.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaFrozenResources.cs" Link="Product/MaaFrozenResources.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaWorkerPolicy.cs" Link="Product/MaaWorkerPolicy.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Infrastructure/MaaInputLease.cs" Link="Product/MaaInputLease.cs" />
+    <Compile Include="../../plugins/managed/maa-framework/src/Infrastructure/MaaNativePath.cs" Link="Product/MaaNativePath.cs" />
+  </ItemGroup>
+</Project>

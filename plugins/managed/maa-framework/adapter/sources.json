@@ -1,0 +1,8 @@
+[
+  "adapter-runtime/core/strict-json.js",
+  "adapter-runtime/core/source-discovery.js",
+  "adapter/maa-program.js",
+  "adapter/maa-native.js",
+  "adapter/main.js",
+  "adapter/discovery.js"
+]

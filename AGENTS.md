@@ -1,95 +1,84 @@
-# AGENTS.md — NexusPipeline-Plugins
+# AGENTS.md
 
-本文件是本仓库的完整项目级工程约束。所有路径相对本仓库根目录。实施计划和任务可以细化步骤，不能扩大授权、降低测试要求或放宽用户数据保护。维护本仓库不依赖特定父目录名称或仓库外指导文件。
+## 开工
 
-## 1. 项目与定位
+- 先读 README 与 docs/developer/architecture.md。
+- 检查 branch、HEAD、status、暂存区和远端同步状态。
+- 未提交修改来源不明时停止依赖它的操作。
+- 日常开发只在本地 develop，Git commit 与远端操作分别授权。
+- 版本变更必须有用户明确目标。
+- 不执行 reset、clean、自动 stash 或 force push。
+- 不修改未知用户数据、实例、凭据和运行目录。
 
-本仓库维护官方插件源码、manifest、作者文档、稳定 catalog 和发行 ZIP。Host 为 `FlappiBakuse/NexusPipeline`；两仓库版本独立，Plugin API、Frontend API、manifest 和能力契约协同维护。
+## 架构
 
-开工前运行 `git status --short --branch`、`git rev-parse HEAD`，保留用户已有改动。按下表读取最小范围，再打开对应插件及其测试。
+- 一个业务概念只有一个 owner。
+- Core 不引用 Host、Platform、SDK DTO、数据库与 UI。
+- Platform 实现 Core ports，并在 SDK 边界转换 DTO。
+- Host 只组合服务、处理入口与生命周期。
+- 业务代码不解析 DI 容器，不建立泛型服务定位器。
+- Web、CLI、MCP 共享同一用例与权限。
+- 生产与 Test Host 使用同一业务和 HTTP 源码。
+- 旧 Nexus 协议、别名、reader 与 fallback 不进入新运行时。
+- 外部上游协议按其自己的版本管理。
 
-| 事项 | 入口 |
-|---|---|
-| 插件分组、使用与源码目录 | `README.md` |
-| 作者开发与验证 | `CONTRIBUTING.md` |
-| data-specialized 数据/能力/脚本 | `docs/author/data-specialized-plugin.md` |
-| managed 浏览器扩展与公共元素 | `docs/author/frontend-plugin.md` |
-| 判断脚本 | `docs/author/judge-script.md` |
-| Preview、stable 候选与发布 | `docs/development/release.md` |
-| 文档导航 | `docs/README.md`、`docs/map.json` |
+## 数据安全
 
-修改公共契约时同时读取 Host 的 `docs/reference/plugin-api/README.md` 和公开元素注册表。不要根据某台机器的相邻目录或旧 commit 猜测当前 API。CI 在一个运行中固定 SDK source SHA；本地联调显式提供 Host 路径。
+- 未知格式只读拒绝，保留原字节。
+- 恢复前必须证明旧 writer 已停止。
+- 无法证明拥有权时隔离资源，不猜测恢复。
+- 未知外部副作用不自动重放。
+- 安全重试必须同时满足冻结声明与宿主策略。
+- JSON 导入导出仅接受当前新格式。
+- 秘密草稿单独驻留内存，不写日志或普通 DTO。
+- keep、set、clear 有明确语义，不以空字符串猜测。
 
-## 2. 授权、Git、版本与数据
+## 文件与工具
 
-- 本地代码实施与 commit/push/tag/PR/合并/规则修改/Release 发布分别受用户授权。缺少发布凭据不阻止纯规则、工具和测试实现；不得把缺权限当作 writer 可以永久留空的理由。
-- 日常开发进入 `develop`；`main` 源码经 PR、`Plugins / 打包检查` 成功、squash 合并。普通开发者/Agent 不直推或 force push `main`。
-- 唯一生成物直推例外为专用 stable publisher App，路径白名单严格为 `metadata/catalog/stable.json`、同字节根投影 `catalog.json`、`metadata/releases/stable-state.json`、`packages/**`。例外不包含源码、工作流、兼容契约或版本修改。Writer 校验实际 Git 差异、父链和来源后正常快进推送；bypass 权限本身不提供路径隔离。
-- 发布控制文件的修改仍通过当时实际生效的 PR 门禁与维护者审核；不得用 Publisher bypass 提交源码或工作流，也不伪造检查结果。
-- `develop` 同一目标版本可多次修改和预览，不强制每次 bump；不修改稳定 catalog/state/packages。稳定 `(artifactName, version)` 不得对应不同字节。正式版本及日期按用户明确指示，发布脚本不自动 bump。
-- 修改前保存 HEAD、diff 和未提交文件的仓库外检查点。未经具体授权不使用 reset/clean/stash/覆盖恢复。备份 tag 仅本地，不推送。
-- 不提交账号、Cookie、Token、密钥、用户设置、日志、运行现场、缓存、临时目录、调试符号或无关构建产物。只清理本次生成且核验过的精确路径；保留用户数据和失败证据。
-- 获授权后按独立可验证的功能边界提交，Conventional Commits 类型英文、说明中文；不混入无关变更，不设任意文件数冻结门槛。
+- 手写文本使用 UTF-8、LF。
+- 标识符清楚表达领域、单位与所有权。
+- 注释解释代码不易说明的原因，不记中间尝试。
+- C# 文件最多 450 行；TS/JS 最多 350 行。
+- Vue SFC 最多 300 行；CSS 最多 350 行。
+- Python/Node 工具最多 400 行；测试最多 500 行。
+- 手写 JSON/YAML 最多 350 行；长期文档最多 400 行。
+- 函数目标 60 行，超过 100 行先审查职责。
+- 不通过压行、partial 或无主公共容器规避边界。
+- 生成例外必须登记具体文件、生成来源与验证命令。
+- 不把依赖、构建、运行数据、报告或候选放进源码。
+- 外部输出根必须由命令显式传入。
+- 工具入口保持薄层，职责模块各自验证。
+- 不依赖父目录文档、聊天或仓外隐藏脚本构建产品。
 
-## 3. 两类插件与包边界
+## 验证
 
-`managed-code` 可以提供公开 Plugin API 以及 Frontend API 1.7 的 slot/route、生命周期与公开 `nxp-*` Native Custom Elements。禁止依赖 Host Vue 内部组件、私有 class 或未声明的宿主服务。
+- 先最低有效层证明可观察结果。
+- 不用源码字符串匹配证明普通业务行为。
+- 架构使用编译或 AST 证据。
+- 零用例、意外 skip、缺报告、取消、超时均失败。
+- 不用无条件重试掩盖失败。
+- 保存原始命令、退出码、计时与源码摘要。
+- 未提交源码记 local-uncommitted，commit/tree 保持 null。
+- 不用旧参考 commit 冒充新实现身份。
+- UI 核心 Smoke 最多 12 个。
+- 不把装饰性断言作为核心功能门禁。
+- 视觉证据保留在仓外，不提交像素基线。
+- 桌面资源按完整进程族计量。
+- fixture、contract-only 与 integrated 证据分列。
+- 未运行记 NOT_RUN，不填假 PASS。
+- 生产与 Test Host 清单及输出必须分开。
 
-`data-specialized` 只包含 manifest、数据、允许的后端判定/配置脚本、i18n 和说明。浏览器扩展点仅声明受支持的 Host 能力，代码由 Host 实现。拒绝 frontend 字段（含 null/空对象）、frontend-module、frontend/、web/、浏览器工程、HTML/CSS 浏览器载荷和 .NET 程序集。不能按 .js 后缀删除现役 judge/configEditor；configValidator 已退役，源码与新包不得声明，Host 显式拒绝旧字段且保留用户快照。配置诊断使用 taskProtocol discover.configAssessment，保持 configEditor 公共字段但官方资产使用 `data/editor.js`。旧开发协议 1.0/1.1/1.2 不作为兼容契约加载。
+## 交付
 
-当前专项能力为 `emulator`、`self-managed-pc-launch`、`no-fresh-config`；`resolve.inputs` 使用 Host 的声明式输入表单。新增能力必须先实现宿主语义、双仓契约及测试。未知能力应清楚报告插件和字段，不静默启用。专项源码、ZIP、Host install/load/serve 都执行相同边界验证。
-
-纯数据插件打包不启动 dotnet、managed tests 或前端构建；其适配测试使用一次共享 Host Jint 工具构建；仍执行语法/配置脚本契约并生成 deterministic ZIP 与 SHA256。managed 插件执行真实构建和测试。ZIP 禁止路径穿越、绝对路径、重复/大小写冲突、符号链接和超限解压。稳定包保留现行最近三个版本策略，不清除已发布资产来绕过不可变性。
-
-## 4. 测试与 SDK
-
-自动化测试从当前终端直接运行并继承权限。普通或管理员终端均可，不主动 UAC、降权或按权限跳过。Windows managed/宿主运行测试仍需要 Windows；平台缺失写明 NOT_RUN，不冒称普通权限导致无法测试。Host 功能联调使用其 asInvoker Test Host，正式发行 EXE 的管理员要求保持。
-
-日常核心入口为 `node tests/run.mjs plugin --plugin <Artifact> --host-root <Host>` 与 `daily --changed --base <完整SHA> --host-root <Host>`；`daily --all-core` 验证当前策略登记的全部插件。完整耗时记录、真实能力边界、原生输入和报告见 `docs/testing/README.md`。以下保留静态检查和显式诊断入口；发行参数见 `docs/development/release.md`：
-
-```text
-python tools/repo.py check source
-python tools/repo.py check syntax
-node tests/config-editors/run.mjs
-python -m unittest discover -s tests/tooling -v
-python tools/repo.py check source --base <完整PR基线SHA>
-python tools/repo.py check host --host-root <显式Host路径> --sdk-sha <完整HostSHA>
-node tests/run.mjs daily --changed --base <完整PR基线SHA> --host-root <显式Host路径>
-python tools/repo.py release candidate --host-root <Host路径> --sdk-sha <SDK_SHA> --workflow-sha <当前完整SHA> --run-id <诊断run ID> --run-attempt 1 --output <新的外部stable-candidate目录>
-```
-
-PR 验证按完整 diff 选择 source、managed 与文档范围；未知共享输入保守扩大。合并后稳定候选使用当前受保护 main 的 catalog/state/packages 快照，按已发布游标覆盖累计未发行变更。没有发行变化返回 `NO_CHANGES`，不得制造新版本或空生成物提交。本地合成 run ID 只用于诊断，不能用于远端发布。
-
-`contracts/host-compatibility.json` 记录 `hostApiVersion`、`frontendApiVersion`、`supportedLocales` 等兼容契约；SHA 用于固定一次编译输入，不是兼容版本。验证和候选任务各自固定 SDK 来源，同一任务内的构建与检查使用同一值；候选清单绑定该值供 writer 复核。当前阶段可使用真实 Host Abstractions 的 ProjectReference；checkout 布局和 `--host-root` 必须指向同一个 SDK，不手写 stub 冒充 SDK。Host API 版本与 Abstractions 包版本分别治理，不自行统一或递增。
-
-先构建前端再执行依赖构建输出的 conformance。所有工具退出码向上传递；未知分组、缺依赖、意外空选择、零用例、意外 skip、缺报告和 timeout 均不算通过。测试最低有效层覆盖实际结果，不读取源码函数体匹配普通行为。UI 测试不持久化视觉截图/像素/布局基线，不依赖私有 DOM/class。跨宿主 Smoke 复用 Host 核心流程，不扩增装饰性 UI 测试。
-
-命令 UTF-8、非交互、显示实时阶段与失败摘要。Python 用于适合的文件/规则工具；现役 dotnet/npm/node/.cmd 入口按文档执行。失败保留证据并修根因，不用重试或跳过掩盖。
-
-## 5. 候选与发布
-
-PR 只要求固定 `Plugins / 打包检查`，单 job `timeout-minutes: 10`，按完整变更闭包生产打包与校验，不运行项目测试。纯文档和纯本机测试输入产生明确无需打包的成功结果，未知生产共享输入扩大闭包。数据插件不启动 .NET 或浏览器；managed 插件使用一次固定的真实 Host SDK。完整候选和实际发布分别手动触发，main push 不自动构建候选或进入 writer。本机验证与完整手动发行不受十分钟时限约束。候选清单仍绑定 source/tree、对端 SHA、原 workflow/run/attempt/job 和逐文件 hash；writer 用服务端记录复核原 job 和 artifact 摘要。
-
-构建 runner 没有发布 App 私钥或仓库写令牌。Writer 在独立干净 runner 运行已审核 main 的发布实现，将候选 ZIP/JSON 视为不可信数据。Publisher App 令牌按实际使用时刻生成，不把短期安装令牌长期存为固定 Secret。
-
-Preview 固定 `plugins-develop` Pre-release；平面资产名 `<Artifact>-<version>-<sha256>.zip`。包上传、下载复核后再切换 `catalog.json`。旧 catalog 引用的包不立即回收；短暂不可用由 Host 同通道缓存或明确错误处理。build 可取消，promote 不因新 build 自动取消；旧候选不得覆盖新候选。
-
-Stable 在源码合入 main 后构建并写回生成物；不重复全量测试。使用目标 main 的 catalog/state/packages 作为发行基线，候选源码只提供源码输入。维护 `metadata/releases/stable-state.json.sourceCommit` 游标，正常快进更新；竞争后重新校验，不 reset 用户工作目录，不依赖工作流排队顺序。旧候选遇到更新源码或分发事实时拒绝覆盖，并为最新源码重新产生候选。App 自身生成物提交的递归处理同时验证父链和路径，不能只看 actor 名或提交消息。
-
-dry-run 不写远端。实际写入入口必须有可测试实现，不能以永久抛异常代替。上传 Actions artifact 只是候选交付，不是 stable/preview 已发布。远端发布成功须有资产下载及 hash 复核。
-
-## 6. 文档与完成标准
-
-长期规则、命令、布局、状态及错误处理都在本仓库正式文档内维护；完成的实施教程、会话清单、迁移库存、临时审计文件与历史兼容层不成为后续开发依赖。源码变更同步 README、CONTRIBUTING、专项/前端指南及 RELEASING；文档链接和结构可自动验证，不用自然语言 regex 固定措辞。
-
-清理前保留失败证据到外部明确目录，核对本次文件所有权、进程已退出和 Git 状态。永久保留现役 schema、源码、测试、发布工具、作者指南与稳定发行事实；临时产物按精确清单删除。
-
-最终报告分开列实现、实际验证和远端启用状态。用无父文档、无实施包的新 checkout 验证上手路径。未经实际执行不宣称产品构建、全量测试、远端资格或发布通过。
-
-正式支持与验收范围为 Windows 11 x64，现役 Plugin API 精确为 2.3，Frontend API 为 1.7，自有 .NET 工程使用 .NET 10。持续清理无调用的旧 Nexus 协议、别名和工具入口；受支持的自动迁移必须具有明确路线、身份校验和应用／数据恢复，稳定发现入口及必要桥接保持可达；外部上游最新稳定及前两版适配独立维护。旧配置、外观、历史及未知恢复现场原字节保留；已实现并验证恢复的迁移路线可以自动升级，未知 schema、缺失路线和未知恢复 journal 必须阻断。未支持的破坏性来源使用新目录人工迁移，独立升级屏障须先于资产公开生效。
-
-GameCheckIn 的专用凭据回读只接受当前任务与固定平台；默认遮罩，清除须保存任务才生效。普通 DTO、轮询、配置和诊断保持脱敏。本机未提交源码装配入口和正式 publisher 边界见 `docs/development/release.md`。
-
-前端设计专项仅在仓外本地执行，覆盖全部宿主页与官方插件页面；语义卡片最多三层，第四层违规，深数据不截断。真实浏览器专项为本机验收必要条件，不加入 PR CI 或核心功能门禁，不提交专项脚本、截图或报告。公共规范与必要功能回归按产品代码维护。
-
-文档名称、职责、格式、权威来源与验证遵循[文档维护规范](docs/development/documentation.md)。
+- README 描述当前真实能力。
+- status 只记录尚未完成的问题。
+- 契约、作者文档与消费者同步。
+- PR 描述最终行为，不记放弃的实现。
+- 获授权提交时按可独立审查的功能边界拆分。
+- 先完成本轮提交与验证，再按授权统一推送 develop。
+- 正式发布需独立授权，不从本地候选推断。
+- 交付注明实现、实际验证、未运行与远端状态。
+- 功能变更交付实际构建软件，不能用命令替代。
+- 新 SDK 版本 0.1.0、Host 0.18.0、官方插件 0.5.0。
+- 自有格式初代 version=1，各版本语义互相独立。
+- 未发布目标版本不因修复或重建重复 bump。

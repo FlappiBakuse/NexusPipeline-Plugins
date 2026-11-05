@@ -1,0 +1,44 @@
+{
+  "repository": "babalae/better-genshin-impact",
+  "tag": "0.66.0",
+  "commit": "0af68c28f6b0e714d5304625ce644736d508022e",
+  "tree": "b6c9b16ce2372abb54478179daa7e01486ac8ec8",
+  "releaseId": 397078936,
+  "publishedAt": "2026-09-26T13:58:48Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/babalae/better-genshin-impact/releases/tag/0.66.0",
+  "assets": [
+    {
+      "id": 589905236,
+      "name": "BetterGI.Install.0.66.0.exe",
+      "size": 504209179,
+      "digest": "sha256:e00c7fa49f9adb8b462525221b01b46ecc2f91681e7a154714f1c47575f033cf",
+      "browser_download_url": "https://github.com/babalae/better-genshin-impact/releases/download/0.66.0/BetterGI.Install.0.66.0.exe"
+    },
+    {
+      "id": 589905234,
+      "name": "BetterGI_v0.66.0.7z",
+      "size": 465128660,
+      "digest": "sha256:28d4756e55f32637538bf84427f5f31afd5b153bf996530c5975bd9c8c0b9343",
+      "browser_download_url": "https://github.com/babalae/better-genshin-impact/releases/download/0.66.0/BetterGI_v0.66.0.7z"
+    }
+  ],
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-25",
+  "selection": "latest official published release with draft=false and prerelease=false",
+  "sourceArchiveSha256": "0f6dbc1a6812a252a0be2c490ca6279d2511d6759b2e5ba838fa33c1c8fa0b7a",
+  "platform": "windows",
+  "sourceDeclaredArchitecture": "x64",
+  "executable": "BetterGI.exe",
+  "sourceQualification": "PASS",
+  "binaryQualification": "NOT_RUN",
+  "submodules": [
+    {
+      "path": "Test/BetterGenshinImpact.UnitTest/Assets",
+      "repository": "huiyadanli/BetterGI.UnitTest.Assets",
+      "commit": "a1965670874cb937060bcbf149a1b309e2ffd65d",
+      "tree": "8b3b49387d10e7c979d6d8ed1f83bc6dfdc586c1"
+    }
+  ]
+}

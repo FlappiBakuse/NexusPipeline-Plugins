@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="sdk/**/*.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Domain/**/*.cs" Link="Product/%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CredentialEditor.cs" Link="Product/CredentialEditor.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CredentialRevealGrants.cs" Link="Product/CredentialRevealGrants.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInHttp.cs" Link="Product/CheckInHttp.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInEffects.cs" Link="Product/CheckInEffects.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/HoyoCheckIn.cs" Link="Product/HoyoCheckIn.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/PassportCheckIn.cs" Link="Product/PassportCheckIn.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/KuroCheckIn.cs" Link="Product/KuroCheckIn.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/TajiduoCheckIn.cs" Link="Product/TajiduoCheckIn.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/TajiduoAuthentication.cs" Link="Product/TajiduoAuthentication.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInPersistence.cs" Link="Product/CheckInPersistence.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInEditors.cs" Link="Product/CheckInEditors.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInTaskEditing.cs" Link="Product/CheckInTaskEditing.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/SklandDeviceProvider.cs" Link="Product/SklandDeviceProvider.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/TajiduoLogins.cs" Link="Product/TajiduoLogins.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInClients.cs" Link="Product/CheckInClients.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInCredentials.cs" Link="Product/CheckInCredentials.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInBrowserLogins.cs" Link="Product/CheckInBrowserLogins.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInRuntime.cs" Link="Product/CheckInRuntime.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInFrontendInputs.cs" Link="Product/CheckInFrontendInputs.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInFrontend.cs" Link="Product/CheckInFrontend.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInProtocols.cs" Link="Product/CheckInProtocols.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInRunner.cs" Link="Product/CheckInRunner.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInIdentity.cs" Link="Product/CheckInIdentity.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInCancellation.cs" Link="Product/CheckInCancellation.cs" />
+  </ItemGroup>
+</Project>

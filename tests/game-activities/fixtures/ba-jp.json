@@ -1,0 +1,16 @@
+{
+  "version": "2026-10",
+  "versionName": "日服活动",
+  "startTime": "2026-10-21T10:00:00",
+  "endTime": "2026-10-28T10:00:59",
+  "cover": "https://resource.starrailassistant.top/ba/activity/5fc1d422a523f6143d0f69df16b66004db296a33.webp",
+  "activities": [
+    {
+      "name": "特殊作战「洛亚追迹」篇",
+      "description": "",
+      "startTime": "2026-10-21T10:00:00",
+      "endTime": "2026-10-28T10:00:59",
+      "cover": "https://resource.starrailassistant.top/ba/activity/5fc1d422a523f6143d0f69df16b66004db296a33.webp"
+    }
+  ]
+}

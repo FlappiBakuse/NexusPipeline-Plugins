@@ -1,0 +1,48 @@
+{
+  "manifest": {
+    "displayName": "更好的原神",
+    "gameName": "原神",
+    "summary": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）"
+  },
+  "tasks": {
+    "claim_mail": {
+      "title": "领取邮件"
+    },
+    "condensed_resin": {
+      "title": "合成树脂"
+    },
+    "domains": {
+      "title": "自动秘境"
+    },
+    "bosses": {
+      "title": "自动首领讨伐"
+    },
+    "stygian_onslaught": {
+      "title": "自动幽境危战"
+    },
+    "ley_line_blossoms": {
+      "title": "自动地脉花"
+    },
+    "daily_rewards": {
+      "title": "领取每日奖励"
+    },
+    "serenitea_pot_rewards": {
+      "title": "领取尘歌壶奖励"
+    }
+  },
+  "diagnostics": {
+    "bettergi_finish_action": "BetterGI 一条龙完成后的系统动作可能影响队列后续工作。",
+    "bettergi_leyline_failed": "地脉任务报告失败",
+    "bettergi_daily_guild_exception": "每日委托领奖异常",
+    "bettergi_resin_exception": "树脂任务异常",
+    "bettergi_mail_claim": "已确认领取邮件",
+    "bettergi_mail_empty": "没有可领取邮件",
+    "bettergi_mail_exception": "领取邮件异常",
+    "bettergi_leyline_not_due": "当前无需执行地脉任务",
+    "bettergi_omitted_tasks_preserved": "执行顺序未包含的任务已保留，当前未选中。",
+    "bettergi_undeclared_tasks_preserved": "缺少完整定义或开关的任务已保留，请检查一条龙配置。",
+    "bettergi_cursor_unknown": "续跑位置未匹配当前任务，请先检查一条龙续跑设置。",
+    "bettergi_completion_action_requires_host_policy": "请将一条龙结束动作设为无操作，由队列统一处理后续动作。",
+    "bettergi_selected_configuration_mismatch": "主程序当前选择的一条龙配置与账号配置不一致。"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "extensionId": "okww",
+  "artifactName": "OkWutheringWaves",
+  "displayName": "ok-ww 日常",
+  "packageVersion": "0.5.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "task.adapt",
+    "configuration.edit"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "selected-script-root"
+    ]
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "instancePolicy": {
+      "selfManagedPcLaunch": false,
+      "supportsAndroid": false,
+      "requiresConfigurationSync": true
+    }
+  },
+  "gameName": "鸣潮",
+  "summary": "单账号日常任务计划、配置隔离与任务结果判定",
+  "author": "FlappiBakuse",
+  "tags": [
+    "鸣潮",
+    "专项插件",
+    "Wuthering Waves",
+    "Specialized plugin"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

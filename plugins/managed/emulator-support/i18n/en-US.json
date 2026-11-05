@@ -1,0 +1,9 @@
+{
+  "manifest": {
+    "displayName": "Emulator Support",
+    "gameName": "Android emulators",
+    "summary": "Provides detection, startup, screenshots and shutdown for LDPlayer, Nox and BlueStacks emulators."
+  },
+  "tasks": {},
+  "diagnostics": {}
+}

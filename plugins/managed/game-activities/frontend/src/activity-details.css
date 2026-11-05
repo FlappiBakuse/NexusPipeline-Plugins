@@ -1,0 +1,133 @@
+.activity-details {
+  padding-bottom: 20px;
+}
+.activity-details .activity-eyebrow {
+  font-size: 11px;
+  color: var(--nx-color-muted);
+  margin: 0 0 10px;
+}
+.activity-panel .activity-details > h3 {
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+.activity-server {
+  display: inline-block;
+  padding: 4px 10px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 20px;
+  color: var(--nx-color-accent);
+  font-size: 12px;
+}
+.activity-help {
+  color: var(--nx-color-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.activity-details > .activity-help {
+  margin: 12px 0;
+}
+.activity-events {
+  display: block !important;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--nx-color-border);
+}
+.activity-panel .activity-events > h4 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  line-height: 1.2;
+  margin: 0 0 20px;
+}
+.activity-count {
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--nx-color-muted);
+  border-radius: 5px;
+  background: var(--content-control);
+}
+.activity-group {
+  margin-top: 16px;
+}
+.activity-group > summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--nx-color-text);
+  font-size: 13px;
+  list-style: none;
+  cursor: pointer;
+}
+.activity-group > summary::-webkit-details-marker {
+  display: none;
+}
+.activity-group > summary::before {
+  content: '';
+  margin: 0;
+  border: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--nx-color-muted);
+  transform: none;
+}
+.activity-ongoing > summary::before {
+  background: var(--success);
+}
+.activity-upcoming > summary::before {
+  background: var(--nx-color-accent);
+}
+.activity-group > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: var(--nx-color-muted);
+}
+.activity-group[open] > summary::after {
+  content: '−';
+}
+.activity-group > summary > span {
+  color: var(--nx-color-muted);
+}
+.activity-event {
+  position: relative;
+  min-height: 170px;
+  padding: 20px;
+  margin-top: 12px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--content-control);
+}
+.activity-event-cover {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 40%;
+  height: 100%;
+  object-fit: cover;
+}
+.activity-event::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--content-control) 58%, transparent);
+  pointer-events: none;
+}
+.activity-event-copy {
+  position: relative;
+  z-index: 1;
+}
+.activity-event h5 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.activity-event .activity-help {
+  margin: 0 0 2px;
+}
+.activity-event-time {
+  margin: 18px 0 0;
+  font-size: 14px;
+}

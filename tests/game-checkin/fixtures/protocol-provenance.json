@@ -1,0 +1,35 @@
+{
+  "format": "nexus.game-checkin.protocol-fixtures",
+  "version": 1,
+  "fixtureValues": "Synthetic accounts, tokens, passwords, device identifiers and responses; no user credentials",
+  "qualification": "Protocol-source and component evidence only; no successful authenticated login, real sign-in or reward claim",
+  "tajiduo": {
+    "apkUrl": "https://htapk.wmupd.com/webops/ht/tgd_1.2.7_bbs_20260831.apk",
+    "apkSha256": "5559b9e9dd938399f4625211cd109b943b20a5ccbab8f23f97316994a9081758",
+    "manifestVersion": "1.2.7",
+    "manifestVersionCode": 19,
+    "nativeSdkVersion": "4.327.0",
+    "nativeRoutes": ["/usercenter/api/loginV2", "/usercenter/api/refreshTokenV2"],
+    "nativeHeader": "AuthorizationV2",
+    "refreshFields": ["token", "userIdentity", "appId"],
+    "communityUrl": "https://bbs-api.tajiduo.com/apihub/api/getCommunityHome?communityId=2",
+    "communitySha256": "385db3e0aba0e0676e80d05863e2ce568ee5286d773df78a5ad59e74c64cb733",
+    "signPageUrl": "https://webstatic.tajiduo.com/bbs/yh-signin/index.html?presentation_style=1&gameId=1289",
+    "signScriptUrl": "https://webstatic.tajiduo.com/bbs/yh-signin/static/js/main.6dcc0621.js",
+    "signScriptSha256": "88c4104f46ab4a56f891b914b56eae0bf7d1f314be2abd3c2aa9fef8854090c9",
+    "signRoutes": ["/apihub/awapi/signin/state", "/apihub/awapi/sign"],
+    "signHeader": "Authorization",
+    "signContentType": "application/x-www-form-urlencoded",
+    "signFields": ["roleId", "gameId"],
+    "stateField": "data.todaySign",
+    "excludedBusiness": ["resign", "community coins", "sharing", "paid makeup"]
+  },
+  "sklandDevice": {
+    "scriptUrl": "https://bbs.hycdn.cn/public/skland/others/skland-bbs/60e9c30fb0b1d1ca574c4522ca06fc7b.js",
+    "scriptSha256": "2dbd8228c80c13e05c05e2e3093fd1c5935fd62937a1b0add7c6fe28a1905f9f",
+    "deviceEndpoint": "https://fp-it.portal101.cn/deviceprofile/v4",
+    "codec": "RSA PKCS1 identity, field DES ECB zero padding, Gzip/Base64/AES CBC outer payload",
+    "profile": "Fixed protocol compatibility profile, not detected user hardware",
+    "actualRequest": "NOT_RUN"
+  }
+}

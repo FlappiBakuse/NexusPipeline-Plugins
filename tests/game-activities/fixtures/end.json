@@ -1,0 +1,25 @@
+{
+  "version": "1.6",
+  "versionName": "丹青渡",
+  "startTime": "2026-10-15T12:00:00",
+  "endTime": "2026-11-26T06:00:00",
+  "cover": "https://web.hycdn.cn/upload/image/20261014/36c2e3fbd1f70b9a3402167ac404ea96.jpg",
+  "activities": [
+    {
+      "name": "「丰碑留名·刻影」限时挑战",
+      "kind": "挑战活动",
+      "description": "「幽影刻形」系列开放后，在「影拓丰碑」完成对应挑战，即可领取【嵌晶玉】×1200、【高阶培养自选箱Ⅰ】等活动奖励",
+      "startTime": "2026-10-05T12:00:00",
+      "endTime": "2026-10-19T04:00:00",
+      "cover": ""
+    },
+    {
+      "name": "「烟火生缘」趣味活动",
+      "kind": "趣味活动",
+      "description": "前往「武陵」地区的「祀的画」区域，经营「缘缘庄客栈」，完成相应的经营任务，提升经营里程，即可领取【嵌晶玉】×1000、【存续的痕迹】等奖励。",
+      "startTime": "2026-10-15T12:00:00",
+      "endTime": "2026-11-26T05:59:59",
+      "cover": "https://web.hycdn.cn/upload/image/20261014/36c2e3fbd1f70b9a3402167ac404ea96.jpg"
+    }
+  ]
+}

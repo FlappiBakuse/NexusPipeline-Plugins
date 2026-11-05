@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaNative.cs" Link="Product/MaaNative.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaNativePath.cs" Link="Product/MaaNativePath.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaControllerBridge.cs" Link="Product/MaaControllerBridge.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaNativeQueries.cs" Link="Product/MaaNativeQueries.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaWaitBridge.cs" Link="Product/MaaWaitBridge.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaAgentNative.cs" Link="Product/MaaAgentNative.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaInputLease.cs" Link="Product/MaaInputLease.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Infrastructure/MaaProgramProcess.cs" Link="Product/MaaProgramProcess.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaAgentSession.cs" Link="Product/MaaAgentSession.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/IMaaController.cs" Link="Product/IMaaController.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/IMaaOutputScope.cs" Link="Product/IMaaOutputScope.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaScreencapPolicy.cs" Link="Product/MaaScreencapPolicy.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaSessionPlan.cs" Link="Product/MaaSessionPlan.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaPipelineGuard.cs" Link="Product/MaaPipelineGuard.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaTaskSession.cs" Link="Product/MaaTaskSession.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Application/MaaTaskPayload.cs" Link="Product/MaaTaskPayload.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Domain/MaaJson.cs" Link="Product/MaaJson.cs" />
+    <Compile Include="../../../plugins/managed/maa-framework/src/Domain/MaaWaitPolicy.cs" Link="Product/MaaWaitPolicy.cs" />
+  </ItemGroup>
+</Project>

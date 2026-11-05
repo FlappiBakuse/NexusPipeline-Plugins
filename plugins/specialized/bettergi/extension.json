@@ -1,0 +1,49 @@
+{
+  "extensionId": "bettergi",
+  "artifactName": "BetterGI",
+  "displayName": "更好的原神",
+  "packageVersion": "0.5.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "task.adapt",
+    "configuration.edit"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "selected-script-root"
+    ]
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "instancePolicy": {
+      "selfManagedPcLaunch": false,
+      "supportsAndroid": false,
+      "requiresConfigurationSync": true,
+      "gamePathResource": "extra-user-config",
+      "gamePathSelector": [
+        "genshinStartConfig",
+        "installPath"
+      ]
+    }
+  },
+  "gameName": "原神",
+  "summary": "BetterGenshinImpact 专项脚本实例配置接管（自动推导主程序、配置、日志路径与自启动参数，按用户接管指定的一条龙配置）",
+  "author": "FlappiBakuse",
+  "tags": [
+    "原神",
+    "专项插件",
+    "配置接管",
+    "Genshin Impact",
+    "Specialized plugin",
+    "Configuration"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

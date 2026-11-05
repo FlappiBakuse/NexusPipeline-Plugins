@@ -1,0 +1,44 @@
+{
+  "extensionId": "zzzonedragon",
+  "artifactName": "ZenlessZoneZeroOneDragon",
+  "displayName": "绝区零一条龙",
+  "packageVersion": "0.5.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "task.adapt",
+    "configuration.edit"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "selected-script-root"
+    ]
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "instancePolicy": {
+      "selfManagedPcLaunch": false,
+      "supportsAndroid": false,
+      "requiresConfigurationSync": true
+    }
+  },
+  "gameName": "绝区零",
+  "summary": "Zenless Zone Zero OneDragon 专项脚本实例配置接管（自动推导主程序、启动参数、配置与日志路径）",
+  "author": "FlappiBakuse",
+  "tags": [
+    "绝区零",
+    "专项插件",
+    "配置接管",
+    "Zenless Zone Zero",
+    "Specialized plugin",
+    "OneDragon"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

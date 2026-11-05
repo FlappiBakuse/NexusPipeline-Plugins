@@ -1,0 +1,8 @@
+{
+  "name": "nexus-sdk-consumer",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@nexuspipeline/extension-sdk": "0.1.0"
+  }
+}

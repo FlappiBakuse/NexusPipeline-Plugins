@@ -1,0 +1,68 @@
+[
+  {
+    "file": "ba-cn.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/ba-cn.json",
+    "originalSha256": "52724ad9b101f1682b62dbde2696f5a78357653c20306229e89b8286b3c42427",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "ba-global.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/ba-global.json",
+    "originalSha256": "75cb7a441ec65669bef91b1a4a34c0b5b5ae0fcd7ea1063ae6651da87e99d665",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "ba-jp.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/ba-jp.json",
+    "originalSha256": "07cc9b13afd06dd7bb1271b3e9dc9e28f68f542928ac7db76f25dd25f84f53b5",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "end.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/end.json",
+    "originalSha256": "f3027df39c11773897f3a0161337c399797a533fe84ecc2cdf05d88327f9f985",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "nte-en-US.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/nte-en-US.json",
+    "originalSha256": "2a6efce295a0432a4494cf88dd6b5e605bcaa309bbb41ba66b6d63b2d1e3a640",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "nte.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/nte.json",
+    "originalSha256": "b76b56d2690a415507e4b3b8a770aed582dad3e6cd0e8c4e7339947101473044",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "sr.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/sr.json",
+    "originalSha256": "a46c05e7b92e2ec52ce6472543b5c71a4e457063e8c332a695bddcaa2b53c3d3",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "ww.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/ww.json",
+    "originalSha256": "708256e3956ffa0a591e8c5345a21cb1dae0de1576ade702057145e75594dde6",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "xtlr.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/xtlr.json",
+    "originalSha256": "5a168f201836b91c9289ea3d9bee92424d1261c29e3e383664e128f40ba25aaa",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "ys.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/ys.json",
+    "originalSha256": "c8591bf311572242e5ca09de9e296dcf388402ab0bb94486a20353770489107c",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  },
+  {
+    "file": "zzz.json",
+    "sourceUrl": "https://starrailassistant.top/api/v1/activity/zzz.json",
+    "originalSha256": "26acc08e477d0459d7eaed8061517ec7e643945d5e4cf9f357996ea6be26d19a",
+    "derivation": "Root fields and first two activities retained; source timestamps unchanged."
+  }
+]

@@ -1,0 +1,75 @@
+{
+  "repository": "OneDragon-Anything/ZenlessZoneZero-OneDragon",
+  "tag": "v2.5.6",
+  "commit": "8fe22ef0cf127f596ba6b28047416fb68dacc797",
+  "tree": "cac8618c4accf49de39ba80debe7076dbfb12e92",
+  "releaseId": 422912726,
+  "publishedAt": "2026-10-24T18:37:52Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/tag/v2.5.6",
+  "assets": [
+    {
+      "id": 673008918,
+      "name": "ZenlessZoneZero-OneDragon-Environment.zip",
+      "size": 469436680,
+      "digest": "sha256:bf7fdd67e7614b42fb3474b34708e14b4762067d35632a4dafa2e9cad0a4b34c",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-Environment.zip"
+    },
+    {
+      "id": 673008934,
+      "name": "ZenlessZoneZero-OneDragon-Launcher.zip",
+      "size": 18873890,
+      "digest": "sha256:a490f26320668f9d9deddc02ad6007d81da55b899706921ccbe7f818167b7504",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-Launcher.zip"
+    },
+    {
+      "id": 673008924,
+      "name": "ZenlessZoneZero-OneDragon-RuntimeLauncher.zip",
+      "size": 207985218,
+      "digest": "sha256:0c64e10fb811ffab42d10011d042ab0db7d20705a8ee631112d1c98f3c42ca7e",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-RuntimeLauncher.zip"
+    },
+    {
+      "id": 673008910,
+      "name": "ZenlessZoneZero-OneDragon-v2.5.6-Full-Environment.zip",
+      "size": 749044160,
+      "digest": "sha256:5a42ce1aac508a71a069829b4f8c933311f1d80fa8a7dbcc7d3a84d308ab2a2d",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-v2.5.6-Full-Environment.zip"
+    },
+    {
+      "id": 673008932,
+      "name": "ZenlessZoneZero-OneDragon-v2.5.6-Full.zip",
+      "size": 279385335,
+      "digest": "sha256:ac4fa182f4f5cbcc00f63d8d48848ea6483d7ced2bc1bfaf68b6fc126e88bf65",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-v2.5.6-Full.zip"
+    },
+    {
+      "id": 673008921,
+      "name": "ZenlessZoneZero-OneDragon-v2.5.6-Installer.exe",
+      "size": 102030928,
+      "digest": "sha256:a232efdb57a6ce3635f3fa3366c720e5b57f2151ddf4755060382da0a1c97db1",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-v2.5.6-Installer.exe"
+    },
+    {
+      "id": 673008927,
+      "name": "ZenlessZoneZero-OneDragon-v2.5.6-WithRuntime-Full.zip",
+      "size": 281996359,
+      "digest": "sha256:4e880fd42165a38eaf43ba7a3a33133746584e0871415fda6eedc9f0edf410cd",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-v2.5.6-WithRuntime-Full.zip"
+    },
+    {
+      "id": 673008935,
+      "name": "ZenlessZoneZero-OneDragon-v2.5.6-WithRuntime.zip",
+      "size": 209661968,
+      "digest": "sha256:6ff183e0d8d5d27be413ad064343508c2c92986bb2ee6407e5d6c00f77c92ac5",
+      "browser_download_url": "https://github.com/OneDragon-Anything/ZenlessZoneZero-OneDragon/releases/download/v2.5.6/ZenlessZoneZero-OneDragon-v2.5.6-WithRuntime.zip"
+    }
+  ],
+  "qualification": {
+    "sourceIntegrity": "PASS",
+    "upstreamBinary": "NOT_RUN",
+    "installedHost": "NOT_RUN",
+    "singleInstanceLaunch": "NOT_RUN"
+  }
+}

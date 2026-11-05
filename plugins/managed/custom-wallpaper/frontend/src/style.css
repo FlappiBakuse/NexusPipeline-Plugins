@@ -1,0 +1,243 @@
+.plugin-panel.wallpaper-panel {
+  display: contents;
+  padding: 0;
+  background: transparent;
+}
+.wallpaper-panel > .plugin-body {
+  display: block;
+}
+.wallpaper-settings {
+  overflow: visible;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--content-card, var(--nx-color-surface));
+  line-height: 1.5;
+}
+.wallpaper-settings > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  list-style: none;
+  cursor: pointer;
+}
+.wallpaper-settings > summary::-webkit-details-marker {
+  display: none;
+}
+.wallpaper-settings > summary::before {
+  display: none;
+}
+.wallpaper-settings > summary > span {
+  display: grid;
+  gap: 4px;
+}
+.wallpaper-settings > summary strong {
+  font-size: 14px;
+  color: var(--nx-color-text);
+}
+.wallpaper-settings > summary small {
+  font-size: 12px;
+  color: var(--nx-color-muted);
+}
+.wallpaper-settings > summary > nexus-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--nx-color-accent);
+  transform: rotate(-90deg);
+}
+.wallpaper-settings[open] > summary > nexus-icon {
+  transform: none;
+}
+.wallpaper-content {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border-top: 1px solid var(--nx-color-border);
+}
+.wallpaper-content > .plugin-status:empty {
+  display: none;
+}
+.wallpaper-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  margin-bottom: 12px;
+  color: var(--nx-color-muted);
+  font-size: 12px;
+}
+.wallpaper-switches {
+  margin-bottom: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+}
+.wallpaper-switches > nexus-switch-setting {
+  min-height: 66px;
+  padding: 10px 16px;
+  background: transparent;
+}
+.wallpaper-switches > nexus-switch-setting + nexus-switch-setting {
+  border-top: 1px solid var(--nx-color-border);
+}
+.wallpaper-rotation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.wallpaper-rotation > .plugin-field,
+.wallpaper-effects > .plugin-field {
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.wallpaper-rotation nexus-select {
+  font-size: 13px;
+}
+.wallpaper-effects {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.wallpaper-effects > .plugin-range {
+  grid-template-columns: minmax(0, 1fr) 32px;
+}
+.wallpaper-effects > .plugin-range > span {
+  grid-column: 1/-1;
+}
+.wallpaper-effects > .plugin-range > nexus-range {
+  align-self: center;
+}
+.wallpaper-effects output {
+  align-self: center;
+  color: var(--nx-color-muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 40px;
+}
+.wallpaper-assets {
+  padding-top: 16px;
+  border-top: 1px solid var(--nx-color-border);
+}
+.wallpaper-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--nx-color-muted);
+}
+.wallpaper-list {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 8px;
+}
+.wallpaper-item {
+  display: grid;
+  grid-template-columns: 24px 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 68px;
+  padding: 12px;
+}
+.wallpaper-item + .wallpaper-item {
+  border-top: 1px solid var(--nx-color-border);
+}
+.wallpaper-thumbnail {
+  display: block;
+  width: 72px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--content-control);
+}
+.wallpaper-thumbnail > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.wallpaper-thumbnail > img:not([src]) {
+  visibility: hidden;
+}
+.wallpaper-item > nexus-button {
+  width: 48px;
+  --nx-button-padding: 0 10px;
+  --nx-button-radius: 6px;
+}
+.wallpaper-upload > nexus-file-picker {
+  --nx-button-radius: 6px;
+}
+.wallpaper-item-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  font-size: 13px;
+}
+.wallpaper-item-copy > strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wallpaper-item-copy > span,
+.wallpaper-empty,
+.wallpaper-limits {
+  color: var(--nx-color-muted);
+  font-size: 12px;
+}
+.wallpaper-empty {
+  margin: 0;
+  padding: 24px;
+}
+.wallpaper-limits {
+  margin: 16px 0 0;
+}
+.wallpaper-appearance {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wallpaper-appearance-image {
+  position: absolute;
+  inset: -6%;
+  background-position: center;
+  background-size: cover;
+}
+.wallpaper-appearance-shade {
+  position: absolute;
+  inset: 0;
+}
+@media (max-width: 720px) {
+  .wallpaper-rotation,
+  .wallpaper-effects {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wallpaper-content {
+    padding: 24px;
+  }
+  .wallpaper-intro {
+    align-items: start;
+  }
+  .wallpaper-intro > nexus-badge {
+    flex: none;
+  }
+  .wallpaper-item {
+    grid-template-columns: 24px 64px minmax(0, 1fr);
+    gap: 8px;
+    padding: 12px;
+  }
+  .wallpaper-thumbnail {
+    width: 64px;
+    height: 44px;
+  }
+  .wallpaper-item > nexus-button {
+    grid-column: 3;
+    justify-self: end;
+  }
+}

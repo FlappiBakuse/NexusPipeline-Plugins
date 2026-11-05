@@ -1,0 +1,84 @@
+import { choose } from './controls.mjs';
+
+export async function activitySurfaceCases({page,test}) {
+  async function mount(localZone=false) {
+    await page.evaluate(async localZone=>{
+      const point={instantUtc:'2030-01-01T00:00:00Z',rawValue:'',timeBasis:'utc',sourceZone:'UTC'};
+      const feed=(game,id,title,progression='cn')=>({id,game,server:progression==='cn'?'国服':'日服',progressionId:progression,
+        contentLocale:'zh-CN',enabled:true,overview:{title,coverId:id,end:point},
+        events:[{id:id+'-event',title:title+' Event',start:{...point,instantUtc:'2020-01-01T00:00:00Z'},playEnd:point}]});
+      let state={revision:1,selectedFeedIds:['gi','hsr'],gameOrder:['genshin-impact','honkai-star-rail','blue-archive'],
+        rotationSeconds:30,pauseOnHover:true,pauseWhenHidden:true,pauseOnInteraction:true,displayZone:'Asia/Shanghai',
+        progressions:{'blue-archive':'cn'},progressionOptions:{'blue-archive':[{value:'cn',label:'国服'},{value:'jp',label:'日服'}]},
+        feeds:[feed('genshin-impact','gi','Alpha'),feed('honkai-star-rail','hsr','Beta'),
+          feed('blue-archive','ba-cn','Blue Archive'),feed('blue-archive','ba-jp','Blue Archive JP','jp')]};
+      if(localZone)delete state.displayZone;
+      window.activityReads=0;window.activityWrites=0;window.activityState=state;
+      await window.testMount('game-activities',{readState:async()=>state,subscribe:()=>()=>{},refreshAll:async()=>state,
+        readCover:async()=>{window.activityReads++;return window.fixturePng();},
+        saveSettings:async value=>{window.activityWrites++;state={...value,revision:state.revision+1};window.activityState=state;return state;}},'overview.cards');
+    },localZone);
+    await page.locator('.activity-slide[aria-hidden=false]').getByText('Alpha',{exact:true}).waitFor();
+  }
+
+  await test('activity overview without an explicit display zone uses the browser local zone',async()=>{
+    await mount(true);
+    const time=await page.locator('.activity-slide[aria-hidden=false] .activity-deadline time').innerText();
+    if(!await page.evaluate(()=>Intl.DateTimeFormat().resolvedOptions().timeZone==='Asia/Tokyo')||!time.endsWith('09:00'))
+      throw Error('The local-zone deadline was rendered as a different time: '+time);
+  });
+
+  await test('activity track keeps slide identities and shared modal exit contents',async()=>{
+    await mount();
+    await page.evaluate(()=>{window.activityTrack=document.querySelector('.activity-track');window.activityFirstSlide=window.activityTrack.firstElementChild;});
+    await page.getByRole('button',{name:'下一款游戏',exact:true}).click();
+    await page.locator('.activity-slide[aria-hidden=false]').getByText('Beta',{exact:true}).waitFor();
+    const stable=await page.evaluate(()=>window.activityTrack===document.querySelector('.activity-track')
+      &&window.activityFirstSlide===document.querySelector('.activity-track').firstElementChild&&window.activityReads===2);
+    if(!stable)throw Error('Selection rebuilt the track or reread unchanged covers');
+    await page.getByRole('button',{name:'查看崩坏：星穹铁道活动详情',exact:true}).click();
+    await page.getByRole('heading',{name:'Beta Event',exact:true}).waitFor();
+    await page.evaluate(()=>{window.activityLeaving=document.querySelector('nexus-modal');});
+    await page.keyboard.press('Escape');
+    const exit=await page.evaluate(()=>({connected:window.activityLeaving.isConnected,open:window.activityLeaving.open,
+      inert:window.activityLeaving.inert,content:window.activityLeaving.textContent.includes('Beta Event')}));
+    if(!exit.connected||exit.open||!exit.inert||!exit.content)throw Error('Modal discarded its normal exit content: '+JSON.stringify(exit));
+    await page.locator('nexus-modal').waitFor({state:'detached'});
+    if(!await page.evaluate(()=>document.activeElement?.classList.contains('activity-hit')))throw Error('Modal did not return focus to the active card');
+    await page.evaluate(()=>window.fixture.hide());
+    if(await page.locator('.activity-cover[src]').count())throw Error('Hidden carousel kept display URLs');
+    await page.evaluate(()=>window.fixture.show());
+    await page.locator('.activity-slide[aria-hidden=false]').getByText('Beta',{exact:true}).waitFor();
+  });
+
+  await test('activity settings preserve hidden drafts and reject invalid raw numbers before writes',async()=>{
+    await mount();await page.getByRole('button',{name:'活动设置',exact:true}).click();
+    const number=page.getByRole('spinbutton',{name:'轮播频率（秒）',exact:true});
+    await number.fill('25');
+    await page.evaluate(()=>window.fixture.hide());
+    if(!await page.locator('nexus-modal').evaluate(element=>!element.open&&element.inert))throw Error('Hidden settings left an active modal');
+    await page.evaluate(()=>window.fixture.show());
+    if(await number.inputValue()!=='25')throw Error('Hidden settings lost their draft');
+    for(const raw of ['121','10.5','']){
+      await number.fill(raw);await page.locator('nexus-modal').getByRole('button',{name:'保存',exact:true}).click();
+      if(await page.evaluate(()=>window.activityWrites)!==0)throw Error('Invalid numeric text caused a save: '+raw);
+      if(await number.inputValue()!==raw)throw Error('Invalid numeric text was replaced: '+raw);
+      if(await page.locator('nexus-number-input').getAttribute('aria-invalid')!=='true')throw Error('Numeric validity was not public');
+    }
+    await number.fill('-1');await page.locator('nexus-modal').getByRole('button',{name:'保存',exact:true}).click();
+    await page.locator('nexus-modal').waitFor({state:'detached'});
+    if(!await page.evaluate(()=>window.activityWrites===1&&window.activityState.rotationSeconds===-1))throw Error('Corrected interval did not save once');
+  });
+
+  await test('unsubscribed activity progression survives save without subscribing the game',async()=>{
+    await mount();await page.getByRole('button',{name:'活动设置',exact:true}).click();
+    const select=page.locator('nexus-select[aria-label="蔚蓝档案 内容进度"]');await choose(select,'jp');
+    await page.locator('nexus-modal').getByRole('button',{name:'保存',exact:true}).click();await page.locator('nexus-modal').waitFor({state:'detached'});
+    if(!await page.evaluate(()=>window.activityState.progressions['blue-archive']==='jp'
+      &&window.activityState.selectedFeedIds.length===2&&!window.activityState.selectedFeedIds.some(id=>id.startsWith('ba-'))))throw Error('Dormant progression was discarded or subscribed');
+    await page.getByRole('button',{name:'活动设置',exact:true}).click();
+    if(await select.evaluate(element=>element.value)!=='jp')throw Error('Saved dormant progression did not reopen');
+    if(await page.getByRole('switch',{name:'蔚蓝档案',exact:true}).getAttribute('aria-checked')!=='false')throw Error('Game was implicitly enabled');
+    await page.keyboard.press('Escape');await page.locator('nexus-modal').waitFor({state:'detached'});
+  });
+}

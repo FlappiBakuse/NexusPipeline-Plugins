@@ -1,0 +1,53 @@
+.activity-panel .activity-settings h3 {
+  font-size: 14px;
+  line-height: 1.35;
+  margin: 0 0 12px;
+}
+.activity-game-list {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 12px;
+  background: var(--nx-color-surface);
+}
+.activity-game-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+}
+.activity-game-row + .activity-game-row {
+  border-top: 1px solid var(--nx-color-border);
+}
+.activity-game-row > strong {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  font-size: 13px;
+}
+.activity-game-row > nexus-select {
+  width: 180px;
+}
+.activity-frequency {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+  color: var(--nx-color-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.activity-frequency > nexus-number-input {
+  display: block;
+  width: 100%;
+}
+.activity-error {
+  color: var(--nx-color-danger);
+  font-size: 13px;
+}
+.activity-settings-cache {
+  margin: 16px 0 0;
+  color: var(--nx-color-muted);
+  font-size: 13px;
+}

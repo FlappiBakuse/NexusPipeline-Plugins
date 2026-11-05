@@ -1,0 +1,294 @@
+.checkin-modal-owner {
+  display: contents !important;
+}
+.checkin-editor > [slot='footer'] {
+  gap: 12px;
+}
+.checkin-editor > [slot='footer'] > nexus-button:last-child {
+  --nx-button-fill: var(--content-control);
+  --nx-color-border: var(--border-strong);
+  --nx-color-text: var(--nx-color-muted);
+}
+.checkin-modal-owner > .plugin-status:empty,
+.checkin-edit-body > .plugin-status:empty {
+  display: none;
+}
+.checkin-edit-body,
+.checkin-main-fields {
+  display: grid;
+  gap: 16px;
+  line-height: 1.5;
+  --nx-input-weight: 600;
+}
+.checkin-label,
+.checkin-main-fields .plugin-field {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.checkin-required > span::after {
+  content: ' *';
+  color: var(--nx-color-danger);
+}
+.checkin-note {
+  --nx-control-height: 96px;
+  --nx-input-font-size: 12px;
+  --nx-textarea-padding: 12px;
+}
+.checkin-main-fields {
+  --nx-input-weight: 600;
+}
+.checkin-edit-body nexus-text-input,
+.checkin-edit-body nexus-text-area,
+.checkin-edit-body nexus-select {
+  --nx-color-border: var(--border-strong);
+}
+.checkin-setting {
+  min-height: 68px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 10px;
+  background: var(--content-control);
+}
+.checkin-main-fields > .checkin-setting {
+  margin-top: -4px;
+}
+.checkin-game-section {
+  overflow: visible;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 12px;
+}
+.checkin-game-section > summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  list-style: none;
+  padding: 16px 24px;
+  cursor: pointer;
+}
+.checkin-game-section > summary::-webkit-details-marker {
+  display: none;
+}
+.checkin-game-section > summary::before {
+  display: none;
+}
+.checkin-game-section > summary > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.checkin-game-section > summary strong {
+  font-size: 14px;
+  color: var(--nx-color-text);
+}
+.checkin-game-section > summary small {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--nx-color-muted);
+}
+.checkin-game-section > summary nexus-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--nx-color-accent);
+  transform: rotate(-90deg);
+}
+.checkin-game-section[open] > summary nexus-icon {
+  transform: none;
+}
+.checkin-game-body {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border-top: 1px solid var(--nx-color-border);
+  --content-control: var(--content-card);
+}
+.checkin-game-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.checkin-game-grid nexus-select {
+  font-size: 13px;
+}
+.checkin-notification {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--nx-color-border);
+}
+.checkin-credential {
+  display: grid;
+  gap: 8px;
+}
+.checkin-credential-controls {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+}
+.checkin-credential-input {
+  min-width: 0;
+  flex: 1;
+  position: relative;
+  --nx-input-padding-end: 44px;
+}
+.checkin-credential-input nexus-text-input {
+  width: 100%;
+}
+.checkin-secret-eye {
+  position: absolute;
+  top: 0;
+  right: 0;
+  --nx-color-text: var(--nx-color-muted);
+}
+.checkin-credential-controls > nexus-button {
+  flex: none;
+  --nx-color-border: var(--border-strong);
+}
+.checkin-schedules > h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.checkin-schedules > p {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--nx-color-muted);
+}
+.checkin-schedule-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.checkin-schedule-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+}
+.checkin-schedule-row > nexus-drag-handle {
+  --nx-drag-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+.checkin-schedule-card {
+  min-width: 0;
+}
+.checkin-schedule-card > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 8px;
+  margin-right: 8px;
+  background: var(--content-control-hover);
+  list-style: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+.checkin-schedule-card > summary::-webkit-details-marker {
+  display: none;
+}
+.checkin-schedule-card > summary::before {
+  display: none;
+}
+.checkin-schedule-card > summary > span {
+  color: var(--nx-color-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+.checkin-schedule-card > summary > strong {
+  color: var(--nx-color-text);
+}
+.checkin-schedule-card > summary > nexus-icon {
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  color: var(--nx-color-muted);
+  transform: rotate(-90deg);
+}
+.checkin-schedule-card[open] > summary > nexus-icon {
+  transform: none;
+}
+.checkin-schedule-card > .checkin-setting {
+  min-height: 48px;
+}
+.checkin-schedule-actions {
+  display: flex;
+  justify-content: end;
+  margin-top: 12px;
+}
+.checkin-schedule-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(160px, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+.checkin-schedule-grid > .checkin-label > span {
+  color: var(--nx-color-muted);
+  font-weight: 400;
+}
+.checkin-schedule-grid nexus-time-picker {
+  --content-control: var(--content-card);
+  font-size: 13px;
+}
+.checkin-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.checkin-days > nexus-button {
+  min-width: 0;
+  --nx-button-fill: var(--content-control);
+  --nx-color-border: var(--border-strong);
+  --nx-color-text: var(--nx-color-muted);
+}
+.checkin-days > nexus-button[aria-pressed='true'] {
+  --nx-button-fill: var(--accent-soft);
+  --nx-color-border: var(--nx-color-accent);
+  --nx-color-text: var(--nx-color-accent);
+}
+.checkin-login {
+  display: grid;
+  gap: 16px;
+  line-height: 1.5;
+  --nx-color-border: var(--border-strong);
+}
+.checkin-login > p {
+  margin: 14px 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--nx-color-text);
+}
+.checkin-login .plugin-field {
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.checkin-login nexus-select[inert] {
+  opacity: 0.55;
+}
+.checkin-login > nexus-button {
+  width: 100%;
+}
+.checkin-login-modal > [slot='footer'] {
+  gap: 12px;
+}
+.checkin-login-modal > [slot='footer'] > nexus-button {
+  min-width: 80px;
+  --nx-color-border: var(--border-strong);
+}
+@media (max-width: 720px) {
+  .checkin-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .checkin-game-grid,
+  .checkin-schedule-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .checkin-game-section > summary {
+    flex-direction: column;
+    align-items: start;
+    gap: 16px;
+    padding: 16px 24px;
+  }
+}

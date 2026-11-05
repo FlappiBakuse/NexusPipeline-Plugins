@@ -1,0 +1,35 @@
+{
+  "extensionId": "emulator-support",
+  "artifactName": "EmulatorSupport",
+  "displayName": "模拟器支持扩展",
+  "packageVersion": "0.5.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "emulator.provide"
+  ],
+  "permissions": {},
+  "managed": {
+    "entryAssembly": "NexusPipeline.Extensions.EmulatorSupport.dll",
+    "entryType": "NexusPipeline.Extensions.EmulatorSupport.EmulatorExtension",
+    "emulators": [
+      "vendors"
+    ]
+  },
+  "gameName": "安卓模拟器",
+  "summary": "提供雷电、夜神和 BlueStacks 模拟器的识别、启动、截图与关闭支持。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "模拟器",
+    "运行支持",
+    "Emulator",
+    "Runtime support"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

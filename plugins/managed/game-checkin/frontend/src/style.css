@@ -1,0 +1,222 @@
+@import './checkin-editor.css';
+
+.checkin-page {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  line-height: 1.5;
+}
+.checkin-page > .plugin-body {
+  display: block;
+}
+.checkin-page > .plugin-body > .plugin-status:empty {
+  display: none;
+}
+.checkin-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.checkin-heading h1 {
+  margin: 0;
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.checkin-heading p {
+  margin: 0;
+}
+.checkin-heading .checkin-eyebrow {
+  color: var(--faint);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.checkin-heading .checkin-description {
+  margin-top: 7px;
+  color: var(--nx-color-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.checkin-task-list {
+  display: block;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 16px;
+  background: var(--content-card);
+}
+.checkin-task {
+  display: block;
+  min-width: 0;
+  padding: 17px 12px 17px 4px;
+  border-bottom: 1px solid var(--nx-color-border);
+}
+.checkin-task:last-child {
+  border-bottom: 0;
+}
+.checkin-task-head {
+  display: grid;
+  grid-template-columns: 28px 36px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 68px;
+}
+.checkin-task-head > nexus-drag-handle {
+  --nx-drag-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+.checkin-avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  color: var(--nx-color-accent);
+  background: var(--accent-soft);
+  font-size: 13px;
+  font-weight: 650;
+}
+.checkin-task-copy {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+.checkin-task-copy h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.checkin-remark {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--nx-color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.checkin-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.checkin-task-actions {
+  display: flex;
+  gap: 8px;
+  --nx-button-fill: var(--content-control);
+  --nx-color-border: var(--border-strong);
+}
+.checkin-task-actions > nexus-button {
+  width: 96px;
+  min-width: 0;
+}
+.checkin-records {
+  margin: 8px 0 0 88px;
+  color: var(--nx-color-muted);
+  font-size: 12px;
+}
+.checkin-records summary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  list-style: none;
+}
+.checkin-records summary::-webkit-details-marker {
+  display: none;
+}
+.checkin-records summary::before {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+  margin: 0;
+  border: 4px solid transparent;
+  border-left-color: currentColor;
+  transform: none;
+  transform-origin: 2px 4px;
+}
+.checkin-records[open] > summary::before {
+  transform: rotate(90deg);
+}
+.checkin-records ol {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+}
+.checkin-records li {
+  padding: 12px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 10px;
+  background: var(--content-card-soft);
+}
+.checkin-run-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.checkin-records p {
+  margin: 4px 0;
+}
+.checkin-empty {
+  display: block;
+  padding: 40px 20px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 16px;
+  background: var(--content-card);
+}
+@media (max-width: 900px) {
+  .checkin-task-head {
+    grid-template-columns: 28px 36px minmax(0, 1fr);
+  }
+  .checkin-task-actions {
+    grid-column: 2 / -1;
+    display: grid;
+    grid-template-columns: 96px 96px minmax(0, 96px);
+    margin-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .checkin-main-fields {
+    gap: 12px;
+  }
+  .checkin-main-fields > .checkin-setting {
+    margin-top: 0;
+    min-height: 66px;
+  }
+  .checkin-heading {
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .checkin-heading > nexus-button {
+    --nx-action-height: 44px;
+  }
+  .checkin-task {
+    padding-left: 0;
+    padding-right: 8px;
+  }
+  .checkin-task-actions {
+    --nx-action-height: 44px;
+  }
+  .checkin-task-actions > nexus-button {
+    width: 100%;
+  }
+  .checkin-records {
+    margin-left: 40px;
+  }
+}

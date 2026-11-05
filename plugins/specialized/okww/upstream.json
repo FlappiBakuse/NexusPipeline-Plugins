@@ -1,0 +1,59 @@
+{
+  "repository": "ok-oldking/ok-wuthering-waves",
+  "tag": "v3.7.12",
+  "commit": "46113e464b823c95d5df988f8eba8b2dd8b45e5e",
+  "tree": "39f660d910863e82a80bb73693a6a68d2e5830f7",
+  "releaseId": 426218305,
+  "publishedAt": "2026-10-28T03:05:22Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/tag/v3.7.12",
+  "assets": [
+    {
+      "id": 683644741,
+      "name": "ok-ww-win32-China-setup.exe",
+      "size": 391207576,
+      "digest": "sha256:a89edd59c90b2be728d372f1b13c28f498043d8068687a7c9be6ab41c246a7bb",
+      "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.12/ok-ww-win32-China-setup.exe"
+    },
+    {
+      "id": 683644744,
+      "name": "ok-ww-win32-Global-setup.exe",
+      "size": 534682310,
+      "digest": "sha256:5f7a9670291b727effdd255fd364b9b19155450599f8ddb4542a82ebc358f6f9",
+      "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.12/ok-ww-win32-Global-setup.exe"
+    },
+    {
+      "id": 683644749,
+      "name": "ok-ww-win32-online-setup.exe",
+      "size": 4023925,
+      "digest": "sha256:e55666aa1a97cda733b76e628ee6cb7e4d9b454460efacd602b1e7ef225d463d",
+      "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.12/ok-ww-win32-online-setup.exe"
+    },
+    {
+      "id": 683644745,
+      "name": "ok-ww-win32.zip",
+      "size": 4976098,
+      "digest": "sha256:29155f7077b571ccd3366203e216c72f6479672b6c456d8b76fa2b7d84a60ea9",
+      "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.12/ok-ww-win32.zip"
+    },
+    {
+      "id": 683644740,
+      "name": "win32_sha256.txt",
+      "size": 64,
+      "digest": "sha256:b7ccb832292c99a1f502ec6a0d7a29dd2ee39ec259082f10cc851127177aaff5",
+      "browser_download_url": "https://github.com/ok-oldking/ok-wuthering-waves/releases/download/v3.7.12/win32_sha256.txt"
+    }
+  ],
+  "okScriptSource": {
+    "version": "2.0.17",
+    "officialWheelSha256": "49720827f267297620208bc5fe6981203eb6472868fe2de59d12329ed7494e44",
+    "qualification": "fixed official PyPI wheel source inspection"
+  },
+  "qualification": {
+    "sourceIntegrity": "PASS",
+    "upstreamBinary": "NOT_RUN",
+    "installedHost": "NOT_RUN",
+    "pyappifyRuntimeOwnership": "NOT_RUN"
+  }
+}

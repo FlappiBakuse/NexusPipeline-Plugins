@@ -1,0 +1,42 @@
+{
+  "extensionId": "oknte",
+  "artifactName": "OkNTE",
+  "displayName": "ok-nte 日常",
+  "packageVersion": "0.5.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "task.adapt",
+    "configuration.edit"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "selected-script-root"
+    ]
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "instancePolicy": {
+      "selfManagedPcLaunch": true,
+      "supportsAndroid": false,
+      "requiresConfigurationSync": true
+    }
+  },
+  "gameName": "异环",
+  "summary": "单账号日常任务计划、配置隔离与任务结果判定",
+  "author": "FlappiBakuse",
+  "tags": [
+    "异环",
+    "专项插件",
+    "Neverness to Everness",
+    "Specialized plugin"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

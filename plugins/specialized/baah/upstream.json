@@ -1,0 +1,32 @@
+{
+  "repository": "BlueArchiveArisHelper/BAAH",
+  "tag": "BAAH2.5.1",
+  "commit": "1f9df2587ff6a6b767e5353a3ce9bb1b8db7c23c",
+  "tree": "8d31e8d8ec5f5e3d0c5ab1b37ab19dbaffc7e066",
+  "releaseId": 425210643,
+  "publishedAt": "2026-10-27T08:49:25Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/tag/BAAH2.5.1",
+  "assets": [
+    {
+      "id": 680995088,
+      "name": "BAAH2.5.1.zip",
+      "size": 172880728,
+      "digest": "sha256:bfb26fc6b70e83ed3e427cd2c0e72c7f347d9a81172c7f4f5b180901b959cb4e",
+      "browser_download_url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/download/BAAH2.5.1/BAAH2.5.1.zip"
+    },
+    {
+      "id": 680995090,
+      "name": "BAAH2.5.1_update.zip",
+      "size": 16267272,
+      "digest": "sha256:64b83c3aacfabd606e2516c7fea26941ced2668ad1f19ecc271773f902036af1",
+      "browser_download_url": "https://github.com/BlueArchiveArisHelper/BAAH/releases/download/BAAH2.5.1/BAAH2.5.1_update.zip"
+    }
+  ],
+  "schemaVersion": 1,
+  "selection": "latest official stable release; draft=false/prerelease=false",
+  "sourceArchiveSha256": "a317ffa3ae421f0c121d8ce20c33a93e41954a2afc39605ad41e9557a3ebb877",
+  "sourceQualification": "PASS",
+  "binaryQualification": "NOT_RUN"
+}

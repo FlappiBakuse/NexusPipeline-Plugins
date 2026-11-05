@@ -1,6 +1,7 @@
 **/bin/
 **/obj/
 **/node_modules/
-/.generated/
 **/__pycache__/
-*.pyc
+*.user
+*.log
+.vs/

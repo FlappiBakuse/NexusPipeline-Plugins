@@ -1,0 +1,259 @@
+@import './activity-details.css';
+@import './activity-settings.css';
+
+.plugin-panel.activity-panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.activity-panel > h3 {
+  display: none;
+}
+.activity-panel > .plugin-status:empty {
+  display: none;
+}
+.activity-panel > .plugin-body {
+  display: block;
+}
+.activity-carousel {
+  --nx-icon-border: transparent;
+  position: relative;
+  min-width: 0;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #18232d;
+  color: white;
+}
+.activity-viewport {
+  min-height: 190px;
+  overflow: hidden;
+}
+.activity-track {
+  display: flex;
+  transition: transform 450ms cubic-bezier(0.22, 0.68, 0, 1);
+}
+.activity-slide {
+  position: relative;
+  flex: 0 0 100%;
+  min-width: 0;
+  min-height: 300px;
+  aspect-ratio: 2.7;
+  overflow: hidden;
+  background: linear-gradient(125deg, #1b335b, #29394b);
+}
+.activity-expanded .activity-slide {
+  aspect-ratio: 16 / 9;
+}
+.activity-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.activity-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(#0002, #00000008 28%, #0004 55%, #000e), linear-gradient(90deg, #0004, transparent 75%);
+}
+.activity-copy {
+  position: absolute;
+  z-index: 1;
+  left: 64px;
+  right: 64px;
+  bottom: 48px;
+  pointer-events: none;
+}
+.activity-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+}
+.activity-meta > span {
+  border: 1px solid #ffffff50;
+  border-radius: 16px;
+  padding: 2px 8px;
+  background: #0003;
+  font-size: 11px;
+}
+.activity-panel .activity-copy h3 {
+  margin: 10px 0;
+  color: white;
+  font-size: clamp(22px, 2.8vw, 32px);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.activity-deadline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+}
+.activity-deadline strong {
+  font-size: 13px;
+}
+.activity-hit {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.activity-hit:hover {
+  background: transparent;
+}
+.activity-hit:focus-visible {
+  outline: 2px solid white;
+  outline-offset: -5px;
+}
+.activity-tools {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.activity-tools nexus-icon-button {
+  width: 40px;
+  height: 40px;
+  color: white;
+}
+.activity-tools span {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 3px #000a);
+}
+.activity-tools > :first-child span {
+  font-size: 28px;
+}
+.activity-tools svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+.activity-previous,
+.activity-next {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  color: white;
+  background: #0003;
+  border: 1px solid #ffffff30;
+  border-radius: 50%;
+}
+.activity-previous {
+  left: 12px;
+}
+.activity-next {
+  right: 12px;
+}
+.activity-previous span,
+.activity-next span {
+  font-size: 30px;
+  line-height: 1;
+}
+.activity-indicators {
+  position: absolute;
+  z-index: 3;
+  bottom: 8px;
+  left: 50%;
+  display: flex;
+  transform: translateX(-50%);
+}
+.activity-indicator {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 4px;
+  border: 0;
+  appearance: none;
+  background: transparent;
+}
+.activity-indicator::after {
+  content: '';
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff6;
+  transform: translateY(4px);
+}
+.activity-indicator[aria-current='true']::after {
+  background: white;
+}
+.activity-indicator:hover {
+  background: transparent;
+}
+.activity-empty {
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  width: 100%;
+  margin: 0;
+  color: white;
+}
+.activity-panel [hidden] {
+  display: none !important;
+}
+.activity-panel nexus-modal {
+  font-size: 14px;
+  line-height: 1.55;
+  --nx-modal-title-size: 16px;
+  --nx-modal-title-line-height: 1.2;
+}
+.activity-panel nexus-modal .plugin-actions {
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .activity-game-row {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 600px) {
+  .activity-slide {
+    min-height: 310px;
+  }
+  .activity-copy {
+    left: 56px;
+    right: 56px;
+  }
+  .activity-game-row > nexus-select {
+    width: 120px;
+  }
+  .activity-deadline {
+    gap: 4px 8px;
+  }
+  .activity-previous {
+    left: 8px;
+  }
+  .activity-next {
+    right: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-track {
+    transition: none;
+  }
+}

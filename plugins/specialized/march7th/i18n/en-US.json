@@ -1,0 +1,136 @@
+{
+  "manifest": {
+    "displayName": "March7thAssistant",
+    "gameName": "Honkai: Star Rail",
+    "summary": "Manage March7thAssistant script instances, configuration paths, logs, and run screenshots."
+  },
+  "tasks": {
+    "daily_enable": {
+      "title": "Daily training"
+    },
+    "power_enable": {
+      "title": "Trailblaze Power"
+    },
+    "universe_enable": {
+      "title": "Simulated / Divergent Universe"
+    },
+    "weekly_divergent_enable": {
+      "title": "Divergent Universe points"
+    },
+    "currencywars_enable": {
+      "title": "Currency Wars points"
+    },
+    "fight_enable": {
+      "title": "World patrol"
+    },
+    "forgottenhall_enable": {
+      "title": "Forgotten Hall"
+    },
+    "purefiction_enable": {
+      "title": "Pure Fiction"
+    },
+    "apocalyptic_enable": {
+      "title": "Apocalyptic Shadow"
+    },
+    "asset_manager_enable": {
+      "title": "Inventory management"
+    },
+    "reward_enable": {
+      "title": "Collect rewards"
+    },
+    "activity_enable": {
+      "title": "Events"
+    },
+    "build_target_enable": {
+      "title": "Build targets"
+    },
+    "echo_of_war_enable": {
+      "title": "Echo of War"
+    },
+    "reward_assist_enable": {
+      "title": "Support rewards"
+    },
+    "reward_mail_enable": {
+      "title": "Mail rewards"
+    },
+    "reward_dispatch_enable": {
+      "title": "Assignment rewards"
+    },
+    "reward_quest_enable": {
+      "title": "Training rewards"
+    },
+    "reward_srpass_enable": {
+      "title": "Nameless Honor"
+    },
+    "reward_achievement_enable": {
+      "title": "Achievement rewards"
+    },
+    "reward_message_enable": {
+      "title": "Message rewards"
+    },
+    "reward_redemption_code_enable": {
+      "title": "Redemption codes"
+    },
+    "asset_self_molding_resin_enable": {
+      "title": "Self-Modeling Resin synthesis"
+    },
+    "asset_lc3_star_superimpose_enable": {
+      "title": "Superimpose 3-star Light Cones"
+    },
+    "asset_ember_special_pass_enable": {
+      "title": "Exchange Special Passes"
+    },
+    "asset_ember_regular_pass_enable": {
+      "title": "Exchange Rail Passes"
+    },
+    "asset_ember_tracks_of_destiny_enable": {
+      "title": "Exchange Tracks of Destiny"
+    },
+    "activity_dailycheckin_enable": {
+      "title": "Event check-in"
+    },
+    "activity_gardenofplenty_enable": {
+      "title": "Garden of Plenty"
+    },
+    "activity_realmofthestrange_enable": {
+      "title": "Realm of the Strange"
+    },
+    "activity_planarfissure_enable": {
+      "title": "Planar Fissure"
+    },
+    "activity_journey_highlights_notification_enable": {
+      "title": "Journey Highlights notification"
+    }
+  },
+  "diagnostics": {
+    "march7th_instance_locked": "The selected instance is locked",
+    "march7th_instance_not_found": "The selected instance was not found",
+    "march7th_instance_teleport_failed": "Teleport may have failed",
+    "march7th_instance_start_failed": "The challenge could not start",
+    "march7th_instance_unsuccessful": "The instance execution did not succeed",
+    "march7th_instance_activity_error": "Activity processing failed",
+    "march7th_instance_activity_unattributed": "Activity error without a confirmed execution scope",
+    "march7th_instance_exhausted": "Internal instance retries were exhausted and the scope exited",
+    "march7th_instance_abandoned": "The instance was not completed before leaving the task scope",
+    "march7th_scope_started": "Entered the task execution scope",
+    "march7th_reward_not_available": "Confirmed that no rewards are available",
+    "march7th_reward_completed": "Reward check completed",
+    "march7th_reward_children_completed": "All enabled reward subtasks completed",
+    "march7th_mail_claimed": "Mail rewards claimed",
+    "march7th_dispatch_in_progress": "Assignments are in progress; no rewards are available",
+    "march7th_daily_target": "Daily training target reached",
+    "march7th_universe_complete": "All configured runs completed",
+    "march7th_universe_incomplete": "The universe run did not complete",
+    "march7th_universe_zero": "Skipped because the configured run count is zero",
+    "march7th_universe_satisfied": "The configured run count for this period is already satisfied",
+    "march7th_weekly_incomplete": "Point rewards remain incomplete after multiple attempts",
+    "march7th_activity_exception": "Activity processing failed",
+    "march7th_echo_not_due": "The configured Echo of War day has not arrived",
+    "march7th_not_due": "The current period has not refreshed",
+    "march7th_unknown_enabled_task_preserved": "Enabled unknown tasks are preserved. Safe retry is unavailable.",
+    "march7th_finish_action_requires_host_policy": "Set the script completion action to None or Exit and let the queue handle completion actions.",
+    "march7th_default_selection_requires_projection": "Some task switches are absent from the configuration snapshot. Script defaults are retained; save explicit task settings first.",
+    "march7th_failure_notification_template_unrecognized": "The failure notification template does not match the supported task-result format. Check its settings.",
+    "march7th_game_path_required": "Set the game path in the script configuration."
+  }
+}

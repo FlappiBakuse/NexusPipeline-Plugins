@@ -1,0 +1,98 @@
+{
+  "extensionId": "maa-framework",
+  "artifactName": "MaaFrameworkDriver",
+  "displayName": "MaaFramework 框架直驱",
+  "packageVersion": "0.5.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "execution.drive",
+    "source.compile",
+    "ui.contribute",
+    "task.adapt",
+    "configuration.edit"
+  ],
+  "permissions": {
+    "desktopAccess": [
+      "window-inventory"
+    ],
+    "processAccess": [
+      "owned-worker",
+      "selected-upstream"
+    ],
+    "fileAccess": [
+      "selected-script-root"
+    ],
+    "secretAccess": [
+      "selected-binding"
+    ]
+  },
+  "frontend": {
+    "entry": "frontend/main.js",
+    "styles": [
+      "frontend/main.css"
+    ],
+    "sdkVersion": "0.1.0"
+  },
+  "managed": {
+    "compilers": [
+      "project"
+    ],
+    "entryAssembly": "NexusPipeline.Extensions.MaaFramework.dll",
+    "entryType": "NexusPipeline.Extensions.MaaFramework.MaaFrameworkExtension",
+    "nativeLibraries": [
+      "runtime/win-x64/MaaFramework.dll",
+      "runtime/win-x64/MaaAgentClient.dll",
+      "runtime/win-x64/MaaCustomControlUnit.dll",
+      "runtime/win-x64/MaaUtils.dll",
+      "runtime/win-x64/opencv_world4_maa.dll",
+      "runtime/win-x64/fastdeploy_ppocr_maa.dll",
+      "runtime/win-x64/onnxruntime_maa.dll",
+      "runtime/win-x64/webgpu_dawn_maa.dll",
+      "runtime/win-x64/DirectML.dll",
+      "runtime/win-x64/dxcompiler.dll",
+      "runtime/win-x64/dxil.dll"
+    ]
+  },
+  "execution": {
+    "entryId": "main",
+    "workerEntry": "worker/NexusPipeline.MaaWorker.exe",
+    "arguments": [],
+    "protocol": "nexus.execution.provider/1",
+    "gracefulStop": true,
+    "targetControl": true
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "compiler": {
+      "extensionId": "maa-framework",
+      "compilerId": "project"
+    },
+    "executionProvider": {
+      "extensionId": "maa-framework",
+      "entryId": "main"
+    },
+    "instancePolicy": {
+      "selfManagedPcLaunch": false,
+      "supportsAndroid": true,
+      "requiresConfigurationSync": true
+    }
+  },
+  "gameName": "MaaFramework Project Interface 项目",
+  "summary": "以独立配置直接执行已授权的 Project Interface 项目。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "框架直驱",
+    "Win32",
+    "ADB",
+    "Framework driver"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

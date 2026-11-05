@@ -1,0 +1,23 @@
+{
+  "version": "4.6",
+  "versionName": "月升之前，与兽共舞",
+  "startTime": "2026-09-28T11:00:00",
+  "endTime": "2026-11-11T06:00:00",
+  "cover": "https://i0.hdslb.com/bfs/new_dyn/31af0eb88c8c6dcfab5b7cbc72d67c781340190821.jpg",
+  "activities": [
+    {
+      "name": "命运契约•再启",
+      "description": "活动期间，登录游戏即可免费领取联动限定5星角色「吉尔伽美什（毁灭•雷）」*1或「Archer（巡猎•量子）」*1及其直升60级的养成材料补给。",
+      "startTime": "2026-07-24T12:00:00",
+      "endTime": "2026-11-11T06:00:00",
+      "cover": "https://resource.starrailassistant.top/QQ20260826-100606.png"
+    },
+    {
+      "name": "末日幻影•仙客天狼",
+      "description": "拥有【坚防守备】的敌方单位被弱点击破时，使我方全体解除控制状态并激活终结技。敌方全体目标受到的战技伤害提高25%，欢愉技伤害提高15%。",
+      "startTime": "2026-08-31T04:00:00",
+      "endTime": "2026-10-05T03:59:59",
+      "cover": "https://i0.hdslb.com/bfs/article/839c3f2ba8ffc2b63b4cd209f8f989041340190821.jpg"
+    }
+  ]
+}

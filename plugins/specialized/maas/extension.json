@@ -1,0 +1,114 @@
+{
+  "extensionId": "maas",
+  "artifactName": "MaaStellaSora",
+  "displayName": "星塔助手",
+  "packageVersion": "0.5.0",
+  "kind": "data-specialized",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "task.adapt",
+    "configuration.edit",
+    "target.android"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "selected-script-root"
+    ]
+  },
+  "specialized": {
+    "adapterEntry": "adapter/main.js",
+    "sourceDiscovery": true,
+    "readOnlySources": {
+      "entries": [
+        "interface.json",
+        "interface.jsonc",
+        "assets/interface.json",
+        "assets/interface.jsonc",
+        "interface/tasks/common.json",
+        "interface/tasks/login.json",
+        "interface/tasks/shop.json",
+        "interface/tasks/tyrants_tower.json",
+        "interface/tasks/talk.json",
+        "interface/tasks/invite.json",
+        "interface/tasks/invite_select_cn.json",
+        "interface/tasks/activity.json",
+        "interface/tasks/activity_challenge.json",
+        "interface/tasks/fight.json",
+        "interface/tasks/quest.json",
+        "interface/tasks/friend.json",
+        "interface/tasks/task.json",
+        "interface/tasks/mail.json",
+        "interface/tasks/grant.json",
+        "interface/tasks/operation.json",
+        "interface/tasks/proving_grounds.json",
+        "interface/tasks/climb_tower.json",
+        "interface/tasks/climb_tower_shop.json",
+        "interface/tasks/climb_tower_shop_enhance.json",
+        "interface/tasks/climb_tower_target.json",
+        "interface/tasks/cataclysm_survivor.json",
+        "i18n/zh_cn.json",
+        "i18n/ko_kr.json",
+        "assets/interface/tasks/common.json",
+        "assets/interface/tasks/login.json",
+        "assets/interface/tasks/shop.json",
+        "assets/interface/tasks/tyrants_tower.json",
+        "assets/interface/tasks/talk.json",
+        "assets/interface/tasks/invite.json",
+        "assets/interface/tasks/invite_select_cn.json",
+        "assets/interface/tasks/activity.json",
+        "assets/interface/tasks/activity_challenge.json",
+        "assets/interface/tasks/fight.json",
+        "assets/interface/tasks/quest.json",
+        "assets/interface/tasks/friend.json",
+        "assets/interface/tasks/task.json",
+        "assets/interface/tasks/mail.json",
+        "assets/interface/tasks/grant.json",
+        "assets/interface/tasks/operation.json",
+        "assets/interface/tasks/proving_grounds.json",
+        "assets/interface/tasks/climb_tower.json",
+        "assets/interface/tasks/climb_tower_shop.json",
+        "assets/interface/tasks/climb_tower_shop_enhance.json",
+        "assets/interface/tasks/climb_tower_target.json",
+        "assets/interface/tasks/cataclysm_survivor.json",
+        "assets/i18n/zh_cn.json",
+        "assets/i18n/ko_kr.json"
+      ],
+      "directories": []
+    },
+    "editorLifecycle": {
+      "resourceId": "settings",
+      "field": "NoAutoStart",
+      "prepareValue": "True",
+      "commitValue": "False"
+    },
+    "editorForbiddenArguments": [
+      "--autostart",
+      "--quit-after-run"
+    ],
+    "exclusiveProgram": true,
+    "instancePolicy": {
+      "selfManagedPcLaunch": false,
+      "supportsAndroid": true,
+      "requiresConfigurationSync": true
+    }
+  },
+  "gameName": "星塔旅人",
+  "summary": "调用本机已安装的上游程序，管理独立配置、任务与日志。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "星塔旅人",
+    "专项插件",
+    "模拟器",
+    "MaaFramework",
+    "Stella Sora",
+    "Specialized plugin",
+    "MaaStellaSora"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

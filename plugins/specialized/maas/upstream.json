@@ -1,0 +1,68 @@
+{
+  "repository": "MaaStellaSora/MaaStellaSora",
+  "tag": "v1.8.0",
+  "commit": "27dfd836e61cb1385cb4dc8ad61e69280d10bb67",
+  "tree": "2f741a88980a23dc1ecbfd95b9ac1c00e3fae123",
+  "releaseId": 422587539,
+  "publishedAt": "2026-10-24T07:37:04Z",
+  "draft": false,
+  "prerelease": false,
+  "url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/tag/v1.8.0",
+  "assets": [
+    {
+      "id": 671610075,
+      "name": "MaaStellaSora-android-arm64-v8a-v1.8.0.apk",
+      "size": 85417742,
+      "digest": "sha256:6877d633a453e6d17b3b7518ac7b29f32717bbe3a26429c83fd476215532dd2f",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-android-arm64-v8a-v1.8.0.apk"
+    },
+    {
+      "id": 671610069,
+      "name": "MaaStellaSora-linux-aarch64-v1.8.0.tar.gz",
+      "size": 159529265,
+      "digest": "sha256:5f79384bcd61e29e9f38f97dbfbc242292cc3c136ddb9e2c09d59348eecbe257",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-linux-aarch64-v1.8.0.tar.gz"
+    },
+    {
+      "id": 671610068,
+      "name": "MaaStellaSora-linux-x86_64-v1.8.0.tar.gz",
+      "size": 167005765,
+      "digest": "sha256:29b21e4000a8e4b4353e481f29e4bb6db78c5bb5d221f6a99f3de16ede7b43bf",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-linux-x86_64-v1.8.0.tar.gz"
+    },
+    {
+      "id": 671610074,
+      "name": "MaaStellaSora-macos-aarch64-v1.8.0.tar.gz",
+      "size": 209565540,
+      "digest": "sha256:6ba8d3016e510d0f1349834d3a87170e3613caaf72bc5baa787141b32d234956",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-macos-aarch64-v1.8.0.tar.gz"
+    },
+    {
+      "id": 671610070,
+      "name": "MaaStellaSora-macos-x86_64-v1.8.0.tar.gz",
+      "size": 226278846,
+      "digest": "sha256:fe9490923465cf58cf26bc4d8cda71deaf0d50a95649cc2626eb3fce0370902d",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-macos-x86_64-v1.8.0.tar.gz"
+    },
+    {
+      "id": 671610071,
+      "name": "MaaStellaSora-win-aarch64-v1.8.0.zip",
+      "size": 253121177,
+      "digest": "sha256:7d7e097fb49c5288c811b9dc8c754f4f72a3d22459e522789340b8e0fa561ddd",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-win-aarch64-v1.8.0.zip"
+    },
+    {
+      "id": 671610072,
+      "name": "MaaStellaSora-win-x86_64-v1.8.0.zip",
+      "size": 256761909,
+      "digest": "sha256:5b96874d051115f103e1bbf0770a7d375b646e295de69b724acd6c75b5b6e890",
+      "browser_download_url": "https://github.com/MaaStellaSora/MaaStellaSora/releases/download/v1.8.0/MaaStellaSora-win-x86_64-v1.8.0.zip"
+    }
+  ],
+  "qualification": {
+    "sourceIntegrity": "PASS",
+    "upstreamBinary": "NOT_RUN",
+    "bundledMfaMaaFramework": "NOT_RUN",
+    "installedHost": "NOT_RUN"
+  }
+}

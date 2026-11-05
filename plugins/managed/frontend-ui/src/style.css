@@ -1,0 +1,24 @@
+.plugin-panel { display:block; padding:20px; color:var(--nx-color-text,inherit); background:var(--nx-color-surface,transparent); border-radius:var(--nx-radius-lg,16px); }
+.plugin-panel h3,.plugin-panel h4 { margin:.25rem 0 .75rem; }
+.plugin-body { display:grid; gap:.8rem; min-width:0; }
+.plugin-body section { display:grid; gap:.55rem; min-width:0; }
+.plugin-field { display:grid; gap:.3rem; min-width:0; }
+.plugin-field select,.plugin-field input,.plugin-field textarea { box-sizing:border-box; width:100%; min-height:40px; color:inherit; background:var(--nx-color-surface,transparent); border:1px solid var(--nx-color-border,#888); border-radius:6px; padding:.4rem .6rem; }
+.plugin-panel textarea { min-height:90px; resize:none; appearance:none; font:inherit; color:inherit; background:var(--nx-color-surface-secondary,var(--nx-color-surface,#1a2940)); border:1px solid var(--nx-color-border,#394152); border-radius:8px; padding:8px 12px; }
+.plugin-field nexus-select,.plugin-field nexus-number-input { display:block; width:100%; }
+.plugin-panel dialog { padding:24px; color:var(--nx-color-text); background:var(--nx-color-surface); border:1px solid var(--nx-color-border); border-radius:16px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); overflow:auto; }
+.plugin-panel dialog::backdrop { background:#030711b8; }
+.plugin-field nexus-text-input { display:block; }
+.plugin-toggle { display:flex; align-items:center; justify-content:space-between; }
+.plugin-range { grid-template-columns:minmax(9rem,1fr) minmax(8rem,2fr) 3rem; align-items:center; }
+.plugin-range output { text-align:right; }
+.plugin-actions { display:flex; flex-wrap:wrap; gap:.5rem; }
+.plugin-row { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
+.plugin-list { display:grid; gap:.5rem; padding:0; list-style:none; }
+.plugin-list li { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; padding:.5rem; border:1px solid var(--nx-color-border,#888); border-radius:8px; overflow-wrap:anywhere; }
+.plugin-list li span:first-child { flex:1; min-width:8rem; }
+.plugin-status { min-height:1.25em; margin:.2rem 0; }
+.plugin-error { color:var(--nx-color-danger,#c23); }
+.plugin-media { display:block; max-width:100%; max-height:55vh; object-fit:contain; border-radius:8px; }
+.plugin-panel [hidden] { display:none !important; }
+@media (max-width:480px) { .plugin-panel { padding:.7rem; } .plugin-list li { align-items:stretch; } }

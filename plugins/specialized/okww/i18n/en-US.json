@@ -1,0 +1,70 @@
+{
+  "manifest": {
+    "displayName": "ok-ww daily",
+    "gameName": "Wuthering Waves",
+    "summary": "Single-account daily task plans and observations."
+  },
+  "tasks": {
+    "daily": {
+      "title": "Daily tasks"
+    },
+    "battle_pass": {
+      "title": "Battle pass rewards"
+    },
+    "daily_reward": {
+      "title": "Daily rewards"
+    },
+    "farm_4c": {
+      "title": "Daily extra: teleport and farm 4C"
+    },
+    "garden": {
+      "title": "Weekly garden"
+    },
+    "mail": {
+      "title": "Mail"
+    },
+    "merge": {
+      "title": "Discarded echo merge"
+    },
+    "nightmare": {
+      "title": "Daily nightmare task"
+    },
+    "nightmare_all": {
+      "title": "Additional task: all Nightmare Nests"
+    },
+    "nightmare_daily": {
+      "title": "Nightmare Nest for daily echo"
+    },
+    "stamina_forgery": {
+      "title": "Daily stamina: Forgery Challenge"
+    },
+    "stamina_simulation": {
+      "title": "Daily stamina: Simulation Challenge"
+    },
+    "stamina_tacet": {
+      "title": "Daily stamina: Tacet Suppression"
+    }
+  },
+  "diagnostics": {
+    "farm_4c_configuration_unsupported": "Daily 4C requires Weekly Challenge or Boss Challenge teleport and a positive finite integer repeat count. No settings were changed.",
+    "runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
+    "okww_battle_pass_not_found": "The battle pass entry was not found; reward collection is unconfirmed",
+    "okww_garden_already_done": "The weekly garden is already complete",
+    "okww_nightmare_started": "Nightmare task started",
+    "okww_step_caught_failure": "This step caught an exception and continued; later completion does not clear the failure",
+    "okww_step_started": "Daily step started",
+    "runtime_installation": "Cannot confirm the official installation ({channel} / {version}). Initialize a supported official channel.",
+    "runtime_version": "This release has not been qualified ({channel} / {version}). Check the installed version.",
+    "runtime_restricted": "The newer official release {channel} / {version} has not qualified for advanced task interpretation. Only the base run is available; task results remain unverified.",
+    "runtime_base_unqualified": "Cannot confirm the official origin or base entry for this newer release ({channel} / {version}). Finish updating or repair the installation.",
+    "runtime_busy": "The updater or application is not ready ({channel} / {version}). Finish updating and close it before checking again.",
+    "runtime_repository": "Local HEAD/tag differs from the qualified release ({channel} / {version}). Check the official installation.",
+    "runtime_code": "Required runtime files are missing or differ from the qualified release ({channel} / {version}). Repair the official installation and check again.",
+    "okww_unknown_daily_addition_preserved": "Unknown daily additions and their settings are preserved.",
+    "okww_finite_4c_configuration_required": "Teleporting to farm 4C requires a challenge teleport mode and a finite positive integer repeat count. Check the configuration first.",
+    "okww_4c_option_invalid": "A boss, level or combat option for teleporting to farm 4C is invalid. Check the saved settings.",
+    "okww_game_target_path_required": "Set the game path in the device configuration.",
+    "okww_nightmare_selection_required": "Select a supported target for the additional Nightmare task.",
+    "okww_stamina_option_invalid": "A dungeon or material option for the daily stamina task is invalid. Check the saved settings."
+  }
+}

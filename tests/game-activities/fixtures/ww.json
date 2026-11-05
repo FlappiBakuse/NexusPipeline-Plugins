@@ -1,0 +1,23 @@
+{
+  "version": "3.7",
+  "versionName": "镜锁妄世，心照红尘",
+  "startTime": "2026-09-30T11:00:00",
+  "endTime": "2026-11-11T03:59:59",
+  "cover": "https://i0.hdslb.com/bfs/new_dyn/7ae8269b71e9ad214db2ef026d8075ee1955897084.jpg",
+  "activities": [
+    {
+      "name": "团团勇者大乱斗",
+      "description": "休闲活动。在安可的帮助下，第二索拉搭建了用于团团勇者乱斗的羊咩舞台。在舞台之上，团团勇者们要利用神奇的魔法道具，展开一场激烈的乱斗！",
+      "startTime": "2026-09-30T11:00:00",
+      "endTime": "2026-11-11T11:59:59",
+      "cover": "https://prod-alicdn-community.kurobbs.com/forum/a0a092469e454228b330bf3a612a996620260929.jpg"
+    },
+    {
+      "name": "梦构匣中",
+      "description": "区域探索活动。梦州的山河林野与亭台楼阁于此交汇，跨越时间相连的梦州人在此栖居生息。此处，便是梦枢天罗。",
+      "startTime": "2026-09-30T11:00:00",
+      "endTime": "2026-11-11T03:59:59",
+      "cover": "https://prod-alicdn-community.kurobbs.com/forum/84fbb8196ba44ac5936a2e25d43201ab20260929.jpg"
+    }
+  ]
+}

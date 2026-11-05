@@ -1,0 +1,23 @@
+{
+  "version": "1.4",
+  "versionName": "For Whom the Verses Mourn",
+  "startTime": "2026-09-30T06:00:00",
+  "endTime": "2026-11-11T05:59:59",
+  "cover": "https://i0.hdslb.com/bfs/new_dyn/73087a64422f3480c7b2aad2b55c3b923546636978489848.jpg",
+  "activities": [
+    {
+      "name": "Circle Gifts",
+      "description": "Login event. Log in for a total of 7 days to earn Solid Dice x10.",
+      "startTime": "2026-09-30T11:00:00",
+      "endTime": "2026-11-11T05:59:59",
+      "cover": "https://i0.hdslb.com/bfs/new_dyn/54c7486bd043bdb18bca12d737dc50c53546636978489848.jpg"
+    },
+    {
+      "name": "Pukaland Travelogue",
+      "description": "Limited-time event. Welcome to Pukaland, where your magical journey begins! Collect Wonder Stamps and unlock your exclusive park memories. During the event, complete limited-time encounters to earn Annulith, Fabricated Dice, Floe Cinema Tickets, Elite Hunter Guides, Chaotic Dye, and more.",
+      "startTime": "2026-09-30T11:00:00",
+      "endTime": "2026-11-11T05:59:59",
+      "cover": "https://i0.hdslb.com/bfs/new_dyn/9f175f1dff8990f8358d4aae88d04d943546636978489848.jpg"
+    }
+  ]
+}

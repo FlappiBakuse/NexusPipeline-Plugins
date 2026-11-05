@@ -1,0 +1,91 @@
+{
+  "extensionId": "game-checkin",
+  "artifactName": "GameCheckIn",
+  "displayName": "游戏签到",
+  "packageVersion": "0.5.0",
+  "kind": "managed-code",
+  "minHostVersion": "0.18.0",
+  "capabilities": [
+    "ui.contribute",
+    "schedule.register",
+    "notification.submit"
+  ],
+  "permissions": {
+    "fileAccess": [
+      "instance-data"
+    ],
+    "secretAccess": [
+      "own-extension"
+    ],
+    "networkOrigins": [
+      "https://api-takumi.mihoyo.com",
+      "https://bbs-api.miyoushe.com",
+      "https://act-nap-api.mihoyo.com",
+      "https://bbs-api-os.hoyolab.com",
+      "https://sg-hk4e-api.hoyolab.com",
+      "https://sg-public-api.hoyolab.com",
+      "https://sg-act-nap-api.hoyolab.com",
+      "https://as.hypergryph.com",
+      "https://zonai.skland.com",
+      "https://as.gryphline.com",
+      "https://zonai.skport.com",
+      "https://api.kurobbs.com",
+      "https://bbs-api.tajiduo.com",
+      "https://user.laohu.com",
+      "https://fp-it.portal101.cn"
+    ],
+    "desktopAccess": [
+      "interactive-login"
+    ],
+    "loginOrigins": [
+      "https://account.hoyolab.com",
+      "https://account.hoyoverse.com",
+      "https://user.gryphline.com",
+      "https://user.hypergryph.com",
+      "https://user.mihoyo.com",
+      "https://web-api.skland.com",
+      "https://web-api.skport.com",
+      "https://www.hoyolab.com",
+      "https://www.kurobbs.com",
+      "https://www.miyoushe.com",
+      "https://www.skland.com",
+      "https://www.skport.com"
+    ]
+  },
+  "frontend": {
+    "entry": "frontend/main.js",
+    "styles": [
+      "frontend/main.css"
+    ],
+    "sdkVersion": "0.1.0"
+  },
+  "managed": {
+    "entryAssembly": "NexusPipeline.Extensions.GameCheckIn.dll",
+    "entryType": "NexusPipeline.Extensions.GameCheckIn.CheckInExtension"
+  },
+  "gameName": "多平台游戏签到任务",
+  "summary": "创建独立游戏签到任务，配置本机时区计划、手动执行、结果和宿主全局通知。",
+  "author": "FlappiBakuse",
+  "tags": [
+    "签到",
+    "米游社",
+    "HoYoLAB",
+    "森空岛",
+    "SKPORT",
+    "库街区",
+    "塔吉多",
+    "定时任务",
+    "Check-in",
+    "Miyoushe",
+    "Skland",
+    "Kuro",
+    "Schedules"
+  ],
+  "localization": {
+    "defaultLocale": "zh-CN",
+    "locales": {
+      "zh-CN": "i18n/zh-CN.json",
+      "en-US": "i18n/en-US.json"
+    }
+  }
+}

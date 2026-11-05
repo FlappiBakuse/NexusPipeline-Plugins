@@ -1,43 +1,43 @@
 # NexusPipeline 官方插件
 
-为 NexusPipeline 提供游戏脚本接入、签到、活动信息、外观与运行辅助功能。用户从 NexusPipeline 的插件页面安装、启用与更新；启停或更新后按界面提示重启。插件不包含游戏，专项插件也不包含上游自动化软件。
+目标为 14 个官方插件 0.5.0，消费 NexusPipeline Extensibility SDK 0.1.0。
+源码包含六个 managed 插件和八个专项插件，安装候选由下述入口从明确输入生成。
+MaaFramework 声明独立 worker 和固定官方原生库，GameCheckIn 包含登录与签到流程。
+五个浏览器模块均导出实际 `createFrontend` transport，并保留公共 SDK 表面与独立类型检查。组件证据、实际原包安装和浏览器业务分别记录，候选包不代表全部插件或完整软件验收。
 
-## 选择插件
+managed 源码归 `plugins/managed/<extension-id>`，专项声明归 `plugins/specialized/<extension-id>`。
+纯共享协议归 `adapter-runtime/core`，框架适配归 `adapter-runtime/frameworks`。
+契约只能从固定 SDK 产物导入，禁止手写第二套 Host DTO。
 
-下表链接到各插件的使用说明。可安装版本、更新内容与最低宿主要求以软件内插件页面展示为准；各插件独立管理版本。
+源码、用户运行数据、测试 fixture 与发行产物必须分离。
 
-| 插件使用说明 | 用途类别 | 适用对象 | 主要功能 |
-| --- | --- | --- | --- |
-| [自定义壁纸](plugins/general/CustomWallpaper/README.md) | 通用功能 | 宿主界面 | 背景图片、轮换与透明度设置 |
-| [模拟器支持扩展](plugins/general/EmulatorSupport/README.md) | 通用功能 | 雷电、夜神、BlueStacks | 模拟器识别、启动、截图与关闭 |
-| [游戏活动](plugins/general/GameActivities/README.md) | 通用功能 | 支持的游戏与区服 | 活动订阅、版本轮播与截止倒计时 |
-| [游戏签到](plugins/general/GameCheckIn/README.md) | 通用功能 | 支持的游戏平台 | 多平台签到任务、计划与结果通知 |
-| [实时截图窗口](plugins/general/LiveScreenshot/README.md) | 通用功能 | 游戏窗口与安卓模拟器 | 在运行任务卡片查看画面预览 |
-| [MaaFramework 框架直驱](plugins/general/MaaFrameworkDriver/README.md) | 通用功能 | MaaFramework 本地项目 | 读取已有配置并直接运行框架任务 |
-| [蔚蓝档案爱丽丝助手](plugins/specialized/BAAH/README.md) | 专项脚本接入 | 蔚蓝档案 | 接入 BAAH 自动化任务 |
-| [更好的原神](plugins/specialized/BetterGI/README.md) | 专项脚本接入 | 原神 | 接入 BetterGI 自动化任务 |
-| [终末地小助手](plugins/specialized/MaaEnd/README.md) | 专项脚本接入 | 明日方舟：终末地 | 接入 MaaEnd 自动化任务 |
-| [星塔助手](plugins/specialized/MaaStellaSora/README.md) | 专项脚本接入 | 星塔旅人 | 接入 MaaStellaSora 自动化任务 |
-| [三月七小助手](plugins/specialized/March7thAssistant/README.md) | 专项脚本接入 | 崩坏：星穹铁道 | 接入 March7thAssistant 自动化任务 |
-| [ok-nte 日常](plugins/specialized/OkNTE/README.md) | 专项脚本接入 | 异环 | 接入 ok-nte 自动化任务 |
-| [ok-ww 日常](plugins/specialized/OkWutheringWaves/README.md) | 专项脚本接入 | 鸣潮 | 接入 ok-ww 自动化任务 |
-| [绝区零一条龙](plugins/specialized/ZenlessZoneZeroOneDragon/README.md) | 专项脚本接入 | 绝区零 | 接入绝区零一条龙自动化任务 |
+本地 SDK 与纵切构建：
 
-## 安装与使用
+```text
+python -B tooling/import_sdk.py --receipt <仓外SDK消费者回执>
+python -B tooling/build_managed_slice.py --extension live-screenshot --sdk-receipt <同一回执> --output <仓外构建根>
+python -B tooling/package_extension.py --build-receipt <实际后端构建回执> --sdk-receipt <同一回执> --frontend-receipt <五bundle构建目录/build-receipt.json> --output <仓外包目录>
+```
 
-1. 在 NexusPipeline 插件页面查看说明并安装需要的插件。
-2. 启用插件，按提示重启软件。
-3. 通用插件在主页面、设置或独立功能页面使用；专项插件在新建脚本时选择，并绑定实际安装目录及用户配置。
-4. 先手动运行并检查结果，再开启计划。旧配置、账号状态及上游版本限制请阅读对应插件说明。
+SDK 回执绑定真实包摘要与 Host 新源码快照；`contracts/sdk-source-lock.json` 记录来源身份。
+构建复用同一仓外工作区，并保存各次原生命令、日志和不可变源码摘要，不写入项目输出目录。
+managed 编译按项目、传递源码、SDK 包、工具及环境核验输入，文档与前端资源不强制重编译未变程序集。
+复用引用原编译回执并核验全部输出；每次仍保存当前完整来源和 manifest，打包读取本次随包文档。
 
-稳定商店使用正式发行版本。开发预览面向测试，不能把源码版本或本机验收包视为已正式上架。卸载或重装前请保全用户配置与凭据。
+MaaFramework 的 managed 构建同时编译 manifest 声明的独立 worker。打包时必须额外传
+`--runtime-receipt <已核验官方资产与逐文件指纹回执>`，并与仓内 `runtime.release.json`
+精确一致；缺少声明的原生库、worker 闭包或前端证据时拒绝生成包。
+打包核对前后端来源、真实 SDK 生产者、全部包成员及逐项摘要；两次装配必须字节一致。
+前端回执按摘要另存不可变副本。ZIP 通过结构与来源核验不表示业务或完整软件已经验收。
 
-官方八专项支持任务识别降级：保留原入口与未知选择，并在整体成功结果中披露未逐项核验范围。
+五份浏览器 bundle：
 
-## 开发与维护
+```text
+node tooling/build_frontend.mjs --sdk-root <Host源码根> --work-root <仓外依赖目录> --output <仓外bundle目录>
+node tests/frontend/fixture.mjs --host-root <Host源码根> --work-root <含playwright-core的仓外依赖目录> --bundles <上一步bundle目录> --report <仓外报告目录> --browser <实际浏览器exe> --extension game-checkin --scenario all
+```
 
-插件作者请从 [贡献指南](CONTRIBUTING.md) 开始；[文档导航](docs/README.md)、[测试](docs/testing/README.md)、[发布](docs/development/release.md) 和 [上游项目支持索引](docs/projects/README.md) 提供工程说明。用户不需要 Node、npm 或自行构建。
+浏览器 fixture 使用显式浏览器和 Host 公开 nexus 元素，`playwright-core` 需安装在指定的仓外依赖目录。当前前端接入边界见 [浏览器模块](docs/developer/frontend.md)。
 
-## License
-
-本仓库自有代码与文档采用 [MIT 许可证](LICENSE)。第三方依赖和资源遵循各自的许可证；MaaFramework 相关许可与声明见 [LICENSES](plugins/general/MaaFrameworkDriver/LICENSES/NOTICE.md)。
+- [插件作者入门与可运行示例](docs/authors/README.md)
+- [PR 打包检查与发行来源](docs/developer/release.md)

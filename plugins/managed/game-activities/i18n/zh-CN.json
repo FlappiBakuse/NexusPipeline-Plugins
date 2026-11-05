@@ -1,0 +1,9 @@
+{
+  "manifest": {
+    "displayName": "游戏活动",
+    "gameName": "通用活动",
+    "summary": "通过 SRA 订阅八款游戏的版本概览与活动，区服独立缓存。"
+  },
+  "tasks": {},
+  "diagnostics": {}
+}

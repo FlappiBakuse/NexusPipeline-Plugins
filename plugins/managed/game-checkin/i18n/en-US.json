@@ -1,0 +1,9 @@
+{
+  "manifest": {
+    "displayName": "Game Check-in",
+    "gameName": "Multi-platform game check-in tasks",
+    "summary": "Create multi-platform game check-in tasks using host global notifications and local schedules."
+  },
+  "tasks": {},
+  "diagnostics": {}
+}

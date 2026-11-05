@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="fixtures/expected-time-values.json" CopyToOutputDirectory="PreserveNewest" TargetPath="expected-time-values.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../plugins/managed/game-activities/src/**/*.cs" Link="Product/%(RecursiveDir)%(Filename)%(Extension)" />
+    <PackageReference Include="NexusPipeline.Extensibility" Version="[0.1.0]" />
+  </ItemGroup>
+</Project>
