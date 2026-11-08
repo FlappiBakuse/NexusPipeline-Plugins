@@ -150,7 +150,7 @@ function readSdkSources() {
 }
 if (JSON.stringify(readSdkSources()) !== JSON.stringify(sdkSourceRecords))
   throw new Error('SDK source changed during frontend compilation');
-const receipt = { status: 'PASS', scope: 'contract-only frontend build', artifactRoot: path.resolve(output), sourceMode: 'local-uncommitted',
+const receipt = { responsibilities: { lint: 'PASS', typecheck: 'PASS', test: 'NOT_RUN', build: 'PASS' }, status: 'PASS', scope: 'contract-only frontend build', artifactRoot: path.resolve(output), sourceMode: 'local-uncommitted',
   requestedExtensions: requestedNames, selectedExtensions: names, sharedInputsChanged: !!sharedChanged,
   sourceCommit: null, sourceTree: null, sourceHash: hash(Buffer.from(JSON.stringify(records))),
   sdkVersion: identity.sdkVersion, contractFingerprint: identity.contractFingerprint,

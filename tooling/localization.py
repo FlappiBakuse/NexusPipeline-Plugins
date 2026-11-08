@@ -20,18 +20,27 @@ def read_locales(plugin, manifest):
         return {}, []
     if set(declaration) != {'defaultLocale', 'locales'} or not isinstance(declaration['locales'], dict) or not 1 <= len(declaration['locales']) <= 16:
         raise ValueError('Localization declaration invalid')
-    dictionaries, records = {}, []
+    path = plugin / 'locale.ts'
+    if path.is_symlink() or path.is_junction() or plugin.is_symlink() or plugin.is_junction():
+        raise ValueError('Linked localization source')
+    data = path.read_bytes()
+    if len(data) > 1048576:
+        raise ValueError('Localization source exceeds package bound')
+    match = re.fullmatch(r'export const locales = (\{.*\}) as const;\s*', data.decode('utf-8'), re.DOTALL)
+    if match is None:
+        raise ValueError('Localization source must export a literal locales dictionary')
+    dictionaries = json.loads(match[1], object_pairs_hook=unique)
+    if not isinstance(dictionaries, dict) or dictionaries.keys() != declaration['locales'].keys():
+        raise ValueError('Localization source differs from declared locales')
+    dictionaries = {locale: dictionaries[locale] for locale in declaration['locales']}
+    records = [{'path': 'locale.ts', 'sha256': sha(data)}]
     for locale, name in declaration['locales'].items():
         relative = PurePosixPath(name)
         if not LOCALE.fullmatch(locale) or relative.parts != ('i18n', locale + '.json'):
             raise ValueError('Localization must use its declared portable locale path')
-        path = plugin / name
-        if path.is_symlink() or path.is_junction() or path.parent.is_symlink() or path.parent.is_junction():
-            raise ValueError('Linked localization source')
-        data = path.read_bytes()
-        if len(data) > 262144:
+        value = dictionaries[locale]
+        if not isinstance(value, dict) or len(locale_bytes(value)) > 262144:
             raise ValueError('Localization document exceeds package bound')
-        value = json.loads(data, object_pairs_hook=unique)
         if set(value) != {'manifest', 'tasks', 'diagnostics'} or set(value['manifest']) != {'displayName', 'gameName', 'summary'}:
             raise ValueError('Localization groups invalid')
         for key, maximum in (('displayName', 120), ('gameName', 120), ('summary', 1024)):
@@ -46,7 +55,6 @@ def read_locales(plugin, manifest):
         if any(not isinstance(code, str) or not isinstance(text, str) or not text or len(text) > 2048 for code, text in value['diagnostics'].items()):
             raise ValueError('Localized diagnostic invalid')
         dictionaries[locale] = value
-        records.append({'path': name, 'sha256': sha(data)})
     fallback = dictionaries.get(declaration['defaultLocale'])
     if fallback is None or any(manifest.get(key) != text for key, text in fallback['manifest'].items()):
         raise ValueError('Default manifest differs from its locale source')
@@ -77,3 +85,23 @@ def adapter_titles(plugin, manifest):
     code = 'const nexusTaskLocales = (() => { const titles = ' + payload + '; return id => Object.prototype.hasOwnProperty.call(titles, id) ? { ...titles[id] } : undefined; })();\n'
     code += 'const nexusTitleEquals = (first, second) => { const a = first || {}, b = second || {}; return Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(key => a[key] === b[key]); };\n'
     return code.encode('utf-8'), records
+
+
+def locale_bytes(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2) + '\n').encode('utf-8')
+
+
+def locale_members(plugin, manifest):
+    dictionaries, _ = read_locales(plugin, manifest)
+    return {manifest['localization']['locales'][locale]: locale_bytes(value)
+            for locale, value in dictionaries.items()}
+
+
+def write_locales(plugin, manifest, output):
+    records = []
+    for name, data in locale_members(plugin, manifest).items():
+        target = output / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        records.append({'member': name, 'path': str(target), 'sha256': sha(data)})
+    return records

@@ -17,6 +17,16 @@ internal static class CoverConcurrencyCases
             Check.That(cached.IsCompletedSuccessfully && !pending.IsCompleted);
             release.SetResult(Image()); await pending;
         });
+        await run("local-cover-preparation-never-fetches-missing-images", async () =>
+        {
+            var docs = new TestDocuments(); var net = new TestNetwork();
+            await using var service = await Prepare(docs, net);
+            net.Handler = (_, _) => Task.FromResult(Image());
+            await service.CoverAsync(Id(0), default);
+            net.Handler = (_, _) => throw new InvalidOperationException("preparation_network_forbidden");
+            Check.That((await service.CachedCoverAsync(Id(0), default)).Bytes.Length > 0);
+            await Check.Reject(() => service.CachedCoverAsync(Id(1), default), "not_cached");
+        });
         await run("cover-network-allows-four-and-drains-waiters", async () =>
         {
             var docs = new TestDocuments(); var net = new TestNetwork();

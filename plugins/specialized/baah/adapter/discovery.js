@@ -34,5 +34,5 @@ globalThis.nexusDiscoverScript = input => sourceResult(input,
     const name = path.slice('BAAH_CONFIGS/'.length), storage = 'DATA/USER_STORAGE/STORAGE' + baahStorageSuffix(name) + '.json';
     return sourceCandidate(path, name, 'BAAH.exe', [name], [sourceResource('main', path),
       sourceResource('software-config', 'DATA/CONFIGS/software_config.json'),
-      ...(sourceExists(storage) ? [sourceResource('progress', storage)] : [])], ['DATA/LOGS/*.log']);
+      ...(sourceExists(storage) ? [sourceResource('progress', storage)] : [])], ['DATA/LOGS/log_*.txt']);
   }));

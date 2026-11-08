@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "MaaFramework 框架直驱",
-    "gameName": "MaaFramework Project Interface 项目",
-    "summary": "以独立配置直接执行已授权的 Project Interface 项目。"
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

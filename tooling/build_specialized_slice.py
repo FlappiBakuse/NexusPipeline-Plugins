@@ -8,7 +8,7 @@ import time
 from sdk_inputs import verified_sdk
 from source_snapshot import snapshot, sha, encode, external_directory
 from generate_adapter import assemble_adapter
-from localization import project_metadata
+from localization import project_metadata, write_locales
 
 
 def main():
@@ -46,7 +46,7 @@ def main():
         "scope": "Source-bound specialized SDK slice syntax check; actual Host interpreter and business validation are separate",
         "source": source, "sdkReceiptSha256": sha(raw), "sdkHostSource": sdk["hostSource"], "sdkPackage": package,
         "contractFingerprint": sdk["contractFingerprint"], "command": command, "exitCode": result.returncode,
-        "generatorInputs": inputs,
+        "generatorInputs": inputs, "localization": write_locales(plugin, manifest, run),
         "elapsedSeconds": time.monotonic() - started, "nativeLog": str(run / "native.log"),
         "manifest": {"path": str(manifest_path), "sha256": sha(manifest_path.read_bytes())},
         "script": {"path": str(script_path), "sha256": sha(script_path.read_bytes()), "sizeBytes": script_path.stat().st_size}}

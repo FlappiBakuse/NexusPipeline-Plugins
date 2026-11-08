@@ -75,6 +75,28 @@ internal static class CacheBoundaryCases
             await service.SaveAsync(Guid.NewGuid(), 1, new ActivitySettings(), default);
             await Check.Reject(() => service.CoverAsync(id, default), "unknown");
         });
+        await run("manual-refresh-retries-negative-covers-and-keeps-successful-covers", async () =>
+        {
+            var docs = new TestDocuments(); var net = new TestNetwork(); var clock = new TestClock();
+            const string url = "https://yh.wanmei.com/cover.jpg";
+            net.Handler = (_, _) => Task.FromResult(TestNetwork.Feed(cover: url));
+            await using var service = new ActivityCoordinator(docs, net, clock); await service.InitializeAsync(default);
+            await service.SaveAsync(Guid.NewGuid(), 0, TestActivity.Select("blue-archive"), default); await TestActivity.Idle(service);
+            var id = ActivityCovers.Identity(url)!;
+            net.Handler = (_, _) => throw new IOException("transient-cover-failure");
+            await Check.Reject(() => service.CoverAsync(id, default));
+            net.Handler = (uri, _) => Task.FromResult(uri.Host == "yh.wanmei.com"
+                ? TestNetwork.Image([255, 216, 255], "image/jpeg") : TestNetwork.Feed(cover: url));
+            await service.RefreshAsync(Guid.NewGuid(), default); await TestActivity.Idle(service);
+            Check.That((await service.CoverAsync(id, default)).ContentType == "image/jpeg");
+            clock.Advance(TimeSpan.FromSeconds(61));
+            net.Handler = (uri, _) => uri.Host == "yh.wanmei.com" ? throw new IOException("positive-cache-must-remain")
+                : Task.FromResult(TestNetwork.Feed(cover: url));
+            await service.RefreshAsync(Guid.NewGuid(), default); await TestActivity.Idle(service);
+            Check.That((await service.CoverAsync(id, default)).ContentType == "image/jpeg");
+            Check.That(ActivityCovers.Allowed("https://sdk.hoyoverse.com/cover.png") &&
+                !ActivityCovers.Allowed("https://yh.wanmei.com.evil.example/cover.jpg"));
+        });
         await run("cover-oversize-rejected-without-affecting-text", async () =>
         {
             var docs = new TestDocuments(); var net = new TestNetwork(); const string url = "https://i0.hdslb.com/large.png";

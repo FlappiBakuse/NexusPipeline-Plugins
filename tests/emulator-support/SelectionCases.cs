@@ -5,7 +5,7 @@ internal static class SelectionCases
 {
     internal static void Run(Action<string, Action> run)
     {
-        foreach (var vendor in Enum.GetValues<EmulatorVendor>())
+        foreach (var vendor in EmulatorVendors.All)
         {
             run("target-has-physical-install-tool-and-explicit-instance/" + vendor, () => {
                 var target = Target(vendor); Assert(target.Id.Length == 64 && target.Fingerprint.Length == 64 && target.Instance.DisplayName == "same display");
@@ -35,7 +35,7 @@ internal static class SelectionCases
             Assert(EmulatorPaths.Endpoint("localhost:5555") == "127.0.0.1:5555" && EmulatorPaths.Endpoint("[::1]:5555") == "[::1]:5555");
         });
         run("same-display-multiple-installations-require-explicit-source-and-unique-port", () => {
-            var target = Target(EmulatorVendor.LdPlayer); var other = Install(EmulatorVendor.LdPlayer, "second-install");
+            var target = Target(EmulatorVendors.LdPlayer); var other = Install(EmulatorVendors.LdPlayer, "second-install");
             var second = target.Instance with { CandidatePorts = [5557] }; var sources = new[] { (target.Installation, new EmulatorEnumeration("enumerated", [target.Instance])), (other, new EmulatorEnumeration("enumerated", [second])) };
             var selected = EmulatorSelection.Select(sources, EmulatorSelection.Identity(other, second), "127.0.0.1:5557", true);
             Assert(selected.Installation.Id == other.Id);
@@ -43,7 +43,7 @@ internal static class SelectionCases
             Reject(() => EmulatorSelection.Select([(target.Installation, new("enumerated", [target.Instance])), (other, new("enumerated", [target.Instance]))], target.Id, target.Endpoint, true), "emulator_endpoint_ambiguous");
         });
         run("bluestacks-process-requires-one-exact-instance-argv-and-one-proof", () => {
-            var target = Target(EmulatorVendor.BlueStacks); var process = Process(target);
+            var target = Target(EmulatorVendors.BlueStacks); var process = Process(target);
             Assert(BlueStacksPolicy.Process(target, [process with { Arguments = ["--instance", "Pie64_2"] }]) is null);
             Assert(BlueStacksPolicy.Process(target, [process with { Arguments = ["--instance", "Pie64", "--instance", "Pie64_2"] }]) is null);
             Assert(BlueStacksPolicy.Process(target, [process, process with { EvidenceId = "second", ProcessId = 4321 }]) is null);
@@ -54,7 +54,7 @@ internal static class SelectionCases
             config.Validate(); Assert(EmulatorText.Decode(config.Bytes.Span) == "<VirtualBox/>"); bytes[^1] = 1; Reject(config.Validate, "emulator_config_identity_invalid");
         });
         run("tool-paths-refuse-traversal-ads-outside-root-and-command-files", () => {
-            var installation = Install(EmulatorVendor.Nox); installation.Validate();
+            var installation = Install(EmulatorVendors.Nox); installation.Validate();
             foreach (var path in new[] { "C:\\Other\\NoxConsole.exe", "C:\\Tools\\installation\\..\\NoxConsole.exe", "C:\\Tools\\installation\\NoxConsole.exe:stream", "C:\\Tools\\installation\\NoxConsole.cmd" })
                 Reject(() => (installation with { Control = installation.Control with { Path = path } }).Validate());
         });
@@ -62,7 +62,7 @@ internal static class SelectionCases
             var first = Config("<VirtualBox/>", "nox/nox.vbox", "one");
             foreach (var second in new[] { first with { Id = "two", PhysicalId = "other", RelativePath = "NOX/NOX.VBOX" },
                 first with { Id = "two", RelativePath = "nox/copy.vbox" } })
-                Reject(() => Install(EmulatorVendor.Nox, "nox", [first, second]).Validate(), "emulator_config_set_invalid");
+                Reject(() => Install(EmulatorVendors.Nox, "nox", [first, second]).Validate(), "emulator_config_set_invalid");
         });
     }
 }

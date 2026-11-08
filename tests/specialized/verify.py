@@ -32,7 +32,7 @@ def main():
               repo / 'tests/specialized/component.mjs', repo / 'tests/specialized/assemble.py',
               repo / 'tests/specialized/maa-fixture.mjs',
               repo / 'tooling/generate_adapter.py', repo / 'tooling/localization.py',
-              plugin / 'extension.json', *sorted((plugin / 'i18n').glob('*.json')), args.jint_assembly, args.acornima_assembly,
+              plugin / 'extension.json', plugin / 'locale.ts', args.jint_assembly, args.acornima_assembly,
               plugin / 'adapter/sources.json', *sorted((repo / 'tests/specialized' / args.extension).glob('*.mjs'))]
     inputs += [repo / name if name.startswith('adapter-runtime/') else plugin / name
                for name in json.loads((plugin / 'adapter/sources.json').read_bytes())]

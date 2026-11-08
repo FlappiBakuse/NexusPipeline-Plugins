@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "MaaFramework Driver",
-    "gameName": "MaaFramework Project Interface projects",
-    "summary": "Run MaaFramework Project Interface projects with isolated workers, verified dependencies and independent task options."
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

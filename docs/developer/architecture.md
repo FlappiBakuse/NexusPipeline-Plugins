@@ -1,20 +1,59 @@
-# 插件所有权
+# 架构与职责边界
 
-managed 插件只消费固定公共 SDK，不依赖 Host/Core 私有类型。
-specialized 插件不包含浏览器模块或 .NET 程序集。
-共享适配 runtime 不反向导入具体游戏插件。
-契约镜像必须携带 SDK 版本、来源快照与字节摘要。
-全部构建、依赖、生成脚本结果和 ZIP 只写显式仓外路径。
+目标是恢复 main 的已确认产品行为，同时保留 next 的公共 SDK、目录与代码风格。任务修复应减少重复责任，不增加一套并行的配置、授权、恢复或状态 owner。
 
-正式浏览器入口与核心交互测试共用一个编辑器和状态流程；fixture只替换受控I/O，不另选功能不同的界面。
-新增Host/SDK能力对应具体业务缺口及关闭用例，插件复用现役权限、调度、资源与恢复owner。
-完整来源身份持续保留，构建与包复用按实际传递输入判断；随包文档、manifest或资源变化仍使对应包失效。
+## 从用户动作到效果
 
-专项目录发现声明 `specialized.sourceDiscovery` 和 `selected-script-root`，实现 `nexusDiscoverScript`。Host 只向该调用提供有界、只读的 `nexusListSource`/`nexusReadSource`；响应使用 `nexus.script.source`，列出明确的程序、参数、配置资源和可选 Maa 项目选择。每个配置路径必须有对应资源，不能借额外路径绕过账号快照。发现不启动程序、不写上游文件，所有候选仍由 Host 核对目录身份与当前安装修订。
+| 责任 | 当前入口 | 保持的边界 |
+|---|---|---|
+| 用户选择和草稿 | 插件 `frontend/src`、Host 公开 surface | 类型化意图；隐藏/取消与晚到结果属于当前表面 |
+| 插件业务 | `Domain`、`Application` 或受限 adapter | 解释本插件规则，返回明确提案/结果 |
+| SDK 适配 | managed `Host` 层、生产 `createFrontend` | 只用公开契约，转换插件领域数据 |
+| Host 用例与所有权 | 配套 Host 的配置、执行、调度、秘密、媒体等 owner | 实例、writer、事务、权限与恢复事实保持单一来源 |
+| 上游或外部平台 | manifest 已声明的入口与能力 | 准确选择程序、账号、资源、来源与有限副作用 |
 
-本地化权威为各插件 i18n 字典，构建器生成 metadata，专项任务另生成 adapter titleLocales；
-catalog、Host 及浏览器消费同源投影。SDK/schema 修改必须先生成并构建实际 SDK，再通过 import_sdk 导入，
-不能手改 contracts 镜像或 fingerprint。
+managed 注册的能力不是无限授权；调用时仍使用现役 Host scope。数据专项不含 .NET、浏览器或原生运行时，也不自行执行进程和文件操作。
 
-`node tests/specialized/diagnostic-locales.mjs <源码绝对路径> <仓外目录>` 使用现役合成配置与发现向量，
-核对八专项实际返回的诊断码均有中英文文案，并保留不支持控制器的读取拒绝；实际安装面板和真实上游范围另行验收。
+## 共享代码的成立条件
+
+已有两个或以上实际消费者，且它们共享同一业务不变量时，才提取共同逻辑。纯协议归 `adapter-runtime/core`；外部框架真实共同语义归 `adapter-runtime/frameworks`；插件前端共同行为归 `plugins/managed/frontend-ui`。
+
+共享层不反向导入具体插件。不同上游的任务编号、日志闭环和重试能力保持独立；OkNTE 与 OkWW 的 `-t` 不同就是明确反例。只为“以后可能有别的插件”建立适配层，不属于本轮范围。
+
+## 数据与秘密
+
+文档/CAS 是普通状态的事实 owner，Secrets/SecretDocuments 是受保护值的 owner，运行结果与任务配置分别保存。读取或解析失败不能产生空白可写状态。未知格式保留原字节并给明确结果，不自动降级旧协议。
+
+前端普通草稿可以保留，秘密草稿按现有隐藏/释放规则清理；keep/set/clear 明确区分。SDK、日志和普通文档不得携带无必要的秘密明文。
+
+上游已有且明确支持的旧保存格式不等同 Nexus main 协议。对外部格式兼容的保留或删除由支持矩阵与真实消费者决定，不凭名字含 legacy/fallback 判断。
+
+## 配置、运行与恢复
+
+插件提出配置修改；Host 核对资源、revision、SHA、expected 值与操作身份。准备工作副本、停止 writer、收集进度、恢复原现场和发布结果都由现有 Host 生命周期协调。
+
+普通重试恢复 main 进度接续；专项重试保持冻结选择和已知安全范围。外部提交未知、partial 或不能证明幂等的动作不得因恢复旧界面而重新自动执行。故障诊断必须有消费者，不能只保存在没人读取的字段里。
+
+## 公共 SDK 的唯一来源
+
+Host schema、实际 .NET/前端公共 API 和 UI 元数据是公开契约事实源。Plugins 的 `contracts/` 是经 `import_sdk.py` 导入的镜像。产品版本、SDK 版本、格式 version 和指纹各有语义，本轮修复不自动 bump 版本。
+
+构建和验证使用同一明确来源，仓外保存依赖、输入、输出与报告。未提交候选记录 `local-uncommitted`，不把审查参考 SHA 冒充候选提交。
+
+## 当前缺口与改造边界
+
+当前 shared frontend-ui 已有五个实际消费者，值得继续使用；Host 与插件的设置分类、开关集合及部分表单行为仍未形成共同 owner。先修这些已有消费者，再评估是否需要小型公开契约变化。
+
+Maa、签到等代码里 Host adapter 与领域数据的重复校验，只有在相同输入、相同拥有期与同一不变量被证明重复时才合并。保留实际边界上的来源、权限和写入检查，避免把“减少代码量”实现为丢失验证责任。
+
+本轮具体目标见[行为对齐表](behavior-targets.md)，开发路径见[作者入口](../authors/README.md)，执行范围见[统一验证](validation.md)。
+
+## 插件资源与启动准备
+
+概览贡献的标题、说明、布局键、默认显示和顺序由插件声明。静态图标属于各插件资源，数据型插件也可通过 manifest 的 `icon` 声明显示图片。Host 消费注册结果和元数据，不维护专项图标表或插件加载优先级。
+
+前端 `activate` 等待自身默认只读数据和本地图片准备；`mount` 等待首轮可用渲染。活动插件使用总览快照和已缓存封面，详情在打开时读取；签到和壁纸复用激活准备结果。缺失外部图片保持占位，隐藏页面停用轮询和交互。Host 统一提供 30 秒预算、取消、失败展示与手动重试。
+
+模拟器插件通过 provider 声明厂商发现、枚举、实例目录及启动/退出命令；Host 保留权限、工具身份和执行证据。MuMu 保持 Host 所有权。预装选择及 Maa 原生输入由 `tooling/build-policy.json`、`tooling/build_inputs.py` 管理；专项协议与厂商 fixture 位于 `tests/host-fixtures`。
+
+SDK 的 vendor 使用插件声明的字符串标识。EmulatorSupport 自己维护三个厂商标识及目标证据编码，保持已有安装与目标选择身份。Host 的安装集成使用 `tests/host-fixtures/storage/emulator-inventory.json` 提供的厂商配置与输出，不在宿主 fixture 内维护厂商规则。

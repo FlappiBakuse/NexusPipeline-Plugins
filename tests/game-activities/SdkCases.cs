@@ -25,7 +25,7 @@ internal static class SdkCases
             var docs = new TestDocuments(); var net = new TestNetwork();
             var context = new ExtensionActivationContext(Empty<IScheduleRegistrationPort>(), Empty<IExtensionSecretPort>(),
                 Empty<INotificationSubmissionPort>(), Empty<IMediaPreviewRegistrationPort>(), Empty<IRunScreenshotPort>(),
-                Empty<IExtensionPackageAssets>(), Empty<IExtensionRuntimeOutputs>(), docs, net, activation: new ReadyGate(true));
+                Empty<IExtensionPackageAssets>(), Empty<IExtensionRuntimeOutputs>(), docs, net, activation: new ReadyGate(true), images: new TestImages(docs));
             await using var scope = new TestScope(); var extension = new GameActivitiesExtension(context);
             await extension.ActivateAsync(scope, default);
             var state = await extension.InvokeAsync(new("read-state", null, "fixture", false, "{}"u8.ToArray()), default);
@@ -39,6 +39,7 @@ internal static class SdkCases
             await scope.DisposeAsync(); Check.That(docs.Values.ContainsKey("settings"));
         });
         await ReadyCases.RunAsync(run);
+        await ImageCacheCases.RunAsync(run);
     }
     private static T Empty<T>() where T : class => DispatchProxy.Create<T, UnusedPort>();
 }

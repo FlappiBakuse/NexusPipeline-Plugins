@@ -3,7 +3,7 @@ using System.Globalization;
 namespace NexusPipeline.Extensions.GameActivities;
 
 internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivityNetwork network,
-    TimeProvider clock) : IAsyncDisposable
+    TimeProvider clock, IActivityImages? imageStore = null) : IAsyncDisposable
 {
     private readonly SemaphoreSlim gate = new(1, 1);
     private readonly CancellationTokenSource lifetime = new();
@@ -114,6 +114,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 .Append(new ActivityManualRequest(operationId, now, selected.Select(s => s.Id).ToArray())).ToArray();
             await documents.WriteAsync(operationId, "refresh-control", current?.Revision ?? 0,
                 ActivityJson.Bytes(control with { Requests = requests }), cancellationToken);
+            foreach (var id in covers.Where(pair => pair.Value.Image is null).Select(pair => pair.Key).ToArray()) covers.Remove(id);
             if (operation is { Accepting: true, Worker.IsCompleted: false } && operation.Generation == generation)
             {
                 foreach (var source in selected.Where(s => !feeds[s.Id].Unsupported))
@@ -141,12 +142,16 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             {
                 while (true)
                 {
-                    ActivitySource? source;
+                    ActivitySource[] sources;
                     await gate.WaitAsync(cancellation.Token);
-                    try { source = op.Pending.Count > 0 ? op.Pending.Dequeue() : null; if (source is null) op.Accepting = false; }
+                    try
+                    {
+                        sources = Enumerable.Range(0, Math.Min(4, op.Pending.Count)).Select(_ => op.Pending.Dequeue()).ToArray();
+                        if (sources.Length == 0) op.Accepting = false;
+                    }
                     finally { gate.Release(); }
-                    if (source is null) break;
-                    await RefreshOneAsync(op, source, cancellation.Token);
+                    if (sources.Length == 0) break;
+                    await Task.WhenAll(sources.Select(Refresh));
                 }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
@@ -164,6 +169,18 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                     if (op.Generation == generation && !lifetime.IsCancellationRequested)
                     { op.Status = op.Failed == 0 ? "succeeded" : op.Checked == op.Failed ? "failed" : "partial"; revision++; }
                 }
+                finally { gate.Release(); }
+            }
+        }
+
+        async Task Refresh(ActivitySource source)
+        {
+            try { await RefreshOneAsync(op, source, cancellation.Token); }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
+            catch (Exception error) when (error is not OutOfMemoryException)
+            {
+                await gate.WaitAsync();
+                try { op.Failed++; }
                 finally { gate.Release(); }
             }
         }
@@ -300,6 +317,20 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     private readonly Dictionary<string, ActivityImageEntry> covers = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim coverRequests = new(4, 4);
     private int imageFailures;
+    internal async Task<ActivityImage> CachedCoverAsync(string id, CancellationToken cancellationToken)
+    {
+        using var combined = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);
+        await gate.WaitAsync(combined.Token);
+        try
+        {
+            if (id.Length != 64 || !id.All(Uri.IsHexDigit) || ResolveCover(id) is null)
+                throw new ActivityFailure("activity_cover_unknown");
+            if (covers.TryGetValue(id, out var entry) && entry.Image is { } image) return image;
+            if (imageStore is not null && await imageStore.ReadAsync(id, combined.Token) is { } saved) return saved;
+            throw new ActivityFailure("activity_cover_not_cached");
+        }
+        finally { gate.Release(); }
+    }
     internal async Task<ActivityImage> CoverAsync(string id, CancellationToken cancellationToken)
     {
         if (id.Length != 64 || !id.All(Uri.IsHexDigit)) throw new ActivityFailure("activity_cover_unknown");
@@ -322,6 +353,12 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 RequireCover();
                 if (covers.TryGetValue(id, out var cached) && cached.Expires > clock.GetUtcNow())
                     return cached.Image ?? throw new ActivityFailure("activity_cover_temporarily_unavailable");
+                if (imageStore is not null && await imageStore.ReadAsync(id, combined.Token) is { } persisted)
+                {
+                    RequireCover();
+                    Remember(id, persisted);
+                    return persisted;
+                }
             }
             finally { gate.Release(); }
             try
@@ -334,10 +371,16 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 try
                 {
                     RequireCover();
-                    while (covers.Values.Sum(item => item.Image?.Bytes.Length ?? 0) + response.Content.Length > 33554432 || covers.Count >= 128)
-                        covers.Remove(covers.MinBy(pair => pair.Value.Expires).Key);
                     var image = new ActivityImage(mime, response.Content.ToArray());
-                    covers[id] = new(image, clock.GetUtcNow() + TimeSpan.FromMinutes(30)); return image;
+                    if (imageStore is not null)
+                    {
+                        var currentIds = feeds.Values.SelectMany(feed => (feed.Cache.Content?.Events.Select(item => item.CoverUrl) ?? [])
+                            .Prepend(feed.Cache.Content?.Overview.CoverUrl)).Select(ActivityCovers.Identity)
+                            .Where(value => value is not null).Select(value => value!).ToHashSet(StringComparer.Ordinal);
+                        await Detached(async () => await imageStore.SaveAsync(id, image, currentIds, combined.Token));
+                        RequireCover();
+                    }
+                    Remember(id, image); return image;
                 }
                 finally { gate.Release(); }
             }
@@ -362,6 +405,12 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             combined.Token.ThrowIfCancellationRequested();
             if (captured != generation || ResolveCover(id) != url) throw new OperationCanceledException(combined.Token);
         }
+    }
+    private void Remember(string id, ActivityImage image)
+    {
+        while (covers.Values.Sum(item => item.Image?.Bytes.Length ?? 0) + image.Bytes.Length > 33554432 || covers.Count >= 128)
+            covers.Remove(covers.MinBy(pair => pair.Value.Expires).Key);
+        covers[id] = new(image, clock.GetUtcNow() + TimeSpan.FromMinutes(30));
     }
     private void ExpireCovers(DateTimeOffset now)
     { foreach (var key in covers.Where(pair => pair.Value.Expires <= now).Select(pair => pair.Key).ToArray()) covers.Remove(key); }

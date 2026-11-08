@@ -9,6 +9,7 @@
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CredentialEditor.cs" Link="Product/CredentialEditor.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CredentialRevealGrants.cs" Link="Product/CredentialRevealGrants.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInHttp.cs" Link="Product/CheckInHttp.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInDiagnostics.cs" Link="Product/CheckInDiagnostics.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInEffects.cs" Link="Product/CheckInEffects.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/HoyoCheckIn.cs" Link="Product/HoyoCheckIn.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/PassportCheckIn.cs" Link="Product/PassportCheckIn.cs" />

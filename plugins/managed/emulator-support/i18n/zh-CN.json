@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "模拟器支持扩展",
-    "gameName": "安卓模拟器",
-    "summary": "提供雷电、夜神和 BlueStacks 模拟器的识别、启动、截图与关闭支持。"
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

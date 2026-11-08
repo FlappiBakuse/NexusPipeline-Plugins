@@ -48,8 +48,10 @@ for (const id of ['baah', 'bettergi', 'march7th', 'oknte', 'okww', 'zzzonedragon
       operationId: '009ca3c5-6b90-40e2-a981-53a33ab5c43f', resources: fixture.resources }, sourceFiles: fixture.sourceFiles });
   rows.push(...configurationDiagnosticCases(id, fixture, invoke));
   assert.ok(rows.length > 0, id + ': configuration/discovery cases required');
-  const dictionaries = Object.fromEntries(['zh-CN', 'en-US'].map(locale => [locale,
-    JSON.parse(pin(path.join(root, 'plugins/specialized', id, 'i18n', locale + '.json'))).diagnostics]));
+  const localePath = path.join(root, 'plugins/specialized', id, 'locale.ts');
+  pin(localePath);
+  const { locales } = await import(pathToFileURL(localePath).href);
+  const dictionaries = Object.fromEntries(Object.entries(locales).map(([locale, value]) => [locale, value.diagnostics]));
   const diagnostics = new Map();
   const readRefusals = [];
   for (const row of rows) {

@@ -19,7 +19,9 @@
       "https://i0.hdslb.com",
       "https://prod-alicdn-community.kurobbs.com",
       "https://webusstatic.yo-star.com",
-      "https://fastcdn.mihoyo.com"
+      "https://fastcdn.mihoyo.com",
+      "https://sdk.hoyoverse.com",
+      "https://yh.wanmei.com"
     ]
   },
   "frontend": {

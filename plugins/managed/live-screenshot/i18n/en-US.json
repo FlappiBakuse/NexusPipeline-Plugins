@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "Live Screenshot",
-    "gameName": "PC games and Android emulators",
-    "summary": "Show a low-frequency preview of the current PC game or emulator screen in running task cards."
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

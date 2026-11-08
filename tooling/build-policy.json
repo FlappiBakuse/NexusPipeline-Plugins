@@ -1,0 +1,6 @@
+{
+  "bundledExtensions": [
+    "emulator-support",
+    "live-screenshot"
+  ]
+}

@@ -2,6 +2,8 @@ namespace NexusPipeline.Extensions.EmulatorSupport;
 
 internal sealed class EmulatorProvider : IEmulatorProvider
 {
+    public IReadOnlyList<EmulatorLayout> Layouts => EmulatorLayouts.All;
+    public EmulatorTargetDescription Describe(EmulatorTarget target) => EmulatorTargetPolicy.Describe(target);
     public ValueTask<EmulatorDiscoveryResult> DiscoverAsync(IEmulatorInventory inventory, bool supportsAndroid,
         CancellationToken cancellationToken) => new EmulatorDiscovery(inventory).DiscoverAsync(supportsAndroid, cancellationToken);
 

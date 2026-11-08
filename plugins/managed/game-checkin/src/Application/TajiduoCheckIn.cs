@@ -55,7 +55,7 @@ internal sealed class TajiduoCheckIn(ICheckInNetwork network, ICheckInEffects ef
         { if (submitted || rotationUnknown) throw new CheckInInterrupted(true); throw; }
         catch (CheckInFailure error) { return Result(submitted ? "success_unconfirmed" : error.Code, effect: submitted || rotationUnknown ? "unknown" : "notSubmitted"); }
         catch (Exception error) when (error is not OutOfMemoryException)
-        { return Result(submitted ? "success_unconfirmed" : "transport_error", effect: submitted || rotationUnknown ? "unknown" : "notSubmitted"); }
+        { return Result(submitted ? "success_unconfirmed" : CheckInDiagnostics.Failure(error, "TajiduoCheckIn.submit"), effect: submitted || rotationUnknown ? "unknown" : "notSubmitted"); }
     }
     private async Task<TajiduoCredential> RefreshAsync(TajiduoCredential credential, CredentialMaterial material, CancellationToken cancellationToken)
     {

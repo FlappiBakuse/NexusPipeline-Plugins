@@ -50,7 +50,7 @@ internal static class ActivityTimes
 internal static class ActivityCovers
 {
     internal static readonly string[] Origins = ["https://resource.starrailassistant.top", "https://web.hycdn.cn", "https://i0.hdslb.com",
-        "https://prod-alicdn-community.kurobbs.com", "https://webusstatic.yo-star.com", "https://fastcdn.mihoyo.com"];
+        "https://prod-alicdn-community.kurobbs.com", "https://webusstatic.yo-star.com", "https://fastcdn.mihoyo.com", "https://sdk.hoyoverse.com", "https://yh.wanmei.com"];
     internal static bool Allowed(string? text) => text is { Length: > 0 and <= 2048 } && text == text.Trim() &&
         Uri.TryCreate(text, UriKind.Absolute, out var uri) && uri.Scheme == "https" && uri.IsDefaultPort &&
         uri.UserInfo.Length == 0 && uri.Fragment.Length == 0 && Origins.Contains(uri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase);

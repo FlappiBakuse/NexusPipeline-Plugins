@@ -71,10 +71,11 @@ class PluginCandidateTests(unittest.TestCase):
                         managed={'entryAssembly': 'Alpha.dll', 'entryType': 'Fixture'},
                         localization={'defaultLocale': 'zh-CN', 'locales': {'zh-CN': 'i18n/zh-CN.json', 'en-US': 'i18n/en-US.json'}})
         self.write(self.plugin / 'extension.json', manifest)
-        for locale in ['zh-CN', 'en-US']:
-            self.write(self.plugin / f'i18n/{locale}.json', {'manifest': {key: manifest[key] for key in ['displayName', 'gameName', 'summary']},
-                                                          'tasks': {}, 'diagnostics': {}})
+        locales = {locale: {'manifest': {key: manifest[key] for key in ['displayName', 'gameName', 'summary']},
+                            'tasks': {}, 'diagnostics': {}} for locale in ['zh-CN', 'en-US']}
+        self.write(self.plugin / 'locale.ts', ('export const locales = ' + json.dumps(locales) + ' as const;\n').encode())
         self.write(self.plugin / 'README.md', b'Current packaged instructions\n')
+        self.write(self.root / 'tooling/build-policy.json', {'bundledExtensions': ['alpha']})
         self.notes('2026-11-01')
         self.source_commit = self.fixture.commit()
         self.consumer = self.scope / 'consumer'

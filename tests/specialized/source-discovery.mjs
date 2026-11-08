@@ -81,7 +81,7 @@ for (const [extension, app, task] of [['oknte', 'ok-nte', 'DailyRoutineTask'], [
     const files = { [app + '.exe']: '', [directory + task + '.json']: '{}', [directory + 'devices.json']: '{}' };
     if (extension === 'oknte') files[directory + 'DailyRoutineTaskConfigs.json'] = '{}';
     const result = discover(extension, files); assert.equal(result.candidates.length, 1);
-    assert.deepEqual(result.candidates[0].arguments, ['-t', '1', '-e']);
+    assert.deepEqual(result.candidates[0].arguments, ['-t', extension === 'oknte' ? '2' : '1', '-e']);
     delete files[directory + task + '.json']; assert.equal(discover(extension, files).candidates.length, 0);
   });
 }
@@ -95,26 +95,28 @@ test('ZZZ explicit two digit instances retain account and group together', () =>
 });
 test('MaaEnd duplicate instance IDs are rejected', () => {
   const result = discover('maaend', { 'MaaEnd.exe': '', 'interface.json': '{}',
-    'config/mxu-MaaEnd.json': '{"version":"1.0","instances":[{"id":"one"},{"id":"one"}]}' });
+    'config/mxu-MaaEnd.json': '{"version":"1.0","settings":{"autoStartInstanceId":"one"},"instances":[{"id":"one"},{"id":"two"},{"id":"two"}]}' });
   assert.equal(result.candidates.length, 0); assert.deepEqual(result.diagnostics, ['maaend_source_instance_ambiguous']);
 });
-test('MaaEnd offers every explicit file instance and interface combination', () => {
+test('MaaEnd offers the configured auto-start instance for each declared interface', () => {
   const result = discover('maaend', { 'MaaEnd.exe': '', 'interface.json': '{}', 'assets/interface.json': '{}',
-    'config/mxu-MaaEnd.json': '{"version":"1.0","instances":[{"id":"one"},{"id":"two"}]}' });
-  assert.equal(result.candidates.length, 4); assert.equal(new Set(result.candidates.map(row => row.candidateId)).size, 4);
+    'config/mxu-MaaEnd.json': '{"version":"1.0","settings":{"autoStartInstanceId":"one"},"instances":[{"id":"one"},{"id":"two"}]}' });
+  assert.equal(result.candidates.length, 2);
+  assert.deepEqual(result.candidates.map(row => row.candidateId), ['interface.json:config/mxu-MaaEnd.json:one', 'assets/interface.json:config/mxu-MaaEnd.json:one']);
+  assert.ok(result.candidates.every(row => JSON.stringify(row.arguments) === JSON.stringify(['--autostart', '--quit-after-run'])));
 });
 test('MaaS independent instances ignore active GUI selection and bind named shared config', () => {
   const result = discover('maas', { 'MFAAvalonia.exe': '', 'interface.json': '{}',
     'appsettings.json': '{"DefaultConfig":"saved","Instances.LastActive":"foreign"}', 'config/mfa_saved.json': '{}',
     'config/instances/first.json': '{}', 'config/instances/second.json': '{}' });
   assert.equal(result.candidates.length, 2);
-  assert.deepEqual(result.candidates.map(row => row.projectSelection.Source.InstanceId), ['first', 'second']);
+  assert.deepEqual(result.candidates.map(row => row.arguments), [['--instance', 'first'], ['--instance', 'second']]);
   assert.equal(result.candidates[0].resources[1].path, 'config/mfa_saved.json');
 });
 test('MaaS unrelated Assets directory is not probed through a lowercase alias', () => {
   const result = discover('maas', { 'MFAAvalonia.exe': '', 'interface.json': '{}', 'Assets/icon.png': '',
     'appsettings.json': '{}', 'config/config.json': '{}', 'config/instances/one.json': '{}' });
   assert.equal(result.candidates.length, 1);
-  assert.equal(result.candidates[0].projectSelection.InterfacePath, 'interface.json');
+  assert.equal(result.candidates[0].candidateId, 'interface.json:config/instances/one.json');
 });
 console.log(JSON.stringify({ status: 'PASS', cases, scope: 'Plugin source discovery components; Host filesystem authority and UI integration separate' }));

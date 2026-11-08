@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "实时截图窗口",
-    "gameName": "通用游戏与安卓模拟器",
-    "summary": "在调度中心运行任务卡片中显示当前 PC 游戏窗口或模拟器画面的低频预览。"
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

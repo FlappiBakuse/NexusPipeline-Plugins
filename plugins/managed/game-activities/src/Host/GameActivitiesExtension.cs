@@ -8,14 +8,15 @@ public sealed class GameActivitiesExtension(ExtensionActivationContext context) 
 {
     private ActivityCoordinator? coordinator;
     public IReadOnlyList<FrontendOperation> Operations { get; } = [new("read-state", FrontendAccess.Read),
-        new("read-feed", FrontendAccess.Read), new("read-cover", FrontendAccess.Read),
+        new("read-feed", FrontendAccess.Read), new("read-cover", FrontendAccess.Read), new("read-cached-cover", FrontendAccess.Read),
         new("save-settings", FrontendAccess.Write), new("refresh-all", FrontendAccess.Write)];
 
     public async ValueTask ActivateAsync(IExtensionScope scope, CancellationToken cancellationToken)
     {
         if (coordinator is not null) throw new InvalidOperationException("activity_already_activated");
         var service = new ActivityCoordinator(new SdkActivityDocuments(context.Documents ?? throw new InvalidOperationException("activity_documents_required")),
-            new SdkActivityNetwork(context.Http ?? throw new InvalidOperationException("activity_http_required")), TimeProvider.System);
+            new SdkActivityNetwork(context.Http ?? throw new InvalidOperationException("activity_http_required")), TimeProvider.System,
+            new SdkActivityImages(context.Documents, context.Images ?? throw new InvalidOperationException("activity_images_required")));
         var activation = context.Activation ?? throw new InvalidOperationException("activity_activation_required");
         await scope.OwnAsync(service);
         cancellationToken.ThrowIfCancellationRequested(); scope.Cancellation.ThrowIfCancellationRequested();
@@ -30,6 +31,9 @@ public sealed class GameActivitiesExtension(ExtensionActivationContext context) 
         {
             case "read-state": result = await service.StateAsync(cancellationToken); break;
             case "read-feed": result = await service.FeedAsync(ActivityJson.Read<FeedInput>(call.Payload).FeedId, cancellationToken); break;
+            case "read-cached-cover":
+                var cached = await service.CachedCoverAsync(ActivityJson.Read<CoverInput>(call.Payload).AssetId, cancellationToken);
+                return new(cached.ContentType, cached.Bytes);
             case "read-cover":
                 var image = await service.CoverAsync(ActivityJson.Read<CoverInput>(call.Payload).AssetId, cancellationToken);
                 return new(image.ContentType, image.Bytes);

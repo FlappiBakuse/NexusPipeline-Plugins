@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from sdk_inputs import verified_sdk
 from source_snapshot import sha, ordinary_path
-from localization import project_metadata, read_locales
+from localization import project_metadata, read_locales, locale_members
 
 
 def read_identity(value):
@@ -45,7 +45,15 @@ def inputs(root, build_receipt, sdk_receipt, frontend_receipt=None, runtime_rece
         relative = path.relative_to(Path(source['exportRoot'])).as_posix()
         if source_map.get(relative) != record['sha256']:
             raise ValueError('Localization differs from its source snapshot')
-        members[record['path']] = read_identity({'path': str(path), 'sha256': record['sha256']})
+        read_identity({'path': str(path), 'sha256': record['sha256']})
+    members.update(locale_members(plugin, manifest))
+    if manifest.get("icon"):
+        icon = manifest["icon"]
+        path = plugin / icon
+        relative = path.relative_to(Path(source["exportRoot"])).as_posix()
+        members[icon] = read_identity({"path": str(path), "sha256": source_map[relative]})
+        if len(members[icon]) > 1048576 or not icon.endswith((".png", ".ico")):
+            raise ValueError("Plugin icon is outside the bounded image contract")
     if category == "managed":
         members[manifest["managed"]["entryAssembly"]] = read_identity(build["assembly"])
         if manifest.get("execution") is not None:
@@ -84,7 +92,8 @@ def inputs(root, build_receipt, sdk_receipt, frontend_receipt=None, runtime_rece
         raise ValueError("Runtime input was supplied without native declarations")
     if category == "specialized":
         allowed = {"manifest.json", manifest["specialized"]["adapterEntry"], "README.md", "CHANGELOG.md", "CHANGELOG.en.md"}
-        allowed.update(record['path'] for record in locale_records)
+        allowed.update(manifest.get('localization', {}).get('locales', {}).values())
+        if manifest.get('icon'): allowed.add(manifest['icon'])
         if any(key in manifest for key in ("managed", "execution", "frontend")) or set(members) - allowed:
             raise ValueError("Data-specialized package contains undeclared or executable payload")
         for name, data in members.items():
@@ -94,11 +103,14 @@ def inputs(root, build_receipt, sdk_receipt, frontend_receipt=None, runtime_rece
                     raise ValueError("Data-specialized document exceeds the bounded input")
                 if name.endswith(".json"):
                     json.loads(text)
+    policy_relative = "tooling/build-policy.json"
+    policy = json.loads(read_identity({"path": str(Path(source["exportRoot"]) / policy_relative), "sha256": source_map[policy_relative]}))
+    bundled = extension_id in policy["bundledExtensions"]
     frozen_frontend = None
     if frontend_receipt is not None:
         frozen_frontend = frontend_root(frontend_receipt) / "runs" / (sha(frontend_receipt.read_bytes()) + ".json")
         _ = read_identity({"path": str(frozen_frontend), "sha256": sha(frontend_receipt.read_bytes())})
-    return manifest, members, {"source": source, "sdkHostSource": sdk["hostSource"], "sdkReceiptSha256": sha(sdk_raw),
+    return manifest, members, {"bundledByDefault": bundled, "source": source, "sdkHostSource": sdk["hostSource"], "sdkReceiptSha256": sha(sdk_raw),
         "buildReceipt": str(build_receipt), "buildReceiptSha256": sha(build_raw), "contractFingerprint": sdk["contractFingerprint"],
         "frontendReceipt": str(frozen_frontend) if frozen_frontend else None,
         "frontendReceiptSha256": sha(frontend_receipt.read_bytes()) if frontend_receipt else None, "runtimeInput": runtime}

@@ -9,6 +9,7 @@ void Run(string name, Action test)
 await Task.CompletedTask;
 ParserCases.Run(Run);
 SelectionCases.Run(Run);
+TargetDescriptionCases.Run(Run);
 SessionCases.Run(Run);
 DiscoveryCases.Run(Run);
 await File.WriteAllBytesAsync(args[0], JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));

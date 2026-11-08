@@ -62,7 +62,11 @@ internal sealed class BrowserCapturePort : ICheckInBrowserCapture
     internal BrowserCredentialCapture Reply = new([], [], []);
     internal TaskCompletionSource<BrowserCredentialCapture>? Pending;
     internal int Cancels;
-    public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, CancellationToken cancellationToken)
-        => Pending is { } pending ? await pending.Task : Reply;
+    public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, Func<BrowserCredentialCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken)
+    {
+        var result = Pending is { } pending ? await pending.Task : Reply;
+        if (!await validate(result, cancellationToken)) throw new CheckInFailure("credential_login_validation_rejected");
+        return result;
+    }
     public ValueTask CancelAsync(CheckInClient client, Guid nonce, CancellationToken cancellationToken) { Cancels++; return ValueTask.CompletedTask; }
 }

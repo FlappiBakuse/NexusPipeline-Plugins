@@ -95,6 +95,25 @@ internal static class CoordinatorCases
             await service.SaveAsync(Guid.NewGuid(), 0, TestActivity.Select("blue-archive"), default); await started.Task;
             await service.DisposeAsync(); Check.That(docs.Writes == 1 && !docs.Values.ContainsKey("feed-ba-cn"));
         });
+        await run("slow-feed-keeps-fast-feed-visible-and-joins-refresh", async () =>
+        {
+            var docs = new TestDocuments(); var net = new TestNetwork();
+            var slow = new TaskCompletionSource<ActivityResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var fast = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            net.Handler = (url, _) => url.AbsolutePath.Contains("ba-cn", StringComparison.Ordinal) ? slow.Task : CompleteFast();
+            Task<ActivityResponse> CompleteFast() { fast.TrySetResult(); return Task.FromResult(TestNetwork.Feed("fast")); }
+            await using var service = new ActivityCoordinator(docs, net, new TestClock());
+            await service.InitializeAsync(default);
+            await service.SaveAsync(Guid.NewGuid(), 0, TestActivity.Select("blue-archive", "genshin-impact"), default);
+            await fast.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            for (var attempt = 0; attempt < 100 && !docs.Values.ContainsKey("feed-ys"); attempt++) await Task.Delay(5);
+            Check.That(TestActivity.Cache(docs, "ys").Content?.Overview.Number == "fast");
+            Check.That(!docs.Values.ContainsKey("feed-ba-cn") && (await TestActivity.State(service)).GetProperty("refreshing").GetBoolean());
+            await service.RefreshAsync(Guid.NewGuid(), default);
+            Check.That(net.Calls.Count(url => url.AbsolutePath.Contains("ba-cn", StringComparison.Ordinal)) == 1);
+            slow.SetResult(TestNetwork.Feed("slow")); await TestActivity.Idle(service);
+            Check.That(TestActivity.Cache(docs).Content?.Overview.Number == "slow");
+        });
         await CacheBoundaryCases.RunAsync(run);
         await CoverConcurrencyCases.RunAsync(run);
     }

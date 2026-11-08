@@ -5,17 +5,17 @@ internal static class SessionCases
 {
     internal static void Run(Action<string, Action> run)
     {
-        foreach (var vendor in Enum.GetValues<EmulatorVendor>())
+        foreach (var vendor in EmulatorVendors.All)
         {
             run("vendor-start-probe-capture-and-explicit-close/" + vendor, () => {
                 var target = Target(vendor); var host = new Host(target); var session = new EmulatorSession(host, target);
                 session.StartAsync(default).GetAwaiter().GetResult(); session.StartAsync(default).GetAwaiter().GetResult();
                 Assert(host.Commands.Count == 1 && host.Commands[0].ToolId == target.Installation.Control.Id);
-                var expected = vendor switch { EmulatorVendor.LdPlayer => new[] { "launch", "--index", "0" }, EmulatorVendor.Nox => new[] { "launch", "-name:NoxPlayer" }, _ => new[] { "--instance", "Pie64" } };
+                var expected = vendor switch { EmulatorVendors.LdPlayer => new[] { "launch", "--index", "0" }, EmulatorVendors.Nox => new[] { "launch", "-name:NoxPlayer" }, _ => new[] { "--instance", "Pie64" } };
                 Assert(host.Commands[0].Arguments.SequenceEqual(expected)); Assert(session.CaptureAsync(default).GetAwaiter().GetResult().MediaId == "host-media");
                 session.CloseAsync(true, default).GetAwaiter().GetResult(); Assert(host.OfflineCalls > 0 && host.Stops.Count == 0);
-                if (vendor == EmulatorVendor.BlueStacks) Assert(host.Commands.Count == 1 && host.Shutdowns == 1);
-                else Assert(host.Commands[1].Arguments[0] == "quit" && host.Commands[1].Arguments.SequenceEqual(vendor == EmulatorVendor.LdPlayer ? new[] { "quit", "--index", "0" } : new[] { "quit", "-name:NoxPlayer" }));
+                if (vendor == EmulatorVendors.BlueStacks) Assert(host.Commands.Count == 1 && host.Shutdowns == 1);
+                else Assert(host.Commands[1].Arguments[0] == "quit" && host.Commands[1].Arguments.SequenceEqual(vendor == EmulatorVendors.LdPlayer ? new[] { "quit", "--index", "0" } : new[] { "quit", "-name:NoxPlayer" }));
             });
             run("cancel-only-host-owned-action-and-never-unowned-selected-vm/" + vendor, () => {
                 var target = Target(vendor); var host = new Host(target) { Owned = false }; var session = new EmulatorSession(host, target);
@@ -33,30 +33,30 @@ internal static class SessionCases
         }
         foreach (var state in new[] { "offline", "unauthorized", "reconnected" })
             run("adb-state-is-observable/" + state, () => {
-                var target = Target(EmulatorVendor.LdPlayer); var host = new Host(target); var session = new EmulatorSession(host, target);
+                var target = Target(EmulatorVendors.LdPlayer); var host = new Host(target); var session = new EmulatorSession(host, target);
                 session.StartAsync(default).GetAwaiter().GetResult(); host.ProbeState = state;
                 Reject(() => session.CaptureAsync(default).GetAwaiter().GetResult(), state == "reconnected" ? "emulator_adb_reconnected" : "emulator_adb_" + state);
                 Assert(host.Captures == 0);
             });
         foreach (var state in new[] { "timeout", "failed", "exit" })
             run("launch-failure-does-not-claim-ready/" + state, () => {
-                var target = Target(EmulatorVendor.LdPlayer); var host = new Host(target) { Launch = state }; var session = new EmulatorSession(host, target);
+                var target = Target(EmulatorVendors.LdPlayer); var host = new Host(target) { Launch = state }; var session = new EmulatorSession(host, target);
                 Reject(() => session.StartAsync(default).GetAwaiter().GetResult(), state == "timeout" ? "emulator_launch_timeout" : "emulator_launch_failed"); Assert(host.Connects == 0);
             });
         run("screenshot-failure-is-not-empty-success", () => {
-            var target = Target(EmulatorVendor.BlueStacks); var host = new Host(target) { Image = new("failed", "", "", 0, 0) }; var session = new EmulatorSession(host, target);
+            var target = Target(EmulatorVendors.BlueStacks); var host = new Host(target) { Image = new("failed", "", "", 0, 0) }; var session = new EmulatorSession(host, target);
             session.StartAsync(default).GetAwaiter().GetResult(); Reject(() => session.CaptureAsync(default).GetAwaiter().GetResult(), "emulator_screenshot_failed");
         });
         run("changed-tools-block-control-and-capture-before-command", () => {
-            var target = Target(EmulatorVendor.LdPlayer); var host = new Host(target); host.Current = host.Current with { Installation = target.Installation with { Control = target.Installation.Control with { Sha256 = new string('b', 64) } } };
+            var target = Target(EmulatorVendors.LdPlayer); var host = new Host(target); host.Current = host.Current with { Installation = target.Installation with { Control = target.Installation.Control with { Sha256 = new string('b', 64) } } };
             Reject(() => new EmulatorSession(host, target).StartAsync(default).GetAwaiter().GetResult(), "emulator_target_changed"); Assert(host.Commands.Count == 0);
         });
         run("missing-host-instance-generation-proof-blocks-launch", () => {
-            var target = Target(EmulatorVendor.LdPlayer); var host = new Host(target); host.Current = host.Current with { InstanceEvidenceId = "" };
+            var target = Target(EmulatorVendors.LdPlayer); var host = new Host(target); host.Current = host.Current with { InstanceEvidenceId = "" };
             Reject(() => new EmulatorSession(host, target).StartAsync(default).GetAwaiter().GetResult(), "emulator_instance_proof_missing"); Assert(host.Commands.Count == 0);
         });
         run("reused-instance-selector-cannot-replace-frozen-physical-generation", () => {
-            var target = Target(EmulatorVendor.LdPlayer); var host = new Host(target); var session = new EmulatorSession(host, target);
+            var target = Target(EmulatorVendors.LdPlayer); var host = new Host(target); var session = new EmulatorSession(host, target);
             session.StartAsync(default).GetAwaiter().GetResult(); host.Current = host.Current with { InstanceEvidenceId = "new-vm-generation" };
             Reject(() => session.CaptureAsync(default).GetAwaiter().GetResult(), "emulator_instance_replaced"); Assert(host.Captures == 0);
         });

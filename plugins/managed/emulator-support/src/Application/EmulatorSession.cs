@@ -13,8 +13,8 @@ internal sealed class EmulatorSession(IEmulatorHost host, EmulatorTarget target)
         {
             await VerifyAsync(cancellationToken);
             if (adb is not null) { await ProbeAsync(cancellationToken); return adb; }
-            var command = target.Installation.Vendor switch { EmulatorVendor.LdPlayer => LdPlayerPolicy.Control(target, true),
-                EmulatorVendor.Nox => NoxPolicy.Control(target, true), EmulatorVendor.BlueStacks => BlueStacksPolicy.Launch(target), _ => throw new EmulatorFailure("emulator_vendor_invalid") };
+            var command = target.Installation.Vendor switch { EmulatorVendors.LdPlayer => LdPlayerPolicy.Control(target, true),
+                EmulatorVendors.Nox => NoxPolicy.Control(target, true), EmulatorVendors.BlueStacks => BlueStacksPolicy.Launch(target), _ => throw new EmulatorFailure("emulator_vendor_invalid") };
             var started = await host.RunAsync(target, command, cancellationToken); actionId = started.ActionId;
             if (started.State == "timeout") throw new EmulatorFailure("emulator_launch_timeout");
             if (started.State != "completed" || (command.Detached ? started.ExitCode is not (null or 0) : started.ExitCode != 0) || string.IsNullOrWhiteSpace(actionId))
@@ -47,9 +47,9 @@ internal sealed class EmulatorSession(IEmulatorHost host, EmulatorTarget target)
             Validate(adb);
             if (!explicitSelection && !adb.OwnedInstance) throw new EmulatorFailure("emulator_instance_not_owned");
             var current = await VerifyAsync(cancellationToken);
-            if (target.Installation.Vendor != EmulatorVendor.BlueStacks)
+            if (target.Installation.Vendor != EmulatorVendors.BlueStacks)
             {
-                var command = target.Installation.Vendor == EmulatorVendor.LdPlayer ? LdPlayerPolicy.Control(target, false) : NoxPolicy.Control(target, false);
+                var command = target.Installation.Vendor == EmulatorVendors.LdPlayer ? LdPlayerPolicy.Control(target, false) : NoxPolicy.Control(target, false);
                 var result = await host.RunAsync(target, command, cancellationToken); actionId = result.ActionId;
                 if (result.State == "completed" && result.ExitCode == 0 && await host.OfflineAsync(adb, cancellationToken)) return;
             }

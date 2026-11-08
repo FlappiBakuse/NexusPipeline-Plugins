@@ -2,6 +2,10 @@
 
 ## 0.5.0
 
+- Use separate rounded task cards with compact spacing and vertically centered content; keep the page title and description without a repeated eyebrow.
+
+- Validate candidate credentials in the live login window; rejection permits continuing or refreshing, and success returns the draft after cleanup.
+
 - Implement 14 regional game combinations across six platforms, task plans, manual execution, per-game results and Host durable-effect adapters.
 - Use client-private credential drafts, six-field atomic publication, task quiescence and exact historical writer proof.
 - Provide the production frontend with explicit operation access/identity and separate read-only login availability from action authority.

@@ -10,7 +10,7 @@ internal static class CaptureCases
         foreach (var platform in new[] { "cn", "os", "skland", "skport", "kuro" })
             await run("actual-capture-sdk-frozen-selectors-final-normalize-and-draft-disposal/" + platform, async () => {
                 var desktop = new Desktop { Platform = platform }; await using var capture = new SdkCheckInBrowser(desktop);
-                var result = await capture.CaptureAsync(Client(), LoginPolicies.For(platform), Guid.NewGuid(), default);
+                var result = await capture.CaptureAsync(Client(), LoginPolicies.For(platform), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default);
                 using var material = LoginCapture.Normalize(platform, result);
                 var policy = desktop.Policy ?? throw new InvalidOperationException("capture_policy_missing");
                 Assert(material.Source == "browser" && desktop.Calls == 1 && policy.Id == "checkin-" + platform + "-v1");
@@ -27,43 +27,43 @@ internal static class CaptureCases
             });
         await run("actual-capture-sdk-unknown-selector-rejected-and-every-draft-cleared", async () => {
             var desktop = new Desktop { Platform = "kuro", Foreign = true }; await using var capture = new SdkCheckInBrowser(desktop);
-            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("kuro"), Guid.NewGuid(), default).AsTask(), "credential_capture_invalid");
+            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("kuro"), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default).AsTask(), "credential_capture_invalid");
             foreach (var draft in desktop.Drafts) Cleared(draft);
         });
         await run("actual-capture-sdk-policy-copy-cannot-change-official-origins", async () => {
             var desktop = new Desktop(); await using var capture = new SdkCheckInBrowser(desktop);
-            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("cn") with { Origins = ["https://evil.test"] }, Guid.NewGuid(), default).AsTask(), "credential_capture_policy_invalid");
+            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("cn") with { Origins = ["https://evil.test"] }, Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default).AsTask(), "credential_capture_policy_invalid");
             Assert(desktop.Calls == 0);
         });
         await run("actual-capture-sdk-null-desktop-preserves-manual-only", async () => {
             await using var capture = new SdkCheckInBrowser(null);
-            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), default).AsTask(), "client_not_supported");
+            await RejectAsync(() => capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default).AsTask(), "client_not_supported");
         });
         await run("actual-capture-sdk-cancel-waits-host-cleanup-before-completing", async () => {
             var desktop = new Desktop { Hold = true }; await using var capture = new SdkCheckInBrowser(desktop); var client = Client(); var nonce = Guid.NewGuid();
-            var pending = capture.CaptureAsync(client, LoginPolicies.For("cn"), nonce, default).AsTask(); await desktop.Entered.Task;
+            var pending = capture.CaptureAsync(client, LoginPolicies.For("cn"), nonce, (_, _) => ValueTask.FromResult(true), default).AsTask(); await desktop.Entered.Task;
             var cancel = capture.CancelAsync(client, nonce, default).AsTask(); await desktop.Cancelled.Task;
             Assert(!pending.IsCompleted && !cancel.IsCompleted); desktop.Cleanup.SetResult(); await cancel; await CancelledAsync(pending);
         });
         await run("actual-capture-sdk-scope-stop-and-repeat-dispose-wait-same-cleanup", async () => {
             var desktop = new Desktop { Hold = true }; var capture = new SdkCheckInBrowser(desktop);
-            var pending = capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), default).AsTask(); await desktop.Entered.Task;
+            var pending = capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default).AsTask(); await desktop.Entered.Task;
             var first = capture.DisposeAsync().AsTask(); await desktop.Cancelled.Task; var second = capture.DisposeAsync().AsTask();
             Assert(!first.IsCompleted && !second.IsCompleted && !pending.IsCompleted); desktop.Cleanup.SetResult(); await Task.WhenAll(first, second); await CancelledAsync(pending);
-            try { await capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), default); }
+            try { await capture.CaptureAsync(Client(), LoginPolicies.For("cn"), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default); }
             catch (ObjectDisposedException) { return; }
             throw new InvalidOperationException("disposed_capture_reused");
         });
         await run("actual-capture-sdk-cross-client-cancel-cannot-close-original-session", async () => {
             var desktop = new Desktop { Hold = true }; await using var capture = new SdkCheckInBrowser(desktop); var client = Client(); var nonce = Guid.NewGuid();
-            var pending = capture.CaptureAsync(client, LoginPolicies.For("cn"), nonce, default).AsTask(); await desktop.Entered.Task;
+            var pending = capture.CaptureAsync(client, LoginPolicies.For("cn"), nonce, (_, _) => ValueTask.FromResult(true), default).AsTask(); await desktop.Entered.Task;
             await capture.CancelAsync(Client(), nonce, default); Assert(!desktop.Cancelled.Task.IsCompleted);
             await RejectAsync(() => capture.CancelAsync(client with { ActivationScopeId = Guid.NewGuid() }, nonce, default).AsTask(), "credential_editor_owner_mismatch");
             var cancel = capture.CancelAsync(client, nonce, default).AsTask(); await desktop.Cancelled.Task; desktop.Cleanup.SetResult(); await cancel; await CancelledAsync(pending);
         });
         await run("actual-capture-sdk-client-retirement-cancels-before-candidate-can-escape", async () => {
             using var lifetime = new CancellationTokenSource(); var desktop = new Desktop { Hold = true }; await using var capture = new SdkCheckInBrowser(desktop);
-            var pending = capture.CaptureAsync(Client() with { Lifetime = lifetime.Token }, LoginPolicies.For("cn"), Guid.NewGuid(), default).AsTask(); await desktop.Entered.Task;
+            var pending = capture.CaptureAsync(Client() with { Lifetime = lifetime.Token }, LoginPolicies.For("cn"), Guid.NewGuid(), (_, _) => ValueTask.FromResult(true), default).AsTask(); await desktop.Entered.Task;
             lifetime.Cancel(); await desktop.Cancelled.Task; Assert(!pending.IsCompleted); desktop.Cleanup.SetResult(); await CancelledAsync(pending);
         });
     }
@@ -84,7 +84,8 @@ internal static class CaptureCases
         internal readonly TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously),
             Cancelled = new(TaskCreationOptions.RunContinuationsAsynchronously), Cleanup = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public ValueTask<Guid?> ReadSessionAsync(CancellationToken cancellationToken) => throw new InvalidOperationException("session_is_not_capture_authority");
-        public async ValueTask<BrowserLoginCapture> CaptureAsync(BrowserLoginPolicy policy, CancellationToken cancellationToken)
+        public async ValueTask<BrowserLoginCapture> CaptureValidatedAsync(BrowserLoginPolicy policy,
+            Func<BrowserLoginCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken)
         {
             Calls++; Policy = policy; Entered.SetResult();
             if (Hold)
@@ -103,7 +104,17 @@ internal static class CaptureCases
             { Add("passport-token", "synthetic-token"); if (Platform == "skland") Add("device", "{\"id\":\"synthetic-device\"}"); }
             else { Add("auth-token", "synthetic-token"); Add("distinct-id", "synthetic-distinct"); }
             if (Foreign) Add("unrequested-selector", "synthetic-foreign");
-            return new(values);
+            var candidate = values.ToDictionary(pair => pair.Key, pair => {
+                string text = ""; pair.Value.Use(value => text = value.ToString());
+                var copy = new SecretDraft(text); Drafts.Add(copy); return copy;
+            });
+            try
+            {
+                if (!await validate(new(candidate), cancellationToken)) throw new CheckInFailure("credential_login_validation_rejected");
+                return new(values);
+            }
+            catch { foreach (var value in values.Values) value.Dispose(); throw; }
+            finally { foreach (var value in candidate.Values) value.Dispose(); }
         }
     }
 }

@@ -78,7 +78,7 @@ internal static class ServiceCases
         internal TaskCompletionSource? Cleanup;
         internal readonly TaskCompletionSource Draining = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public async ValueTask DisposeAsync() { Draining.TrySetResult(); if (Cleanup is not null) await Cleanup.Task; }
-        public ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_capture");
+        public ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, Func<BrowserCredentialCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_capture");
         public ValueTask CancelAsync(CheckInClient client, Guid nonce, CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_capture_cancel");
     }
     private static T Fake<T>() where T : class => DispatchProxy.Create<T, UnexpectedSdkCall>();

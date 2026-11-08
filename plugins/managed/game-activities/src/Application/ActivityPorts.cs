@@ -47,3 +47,9 @@ internal sealed class ActivityCachedSource(ActivitySource source)
 
 internal sealed record ActivityImage(string ContentType, ReadOnlyMemory<byte> Bytes);
 internal sealed record ActivityImageEntry(ActivityImage? Image, DateTimeOffset Expires);
+
+internal interface IActivityImages
+{
+    ValueTask<ActivityImage?> ReadAsync(string coverId, CancellationToken cancellationToken);
+    ValueTask SaveAsync(string coverId, ActivityImage image, IReadOnlySet<string> currentIds, CancellationToken cancellationToken);
+}

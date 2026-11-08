@@ -2,7 +2,7 @@ namespace NexusPipeline.Extensions.GameCheckIn;
 
 internal interface ICheckInBrowserCapture : IAsyncDisposable
 {
-    ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, CancellationToken cancellationToken);
+    ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, Func<BrowserCredentialCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken);
     ValueTask CancelAsync(CheckInClient client, Guid nonce, CancellationToken cancellationToken);
 }
 internal sealed record CheckInLoginCandidate(string CandidateId, long FieldGeneration);
@@ -38,13 +38,19 @@ internal sealed class CheckInBrowserLogins(CheckInEditors editors, ICheckInNativ
             if (sessions.Count >= 256) throw new CheckInFailure("credential_login_limit");
             session = new(client, editors.Get(client, editorId).Prepare(client, platform, generation)); sessions.Add(key, session);
         }
+        CredentialMaterial? validated = null;
         try
         {
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, session.Cancellation.Token);
-            var result = await capture.CaptureAsync(client, policy, session.Binding.Nonce, linked.Token);
+            _ = await capture.CaptureAsync(client, policy, session.Binding.Nonce, async (result, token) =>
+            {
+                using var captured = LoginCapture.Normalize(platform, result);
+                try { validated = await verify(platform, captured, token); return true; }
+                catch (CheckInFailure) { return false; }
+            }, linked.Token);
             linked.Token.ThrowIfCancellationRequested();
-            using var captured = LoginCapture.Normalize(platform, result);
-            var verified = await verify(platform, captured, linked.Token);
+            var verified = validated ?? throw new CheckInFailure("credential_login_validation_required");
+            validated = null;
             try
             {
                 linked.Token.ThrowIfCancellationRequested();
@@ -60,6 +66,7 @@ internal sealed class CheckInBrowserLogins(CheckInEditors editors, ICheckInNativ
         }
         catch
         {
+            validated?.Dispose();
             lock (sessions)
             {
                 if (sessions.GetValueOrDefault(key) == session)

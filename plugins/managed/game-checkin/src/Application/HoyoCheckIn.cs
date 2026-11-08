@@ -44,7 +44,7 @@ internal sealed class HoyoCheckIn(ICheckInNetwork network, ICheckInEffects effec
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (CheckInFailure error) { return CheckInResults.Result(platform, gameCode, error.Code); }
-        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result(platform, gameCode, "transport_error"); }
+        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result(platform, gameCode, CheckInDiagnostics.Failure(error, "HoyoCheckIn.prepare")); }
     }
     private async Task<CheckInGameResult> SignRoleAsync(string platform, string game, HoyoEndpoint endpoint,
         CheckInRole role, string cookie, string deviceId, bool maySubmit, CancellationToken cancellationToken)
@@ -84,7 +84,7 @@ internal sealed class HoyoCheckIn(ICheckInNetwork network, ICheckInEffects effec
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException)
-        { return CheckInResults.Result(platform, game, submitted || lease.State == "unknown" || !maySubmit ? "success_unconfirmed" : "transport_error",
+        { return CheckInResults.Result(platform, game, submitted || lease.State == "unknown" || !maySubmit ? "success_unconfirmed" : CheckInDiagnostics.Failure(error, "HoyoCheckIn.submit"),
             effectState: submitted || lease.State == "unknown" || !maySubmit ? "unknown" : "notSubmitted"); }
     }
     private Task<JsonDocument> ReadAsync(string platform, HoyoEndpoint endpoint, string url, string cookie, string deviceId,

@@ -40,16 +40,16 @@ internal sealed class EmulatorDiscovery(IEmulatorInventory host)
     }
     private async ValueTask<EmulatorEnumeration> EnumerateAsync(EmulatorInstallation installation, CancellationToken cancellationToken)
     {
-        if (installation.Vendor == EmulatorVendor.BlueStacks)
+        if (installation.Vendor == EmulatorVendors.BlueStacks)
         {
             var configs = installation.Configurations.Where(config => EmulatorPaths.Name(config.RelativePath) == "bluestacks.conf").ToArray();
             if (configs.Length != 1) throw new EmulatorFailure(configs.Length == 0 ? "bluestacks_config_missing" : "bluestacks_config_ambiguous");
             return BlueStacksPolicy.Parse(configs[0]);
         }
-        var command = installation.Vendor == EmulatorVendor.LdPlayer ? LdPlayerPolicy.List(installation) : NoxPolicy.List(installation);
+        var command = installation.Vendor == EmulatorVendors.LdPlayer ? LdPlayerPolicy.List(installation) : NoxPolicy.List(installation);
         var result = await host.EnumerateAsync(installation, command, cancellationToken);
         if (result.State == "timeout") throw new EmulatorFailure("emulator_enumeration_timeout");
         if (result.State != "completed" || result.ExitCode != 0) throw new EmulatorFailure("emulator_enumeration_exit");
-        return installation.Vendor == EmulatorVendor.LdPlayer ? LdPlayerPolicy.Parse(result.StandardOutput) : NoxPolicy.Parse(result.StandardOutput, installation.Configurations);
+        return installation.Vendor == EmulatorVendors.LdPlayer ? LdPlayerPolicy.Parse(result.StandardOutput) : NoxPolicy.Parse(result.StandardOutput, installation.Configurations);
     }
 }

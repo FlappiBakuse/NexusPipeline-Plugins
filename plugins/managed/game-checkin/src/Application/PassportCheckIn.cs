@@ -51,7 +51,7 @@ internal sealed class PassportCheckIn(ICheckInNetwork network, ICheckInEffects e
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (CheckInFailure error) { return CheckInResults.Result(platform, gameCode, error.Code); }
-        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result(platform, gameCode, "transport_error"); }
+        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result(platform, gameCode, CheckInDiagnostics.Failure(error, "PassportCheckIn.prepare")); }
     }
     private async Task<CheckInGameResult> AttendanceAsync(string platform, string game, Session session, CheckInRole role,
         bool endfield, CancellationToken cancellationToken)

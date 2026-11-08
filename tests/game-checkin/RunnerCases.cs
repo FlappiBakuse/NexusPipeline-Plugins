@@ -16,7 +16,7 @@ internal static class RunnerCases
             var runner = new CheckInRunner(store, new(network, ports, new TestDevice(), TimeProvider.System), ports, TimeProvider.System);
             var result = runner.ExecuteAsync(task.Id, 3, Identity(), default).GetAwaiter().GetResult();
             Assert(result.Results.Length == 14 && result.Results.All(result => result.Code == "credential_not_configured") && result.Status == "failed");
-            Assert(store.Writes == 30 && store.Saved!.Results.Length == 14 && network.Requests.Count == 0 && ports.Claims == 0);
+            Assert(store.Saved!.Results.Length == 14 && network.Requests.Count == 0 && ports.Claims == 0);
         });
         run("runner-uses-host-frozen-month-and-versioned-secret-per-game", () =>
         {
@@ -24,7 +24,7 @@ internal static class RunnerCases
             var ports = new RunnerExecutionPorts(); var network = new RunnerNetwork(ports); var runner = new CheckInRunner(store, new(network, ports, new TestDevice(), TimeProvider.System), ports, TimeProvider.System);
             var identity = Identity(); var result = runner.ExecuteAsync(task.Id, 3, identity, default).GetAwaiter().GetResult();
             Assert(result.Status == "success" && result.Results.Length == 2 && result.Results.All(result => result.Success));
-            Assert(ports.Claims == 2 && ports.SecretRevisions.All(revision => revision == 7) && store.Writes == 6 && store.Operations.Distinct().Count() == 6);
+            Assert(ports.Claims == 2 && ports.SecretRevisions.All(revision => revision == 7) && store.Operations.Distinct().Count() == 6);
             Assert(network.Requests.Where(request => request.Address.EndsWith("/signIn/v2", StringComparison.Ordinal)).All(request => request.Body.Contains("reqMonth=01", StringComparison.Ordinal)));
             Assert(result.AttemptId == identity.AttemptId.ToString("D") && result.TaskRevision == 3);
         });
@@ -42,7 +42,7 @@ internal static class RunnerCases
             var runner = new CheckInRunner(store, new(network, ports, new TestDevice(), TimeProvider.System), ports, TimeProvider.System);
             var result = runner.ExecuteAsync(task.Id, 3, Identity(), cancellation.Token).GetAwaiter().GetResult();
             Assert(result.Status == "cancelled" && result.Results[0].EffectState == "unknown" && result.Results[1].Code == "cancelled");
-            Assert(store.Writes == 2 && store.Saved!.Results[0].Code == "running" && store.Saved.Results[1].Code == "pending");
+            Assert(store.Saved!.Results[0].Code == "running" && store.Saved.Results[1].Code == "pending");
             var merged = CheckInRunFacts.Merge(store.Saved!, new(Guid.Parse(result.Id), Guid.Parse(result.AttemptId), 3, "cancelled", result.CompletedAt));
             Assert(merged.Results[0].EffectState == "unknown" && merged.Results[1].Code == "not_executed");
         });

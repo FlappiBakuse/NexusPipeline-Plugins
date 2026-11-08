@@ -1,0 +1,24 @@
+export const locales = {
+  "en-US": {
+    "manifest": {
+      "displayName": "Custom Wallpaper",
+      "gameName": "General appearance",
+      "summary": "Manage multiple custom wallpapers in NexusPipeline, including rotation, display effects, and adaptive colors."
+    },
+    "tasks": {
+    },
+    "diagnostics": {
+    }
+  },
+  "zh-CN": {
+    "manifest": {
+      "displayName": "自定义壁纸",
+      "gameName": "通用外观",
+      "summary": "同步管理 NexusPipeline 的多张自定义壁纸、随机轮换、显示效果和自适应配色。"
+    },
+    "tasks": {
+    },
+    "diagnostics": {
+    }
+  }
+} as const;

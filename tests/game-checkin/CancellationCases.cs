@@ -38,7 +38,7 @@ internal static class CancellationCases
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         private readonly TaskCompletionSource<BrowserCredentialCapture> pending = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal int Cancels;
-        public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, CancellationToken cancellationToken)
+        public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, Func<BrowserCredentialCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken)
         {
             using var registration = cancellationToken.Register(() => throw new InvalidOperationException("synthetic_capture_cancel_failure"));
             return await pending.Task;

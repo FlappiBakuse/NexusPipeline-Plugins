@@ -17,7 +17,7 @@ internal sealed class SdkCheckInBrowser(IExtensionDesktop? desktop) : ICheckInBr
     private readonly Dictionary<(Guid Client, Guid Nonce), Active> active = [];
     private readonly TaskCompletionSource drained = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool disposed;
-    public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, CancellationToken cancellationToken)
+    public async ValueTask<BrowserCredentialCapture> CaptureAsync(CheckInClient client, CheckInLoginPolicy policy, Guid nonce, Func<BrowserCredentialCapture, CancellationToken, ValueTask<bool>> validate, CancellationToken cancellationToken)
     {
         client.Require();
         if (desktop is null) throw new CheckInFailure("client_not_supported");
@@ -32,7 +32,7 @@ internal sealed class SdkCheckInBrowser(IExtensionDesktop? desktop) : ICheckInBr
         {
             try
             {
-                using var captured = await desktop.CaptureAsync(mapping.Policy, current.Token);
+                using var captured = await desktop.CaptureValidatedAsync(mapping.Policy, (candidate, token) => validate(mapping.Read(candidate), token), current.Token);
                 current.Token.ThrowIfCancellationRequested(); client.Require();
                 return mapping.Read(captured);
             }

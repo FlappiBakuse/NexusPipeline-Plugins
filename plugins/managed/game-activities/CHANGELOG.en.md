@@ -2,6 +2,12 @@
 
 ## 0.5.0
 
+- Reuse loaded covers immediately on page return; use tall narrow SVG navigation chevrons.
+
+- Retry failed covers on manual refresh, allow verified image origins, and center toolbar icons; retain the background when no cover is provided.
+
+- Refresh up to four text feeds concurrently while preserving per-feed publication, subscription generations and throttling.
+
 - Add eleven SRA feeds for eight games, complete game ordering, and Blue Archive / Neverness to Everness progression settings.
 - Connect Host Documents, Http and frontend transport for persistent caching, CAS settings, scheduled refresh and rate-limited manual refresh.
 - Preserve unknown source time zones and display verified instants in the computer time zone; image failures retain text and last good feed data.

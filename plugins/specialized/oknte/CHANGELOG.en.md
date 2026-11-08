@@ -1,6 +1,8 @@
 # Changelog
 
 ## 0.5.0
+
+- Discover daily execution with `-t 2 -e`, selecting the upstream DailyRoutineTask.
 - Localize missing configuration, defaults, targets and interface import diagnostics while preserving validation and repair previews.
 - Provide Chinese and English configuration diagnostics while preserving warning, admission and repair conditions.
 - Declare instance launch, Android and configuration sync constraints for Host save and execution admission.

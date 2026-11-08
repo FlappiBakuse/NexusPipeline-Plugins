@@ -45,7 +45,7 @@ internal sealed class KuroCheckIn(ICheckInNetwork network, ICheckInEffects effec
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (CheckInFailure error) { return CheckInResults.Result("kuro", gameCode, error.Code); }
-        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result("kuro", gameCode, "transport_error"); }
+        catch (Exception error) when (error is not OutOfMemoryException) { return CheckInResults.Result("kuro", gameCode, CheckInDiagnostics.Failure(error, "KuroCheckIn.prepare")); }
     }
     private async Task<CheckInGameResult> SignRoleAsync(CheckInGame game, CredentialMaterial material, CheckInRole role, string device,
         string distinct, DateOnly date, CancellationToken cancellationToken)

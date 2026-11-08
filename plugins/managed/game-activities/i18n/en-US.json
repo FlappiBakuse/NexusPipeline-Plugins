@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "Game Activities",
-    "gameName": "General activities",
-    "summary": "Subscribe to SRA version overviews and activities with isolated progression caches."
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

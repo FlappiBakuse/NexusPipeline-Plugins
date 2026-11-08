@@ -1,9 +1,0 @@
-{
-  "manifest": {
-    "displayName": "Custom Wallpaper",
-    "gameName": "General appearance",
-    "summary": "Manage multiple custom wallpapers in NexusPipeline, including rotation, display effects, and adaptive colors."
-  },
-  "tasks": {},
-  "diagnostics": {}
-}

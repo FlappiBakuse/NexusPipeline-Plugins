@@ -94,5 +94,6 @@
       "zh-CN": "i18n/zh-CN.json",
       "en-US": "i18n/en-US.json"
     }
-  }
+  },
+  "icon": "assets/icon.png"
 }

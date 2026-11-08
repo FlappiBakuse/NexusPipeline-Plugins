@@ -1,0 +1,61 @@
+{
+  "LdPlayer": {
+    "port": 5555,
+    "control": "ldconsole.exe",
+    "adb": "adb.exe",
+    "configurations": [],
+    "enumerate": "list2",
+    "stdout": "0,Same,0,0,0,-1,-1\n",
+    "runtime": {
+      "vmDirectory": "vms/leidian0",
+      "port": 5555,
+      "configurations": []
+    }
+  },
+  "Nox": {
+    "port": 62001,
+    "control": "NoxConsole.exe",
+    "adb": "nox_adb.exe",
+    "configurations": [
+      {
+        "path": "BignoxVMS/nox/nox.vbox",
+        "text": "<VirtualBox><Machine><Hardware><Network><Adapter><NAT><Forwarding name=\"adb\" proto=\"1\" hostport=\"62001\" guestport=\"5555\"/></NAT></Adapter></Network></Hardware></Machine></VirtualBox>"
+      }
+    ],
+    "enumerate": "list",
+    "stdout": "nox,Same,0,0,0,-1\n",
+    "runtime": {
+      "vmDirectory": "BignoxVMS/nox",
+      "port": 16384,
+      "configurations": [
+        {
+          "path": "BignoxVMS/nox/nox.vbox",
+          "text": "<VirtualBox><Machine><Hardware><Network><Adapter><NAT><Forwarding name=\"adb\" proto=\"1\" hostport=\"16384\" guestport=\"5555\"/></NAT></Adapter></Network></Hardware></Machine></VirtualBox>"
+        }
+      ]
+    }
+  },
+  "BlueStacks": {
+    "port": 5555,
+    "control": "HD-Player.exe",
+    "adb": "HD-Adb.exe",
+    "configurations": [
+      {
+        "path": "bluestacks.conf",
+        "text": "bst.instance.Pie64.display_name=\"Same\"\nbst.instance.Pie64.adb_port=\"5555\"\n"
+      }
+    ],
+    "enumerate": "list",
+    "stdout": "nox,Same,0,0,0,-1\n",
+    "runtime": {
+      "vmDirectory": "Engine/Pie64",
+      "port": 16384,
+      "configurations": [
+        {
+          "path": "bluestacks.conf",
+          "text": "bst.instance.Pie64.display_name=\"Controlled VM\"\nbst.instance.Pie64.adb_port=\"16384\"\n"
+        }
+      ]
+    }
+  }
+}

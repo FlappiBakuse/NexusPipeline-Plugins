@@ -7,7 +7,7 @@ namespace NexusPipeline.Extensions.EmulatorSupport;
 internal static class EmulatorSelection
 {
     internal static string Identity(EmulatorInstallation installation, EmulatorInstance instance) => Hash(new {
-        format = "nexus.emulator.instance", version = 1, installation.Vendor, installation.RootPhysicalId, installation.Id,
+        format = "nexus.emulator.instance", version = 1, Vendor = EmulatorVendors.EvidenceCode(installation.Vendor), installation.RootPhysicalId, installation.Id,
         instance.Identity, instance.Index, instance.ControlName });
     internal static EmulatorTarget Select(IReadOnlyList<(EmulatorInstallation Installation, EmulatorEnumeration Enumeration)> sources,
         string selectedId, string endpoint, bool supportsAndroid)
@@ -36,7 +36,7 @@ internal static class EmulatorSelection
     internal static string Fingerprint(EmulatorInstallation installation, EmulatorInstance instance, string endpoint)
     {
         installation.Validate();
-        return Hash(new { format = "nexus.emulator.target", version = 1, installation.Id, installation.Vendor, installation.RootPath, installation.RootPhysicalId,
+        return Hash(new { format = "nexus.emulator.target", version = 1, installation.Id, Vendor = EmulatorVendors.EvidenceCode(installation.Vendor), installation.RootPath, installation.RootPhysicalId,
             installation.Control, installation.Adb, Configurations = installation.Configurations.OrderBy(config => config.Id, StringComparer.Ordinal)
                 .Select(config => new { config.Id, config.RelativePath, config.PhysicalId, config.Sha256, config.Revision }),
             instance.Identity, instance.ControlName, instance.Index, CandidatePorts = instance.CandidatePorts.Order(), ConfigIds = instance.ConfigIds.Order(StringComparer.Ordinal), Endpoint = EmulatorPaths.Endpoint(endpoint) });
@@ -49,7 +49,7 @@ internal static class EmulatorSelection
     internal static EmulatorProcess? Process(EmulatorTarget target, EmulatorInstance current, IReadOnlyList<EmulatorProcess> processes, EmulatorProcess? frozen)
     {
         if (frozen is null || frozen.InstallationId != target.Installation.Id) return null;
-        if (target.Installation.Vendor == EmulatorVendor.BlueStacks)
+        if (target.Installation.Vendor == EmulatorVendors.BlueStacks)
         { var blue = BlueStacksPolicy.Process(target, processes); return blue is not null && Same(blue, frozen) ? blue : null; }
         if (current.Identity != target.Instance.Identity || current.Index != target.Instance.Index || current.ControlName != target.Instance.ControlName ||
             current.ProcessId is null || target.Instance.ProcessId is null || current.ProcessId != target.Instance.ProcessId) return null;
