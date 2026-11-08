@@ -19,3 +19,20 @@ export async function boundedImage(blob: Blob, maxBytes = 8 * MEGABYTE): Promise
   } finally { bitmap.close(); }
   return blob;
 }
+
+export async function loadedImages(element: HTMLElement, signal: AbortSignal): Promise<void> {
+  signal.throwIfAborted();
+  await Promise.all([...element.querySelectorAll<HTMLImageElement>('img[src]')].map(image => {
+    if (image.complete) return;
+    return new Promise<void>(resolve => {
+      const done = () => {
+        image.removeEventListener('load', done); image.removeEventListener('error', done);
+        signal.removeEventListener('abort', done); resolve();
+      };
+      image.addEventListener('load', done, { once: true });
+      image.addEventListener('error', done, { once: true });
+      signal.addEventListener('abort', done, { once: true });
+    });
+  }));
+  signal.throwIfAborted();
+}

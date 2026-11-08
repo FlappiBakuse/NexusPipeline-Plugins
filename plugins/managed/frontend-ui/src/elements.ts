@@ -19,7 +19,7 @@ export function createPanel(surface: ExtensionSurface, title: string, t: Transla
   });
   const body = document.createElement('div');
   body.className = 'plugin-body';
-  const status = document.createElement('p');
+  const status = document.createElement('nexus-toast') as UiElement<'nexus-toast'>;
   status.className = 'plugin-status';
   status.setAttribute('role', 'status');
   card.append(heading, status, body);
@@ -30,9 +30,9 @@ export function createPanel(surface: ExtensionSurface, title: string, t: Transla
   const alive = () => !closed && !surface.signal.aborted;
   const say = (message: string, error = false) => {
     if (!alive()) return;
-    bindLocale(t, signal, status, 'textContent', () => {
-      status.textContent = t(message);
-    });
+    status.message = '';
+    status.tone = error ? 'danger' : 'info';
+    bindLocale(t, signal, status, 'message', () => { status.message = t(message); });
     status.classList.toggle('plugin-error', error);
   };
   const run = async (action: () => Promise<void>) => {

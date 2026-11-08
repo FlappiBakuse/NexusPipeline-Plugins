@@ -14,14 +14,10 @@ export function createExtension(ports?: WallpaperPorts): FrontendExtension {
     extensionId: 'custom-wallpaper',
     sdkVersion,
     contractFingerprint,
-    activate(context) {
+    async activate(context) {
       const runtime = ports ? createRuntime(ports, context.scope.signal) : undefined;
-      if (runtime)
-        void runtime.refresh(async () => {
-          const kind = await ports!.connectionKind(context.scope.signal);
-          return kind === 'local' ? ports!.advanceRotation(context.scope.signal) :
-            ports!.readState(context.scope.signal);
-        }).catch(() => {});
+      if (runtime) await runtime.refresh();
+      context.scope.signal.throwIfAborted();
       context.registerSurface({
         id: 'custom-wallpaper.settings',
         target: 'settings.panels',

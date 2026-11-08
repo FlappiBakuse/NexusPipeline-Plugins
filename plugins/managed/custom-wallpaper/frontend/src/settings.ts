@@ -90,13 +90,13 @@ export function mountSettings(
     controls.update(value, busy, runtime?.error || '');
     assets?.render(value);
   };
-  controls.root.addEventListener('toggle', () => assets?.setVisible(visible && controls.root.open), {
+  controls.root.addEventListener('nexus-toggle', () => assets?.setVisible(visible && controls.root.expanded), {
     signal: panel.signal
   });
   const visibility = surface.onVisibilityChanged((value) => {
     visible = value;
     runtime?.setSettingsVisible(value);
-    assets?.setVisible(value && controls.root.open);
+    assets?.setVisible(value && controls.root.expanded);
     if (value) update();
   });
   const unsubscribe = runtime?.listen((next) => {

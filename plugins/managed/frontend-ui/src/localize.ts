@@ -1,3 +1,4 @@
+import { errorMessages } from './error-messages.js';
 import type { FrontendExtensionContext } from '@nexuspipeline/extension-sdk';
 
 export type Translate = ((text: string) => string) & {
@@ -13,6 +14,10 @@ export function localize(context: FrontendExtensionContext, english: Readonly<Re
     context.scope.signal.removeEventListener('abort', release);
   };
   const translate: Translate = text => {
+    const error = errorMessages[text];
+    if (error) return error[context.locale === 'en-US' ? 1 : 0];
+    if (text.startsWith('保存结果待确认：'))
+      return (context.locale === 'en-US' ? 'Save outcome unknown: ' : '保存结果待确认：') + text.slice(8);
     const translated = context.translate(text);
     if (translated !== text) return translated;
     return context.locale === 'en-US' ? english[text] ?? text : text;

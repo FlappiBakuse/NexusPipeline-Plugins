@@ -10,11 +10,7 @@
 }
 .activity-panel > h3 {
   display: none;
-}
-.activity-panel > .plugin-status:empty {
-  display: none;
-}
-.activity-panel > .plugin-body {
+}.activity-panel > .plugin-body {
   display: block;
 }
 .activity-carousel {
@@ -136,6 +132,10 @@
   color: white;
 }
 .activity-tools span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
   font-size: 20px;
   filter: drop-shadow(0 1px 3px #000a);
 }
@@ -168,8 +168,15 @@
 }
 .activity-previous span,
 .activity-next span {
-  font-size: 30px;
-  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.activity-previous svg,
+.activity-next svg {
+  display: block;
+  width: 14px;
+  height: 26px;
 }
 .activity-indicators {
   position: absolute;

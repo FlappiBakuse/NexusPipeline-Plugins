@@ -139,8 +139,9 @@ await page.evaluate(async () => {
     const extension = await import(`/${name}/main.js`);
     const registered = [];
     const controller = new AbortController();
+    const owned = [];
     const localeListeners = new Set();
-    const host = { extensionId: name, scope: { signal: controller.signal }, get locale() { return locale; }, appearance: 'dark',
+    const host = { extensionId: name, scope: { signal: controller.signal, own: value => { owned.push(value); return value; } }, get locale() { return locale; }, appearance: 'dark',
       onLocaleChanged(listener) { localeListeners.add(listener); return () => localeListeners.delete(listener); },
       translate: key => key, registerSurface: item => registered.push(item), registerRoute: item => registered.push(item),
       registerStyle: () => {} };
@@ -162,6 +163,7 @@ await page.evaluate(async () => {
       hide() { surface.visible = false; for (const listener of listeners) listener(false); },
       show() { surface.visible = true; for (const listener of listeners) listener(true); },
       dispose() { controller.abort(); cleanup?.(); if (target === 'application.appearance') window.fixtureAppearance = null;
+        for (const release of owned.splice(0)) release();
         element.remove(); style.remove(); } };
   };
 });
@@ -237,10 +239,11 @@ await test('registry late cleanup and rollback', async () => {
     const started = new Promise(resolve => { begin = resolve; });
     let finish;
     const waiting = new Promise(resolve => { finish = resolve; });
-    let cleaned = 0;
+    let cleaned = 0, cleanupDone;
+    const cleanup = new Promise(resolve => { cleanupDone = resolve; });
     const extension = { extensionId: 'fixture', sdkVersion, contractFingerprint,
       activate(context) { context.registerSurface({ id: 'fixture.late', target: 'overview.cards',
-        mount: async () => { begin(); await waiting; return () => { cleaned++; }; } }); } };
+        mount: async () => { begin(); await waiting; return () => { cleaned++; cleanupDone(); }; } }); } };
     const owner = await registry.activate(manifest, extension);
     const holder = document.createElement('div'); document.body.append(holder);
     const pending = registry.mount('fixture', 'fixture.late', holder,
@@ -248,7 +251,7 @@ await test('registry late cleanup and rollback', async () => {
     await started;
     await owner.dispose();
     finish();
-    await pending;
+    await pending; await cleanup;
     const result = { cleaned, children: holder.children.length, active: registry.listSurfaces('overview.cards').length };
     holder.remove();
     return result;
@@ -282,7 +285,7 @@ await test('wallpaper settings and appearance', async () => {
       setAppearance: () => { window.appearanceApplied = true; }, clearAppearance: () => {},
     }, 'settings.panels');
   });
-  await page.locator('.wallpaper-settings>summary').click();
+  await page.locator('.wallpaper-settings').getByRole('button').first().click();
   await page.getByText('A.png').waitFor();
   if (!await page.locator('nexus-file-picker').count()) throw new Error(`Picker absent initially: ${await page.locator('#app').innerHTML()}`);
   await choose(page.getByText('轮换方式').locator('..').locator('nexus-select'), 'startup');
@@ -455,6 +458,7 @@ if (extension === 'game-activities') {
   const { runActivityRules } = await import('./activity-rules.mjs'); await runActivityRules({test});
   const { activitySurfaceCases } = await import('./activity-surface-cases.mjs'); await activitySurfaceCases({page,test});
   const { activityLifecycle } = await import('./activity-lifecycle.mjs'); await activityLifecycle({page,test});
+  const { activityCoverCases } = await import('./activity-cover-cases.mjs'); await activityCoverCases({page,test});
 }
 if (extension === 'live-screenshot') await screenshotLifecycle({page,test});
 if (extension === 'custom-wallpaper') {
@@ -471,6 +475,8 @@ await test('checkin repeated row updates release only their own locale listeners
 });
 
 if (extension === 'game-checkin') {
+  const { checkinLayoutCases } = await import('./checkin-layout-cases.mjs');
+  await checkinLayoutCases({ page, test });
   const { checkinPublicationCases } = await import('./checkin-publication-cases.mjs');
   await checkinPublicationCases({ page, test });
 }
@@ -485,7 +491,7 @@ for (const input of hostUiInputs) {
 const runtimeArtifacts = ['ui.js','registry.js','sdk.js','row-owner.js'].map(name => ({path:name,
   sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(reportRoot,name))).digest('hex')}));
 const fixtureHash = crypto.createHash('sha256');
-for (const file of ['fixture.mjs', 'checkin-row-owner.ts', 'fixture-cases.mjs', 'checkin-editor-cases.mjs', 'checkin-publication-cases.mjs', 'maa-editor-cases.mjs', 'maa-project-cases.mjs', 'maa-script-cases.mjs', 'locale-cases.mjs', 'race-cases.mjs', 'activity-rules.mjs', 'activity-surface-cases.mjs', 'activity-lifecycle.mjs', 'screenshot-lifecycle.mjs', 'refresh-cases.mjs', 'controls.mjs'])
+for (const file of ['fixture.mjs', 'checkin-row-owner.ts', 'fixture-cases.mjs', 'checkin-editor-cases.mjs', 'checkin-publication-cases.mjs', 'checkin-layout-cases.mjs', 'maa-editor-cases.mjs', 'maa-project-cases.mjs', 'maa-script-cases.mjs', 'locale-cases.mjs', 'race-cases.mjs', 'activity-rules.mjs', 'activity-surface-cases.mjs', 'activity-lifecycle.mjs', 'activity-cover-cases.mjs', 'screenshot-lifecycle.mjs', 'refresh-cases.mjs', 'controls.mjs'])
   fixtureHash.update(fs.readFileSync(path.join(repository, 'tests/frontend', file)));
 if (!checks.length) failures.push({name:'selection',error:'Unknown scenario or zero selected cases'});
 const result = { extension, scenario, status: failures.length ? 'FAIL' : 'PASS', scope: 'contract-only browser fixture',

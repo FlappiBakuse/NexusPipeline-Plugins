@@ -1,4 +1,5 @@
 export const english: Readonly<Record<string, string>> = {
+  '查看订阅游戏的版本与活动。': 'View versions and events for subscribed games.',
   蔚蓝档案: 'Blue Archive',
   原神: 'Genshin Impact',
   '明日方舟：终末地': 'Arknights: Endfield',

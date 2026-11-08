@@ -28,10 +28,10 @@ export async function activityLifecycle({ page, test }) {
           subscribe: () => { subscriptions++; return () => { subscriptions--; }; }
         }, 'overview.cards', 'zh-CN', true);
         await settle();
-        const initial = reads === 1 && details === 1 && subscriptions === 1 && callbacks.size === 1;
+        const initial = reads === 1 && details === 0 && subscriptions === 1 && callbacks.size === 1;
         for (const callback of callbacks.values()) callback();
         await settle();
-        const reused = reads === 2 && details === 1;
+        const reused = reads === 2 && details === 0;
         hold = true;
         for (const callback of callbacks.values()) callback();
         await settle();
@@ -41,10 +41,10 @@ export async function activityLifecycle({ page, test }) {
         const before = reads;
         pending.resolve({ ...state, revision: 99 });
         await settle();
-        const hidden = callbacks.size === 0 && subscriptions === 0 && reads === before && details === 1;
+        const hidden = callbacks.size === 0 && subscriptions === 0 && reads === before && details === 0;
         hold = false; state = { ...state, revision: 2 };
         window.fixture.show(); await settle();
-        const resumed = reads === before + 1 && details === 2 && subscriptions === 1 && callbacks.size === 1;
+        const resumed = reads === before + 1 && details === 0 && subscriptions === 1 && callbacks.size === 1;
         window.fixture.dispose();
         return { initial, reused, canceled, hidden, resumed,
           released: subscriptions === 0 && callbacks.size === 0 };

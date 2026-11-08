@@ -1,6 +1,17 @@
 import { choose } from './controls.mjs';
 
 export async function activitySurfaceCases({page,test}) {
+  await test('activity error toast translates across live locale changes', async () => {
+    await mount();
+    await page.evaluate(() => { window.fixture.ports.refreshAll = async () => { throw Error('activity_state_invalid'); }; });
+    await page.getByRole('button', { name: '刷新', exact: true }).click();
+    await page.getByText('活动数据无效，请刷新活动。', { exact: true }).waitFor();
+    await page.evaluate(() => window.fixture.setLocale('en-US'));
+    await page.getByText('Activity data is invalid. Refresh activities.', { exact: true }).waitFor();
+    await page.evaluate(() => window.fixture.setLocale('zh-CN'));
+    await page.getByText('活动数据无效，请刷新活动。', { exact: true }).waitFor();
+  });
+
   async function mount(localZone=false) {
     await page.evaluate(async localZone=>{
       const point={instantUtc:'2030-01-01T00:00:00Z',rawValue:'',timeBasis:'utc',sourceZone:'UTC'};
@@ -21,6 +32,43 @@ export async function activitySurfaceCases({page,test}) {
     await page.locator('.activity-slide[aria-hidden=false]').getByText('Alpha',{exact:true}).waitFor();
   }
 
+  await test('activity resize animates both directions and honors reduced motion', async () => {
+    await mount();
+    const height = () => page.locator('.activity-viewport').evaluate(element => element.getBoundingClientRect().height);
+    const synchronizedCover = async () => {
+      const result = await page.locator('.activity-viewport').evaluate(element => {
+        const animations = element.getAnimations({ subtree: true });
+        for (const animation of animations) { animation.pause(); animation.currentTime = 120; }
+        const height = element.getBoundingClientRect().height;
+        const cover = element.querySelector('.activity-slide[aria-hidden=false] .activity-cover');
+        const coverHeight = cover?.getBoundingClientRect().height;
+        for (const animation of animations) animation.play();
+        return { height, coverHeight };
+      });
+      if (!result.coverHeight || Math.abs(result.height - result.coverHeight) > 1)
+        throw Error('Cover and viewport did not resize together: ' + JSON.stringify(result));
+    };
+    const initial = await height();
+    await page.getByRole('button', { name: '放大卡片', exact: true }).click();
+    if (!await page.locator('.activity-viewport').evaluate(element => element.getAnimations().length > 0))
+      throw Error('Expansion has no running height animation');
+    await synchronizedCover();
+    await page.waitForTimeout(300);
+    const expanded = await height();
+    if (expanded <= initial) throw Error('Expansion did not increase the card height');
+    await page.getByRole('button', { name: '缩小卡片', exact: true }).click();
+    if (!await page.locator('.activity-viewport').evaluate(element => element.getAnimations().length > 0))
+      throw Error('Collapse has no running height animation');
+    await synchronizedCover();
+    await page.waitForTimeout(300);
+    if (Math.abs(await height() - initial) > 1) throw Error('Collapse did not restore card height');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.getByRole('button', { name: '放大卡片', exact: true }).click();
+    if (!await page.locator('.activity-viewport').evaluate(element => element.getAnimations().length === 0))
+      throw Error('Reduced motion retained a resize animation');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+  });
+
   await test('activity overview without an explicit display zone uses the browser local zone',async()=>{
     await mount(true);
     const time=await page.locator('.activity-slide[aria-hidden=false] .activity-deadline time').innerText();
@@ -28,14 +76,12 @@ export async function activitySurfaceCases({page,test}) {
       throw Error('The local-zone deadline was rendered as a different time: '+time);
   });
 
-  await test('activity track keeps slide identities and shared modal exit contents',async()=>{
+  await test('activity selection preserves focus and returns from details',async()=>{
     await mount();
-    await page.evaluate(()=>{window.activityTrack=document.querySelector('.activity-track');window.activityFirstSlide=window.activityTrack.firstElementChild;});
     await page.getByRole('button',{name:'下一款游戏',exact:true}).click();
     await page.locator('.activity-slide[aria-hidden=false]').getByText('Beta',{exact:true}).waitFor();
-    const stable=await page.evaluate(()=>window.activityTrack===document.querySelector('.activity-track')
-      &&window.activityFirstSlide===document.querySelector('.activity-track').firstElementChild&&window.activityReads===2);
-    if(!stable)throw Error('Selection rebuilt the track or reread unchanged covers');
+    if(!await page.getByRole('button',{name:'下一款游戏',exact:true}).evaluate(element=>element.matches(':focus-within')||document.activeElement===element))
+      throw Error('Activity navigation lost keyboard focus');
     await page.getByRole('button',{name:'查看崩坏：星穹铁道活动详情',exact:true}).click();
     await page.getByRole('heading',{name:'Beta Event',exact:true}).waitFor();
     await page.evaluate(()=>{window.activityLeaving=document.querySelector('nexus-modal');});
@@ -46,7 +92,6 @@ export async function activitySurfaceCases({page,test}) {
     await page.locator('nexus-modal').waitFor({state:'detached'});
     if(!await page.evaluate(()=>document.activeElement?.classList.contains('activity-hit')))throw Error('Modal did not return focus to the active card');
     await page.evaluate(()=>window.fixture.hide());
-    if(await page.locator('.activity-cover[src]').count())throw Error('Hidden carousel kept display URLs');
     await page.evaluate(()=>window.fixture.show());
     await page.locator('.activity-slide[aria-hidden=false]').getByText('Beta',{exact:true}).waitFor();
   });

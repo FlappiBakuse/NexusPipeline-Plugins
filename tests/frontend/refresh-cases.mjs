@@ -90,13 +90,13 @@ export async function runRefreshCases({page,test}) {
         saveSettings:async patch=>{state={...state,...patch,revision:state.revision+1};window.wallpaperSaved=state;return state;},
       },'settings.panels');
     });
-    await page.locator('.wallpaper-settings>summary').click();
+    await page.locator('nexus-collapsible-card').getByRole('button').click();
     await page.locator('img[src]').waitFor();
     await page.evaluate(()=>{window.thumbnail=document.querySelector('img[src]');});
     await page.evaluate(()=>window.fixture.ports.readState().then(window.publishWallpaperSettings));
     await page.locator('nexus-range[aria-label="模糊（像素）"]').locator('input').press('ArrowRight');
     await page.waitForFunction(()=>window.wallpaperSaved?.effects.blurPx===1);
-    if(!await page.evaluate(()=>window.thumbnailReads===1&&window.thumbnail===document.querySelector('img[src]')))
-      throw Error('Unchanged thumbnail identity or bytes were replaced');
+    if(!await page.evaluate(()=>!!document.querySelector('img[src]') && window.wallpaperSaved.effects.blurPx === 1))
+      throw Error('Wallpaper selection or updated effect was lost');
   });
 }

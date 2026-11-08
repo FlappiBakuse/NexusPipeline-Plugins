@@ -47,6 +47,10 @@ export function openActivityDetails(
   const section = document.createElement('section');
   section.className = 'activity-events';
   modal.body.append(section);
+  const render = (detail: ActivityFeed) => {
+    if (!modal.alive()) return;
+    feed = detail;
+    section.replaceChildren();
   const heading = text(section, 'h4', () => panel.t('活动'));
   text(heading, 'span', String(feed.events.length), 'activity-count');
   for (const [label, name] of [
@@ -116,5 +120,14 @@ export function openActivityDetails(
       }
     }
   }
+  };
+  if (ports.readFeed) {
+    text(section, 'p', () => panel.t('加载中…'));
+    void ports.readFeed(feed.id, modal.signal).then(render).catch(error => {
+      if (!modal.alive()) return;
+      section.replaceChildren();
+      text(section, 'p', error instanceof Error ? error.message : String(error));
+    });
+  } else render(feed);
   return modal;
 }

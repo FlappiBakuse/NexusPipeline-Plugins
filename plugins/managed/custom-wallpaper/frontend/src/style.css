@@ -4,61 +4,12 @@
   background: transparent;
 }
 .wallpaper-panel > .plugin-body {
-  display: block;
-}
-.wallpaper-settings {
-  overflow: visible;
-  border: 1px solid var(--border-strong);
-  border-radius: 12px;
-  background: var(--content-card, var(--nx-color-surface));
-  line-height: 1.5;
-}
-.wallpaper-settings > summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 24px;
-  list-style: none;
-  cursor: pointer;
-}
-.wallpaper-settings > summary::-webkit-details-marker {
-  display: none;
-}
-.wallpaper-settings > summary::before {
-  display: none;
-}
-.wallpaper-settings > summary > span {
-  display: grid;
-  gap: 4px;
-}
-.wallpaper-settings > summary strong {
-  font-size: 14px;
-  color: var(--nx-color-text);
-}
-.wallpaper-settings > summary small {
-  font-size: 12px;
-  color: var(--nx-color-muted);
-}
-.wallpaper-settings > summary > nexus-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--nx-color-accent);
-  transform: rotate(-90deg);
-}
-.wallpaper-settings[open] > summary > nexus-icon {
-  transform: none;
+  display: contents;
 }
 .wallpaper-content {
   display: grid;
   gap: 16px;
-  padding: 24px;
-  border-top: 1px solid var(--nx-color-border);
-}
-.wallpaper-content > .plugin-status:empty {
-  display: none;
-}
-.wallpaper-intro {
+}.wallpaper-intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -68,20 +19,7 @@
   color: var(--nx-color-muted);
   font-size: 12px;
 }
-.wallpaper-switches {
-  margin-bottom: 24px;
-  overflow: hidden;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-}
-.wallpaper-switches > nexus-switch-setting {
-  min-height: 66px;
-  padding: 10px 16px;
-  background: transparent;
-}
-.wallpaper-switches > nexus-switch-setting + nexus-switch-setting {
-  border-top: 1px solid var(--nx-color-border);
-}
+.wallpaper-switches { margin-bottom: 24px; }
 .wallpaper-rotation {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -33,23 +33,13 @@ export function wallpaperControls(
   queue: (patch: WallpaperPatch) => void,
   preview: (effects: WallpaperEffects) => void
 ) {
-  const root = document.createElement('details');
+  const root = document.createElement('nexus-collapsible-card') as UiElement<'nexus-collapsible-card'>;
+  root.panelId = 'wallpaper';
   root.className = 'wallpaper-settings';
-  const summary = document.createElement('summary'),
-    title = document.createElement('strong'),
-    description = document.createElement('small');
-  bindLocale(panel.t, panel.signal, title, 'textContent', () => {
-    title.textContent = panel.t('自定义壁纸');
+  bindLocale(panel.t, panel.signal, root, 'title', () => { root.title = panel.t('自定义壁纸'); });
+  bindLocale(panel.t, panel.signal, root, 'description', () => {
+    root.description = panel.t('同步壁纸、轮换方式和显示效果');
   });
-  bindLocale(panel.t, panel.signal, description, 'textContent', () => {
-    description.textContent = panel.t('同步壁纸、轮换方式和显示效果');
-  });
-  const copy = document.createElement('span'),
-    arrow = document.createElement('nexus-icon') as UiElement<'nexus-icon'>;
-  arrow.name = 'chevronDown';
-  copy.append(title, description);
-  summary.append(copy, arrow);
-  root.append(summary);
   const body = document.createElement('div');
   body.className = 'wallpaper-content';
   root.append(body);
@@ -63,7 +53,7 @@ export function wallpaperControls(
   const badge = document.createElement('nexus-badge') as UiElement<'nexus-badge'>;
   intro.append(note, badge);
   body.append(intro);
-  const switches = document.createElement('div');
+  const switches = document.createElement('nexus-switch-list') as UiElement<'nexus-switch-list'>;
   switches.className = 'wallpaper-switches';
   body.append(switches);
   const enabled = switchRow(

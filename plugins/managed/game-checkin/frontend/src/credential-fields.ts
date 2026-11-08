@@ -187,7 +187,7 @@ export class CredentialFields {
       });
     }
     if (row.platform.browserLogin?.ready)
-      button(panel, row.element, id === 'tajiduo' ? '塔吉多登录' : '浏览器登录', () => this.login(id));
+      button(panel, controls, id === 'tajiduo' ? '塔吉多登录' : '浏览器登录', () => this.login(id));
   }
   private async read(id: string): Promise<void> {
     if (!this.ports.canReveal) return;

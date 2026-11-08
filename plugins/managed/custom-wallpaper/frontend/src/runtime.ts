@@ -81,7 +81,7 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
     scheduleRotation(next);
     const own = ++serial;
     const asset = next.assets.find((item) => item.id === next.currentId);
-    if (!appearanceVisible || !next.effectiveEnabled || !asset) {
+    if (!next.effectiveEnabled || !asset) {
       releaseAsset();
       showAppearance(undefined);
       return;
@@ -184,11 +184,6 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
     setAppearanceVisible(visible: boolean) {
       if (appearanceVisible === visible) return;
       appearanceVisible = visible;
-      if (!visible) {
-        serial++;
-        releaseAsset();
-        showAppearance(undefined);
-      }
       observeVisibility();
       if (visible) void refresh().catch(() => {});
     },

@@ -70,10 +70,7 @@ export function mountAppearance(surface: ExtensionSurface, runtime: Runtime | un
   const unobserve = surface.onVisibilityChanged((next) => {
     visible = next;
     runtime.setAppearanceVisible(next);
-    if (!next) {
-      frame = undefined;
-      release();
-    }
+    render();
   });
   runtime.setAppearanceVisible(visible);
   const dispose = () => {

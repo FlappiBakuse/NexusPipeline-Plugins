@@ -17,18 +17,13 @@ import { transportPorts } from './transport-ports.js';
 import '../../../frontend-ui/src/style.css';
 import './style.css';
 
-function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPorts, locale = 'zh-CN') {
+function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPorts, locale = 'zh-CN', prepared?: CheckInState) {
   const panel = createPanel(surface, '签到', t);
   panel.card.classList.add('checkin-page');
   panel.card.querySelector('h3')?.remove();
   const heading = document.createElement('header');
   heading.className = 'checkin-heading';
-  const titles = document.createElement('div'),
-    eyebrow = document.createElement('p');
-  eyebrow.className = 'checkin-eyebrow';
-  bindLocale(t, panel.signal, eyebrow, 'textContent', () => {
-    eyebrow.textContent = t('签到');
-  });
+  const titles = document.createElement('div');
   const title = document.createElement('h1');
   bindLocale(t, panel.signal, title, 'textContent', () => {
     title.textContent = t('签到');
@@ -38,7 +33,7 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
   bindLocale(t, panel.signal, description, 'textContent', () => {
     description.textContent = t('管理多平台游戏签到任务和运行计划。');
   });
-  titles.append(eyebrow, title, description);
+  titles.append(title, description);
   const add = button(panel, heading, '添加签到任务', () => edit()) as UiElement<'nexus-button'>;
   add.tone = 'info';
   add.disabled = true;
@@ -58,7 +53,7 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
     return panel.cleanup;
   }
   const ports = provided;
-  let state: CheckInState | undefined, waiting: CheckInState | undefined;
+  let state: CheckInState | undefined = prepared, waiting: CheckInState | undefined;
   let visible = surface.visible,
     dragging = false,
     serial = 0,
@@ -225,13 +220,15 @@ export function createExtension(ports?: CheckInPorts): FrontendExtension {
     extensionId: 'game-checkin',
     sdkVersion,
     contractFingerprint,
-    activate(context) {
+    async activate(context) {
+      const prepared = ports ? await ports.readState(context.scope.signal) : undefined;
+      context.scope.signal.throwIfAborted();
       const t = localize(context, english);
       context.registerRoute({
         id: 'game-checkin.tasks',
         path: '/plugin/game-checkin/tasks',
         get label() { return t('签到'); },
-        mount: (surface) => mountPage(surface, t, ports, context.locale)
+        mount: (surface) => mountPage(surface, t, ports, context.locale, prepared)
       });
       context.registerSurface({
         id: 'game-checkin.navigation',

@@ -17,18 +17,10 @@
   padding: 16px 24px;
   font-size: 15px;
   line-height: 1.45;
-}
-.maa-editor > .plugin-status:empty {
-  display: none;
-}
-.maa-editor > .plugin-body {
+}.maa-editor > .plugin-body {
   display: block;
   padding: 0 24px 24px;
-}
-.maa-editor > .plugin-status:not(:empty) {
-  margin: 0 24px 12px;
-}
-.maa-fields {
+}.maa-fields {
   display: grid;
   gap: 12px;
   min-width: 0;

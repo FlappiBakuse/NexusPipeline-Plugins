@@ -68,6 +68,8 @@ export interface ActivityState {
 
 export interface ActivityPorts {
   readState(signal: AbortSignal): Promise<ActivityState>;
+  readFeed?(feedId: string, signal: AbortSignal): Promise<ActivityFeed>;
+  readCachedCover?(coverId: string, signal: AbortSignal): Promise<Blob>;
   saveSettings(state: ActivityState, signal: AbortSignal): Promise<ActivityState>;
   refreshAll(signal: AbortSignal): Promise<ActivityState>;
   readCover(coverId: string, signal: AbortSignal): Promise<Blob>;

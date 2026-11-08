@@ -44,12 +44,12 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       result.theme?.accent !== '#ff0000' || result.theme?.accentStrong !== '#00ff00' ||
       result.theme?.cardDark !== '#0000ff' || result.theme?.cardOpacity !== 0.8 ||
       !result.theme?.secondaryTransparent || result.initialReads < 1 ||
-      result.hiddenReads !== result.initialReads || result.reads <= result.initialReads ||
+      result.hiddenReads !== result.initialReads || result.reads !== result.initialReads ||
       result.created !== result.revoked || !result.detached)
       throw new Error(`Wallpaper appearance lifecycle mismatch: ${JSON.stringify(result)}`);
   });
 
-  await test('wallpaper hidden late image is discarded', async () => {
+  await test('wallpaper prepares local image before appearance mount', async () => {
     const result = await page.evaluate(async () => {
       const state = { revision: 1, enabled: true, effectiveEnabled: true,
         assets: [{ id: 'a', name: 'A', sizeBytes: 1 }], order: ['a'], currentId: 'a',
@@ -60,7 +60,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       const create = URL.createObjectURL;
       URL.createObjectURL = (...args) => { created++; return create(...args); };
       try {
-        await window.testMount('custom-wallpaper', {
+        const mounting = window.testMount('custom-wallpaper', {
           connectionKind: async () => 'remote', readState: async () => state,
           readAsset: () => new Promise(resolve => { release = resolve; }),
           advanceRotation: async () => state, subscribe: () => () => {},
@@ -68,14 +68,15 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
         for (let index = 0; index < 30 && !release; index++)
           await new Promise(resolve => setTimeout(resolve, 10));
         if (!release) throw Error('Asset read did not begin');
-        window.fixture.hide();
+        const withheld = !document.querySelector('.wallpaper-appearance-image');
         release(window.fixturePng());
-        await new Promise(resolve => setTimeout(resolve, 20));
+        await mounting;
+        const ready = !!document.querySelector('.wallpaper-appearance-image')?.style.backgroundImage;
         window.fixture.dispose();
-        return { created };
+        return { created, withheld, ready };
       } finally { URL.createObjectURL = create; }
     });
-    if (result.created) throw new Error(`Hidden late wallpaper created Blob URL: ${JSON.stringify(result)}`);
+    if (!result.withheld || !result.ready || !result.created) throw new Error(`Wallpaper preparation mismatch: ${JSON.stringify(result)}`);
   });
   await test('screenshot rejects oversized dimensions before preview', async () => {
     await page.evaluate(async () => {

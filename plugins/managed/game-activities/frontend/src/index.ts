@@ -5,6 +5,7 @@ import {
   type FrontendTransport,
   type ExtensionSurface
 } from '@nexuspipeline/extension-sdk';
+import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
 import { createPanel } from '../../../frontend-ui/src/elements.js';
 import { localize, type Translate } from '../../../frontend-ui/src/localize.js';
 import type { PluginModal } from '../../../frontend-ui/src/modal.js';
@@ -17,7 +18,7 @@ import { transportPorts } from './transport-ports.js';
 import '../../../frontend-ui/src/style.css';
 import './style.css';
 
-function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, ports?: ActivityPorts) {
+async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, ports?: ActivityPorts, prepared?: ActivityState, covers: ReadonlyMap<string, Blob> = new Map()) {
   const panel = createPanel(surface, '游戏活动', t);
   panel.card.classList.add('activity-panel');
   if (!ports) {
@@ -75,6 +76,7 @@ function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, 
       void panel.run(async () => {
         try {
           update(await ports.refreshAll(panel.signal));
+          view.retryCovers();
         } finally {
           refreshing = false;
           if (state) view.status(state);
@@ -91,7 +93,7 @@ function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, 
       expanded = !expanded;
       view.appearance(expanded, paused);
     }
-  });
+  }, covers);
   function update(next: ActivityState): void {
     if (!panel.alive() || (state && next.revision < state.revision)) return;
     const selected = feeds()[active]?.id,
@@ -169,6 +171,7 @@ function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, 
     unsubscribe?.(); unsubscribe = undefined;
     reading?.abort(); reading = undefined;
   };
+  let initialSnapshot = !!prepared;
   const syncDisplay = () => {
     const shown = visible && !document.hidden;
     view.setVisible(shown);
@@ -181,6 +184,7 @@ function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, 
     unsubscribe = ports.subscribe(update);
     rotation = setInterval(rotate, 250);
     countdown = setInterval(() => view.tick(), 1000);
+    if (initialSnapshot) { initialSnapshot = false; return; }
     void panel.run(async () => {
       const next = await ports.readState(AbortSignal.any([panel.signal, owner.signal]));
       if (!owner.signal.aborted && reading === owner) update(next);
@@ -188,6 +192,9 @@ function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, 
   };
   const visibility = surface.onVisibilityChanged((value) => { visible = value; syncDisplay(); });
   document.addEventListener('visibilitychange', syncDisplay, { signal: panel.signal });
+  if (prepared) update(prepared);
+  await view.ready();
+  if (!panel.alive()) { view.dispose(); panel.cleanup(); return; }
   syncDisplay();
   return () => {
     stopDisplay();
@@ -204,11 +211,27 @@ export function createExtension(ports?: ActivityPorts): FrontendExtension {
     extensionId: 'game-activities',
     sdkVersion,
     contractFingerprint,
-    activate(context) {
+    async activate(context) {
+      const state = ports ? await ports.readState(context.scope.signal) : undefined;
+      const covers = new Map<string, Blob>();
+      const pending = state?.feeds.filter(feed => state.selectedFeedIds.includes(feed.id) && feed.overview.coverId) ?? [];
+      let next = 0;
+      await Promise.all(Array.from({ length: Math.min(4, pending.length) }, async () => {
+        while (next < pending.length && !context.scope.signal.aborted) {
+          const id = pending[next++]!.overview.coverId!;
+          if (!ports?.readCachedCover) continue;
+          try { covers.set(id, await boundedImage(await ports.readCachedCover(id, context.scope.signal))); }
+          catch (error) { if (context.scope.signal.aborted) throw error; }
+        }
+      }));
+      context.scope.signal.throwIfAborted();
+      await context.scope.own(() => covers.clear());
       context.registerSurface({
         id: 'game-activities.carousel',
         target: 'overview.cards',
-        mount: (surface) => mountCarousel(surface, localize(context, english), context.locale, ports)
+        dashboard: { key: 'game-activities', get title() { return localize(context, english)('游戏活动'); },
+          get description() { return localize(context, english)('查看订阅游戏的版本与活动。'); }, defaultVisible: true, order: -100 },
+        mount: (surface) => mountCarousel(surface, localize(context, english), context.locale, ports, state, covers)
       });
     }
   };

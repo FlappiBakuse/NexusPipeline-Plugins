@@ -16,9 +16,7 @@
 .plugin-row { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; }
 .plugin-list { display:grid; gap:.5rem; padding:0; list-style:none; }
 .plugin-list li { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem; padding:.5rem; border:1px solid var(--nx-color-border,#888); border-radius:8px; overflow-wrap:anywhere; }
-.plugin-list li span:first-child { flex:1; min-width:8rem; }
-.plugin-status { min-height:1.25em; margin:.2rem 0; }
-.plugin-error { color:var(--nx-color-danger,#c23); }
+.plugin-list li span:first-child { flex:1; min-width:8rem; }.plugin-error { color:var(--nx-color-danger,#c23); }
 .plugin-media { display:block; max-width:100%; max-height:55vh; object-fit:contain; border-radius:8px; }
 .plugin-panel [hidden] { display:none !important; }
 @media (max-width:480px) { .plugin-panel { padding:.7rem; } .plugin-list li { align-items:stretch; } }

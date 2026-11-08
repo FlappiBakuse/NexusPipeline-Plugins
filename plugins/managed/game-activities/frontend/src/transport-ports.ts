@@ -10,35 +10,25 @@ function operationId(): string {
 }
 
 export function transportPorts(transport: FrontendTransport): ActivityPorts {
-  let details: { revision: number; selection: string; feeds: Map<string, ActivityFeed> } | undefined;
   const readState = async (signal: AbortSignal): Promise<ActivityState> => {
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const state = await transport.invoke('read-state', {}, signal) as ActivityState;
-      signal.throwIfAborted();
-      if (!Number.isSafeInteger(state.revision) || !Number.isSafeInteger(state.settingsRevision) ||
-          !Array.isArray(state.feeds) || !Array.isArray(state.selectedFeedIds)) throw new Error('activity_state_invalid');
-      const selection = JSON.stringify([state.settingsRevision, state.selectedFeedIds]);
-      let byId = details?.revision === state.revision && details.selection === selection ? details.feeds : undefined;
-      if (!byId) {
-        const detailed = await Promise.all(state.selectedFeedIds.map(async (feedId) => {
-          const item = await transport.invoke('read-feed', { feedId }, signal) as { revision: number; feed: ActivityFeed };
-          if (item.feed.id !== feedId) throw new Error('activity_feed_identity_invalid');
-          return item;
-        }));
-        signal.throwIfAborted();
-        if (detailed.some((item) => item.revision !== state.revision)) continue;
-        byId = new Map(detailed.map((item) => [item.feed.id, item.feed]));
-        if (!details || state.revision >= details.revision) details = { revision: state.revision, selection, feeds: byId };
-      }
-      return { ...state, feeds: state.feeds.map((feed) => {
-        const result = byId.get(feed.id) ?? feed;
-        return { ...result, events: result.events ?? [] };
-      }) };
-    }
-    throw new Error('activity_snapshot_changed');
+    const state = await transport.invoke('read-state', {}, signal) as ActivityState;
+    signal.throwIfAborted();
+    if (!Number.isSafeInteger(state.revision) || !Number.isSafeInteger(state.settingsRevision) ||
+      !Array.isArray(state.feeds) || !Array.isArray(state.selectedFeedIds)) throw new Error('activity_state_invalid');
+    return { ...state, feeds: state.feeds.map(feed => ({ ...feed, events: feed.events ?? [] })) };
   };
   return {
     readState,
+    async readFeed(feedId, signal) {
+      const result = await transport.invoke('read-feed', { feedId }, signal) as { feed: ActivityFeed };
+      if (result.feed.id !== feedId || !Array.isArray(result.feed.events)) throw new Error('activity_feed_identity_invalid');
+      return result.feed;
+    },
+    async readCachedCover(id, signal) {
+      const image = await transport.image('read-cached-cover', id, signal);
+      try { return image.blob.slice(0, image.blob.size, image.blob.type); }
+      finally { image.release(); }
+    },
     async saveSettings(state, signal) {
       if (!Number.isSafeInteger(state.settingsRevision)) throw new Error('activity_settings_revision_required');
       const selected = state.selectedFeedIds.map((id) => {

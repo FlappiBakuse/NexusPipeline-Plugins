@@ -8,12 +8,7 @@
   --nx-button-fill: var(--content-control);
   --nx-color-border: var(--border-strong);
   --nx-color-text: var(--nx-color-muted);
-}
-.checkin-modal-owner > .plugin-status:empty,
-.checkin-edit-body > .plugin-status:empty {
-  display: none;
-}
-.checkin-edit-body,
+}.checkin-edit-body,
 .checkin-main-fields {
   display: grid;
   gap: 16px;

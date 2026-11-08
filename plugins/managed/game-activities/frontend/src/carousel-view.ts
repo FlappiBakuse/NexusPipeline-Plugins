@@ -1,10 +1,12 @@
+import { resizeCarousel } from './carousel-size.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
 import type { ExtensionSurface, UiElement } from '@nexuspipeline/extension-sdk';
 import type { Panel } from '../../../frontend-ui/src/elements.js';
-import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
+import { boundedImage, loadedImages } from '../../../frontend-ui/src/image-bound.js';
 import type { ActivityFeed, ActivityPorts, ActivityState } from './ports.js';
 import { formatTime, remaining } from './time-view.js';
 import { gameName } from './activity-labels.js';
+import { pageChevron } from './carousel-icons.js';
 
 export function createCarousel(
   panel: Panel,
@@ -19,7 +21,8 @@ export function createCarousel(
     refresh: () => void;
     pause: () => void;
     expand: () => void;
-  }
+  },
+  prepared: ReadonlyMap<string, Blob> = new Map()
 ) {
   const stage = document.createElement('div');
   stage.className = 'activity-carousel';
@@ -43,6 +46,7 @@ export function createCarousel(
   let contentOwner = new AbortController(),
     imageOwner = new AbortController();
   const urls = new Map<string, string>();
+  const loading = new WeakMap<HTMLImageElement, AbortSignal>();
   let generation = 0,
     items: ActivityFeed[] = [],
     state: ActivityState | undefined,
@@ -97,8 +101,10 @@ export function createCarousel(
   const pauseButton = icon(tools, '暂停轮播', '⏸️', actions.pause);
   const refreshButton = icon(tools, '刷新', '🔄', actions.refresh);
   const settingsButton = icon(tools, '活动设置', '⚙️', actions.settings);
-  const previous = icon(stage, '上一款游戏', '‹', () => actions.select(selected - 1), 'activity-previous');
-  const next = icon(stage, '下一款游戏', '›', () => actions.select(selected + 1), 'activity-next');
+  const previous = icon(stage, '上一款游戏', '', () => actions.select(selected - 1), 'activity-previous');
+  const next = icon(stage, '下一款游戏', '', () => actions.select(selected + 1), 'activity-next');
+  previous.querySelector('span')!.append(pageChevron('previous'));
+  next.querySelector('span')!.append(pageChevron('next'));
   stage.append(viewport, tools, indicators);
   panel.body.append(stage);
   const showTool = (button: UiElement<'nexus-icon-button'>, show: boolean) => {
@@ -154,36 +160,49 @@ export function createCarousel(
   }
 
   async function loadCover(feed: ActivityFeed, image: HTMLImageElement, own: number): Promise<void> {
-    if (!feed.overview.coverId || !visible) return;
+    if (!feed.overview.coverId || image.hasAttribute('src') || loading.get(image)?.aborted === false) return;
+    const initial = prepared.get(feed.overview.coverId);
+    if (initial && !urls.has(feed.overview.coverId)) urls.set(feed.overview.coverId, URL.createObjectURL(initial));
+    const cached = urls.get(feed.overview.coverId);
+    if (cached) { image.src = cached; image.hidden = false; return; }
+    if (!visible) return;
+    const active = AbortSignal.any([signal, imageOwner.signal]);
+    loading.set(image, active);
     try {
       const candidate = await ports.readCover(
         feed.overview.coverId,
-        AbortSignal.any([signal, imageOwner.signal])
+        active
       );
       if (!panel.alive() || own !== generation || !visible) return;
       const blob = await boundedImage(candidate);
       if (!panel.alive() || own !== generation || !visible) return;
       const url = URL.createObjectURL(blob);
-      urls.set(feed.id, url);
+      urls.set(feed.overview.coverId, url);
       image.src = url;
+      image.hidden = false;
     } catch {
-      /* The cover remains a drawn fallback while feed content stays accessible. */
-    }
+      if (own === generation) image.hidden = true;
+    } finally { if (loading.get(image) === active) loading.delete(image); }
   }
 
-  function release(): void {
+  function retryCovers(): void {
+    for (const [index, feed] of items.entries()) {
+      const image = track.children[index]?.querySelector('img');
+      if (image) void loadCover(feed, image, generation);
+    }
+  }
+  function release(retain = false): void {
     generation++;
     imageOwner.abort();
     imageOwner = new AbortController();
-    for (const url of urls.values()) URL.revokeObjectURL(url);
-    urls.clear();
-    for (const image of track.querySelectorAll('img')) image.removeAttribute('src');
+    const retained = new Set(retain ? items.map(feed => feed.overview.coverId) : []);
+    for (const [id, url] of urls) if (!retained.has(id)) { URL.revokeObjectURL(url); urls.delete(id); }
   }
 
   function render(nextState: ActivityState, feeds: ActivityFeed[], index: number): void {
     state = nextState;
     items = feeds;
-    release();
+    release(true);
     timings.clear();
     track.replaceChildren();
     indicators.replaceChildren();
@@ -197,6 +216,7 @@ export function createCarousel(
       const image = document.createElement('img');
       image.alt = feed.overview.title;
       image.className = 'activity-cover';
+      image.hidden = true;
       slide.append(image);
       void loadCover(feed, image, own);
       const copy = document.createElement('div');
@@ -264,7 +284,7 @@ export function createCarousel(
   function appearance(isExpanded: boolean, isPaused: boolean): void {
     expanded = isExpanded;
     paused = isPaused;
-    stage.classList.toggle('activity-expanded', expanded);
+    resizeCarousel(stage, expanded, signal);
     resizePath.setAttribute(
       'd',
       expanded ? 'M3 10H10V3M10 10 3 3M21 14H14V21M14 14 21 21' : 'M3 8V3H8M3 3 10 10M16 21H21V16M21 21 14 14'
@@ -291,17 +311,23 @@ export function createCarousel(
   }
   panel.t.watch?.(tick, signal);
   return {
+    async ready() {
+      signal.throwIfAborted();
+      await loadedImages(track, signal);
+    },
     render,
     select,
     tick,
     appearance,
     status,
+    retryCovers,
     refreshing(value: boolean) {
       refreshButton.disabled = value;
     },
     setVisible(value: boolean) {
+      if (visible === value) return;
       visible = value;
-      release();
+      release(true);
       if (!value) for (const tooltip of tooltips.values()) tooltip.open = false;
       if (value)
         for (const [index, feed] of items.entries())

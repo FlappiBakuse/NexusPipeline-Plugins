@@ -9,11 +9,7 @@
 }
 .checkin-page > .plugin-body {
   display: block;
-}
-.checkin-page > .plugin-body > .plugin-status:empty {
-  display: none;
-}
-.checkin-heading {
+}.checkin-heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -30,11 +26,6 @@
 .checkin-heading p {
   margin: 0;
 }
-.checkin-heading .checkin-eyebrow {
-  color: var(--faint);
-  font-size: 11px;
-  line-height: 1.55;
-}
 .checkin-heading .checkin-description {
   margin-top: 7px;
   color: var(--nx-color-muted);
@@ -42,29 +33,25 @@
   line-height: 1.55;
 }
 .checkin-task-list {
-  display: block;
+  display: grid;
+  gap: 14px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--nx-color-border);
-  border-radius: 16px;
-  background: var(--content-card);
 }
 .checkin-task {
   display: block;
   min-width: 0;
-  padding: 17px 12px 17px 4px;
-  border-bottom: 1px solid var(--nx-color-border);
-}
-.checkin-task:last-child {
-  border-bottom: 0;
+  padding: 12px 12px 12px 4px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: 16px;
+  background: var(--content-card);
 }
 .checkin-task-head {
   display: grid;
   grid-template-columns: 28px 36px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  min-height: 68px;
+  min-height: 56px;
 }
 .checkin-task-head > nexus-drag-handle {
   --nx-drag-size: 40px;
@@ -86,7 +73,7 @@
 .checkin-task-copy {
   min-width: 0;
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 .checkin-task-copy h2 {
   margin: 0;
