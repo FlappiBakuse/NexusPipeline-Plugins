@@ -1,4 +1,3 @@
-from copy import deepcopy
 import hashlib
 import json
 import os
@@ -157,7 +156,7 @@ class PluginCandidateTests(unittest.TestCase):
         with patch.dict(os.environ, self.environment() if self.args.profile == 'production' else {}):
             return assemble(self.args)
 
-    def test_builds_candidate(self):
+    def test_roundtrips_writer(self):
         before = {name: (self.root / name).read_bytes() for name in [CATALOG, STATE, 'catalog.json']}
         result = self.run_candidate()
         self.assertEqual('CANDIDATE_CREATED_NOT_QUALIFIED', result['status'])
@@ -178,9 +177,6 @@ class PluginCandidateTests(unittest.TestCase):
         self.assertNotEqual(candidate['source']['sourceSnapshotHash'], package['source']['sourceSnapshotHash'])
         self.assertEqual(sha(self.sdk_receipt.read_bytes()), candidate['release']['plan']['packageInputs']['sdkReceiptSha256'])
 
-    def test_roundtrips_writer(self):
-        self.run_candidate()
-        candidate = json.loads((self.args.output / 'candidate.json').read_bytes())
         provenance = {'kind': 'stable', **candidate['producer'], 'completedJobsVerified': True}
         server = publishing.GitServer(self.fixture, self.source_commit)
 
@@ -204,21 +200,32 @@ class PluginCandidateTests(unittest.TestCase):
         self.assertEqual(self.source_commit, json.loads(server.git('show', server.remote + ':' + STATE))['sourceCommit'])
 
     def test_rejects_receipts(self):
-        for case in ['missing', 'duplicate', 'profile', 'package']:
-            args = deepcopy(self.args)
-            if case == 'missing':
-                self.args.package_receipt = []
-            elif case == 'duplicate':
-                self.args.package_receipt *= 2
-            elif case == 'profile':
-                self.args.profile = 'test'
-            else:
-                value = json.loads(self.package_receipt.read_bytes())
-                self.write(Path(value['artifact']['path']), b'Changed artifact')
-            with self.subTest(case=case), self.assertRaises(ValueError):
-                self.run_candidate()
-            self.assertFalse(self.args.output.exists())
-            self.args = args
+        for field, value, reason in [
+            ('package_receipt', [], 'receipt set is incomplete'),
+            ('package_receipt', [self.package_receipt] * 2, 'receipt is duplicated'),
+            ('host_build_receipt', None, 'require explicit SDK and Host build receipts'),
+            ('profile', 'test', 'successful matching-profile Host build'),
+        ]:
+            with self.subTest(reason=reason), patch.object(self.args, field, value):
+                with self.assertRaisesRegex(ValueError, reason):
+                    self.run_candidate()
+                self.assertFalse(self.args.output.exists())
+
+        receipt = json.loads(self.package_receipt.read_bytes())
+        for path, reason in [
+            (Path(receipt['buildReceipt']), 'Candidate compiler receipt changed'),
+            (Path(receipt['artifact']['path']), 'Candidate archive differs from its original receipt'),
+        ]:
+            before = path.read_bytes()
+            try:
+                path.write_bytes(before + b'\n')
+                with self.subTest(reason=reason):
+                    with self.assertRaisesRegex(ValueError, reason):
+                        self.run_candidate()
+                    self.assertFalse(self.args.output.exists())
+                    self.assertEqual(before + b'\n', path.read_bytes())
+            finally:
+                path.write_bytes(before)
 
     def test_rejects_changed_source(self):
         self.write(self.plugin / 'README.md', b'Changed after package generation\n')

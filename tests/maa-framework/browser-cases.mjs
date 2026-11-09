@@ -1,44 +1,78 @@
+import assert from 'node:assert/strict';
 import path from 'node:path';
-import { choose } from '../frontend/controls.mjs';
+import { choose, confirm } from '../frontend/controls.mjs';
 
 export async function browserCases(page, checks, output) {
-  const check = (name, condition) => { if (!condition) throw Error(name); checks.push({ name, status: 'PASS' }); };
-  const click = async name => page.locator('nexus-button').filter({ hasText: name }).click();
-  await page.evaluate(() => window.mountFixture()); await page.getByText('Maa 重复任务项目', { exact: true }).waitFor();
-  check('production frontend reads the actual binding surface context', await page.evaluate(() => window.calls.length === 1 && window.calls[0].action === 'context'));
-  await click('保存来源选择'); await page.getByText('请明确选择接口与配置实例', { exact: true }).waitFor();
-  check('save without explicit PI and instance performs no mutation', await page.evaluate(() => !window.calls.some(item => item.action === 'select')));
-  await click('发现项目与配置'); await page.locator('nexus-select[aria-label="PI 接口"]').waitFor();
-  await choose(page.locator('nexus-select[aria-label="PI 接口"]'), 'interface.json');
-  await choose(page.locator('nexus-select[aria-label="保存配置实例"]'), 'local-b');
-  await click('保存来源选择'); await page.getByText('配置需要修复，当前不可执行', { exact: true }).waitFor();
-  check('same-name instances preserve the chosen source and CAS operation', await page.evaluate(() => {
-    const item = window.calls.find(row => row.action === 'select');
-    return item.input.selection.Source.InstanceId === 'b' && item.input.selection.Source.Path === 'config/instances/b.json' &&
-      item.input.expectedBindingRevision === 7 && item.input.expectedSelectionRevision === 2 && !!item.operationId;
-  }));
-  await page.locator('summary').filter({ hasText: /^任务条目$/ }).click();
-  await page.getByText('读取下一页', { exact: true }).waitFor();
-  await page.locator('summary').filter({ hasText: /^0$/ }).first().click();
-  await page.locator('summary').filter({ hasText: /^Name$/ }).first().click();
-  await page.getByText('重复任务 🌌', { exact: true }).waitFor();
-  check('bounded project pages render original duplicate task metadata and non-BMP labels', await page.evaluate(() => window.calls.some(row => row.action === 'page' && row.input.asset.startsWith('editor-page-'))));
+  const editor = page.locator('.maa-editor');
+  const button = name => editor.getByRole('button', { name, exact: true });
+  const select = label => editor.locator('nexus-select[aria-label=' + JSON.stringify(label) + ']');
+  const readWrites = () => page.evaluate(() => window.writes);
+  const preview = () => button('只读执行预览').click();
+  const status = text => editor.getByText(text, { exact: true }).waitFor();
+  const passed = name => checks.push({ name, status: 'PASS' });
+
+  const previewOutput = editor.locator('.maa-output');
+  const taskName = '重复任务 🌌';
+  const occurrences = [['row-0', 'original-0', taskName], ['row-1', 'original-1', taskName]];
+
+  await button('读取项目').click();
+  await choose(select('项目接口'), 'interface.json');
+  await choose(select('来源配置'), 'local-b');
+  await button('读取项目').click();
+  const tasks = editor.locator('.maa-occurrence').getByText(taskName, { exact: true });
+  await tasks.nth(1).waitFor();
+  assert.equal(await tasks.count(), occurrences.length);
+  await preview();
+  await previewOutput.filter({ hasText: 'original-1' }).waitFor();
+  const result = JSON.parse(await previewOutput.textContent());
+  assert.deepEqual(result.tasks.map(row => [row.Id, row.SourceId, row.Name]), occurrences);
+  assert.deepEqual(await readWrites(), []);
+  passed('the actual editor renders both paged occurrences and previews without writing');
+
+  await button('保存用户配置').click();
+  await confirm(page);
+  await status('已保存');
+  const writes = await readWrites();
+  assert.equal(writes.length, 1);
+  const { input, operationId } = writes[0];
+  assert.ok(operationId);
+  assert.equal(input.expectedBindingRevision, 7);
+  assert.equal(input.expectedSelectionRevision, 2);
+  assert.equal(input.selection.InterfacePath, 'interface.json');
+  assert.deepEqual(input.selection.Source, { Kind: 'mfa', Path: 'config/instances/b.json', InstanceId: 'b' });
+  assert.deepEqual(input.selection.Profile.Tasks.map(row => [row.Id, row.SourceId, row.Name]), occurrences);
+  passed('confirmed save binds the selected same-name source and both original occurrences to the CAS revisions');
+
   for (const width of [360, 768, 1280]) {
     await page.setViewportSize({ width, height: 900 });
-    if (!await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)) throw Error('responsive_overflow_' + width);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'responsive_overflow_' + width);
     await page.screenshot({ path: path.join(output, 'maa-project-' + width + '.png'), fullPage: true });
   }
-  check('three browser widths retain the bounded preview without horizontal overflow', true);
-  await page.evaluate(() => { window.mode = 'tamper'; }); await click('读取当前冻结预览');
-  await page.getByText('maa_editor_page_changed', { exact: true }).waitFor();
-  check('changed page digest is rejected before publishing a replacement view', true);
-  await page.evaluate(() => window.mountFixture()); await page.getByText('Maa 重复任务项目', { exact: true }).waitFor();
-  await page.evaluate(() => { window.mode = 'late'; }); await click('读取当前冻结预览');
-  await page.waitForFunction(() => window.late !== null);
-  await choose(page.locator('nexus-select[aria-label="项目语言"]'), 'en_us');
+  passed('the project editor fits three viewport widths');
+
+  const originalOutput = await previewOutput.textContent();
+  await page.evaluate(() => { window.mode = 'tamper'; });
+  await preview();
+  await status('Maa 配置分页已变化，请重新读取配置。');
+  assert.equal(await previewOutput.textContent(), originalOutput);
+  passed('a changed task page digest cannot replace the valid preview');
+
+  await page.evaluate(() => { window.mode = 'late'; });
+  await preview();
+  await page.waitForFunction(() => typeof window.late === 'function');
+  await choose(select('Controller'), 'alternate');
   await page.evaluate(() => window.late());
-  await page.waitForFunction(() => window.calls.some(row => row.action === 'release'));
-  check('a late preview is released after its selection draft changes', await page.locator('[data-maa-preview]').count() === 0);
+  await status('草稿已变化，请重新执行此操作');
+  assert.equal(await previewOutput.textContent(), '');
+  await button('保存用户配置').click();
+  await status('请先预览当前配置');
+  assert.equal((await readWrites()).length, 1);
+  passed('changing the draft during preview prevents a stale result and another save');
+
+  const lateId = await page.evaluate(() => window.previewId);
+  assert.ok(lateId);
   await page.evaluate(() => window.disposeFixture());
-  check('disposing the real surface scope removes all plugin DOM', await page.locator('nexus-card').count() === 0);
+  await editor.waitFor({ state: 'detached' });
+  await page.waitForFunction(id => window.releasedId === id, lateId);
+  passed('closing the surface releases the last preview and removes the editor');
 }

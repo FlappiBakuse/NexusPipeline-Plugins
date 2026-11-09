@@ -45,8 +45,8 @@ internal static class ParserCases
         foreach (var content in new[] { "{\"instance.Pie64.adb_port\":5555}", "{\"Pie64\":{\"adbPort\":5555}}", "{\"bst\":{\"instance\":{\"Pie64\":{\"adb_port\":5555}}}}" })
             run("bluestacks-external-json-format/" + content.Length, () => Assert(BlueStacksPolicy.Parse(Config(content)).Instances.Single().Identity == "Pie64"));
         run("bluestacks-unrelated-json-arrays-do-not-remove-known-instance-or-original-bytes", () => {
-            var config = Config("{\"instance.Pie64.adb_port\":5555,\"unknown\":[1,{\"other\":true}]}"); var sha = config.Sha256;
-            Assert(BlueStacksPolicy.Parse(config).Instances.Single().Identity == "Pie64" && config.Sha256 == sha);
+            var config = Config("{\"instance.Pie64.adb_port\":5555,\"unknown\":[1,{\"other\":true}]}"); var original = config.Bytes.ToArray();
+            Assert(BlueStacksPolicy.Parse(config).Instances.Single().Identity == "Pie64" && config.Bytes.Span.SequenceEqual(original));
         });
         run("bluestacks-zero-port-is-visible-unready-and-status-zero-keeps-static-candidate", () => {
             var rows = BlueStacksPolicy.Parse(Config("bst.instance.Pie64.adb_port=5555\nbst.instance.Pie64.status.adb_port=0\nbst.instance.Nougat32.adb_port=0")).Instances;

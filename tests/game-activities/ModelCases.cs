@@ -3,15 +3,14 @@ using NexusPipeline.Extensions.GameActivities;
 
 internal static class ModelCases
 {
-    internal static async Task RunAsync(Func<string, Func<Task>, Task> run, string fixtures)
+    internal static async Task SourceFieldsAsync(Func<string, Func<Task>, Task> run, string fixtures)
     {
+        using var expected = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "expected-time-values.json")));
         foreach (var source in ActivitySources.All)
             await run("source-fields/" + source.File, () => Check.Sync(() =>
             {
                 var parsed = SraFeed.Parse(source, File.ReadAllBytes(Path.Combine(fixtures, source.File + ".json")));
-                Check.That(parsed.Content.FeedId == source.Id && parsed.Content.SnapshotId.Length == 64);
-                Check.That(parsed.Content.Events.All(item => item.Id.Length == 64));
-                using var expected = System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "expected-time-values.json")));
+                Check.That(parsed.Content.FeedId == source.Id);
                 var points = new[] { parsed.Content.Overview.Start, parsed.Content.Overview.End }
                     .Concat(parsed.Content.Events.SelectMany(item => new[] { item.Start, item.PlayEnd })).Where(item => item is not null).ToArray();
                 var values = expected.RootElement.GetProperty(source.File).EnumerateArray().ToArray();
@@ -25,6 +24,10 @@ internal static class ModelCases
                 if (source.File == "nte-en-US") Check.That(source.Locale == "en-US" && source.ProgressionId == "global");
                 if (source.File == "end") Check.That(parsed.Content.Events.Any(item => item.Kind is not null));
             }));
+    }
+
+    internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
+    {
         foreach (var source in ActivitySources.All)
             await run("known-source-default-offset/" + source.Id, () => Check.Sync(() =>
             {

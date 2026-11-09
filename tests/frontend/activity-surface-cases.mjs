@@ -84,10 +84,11 @@ export async function activitySurfaceCases({page,test}) {
       throw Error('Activity navigation lost keyboard focus');
     await page.getByRole('button',{name:'查看崩坏：星穹铁道活动详情',exact:true}).click();
     await page.getByRole('heading',{name:'Beta Event',exact:true}).waitFor();
-    await page.evaluate(()=>{window.activityLeaving=document.querySelector('nexus-modal');});
     await page.keyboard.press('Escape');
-    const exit=await page.evaluate(()=>({connected:window.activityLeaving.isConnected,open:window.activityLeaving.open,
-      inert:window.activityLeaving.inert,content:window.activityLeaving.textContent.includes('Beta Event')}));
+    const exit=await page.evaluate(()=>{
+      const modal=document.querySelector('nexus-modal');
+      return {connected:!!modal,open:modal?.open,inert:modal?.inert,content:modal?.textContent.includes('Beta Event')};
+    });
     if(!exit.connected||exit.open||!exit.inert||!exit.content)throw Error('Modal discarded its normal exit content: '+JSON.stringify(exit));
     await page.locator('nexus-modal').waitFor({state:'detached'});
     if(!await page.evaluate(()=>document.activeElement?.classList.contains('activity-hit')))throw Error('Modal did not return focus to the active card');

@@ -45,9 +45,10 @@ page.on('pageerror', error => errors.push(String(error)));
 await page.goto(`http://127.0.0.1:${server.address().port}/`);
 try { await browserCases(page, checks, output); }
 finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
-const result = { status: checks.length > 0 && checks.every(item => item.status === 'PASS') && !errors.length ? 'PASS' : 'FAIL',
+const passed = checks.length > 0 && checks.every(item => item.status === 'PASS') && !errors.length;
+const result = { status: passed ? 'PASS' : 'FAIL',
   scope: 'Production createFrontend with real P2 controls and SDK ExtensionScope; fake authenticated Host transport, not installed Host',
-  command: process.argv, exitCode: checks.every(item => item.status === 'PASS') && !errors.length ? 0 : 1,
+  command: process.argv, exitCode: passed ? 0 : 1,
   milliseconds: Date.now() - started, contractFingerprint: receipt.contractFingerprint, buildSourceHash: receipt.sourceHash,
   inputs: ['browser.mjs', 'browser-cases.mjs'].map(file => ({ file, sha256: sha(fs.readFileSync(path.join(root, 'tests/game-activities', file))) })),
   modelSha256: sha(fs.readFileSync(options.get('--view-model'))), checks, errors };

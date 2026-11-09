@@ -55,15 +55,23 @@ test('unresolved dynamic imports refuse a guessed module closure', () => fixture
   assert.throws(inputs, /Dynamic frontend imports/);
 }));
 
-test('reused artifacts retain their original receipt and reject added files', () => fixture(({ root, write }) => {
+test('failed builds cannot claim unknown files and can reuse verified artifacts', () => fixture(({ root, write }) => {
   const output = path.join(root, 'output');
+  function record(value) {
+    const raw = JSON.stringify(value) + '\n', digest = hash(raw);
+    write('output/runs/' + digest + '.json', raw);
+    write('output/build-receipt.json', raw);
+    return digest;
+  }
+  const failure = { status: 'FAIL', previousSuccess: null };
+  record(failure);
+  assert.equal(previousBuild(output).value, null);
   write('output/module/main.js', 'compiled-output');
-  const receipt = { status: 'PASS', artifacts: [{ path: 'module/main.js', sha256: hash(Buffer.from('compiled-output')) }] };
-  const raw = Buffer.from(JSON.stringify(receipt) + '\n');
-  write('output/build-receipt.json', raw);
-  write('output/runs/' + hash(raw) + '.json', raw);
-  assert.equal(previousBuild(output).reference.sha256, hash(raw));
+  assert.throws(() => previousBuild(output), /unowned artifacts/);
+  const success = { status: 'PASS', artifacts: [{ path: 'module/main.js', sha256: hash('compiled-output') }] };
+  const previousSuccess = record(success);
+  record({ ...failure, previousSuccess });
+  assert.deepEqual(previousBuild(output).value, success);
   write('output/module/unowned.js', 'unexpected-output');
   assert.throws(() => previousBuild(output), /inventory changed/);
-  assert.equal(fs.readFileSync(path.join(output, 'runs', hash(raw) + '.json')).toString(), raw.toString());
 }));

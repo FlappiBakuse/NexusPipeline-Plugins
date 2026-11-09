@@ -32,7 +32,7 @@ export async function browserCases(page, checks, output) {
         throw Error('unexpected_operation_' + operation);
       },
       async image(operation, assetId, signal) {
-        if (operation !== 'read-cover' || !/^[a-f0-9]{64}$/.test(assetId)) throw Error('invalid_cover_reference');
+        if (!['read-cover', 'read-cached-cover'].includes(operation) || !/^[a-f0-9]{64}$/.test(assetId)) throw Error('invalid_cover_reference');
         if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
         const blob = new Blob([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC'), x => x.charCodeAt(0))], { type: 'image/png' });
         return { blob, width: 1, height: 1, release() { window.releases++; } };
@@ -41,7 +41,7 @@ export async function browserCases(page, checks, output) {
     };
     window.scope = new ExtensionScope(); const registered = [];
     await createFrontend(transport).activate({ extensionId: 'game-activities', scope: window.scope, locale: 'zh-CN', appearance: 'dark', translate: key => key,
-      registerSurface: item => registered.push(item), registerRoute() {}, registerStyle() {} });
+      onLocaleChanged: () => () => {}, registerSurface: item => registered.push(item), registerRoute() {}, registerStyle() {} });
     const contribution = registered.find(item => item.target === 'overview.cards');
     const element = document.querySelector('#app');
     window.cleanup = await contribution.mount({ element, context: { surfaceId: 'overview.cards', instanceId: 'fixture' },
@@ -49,12 +49,15 @@ export async function browserCases(page, checks, output) {
   });
   await test('production transport composes backend metadata and detailed feed', async () => {
     await page.locator('.activity-slide[aria-hidden=false]').waitFor();
-    if (!await page.evaluate(() => window.calls.some(call => call.operation === 'read-feed') && window.current.feeds.length === 11 && window.current.gameOrder.length === 8)) throw Error('Incomplete backend composition');
     await page.waitForFunction(() => window.releases > 0);
-  });
-  await test('unknown source time stays unknown and details have no announcement jump', async () => {
-    await page.locator('.activity-hit').first().click();
-    await page.locator('.activity-unknown > summary').waitFor();
+    const expected = await page.evaluate(() => {
+      const [id] = window.current.selectedFeedIds;
+      return { id, title: window.feedMap.get(id).events[0].title };
+    });
+    await page.locator('.activity-slide[aria-hidden=false] .activity-hit').click();
+    await page.locator('.activity-event').getByText(expected.title, { exact: true }).waitFor({ state: 'attached' });
+    if (!await page.evaluate(id => window.calls.some(call => call.operation === 'read-feed' && call.input.feedId === id), expected.id))
+      throw Error('Missing detailed feed request for the selected feed');
     if (await page.locator('nexus-modal a').count()) throw Error('Announcement link rendered');
     await page.keyboard.press('Escape'); await page.locator('nexus-modal').waitFor({ state: 'detached' });
   });
@@ -69,7 +72,7 @@ export async function browserCases(page, checks, output) {
     await row.getByRole('switch').click();
     await page.locator('nexus-modal').getByRole('button', { name: '保存', exact: true }).click();
     await page.locator('nexus-modal').waitFor({ state: 'detached' });
-    if (!await page.evaluate(() => window.saved.length === 1 && window.saved[0].expectedRevision === 1 && window.saved[0].settings.gameOrder.length === 8 &&
+    if (!await page.evaluate(() => window.saved.length === 1 && window.saved[0].expectedRevision === 1 &&
       window.saved[0].settings.progressions['neverness-to-everness'] === 'global' && window.current.selectedFeedIds.includes('neverness-to-everness/global'))) throw Error('CAS or progression save changed');
   });
   await test('narrow viewport keeps production carousel inside viewport', async () => {

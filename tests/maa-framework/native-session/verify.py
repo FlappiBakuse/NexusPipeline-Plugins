@@ -7,9 +7,17 @@ import os
 from pathlib import Path
 import struct
 import subprocess
+import sys
 import time
 import zlib
 import uuid
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from managed_probe import compiled_sources, input_fingerprints, record_cases, run_command, test_result
+from maa_runtime_package import REQUIRED
+
+OUTPUT_MODES = ("output-native-detail", "output-reject-parameters", "output-quota", "output-cancel",
+                "output-cwd-mismatch", "output-resource-parameters", "output-no-scope")
 
 
 def png():
@@ -38,14 +46,36 @@ def fixtures(root):
     (root / "unsafe-screenshots/pipeline/main.json").write_text(json.dumps({"Screenshot": {"recognition": "DirectHit", "action": {"type": "Screencap", "param": {"filename": "../outside"}}}}), encoding="utf-8")
 
 
+def stage_runtime(runtime, destination, partial):
+    required = {"bin/" + name for name in REQUIRED}
+    allowed = required | {"bin/MaaAgentServer.dll"}
+    records = [item for item in runtime["files"] if item["path"] in allowed]
+    paths = {item["path"] for item in records}
+    if runtime["status"] != "VERIFIED_BINARY_INPUT_ONLY" or len(paths) != len(records) or not (required if partial else allowed) <= paths:
+        raise ValueError("Native runtime receipt does not cover the required closure")
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in records:
+        original = Path(runtime["runtime"]) / item["path"]
+        target = destination / original.name
+        if not target.exists():
+            os.link(original, target)
+        with target.open("rb") as stream:
+            digest = hashlib.file_digest(stream, "sha256").hexdigest()
+        if not os.path.samefile(original, target) or target.stat().st_size != item["sizeBytes"] or digest != item["sha256"]:
+            raise ValueError("Native closure identity mismatch: " + item["path"])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--runtime-receipt", type=Path, required=True)
-    parser.add_argument("--resource-inventory", type=Path)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--runtime-receipt", type=Path)
+    mode.add_argument("--resource-inventory", type=Path)
     parser.add_argument("--case", action="append", dest="selected_cases")
     args = parser.parse_args()
+    if args.selected_cases and args.resource_inventory:
+        parser.error("--case requires --runtime-receipt")
     if args.selected_cases and (len(set(args.selected_cases)) != len(args.selected_cases) or
                                any(not name or name.startswith("output-") for name in args.selected_cases)):
         raise ValueError("Select distinct native cases; output workers remain a separate full-suite qualification")
@@ -56,81 +86,106 @@ def main():
     run = output / "runs" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     run.mkdir(parents=True)
     fixture = run / "fixture"
-    fixtures(fixture)
-    runtime = json.loads(args.runtime_receipt.read_bytes())
-    runtime_root = output / "runtime/bin"
-    runtime_root.mkdir(parents=True, exist_ok=True)
-    required = {"MaaFramework.dll", "MaaCustomControlUnit.dll", "MaaUtils.dll", "opencv_world4_maa.dll", "fastdeploy_ppocr_maa.dll",
-                "onnxruntime_maa.dll", "webgpu_dawn_maa.dll", "DirectML.dll", "dxcompiler.dll", "dxil.dll", "MaaAgentClient.dll", "MaaAgentServer.dll"}
-    for item in runtime["files"]:
-        if item["path"] not in {"bin/" + name for name in required}:
-            continue
-        original = Path(runtime["runtime"]) / item["path"]
-        destination = runtime_root / original.name
-        if not destination.exists():
-            os.link(original, destination)
-        if not os.path.samefile(original, destination) or hashlib.sha256(destination.read_bytes()).hexdigest() != item["sha256"]:
-            raise ValueError("Native closure identity mismatch")
-    sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
-    project = Path(__file__).with_name("NativeSession.csproj")
-    source_root = root / "plugins/managed/maa-framework/src"
-    names = ["Application/IMaaController.cs", "Application/IMaaOutputScope.cs", "Application/MaaScreencapPolicy.cs", "Application/MaaSessionPlan.cs",
-             "Application/MaaPipelineGuard.cs", "Application/MaaTaskSession.cs", "Application/MaaTaskPayload.cs", "Infrastructure/MaaNative.cs", "Infrastructure/MaaNativePath.cs",
-             "Infrastructure/MaaControllerBridge.cs", "Infrastructure/MaaNativeQueries.cs", "Infrastructure/MaaWaitBridge.cs", "Infrastructure/MaaAgentNative.cs",
-             "Infrastructure/MaaInputLease.cs", "Infrastructure/MaaProgramProcess.cs", "Application/MaaAgentSession.cs", "Domain/MaaJson.cs", "Domain/MaaWaitPolicy.cs"]
-    sources = [source_root / name for name in names] + sorted(Path(__file__).parent.glob("*.cs")) + [project, Path(__file__)]
-    inputs = [{"path": source.relative_to(root).as_posix(), "sha256": sha(source)} for source in sources]
+    receipt_path = args.runtime_receipt.resolve() if args.runtime_receipt else None
+    project = Path(__file__).resolve().with_name("NativeSession.csproj")
+    probe = ["dotnet", str(output / "build/bin/NativeSession/release/NativeSession.dll")]
+    properties = ["-p:Configuration=Release", "-p:UseArtifactsOutput=true", f"-p:ArtifactsPath={output / 'build'}",
+                  f"-p:RestorePackagesPath={args.cache / 'native-session-packages'}"]
     env = os.environ.copy()
     env.update(TEMP=str(run), TMP=str(run), DOTNET_CLI_HOME=str(args.cache / "dotnet-home"),
-               DOTNET_CLI_UI_LANGUAGE="en-US", DOTNET_CLI_TELEMETRY_OPTOUT="1")
+               DOTNET_CLI_UI_LANGUAGE="en-US", DOTNET_CLI_TELEMETRY_OPTOUT="1", DOTNET_NOLOGO="1")
     env.pop("NEXUS_NATIVE_CASES", None)
     if args.selected_cases:
         env["NEXUS_NATIVE_CASES"] = json.dumps(args.selected_cases)
-    command = ["dotnet", "build", str(project), "--configuration", "Release", "--nologo", "--disable-build-servers", "-m:1",
-               "-p:UseArtifactsOutput=true", f"-p:ArtifactsPath={output / 'build'}", f"-p:RestorePackagesPath={args.cache / 'native-session-packages'}"]
-    commands = []
+    tracked = {Path(__file__).resolve(), project, root / "tests/managed_probe.py", root / "tooling/source_snapshot.py",
+               root / "tooling/maa_runtime_package.py"}
+    if receipt_path and receipt_path.is_file():
+        tracked.add(receipt_path)
+
+    def snapshot(log):
+        return input_fingerprints(root, tracked | compiled_sources(root, project, properties, env, run / log))
+
+    commands, cases, inputs = [], [], []
     started = time.monotonic()
-    result = subprocess.run(command, cwd=run, env=env, capture_output=True, encoding="utf-8", errors="replace", timeout=90)
-    (run / "build.log").write_text(result.stdout + result.stderr, encoding="utf-8")
-    commands.append({"command": command, "exitCode": result.returncode})
-    cases = []
-    if result.returncode == 0:
-        command = ["dotnet", str(output / "build/bin/NativeSession/release/NativeSession.dll"), str(args.runtime_receipt.resolve()), str(fixture), str(run / "cases.json")]
-        if args.resource_inventory:
-            command.append(str(args.resource_inventory.resolve()))
+    preparation = dict.fromkeys(("runtimeClosure", "fixture", "sourceInventory", "probeCompilation"), "NOT_RUN")
+    runtime_sha = preparation_error = input_error = None
+    if receipt_path:
+        phase = "runtimeClosure"
         try:
-            result = subprocess.run(command, cwd=run, env=env, capture_output=True, encoding="utf-8", errors="replace", timeout=180)
-            (run / "native.log").write_text(result.stdout + result.stderr, encoding="utf-8")
-            commands.append({"command": command, "exitCode": result.returncode})
-        except subprocess.TimeoutExpired as failure:
-            (run / "native.log").write_bytes((failure.stdout or b"") + (failure.stderr or b""))
-            commands.append({"command": command, "exitCode": None, "status": "TIMEOUT"})
-        if (run / "cases.json").exists():
-            cases = json.loads((run / "cases.json").read_bytes())
-        for mode in ([] if args.selected_cases else ["output-native-detail", "output-reject-parameters", "output-quota", "output-cancel", "output-cwd-mismatch", "output-resource-parameters", "output-no-scope"]):
+            raw = receipt_path.read_bytes()
+            runtime_sha = hashlib.sha256(raw).hexdigest()
+            stage_runtime(json.loads(raw), output / "runtime/bin", bool(args.selected_cases))
+            preparation[phase] = "PASS"
+            phase = "fixture"
+            fixtures(fixture)
+            preparation[phase] = "PASS"
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            preparation[phase] = "FAIL"
+            preparation_error = str(error)
+    if preparation["fixture"] == "PASS" or args.resource_inventory:
+        try:
+            inputs = snapshot("evaluated-inputs.json")
+            preparation["sourceInventory"] = "PASS"
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            preparation["sourceInventory"] = "FAIL"
+            input_error = str(error)
+    if inputs:
+        build = ["dotnet", "build", str(project), "--nologo", "--disable-build-servers", "-m:1", *properties]
+        commands.append(run_command("preparation", build, run, env, run / "build.log"))
+        preparation["probeCompilation"] = "PASS" if commands[-1]["exitCode"] == 0 else "FAIL"
+
+    def test(label, report, extra, cwd, process_env, timeout, expected):
+        command = [*probe, str(receipt_path), str(fixture), str(report), *extra]
+        record = run_command("test", command, cwd, process_env, run / (label + ".log"), timeout)
+        record["scenario"] = label
+        commands.append(record)
+        cases.extend(record_cases(record, report, fields=("Name", "Status"), expected=expected))
+
+    if preparation["probeCompilation"] == preparation["fixture"] == "PASS":
+        test("native", run / "cases.json", [], run, env, 180, args.selected_cases)
+        for mode in (() if args.selected_cases else OUTPUT_MODES):
             worker = run / "output-workers" / mode
-            worker.mkdir(parents=True)
             nonce = uuid.uuid4().hex
-            (worker / ".fresh-proof").write_text(nonce, encoding="utf-8")
+            try:
+                worker.mkdir(parents=True)
+                (worker / ".fresh-proof").write_text(nonce, encoding="utf-8")
+            except OSError as error:
+                commands.append({"responsibility": "test", "scenario": mode, "status": "NOT_RUN", "fixtureError": str(error)})
+                continue
             worker_env = {**env, "NEXUS_TEST_OUTPUT_PROOF": nonce}
-            result_path = run / (mode + ".json")
-            command = ["dotnet", str(output / "build/bin/NativeSession/release/NativeSession.dll"), str(args.runtime_receipt.resolve()), str(fixture), str(result_path), mode]
-            result = subprocess.run(command, cwd=worker, env=worker_env, capture_output=True, encoding="utf-8", errors="replace", timeout=40)
-            (run / (mode + ".log")).write_text(result.stdout + result.stderr, encoding="utf-8")
-            commands.append({"command": command, "cwd": str(worker), "exitCode": result.returncode,
-                             "qualification": "Parent-controlled synthetic child process; not actual Host Native Job/Agent-family admission"})
-            if result_path.exists():
-                cases.extend(json.loads(result_path.read_bytes()))
-    unchanged = all(sha(root / item["path"]) == item["sha256"] for item in inputs)
+            test(mode, run / (mode + ".json"), [mode], worker, worker_env, 40, [mode])
+    audit = {"status": "NOT_RUN"}
+    if args.resource_inventory and preparation["probeCompilation"] == "PASS":
+        audit_report = run / "native-policy-corpus.json"
+        command = [*probe, "resource-audit", str(args.resource_inventory.resolve()), str(audit_report)]
+        audit = run_command("evidence", command, run, env, run / "resource-audit.log", 180)
+        audit["status"] = "FAIL"
+        if audit["exitCode"] == 0:
+            try:
+                audit.update(status="PASS", report=str(audit_report), sha256=hashlib.sha256(audit_report.read_bytes()).hexdigest())
+            except OSError as error:
+                audit["reportError"] = str(error)
+    unchanged = False
+    if inputs:
+        try:
+            unchanged = inputs == snapshot("evaluated-inputs-after.json")
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            input_error = str(error)
     passed = sum(case["Status"] == "PASS" for case in cases)
-    expected = len(args.selected_cases) if args.selected_cases else 46
-    selected_match = not args.selected_cases or sorted(case["Name"] for case in cases) == sorted(args.selected_cases)
-    report = {"status": "PASS" if len(cases) == expected and passed == expected and selected_match and unchanged and all(item["exitCode"] == 0 for item in commands) else "FAIL",
-              "qualification": "Official native C ABI and actual owned AgentClient/AgentServer child programs; synthetic resources and NoInput controller; not actual Host worker/IPC/target/game execution",
+    test_status = test_result(commands)
+    unique_cases = len({case["Name"] for case in cases}) == len(cases)
+    mode_status = audit["status"] if args.resource_inventory else test_status
+    report = {"status": "PASS" if mode_status == "PASS" and unchanged and unique_cases else "FAIL",
+              "preparation": preparation, "preparationError": preparation_error, "inputError": input_error,
+              "resourceAudit": audit,
+              "responsibilities": {"lint": "NOT_RUN", "typecheck": "NOT_RUN", "test": test_status, "build": "NOT_RUN"},
+              "qualification": "Read-only locked resource policy audit" if args.resource_inventory else
+              "Official native C ABI and owned AgentClient/AgentServer child programs with synthetic resources and a NoInput controller",
               "sourceMode": "local-uncommitted", "commit": None, "tree": None, "inputs": inputs,
-              "runtimeReceipt": str(args.runtime_receipt.resolve()), "runtimeReceiptSha256": sha(args.runtime_receipt),
-              "commands": commands, "cases": len(cases), "passed": passed, "unchanged": unchanged, "expectedCases": expected,
-              "selectedCases": args.selected_cases, "coverage": "partial" if args.selected_cases else "full",
+              "runtimeReceipt": str(receipt_path) if receipt_path else None, "runtimeReceiptSha256": runtime_sha,
+              "commands": commands, "cases": len(cases), "passed": passed, "unchanged": unchanged, "uniqueCases": unique_cases,
+              "selectedCases": args.selected_cases,
+              "coverage": None if args.resource_inventory else "partial" if args.selected_cases else "full",
               "elapsedSeconds": time.monotonic() - started}
     (run / "receipt.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"status": report["status"], "cases": len(cases), "passed": passed, "receipt": str(run / "receipt.json")}))

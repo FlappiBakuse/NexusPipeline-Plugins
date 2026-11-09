@@ -39,17 +39,19 @@ def main():
     started = time.monotonic()
     result = subprocess.run(command, cwd=plugin, capture_output=True, encoding="utf-8", errors="replace")
     (run / "native.log").write_bytes((result.stdout + result.stderr).encode())
-    manifest_path, script_path = run / "extension.manifest.json", run / "adapter.js"
-    manifest_path.write_bytes(encode(manifest))
-    script_path.write_bytes(script_bytes)
     receipt = {"status": "PASS" if result.returncode == 0 else "FAIL",
+        "responsibilities": dict(lint="FAIL" if result.returncode else "PASS", typecheck="NOT_RUN", test="NOT_RUN", build="NOT_RUN"),
         "scope": "Source-bound specialized SDK slice syntax check; actual Host interpreter and business validation are separate",
         "source": source, "sdkReceiptSha256": sha(raw), "sdkHostSource": sdk["hostSource"], "sdkPackage": package,
         "contractFingerprint": sdk["contractFingerprint"], "command": command, "exitCode": result.returncode,
-        "generatorInputs": inputs, "localization": write_locales(plugin, manifest, run),
-        "elapsedSeconds": time.monotonic() - started, "nativeLog": str(run / "native.log"),
-        "manifest": {"path": str(manifest_path), "sha256": sha(manifest_path.read_bytes())},
-        "script": {"path": str(script_path), "sha256": sha(script_path.read_bytes()), "sizeBytes": script_path.stat().st_size}}
+        "generatorInputs": inputs, "elapsedSeconds": time.monotonic() - started, "nativeLog": str(run / "native.log")}
+    if result.returncode == 0:
+        manifest_path = run / "extension.manifest.json"
+        manifest_path.write_bytes(encode(manifest))
+        receipt.update(localization=write_locales(plugin, manifest, run),
+            manifest={"path": str(manifest_path), "sha256": sha(manifest_path.read_bytes())},
+            script={"path": str(script), "sha256": sha(script_bytes), "sizeBytes": len(script_bytes)})
+        receipt["responsibilities"]["build"] = "PASS"
     (run / "build-receipt.json").write_bytes(encode(receipt))
     print(json.dumps({"status": receipt["status"], "receipt": str(run / "build-receipt.json")}))
     return result.returncode

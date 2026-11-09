@@ -4,7 +4,7 @@ import { createFrontend } from '/plugin.js';
 
 registerElements();
 const model = await (await fetch('/model.json')).json();
-let editorSequence = 0, taskSequence = 0, viewRevision = 0;
+let editorSequence = 0, taskSequence = 0, viewRevision = model.revision - 1;
 window.calls = []; window.saves = []; window.visibility = new Set(); window.committed = new Set();
 const ok = value => ({ ok: true, value });
 const fail = code => ({ ok: false, error: { code } });
@@ -71,7 +71,8 @@ const transport = {
     if (operation === 'save-task') {
       if (!operationId) throw Error('fixture_missing_operation');
       const editor = requireEditor(input.editorSessionId);
-      if (editor.expectedRevision !== window.state.configurationRevision || window.saveFailure === 'conflict') return fail('checkin_configuration_conflict');
+      if (editor.expectedRevision !== window.state.configurationRevision) return fail('checkin_configuration_conflict');
+      if (window.saveFailure === 'conflict') return fail('credential_saved_conflict');
       if (window.saveFailure === 'unknown') throw Error('synthetic_lost_response');
       const id = input.draft.id ?? taskId(); const task = { ...structuredClone(input.draft), id, isRunning: false, nextRunAt: null, recentRun: null, runs: [] };
       const configured = Object.fromEntries(Object.entries(editor.fields).map(([id, field]) => [id, field.configured]));
@@ -118,7 +119,7 @@ window.mountFixture = async (withTask = false) => {
   }
   window.scope = new ExtensionScope(); const routes = [];
   await createFrontend(transport).activate({ extensionId: 'game-checkin', scope: window.scope, locale: 'zh-CN', appearance: 'dark', translate: key => key,
-    registerRoute(route) { routes.push(route); }, registerSurface() {}, registerStyle() {} });
+    registerRoute(route) { routes.push(route); }, registerSurface() {}, registerStyle() {}, onLocaleChanged: () => () => {} });
   window.fixtureSurface = new FixtureSurface(document.querySelector('#app'), window.scope, window.visibility);
   window.cleanup = await routes.find(route => route.id === 'game-checkin.tasks').mount(window.fixtureSurface);
 };

@@ -74,10 +74,24 @@ export function moduleInputs(repository, sdkRoot, entry, workRoot) {
 export function previousBuild(output) {
   const latest = path.join(output, 'build-receipt.json');
   if (!fs.existsSync(latest)) return null;
-  const raw = fs.readFileSync(latest), original = path.join(output, 'runs', hash(raw) + '.json');
+  let raw = fs.readFileSync(latest), original = path.join(output, 'runs', hash(raw) + '.json');
   if (!fs.existsSync(original) || !fs.readFileSync(original).equals(raw)) throw new Error('Original frontend build receipt changed');
-  const value = JSON.parse(raw);
-  if (value.status !== 'PASS') return null;
+  let value = JSON.parse(raw);
+  if (value.status === 'FAIL') {
+    if (value.previousSuccess === null) {
+      const owned = new Set(['build-receipt.json', 'naming-receipt.json', 'runs']);
+      if (fs.readdirSync(output, { withFileTypes: true }).some(entry => entry.isSymbolicLink() || !owned.has(entry.name)))
+        throw new Error('Failed frontend output contains unowned artifacts');
+      return { value: null };
+    }
+    const prior = value.previousSuccess;
+    if (!/^[a-f0-9]{64}$/.test(prior)) throw new Error('Previous frontend success reference invalid');
+    original = path.join(output, 'runs', prior + '.json');
+    raw = fs.readFileSync(original);
+    if (hash(raw) !== prior) throw new Error('Previous frontend success changed');
+    value = JSON.parse(raw);
+  }
+  if (value.status !== 'PASS') throw new Error('Previous frontend receipt is not successful');
   if (value.artifacts.some(item => !/^[a-z0-9-]+\/(?:main\.js|main\.css)$/.test(item.path)))
     throw new Error('Frontend artifact name escaped its finite module owner');
   const expected = new Set(value.artifacts.map(item => item.path));

@@ -3,18 +3,23 @@ using System.Text.Json;
 using NexusPipeline.Extensions.MaaFramework;
 
 if (args is ["agent-child", .. var agentArguments]) return AgentChild.Run(agentArguments);
-if (args.Length is < 3 or > 4) throw new ArgumentException("runtime-receipt fixture-root result-path [resource-inventory]");
+if (args is ["resource-audit", var inventory, var auditReport])
+{
+    ResourceAudit.Run(inventory, auditReport);
+    return 0;
+}
+if (args.Length is < 3 or > 4) throw new ArgumentException("runtime-receipt fixture-root result-path [output-mode]");
 if (args.Length == 4 && args[3].StartsWith("output-", StringComparison.Ordinal))
 {
     var result = await OutputCases.Run(args[3], args[0], args[1]);
     await File.WriteAllTextAsync(args[2], JsonSerializer.Serialize(new[] { result }) + "\n");
     return result.Status == "PASS" ? 0 : 1;
 }
-if (args.Length == 4) ResourceAudit.Run(args[3], Path.Combine(Path.GetDirectoryName(args[2])!, "native-policy-corpus.json"));
+if (args.Length == 4) throw new ArgumentException("Unknown output mode");
 var suite = new NativeCases(args[0], args[1]);
 await suite.RunAsync();
 await File.WriteAllTextAsync(args[2], JsonSerializer.Serialize(suite.Results, new JsonSerializerOptions { WriteIndented = true }) + "\n");
-return suite.Results.All(result => result.Status == "PASS") ? 0 : 1;
+return suite.Results.Count > 0 && suite.Results.All(result => result.Status == "PASS") ? 0 : 1;
 
 internal sealed record CaseResult(string Name, string Status, string? Error);
 internal sealed class NativeCases(string runtimeReceipt, string root)
@@ -80,7 +85,7 @@ internal sealed class NativeCases(string runtimeReceipt, string root)
         var f = Create(); await using var session = f.Session;
         await session.InitializeAsync(default);
         var facts = await session.RunAsync([TaskRow("a", repeat: 2), TaskRow("b")], default);
-        Check(facts.Count == 3 && facts.All(fact => fact.Status == 3000) && facts.Select(fact => fact.NativeTaskId).Distinct().Count() == 3);
+        Check(facts.All(fact => fact.Status == 3000) && facts.Select(fact => fact.NativeTaskId).Distinct().Count() == 3);
         Check(facts.Select(fact => fact.OccurrenceId + fact.Repetition).SequenceEqual(new[] { "a1", "a2", "b1" }));
         Check(facts.All(fact => session.Events.Any(item => item.TaskId == fact.NativeTaskId && item.Code == "Tasker.Task.Succeeded")));
         await session.StopAsync(); Check(session.IsDrained && f.Inputs.Disposed && f.Controller.Disposed && f.Controller.Actions == 0);
@@ -242,9 +247,9 @@ internal sealed class NativeCases(string runtimeReceipt, string root)
     }
     private Task PluginDirectory()
     {
-        using var document = JsonDocument.Parse(File.ReadAllBytes(runtimeReceipt));
-        var runtime = document.RootElement.GetProperty("runtime").GetString()!;
-        try { using var native = MaaNative.Load(Path.Combine(runtime, "bin/MaaFramework.dll"), "unused", "unused"); }
+        var runtime = Path.Combine(root, "undeclared-runtime");
+        Directory.CreateDirectory(Path.Combine(runtime, "plugins"));
+        try { using var native = MaaNative.Load(Path.Combine(runtime, "MaaFramework.dll"), "unused", "unused"); }
         catch (IOException failure) when (failure.Message == "maa_undeclared_native_plugins") { return System.Threading.Tasks.Task.CompletedTask; }
         throw new IOException("fixture_plugin_directory_not_rejected");
     }

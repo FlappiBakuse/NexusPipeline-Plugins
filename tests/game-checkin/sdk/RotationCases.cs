@@ -19,10 +19,12 @@ internal static class RotationCases
         });
         await run("actual-sdk-rotation-atomically-replaces-only-taji-without-changing-private-task", async () => {
             using var fixture = new Fixture(); using var before = Material(); using var after = Material(true);
+            var original = fixture.Ports.Document!.Json.ToArray();
             var adapter = fixture.Adapter(); Assert(await adapter.PersistAsync(before, after, default));
             Assert(fixture.Ports.AtomicWrites == 1 && fixture.Ports.SingleWrites == 0 && fixture.Ports.Applies == 0 && fixture.Ports.Transferred.Count == 1);
             var snapshot = await fixture.Persistence.ReadTasksAsync(default); using var saved = await fixture.Persistence.ReadCredentialAsync(fixture.Task.Id, "tajiduo", default);
             Assert(snapshot.Revision == 12 && snapshot.Store.Tasks.Single().Revision == 3 && saved.Revision == 2);
+            Assert(fixture.Ports.Document!.Json.Span.SequenceEqual(original));
             saved.Material!.Use(value => Assert(value.Contains("replacement-access", StringComparison.Ordinal)));
             Assert(!await adapter.PersistAsync(before, after, default) && fixture.Ports.AtomicWrites == 1);
         });

@@ -30,7 +30,6 @@ export function cases(invoke) {
   for (const farm of farms) for (let bits = 0; bits < 16; bits++) for (const echo of [false, true]) {
     const extras = additions.filter((_, index) => bits & 1 << index), document = make(farm, extras, echo), nightmare = extras.includes(additions[1]) || echo && farm !== farms[0];
     add('all native combinations ' + farm + '/' + bits + '/' + echo, request('discover', document), {
-      'tasks.0.titleLocales': { 'zh-CN': '日常任务', 'en-US': 'Daily tasks' },
       'tasks.0.retrySafety': extras.includes(additions[3]) ? 'unknown' : 'safe', 'tasks.1.isSelected': nightmare, 'tasks.2.title': '日常体力：' + farm,
       'tasks.6.isSelected': extras.includes(additions[0]), 'tasks.7.isSelected': extras.includes(additions[2]), 'tasks.8.isSelected': extras.includes(additions[3]) });
     add('authoritative flow branch ' + farm + '/' + bits + '/' + echo, observe(document, outer), state('daily', 'succeeded'));
@@ -67,15 +66,16 @@ export function cases(invoke) {
   add('launcher/framework finished cannot prove daily', observe(full, [{ owner: 'LauncherTask', text: 'Daily Task Completed' }, { owner: 'TaskExecutor', text: 'finished' }]), state('daily', 'unknown'));
   for (const extras of [{ sourceId: 'stdout' }, { sourceId: 'file:1' }, { thread: 'MainThread' }])
     add('foreign log context ' + JSON.stringify(extras), observe(full, [], { logEvents: events(outer, extras) }), state('daily', 'unknown'));
-  const partialObservations = invoke(observe(full, ['open_daily', { level: 'ERROR', text: 'GardenTask Failed Traceback' }, ...outer.slice(1)])).observations;
-  add('partial family cannot retry implicit consumption', request('retry', full, { tasks, observations: partialObservations, idempotencyKey: 'finite' }), { selectedTaskIds: [] });
   add('4C process-local counter cannot be reset by a new invocation', request('retry', full, { tasks,
     observations: [{ taskId: 'okww:daily', state: 'failed', reasonCode: 'synthetic' }], idempotencyKey: 'finite' }), { selectedTaskIds: [] });
   const resume = make(farms[0], ['Check Weekly Garden']), resumeTasks = invoke(request('discover', resume)).tasks;
   add('failed authority resumes unchanged daily scope', request('retry', resume, { tasks: resumeTasks,
     observations: [{ taskId: 'okww:daily', state: 'failed', reasonCode: 'synthetic' }], idempotencyKey: 'finite' }), { selectedTaskIds: ['okww:daily'] });
+  add('partial family cannot retry implicit consumption', request('retry', resume, { tasks: resumeTasks, idempotencyKey: 'finite',
+    observations: [{ taskId: 'okww:daily', state: 'partial' }, { taskId: 'okww:garden', state: 'failed' }] }), { selectedTaskIds: [] });
   add('native resume declares every selected implicit child', request('discover', resume), {
-    'tasks.0.nativeResumeScope': resumeTasks.filter(task => task.isSelected).map(task => task.taskId).sort() });
+    'tasks.0.titleLocales': { 'zh-CN': '日常任务', 'en-US': 'Daily tasks' },
+    'tasks.0.nativeResumeScope': ['okww:battle_pass', 'okww:daily', 'okww:daily_reward', 'okww:garden', 'okww:mail', 'okww:stamina'] });
   add('child alone does not create independent switch retry', request('retry', full, { tasks,
     observations: [{ taskId: 'okww:merge', state: 'failed', reasonCode: 'synthetic' }], idempotencyKey: 'finite' }), { selectedTaskIds: [] });
   const streaming = observe(full, ['open_daily'], { logComplete: false }), checkpoint = invoke(streaming).observationCheckpoint;
@@ -90,13 +90,16 @@ export function cases(invoke) {
     const input = request('configuration', make(farms[0], [additions[3]])), farm = child(); farm['Teleport to Boss'] = mode;
     input.resources[1] = resource(farm, 'farm-4c');
     add('unsupported enabled 4c scope blocks without rewriting ' + mode, structuredClone(input),
-      { 'diagnostics.0.code': 'okww_finite_4c_configuration_required', configPatches: [] });
+      { 'diagnostics.okww_finite_4c_configuration_required': 'blocking', configPatches: [] });
     input.resources[0] = resource(make(farms[0], []));
     add('disabled 4c preserves unsupported mode ' + mode, structuredClone(input), { diagnostics: [], configPatches: [] });
   }
   for (const count of [0, -1, 1.5, 1000001]) {
-    const input = request('configuration', make(farms[0], [additions[3]])), farm = child(); farm['Repeat Farm Count'] = count;
-    input.resources[1] = resource(farm, 'farm-4c'); add('invalid 4c count blocks ' + count, input, { 'diagnostics.0.code': 'okww_finite_4c_configuration_required' });
+    const input = request('configuration', make(farms[0], [additions[3], 'future-extra'])), farm = child();
+    farm['Repeat Farm Count'] = count;
+    input.resources[1] = resource(farm, 'farm-4c');
+    add('invalid 4c count blocks ' + count, input, { 'diagnostics.okww_finite_4c_configuration_required': 'blocking',
+      'diagnostics.okww_unknown_daily_addition_preserved': 'warning', configPatches: [] });
   }
   const unknown = make(farms[0], ['future-extra']);
   add('unknown addition kept and blocks safe retry', request('discover', unknown), { 'tasks.9.taskId': 'okww:extra:0:future-extra', 'tasks.9.isSelected': false, 'tasks.9.isEnabled': true, 'tasks.0.retrySafety': 'unknown' });

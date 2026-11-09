@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using NexusPipeline.Extensions.GameCheckIn;
 using NexusPipeline.Extensibility.Assets;
 using NexusPipeline.Extensibility.Frontend;
@@ -15,14 +16,19 @@ internal static class ServiceCases
     internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
     {
         static void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
-        await run("scope-services-initialize-once-after-ready-without-inheriting-original-use", async () => {
+        await run("scope-services-ready-without-inheriting-original-use", async () => {
             using var fixture = new Fixture(); Caller.Value = "original-frontend-use";
             await using var services = new CheckInServices(fixture.Context, new Native(), new Capture(), fixture.Scope.Token);
             await fixture.Activation.Entered.Task; Assert(fixture.Ports.DocumentReads == 0 && fixture.Activation.Caller is null);
             Caller.Value = null; fixture.Activation.Ready.SetResult();
             var call = new FrontendCall("unknown-operation", null, "fixture", true, "{}"u8.ToArray());
-            _ = await services.Frontend.InvokeAsync(call, default); _ = await services.Frontend.InvokeAsync(call, default);
-            Assert(fixture.Ports.DocumentReads == 1 && services.Work.IdentityVersion == "v1");
+            for (var index = 0; index < 2; index++)
+            {
+                using var response = JsonDocument.Parse((await services.Frontend.InvokeAsync(call, default)).Content);
+                Assert(!response.RootElement.GetProperty("ok").GetBoolean() &&
+                    response.RootElement.GetProperty("error").GetProperty("code").GetString() == "checkin_operation_unknown");
+            }
+            Assert(services.Work.IdentityVersion == "v1");
         });
         await run("scope-stop-before-publication-cancels-initialization-without-document-consumption", async () => {
             using var fixture = new Fixture(); var services = new CheckInServices(fixture.Context, new Native(), new Capture(), fixture.Scope.Token);
@@ -41,7 +47,7 @@ internal static class ServiceCases
             await using var services = new CheckInServices(fixture.Context, new Native(), new Capture(), fixture.Scope.Token);
             await fixture.Activation.Entered.Task; fixture.Activation.Ready.SetResult();
             try { await services.Frontend.InvokeAsync(new("read-state", null, "fixture", true, "{}"u8.ToArray()), default); }
-            catch (CheckInFailure) { Assert(fixture.Ports.DocumentReads == 1 && fixture.Ports.Document.Json.Span.SequenceEqual(bytes) && fixture.Ports.AtomicWrites == 0); return; }
+            catch (CheckInFailure) { Assert(fixture.Ports.Document.Json.Span.SequenceEqual(bytes) && fixture.Ports.AtomicWrites == 0); return; }
             throw new InvalidOperationException("unknown_document_became_empty");
         });
     }

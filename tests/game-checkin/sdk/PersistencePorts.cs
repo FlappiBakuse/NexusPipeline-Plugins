@@ -7,6 +7,7 @@ internal sealed class PersistencePorts : IExtensionDocuments, IExtensionSecretPo
     private readonly Dictionary<(Guid, string), Field> fields = [];
     private readonly Dictionary<Guid, DocumentCommit> commits = [];
     internal ExtensionDocument? Document;
+    internal Action? BeforeAtomic;
     internal bool RejectAtomic, RaceState, ThrowAfterCommit;
     internal int CommitReads;
     internal int DocumentReads;
@@ -22,6 +23,7 @@ internal sealed class PersistencePorts : IExtensionDocuments, IExtensionSecretPo
     public ValueTask<DocumentCommit> WriteAsync(Guid operationId, string name, long expectedRevision, ReadOnlyMemory<byte> json,
         IReadOnlyList<DocumentSecretEdit> changes, CancellationToken cancellationToken)
     {
+        BeforeAtomic?.Invoke();
         AtomicWrites++; Transferred = changes.Select(change => change.Change).ToList();
         try
         {

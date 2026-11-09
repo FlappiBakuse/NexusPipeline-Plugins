@@ -60,20 +60,25 @@ internal static class TaskEditingCases
         {
             var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] });
             using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
-            var opened = service.OpenAsync(client, task.Id, 0, default).Result; store.Revision++;
+            var opened = service.OpenAsync(client, task.Id, 0, default).Result;
+            var editor = editors.Get(client, opened.Editor.EditorSessionId);
+            var binding = editor.Prepare(client, "kuro", 0);
+            var candidate = editor.Accept(client, binding, new("synthetic-candidate", "browser", "kuro · 12**56"));
+            var generation = editor.View(client).Fields["kuro"].FieldGeneration; store.Revision++;
             Reject(() => service.SaveAsync(client, Guid.NewGuid(), opened.Editor.EditorSessionId, Draft(task), new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult(),
                 "checkin_configuration_conflict");
-            Assert(store.Writes == 0 && editors.Get(client, opened.Editor.EditorSessionId).TaskId == task.Id);
+            var retained = editors.Get(client, opened.Editor.EditorSessionId).View(client).Fields["kuro"];
+            Assert(store.Writes == 0 && retained.CandidateId == candidate && retained.FieldGeneration == generation);
         });
         foreach (var committed in new[] { false, true })
-            run("lost-atomic-reply-queries-original-operation-once/" + committed, () =>
+            run("lost-atomic-reply-reconciles-original-operation-without-rewrite/" + committed, () =>
             {
                 var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] }) { LoseReply = true, CommitBeforeLostReply = committed };
                 using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
                 var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor; var operation = Guid.NewGuid();
                 void Save() => service.SaveAsync(client, operation, editor.EditorSessionId, Draft(task) with { Name = "changed" }, new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult();
                 if (committed) Save(); else Reject(Save, "checkin_publication_unknown");
-                Assert(store.Writes == 1 && store.CommitQueries == 1 && store.QueriedOperation == operation);
+                Assert(store.Writes == 1 && store.QueriedOperations.Count > 0 && store.QueriedOperations.All(id => id == operation));
                 Assert(store.Store.Tasks.Single().Name == (committed ? "changed" : "one"));
             });
         run("delete-clears-only-target-six-secrets-in-same-fact", () =>
@@ -113,8 +118,9 @@ internal static class TaskEditingCases
             var quiescence = new EditingQuiescence { OnHold = () => store.Revision++ };
             using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, quiescence);
             var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor;
+            var readsBeforeSave = store.SecretReads;
             Reject(() => service.SaveAsync(client, Guid.NewGuid(), editor.EditorSessionId, Draft(task), new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult(), "checkin_configuration_conflict");
-            Assert(store.Writes == 0 && store.SecretReads == 6 && quiescence.Released);
+            Assert(store.Writes == 0 && store.SecretReads == readsBeforeSave && quiescence.Released);
         });
     }
 }
@@ -122,9 +128,10 @@ internal sealed class EditingPersistence(CheckInTaskStore initial) : ICheckInPer
 {
     internal CheckInTaskStore Store = initial;
     internal long Revision;
-    internal int SecretReads, Writes, CommitQueries;
+    internal int SecretReads, Writes;
     internal bool LoseReply, CommitBeforeLostReply;
-    internal Guid? Subject, QueriedOperation;
+    internal Guid? Subject;
+    internal readonly List<Guid> QueriedOperations = [];
     internal CredentialMutation[] Mutations = [];
     internal Action? BeforeWrite;
     private CheckInPublication? commit;
@@ -142,7 +149,7 @@ internal sealed class EditingPersistence(CheckInTaskStore initial) : ICheckInPer
         return ValueTask.FromResult(commit!);
     }
     public ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken)
-    { CommitQueries++; QueriedOperation = operationId; return ValueTask.FromResult(commit); }
+    { QueriedOperations.Add(operationId); return ValueTask.FromResult(commit); }
     public ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken) => throw new NotSupportedException();
     public ValueTask<long> WriteRunAsync(Guid operationId, Guid taskId, long expectedRevision, CheckInRun run, CancellationToken cancellationToken) => throw new NotSupportedException();
 }

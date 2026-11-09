@@ -38,7 +38,8 @@ internal static class CacheBoundaryCases
         {
             var docs = new TestDocuments(); docs.Values["settings"] = new(1, "{}"u8.ToArray());
             await using var service = new ActivityCoordinator(docs, new TestNetwork(), new TestClock());
-            await Check.Reject(() => service.InitializeAsync(default)); Check.That(docs.Writes == 0);
+            await Check.Reject(() => service.InitializeAsync(default));
+            Check.That(docs.Values["settings"].Revision == 1 && docs.Values["settings"].Json.Span.SequenceEqual("{}"u8));
         });
         await run("saved-case-alias-rejects-and-preserves-original-bytes", async () =>
         {

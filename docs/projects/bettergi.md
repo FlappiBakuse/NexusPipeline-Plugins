@@ -54,9 +54,9 @@ configuration 输入的 `configurationIntents` 是显式用户意图。每项完
 
 ```text
 node tests/specialized/bettergi/verify.mjs --output <显式仓外报告目录>
-python -B tests/specialized/bettergi/native_verify.py --host-root <实际Host源码> --jint-assembly <已声明Jint.dll> --acornima-assembly <已声明Acornima.dll> --output <同一仓外报告目录>
+python -B tests/specialized/bettergi/native_verify.py --host-root <实际Host源码> --jint-assembly <已声明Jint.dll> --acornima-assembly <已声明Acornima.dll> --output <新的仓外报告目录>
 ```
 
-Node VM 和从实际生产 `BoundedTaskScript.cs` 编译的独立组件探针运行相同 source-derived 用例，报告分别写 node-report.json、native/report.json 和 native/receipt.json，包含命令、退出码、耗时、源码和程序集摘要。它们证明四阶段算法与真实 Jint 解释器组件行为，不代表安装 Host 或真实上游。
+选择 Jint 入口时由它运行 Node 向量。Node VM 和从实际生产 `BoundedTaskScript.cs` 编译的独立组件探针运行同一套用例。报告分别写入 node-report.json、native/report.json 和 native/receipt.json，记录命令、退出码、耗时、源码和程序集摘要，并区分编译准备与两个解释器的行为结果。
 
 以下仍须由正式整合验证：冻结 SDK producer 的消费身份、完整 TaskAdapterExecutor 及安装包接入、当前 Host 的日志读取与声明绑定、持久选择重试/停止 writer/恢复、实际配置 UI，以及真实 0.66.0 发行二进制的隔离配置消费、受控失败、取消与再运行。未运行资格记 NOT_RUN；不要求真实账号日常或真实奖励核验。

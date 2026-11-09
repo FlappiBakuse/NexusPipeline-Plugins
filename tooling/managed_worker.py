@@ -31,12 +31,13 @@ def build_worker(plugin, manifest, output, packages, package_path, env, run):
     log.write_bytes((result.stdout + result.stderr).encode())
     evidence = {"command": command, "exitCode": result.returncode, "elapsedSeconds": time.monotonic() - started,
                 "nativeLog": str(log), "nativeLogSha256": sha(log.read_bytes())}
+    failure = {"status": "FAIL", "build": evidence}
     if result.returncode:
-        return {"status": "FAIL", "build": evidence}
+        return failure
     binary = output / "build/bin" / project.stem / "release"
     entry = PurePosixPath(declaration["workerEntry"])
     if entry.parent.as_posix() != "worker" or not (binary / entry.name).is_file():
-        raise ValueError("Compiled worker does not match the manifest entry")
+        return {**failure, "error": "Compiled worker does not match the manifest entry"}
     files = []
     for file in sorted(binary.iterdir()):
         if file.is_file() and (file.suffix in {".dll", ".exe"} or file.name.endswith((".deps.json", ".runtimeconfig.json"))):
@@ -44,5 +45,5 @@ def build_worker(plugin, manifest, output, packages, package_path, env, run):
     required = {entry.name, entry.stem + ".dll", entry.stem + ".deps.json", entry.stem + ".runtimeconfig.json",
                 manifest["managed"]["entryAssembly"], "NexusPipeline.Extensibility.dll"}
     if not required.issubset({Path(file["path"]).name for file in files}):
-        raise ValueError("Managed worker launch closure is incomplete")
+        return {**failure, "error": "Managed worker launch closure is incomplete"}
     return {"status": "PASS", "build": evidence, "files": files}

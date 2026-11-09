@@ -36,9 +36,11 @@ internal static class CorpusCases
                 if (head["languages"] is JsonObject languages && languages["zh_cn"] is JsonValue locale)
                     Capture(MaaSourceSet.Relative(main, locale.GetValue<string>()));
                 var inputs = new MaaSourceSet(used.Values.ToArray()); var project = new MaaPiCompiler(inputs, name == "MaaStellaSora" ? "mfa" : "mxu").Compile(main);
-                if (project.Tasks.Length != source["taskCount"]!.GetValue<int>()) throw new InvalidDataException("corpus_task_count_mismatch");
+                var taskCount = source["taskCount"]!.GetValue<int>();
+                if (project.Tasks.Length != taskCount) throw new InvalidDataException($"corpus_task_count_mismatch:{taskCount}:{project.Tasks.Length}");
                 var json = JsonSerializer.SerializeToUtf8Bytes(project.Declaration);
-                var projection = MaaCompactProjection.Build(project);
+                var bundle = CorpusBundle.Build(name, project, used.Values, expected, source["blockingDiagnostic"]?.GetValue<string>());
+                var projection = bundle.Pi;
                 if (!JsonNode.DeepEquals(MaaCompactProjection.Restore(projection, project.CompilationFingerprint), project.Declaration))
                     throw new InvalidDataException("corpus_projection_not_lossless");
                 var artifacts = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(reportPath)!, "..", "..", "projection-artifacts"));
@@ -52,10 +54,7 @@ internal static class CorpusCases
                 }
                 Save(projection.ArtifactSha256, projection.Artifact); Save(projection.ViewSha256, projection.View);
                 foreach (var page in projection.Pages) Save(page.Key, page.Value);
-                var bundle = CorpusBundle.Build(name, project, used.Values, expected);
                 Save(bundle.ArtifactSha256, bundle.Artifact); Save(bundle.ExecutionSha256, bundle.Execution); Save(bundle.IndexSha256, bundle.Index);
-                Save(bundle.Pi.ArtifactSha256, bundle.Pi.Artifact); Save(bundle.Pi.ViewSha256, bundle.Pi.View);
-                foreach (var page in bundle.Pi.Pages) Save(page.Key, page.Value);
                 var editor = MaaEditorProjection.Build(bundle); var publicEditor = MaaEditorProjection.Restore(editor);
                 BundleCases.Assert(publicEditor["schema"]!["task"]!.AsArray().Count == project.Tasks.Length &&
                     publicEditor["schema"]!["option"]!.AsObject().Count == project.Options.Count &&
@@ -74,9 +73,8 @@ internal static class CorpusCases
                     bundle.ExecutionSha256, bundle.SemanticFingerprint, bundleSnapshotFingerprint = bundle.SnapshotFingerprint,
                     editorIndexBytes = editor.Index.Length, editorIndexSha256 = editor.IndexSha256, editorPages = editor.Pages.Count,
                     editorPageBytes = editor.Pages.Values.Sum(page => page.Length), editorTranslationCount = publicEditor["translations"]!.AsObject().Count,
-                    bundleQualification = "Complete locked PI with explicit synthetic saved profile; one enabled real PI task plus all disabled occurrences retained; no upstream user configuration or execution",
-                    sdkProviderQualification = "Actual SDK ISelectedSource/IProjectCompiler with a readonly fixture of the locked inventory and explicit synthetic configuration; identical semantic fingerprint; not installed Host integration",
-                    qualification = "Complete locked local PI closure interpreted by actual C# compiler; not Host/Jint/native integration" });
+                    bundle.CanExecute, bundle.BlockingDiagnostics,
+                    qualification = "Read-only PI and SDK compilation with a synthetic saved profile and one enabled task" });
             });
         }
         File.WriteAllText(reportPath, JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }) + "\n");

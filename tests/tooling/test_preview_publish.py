@@ -21,7 +21,6 @@ class PreviewServer(stable_fixture.GitServer):
         self.records = {}
         self.next_id = 100
         self.fail = None
-        self.uploaded = []
         self.writes = []
         self.old_catalog = None
         if existing:
@@ -79,10 +78,6 @@ class PreviewServer(stable_fixture.GitServer):
 
     def upload(self, repository, release_id, path, name):
         self.writes.append(('upload', name))
-        self.uploaded.append(name)
-        if self.fail == 'package' and name.endswith('.zip'):
-            self.fail = None
-            raise ValueError('Controlled package failure')
         if self.fail == 'catalog' and name == 'catalog.json':
             self.fail = None
             raise ValueError('Controlled catalog failure')
@@ -95,6 +90,9 @@ class PreviewServer(stable_fixture.GitServer):
             self.fail = None
             self.advance()
         return result
+
+    def contents(self):
+        return {item['record']['name']: item['raw'] for item in self.records.values()}
 
     def catalog(self):
         values = [item['raw'] for item in self.records.values() if item['record']['name'] == 'catalog.json']
@@ -121,15 +119,16 @@ class PreviewPublishTests(unittest.TestCase):
             self.base.scope / ('preview-publication-' + str(self.round)), publish)
 
     def test_publishes_preview(self):
+        before = self.server.contents()
         result = self.publish()
         self.assertEqual('PUBLISHED', result['status'])
         self.assertTrue(result['remoteWritten'])
         self.assertEqual((self.base.args.output / 'catalog.json').read_bytes(), self.server.catalog())
-        names = self.server.uploaded
-        self.assertTrue(names[0].endswith('.zip'))
-        self.assertTrue(names[1].startswith('preview-publisher-'))
-        self.assertEqual('catalog.json', names[2])
-        self.assertIn('retained-package.zip', [item['record']['name'] for item in self.server.records.values()])
+        package = self.base.args.output / self.data['candidate']['release']['packageMetadata']['Alpha']['path']
+        current = self.server.contents()
+        self.assertEqual(package.read_bytes(), current[package.name])
+        self.assertEqual(before['retained-package.zip'], current['retained-package.zip'])
+        self.assertLess(self.server.writes.index(('upload', package.name)), self.server.writes.index(('upload', 'catalog.json')))
 
     def test_preserves_readonly(self):
         original = self.server.catalog()
@@ -165,13 +164,18 @@ class PreviewPublishTests(unittest.TestCase):
         self.assertNotIn(('delete', 'catalog.json'), self.server.writes)
 
     def test_restores_catalog(self):
-        for fault in ['catalog', 'corrupt']:
+        package = self.base.args.output / self.data['candidate']['release']['packageMetadata']['Alpha']['path']
+        for fault, reason in [('catalog', 'Controlled catalog failure'), ('corrupt', 'Immutable preview asset bytes differ')]:
             with self.subTest(fault=fault):
                 server = PreviewServer(self.base.fixture, self.base.args.source_commit)
+                before = server.contents()
                 server.fail = fault
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(ValueError, reason):
                     self.publish(server=server)
-                self.assertEqual(server.old_catalog, server.catalog())
+                current = server.contents()
+                self.assertEqual(before, {name: current[name] for name in before})
+                self.assertEqual(package.read_bytes(), current[package.name])
+                self.assertEqual('PUBLISHED', self.publish(server=server)['status'])
 
     def test_restores_initial(self):
         server = PreviewServer(self.base.fixture, self.base.args.source_commit, existing=False)

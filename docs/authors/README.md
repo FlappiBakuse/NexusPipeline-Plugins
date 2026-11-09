@@ -51,6 +51,8 @@ python -B tooling/build_managed_slice.py --extension live-screenshot --sdk-recei
 python -B tooling/build_specialized_slice.py --extension baah --sdk-receipt <同一回执> --output <仓外specialized根>
 ```
 
+切片回执把 adapter 语法归入 lint。managed 主程序集和可选 worker 的编译归入 typecheck，完整切片产物归入 build。实际执行验证单独记录。
+
 只构建一个受影响的前端模块：
 
 ```text
@@ -64,6 +66,10 @@ python -B tooling/package_extension.py --build-receipt <构建回执> --sdk-rece
 ```
 
 数据专项和没有前端的 `emulator-support` 不传 `--frontend-receipt`。Maa 直驱另外需要匹配 `runtime.release.json` 的实际 `--runtime-receipt`，只在该插件产物属于交付范围时准备。不能为避免准备成本伪造回执或丢弃原生闭包。
+
+前端 `build-receipt.json` 记录本次准备、lint、类型检查和构建结果。失败回执拒绝打包，并引用上次成功回执供后续构建验证和复用。
+
+打包入口生成 ZIP 后核对实际成员和字节，记录 build 结果。成员顺序与时间变化下的确定性由独立测试验证。
 
 ## 验证只证明它实际覆盖的层
 

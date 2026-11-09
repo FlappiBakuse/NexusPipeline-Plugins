@@ -1,23 +1,5 @@
 import crypto from 'node:crypto';
-import { cases as zzzCases } from './zzzonedragon/cases.mjs';
-
 const sha = text => crypto.createHash('sha256').update(text).digest('hex');
-const diagnosticIndices = {
-  "oknte_game_target_path_required": 2,
-  "okww_game_target_path_required": 1,
-  "okww_stamina_option_invalid": 1,
-  "zzzonedragon_bound_game_path_required": 1,
-  "zzzonedragon_single_instance_global_required": 1,
-  "maaend_controller_default_used": 1,
-  "maaend_resource_default_used": 1,
-  "maaend_other_instance_schedule_ambiguous": 3,
-  "maaend_retired_task_not_imported": 1,
-  "maaend_task_incompatible": 1,
-  "maas_missing_profile_default_used": 1,
-  "maas_new_defaults_require_native_materialization": 1,
-  "maas_finish_action_requires_host_policy": 2,
-  "maas_computer_operation_requires_host_policy": 2
-};
 
 function edit(sample, resourceId, change) {
   const resource = sample.resources.find(item => item.resourceId === resourceId);
@@ -40,7 +22,7 @@ function launch(sample, manual) {
       LaunchGamePCLauncherExe: { type: 'input', values: { LauncherExe: 'not-a-launcher.exe' } } } : {} }]; });
 }
 
-function nativeCases(add, invoke) {
+function nativeCases(add, rows) {
   for (const [key, value, code] of [
     ['ADB_DIRECT_USE_SERIAL_NUMBER', 'serial', 'baah_adb_mode_invalid'],
     ['ADB_DIRECT_USE_SERIAL_NUMBER', true, 'baah_direct_adb_serial_not_endpoint_proof'],
@@ -68,7 +50,7 @@ function nativeCases(add, invoke) {
   add('zzzonedragon', 'zzzonedragon_bound_game_path_required', sample => edit(sample, 'account:01', value => { value.game_path = ''; }));
   add('zzzonedragon', 'zzzonedragon_single_instance_global_required', sample => { sample.resources = sample.resources.filter(row => row.resourceId !== 'global'); });
   add('zzzonedragon', 'zzzonedragon_legacy_group_read_only', sample => {
-    const row = zzzCases(invoke).find(item => item.name === 'legacy projected in native migration order read only');
+    const row = rows.find(item => item.name === 'legacy projected in native migration order read only');
     sample.resources = structuredClone(row.input.resources);
   });
 }
@@ -98,7 +80,7 @@ function maaCases(add) {
   }, 'maas_controller_resource_required');
 }
 
-export function configurationDiagnosticCases(extensionId, fixture, invoke) {
+export function configurationDiagnosticCases(extensionId, fixture, rows) {
   const vectors = [];
   function add(id, code, change, error) {
     if (id !== extensionId) return;
@@ -106,10 +88,10 @@ export function configurationDiagnosticCases(extensionId, fixture, invoke) {
     change(sample);
     const input = { format: 'nexus.task.adapter', version: 1, direction: 'request', extensionId: id,
       phase: 'configuration', operationId: '009ca3c5-6b90-40e2-a981-53a33ab5c43f', resources: sample.resources };
-    vectors.push({ name: code, input, sourceFiles: sample.sourceFiles, expectedDiagnosticCode: code,
-      ...(error ? { error } : {}), expect: { ['diagnostics.' + (diagnosticIndices[code] ?? 0) + '.code']: code } });
+    vectors.push({ name: code, input, sourceFiles: sample.sourceFiles,
+      ...(error ? { error } : { expectedDiagnosticCode: code }) });
   }
-  nativeCases(add, invoke);
+  nativeCases(add, rows);
   maaCases(add);
   for (const id of ['maaend', 'maas']) for (const missing of [false, true])
     add(id, id + (missing ? '_declared_import_unavailable' : '_unknown_import_preserved'), sample => {

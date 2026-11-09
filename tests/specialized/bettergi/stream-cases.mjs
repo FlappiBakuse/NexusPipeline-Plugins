@@ -80,7 +80,7 @@ export function configurationCases(invoke) {
     genshinStartConfig: { installPath: 'D:\\Games\\GenshinImpact.exe' }, accountData: { opaque: 'preserved' } }, 'extra-user-config')] });
   extra.configurationIntents = [intent(extra, 'extra-user-config', [{ selector: ['selectedOneDragonFlowConfigName'], expected: '其他', value: '日常' }])];
   add('select explicitly bound existing configuration', extra, { 'configPatches.0.resourceId': 'extra-user-config',
-    'configPatches.0.edits.0.value': '日常', 'diagnostics.0.severity': 'warning' });
+    'configPatches.0.edits.0.value': '日常', 'diagnostics.bettergi_selected_configuration_mismatch': 'warning' });
   const desiredUnknown = structuredClone(extra); desiredUnknown.configurationIntents[0].edits[0].value = '未绑定的配置';
   add('configuration selection cannot invent unbound profile', desiredUnknown, {}, 'bettergi_configuration_edit_not_supported');
   for (const [name, mutate, error] of [

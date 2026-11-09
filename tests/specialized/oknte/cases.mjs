@@ -21,7 +21,7 @@ const patch = (input, edits, resourceId = 'main') => ({ format: 'nexus.config.pa
 export function cases(invoke) {
   const rows = [], add = (name, input, expect = {}, error) => rows.push({ name, input, expect, ...(error ? { error } : {}) });
   const observe = (ids, lines, extras = {}) => { const document = make(Array.isArray(ids) ? ids : [ids]);
-    return request('observe', document, { tasks: invoke(request('discover', document)).tasks, logEvents: events(lines), logComplete: true, ...extras }); };
+    return request('observe', document, { tasks: extras.tasks ?? invoke(request('discover', document)).tasks, logEvents: events(lines), logComplete: true, ...extras }); };
   add('retry observation excludes prior completed routine', observe(['coffee', 'daily_claim'],
     [rootStart, '开始任务: 日常领取', '任务完成: 日常领取', rootEnd], { selectedTaskIds: ['oknte:daily_claim'] }),
     { ...state('daily_claim', 'succeeded'), ...state('coffee', 'unknown') });
@@ -29,25 +29,23 @@ export function cases(invoke) {
   add('projection preserves original exclusive switch while distinguishing normalized selection', request('discover', exclusiveSaved),
     { 'tasks.1.isEnabled': true, 'tasks.1.isSelected': false, 'tasks.1.projection.selector': selection('daily_anomaly_hunter') });
   for (const [id, title] of entries) {
-    add('discover routine ' + id, request('discover', make([id])), { ['tasks.' + index(id) + '.taskId']: 'oknte:' + id,
+    const document = make([id]), discover = request('discover', document), tasks = invoke(discover).tasks;
+    add('discover routine ' + id, discover, { ['tasks.' + index(id) + '.taskId']: 'oknte:' + id,
       ['tasks.' + index(id) + '.isSelected']: true, ['tasks.' + index(id) + '.retrySafety']: 'safe' });
-    for (const [name, lines, result] of [['paired completion', [rootStart, '开始任务: ' + title, '任务完成: ' + title, rootEnd], 'succeeded'],
+    for (const [name, lines, result, kind] of [['paired completion', [rootStart, '开始任务: ' + title, '任务完成: ' + title, rootEnd], 'succeeded'],
       ['paired failure', [rootStart, '开始任务: ' + title, '任务失败: ' + title, rootEnd], 'failed'],
-      ['language unsupported', [rootStart, '任务不支持当前语言, 跳过: ' + id, rootEnd], 'succeeded'],
-      ['None is native skipped result', [rootStart, '开始任务: ' + title, rootEnd], 'succeeded'],
+      ['language unsupported', [rootStart, '任务不支持当前语言, 跳过: ' + id, rootEnd], 'succeeded', 'inapplicable'],
+      ['None is native skipped result', [rootStart, '开始任务: ' + title, rootEnd], 'succeeded', 'inapplicable'],
       ['unpaired success', [rootStart, '任务完成: ' + title, rootEnd], 'unknown'],
       ['outer completion only', [rootStart, rootEnd], 'unknown'],
       ['outside daily scope', ['开始任务: ' + title, '任务完成: ' + title], 'unknown'],
       ['late formal failure', [rootStart, '开始任务: ' + title, '任务完成: ' + title, rootEnd, '任务失败: ' + title], 'failed']])
-      add(name + ' ' + id, observe(id, lines), state(id, result));
-    const document = make([id]), tasks = invoke(request('discover', document)).tasks;
+      add(name + ' ' + id, observe(id, lines, { tasks }), {
+        ...state(id, result), ...(kind ? { ['observations.' + index(id) + '.completionKind']: kind } : {})
+      });
     add('all daily failed items eligible finite subset ' + id, request('retry', document, { tasks, idempotencyKey: 'finite',
       observations: [{ taskId: 'oknte:' + id, state: 'failed', reasonCode: 'synthetic' }] }), { selectedTaskIds: ['oknte:' + id] });
   }
-  add('language unsupported is inapplicable', observe('coffee', [rootStart, '任务不支持当前语言, 跳过: coffee', rootEnd]), {
-    ...state('coffee', 'succeeded'), ['observations.' + index('coffee') + '.completionKind']: 'inapplicable' });
-  add('None is inapplicable without claiming actual work', observe('coffee', [rootStart, '开始任务: 一咖舍', rootEnd]), {
-    ...state('coffee', 'succeeded'), ['observations.' + index('coffee') + '.completionKind']: 'inapplicable' });
   add('summary text cannot produce task success', observe('daily_claim', [rootStart, '成功 1 项 | 失败 0 项 | 跳过 0 项', '✅ 成功', '日常领取', rootEnd]), state('daily_claim', 'unknown'));
   add('child standalone owner cannot close daily item', observe('daily_claim', [rootStart, '开始任务: 日常领取', { owner: 'DailyClaimTask', text: '任务完成: 日常领取' }]), state('daily_claim', 'unknown'));
   add('scoped item exception sticky despite success', observe('daily_claim', [rootStart, '开始任务: 日常领取', { level: 'ERROR', text: '任务运行失败: 日常领取 Traceback (most recent call last):' }, '任务完成: 日常领取', rootEnd]), state('daily_claim', 'failed'));
@@ -70,8 +68,10 @@ export function cases(invoke) {
   }
   const unknown = make(); unknown['Routine Items'].push({ id: 'future', enabled: true, progress: 9 });
   add('unknown row retained read only', request('discover', unknown), { 'tasks.8.taskId': 'oknte:unknown/8/future', 'tasks.8.isEnabled': true, 'tasks.8.isSelected': false });
-  const unrelated = request('discover'); unrelated.resources.push(resource('unparseable standalone configuration', 'CoffeeTask'));
-  add('standalone config never supplies routine child options', unrelated, { tasks: invoke(request('discover')).tasks });
+  const unrelated = request('discover', make(['coffee']));
+  unrelated.resources.push(resource('unparseable standalone configuration', 'CoffeeTask'));
+  add('standalone config cannot alter routine selection', unrelated, { 'tasks.2.taskId': 'oknte:coffee', 'tasks.2.isSelected': true,
+    'tasks.2.retrySafety': 'safe', 'tasks.2.projection.selector': selection('coffee') });
   const streaming = observe('daily_claim', [rootStart, '开始任务: 日常领取'], { logComplete: false }), checkpoint = invoke(streaming).observationCheckpoint;
   add('bounded batches preserve current item', { ...streaming, observationCheckpoint: checkpoint, logEvents: events(['任务完成: 日常领取', rootEnd], { first: 3 }), logComplete: true }, state('daily_claim', 'succeeded'));
   add('gap cannot infer None or completed', { ...streaming, observationCheckpoint: checkpoint, logEvents: events([rootEnd], { first: 4 }), logComplete: true }, state('daily_claim', 'unknown'));
@@ -96,13 +96,19 @@ export function cases(invoke) {
     add('CAS binding reject ' + field, input, {}, 'oknte_configuration_intent_unbound');
   }
   const childValues = [['daily_anomaly', '任务类型', '经验与甲硬币', '空幕'], ['daily_anomaly', '空幕序号', 1, 6], ['daily_anomaly', '目标消耗体力', 180, 0],
-    ['daily_anomaly_hunter', '追猎目标', '音霸魔王', '斑蝶'], ['coffee', '补货时长', 'auto', '24小时'], ['coffee', '优化商品', false, true],
+    ['daily_anomaly_hunter', '追猎目标', '音霸魔王', '斑蝶'], ['coffee', '优化商品', false, true],
     ['daily_claim', '邮件', true, false], ['cinema_date', '约会目标', '', '目标'], ['fountain', '签到方式', '签到', '捞币'], ['furniture', '挑战玛门', true, false]];
   for (const [id, key, before, after] of childValues) {
     const input = request('configuration'); input.resources.push(resource({ [id]: { [key]: before, nativeProgress: 7 } }, 'routine-configs'));
     const p = patch(input, [{ selector: [id, key], expected: before, value: after }], 'routine-configs'); input.configurationIntents = [p];
     add('dedicated source option CAS ' + id + '/' + key, input, { configPatches: [p] });
   }
+  const coffee = request('configuration', make(['coffee']));
+  coffee.resources.push(resource({ coffee: { '补货时长': 'auto' } }, 'routine-configs'),
+    resource({ coffee: { '补货时长': '2小时' } }, 'CoffeeTask'));
+  const coffeePatch = patch(coffee, [{ selector: ['coffee', '补货时长'], expected: 'auto', value: '24小时' }], 'routine-configs');
+  coffee.configurationIntents = [coffeePatch];
+  add('routine coffee edit binds dedicated config despite standalone resource', coffee, { configPatches: [coffeePatch] });
   for (const [id, key, before, after] of [['coffee', '补货时长', 'auto', '12小时'], ['daily_anomaly', '空幕序号', 1, 7],
     ['gift', 'nativeProgress', 1, 0], ['daily_claim', '邮件', true, 'true']]) {
     const input = request('configuration'); input.resources.push(resource({ [id]: { [key]: before } }, 'routine-configs'));

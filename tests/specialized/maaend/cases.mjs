@@ -51,7 +51,7 @@ export function cases(invoke) {
     const doc = document([task(), task('unknown', { taskName: 'FutureTask', enabled, nested: { retain: true } })]);
     add('unknown ' + enabled + ' retained without projection', input('discover', doc),
       { 'tasks.1.title': 'FutureTask', 'tasks.1.isEnabled': enabled, 'tasks.1.isSelected': false,
-        'tasks.1.retrySafety': 'unknown', 'diagnostics.0.severity': 'warning' });
+        'tasks.1.retrySafety': 'unknown', 'diagnostics.maaend_unknown_task_preserved': 'warning' });
   }
   const frozen = invoke(input('discover'), sources).tasks;
   for (const [start, end] of [['任务开始', '任务完成'], ['Task started', 'Task completed'], ['任務開始', '任務完成'],
@@ -86,13 +86,14 @@ export function cases(invoke) {
   add('ambiguous interface roots rejected', input('discover'), {}, 'ambiguous_or_missing', { ...sources, 'assets/interface.json': sources['interface.json'] });
   const wrong = document(); wrong.settings.autoStartInstanceId = 'missing';
   add('missing automatic instance has a blocking discovery diagnostic without guessing', input('discover', wrong),
-    { tasks: [], 'diagnostics.0.code': 'mxu_autostart_invalid', 'diagnostics.0.severity': 'blocking' });
+    { tasks: [], 'diagnostics.mxu_autostart_invalid': 'blocking' });
   add('missing automatic instance does not propose a configuration rewrite', input('configuration', wrong),
-    { configPatches: [], 'diagnostics.0.code': 'mxu_autostart_invalid', 'diagnostics.0.severity': 'blocking' });
+    { configPatches: [], 'diagnostics.mxu_autostart_invalid': 'blocking' });
   for (const phase of ['observe', 'retry'])
     add('missing automatic instance cannot enter ' + phase, input(phase, wrong), {}, 'auto_start_instance_required');
   add('duplicate saved identity rejected', input('discover', document([task(), task()])), {}, 'task_identity_invalid');
   const importSources = metadata(); importSources['interface.json'].import = ['../../outside.json'];
-  add('unknown import warning preserves available tasks', input('discover'), { 'diagnostics.0.code': 'maaend_unknown_import_preserved' }, undefined, importSources);
+  add('unknown import warning preserves available tasks', input('discover'),
+    { 'tasks.0.taskId': 'maaend:stable/t', 'diagnostics.maaend_unknown_import_preserved': 'warning' }, undefined, importSources);
   return rows;
 }

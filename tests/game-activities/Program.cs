@@ -1,20 +1,27 @@
 using System.Text.Json;
 using NexusPipeline.Extensions.GameActivities;
 
+if (args is not [_, _] and not ["--source-fields", _, _]) return 2;
+var (fixtures, report) = (args[^2], args[^1]);
 var cases = new List<object>();
+var failed = false;
 async Task Run(string name, Func<Task> action)
 {
     try { await action(); cases.Add(new { name, status = "PASS" }); }
-    catch (Exception error) { cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
+    catch (Exception error) { failed = true; cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
 }
-await ModelCases.RunAsync(Run, args[0]);
-await CoordinatorCases.RunAsync(Run);
-await SdkCases.RunAsync(Run);
-await ViewFixture.WriteAsync(args[0], Path.Combine(Path.GetDirectoryName(args[1])!, "view-model.json"));
+await ModelCases.SourceFieldsAsync(Run, fixtures);
+if (args.Length == 2)
+{
+    await ModelCases.RunAsync(Run);
+    await CoordinatorCases.RunAsync(Run);
+    await SdkCases.RunAsync(Run);
+}
+await ViewFixture.WriteAsync(fixtures, Path.Combine(Path.GetDirectoryName(report)!, "view-model.json"));
 var json = JsonSerializer.Serialize(cases, new JsonSerializerOptions { WriteIndented = true });
-await File.WriteAllTextAsync(args[1], json);
+await File.WriteAllTextAsync(report, json);
 Console.WriteLine(json);
-return cases.Any(item => JsonSerializer.Serialize(item).Contains("\"FAIL\"", StringComparison.Ordinal)) ? 1 : 0;
+return cases.Count > 0 && !failed ? 0 : 1;
 
 internal static class Check
 {

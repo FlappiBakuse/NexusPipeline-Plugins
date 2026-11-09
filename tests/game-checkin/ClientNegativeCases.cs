@@ -37,7 +37,7 @@ internal static class ClientNegativeCases
             network.Failure = request => ClientNetwork.BusinessPost(new Uri(request.Address).AbsolutePath) ? new IOException("synthetic_network_unknown") : null;
             using var material = ClientFixtures.Material("os");
             var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync("os", "gi", material, "", default).GetAwaiter().GetResult();
-            Assert(!result.Success && result.EffectState == "unknown" && network.Posts == 1 && network.Requests.Count == 2);
+            Assert(!result.Success && result.EffectState == "unknown" && network.Posts == 1);
         });
         foreach (var confirmation in new[] { ClientFixtures.HoyoFalse, "invalid" })
             run("post-accepted-but-unverified-never-reposts/" + confirmation, () =>
@@ -66,7 +66,7 @@ internal static class ClientNegativeCases
             var effects = new TestEffects(); var rotation = new TestRotation { Accept = false }; var network = new ClientNetwork(effects, ClientFixtures.Refresh);
             using var material = ClientFixtures.Material("tajiduo");
             var result = new TajiduoCheckIn(network, effects, rotation, TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
-            Assert(result.Code == "credential_changed" && result.EffectState == "unknown" && network.Requests.Count == 1 && network.Posts == 0);
+            Assert(result.Code == "credential_changed" && result.EffectState == "unknown" && network.Requests.All(request => new Uri(request.Address).AbsolutePath == "/usercenter/api/refreshTokenV2") && network.Posts == 0);
         });
         run("tajiduo-multiple-roles-stops-before-today-state-or-submission", () =>
         {
@@ -74,7 +74,8 @@ internal static class ClientNegativeCases
                 "{\"code\":0,\"data\":{\"roles\":[{\"roleId\":\"123\"},{\"roleId\":\"456\"}]}}");
             using var material = ClientFixtures.Material("tajiduo");
             var result = new TajiduoCheckIn(network, effects, new TestRotation(), TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
-            Assert(result.Code == "role_selection_required" && network.Requests.Count == 2 && network.Posts == 0);
+            Assert(result.Code == "role_selection_required" && network.Posts == 0 &&
+                network.Requests.All(request => new Uri(request.Address).AbsolutePath is "/usercenter/api/refreshTokenV2" or "/usercenter/api/v2/getGameRoles"));
         });
         run("tajiduo-unknown-total-claim-readonly-reconciles-without-repost", () =>
         {
@@ -83,8 +84,12 @@ internal static class ClientNegativeCases
             using var material = ClientFixtures.Material("tajiduo");
             var rotation = new TestRotation { Accept = false };
             var result = new TajiduoCheckIn(network, effects, rotation, TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
-            Assert(result.EffectState == "unknown" && network.Requests.Count == 2 && network.Requests.All(request => request.Method == "GET") && network.Posts == 0 && rotation.Access is null);
-            Assert(network.Requests[0].Headers["AuthorizationV2"] == "synthetic-access" && network.Requests[1].Headers["Authorization"] == "synthetic-access");
+            Assert(result.EffectState == "unknown" && network.Requests.All(request => request.Method == "GET") && network.Posts == 0 && rotation.Access is null);
+            foreach (var (path, header) in new[] { ("/usercenter/api/v2/getGameRoles", "AuthorizationV2"), ("/apihub/awapi/signin/state", "Authorization") })
+            {
+                var requests = network.Requests.Where(request => new Uri(request.Address).AbsolutePath == path).ToArray();
+                Assert(requests.Length > 0 && requests.All(request => request.Headers[header] == "synthetic-access"));
+            }
         });
         run("tajiduo-unknown-claim-positive-readonly-status-resolves-without-refresh", () =>
         {

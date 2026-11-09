@@ -64,7 +64,7 @@ fixture 场景必须是现役完整名称；`all` 只在所有该插件场景都
 node tests/specialized/component.mjs <Plugins绝对根> oknte <新的仓外报告根>
 ```
 
-该入口按插件选择，不支持 case 参数。若计划已经选择实际 Host/Jint 入口，则不要先单独运行上述命令，因为后者会在内部执行 Node 向量：
+该入口按插件选择，不支持 case 参数。回执分别记录装配、向量准备和 Node 行为。准备失败时 Node test 为 `NOT_RUN`，Jint 入口也不执行探针编译或 Jint 行为。Jint 回执分开记录探针编译、输入准备与逐案结果，缺少有效回执时 Jint test 为 `NOT_RUN`。若计划已选择实际 Host/Jint 入口，直接运行下列命令，由它执行 Node 向量：
 
 ```text
 python -B tests/specialized/verify.py --extension oknte --host-root <Host根> --jint-assembly <实际Jint.dll> --acornima-assembly <实际Acornima.dll> --output <报告根> --work-root <仓外编译根>
@@ -76,7 +76,9 @@ python -B tests/specialized/verify.py --extension oknte --host-root <Host根> --
 python -B tests/specialized/bettergi/native_verify.py --host-root <Host根> --jint-assembly <实际Jint.dll> --acornima-assembly <实际Acornima.dll> --output <新的仓外报告根>
 ```
 
-它内部调用 `verify.mjs`；不存在 `tests/specialized/bettergi/verify.py`。共享发现脚本 `tests/specialized/source-discovery.mjs` 在基线没有 case 选择器，并存在已知陈旧期望；只有本批已修复其相关 oracle/选择后，才把相应行为列入计划，不将“它原来全绿”作为新预期。
+它内部调用 `verify.mjs`。共享来源发现使用 `node tests/specialized/source-discovery.mjs <新的仓外报告根>`，按八个专项执行目录、候选、资源和启动参数用例。回执分别记录 adapter 装配准备和行为结果。
+
+诊断翻译用 `node tests/specialized/diagnostic-locales.mjs <Plugins绝对根> <新的仓外报告根>`。它按插件装配一次 adapter，并核对配置和发现实际返回的诊断码是否具备中英文文案。回执分别记录夹具准备与 `test`。准备失败时测试记为 `NOT_RUN`。翻译验证通过后校验源输入。若输入变化，回执整体失败，`inputsUnchanged` 为 `false`，`test` 保留实际结果。
 
 ### managed 业务与 SDK
 
@@ -86,7 +88,7 @@ python -B tests/specialized/bettergi/native_verify.py --host-root <Host根> --ji
 python -B tests/game-activities/verify.py --sdk-receipt <同源SDK消费者回执> --cache <仓外缓存根> --output <报告根>
 ```
 
-签到的纯策略入口为 `tests/game-checkin/verify.py --output <报告根> --cache <缓存根>`；确需 SDK 适配时加 `--sdk-receipt <回执>`，确需原包程序集消费时再加实际 `--package-receipt <回执>`。这些入口基线没有方法级筛选；纯策略、SDK、原包是按缺口升级的选择，不要求每次三层重跑。
+签到的纯策略入口为 `tests/game-checkin/verify.py --output <报告根> --cache <缓存根>`。加 `--sdk-receipt <回执>` 选择 SDK 适配用例，同时指定 `--package-receipt <回执>` 时仅运行原包入口用例。三种模式独立记录编译准备与行为测试，SDK 和原包模式在执行前核对 SDK 程序集字节。
 
 构建/打包见[作者入口](../authors/README.md#实际构建入口)。只需文档或受控算法证明时，不自动准备真实厂商或完整候选安装。
 
@@ -109,3 +111,9 @@ SDK 输入按真实资格选择：现役 Host `--compile-only` 仍构建独立 c
 当选定产品假设已有最低有效证据、需要的产物已形成、文档同步，停止可选验证并交付。实际产品执行与正式发布属于不同操作，构建通过不自动触发远端发布。
 
 源码快照包括仓内docs。业务说明尽量在编码阶段定稿，真实验证结果默认写仓外；验证后纯文档修订单列docs-only delta，并分别保留产物冻结输入与当前工作树身份。不要为了更新一行PASS默认重跑产品，也不把旧回执冒充新全树。只有交付确需含新文档的产物时，补必要的产物准备和文档检查。
+
+## SDK 消费者与命名职责
+
+SDK 独立消费者只编译真实公开类型及调用，归 typecheck；不执行自造 DTO 往返或反射方法存在性断言。SDK 默认打包入口另执行前端生命周期行为测试；`--compile-only` 跳过该行为测试。回执的 `runtimeConsumers` 固定为 NOT_RUN，`lifecycle` 按实际执行记录，`validationMode` 为 compile-only 或 lifecycle。包内容、来源与消费者使用的实际 SDK 身份继续核验。
+
+命名检查属于 lint：最多四个单词，含完整介词词元时允许五个；六词始终超限。接口 I 前缀及现有缩写拆分保持原规则。介词按检查器显式词表匹配，`within` 可匹配，`input` 中的 `in` 不匹配。Python 文件与声明、C# 类型与方法、前端 AST 声明沿用各自现有检查范围。固定平台 API 超限仍保留逐项例外。

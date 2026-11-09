@@ -97,7 +97,7 @@ export function cases(invoke) {
   add('native cursor retains range', request('discover', cursor), { 'tasks.0.isSelected': false, 'tasks.1.isSelected': true, 'tasks.1.retrySafety': 'unknown' });
   cursor.NextTaskId = 'missing';
   add('unknown cursor cannot expand range', request('discover', cursor), { 'tasks.0.isSelected': false, 'tasks.1.isSelected': false });
-  add('unknown cursor diagnosed', request('configuration', cursor), { 'diagnostics.0.code': 'bettergi_cursor_unknown', 'diagnostics.0.severity': 'blocking' });
+  add('unknown cursor diagnosed', request('configuration', cursor), { 'diagnostics.bettergi_cursor_unknown': 'blocking' });
   for (const action of ['', '无', '关闭游戏', '关闭软件', '关闭游戏和软件']) {
     const document = configuration(); document.CompletionAction = action;
     add('supported completion action preserved ' + action, request('configuration', document), { configPatches: [] });
@@ -108,7 +108,7 @@ export function cases(invoke) {
   const noRevision = request('configuration', unsafe); delete noRevision.resources[0].revision;
   add('missing revision cannot propose mutation', noRevision, { configPatches: [] });
   const additional = request('configuration', configuration(), { resources: [resource(configuration()), resource({ selectedOneDragonFlowConfigName: '其他' }, 'extra-user-config')] });
-  add('explicit extra config mismatch diagnosed', additional, { 'diagnostics.0.code': 'bettergi_selected_configuration_mismatch' });
+  add('explicit extra config mismatch diagnosed', additional, { 'diagnostics.bettergi_selected_configuration_mismatch': 'blocking' });
   const document = configuration(), tasks = invoke(request('discover', document)).tasks;
   for (const state of ['unknown', 'partial', 'succeeded'])
     add('no automatic replay for ' + state, request('retry', document, { tasks, idempotencyKey: 'finite',

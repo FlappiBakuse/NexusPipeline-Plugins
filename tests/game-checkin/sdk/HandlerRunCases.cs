@@ -13,13 +13,16 @@ internal static class HandlerRunCases
                 Assert(result.BusinessOutcome == "failed" && result.ReasonCode == "checkin_failed" && result.Invocation == fixture.Invocation);
                 Assert(fixture.Submission.Calls == 1 && fixture.Submission.Sent!.Invocation == fixture.Invocation &&
                     fixture.Submission.Sent.OperationId == fixture.Invocation.NotificationOperationId && fixture.Submission.Sent.Body.Contains("未确认", StringComparison.Ordinal));
-                Assert(fixture.Store.Run!.Status == "failed" && fixture.Store.Run.Trigger == (planned ? "scheduled" : "manual") && fixture.Store.CredentialReads == 1);
+                Assert(fixture.Store.Run!.Status == "failed" && fixture.Store.Run.Trigger == (planned ? "scheduled" : "manual") &&
+                    fixture.Store.Run.Results.Single().Code == "credential_not_configured");
+                Assert(fixture.Store.CredentialReads.Count > 0 && fixture.Store.CredentialReads.All(read => read == (fixture.Task.Id, "kuro")));
                 if (!planned) Assert(!fixture.Task.Enabled && fixture.Task.Schedules.Length == 0);
             });
         await run("actual-handler-notification-acceptance-failure-preserves-business-result-and-does-not-repeat", async () => {
             var fixture = new Fixture(false); fixture.Submission.Fail = true; var result = await fixture.ExecuteAsync();
             Assert(result.BusinessOutcome == "failed" && result.ReasonCode == "checkin_notification_unknown" && fixture.Submission.Calls == 1 &&
-                fixture.Store.Run!.Status == "failed" && fixture.Store.CredentialReads == 1);
+                fixture.Store.Run!.Status == "failed" && fixture.Store.Run.Results.Single().Code == "credential_not_configured");
+            Assert(fixture.Store.CredentialReads.Count > 0 && fixture.Store.CredentialReads.All(read => read == (fixture.Task.Id, "kuro")));
         });
     }
     private sealed class Fixture
@@ -51,10 +54,10 @@ internal static class HandlerRunCases
     private sealed class Store(CheckInTask task) : ICheckInPersistence
     {
         internal CheckInRun? Run;
-        internal int CredentialReads;
+        internal readonly List<(Guid, string)> CredentialReads = [];
         public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInTaskSnapshot(11, new() { Tasks = [task] }));
         public ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken)
-        { CredentialReads++; return ValueTask.FromResult(new CheckInCredentialRead(0, false, null)); }
+        { CredentialReads.Add((taskId, platform)); return ValueTask.FromResult(new CheckInCredentialRead(0, false, null)); }
         public ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInRecentRunSnapshot(0, Run));
         public ValueTask<long> WriteRunAsync(Guid operationId, Guid taskId, long expectedRevision, CheckInRun run, CancellationToken cancellationToken)
         { Run = run; return ValueTask.FromResult(expectedRevision + 1); }

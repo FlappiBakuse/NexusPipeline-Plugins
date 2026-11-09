@@ -20,7 +20,10 @@ internal static class CaptureCases
                 {
                     var token = platform == "cn" ? "cookie_token_v2" : "ltoken_v2"; var id = platform == "cn" ? "account_id_v2" : "ltuid_v2";
                     material.Use(value => Assert(value.SequenceEqual(token + "=synthetic-token; " + id + "=123456")));
-                    Assert(policy.ReadySets.Count == (platform == "cn" ? 4 : 2) && policy.EqualSets.Count > 0);
+                    var tokenId = policy.Cookies.First(rule => rule.Name == token).Id;
+                    var accountId = policy.Cookies.First(rule => rule.Name == id).Id;
+                    Assert(policy.ReadySets.Any(set => set.Count > 0 && set.All(key => key == tokenId || key == accountId)) &&
+                        !policy.ReadySets.Any(set => set.All(key => key == tokenId)) && policy.EqualSets.Count > 0);
                 }
                 foreach (var draft in desktop.Drafts) Cleared(draft);
                 Assert(policy.JsonRequests.All(rule => rule.Method == (platform == "skland" ? "POST" : "GET")));

@@ -27,7 +27,8 @@ internal sealed class RunnerPersistence(CheckInTask task) : ICheckInPersistence,
 }
 internal sealed class RunnerExecutionPorts : ICheckInExecutionPorts
 {
-    internal int Claims, WriterQueries;
+    internal int Claims;
+    internal readonly List<(Guid, Guid, Guid)> WriterQueries = [];
     internal bool WriterStopped = true;
     internal string GameState = "new";
     internal TestEffects? Current;
@@ -36,7 +37,7 @@ internal sealed class RunnerExecutionPorts : ICheckInExecutionPorts
     { Claims++; SecretRevisions.Add(expectedSecretRevision); return Current = new TestEffects { GameState = GameState }; }
     public ICheckInCredentialRotation Rotation(Guid taskId, long expectedTaskRevision, long expectedSecretRevision) => new TestRotation();
     public ValueTask<bool> IsStoppedAsync(Guid taskId, Guid runId, Guid attemptId, CancellationToken cancellationToken)
-    { WriterQueries++; return ValueTask.FromResult(WriterStopped); }
+    { WriterQueries.Add((taskId, runId, attemptId)); return ValueTask.FromResult(WriterStopped); }
 }
 internal sealed class RunnerNetwork(RunnerExecutionPorts ports) : ICheckInNetwork
 {

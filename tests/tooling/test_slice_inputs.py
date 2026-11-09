@@ -1,18 +1,32 @@
+from io import BytesIO
 import json
 import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tooling'))
+import build_managed_slice
 from package_extension import archive
 from package_inputs import inputs
 from slice_cache import artifact_records, reusable_build, save_result
 from slice_inputs import managed_inputs
 from source_snapshot import snapshot, sha, encode
+
+
+class ArchiveTests(unittest.TestCase):
+    def test_packages_deterministically(self):
+        members = {'manifest.json': b'{}', 'worker/main.dll': b'compiled output', 'README.md': b'documentation'}
+        with patch('zipfile.time.time', return_value=1735689600):
+            first = archive(members)
+        with patch('zipfile.time.time', return_value=1767225600):
+            second = archive(dict(reversed(members.items())))
+        self.assertEqual(first, second)
 
 
 class SliceInputTests(unittest.TestCase):
@@ -50,12 +64,12 @@ class SliceInputTests(unittest.TestCase):
             self.package, self.manifest, os.environ)
 
     def test_separates_package(self):
-        _, before = self.component()
-        self.write('plugins/managed/live-screenshot/README.md', 'New package documentation\n')
+        source, component = self.component()
+        self.save_build('original', source, component)
         self.write('plugins/managed/live-screenshot/frontend/src/main.ts', 'export {};')
-        self.assertEqual(before, self.component()[1])
+        self.assertIsNotNone(reusable_build(self.output, 'live-screenshot', self.component()[1]))
         self.write('plugins/managed/live-screenshot/Owner.cs', 'class Owner { int changed; }')
-        self.assertNotEqual(before, self.component()[1])
+        self.assertIsNone(reusable_build(self.output, 'live-screenshot', self.component()[1]))
 
     def test_tracks_deletion(self):
         subprocess.run(['git', '-C', str(self.root), 'add', '.'], check=True, capture_output=True)
@@ -68,14 +82,15 @@ class SliceInputTests(unittest.TestCase):
         self.assertEqual(index, (self.root / '.git/index').read_bytes())
 
     def test_tracks_sdk(self):
-        _, before = self.component()
+        source, component = self.component()
+        self.save_build('original', source, component)
         self.package['sha256'] = 'c' * 64
-        self.assertNotEqual(before, self.component()[1])
+        self.assertIsNone(reusable_build(self.output, 'live-screenshot', self.component()[1]))
 
     def test_refuses_import(self):
         self.write('plugins/managed/live-screenshot/Slice.csproj', '<Project><Import Project="unknown.props" /></Project>')
-        _, component = self.component()
-        self.assertTrue(component['conservativeReasons'])
+        source, component = self.component()
+        self.save_build('original', source, component)
         self.assertIsNone(reusable_build(self.output, 'live-screenshot', component))
 
     def save_build(self, name, source, component):
@@ -110,6 +125,7 @@ class SliceInputTests(unittest.TestCase):
     def test_packages_document(self):
         contract = b'{"controlled":"public-contract"}\n'
         self.write('contracts/fingerprint.json', contract.decode())
+        self.write('tooling/build-policy.json', '{"bundledExtensions":[]}')
         package = Path(self.scope.name) / 'sdk.nupkg'
         with zipfile.ZipFile(package, 'w') as target:
             target.writestr('contracts/fingerprint.json', contract)
@@ -120,20 +136,32 @@ class SliceInputTests(unittest.TestCase):
         self.sdk = Path(self.scope.name) / 'sdk-receipt.json'
         self.sdk.write_bytes(encode({'status': 'PASS', 'hostSource': producer, 'contractFingerprint': 'b' * 64,
             'packages': [self.package]}))
-        source, component = self.component()
-        first, _ = self.save_build('first', source, component)
-        _, old_members, _ = inputs(self.root, first, self.sdk)
-        original = first.read_bytes()
-        self.write('plugins/managed/live-screenshot/README.md', 'Revised package documentation\n')
-        current, unchanged = self.component()
-        self.assertEqual(component, unchanged)
-        self.assertIsNotNone(reusable_build(self.output, 'live-screenshot', unchanged))
-        second, _ = self.save_build('second', current, unchanged)
+        script = self.root / 'tooling/build_managed_slice.py'
+        script.write_bytes(Path(build_managed_slice.__file__).read_bytes())
+        assembly = self.output / 'build/bin/Slice/release/Slice.dll'
+        pointer = self.output / 'managed-latest/live-screenshot.json'
+        arguments = [str(script), '--extension', 'live-screenshot', '--sdk-receipt', str(self.sdk), '--output', str(self.output)]
+
+        def compile_slice(command, **kwargs):
+            assembly.parent.mkdir(parents=True, exist_ok=True)
+            with assembly.open('xb') as stream:
+                stream.write(b'controlled-compiler-output')
+            return subprocess.CompletedProcess(command, 0, '', '')
+
+        with (patch.object(build_managed_slice, '__file__', str(script)), patch.object(sys, 'argv', arguments),
+              patch.object(build_managed_slice, 'subprocess', SimpleNamespace(run=compile_slice))):
+            self.assertEqual(0, build_managed_slice.main())
+            first = json.loads(pointer.read_bytes())
+            self.write('plugins/managed/live-screenshot/README.md', 'Revised package documentation\n')
+            self.assertEqual(0, build_managed_slice.main())
+
+        second = Path(json.loads(pointer.read_bytes())['path'])
+        self.assertEqual(first, json.loads(second.read_bytes())['reusedCompilation'])
         _, new_members, _ = inputs(self.root, second, self.sdk)
-        self.assertNotEqual(archive(old_members), archive(new_members))
-        self.assertEqual(old_members['Slice.dll'], new_members['Slice.dll'])
-        self.assertEqual(b'Revised package documentation\n', new_members['README.md'])
-        self.assertEqual(original, first.read_bytes())
+        with zipfile.ZipFile(BytesIO(archive(new_members))) as packaged:
+            self.assertEqual(b'controlled-compiler-output', packaged.read('Slice.dll'))
+            self.assertEqual(b'Revised package documentation\n', packaged.read('README.md'))
+        self.assertEqual(first['sha256'], sha(Path(first['path']).read_bytes()))
 
 
 if __name__ == '__main__':

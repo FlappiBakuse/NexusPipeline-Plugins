@@ -6,10 +6,22 @@ using NexusPipeline.Extensibility.State;
 using NexusPipeline.Extensibility.Notifications;
 
 var cases = new List<object>();
+var failed = false;
 async Task Run(string name, Func<Task> body)
 {
     try { await body(); cases.Add(new { name, status = "PASS" }); }
-    catch (Exception error) { cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
+    catch (Exception error) { failed = true; cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
+}
+async Task<int> WriteResults()
+{
+    await File.WriteAllBytesAsync(args[^1], JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));
+    Console.WriteLine($"{cases.Count} cases");
+    return cases.Count > 0 && !failed ? 0 : 1;
+}
+if (args.Length == 3)
+{
+    await EntryCases.RunAsync(Run, args[0], args[1]);
+    return await WriteResults();
 }
 void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
 await Run("actual-sdk-six-field-atomic-save-and-owned-secret-memory", async () =>
@@ -46,9 +58,11 @@ await Run("unknown-task-format-and-case-alias-preserve-original-document", async
 });
 await Run("unknown-credential-format-is-readable-status-with-original-bytes-preserved", async () =>
 {
-    using var ports = new PersistencePorts(); var id = Guid.NewGuid(); ports.Put(id, "kuro", "{\"formatVersion\":9,\"value\":\"synthetic-canary\"}");
+    const string original = "{\"formatVersion\":9,\"value\":\"synthetic-canary\"}";
+    using var ports = new PersistencePorts(); var id = Guid.NewGuid(); ports.Put(id, "kuro", original);
     var adapter = new SdkCheckInPersistence(ports, ports, ports); using var read = await adapter.ReadCredentialAsync(id, "kuro", default);
     Assert(read.Configured && read.Material is null && read.Error == "credential_format_unsupported" && ports.Applies == 0 && ports.AtomicWrites == 0);
+    using var retained = await ports.ReadAsync(id, "kuro", default); retained.Use(value => Assert(value.SequenceEqual(original)));
 });
 await Run("credential-read-revision-race-does-not-bind-new-bytes-to-old-revision", async () =>
 {
@@ -94,10 +108,7 @@ await ServiceCases.RunAsync(Run);
 await NativePortCases.RunAsync(Run);
 await CaptureCases.RunAsync(Run);
 await RoleEpochCases.RunAsync(Run);
-if (args.Length > 2) await EntryCases.RunAsync(Run, args[1], args[2]);
-await File.WriteAllBytesAsync(args[0], JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));
-Console.WriteLine($"{cases.Count} SDK adapter cases");
-return cases.Count > 0 && cases.All(item => !JsonSerializer.Serialize(item).Contains("\"FAIL\"", StringComparison.Ordinal)) ? 0 : 1;
+return await WriteResults();
 
 internal sealed class NotificationCatalog(NotificationTargets targets) : INotificationTargets
 {

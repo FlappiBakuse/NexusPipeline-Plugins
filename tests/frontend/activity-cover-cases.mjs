@@ -65,8 +65,8 @@ export async function activityCoverCases({ page, test }) {
       if (!size || size.height < size.width * 1.5) throw Error('Navigation must use tall narrow SVG chevrons');
     }
     const cached = await page.evaluate(() => {
-      const image = document.querySelector('.activity-cover');
       window.fixture.hide(); window.fixture.show();
+      const image = document.querySelector('.activity-cover');
       return { width: image.naturalWidth, hidden: image.hidden, attempts: window.coverAttempts };
     });
     if (cached.width !== 4 || cached.hidden || cached.attempts !== firstAttempts)

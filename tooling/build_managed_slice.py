@@ -48,50 +48,67 @@ def main():
     start = time.monotonic()
     component = managed_inputs(Path(source['exportRoot']), plugin, source, package, manifest, env)
     previous = reusable_build(output, args.extension, component)
-    worker = None
     if previous is None:
         result = subprocess.run(command, cwd=plugin, env=env, capture_output=True, encoding="utf-8", errors="replace")
         exit_code = result.returncode
         native_output = result.stdout + result.stderr
-        if exit_code == 0:
-            worker = build_worker(plugin, manifest, output, cache / "packages" / package["sha256"], package_path, env, run)
     else:
         exit_code = 0
         native_output = 'Managed compilation reused after component and artifact verification.\n'
-        worker = previous[0].get('worker')
     (run / "native.log").write_bytes(native_output.encode())
-    receipt = {"status": "PASS" if exit_code == 0 else "FAIL", "scope": "Managed slice compilation only; not a plugin package or runtime acceptance",
+    responsibilities = dict(lint="NOT_RUN", typecheck="NOT_RUN", test="NOT_RUN", build="FAIL")
+    receipt = {"scope": "Managed slice compilation only; not a plugin package or runtime acceptance",
                "source": source, "sdkReceiptSha256": sha(sdk_bytes), "sdkHostSource": sdk["hostSource"], "sdkPackage": package,
-               "contractFingerprint": sdk["contractFingerprint"], "command": command if previous is None else None, "exitCode": exit_code,
+               "contractFingerprint": sdk["contractFingerprint"], "command": command if previous is None else None, "mainExitCode": exit_code,
                "componentInputs": component, "reusedCompilation": previous[1] if previous else None,
-               "elapsedSeconds": time.monotonic() - start, "nativeLog": str(run / "native.log")}
-    if worker is not None:
-        receipt["worker"] = worker
-        if worker["status"] != "PASS": receipt["status"] = "FAIL"
-    if receipt["status"] == "PASS":
-        assembly = output / "build/bin" / projects[0].stem / "release" / manifest["managed"]["entryAssembly"]
-        if not assembly.is_file():
-            raise ValueError("Managed slice output assembly is missing")
-        receipt["assembly"] = {"path": str(assembly), "sha256": sha(assembly.read_bytes()), "sizeBytes": assembly.stat().st_size}
-        if manifest.get("specialized") is not None:
-            script, inputs = assemble_adapter(plugin)
-            script_path = run / "adapter.js"
-            script_path.write_bytes(script)
-            syntax = subprocess.run(["node", "--check", str(script_path)], cwd=plugin, env=env, capture_output=True)
-            (run / "adapter-syntax.log").write_bytes(syntax.stdout + syntax.stderr)
-            if syntax.returncode:
-                raise ValueError("Managed driver adapter syntax failed")
-            receipt["script"] = {"path": str(script_path), "sha256": sha(script), "sizeBytes": len(script)}
-            receipt["generatorInputs"] = inputs
-        manifest_path = run / "extension.manifest.json"
-        manifest_path.write_bytes(encode(manifest))
-        receipt["manifest"] = {"path": str(manifest_path), "sha256": sha(manifest_path.read_bytes())}
-        receipt['artifacts'] = artifact_records(output, component['projects'])
+               "nativeLog": str(run / "native.log"), "responsibilities": responsibilities}
+    worker = None
+    try:
+        if exit_code == 0:
+            worker = previous[0].get('worker') if previous else build_worker(
+                plugin, manifest, output, cache / "packages" / package["sha256"], package_path, env, run)
+            if worker is not None:
+                receipt["worker"] = worker
+                exit_code = worker["build"]["exitCode"]
+        responsibilities["typecheck"] = "FAIL" if exit_code else "PASS"
+        if not exit_code and worker is not None and worker["status"] != "PASS":
+            raise ValueError(worker["error"])
+        if exit_code == 0:
+            assembly = output / "build/bin" / projects[0].stem / "release" / manifest["managed"]["entryAssembly"]
+            if not assembly.is_file():
+                raise ValueError("Managed slice output assembly is missing")
+            receipt["assembly"] = {"path": str(assembly), "sha256": sha(assembly.read_bytes()), "sizeBytes": assembly.stat().st_size}
+            if manifest.get("specialized") is not None:
+                script, inputs = assemble_adapter(plugin)
+                script_path = run / "adapter.js"
+                script_path.write_bytes(script)
+                syntax_command = ["node", "--check", str(script_path)]
+                responsibilities["lint"] = "FAIL"
+                syntax = subprocess.run(syntax_command, cwd=plugin, env=env, capture_output=True)
+                log = run / "adapter-syntax.log"
+                log.write_bytes(syntax.stdout + syntax.stderr)
+                exit_code = syntax.returncode
+                receipt["adapterSyntax"] = {"command": syntax_command, "exitCode": exit_code, "nativeLog": str(log)}
+                if exit_code == 0:
+                    responsibilities["lint"] = "PASS"
+                    receipt["script"] = {"path": str(script_path), "sha256": sha(script), "sizeBytes": len(script)}
+                    receipt["generatorInputs"] = inputs
+        if exit_code == 0:
+            manifest_path = run / "extension.manifest.json"
+            manifest_path.write_bytes(encode(manifest))
+            receipt["manifest"] = {"path": str(manifest_path), "sha256": sha(manifest_path.read_bytes())}
+            receipt['artifacts'] = artifact_records(output, component['projects'])
+            responsibilities["build"] = "PASS"
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        exit_code = 1
+        receipt["error"] = str(error)
+        print(str(error), flush=True)
+    receipt.update(status="FAIL" if exit_code else "PASS", exitCode=exit_code, elapsedSeconds=time.monotonic() - start)
     save_result(output, args.extension, run / 'build-receipt.json', receipt)
     print(json.dumps({"status": receipt["status"], "receipt": str(run / "build-receipt.json")}), flush=True)
-    if exit_code:
+    if receipt["mainExitCode"]:
         print(native_output)
-    return 0 if receipt["status"] == "PASS" else 1
+    return exit_code
 
 
 if __name__ == "__main__":

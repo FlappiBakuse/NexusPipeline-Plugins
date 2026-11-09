@@ -12,8 +12,14 @@ if (!root || !modules || !path.isAbsolute(root) || !path.isAbsolute(modules))
   throw Error('Pass absolute --root and --modules paths');
 const ts = createRequire(path.join(modules, 'package.json'))('typescript');
 if (ts.version !== '5.9.3') throw Error('Frontend naming requires the locked TypeScript compiler');
-const wordCount = name => (name.replace(/^I(?=[A-Z][a-z])/, '').replaceAll('BetterGi', 'Bettergi').replaceAll('MuMu', 'Mumu')
-  .match(/[A-Z]+(?=[A-Z][a-z]|[0-9]|$)|[A-Z]?[a-z]+[0-9]*|[0-9]+/g) || []).length;
+const nameWords = name => (name.replace(/^I(?=[A-Z][a-z])/, '').replaceAll('BetterGi', 'Bettergi').replaceAll('MuMu', 'Mumu')
+  .match(/[A-Z]+(?=[A-Z][a-z]|[0-9]|$)|[A-Z]?[a-z]+[0-9]*|[0-9]+/g) || []);
+
+const prepositions = new Set('as like per since than towards unlike versus about above across after against along among around at before behind below beneath beside between beyond by despite down during except for from in inside into near of off on onto out outside over past through throughout to toward under underneath until up upon via with within without'.split(' '));
+const exceedsLimit = name => {
+  const words = nameWords(name);
+  return words.length > (words.some(word => prepositions.has(word.toLowerCase())) ? 5 : 4);
+};
 
 function declarations(text, filename) {
   const tree = ts.createSourceFile(filename, text, ts.ScriptTarget.Latest, true,
@@ -35,12 +41,15 @@ function declarations(text, filename) {
 }
 
 function selfTest() {
-  const sample = declarations('class ClearName { fourWordMemberMethod() {} }\nfunction clearName() { function fourWordLocalFunction() {} }\nconst fourWordArrowFunction = () => {};', 'sample.ts');
-  const failures = sample.filter(item => wordCount(item.name) > 3).map(item => item.name);
-  if (JSON.stringify(failures) !== JSON.stringify(['fourWordMemberMethod', 'fourWordLocalFunction', 'fourWordArrowFunction']))
+  if (exceedsLimit('fourWordMethodName') || exceedsLimit('readValueFromCurrentAccount')
+      || !exceedsLimit('fiveWordMethodNameLimit') || !exceedsLimit('readValueFromCurrentAccountStore'))
+    throw Error('Four-word and preposition naming boundaries failed');
+  const sample = declarations('class ClearName { fiveWordMemberMethodName() {} }\nfunction clearName() { function fiveWordLocalFunctionName() {} }\nconst fiveWordArrowFunctionName = () => {};', 'sample.ts');
+  const failures = sample.filter(item => exceedsLimit(item.name)).map(item => item.name);
+  if (JSON.stringify(failures) !== JSON.stringify(['fiveWordMemberMethodName', 'fiveWordLocalFunctionName', 'fiveWordArrowFunctionName']))
     throw Error('Frontend naming declaration coverage failed');
   const script = declarations('function fourWordScriptFunction() {}', 'sample.mjs');
-  if (script[0]?.name !== 'fourWordScriptFunction' || wordCount(script[0].name) !== 4)
+  if (script[0]?.name !== 'fourWordScriptFunction' || nameWords(script[0].name).length !== 4)
     throw Error('Frontend script declaration coverage failed');
 }
 
@@ -54,8 +63,8 @@ function inspect(folder) {
       const relative = path.relative(root, full).replaceAll('\\', '/');
       const found = declarations(fs.readFileSync(full, 'utf8'), relative);
       files.push({ file: relative, declarations: found.length });
-      for (const declaration of found) if (wordCount(declaration.name) > 3)
-        errors.push({ file: relative, ...declaration, words: wordCount(declaration.name) });
+      for (const declaration of found) if (exceedsLimit(declaration.name))
+        errors.push({ file: relative, ...declaration, words: nameWords(declaration.name).length });
     }
   }
 }

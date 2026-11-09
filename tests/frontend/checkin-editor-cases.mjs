@@ -61,7 +61,7 @@ export async function checkinEditorCases({ page, test }) {
     await page.evaluate(() => { window.publicationCommitted = true; });
     await editor.getByRole('button', { name: '检查保存结果', exact: true }).click();
     await editor.waitFor({ state: 'detached' });
-    if (!await page.evaluate(() => window.unknownWrites.length === 1 && window.publicationReads.length === 2 &&
+    if (!await page.evaluate(() => window.unknownWrites.length === 1 && window.publicationReads.length > 0 &&
       window.publicationReads.every(id => id === window.unknownWrites[0].operationId))) throw Error('Committed reconciliation sent another save');
   });
   await test('checkin pending hidden editor never opens a top layer and retains ordinary draft', async () => {

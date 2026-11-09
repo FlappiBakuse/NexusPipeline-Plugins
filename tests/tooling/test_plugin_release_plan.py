@@ -134,7 +134,7 @@ class PluginReleasePlanTests(unittest.TestCase):
         self.assertEqual(['Alpha'], self.plan('preview')['requiresPackage'])
         self.bump('alpha', '0.3.0')
         self.commit()
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, 'Plugin source version regresses'):
             self.plan('preview')
         self.bump('alpha', '0.5.0')
         self.commit()
@@ -152,21 +152,14 @@ class PluginReleasePlanTests(unittest.TestCase):
         self.assertEqual([], self.plan('preview')['removeArtifacts'])
 
     def test_binds_metadata(self):
-        for field in ('version', 'sha256', 'sizeBytes', 'name'):
+        for field, value in [('version', '0.3.0-rc.1'), ('sha256', 'f' * 64), ('sizeBytes', 1), ('name', 'other-alpha')]:
             self.git('checkout', '-b', 'metadata-' + field, self.distribution)
             bad = deepcopy(self.state)
-            bad['released']['Alpha'][field] = 'invalid'
+            bad['released']['Alpha'][field] = value
             self.write(STATE, json.dumps(bad))
             distribution = self.commit()
-            with self.subTest(field=field), self.assertRaises(ValueError):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, 'Published package facts disagree'):
                 make_plan(self.repo, self.repo, distribution, distribution)
-        self.git('checkout', '-b', 'local', self.distribution)
-        self.bump()
-        plan = self.plan(local=True)
-        self.assertEqual('local-uncommitted', plan['source']['sourceMode'])
-        self.assertIsNone(plan['source']['sourceCommit'])
-        self.assertIsNone(plan['source']['sourceTree'])
-        self.assertFalse(plan['publishable'])
 
     def test_rejects_ambiguous(self):
         path = self.repo / 'plugins/managed/gamma/extension.json'
@@ -190,9 +183,12 @@ class PluginReleasePlanTests(unittest.TestCase):
         self.assertEqual(0, result.returncode, result.stderr.decode())
         self.assertEqual('NO_CHANGES', json.loads((report / 'release-plan.json').read_bytes())['status'])
         before = (report / 'release-plan.json').read_bytes()
-        self.assertNotEqual(0, subprocess.run([*command, str(report)], capture_output=True).returncode)
+        for target, reason in [(report, b'Release plan output must be new or empty'),
+                               (self.repo / 'output', b'Output must be outside and disjoint from the source tree')]:
+            result = subprocess.run([*command, str(target)], capture_output=True)
+            self.assertNotEqual(0, result.returncode)
+            self.assertIn(reason, result.stderr)
         self.assertEqual(before, (report / 'release-plan.json').read_bytes())
-        self.assertNotEqual(0, subprocess.run([*command, str(self.repo / 'output')], capture_output=True).returncode)
         self.assertFalse((self.repo / 'output').exists())
 
     def test_legacy_cursor(self):
@@ -223,7 +219,10 @@ class PluginReleasePlanTests(unittest.TestCase):
         self.bump()
         with self.assertRaisesRegex(ValueError, 'clean|dirty|HEAD'):
             self.plan()
-        self.assertEqual(['Alpha'], self.plan(local=True)['requiresPackage'])
+        plan = self.plan(local=True)
+        self.assertEqual(['Alpha'], plan['requiresPackage'])
+        self.assertEqual(('local-uncommitted', None, None, False), (
+            plan['source']['sourceMode'], plan['source']['sourceCommit'], plan['source']['sourceTree'], plan['publishable']))
 
     def test_semver_retention(self):
         files = {f'packages/Alpha/Alpha-{value}.zip': 'blob' for value in
@@ -238,16 +237,20 @@ class PluginReleasePlanTests(unittest.TestCase):
                 version(value)
 
     def test_rejects_cursor_and_projection(self):
-        for field in ('cursor', 'projection'):
+        self.git('checkout', '-b', 'sibling-cursor', self.cursor)
+        self.write('docs/sibling.md', 'Unrelated source history')
+        unrelated = self.commit()
+        for field, reason in [('cursor', 'Published source cursor must precede'),
+                              ('projection', 'Published catalog projection differs')]:
             self.git('checkout', '-b', 'invalid-' + field, self.distribution)
             if field == 'cursor':
                 bad = deepcopy(self.state)
-                bad['sourceCommit'] = 'f' * 40
+                bad['sourceCommit'] = unrelated
                 self.write(STATE, json.dumps(bad))
             else:
                 self.write('catalog.json', '{}')
             distribution = self.commit()
-            with self.subTest(field=field), self.assertRaises(ValueError):
+            with self.subTest(field=field), self.assertRaisesRegex(ValueError, reason):
                 make_plan(self.repo, self.repo, distribution, distribution)
 
     def tearDown(self):

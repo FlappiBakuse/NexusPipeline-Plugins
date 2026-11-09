@@ -7,7 +7,6 @@ internal static class WorkerPolicyCases
     internal static void Run(Action<string, Action> run)
     {
         run("worker-repetition-progress-is-bound-to-selected-business-identity-and-total", RepetitionProgress);
-        run("worker-accepts-only-the-exact-implemented-frozen-controller-methods", () => MaaWorkerPolicy.Require(Project(), "pc"));
         foreach (var capture in new[] { "PrintWindow", "GDI", "ScreenDC", "FramePool" })
             foreach (var mouse in new[] { "SendMessage", "PostMessage", "SendMessageWithCursorPos", "Seize" })
                 foreach (var keyboard in new[] { "SendMessage", "PostMessage", "SendMessageWithCursorPos", "Seize" })

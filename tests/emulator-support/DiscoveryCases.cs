@@ -10,8 +10,8 @@ internal static class DiscoveryCases
             host.Items[EmulatorVendors.Nox] = [Install(EmulatorVendors.Nox, "nox")];
             host.Items[EmulatorVendors.BlueStacks] = [Install(EmulatorVendors.BlueStacks, "blue", [Config("bst.instance.Pie64.adb_port=5559")])];
             var result = new EmulatorDiscovery(host).DiscoverAsync(true, default).GetAwaiter().GetResult();
-            Assert(result.State == "discovered" && result.Sources.Count == 4 && result.Sources.Select(source => source.Installation.Id).Distinct().Count() == 4);
-            Assert(host.Commands.Count == 3 && host.Commands.Count(command => command.Arguments.Single() == "list2") == 2 && host.Commands.Count(command => command.Arguments.Single() == "list") == 1);
+            Assert(result.State == "discovered" && result.Sources.Select(source => source.Installation.Id).Order().SequenceEqual(new[] { "blue", "ld-one", "ld-two", "nox" }));
+            Assert(host.Commands.All(item => item.Command.Arguments.SequenceEqual(new[] { item.Vendor == EmulatorVendors.LdPlayer ? "list2" : "list" })));
         });
         run("discovery-never-offers-android-to-pc-only-script", () => {
             var host = new Inventory(); var result = new EmulatorDiscovery(host).DiscoverAsync(false, default).GetAwaiter().GetResult(); Assert(result.State == "notApplicable" && host.Calls == 0);
@@ -37,14 +37,14 @@ internal static class DiscoveryCases
     private sealed class Inventory : IEmulatorInventory
     {
         internal readonly Dictionary<string, EmulatorInstallation[]> Items = [];
-        internal readonly List<EmulatorCommand> Commands = [];
+        internal readonly List<(string Vendor, EmulatorCommand Command)> Commands = [];
         internal string State = "completed";
         internal int Calls;
         public ValueTask<IReadOnlyList<EmulatorInstallation>> DiscoverAsync(EmulatorLayout layout, CancellationToken cancellationToken)
         { Calls++; return ValueTask.FromResult<IReadOnlyList<EmulatorInstallation>>(Items.GetValueOrDefault(layout.Vendor) ?? []); }
         public ValueTask<EmulatorCommandResult> EnumerateAsync(EmulatorInstallation installation, EmulatorCommand command, CancellationToken cancellationToken)
         {
-            Commands.Add(command); var output = State switch { "empty" => "", "malformed" => "ERROR not an instance list", _ => installation.Vendor == EmulatorVendors.LdPlayer ? "0,same name,0,0,1,123,456" : "nox,NoxPlayer,1,2,3,456" };
+            Commands.Add((installation.Vendor, command)); var output = State switch { "empty" => "", "malformed" => "ERROR not an instance list", _ => installation.Vendor == EmulatorVendors.LdPlayer ? "0,same name,0,0,1,123,456" : "nox,NoxPlayer,1,2,3,456" };
             return ValueTask.FromResult(new EmulatorCommandResult(State == "timeout" ? "timeout" : "completed", State == "exit" ? 1 : 0, output, "", "host-action"));
         }
     }

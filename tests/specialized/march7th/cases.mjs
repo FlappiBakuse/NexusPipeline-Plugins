@@ -27,7 +27,7 @@ const index = key => sourceTasks.findIndex(row => row[0] === key), outcome = (ke
 export function cases(invoke) {
   const rows = [], add = (name, input, expect = {}, error) => rows.push({ name, input, expect, ...(error ? { error } : {}) });
   const observe = (keys, lines, extra = {}) => {
-    const document = make(Array.isArray(keys) ? keys : [keys]), tasks = invoke(request('discover', document)).tasks;
+    const document = make(Array.isArray(keys) ? keys : [keys]), tasks = extra.tasks ?? invoke(request('discover', document)).tasks;
     return request('observe', document, { tasks, logEvents: events(lines), logComplete: true, ...extra });
   };
   const rewardGate = make(['reward_mail_enable']);
@@ -45,7 +45,7 @@ export function cases(invoke) {
       ['tasks.' + index(key) + '.projection']: { resourceId: 'main', relativePath: '', selector: [key] } });
     add('failed subset preserves dates and progress ' + key, request('retry', document, { tasks, idempotencyKey: 'finite',
       observations: [{ taskId: 'march7th:' + key, state: 'failed', reasonCode: 'synthetic' }] }), { selectedTaskIds: role === 'business' ? ['march7th:' + key] : [] });
-    add('unpaired generic banner cannot complete ' + key, observe(key, [done, stop]), outcome(key, 'unknown'));
+    add('unpaired generic banner cannot complete ' + key, observe(key, [done, stop], { tasks }), outcome(key, 'unknown'));
     if (parent) { const disabled = make([key]); disabled[parent] = false;
       add('parent disables child without clearing saved flag ' + key, request('discover', disabled), {
         ['tasks.' + index(key) + '.isSelected']: false, ['tasks.' + index(key) + '.isEnabled']: true }); }
@@ -110,9 +110,12 @@ export function cases(invoke) {
   }
   add('late current instance failure conflicts with success', observe('power_enable', [title('开始清体力'), instance('A'), '第1次副本完成', '副本任务完成', failure, done, stop]), outcome('power_enable', 'failed'));
   add('INFO text cannot impersonate title logger scope', observe('daily_enable', [{ text: title('开始日常任务') }, { text: done }, stop]), outcome('daily_enable', 'unknown'));
+  const dailyTasks = invoke(request('discover')).tasks;
   for (const key of ['weekly_relic_smart_discard_enable', 'divergent_auto_save_enable', 'fight_reward_enable', 'notify_qmsg_enable']) {
     const document = make(); document[key] = true;
-    add('known auxiliary switch not unknown business ' + key, request('discover', document), { 'tasks': invoke(request('discover', make())).tasks });
+    add('auxiliary switch preserves frozen daily retry ' + key, request('retry', document, {
+      tasks: dailyTasks, idempotencyKey: 'auxiliary', observations: [{ taskId: 'march7th:daily_enable', state: 'failed' }]
+    }), { selectedTaskIds: ['march7th:daily_enable'] });
   }
   const document = make(['power_enable']); document.notify_template = { InstanceNotCompleted: '提示\n{{副本}} {error}' };
   const tasks = invoke(request('discover', document)).tasks;
@@ -126,8 +129,11 @@ export function cases(invoke) {
     logEvents: events([title('开始日常任务'), done, stop], 1, 0, sourceId) }), outcome('daily_enable', 'unknown'));
   const configInput = request('configuration'), edit = { selector: ['daily_enable'], expected: true, value: false };
   const intent = patch(configInput, [edit]); configInput.configurationIntents = [intent]; add('boolean CAS proposal', configInput, { configPatches: [intent] });
-  for (const field of ['last_run_timestamp', 'divergent_universe_daily_completed_count', 'power_plan', 'already_used_codes']) {
-    const input = request('configuration'); input.configurationIntents = [patch(input, [{ selector: [field], expected: input.resources[0].value?.[field], value: 0 }])];
+  const progress = make();
+  for (const [field, value] of [['last_run_timestamp', '2026-10-23T04:00:00'], ['divergent_universe_daily_completed_count', 0],
+    ['power_plan', []], ['already_used_codes', []]]) {
+    const input = request('configuration', progress);
+    input.configurationIntents = [patch(input, [{ selector: [field], expected: progress[field], value }])];
     add('never reset native progress ' + field, input, {}, 'march7th_configuration_edit_not_supported');
   }
   const unsafe = make(); unsafe.after_finish = 'Loop';
@@ -138,20 +144,21 @@ export function cases(invoke) {
   for (const parent of ['reward_enable', 'asset_manager_enable', 'activity_enable']) {
     const children = sourceTasks.filter(row => row[2] === parent && row[3] === 'business').slice(0, 2).map(row => row[0]);
     const document = make(children), tasks = invoke(request('discover', document)).tasks;
-    const selected = tasks.filter(task => task.isSelected), childIds = tasks.filter(task => children.some(key => task.taskId === 'march7th:' + key)).map(task => task.taskId);
+    const parentId = 'march7th:' + parent, childIds = children.map(key => 'march7th:' + key);
     for (const state of ['all-failed', 'one-failed', 'parent-only']) {
-      const observations = selected.map(task => ({ taskId: task.taskId, reasonCode: 'synthetic',
-        state: task.taskId === 'march7th:' + parent || state === 'all-failed' || state === 'one-failed' && task.taskId === childIds[0] ? 'failed' : 'succeeded' }));
+      const observations = [parentId, ...childIds].map(taskId => ({ taskId, reasonCode: 'synthetic',
+        state: taskId === parentId || state === 'all-failed' || state === 'one-failed' && taskId === childIds[0] ? 'failed' : 'succeeded' }));
       add('retry only original failed leaves ' + parent + ' ' + state,
         request('retry', document, { tasks, observations, idempotencyKey: 'finite' }),
         { selectedTaskIds: state === 'all-failed' ? childIds : state === 'one-failed' ? childIds.slice(0, 1) : [] });
     }
   }
-  const mixed = make(['reward_mail_enable', 'build_target_enable', 'activity_journey_highlights_notification_enable']);
+  const mixedKeys = ['reward_mail_enable', 'build_target_enable', 'activity_journey_highlights_notification_enable'];
+  const mixed = make(mixedKeys);
   const mixedTasks = invoke(request('discover', mixed)).tasks;
   add('technical failures never widen the failed business leaf proposal', request('retry', mixed, {
-    tasks: mixedTasks, idempotencyKey: 'finite', observations: mixedTasks.filter(task => task.isSelected)
-      .map(task => ({ taskId: task.taskId, state: 'failed', reasonCode: 'synthetic' })) }), { selectedTaskIds: ['march7th:reward_mail_enable'] });
+    tasks: mixedTasks, idempotencyKey: 'finite', observations: mixedKeys
+      .map(key => ({ taskId: 'march7th:' + key, state: 'failed', reasonCode: 'synthetic' })) }), { selectedTaskIds: ['march7th:reward_mail_enable'] });
   for (const field of ['resourceId', 'relativePath', 'selector', 'retryPrerequisites']) {
     const input = observe('daily_enable', []), task = input.tasks[index('daily_enable')];
     if (field === 'retryPrerequisites') task.retryPrerequisites = ['foreign'];

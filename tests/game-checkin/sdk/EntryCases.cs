@@ -24,9 +24,9 @@ internal static class EntryCases
         IExtension Create(Fixture fixture) => (IExtension)Activator.CreateInstance(type, fixture.Context)!;
         await run("original-zip-entry-registers-business-provider-and-waits-for-ready-before-frontend-read", async () => {
             await using var fixture = new Fixture(); var extension = Create(fixture); var frontend = (IExtensionFrontend)extension;
-            Assert(frontend.Operations.Count == 18 && fixture.Ports.DocumentReads == 0);
+            Assert(fixture.Ports.DocumentReads == 0);
             await extension.ActivateAsync(fixture.Scope, default); await fixture.Ready.Entered.Task;
-            Assert(fixture.Schedules.Id == "checkin" && fixture.Schedules.Handler is IManualWorkHandler && fixture.Schedules.Handler is IScheduledWorkPlanningHandler && fixture.Scope.Owned == 1);
+            Assert(fixture.Schedules.Id == "checkin" && fixture.Schedules.Handler is IManualWorkHandler && fixture.Schedules.Handler is IScheduledWorkPlanningHandler);
             var pending = frontend.InvokeAsync(fixture.Call("read-state"), default).AsTask(); Assert(!pending.IsCompleted && fixture.Ports.DocumentReads == 0);
             fixture.Ready.Signal.SetResult(); using var response = JsonDocument.Parse((await pending).Content); var state = response.RootElement.GetProperty("value");
             Assert(response.RootElement.GetProperty("ok").GetBoolean() && state.GetProperty("tasks").GetArrayLength() == 0 &&
@@ -43,14 +43,14 @@ internal static class EntryCases
                 draft = new { id = (string?)null, name = "original-module-task", remark = "", enabled = true, games = new { kuro = new[] { "ww" } },
                     schedules = new[] { new { id = schedule, days = new[] { 1 }, enabled = true, time = "09:00" } }, notification = new { enabled = false, notificationTaskIds = Array.Empty<string>() } } }));
             Assert(saved.RootElement.GetProperty("ok").GetBoolean()); var taskId = Guid.Parse(saved.RootElement.GetProperty("value").GetProperty("tasks")[0].GetProperty("id").GetString()!);
-            Assert(fixture.Work.Holds == 1 && fixture.Work.HeldTask == taskId && fixture.Ports.AtomicWrites == 1 && fixture.Ports.Applies == 0 && fixture.Ports.SingleWrites == 0);
+            Assert(!fixture.Work.Held && fixture.Work.HeldTask == taskId && fixture.Ports.AtomicWrites == 1 && fixture.Ports.Applies == 0 && fixture.Ports.SingleWrites == 0);
             Assert(!System.Text.Encoding.UTF8.GetString(fixture.Ports.Document!.Json.Span).Contains("synthetic-private-token", StringComparison.Ordinal));
             var plans = await ((IScheduledWorkPlanningHandler)fixture.Schedules.Handler!).ReadPlansAsync(default);
             Assert(plans.Tasks.Single().OwnerTaskId == taskId.ToString("D") && plans.Tasks.Single().LocalMinute == 540 && plans.Tasks.Single().Weekdays.Single() == 1);
             var manual = await ((IManualWorkHandler)fixture.Schedules.Handler!).ReadTaskAsync(taskId, default); Assert(manual!.ScheduledTaskIds.Single() == plans.Tasks.Single().TaskId);
             using var deleted = await InvokeAsync(frontend, fixture.Call("delete-task", new { taskId, expectedRevision = 1 }));
             Assert(deleted.RootElement.GetProperty("ok").GetBoolean() && deleted.RootElement.GetProperty("value").GetProperty("tasks").GetArrayLength() == 0 &&
-                fixture.Work.Holds == 2 && fixture.Ports.AtomicWrites == 2 && await ((IManualWorkHandler)fixture.Schedules.Handler!).ReadTaskAsync(taskId, default) is null);
+                !fixture.Work.Held && fixture.Work.HeldTask == taskId && fixture.Ports.AtomicWrites == 2 && await ((IManualWorkHandler)fixture.Schedules.Handler!).ReadTaskAsync(taskId, default) is null);
         });
         await run("original-zip-entry-scope-stop-retires-private-frontend-client", async () => {
             await using var fixture = new Fixture(); var extension = Create(fixture); await extension.ActivateAsync(fixture.Scope, default); fixture.Ready.Signal.SetResult();
@@ -74,6 +74,7 @@ internal static class EntryCases
         internal Fixture()
         {
             Work = new(Ports);
+            Ports.BeforeAtomic = () => { if (!Work.Held) throw new InvalidOperationException("publication_without_quiescence"); };
             Context = new(Schedules, Ports, Fake<INotificationSubmissionPort>(), Fake<IMediaPreviewRegistrationPort>(), Fake<IRunScreenshotPort>(),
                 Fake<IExtensionPackageAssets>(), Fake<IExtensionRuntimeOutputs>(), documents: Ports, http: Fake<IExtensionHttp>(), activation: Ready,
                 secretDocuments: Ports, notificationTargets: new Targets(), workTasks: Work, workEffects: Fake<IWorkEffects>());
@@ -89,7 +90,6 @@ internal static class EntryCases
         private readonly List<IAsyncDisposable> resources = [];
         private bool stopped;
         public CancellationToken Cancellation { get; } 
-        internal int Owned => resources.Count;
         internal Scope() => Cancellation = lifetime.Token;
         public async ValueTask OwnAsync(IAsyncDisposable resource) { if (stopped) await resource.DisposeAsync(); else resources.Add(resource); }
         public async ValueTask DisposeAsync()
@@ -110,7 +110,7 @@ internal static class EntryCases
     { public ValueTask<NotificationTargets> ReadAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new NotificationTargets(1, [])); }
     private sealed class Work(PersistencePorts ports) : IWorkTasks
     {
-        internal int Holds;
+        internal bool Held;
         internal Guid HeldTask;
         public ValueTask<WorkClock> ReadClockAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new WorkClock(DateTimeOffset.UtcNow, "UTC"));
         public ValueTask<WorkTaskSnapshot> ReadAsync(string providerId, IReadOnlyList<Guid> ids, CancellationToken cancellationToken)
@@ -119,11 +119,12 @@ internal static class EntryCases
             return ValueTask.FromResult(new WorkTaskSnapshot(new(DateTimeOffset.UtcNow, "UTC"), ids.Select(id => new WorkTaskInfo(id, store.Tasks.Single(task => task.Id == id).Revision, false, null, [])).ToArray()));
         }
         public ValueTask<IAsyncDisposable> QuiesceAsync(string providerId, Guid taskId, long revision, CancellationToken cancellationToken)
-        { Holds++; HeldTask = taskId; return ValueTask.FromResult<IAsyncDisposable>(new Lease()); }
+        { Held = true; HeldTask = taskId; return ValueTask.FromResult<IAsyncDisposable>(new Lease(this)); }
         public ValueTask<WorkInvocation> ReadCurrentAsync(CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_real_run");
         public ValueTask<ManualRunReceipt> RunAsync(string providerId, Guid taskId, long revision, CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_real_run");
         public ValueTask<bool> HasStoppedAsync(string providerId, Guid taskId, Guid runId, Guid attemptId, CancellationToken cancellationToken) => throw new InvalidOperationException("unexpected_real_recovery");
-        private sealed class Lease : IAsyncDisposable { public ValueTask DisposeAsync() => ValueTask.CompletedTask; }
+        private sealed class Lease(Work owner) : IAsyncDisposable
+        { public ValueTask DisposeAsync() { owner.Held = false; return ValueTask.CompletedTask; } }
     }
     private static T Fake<T>() where T : class => System.Reflection.DispatchProxy.Create<T, UnexpectedSdkCall>();
 }

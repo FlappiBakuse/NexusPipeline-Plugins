@@ -30,25 +30,25 @@ const flow = (name, inside = []) => [log(`判断任务${name}是否可以执行`
 export function cases(invoke) {
   const rows = [], add = (name, input, expect, error) => rows.push({ name, input, expect, ...(error ? { error } : {}) });
   function observe(name, document, lines, expected = 'succeeded', options = {}) {
-    const tasks = invoke(request('discover', document)).tasks;
+    const tasks = options.tasks ?? invoke(request('discover', document)).tasks;
     add(name, request('observe', document, { tasks, logEvents: eventize(lines), logComplete: true, ...options }),
       { 'observations.0.state': expected });
   }
   for (const [title, name] of Object.entries(classes)) {
-    const document = configuration([title]), discovered = invoke(request('discover', document)).tasks;
-    const index = discovered.findIndex(item => item.title === title), id = discovered[index].taskId;
-    add('discover ' + title, request('discover', document), { [`tasks.${index}.taskId`]: `baah:0/0/${title}`,
+    const document = configuration([title]), discover = request('discover', document), tasks = invoke(discover).tasks;
+    const id = `baah:0/0/${title}`, index = tasks.findIndex(item => item.taskId === id);
+    add('discover ' + title, discover, { [`tasks.${index}.taskId`]: id,
       [`tasks.${index}.workflowRole`]: title === '登录游戏' ? 'technical' : 'business' });
-    observe('CN closed scope ' + title, document, [activation(), ...flow(name)]);
+    observe('CN closed scope ' + title, document, [activation(), ...flow(name)], 'succeeded', { tasks });
     observe('EN closed scope ' + title, document, [log('Now activated pipeline 1'), log(`Judge whether the task ${name} can be executed`),
-      log(`Run task ${name}`), log(`Judge whether the task ${name} execution result is controllable`), log(`Task ${name} execution completed`)]);
+      log(`Run task ${name}`), log(`Judge whether the task ${name} execution result is controllable`), log(`Task ${name} execution completed`)], 'succeeded', { tasks });
     observe('precondition failure ' + title, document, [activation(), log(`判断任务${name}是否可以执行`),
-      log(`任务${name}执行前条件不成立或超时，跳过此任务`, 'WARN')], 'failed');
+      log(`任务${name}执行前条件不成立或超时，跳过此任务`, 'WARN')], 'failed', { tasks });
     observe('postcondition failure survives return home ' + title, document, [activation(), log(`判断任务${name}是否可以执行`),
       log(`执行任务${name}`), log(`判断任务${name}执行结果是否可控`), log(`任务${name}执行后条件不成立或超时`, 'WARN'),
-      log('返回主页成功'), log(`任务${name}执行结束`), log('所有任务结束')], 'failed');
-    observe('final banner cannot supply missing scope ' + title, document, [activation(), log('所有任务结束')], 'unknown');
-    add('bounded failed subset ' + title, request('retry', document, { tasks: discovered, idempotencyKey: 'finite',
+      log('返回主页成功'), log(`任务${name}执行结束`), log('所有任务结束')], 'failed', { tasks });
+    observe('final banner cannot supply missing scope ' + title, document, [activation(), log('所有任务结束')], 'unknown', { tasks });
+    add('bounded failed subset ' + title, request('retry', document, { tasks, idempotencyKey: 'finite',
       observations: [{ taskId: id, state: 'failed', reasonCode: 'synthetic' }] }),
       { selectedTaskIds: ['自定义任务', '登录游戏'].includes(title) ? [] : [id] });
   }
@@ -56,8 +56,9 @@ export function cases(invoke) {
   const mixed = configuration(['登录游戏', '邮件']);
   mixed.OPEN_GAME_APP_TASK = true; mixed.DO_POST_ALL_TASK = true;
   const mixedTasks = invoke(request('discover', mixed)).tasks;
+  const mixedIds = ['baah:automatic-login', 'baah:0/0/登录游戏', 'baah:0/1/邮件', 'baah:automatic-cleanup'];
   add('retry excludes failed technical and cleanup steps', request('retry', mixed, { tasks: mixedTasks,
-    idempotencyKey: 'mixed-failed', observations: mixedTasks.map(task => ({ taskId: task.taskId, state: 'failed', reasonCode: 'synthetic' })) }),
+    idempotencyKey: 'mixed-failed', observations: mixedIds.map(taskId => ({ taskId, state: 'failed', reasonCode: 'synthetic' })) }),
     { selectedTaskIds: ['baah:0/1/邮件'], idempotencyKey: 'mixed-failed' });
   add('retry leaves original technical configuration intact', request('configuration', mixed), { configPatches: [] });
   const subset = configuration(['登录游戏', '咖啡馆', '邮件']);
@@ -66,8 +67,7 @@ export function cases(invoke) {
   const subsetRequest = request('observe', subset, { tasks: subsetTasks, selectedTaskIds: subsetIds,
     logEvents: eventize([activation(), ...flow('EnterGame'), ...flow('CollectMails')]), logComplete: true });
   add('restart observes only actual frozen retry subset in order', subsetRequest,
-    { 'observations.0.taskId': subsetIds[0], 'observations.0.state': 'succeeded',
-      'observations.1.taskId': subsetIds[1], 'observations.1.state': 'succeeded' });
+    { observations: subsetIds.map(taskId => ({ taskId, state: 'succeeded', reasonCode: 'baah_outer_scope_completed', completionKind: 'completed' })) });
   add('foreign retry observation scope rejected', { ...subsetRequest, selectedTaskIds: ['foreign'] }, {}, 'baah_observation_selection_unbound');
   add('checkpoint cannot move between invocation subsets', { ...subsetRequest, selectedTaskIds: [subsetIds[0]],
     observationCheckpoint: invoke(subsetRequest).observationCheckpoint }, {}, 'baah_observation_checkpoint_unbound');
@@ -83,15 +83,13 @@ export function cases(invoke) {
   add('preparation and cleanup roles remain outside business', request('discover', technical),
     { 'tasks.0.workflowRole': 'technical', 'tasks.0.titleLocales.en-US': 'Automatic login',
       'tasks.1.dependencies': ['baah:automatic-login'], 'tasks.2.workflowRole': 'cleanup', 'tasks.2.titleLocales.en-US': 'Cleanup' });
-  const ap = configuration(['购买AP']);
+  const ap = configuration(['购买AP']), apTasks = invoke(request('discover', ap)).tasks;
   for (const [text, level, outcome] of [['未找到购买按钮', 'WARN', 'failed'], ['识别单价失败', 'ERROR', 'failed'],
     ['价格超过限制，不购买', 'INFO', 'succeeded'], ['Price exceeds the limit, not buy', 'INFO', 'succeeded'],
     ['購入ボタンが見つかりません', 'WARN', 'failed']])
-    observe('AP specific outcome ' + text, ap, [activation(), ...flow('BuyAP', [log(text, level)])], outcome);
-  const apTasks = invoke(request('discover', ap)).tasks;
-  add('price limit is inapplicable not purchased', request('observe', ap, { tasks: apTasks,
-    logEvents: eventize([activation(), ...flow('BuyAP', [log('价格超过限制，不购买')])]), logComplete: true }),
-    { 'observations.0.state': 'succeeded', 'observations.0.completionKind': 'inapplicable' });
+    add('AP specific outcome ' + text, request('observe', ap, { tasks: apTasks,
+      logEvents: eventize([activation(), ...flow('BuyAP', [log(text, level)])]), logComplete: true }),
+      { 'observations.0.state': outcome, ...(outcome === 'succeeded' ? { 'observations.0.completionKind': 'inapplicable' } : {}) });
   const momo = configuration(['清momotalk']), momoTasks = invoke(request('discover', momo)).tasks;
   add('no red dot is satisfied', request('observe', momo, { tasks: momoTasks,
     logEvents: eventize([activation(), ...flow('InMomotalk', [log('未检测到红点标记，跳过此任务')])]), logComplete: true }),
@@ -118,11 +116,12 @@ export function cases(invoke) {
   observe('late success without restart cannot clear failure', mail, [...broken, ...flow('CollectMails')], 'failed');
   const unknown = configuration(['未知任务']);
   add('unknown task is preserved but not auto enabled', request('discover', unknown), { 'tasks.1.title': '未知任务', 'tasks.1.isSelected': false, 'tasks.1.isEnabled': true });
-  add('unknown task blocks configuration', request('configuration', unknown), { 'diagnostics.0.code': 'baah_unknown_pipeline_task' });
+  add('unknown task warns without rewriting', request('configuration', unknown),
+    { 'diagnostics.baah_unknown_pipeline_task': 'warning', configPatches: [] });
   const loggingOff = request('configuration', mail); loggingOff.resources[1] = resource({ SAVE_LOG_TO_FILE: false }, 'software-config');
   add('file logging false has bound true proposal', loggingOff, { 'configPatches.0.resourceId': 'software-config', 'configPatches.0.edits.0.value': true });
   const invalidLogging = request('configuration', mail); invalidLogging.resources[1] = resource({ SAVE_LOG_TO_FILE: 'true' }, 'software-config');
-  add('logging string not coerced', invalidLogging, { configPatches: [], 'diagnostics.0.severity': 'blocking' });
+  add('logging string not coerced', invalidLogging, { configPatches: [], 'diagnostics.baah_file_logging_required': 'blocking' });
   const command = configuration(['邮件']); command.POST_COMMAND = 'shutdown /s';
   add('post command removed by bound proposal only', request('configuration', command), { 'configPatches.0.edits.0.selector': ['POST_COMMAND'], 'configPatches.0.edits.0.value': '' });
   const edit = request('configuration', mail), main = edit.resources[0];

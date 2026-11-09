@@ -4,7 +4,7 @@ using NexusPipeline.Extensions.GameCheckIn;
 
 internal static class FrontendCases
 {
-    internal static void Run(Action<string, Action> run)
+    internal static void Run(Action<string, Action> run, string viewModel)
     {
         void Assert(bool condition) { if (!condition) throw new InvalidOperationException("assertion_failed"); }
         void Reject(Action action, string code)
@@ -19,11 +19,14 @@ internal static class FrontendCases
         });
         run("frontend-read-state-projections-do-not-expose-protocol-or-secret-fields", () =>
         {
-            using var fixture = new FrontendFixture(); var task = FrontendFixture.Task("one"); fixture.Persistence.Store = new() { Tasks = [task] }; fixture.Runtime.Running = true;
+            using var fixture = new FrontendFixture();
+            var initial = (CheckInState)fixture.Invoke("read-state", "{}");
+            var task = FrontendFixture.Task("one"); fixture.Persistence.Store = new() { Tasks = [task] }; fixture.Runtime.Running = true;
             var state = (CheckInState)fixture.Invoke("read-state", "{}"); var bytes = CheckInJson.Bytes(state); var json = Encoding.UTF8.GetString(bytes);
             Assert(state.Tasks.Single().IsRunning && state.Platforms.Sum(platform => platform.Games.Length) == 14 && state.ConfigurationRevision == 0);
             Assert(!json.Contains("protocol", StringComparison.OrdinalIgnoreCase) && !json.Contains(task.Protocol.CnDeviceId.ToString("D"), StringComparison.Ordinal));
             Assert(state.NotificationTasks.Single().Id == "target-one" && !state.Platforms.Any(platform => platform.BrowserLogin.Ready));
+            File.WriteAllBytes(viewModel, CheckInJson.Bytes(initial));
         });
         run("frontend-new-editor-save-reorder-delete-use-real-application-cas", () =>
         {
@@ -72,7 +75,8 @@ internal static class FrontendCases
             using var fixture = new FrontendFixture(native: true); var editor = fixture.Editors.Add(fixture.Client, null, 0, new Dictionary<string, SavedCredentialField>());
             fixture.Capture.Reply = FrontendFixture.CaptureCn();
             var accepted = fixture.Browser.BeginAsync(fixture.Client, editor.Id, "cn", 0, default).Result;
-            Assert(fixture.Verifications == 1 && editor.View(fixture.Client).Fields["cn"].CandidateId == accepted.CandidateId && fixture.Persistence.Writes == 0);
+            var field = editor.View(fixture.Client).Fields["cn"];
+            Assert(field.MaskedAccount == "cn · 12**56" && field.CandidateId == accepted.CandidateId && fixture.Persistence.Writes == 0);
             fixture.Browser.CancelAsync(fixture.Client, editor.Id, "cn", default).GetAwaiter().GetResult();
             Assert(editor.View(fixture.Client).Fields["cn"].CandidateId is null && fixture.Capture.Cancels == 1);
         });
@@ -86,7 +90,8 @@ internal static class FrontendCases
             var current = fixture.Browser.BeginAsync(fixture.Client, editor.Id, "cn", editor.View(fixture.Client).Fields["cn"].FieldGeneration, default).Result;
             pending.SetResult(FrontendFixture.CaptureCn());
             try { late.GetAwaiter().GetResult(); throw new InvalidOperationException("late_capture_accepted"); } catch (OperationCanceledException) { }
-            Assert(editor.View(fixture.Client).Fields["cn"].CandidateId == current.CandidateId && fixture.Verifications == 1);
+            var field = editor.View(fixture.Client).Fields["cn"];
+            Assert(field.CandidateId == current.CandidateId && field.FieldGeneration == current.FieldGeneration && fixture.Persistence.Writes == 0);
         });
         run("reveal-candidate-requires-same-client-confirmation-and-no-document-write", () =>
         {

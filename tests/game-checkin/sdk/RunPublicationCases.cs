@@ -17,24 +17,24 @@ internal static class RunPublicationCases
             Assert(await adapter.WriteRunAsync(operation, task, 0, result, default) == 1);
             var saved = await adapter.ReadRunAsync(task, default);
             Assert(saved.Revision == 1 && saved.Run!.AttemptId == result.AttemptId && saved.Run.Results.Single().Code == "credential_not_configured");
-            Assert(documents.Name == "run-" + task.ToString("N") && documents.Writes == 1 && documents.Queries == 0);
+            Assert(documents.Name == "run-" + task.ToString("N") && documents.Writes == 1 && documents.Queries.Count == 0);
         });
         await run("lost-result-commit-response-queries-original-operation-without-second-write", async () =>
         {
             using var secrets = new PersistencePorts(); var documents = new RunDocuments { LoseResponse = true };
             var adapter = new SdkCheckInPersistence(documents, secrets, secrets); var operation = Guid.NewGuid();
             Assert(await adapter.WriteRunAsync(operation, task, 0, result, default) == 1);
-            Assert(documents.Writes == 1 && documents.Queries == 1 && documents.Queried == operation);
+            Assert(documents.Writes == 1 && documents.Queries.Count > 0 && documents.Queries.All(id => id == operation));
         });
         await run("unknown-or-mismatched-result-publication-does-not-become-success", async () =>
         {
             foreach (var mode in new[] { "missing", "operation", "revision", "hash" })
             {
                 using var secrets = new PersistencePorts(); var documents = new RunDocuments { LoseResponse = true, Corruption = mode };
-                var adapter = new SdkCheckInPersistence(documents, secrets, secrets);
-                try { await adapter.WriteRunAsync(Guid.NewGuid(), task, 0, result, default); throw new InvalidOperationException("unknown_commit_accepted"); }
+                var adapter = new SdkCheckInPersistence(documents, secrets, secrets); var operation = Guid.NewGuid();
+                try { await adapter.WriteRunAsync(operation, task, 0, result, default); throw new InvalidOperationException("unknown_commit_accepted"); }
                 catch (CheckInFailure error) when (error.Code == "checkin_run_publication_unknown") { }
-                Assert(documents.Writes == 1 && documents.Queries == 1);
+                Assert(documents.Writes == 1 && documents.Queries.Count > 0 && documents.Queries.All(id => id == operation));
             }
         });
     }
@@ -42,8 +42,8 @@ internal static class RunPublicationCases
     {
         internal bool LoseResponse;
         internal string? Corruption, Name;
-        internal Guid Queried;
-        internal int Writes, Queries;
+        internal readonly List<Guid> Queries = [];
+        internal int Writes;
         private ExtensionDocument? saved;
         private DocumentCommit? committed;
         public ValueTask<ExtensionDocument?> ReadAsync(string name, CancellationToken cancellationToken) => ValueTask.FromResult(saved);
@@ -58,7 +58,7 @@ internal static class RunPublicationCases
         }
         public ValueTask<DocumentCommit?> ReadCommitAsync(Guid operationId, CancellationToken cancellationToken)
         {
-            Queries++; Queried = operationId;
+            Queries.Add(operationId);
             return ValueTask.FromResult(Corruption switch {
                 "missing" => null, "operation" => committed! with { OperationId = Guid.NewGuid() },
                 "revision" => committed! with { Revision = committed.Revision + 1 }, "hash" => committed! with { Sha256 = new string('0', 64) }, _ => committed });

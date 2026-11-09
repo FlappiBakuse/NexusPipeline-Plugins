@@ -3,8 +3,9 @@ using System.Text.Json.Nodes;
 using NexusPipeline.Extensions.MaaFramework;
 
 var cases = new List<object>();
+var failed = false;
 void Run(string name, Action action)
-{ try { action(); cases.Add(new { name, status = "PASS" }); } catch (Exception error) { cases.Add(new { name, status = "FAIL", error = error.ToString() }); } }
+{ try { action(); cases.Add(new { name, status = "PASS" }); } catch (Exception error) { failed = true; cases.Add(new { name, status = "FAIL", error = error.ToString() }); } }
 void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
 void Reject(Action action)
 { try { action(); } catch (Exception error) when (error is MaaInputFailure or JsonException) { return; } throw new InvalidOperationException("rejection_expected"); }
@@ -53,13 +54,14 @@ BundleCases.Run(Run);
 DraftCases.Run(Run);
 RuntimeCases.Run(Run);
 ProjectInputCases.Run(Run);
-ResourceCases.Run(Run, args[0]);
+var report = args[^1];
+ResourceCases.Run(Run, report);
 WorkerPolicyCases.Run(Run);
 ProviderCases.Run(Run);
 MountCases.Run(Run);
 ReadonlyCases.Run(Run);
 EditorCases.Run(Run);
-if (args.Length > 1) CorpusCases.Run(Run, args[1], args[0] + ".corpus.json");
-await File.WriteAllBytesAsync(args[0], JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));
+if (args.Length > 1) CorpusCases.Run(Run, args[0], report + ".corpus.json");
+await File.WriteAllBytesAsync(report, JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));
 Console.WriteLine($"{cases.Count} cases");
-return cases.Count > 0 && cases.All(item => !JsonSerializer.Serialize(item).Contains("\"FAIL\"", StringComparison.Ordinal)) ? 0 : 1;
+return cases.Count > 0 && !failed ? 0 : 1;

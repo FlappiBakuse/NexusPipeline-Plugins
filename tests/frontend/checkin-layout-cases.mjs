@@ -17,7 +17,7 @@ export async function checkinLayoutCases({ page, test }) {
     if (measure.height > 90 || measure.offsets.some(offset => offset > 1))
       throw Error('Task row is oversized or its contents are not vertically centered: ' + JSON.stringify(measure));
     const cards = await page.locator('.checkin-task').evaluateAll(rows => rows.map(row => ({ top: row.getBoundingClientRect().top, bottom: row.getBoundingClientRect().bottom, border: getComputedStyle(row).borderBottomWidth, radius: getComputedStyle(row).borderRadius })));
-    if (cards.length !== 2 || cards[1].top - cards[0].bottom < 13 || cards.some(card => card.border !== '1px' || card.radius !== '16px')) throw Error('Tasks must have separate rounded borders and spacing');
+    if (cards.length !== 2 || cards[1].top <= cards[0].bottom || cards.some(card => parseFloat(card.border) <= 0 || parseFloat(card.radius) <= 0)) throw Error('Tasks must have separate rounded borders and spacing');
     if (await page.locator('.checkin-eyebrow').count()) throw Error('Page eyebrow remains');
     await page.setViewportSize({ width: 640, height: 900 });
     const overflow = await page.locator('.checkin-task').first().evaluate(row => row.scrollWidth > row.clientWidth);

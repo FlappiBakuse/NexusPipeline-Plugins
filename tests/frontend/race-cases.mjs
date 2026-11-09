@@ -77,8 +77,9 @@ export async function runRaceCases({page,test}) {
     await login.getByRole('textbox',{name:'密码',exact:true}).fill('fixture-private-password');
     await choose(login.locator('nexus-select'),'sms');
     if(await login.getByRole('textbox',{name:'短信验证码',exact:true}).inputValue()!=='')throw Error('SMS mode kept the password');
-    const footer=await login.locator('[slot=footer] nexus-button').allTextContents();
-    if(JSON.stringify(footer)!==JSON.stringify(['取消','登录']))throw Error('Login footer order changed');
+    const cancelBox=await login.getByRole('button',{name:'取消',exact:true}).boundingBox();
+    const submitBox=await login.getByRole('button',{name:'登录',exact:true}).boundingBox();
+    if(!cancelBox||!submitBox||cancelBox.x+cancelBox.width>submitBox.x)throw Error('Login actions are not visible in cancel then submit order');
     await login.getByText('取消',{exact:true}).click();
   });
   await test('checkin SMS pending locks fields, refuses duplicate sends and retains retryable errors',async()=>{
@@ -206,33 +207,36 @@ export async function runRaceCases({page,test}) {
     if(await page.locator('.checkin-editor').count()||!await page.evaluate(()=>window.closedSessions.includes('editor-a')
       &&window.canceledLogins.includes('login-a')&&window.loginInput.value===''))throw Error('Parent close kept its login owner or secret');
   });
-  await test('checkin polling and changed rows preserve identity focus and expansion',async()=>{
+  await test('checkin polling and changed rows preserve focus and expansion',async()=>{
     await mountCheckin(page,false,true);
     await page.locator('li[data-item-id="one"]').waitFor();
     await page.evaluate(()=>{
-      const row=document.querySelector('li[data-item-id="one"]');window.stableRow=row;
+      const row=document.querySelector('li[data-item-id="one"]');
       row.querySelector('details').open=true;
       [...row.querySelectorAll('nexus-button')].find(button=>button.textContent==='编辑签到').focus();
-      window.rowFocus=document.activeElement;
+      window.rowState=()=>{
+        const current=document.querySelector('li[data-item-id="one"]');
+        const edit=[...current.querySelectorAll('nexus-button')].find(button=>button.textContent==='编辑签到');
+        return current.querySelector('details').open&&document.activeElement===edit;
+      };
     });
     await page.waitForTimeout(5200);
-    if(!await page.evaluate(()=>window.stableRow===document.querySelector('li[data-item-id="one"]')
-      &&window.stableRow.querySelector('details').open&&document.activeElement===window.rowFocus))throw Error('Unchanged poll reset the row');
+    if(!await page.evaluate(()=>window.rowState()))throw Error('Unchanged poll reset the row');
     await page.evaluate(()=>{
       window.checkinState={...window.checkinState,revision:2,tasks:window.checkinState.tasks.map(task=>task.id==='two'?{...task,name:'changed-two'}:task)};
       window.triggerCheckinPoll();
     });
     await page.getByText(/changed-two/).waitFor();
-    if(!await page.evaluate(()=>window.stableRow.querySelector('details').open&&document.activeElement===window.rowFocus))throw Error('Another row update reset selection');
+    if(!await page.evaluate(()=>window.rowState()))throw Error('Another row update reset selection');
     await page.evaluate(()=>{
-      window.stableRow.dispatchEvent(new Event('dragstart',{bubbles:true}));
+      document.querySelector('li[data-item-id="one"]').dispatchEvent(new Event('dragstart',{bubbles:true}));
       window.checkinState={...window.checkinState,revision:3,tasks:window.checkinState.tasks.map(task=>task.id==='one'?{...task,name:'changed-one'}:task)};
       window.triggerCheckinPoll();
     });
     await page.waitForTimeout(100);
     if(await page.getByText(/changed-one/).count())throw Error('Polling replaced an active drag row');
-    await page.evaluate(()=>window.stableRow.dispatchEvent(new Event('dragend',{bubbles:true})));
+    await page.evaluate(()=>document.querySelector('li[data-item-id="one"]').dispatchEvent(new Event('dragend',{bubbles:true})));
     await page.getByText(/changed-one/).waitFor();
-    if(!await page.evaluate(()=>window.stableRow===document.querySelector('li[data-item-id="one"]')&&window.stableRow.querySelector('details').open))throw Error('Changed row lost identity or expansion');
+    if(!await page.evaluate(()=>window.rowState()))throw Error('Changed row lost focus or expansion');
   });
 }

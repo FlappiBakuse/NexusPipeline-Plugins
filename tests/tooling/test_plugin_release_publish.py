@@ -108,7 +108,7 @@ class GitServer:
             identity = route.removeprefix('git/blobs/')
             raw = self.git('cat-file', 'blob', identity)
             if self.fault == 'readback' and self.applied:
-                raw += b'changed'
+                raw = bytes([raw[0] ^ 1]) + raw[1:]
             return {'sha': identity, 'size': len(raw), 'encoding': 'base64', 'content': base64.b64encode(raw).decode()}
         if method == 'GET' and route.startswith('compare/'):
             older, newer = route.removeprefix('compare/').split('...')
@@ -234,32 +234,48 @@ class PluginReleasePublishTests(unittest.TestCase):
         self.assertEqual(before, len([event for event in self.api.events if event[0] != 'GET']))
 
     def test_rejects_payloads(self):
-        for field in ['source', 'package', 'scope', 'projection', 'extra', 'plan']:
+        failures = {
+            'source': 'Stable source differs from its verified Git tree',
+            'package': 'Stable package bytes differ from PackageMetadata',
+            'scope': 'Stable package path differs from artifactName and version',
+            'projection': 'Stable catalog projection differs',
+            'extra': 'Stable candidate files differ from their exact whitelist',
+            'plan': 'Stable release plan must be an object',
+        }
+        for field, reason in failures.items():
+            original = self.verified
+            self.verified = deepcopy(original)
+            candidate = self.verified['candidate']
+            if field == 'source':
+                candidate['source']['sourceMode'] = 'local-uncommitted'
+                candidate['release']['plan']['source'] = candidate['source']
+            elif field == 'package':
+                with zipfile.ZipFile(io.BytesIO(self.packages['Alpha'])) as package:
+                    members = {name: package.read(name) for name in package.namelist()}
+                members['frontend/main.js'] = b'export const fixture = false;'
+                self.write('packages/Alpha/Alpha-0.5.0.zip', archive(members))
+            elif field == 'scope':
+                candidate['release']['packageMetadata']['Alpha']['path'] = '../escape.zip'
+            elif field == 'projection':
+                self.write('catalog.json', b'{}')
+            elif field == 'extra':
+                self.write('tooling/execute.py', b'raise RuntimeError("Candidate source must never execute")')
+            else:
+                candidate['release']['plan'] = []
+            self.save_candidate()
+            server = GitServer(self.fixture, self.source)
             with self.subTest(field=field):
-                original = deepcopy(self.verified)
-                if field == 'source':
-                    self.verified['candidate']['source'] = {**self.plan['source'], 'sourceMode': 'local-uncommitted'}
-                elif field == 'package':
-                    self.write('packages/Alpha/Alpha-0.5.0.zip', b'Changed package')
-                elif field == 'scope':
-                    self.verified['candidate']['release']['packageMetadata']['Alpha']['path'] = '../escape.zip'
-                elif field == 'projection':
-                    self.write('catalog.json', b'{}')
-                    self.save_candidate()
-                elif field == 'extra':
-                    self.write('tooling/execute.py', b'raise RuntimeError("Candidate source must never execute")')
-                    self.save_candidate()
-                else:
-                    self.verified['candidate']['release']['plan'] = []
-                with self.assertRaises((ValueError, KeyError)):
-                    publish_stable(self.api, self.directory, self.verified, True)
-                self.assertTrue(all(method == 'GET' for method, _, _ in self.api.events))
-                self.verified = original
-                if field == 'extra':
-                    (self.directory / 'tooling/execute.py').unlink()
+                with self.assertRaisesRegex(ValueError, reason):
+                    publish_stable(server, self.directory, self.verified, True)
+                self.assertTrue(all(method == 'GET' for method, _, _ in server.events))
+            self.verified = original
+            if field == 'extra':
+                (self.directory / 'tooling/execute.py').unlink()
+            elif field == 'package':
                 self.write('packages/Alpha/Alpha-0.5.0.zip', self.packages['Alpha'])
+            elif field == 'projection':
                 self.write('catalog.json', (self.directory / CATALOG).read_bytes())
-                self.save_candidate()
+            self.save_candidate()
 
     def test_rejects_unselected(self):
         for name in [CATALOG, STATE]:
@@ -287,16 +303,27 @@ class PluginReleasePublishTests(unittest.TestCase):
         self.assertTrue(all(method == 'GET' for method, _, _ in self.api.events))
 
     def test_checks_server(self):
-        for fault in ['truncated', 'blob', 'tree', 'advance', 'patch', 'readback']:
+        failures = {
+            'truncated': 'Git tree is missing or truncated',
+            'blob': 'Uploaded Git blob identity differs',
+            'tree': 'Prepared stable tree exceeds its exact whitelist',
+            'advance': 'Stable main advanced before the atomic update',
+            'patch': 'Server rejected a non-fast-forward reference',
+            'readback': 'Git blob bytes differ from their identity',
+        }
+        for fault, reason in failures.items():
             with self.subTest(fault=fault):
                 server = GitServer(self.fixture, self.source)
                 server.fault = fault
-                with self.assertRaises(ValueError):
+                with self.assertRaisesRegex(ValueError, reason):
                     publish_stable(server, self.directory, self.verified, True)
-                if fault in ['truncated', 'blob', 'tree']:
-                    self.assertEqual(self.source, server.remote)
                 if fault == 'readback':
-                    self.assertTrue(server.applied)
+                    self.assertEqual((self.directory / 'catalog.json').read_bytes(), server.git('show', server.remote + ':catalog.json'))
+                elif fault == 'advance':
+                    self.assertEqual(b'New protected source', server.git('show', server.remote + ':docs/advanced.md'))
+                    self.assertEqual(server.git('show', self.source + ':catalog.json'), server.git('show', server.remote + ':catalog.json'))
+                else:
+                    self.assertEqual(self.source, server.remote)
 
     def test_removes_deleted(self):
         self.fixture.git('checkout', '-b', 'remove-beta', self.fixture.distribution)
@@ -417,21 +444,19 @@ class PluginReleasePublishTests(unittest.TestCase):
         self.packages = {'Beta': archive(original)}
         self.build_candidate()
         self.assertEqual('VERIFIED_NOT_PUBLISHED', publish_stable(self.api, self.directory, self.verified)['status'])
-        for fault in ['worker', 'frontend', 'binary', 'case']:
-            members = dict(original)
-            if fault in ['worker', 'frontend']:
-                members['worker/evil.dll' if fault == 'worker' else 'frontend/main.js'] = b'Undeclared payload'
-            elif fault == 'binary':
-                members['adapter/main.js'] = b'Invalid\0script'
-            else:
-                members['MANIFEST.JSON'] = members['manifest.json']
+        for name, content, reason in [
+            ('worker/evil.dll', b'Undeclared payload', 'has an undeclared payload'),
+            ('frontend/main.js', b'Undeclared payload', 'has an undeclared payload'),
+            ('adapter/main.js', b'Invalid\0script', 'contains binary bytes'),
+            ('MANIFEST.JSON', original['manifest.json'], 'has unsafe or colliding members'),
+        ]:
             buffer = io.BytesIO()
             with zipfile.ZipFile(buffer, 'w') as output:
-                for name, raw in members.items():
-                    output.writestr(name, raw)
+                for member, raw in (original | {name: content}).items():
+                    output.writestr(member, raw)
             self.packages['Beta'] = buffer.getvalue()
             self.build_candidate()
-            with self.subTest(fault=fault), self.assertRaises(ValueError):
+            with self.subTest(member=name), self.assertRaisesRegex(ValueError, reason):
                 publish_stable(self.api, self.directory, self.verified, True)
         self.assertTrue(all(method == 'GET' for method, _, _ in self.api.events))
 

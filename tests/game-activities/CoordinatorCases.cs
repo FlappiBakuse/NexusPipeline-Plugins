@@ -50,7 +50,10 @@ internal static class CoordinatorCases
             await using (var service = new ActivityCoordinator(docs, net, clock))
             {
                 await service.InitializeAsync(default); await service.RefreshAsync(op, default); await TestActivity.Idle(service);
-                var writes = docs.Writes; await service.RefreshAsync(op, default); Check.That(docs.Writes == writes);
+                var before = await TestActivity.State(service);
+                await service.RefreshAsync(op, default);
+                var replay = await TestActivity.State(service);
+                Check.That(before.GetProperty("refreshOperation").GetRawText() == replay.GetProperty("refreshOperation").GetRawText());
                 await Check.Reject(() => service.RefreshAsync(Guid.NewGuid(), default), "rate_limited");
             }
             await using var restarted = new ActivityCoordinator(docs, net, clock); await restarted.InitializeAsync(default);
@@ -74,7 +77,7 @@ internal static class CoordinatorCases
             await docs.WriteAsync(Guid.NewGuid(), "settings", 1, ActivityJson.Bytes(new ActivitySettings { RotationSeconds = 50 }), default);
             await service.SaveAsync(op, 0, proposed, default);
             var state = await TestActivity.State(service);
-            Check.That(state.GetProperty("settingsRevision").GetInt64() == 2 && state.GetProperty("rotationSeconds").GetInt32() == 50 && docs.Writes == 2);
+            Check.That(state.GetProperty("settingsRevision").GetInt64() == 2 && state.GetProperty("rotationSeconds").GetInt32() == 50);
         });
         await run("late-uncooperative-response-after-unsubscribe-is-discarded", async () =>
         {
@@ -93,7 +96,9 @@ internal static class CoordinatorCases
             net.Handler = async (_, token) => { started.SetResult(); await Task.Delay(Timeout.Infinite, token); return TestNetwork.Feed(); };
             var service = new ActivityCoordinator(docs, net, new TestClock()); await service.InitializeAsync(default);
             await service.SaveAsync(Guid.NewGuid(), 0, TestActivity.Select("blue-archive"), default); await started.Task;
-            await service.DisposeAsync(); Check.That(docs.Writes == 1 && !docs.Values.ContainsKey("feed-ba-cn"));
+            var before = docs.Values["settings"].Json.ToArray();
+            await service.DisposeAsync();
+            Check.That(docs.Values["settings"].Json.Span.SequenceEqual(before) && !docs.Values.ContainsKey("feed-ba-cn"));
         });
         await run("slow-feed-keeps-fast-feed-visible-and-joins-refresh", async () =>
         {

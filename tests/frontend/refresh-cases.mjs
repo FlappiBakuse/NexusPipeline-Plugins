@@ -78,21 +78,20 @@ export async function runRefreshCases({page,test}) {
       if (Object.values(result).some(value => !value)) throw Error(target + ': ' + JSON.stringify(result));
     }
   });
-  await test('wallpaper settings reuse thumbnails across no-change and effect updates',async()=>{
+  await test('wallpaper settings retain image and saved effects across updates',async()=>{
     await page.evaluate(async()=>{
-      window.thumbnailReads=0;window.wallpaperSaved=undefined;
+      window.wallpaperSaved=undefined;
       let state={revision:1,enabled:true,effectiveEnabled:true,assets:[{id:'one',name:'One',sizeBytes:69}],order:['one'],selectedId:'one',
         currentId:'one',rotation:{mode:'off',intervalMinutes:30},
         effects:{blurPx:0,dimPercent:0,surfaceTransparencyPercent:0,secondaryTransparency:false}};
       await window.testMount('custom-wallpaper',{
         connectionKind:async()=>'remote',readState:async()=>state,
-        readAsset:async()=>{window.thumbnailReads++;return window.fixturePng();},subscribe:callback=>{window.publishWallpaperSettings=callback;return()=>{};},
+        readAsset:async()=>window.fixturePng(),subscribe:callback=>{window.publishWallpaperSettings=callback;return()=>{};},
         saveSettings:async patch=>{state={...state,...patch,revision:state.revision+1};window.wallpaperSaved=state;return state;},
       },'settings.panels');
     });
     await page.locator('nexus-collapsible-card').getByRole('button').click();
     await page.locator('img[src]').waitFor();
-    await page.evaluate(()=>{window.thumbnail=document.querySelector('img[src]');});
     await page.evaluate(()=>window.fixture.ports.readState().then(window.publishWallpaperSettings));
     await page.locator('nexus-range[aria-label="模糊（像素）"]').locator('input').press('ArrowRight');
     await page.waitForFunction(()=>window.wallpaperSaved?.effects.blurPx===1);

@@ -42,9 +42,9 @@ MFA 只展开当前控制器、资源及选中 case 的子选项，同一层选�
 
 ## 生产接线与验证
 
-标准 `tests/maa-framework/verify.py --sdk-receipt <正式生产者回执> --output <仓外目录> --cache <共用缓存>` 使用仓内合成输入和真实 SDK 接口，构建与正常测试不依赖 Reference。显式本机数据探针另核对锁定 MaaEnd/MaaS 完整 PI 闭包，逐文件匹配 inventory：MaaEnd 73 文件 / 49 任务 / 426 选项，MaaS 24 文件 / 17 任务 / 61 选项。组件覆盖编译、运行计划绑定和 SDK 分块消费，不代表所有项目 native/Agent 或业务实测通过。
+标准 `tests/maa-framework/verify.py --sdk-receipt <正式生产者回执> --output <仓外目录> --cache <共用缓存>` 使用仓内合成输入和真实 SDK 接口。可选 `--corpus <清单>` 核对锁定 MaaEnd/MaaS 的完整 PI 闭包。清单逐项指定 `project`、`root`、`interface`、`inventory`、`taskCount` 和预期阻止执行时的 `blockingDiagnostic`。语料逐文件匹配 inventory，文件、任务、选项和分页数据写入语料回执。
 
-完整元数据使用内部有界页图投影，所有选项、case、控制器、资源与未知扩展字段均可无损恢复；不只导出固定任务摘要。MaaEnd 的完整 PI artifact 为 2,322,276 字节，index 为 18,836 字节，38 个内容页总计 1,570,610 字节；最大页 65,532 字节。MaaS index 为 9,175 字节、13 页。每页 SHA、页闭包、原 source-set 和 compilation 指纹同时校验；缺页、改页、无关页及错误身份拒绝。PI 中完整 pipeline_override 留在 artifact，Jint 不应一次展开全部页；磁盘上的完整 native resource/pipeline 字节由独立归档 owner 负责。
+完整元数据使用内部有界页图投影，所有选项、case、控制器、资源与未知扩展字段均可无损恢复。每页 SHA、页闭包、原 source-set 和 compilation 指纹同时校验；缺页、改页、无关页及错误身份拒绝。PI 中完整 pipeline_override 留在 artifact，Jint 按页读取。磁盘上的完整 native resource/pipeline 字节由独立归档 owner 负责。
 
 正式入口在激活时注册 `IProjectCompiler`，compilerId 为 `project`，注册可见性和回调排空沿 Host scope。安装后的编译器、绑定编辑器与独立 worker 使用同一冻结项目。受控安装测试覆盖正常原生任务、截图、Agent 自定义动作，以及初始化成功、失败和取消；四类真实发行项目的完整组合仍需独立验证。
 
@@ -52,7 +52,7 @@ MFA 只展开当前控制器、资源及选中 case 的子选项，同一层选�
 
 小 index 绑定 bundle artifact、PI index 和执行 JSON。执行 JSON 最多 262144 字节；保留全部 occurrence 的顺序、Id/SourceId、Entry、RepeatCount、Enabled 和 Role，Options/Pipeline 通过完整 artifact 内的精确 JSON pointer、字节数和 SHA 引用。启用任务的编译内容来自同一 `MaaSemanticPlan`，禁用与未知行不因此消失。唯一内容闭包总计最多 32 MiB；超过预算明确拒绝，不截断、拆假任务或提高 Jint 限额。
 
-`Verify` 使用 Host 应保存的 artifact 摘要和原冻结来源重开，验证完整页图并重建比对 profile、semantic 与执行视图。普通编辑 schema 按页取用，不应让 Jint 一次展开所有页。组件覆盖重算摘要后的 profile/semantic/read-set 修改、来源身份与清单变化、缺页/改页/多余页和预算拒绝；两个完整 corpus 使用明确合成的 MXU/MFA 保存配置，各启用一个真实 PI 任务并保留其余 occurrence，未读取用户配置或执行上游任务。
+`Verify` 使用 Host 应保存的 artifact 摘要和原冻结来源重开，验证完整页图并重建比对 profile、semantic 与执行视图。普通编辑 schema 按页取用。组件覆盖重算摘要后的 profile/semantic/read-set 修改、来源身份与清单变化、缺页/改页/多余页和预算拒绝。两个完整语料使用合成的 MXU/MFA 保存配置，各启用一个真实 PI 任务并保留其余 occurrence。缺少相应的运行时或 Agent 程序选择时，保留可读预览和诊断，执行保持禁用。
 
 完整 PI/profile 可解释但业务设置阻断执行时，公共 CompilationResult.CanExecute 与 bundle、ExecutionView 使用同一语义结果，返回 `canExecute=false` 和 `blockingDiagnostics[{Code,Stage,Detail}]`。完整 SourceSnapshot、PI 页图、保存选项及来源绑定继续保留；`semantic`、`semanticFingerprint` 和各行 Compiled 为 null，不伪造空的可执行计划。MFA StartupSoftwareAndScript、MXU 启用的 __MXU_POWER__、不支持的控制器和明确的选项选择冲突属于此类。只有显式 typed 业务错误转换为阻断；JSON/源码、缺少 import、身份/路径、口令保护、重复次数及输出预算错误继续拒绝。修复配置后必须以新冻结输入重新编译。`canExecute=true` 仅表示语义编译成功，不代表 Host 已授权启动或 native 验收通过。
 
@@ -68,7 +68,7 @@ Compile 首先核对 `ISelectedSource.Configurations` 的实际保存 mount：�
 
 ResourceId、Path、Revision、ContractRevision、ContractSha256、SnapshotSha256、Kind 和实例事实全部冻结进入观察与快照摘要；回调中 metadata 改变拒绝，原字节相同也不能复用另一保存修订。伪造 selection metadata、重叠 mount 和大小写别名拒绝。此校验使用 Host 对象，不从文件名、selection 或私有身份字符串推断来源权限。
 
-`CompilationResult.RootIndex` 指向 `project` index，全部 Index/Page/Artifact 的 References 都为本次资产名，闭合且无孤儿。目录/缺失观察与 mount metadata 作为 artifact 绑定。`ResourceTrees` 从实际所选控制器/资源声明解析路径并按原顺序去重，生成唯一 resource-N 名字，最多八个唯一相对根；超过预算拒绝。对所选路径只列其根和 pipeline 的完整即时成员，不扫描 DLL/图片，不按任务名猜 pipeline 子集，不把声明或目录观察冒称资源归档。两个完整 corpus 同时通过带保存 mount 的 SDK 只读 fixture 调用并取得相同 semantic 指纹；这仍是接口组件范围，不是安装集成。
+`CompilationResult.RootIndex` 指向 `project` index，全部 Index/Page/Artifact 的 References 都为本次资产名，闭合且无孤儿。目录/缺失观察与 mount metadata 作为 artifact 绑定。`ResourceTrees` 从实际所选控制器/资源声明解析路径并按原顺序去重，生成唯一 resource-N 名字，最多八个唯一相对根；超过预算拒绝。对所选路径只列其根和 pipeline 的完整即时成员，不扫描 DLL/图片，不按任务名猜 pipeline 子集，不把声明或目录观察冒称资源归档。完整语料通过带保存 mount 的 SDK 只读端口核对任务顺序、启用状态和执行门禁。
 
 ## 浏览器编辑投影
 
@@ -80,7 +80,7 @@ schema 保留 password 标志，但密码 default 不公开；非空密码 defau
 
 profile 保留 occurrence 的 Id/SourceId、顺序、开关、重复次数、角色及原 Origin{Kind,Path,Pointer,Index}，不提供 SourceSnapshot 或指向它的私有 SnapshotPointer。未知行保留身份与位置，Name/Entry 为 null。MFA Inheritance 与原配置 SHA/revision 绑定保持，不构成写授权。阻断诊断只公开 code/stage/severity，不公开可能含原配置片段的 Detail。
 
-每页最多65536字节，index最多524288字节；使用 inline/object/array/string 编码，所有分片都由 SHA/bytes/count 绑定并可无损还原公共 schema。完整两个 corpus 中，MaaEnd editor index为2207字节、25页共725448字节；MaaS为7745字节、4页共140114字节。组件覆盖所有公开任务/选项数量、长非BMP文本、缺页/改页/多余页、来源绑定及隐私 sentinel；不是实际浏览器或安装授权验收。
+每页最多65536字节，index最多524288字节。使用 inline/object/array/string 编码，所有分片都由 SHA/bytes/count 绑定并可无损还原公共 schema。组件覆盖公开任务和选项数量、长非 BMP 文本、缺页、改页、多余页、来源绑定和私有配置隔离。
 
 Host 以所选 binding 的已保存配置挂载和 revision/read-set 编译，不能用另一个 live 账号配置代替。
 完整编译闭包及所选语义计划绑定到 Jint 和历史计划。DeliveryJobs 单文件 2,360,901 字节，
@@ -113,8 +113,7 @@ pretask 默认限时 15 分钟、最大 20 分钟，同时受 Host 本次预算�
 其他控制器方法仍须逐项接通，不以编译 CanExecute 替代准入。
 原生会话排空后才释放输入；无法排空时保留全部所有权，等待 Host 停止完整进程族。
 
-`tests/packaging/verify.py --output <仓外目录>` 独立验证归档/发行/成员错配等十二种
-合成边界。组件资源物化、独立 worker 编译与包输入核验均不代表原发行项目运行通过。
+`tests/packaging/verify.py --output <仓外目录>` 用合成归档核对声明的 DLL、原始字节和错配拒绝。
 
 业务任务通过 `executionTaskId` 绑定编译 occurrence，Host 将实际选中业务 ID 和执行 ID
 同序冻结。worker 不依赖专项插件 ID 规则，也不从显示名或 Entry 推断对应关系。
@@ -159,12 +158,12 @@ pipeline，设置空 LogDir、StdoutLevel Off、关闭 DebugMode/SaveDraw/SaveOn
 拒绝绕过 typed controller 的 Command，缺少可信输出 scope 时拒绝原生 Screencap；不是全文字符串命中。
 资源输入按完整只读树检查，32 MiB pipeline 字节预算，最多八棵资源树，不按任务名裁剪。
 
-锁定 MaaEnd 主树的416个 pipeline 文件中有4处 Screencap，位于 SceneImageCheck 与
-Loading；其他五树无 Command/Screencap。没有输出 scope 时加载该主树的选择（包括 WeaponUpgrade）
-明确拒绝，不将静态任务图不可达视为运行授权。MaaS 五树94文件未发现这两种动作，
-这只说明动作 guard 未阻断，不证明 Agent、target 或动态任务链就绪。
+`tests/maa-framework/native-session/verify.py` 使用 `--resource-inventory <清单>` 独立审计锁定资源，
+使用 `--runtime-receipt <回执>` 验证原生行为。清单的 `projects` 逐项提供项目名 `project`、源码
+`root` 和由 `relativePath` 组成的 `trees`。审计回执记录流水线与默认流水线的核验范围，以及
+有无输出 scope 时的产品 guard 结果。资源审计的 `test` 状态为 `NOT_RUN`。
 
-正式原生组件测试使用已核验官方 5.14.3 的十 DLL 闭包与合成资源，覆盖顺序/重复、
+正式原生组件测试使用已核验官方 5.14.3 的原生闭包与合成资源，覆盖顺序/重复、
 override、资源覆盖、识图、失败停止、回调异常、取消排空、并发拒绝、typed app/shell
 拒绝、未证明停止时保留所有权及语义动作 guard。测试不运行真实 corpus，不连接设备，
 组件结果不替代独立的 Host owned-worker、target IPC 和 Agent 安装验证，也不证明真实项目业务通过。
@@ -192,9 +191,9 @@ NativeWritersDrained=true 与 ProcessFamilyStopped=false 明确区分。毫秒�
 会话不会 Dispose 输出 scope；外层 Host 保持它和独立输入 master 到所有 worker/Agent
 writer 真正结束，再核验完整文件集、身份与哈希后发布受控证据。普通页面没有此输出接口。
 
-组件包含35个合成案例，其中7个独立子进程由测试父进程设置各自 fresh CWD；scope fixture
+组件的 7 个独立输出子进程由测试父进程设置各自 fresh CWD。scope fixture
 持有真实目录身份/no-delete 句柄和独立输入只读 master。实际 C ABI 验证 Screencap detail、
 PNG 参数、文件 SHA、目录替换/输入写拒绝、取消排空、quota 失败、错误 CWD 与缺 scope 拒绝。
-两项目11棵树另做完整纯源码策略核验；未调用真实 corpus 的 native load/task、Agent 或设备。
+可选真实语料审计只读取锁定资源并调用策略 guard。
 测试子进程不等同 Host Native Job 准入，内部快照不构成完整进程族停止证明；实际输出
 scope/family stop/最终收集的安装验证由受控原包用例单独记录。

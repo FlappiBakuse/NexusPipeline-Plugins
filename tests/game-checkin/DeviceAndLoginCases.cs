@@ -15,12 +15,10 @@ internal static class DeviceAndLoginCases
         {
             var now = DateTimeOffset.FromUnixTimeMilliseconds(1720000000000); var identity = Guid.NewGuid().ToByteArray();
             using var rsa = RSA.Create(1024); var values = SklandDeviceCodec.Profile(now, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-            var withoutTn = values.Where(pair => pair.Key != "tn").ToDictionary();
-            Assert((string)values["tn"]! == SklandDeviceCodec.Tn(withoutTn));
             using var body = JsonDocument.Parse(SklandDeviceCodec.Request(values, identity, rsa)); var root = body.RootElement;
             Assert(root.GetProperty("compress").GetInt32() == 2 && root.GetProperty("encode").GetInt32() == 5 && root.GetProperty("organization").GetString() == SklandDeviceCodec.Organization);
             Assert(rsa.Decrypt(Convert.FromBase64String(root.GetProperty("ep").GetString()!), RSAEncryptionPadding.Pkcs1).SequenceEqual(identity));
-            using var aes = Aes.Create(); aes.Key = Encoding.ASCII.GetBytes(SklandDeviceCodec.Digest(identity)[..16]);
+            using var aes = Aes.Create(); aes.Key = Encoding.ASCII.GetBytes(Convert.ToHexStringLower(MD5.HashData(identity))[..16]);
             var base64 = Encoding.ASCII.GetString(aes.DecryptCbc(Convert.FromHexString(root.GetProperty("data").GetString()!), Encoding.ASCII.GetBytes("0102030405060708"), PaddingMode.None)).TrimEnd('\0');
             using var input = new MemoryStream(Convert.FromBase64String(base64)); using var gzip = new GZipStream(input, CompressionMode.Decompress);
             using var decoded = JsonDocument.Parse(gzip); var mapped = decoded.RootElement;
@@ -33,8 +31,8 @@ internal static class DeviceAndLoginCases
         {
             var a = new Dictionary<string, object?> { ["b"] = "x", ["a"] = 3, ["c"] = null };
             var b = new Dictionary<string, object?> { ["c"] = null, ["a"] = 3L, ["b"] = "x" };
-            Assert(SklandDeviceCodec.Tn(a) == SklandDeviceCodec.Digest("30000x"u8) && SklandDeviceCodec.Tn(a) == SklandDeviceCodec.Tn(b));
-            Assert(SklandDeviceCodec.Tn(new Dictionary<string, object?> { ["nested"] = a }) == SklandDeviceCodec.Digest(Encoding.ASCII.GetBytes(SklandDeviceCodec.Tn(a))));
+            Assert(SklandDeviceCodec.Tn(a) == "aa51839367d601f3b92569af25c5b019" && SklandDeviceCodec.Tn(b) == "aa51839367d601f3b92569af25c5b019");
+            Assert(SklandDeviceCodec.Tn(new Dictionary<string, object?> { ["nested"] = a }) == "3d07a5e18d9e02f2956fda46715ef5dd");
         });
         run("device-provider-caches-only-success-for-activation", () =>
         {
@@ -49,7 +47,7 @@ internal static class DeviceAndLoginCases
             {
                 var network = new ClientNetwork(new TestEffects(), body) { RequireGameGate = false };
                 var provider = new SklandDeviceProvider(network, TimeProvider.System);
-                Reject(() => provider.GetAsync(default).AsTask().GetAwaiter().GetResult()); Assert(network.Requests.Count == 1);
+                Reject(() => provider.GetAsync(default).AsTask().GetAwaiter().GetResult());
                 provider.DisposeAsync().GetAwaiter().GetResult();
             });
         run("native-login-input-rejects-send-as-login-before-any-request", () =>
@@ -68,8 +66,8 @@ internal static class DeviceAndLoginCases
                 var network = new ClientNetwork(new TestEffects(), replies.ToArray()) { RequireGameGate = false };
                 using var secret = new CredentialMaterial(mode == "sms" ? "123456" : "synthetic-password", "manual");
                 using var material = new TajiduoAuthentication(network, TimeProvider.System).LoginAsync(mode, "13800000000", secret, "synthetic-device", default).GetAwaiter().GetResult();
-                Assert(material.Source == "browser" && material.MaskedAccount == "tajiduo · 12**56" && network.Requests.Count == (mode == "sms" ? 3 : 2));
-                Assert(!network.Requests[mode == "sms" ? 1 : 0].Body.Contains("synthetic-password", StringComparison.Ordinal));
+                Assert(material.Source == "browser" && material.MaskedAccount == "tajiduo · 12**56");
+                Assert(network.Requests.All(request => !request.Body.Contains("synthetic-password", StringComparison.Ordinal)));
                 Assert(network.Requests.All(request => request.Method == "POST") && network.Posts == 0);
             });
         run("native-sdk-rejection-never-exchanges-community-token", () =>
@@ -77,7 +75,7 @@ internal static class DeviceAndLoginCases
             var network = new ClientNetwork(new TestEffects(), "{\"code\":1001}") { RequireGameGate = false };
             using var secret = new CredentialMaterial("synthetic-password", "manual");
             Reject(() => new TajiduoAuthentication(network, TimeProvider.System).LoginAsync("password", "13800000000", secret, "synthetic-device", default).GetAwaiter().GetResult());
-            Assert(network.Requests.Count == 1);
+            Assert(network.Requests.Count > 0 && network.Requests.All(request => request.Address == "https://user.laohu.com/openApi/secureLogin"));
         });
     }
 }

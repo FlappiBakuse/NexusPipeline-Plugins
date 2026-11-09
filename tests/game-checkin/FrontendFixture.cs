@@ -12,13 +12,12 @@ internal sealed class FrontendFixture : IDisposable
     private readonly CredentialRevealGrants grants;
     private readonly TajiduoLogins tajiduo;
     internal readonly CheckInFrontend Frontend;
-    internal int Verifications;
     internal FrontendFixture(bool native = false)
     {
         var clock = new DraftClock(); Editors = new(clock); grants = new(clock); var proof = new FrontendNativeProof(native);
         Browser = new(Editors, proof, Capture, (platform, material, token) =>
         {
-            Verifications++; string value = ""; material.Use(text => value = text.ToString());
+            string value = ""; material.Use(text => value = text.ToString());
             return System.Threading.Tasks.Task.FromResult(new CredentialMaterial(value, "browser", platform + " · 12**56", material.Web));
         });
         var network = new ClientNetwork(new TestEffects()) { RequireGameGate = false };

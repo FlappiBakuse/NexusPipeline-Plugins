@@ -11,8 +11,9 @@ import unittest
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
+MANIFEST = ROOT / "plugins/managed/maa-framework/extension.json"
 sys.path.insert(0, str(ROOT / "tooling"))
-from maa_runtime_package import REQUIRED, runtime_members
+from maa_runtime_package import runtime_members
 
 
 def encoded(value):
@@ -32,9 +33,11 @@ class RuntimeTests(unittest.TestCase):
         (self.runtime / "bin").mkdir(parents=True)
         self.pin_path, self.receipt_path = self.work / "pin.json", self.work / "receipt.json"
         self.archive = self.work / "runtime.zip"
+        self.manifest = json.loads(MANIFEST.read_bytes())
+        libraries = sorted(Path(path).name for path in self.manifest["managed"]["nativeLibraries"])
         files = []
         with zipfile.ZipFile(self.archive, "w") as archive:
-            for index, name in enumerate(sorted(REQUIRED)):
+            for index, name in enumerate(libraries):
                 data = bytes([index + 1]) * (index + 2)
                 (self.runtime / "bin" / name).write_bytes(data)
                 archive.writestr("bin/" + name, data)
@@ -45,7 +48,6 @@ class RuntimeTests(unittest.TestCase):
             "asset": {"id": 2, "name": self.pin["assetName"], "digest": "sha256:" + self.pin["assetSha256"], "size": self.archive.stat().st_size,
                 "browser_download_url": "https://github.com/MaaXYZ/MaaFramework/releases/download/v5.14.3/" + self.pin["assetName"]},
             "archive": str(self.archive), "runtime": str(self.runtime), "files": files}
-        self.manifest = {"extensionId": "maa-framework", "managed": {"nativeLibraries": ["runtime/win-x64/" + name for name in sorted(REQUIRED)]}}
 
     def invoke(self):
         self.pin_path.write_bytes(encoded(self.pin)); self.receipt_path.write_bytes(encoded(self.receipt))
@@ -53,13 +55,12 @@ class RuntimeTests(unittest.TestCase):
 
     def test_complete_closure(self):
         members, proof = self.invoke()
-        self.assertEqual(len(REQUIRED) + 1, len(members))
-        lock = json.loads(members["runtime/win-x64/runtime-lock.json"])
+        lock = json.loads(members.pop("runtime/win-x64/runtime-lock.json"))
+        with zipfile.ZipFile(self.archive) as archive:
+            self.assertEqual({"runtime/win-x64/" + Path(name).name: archive.read(name) for name in archive.namelist()}, members)
         self.assertEqual("5.14.3", lock["runtimeVersion"])
-        self.assertEqual(sorted(REQUIRED), [record["name"] for record in lock["files"]])
-        for record in lock["files"]:
-            data = members["runtime/win-x64/" + record["name"]]
-            self.assertEqual((len(data), digest(data)), (record["sizeBytes"], record["sha256"]))
+        self.assertCountEqual([dict(name=Path(item["path"]).name, sizeBytes=item["sizeBytes"], sha256=item["sha256"])
+                               for item in self.receipt["files"]], lock["files"])
         self.assertEqual(digest(self.receipt_path.read_bytes()), proof["inputReceiptSha256"])
 
     def test_archive_digest(self):
@@ -120,12 +121,13 @@ def main():
         raise ValueError("Packaging fixture output crosses a link")
     run = output / "runs" / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     run.mkdir(parents=True); RuntimeTests.root = run
-    sources = [Path(__file__), ROOT / "tooling/maa_runtime_package.py", ROOT / "tooling/source_snapshot.py"]
+    sources = [Path(__file__), MANIFEST, ROOT / "tooling/maa_runtime_package.py", ROOT / "tooling/source_snapshot.py"]
     records = [{"path": path.relative_to(ROOT).as_posix(), "sha256": digest(path.read_bytes())} for path in sources]
     log = io.StringIO(); started = time.monotonic()
     suite = unittest.defaultTestLoader.loadTestsFromTestCase(RuntimeTests)
+    expected = suite.countTestCases()
     result = unittest.TextTestRunner(stream=log, verbosity=2).run(suite)
-    status = "PASS" if result.wasSuccessful() and result.testsRun == 12 and not result.skipped and \
+    status = "PASS" if result.wasSuccessful() and result.testsRun == expected and expected > 0 and not result.skipped and \
         all(digest((ROOT / record["path"]).read_bytes()) == record["sha256"] for record in records) else "FAIL"
     (run / "native.log").write_bytes(log.getvalue().encode())
     report = {"status": status, "qualification": "Synthetic archive packaging boundaries; no native execution", "cases": result.testsRun,

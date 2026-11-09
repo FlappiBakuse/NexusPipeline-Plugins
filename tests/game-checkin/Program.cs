@@ -3,15 +3,22 @@ using System.Text.Json;
 using NexusPipeline.Extensions.GameCheckIn;
 
 var cases = new List<object>();
+var failures = 0;
 void Run(string name, Action body)
 {
     try { body(); cases.Add(new { name, status = "PASS" }); }
-    catch (Exception error) { cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
+    catch (Exception error) { failures++; cases.Add(new { name, status = "FAIL", error = error.ToString() }); }
 }
 void Assert(bool condition) { if (!condition) throw new InvalidOperationException("assertion_failed"); }
 void Reject(Action action)
 { try { action(); } catch (Exception error) when (error is CheckInFailure or JsonException) { return; } throw new InvalidOperationException("expected_rejection"); }
-Run("catalog-all-fourteen-region-game-pairs", () => Assert(CheckInCatalog.Platforms.SelectMany(platform => platform.Games).Count() == 14));
+Run("catalog-all-fourteen-region-game-pairs", () =>
+{
+    var expected = new[] { "cn/gi", "cn/hsr", "cn/zzz", "cn/bh3", "os/gi", "os/hsr", "os/zzz", "os/bh3",
+        "skland/ak", "skland/endfield", "skport/endfield", "kuro/ww", "kuro/pgr", "tajiduo/nte" };
+    Assert(CheckInCatalog.Platforms.SelectMany(platform => platform.Games.Select(game => platform.Id + "/" + game.Code))
+        .Order(StringComparer.Ordinal).SequenceEqual(expected.Order(StringComparer.Ordinal)));
+});
 foreach (var platform in CheckInCatalog.Platforms)
 foreach (var game in platform.Games)
     Run("task/" + platform.Id + "/" + game.Code, () =>
@@ -68,8 +75,10 @@ Run("passport-endfield-role-server-header-identities", () =>
 });
 Run("login-origin-and-field-extraction-scopes", () =>
 {
-    Assert(LoginPolicies.Browser.Length == 5 && LoginPolicies.For("skland").Storage.Single().Key == "SK_SHUMEI_DEVICE_ID_KEY");
-    Assert(LoginPolicies.For("skport").JsonRequests.Single().Method == "GET" && LoginPolicies.For("kuro").Storage.Length == 2);
+    Assert(LoginPolicies.Browser.Select(policy => policy.Platform).Order(StringComparer.Ordinal).SequenceEqual(new[] { "cn", "kuro", "os", "skland", "skport" }));
+    Assert(LoginPolicies.For("skland").Storage.Single().Key == "SK_SHUMEI_DEVICE_ID_KEY");
+    Assert(LoginPolicies.For("skport").JsonRequests.Single().Method == "GET" &&
+        LoginPolicies.For("kuro").Storage.Select(rule => rule.Key).Order(StringComparer.Ordinal).SequenceEqual(new[] { "auth_token", "distinct_id" }));
     Assert(LoginPolicies.Browser.All(policy => policy.Origins.All(origin => new Uri(origin).Scheme == "https" && !origin.Contains('*'))));
     Reject(() => LoginPolicies.For("tajiduo"));
 });
@@ -81,7 +90,7 @@ ClientCases.Run(Run);
 TaskEditingCases.Run(Run);
 DeviceAndLoginCases.Run(Run);
 NativeSessionCases.Run(Run);
-FrontendCases.Run(Run);
+FrontendCases.Run(Run, Path.Combine(Path.GetDirectoryName(Path.GetFullPath(args[0]))!, "view-model.json"));
 RunnerCases.Run(Run);
 IdentityCases.Run(Run);
 CancellationCases.Run(Run);
@@ -95,7 +104,10 @@ Run("all-fourteen-notification-lines-preserve-unknown-without-raw-server-message
         "success_unconfirmed", "synthetic-sensitive-server-response", false, "unknown"))).ToArray();
     var started = DateTimeOffset.UtcNow; var run = new CheckInRun(Guid.NewGuid().ToString("D"), "manual", "unknown", started, started, results, Guid.NewGuid().ToString("D"), 1);
     var summary = CheckInSummary.Create(task, run);
-    Assert(summary.Title.Contains("结果未知", StringComparison.Ordinal) && summary.Body.Split('\n').Length == 15 && summary.Body.Length < 4000);
+    Assert(summary.Title.Contains("结果未知", StringComparison.Ordinal) && summary.Body.Length < 4000);
+    foreach (var platform in CheckInCatalog.Platforms)
+    foreach (var game in platform.Games)
+        Assert(summary.Body.Split('\n').Any(line => line.Contains(platform.Name + " / " + game.Name, StringComparison.Ordinal) && line.Contains("结果未知", StringComparison.Ordinal)));
     Assert(!summary.Body.Contains("synthetic-sensitive-server-response", StringComparison.Ordinal));
 });
 Run("notification-summary-rejects-unfinished-stale-or-incomplete-results", () =>
@@ -107,7 +119,7 @@ Run("notification-summary-rejects-unfinished-stale-or-incomplete-results", () =>
     Reject(() => CheckInSummary.Create(task, run with { TaskRevision = 2 }));
     Reject(() => CheckInSummary.Create(task, run with { Results = [] }));
 });
-foreach (var id in new[] { "smtp", Guid.Empty.ToString("D"), Guid.NewGuid().ToString("N"), "ABCDEF01-2345-4567-89AB-ABCDEF012345" })
+foreach (var id in new[] { "smtp", Guid.Empty.ToString("D"), "abcdef012345456789ababcdef012345", "ABCDEF01-2345-4567-89AB-ABCDEF012345" })
     Run("notification-target-rejects-noncanonical-host-identity/" + id, () => Reject(() => new CheckInNotification { NotificationTaskIds = [id] }.Validate()));
 Run("persisted-result-requires-explicit-success-and-effect-state", () =>
 {
@@ -116,12 +128,6 @@ Run("persisted-result-requires-explicit-success-and-effect-state", () =>
         "{\"platform\":\"kuro\",\"gameCode\":\"ww\",\"code\":\"failed\",\"message\":\"fixture\",\"success\":false}" })
         Reject(() => CheckInJson.Read<CheckInGameResult>(Encoding.UTF8.GetBytes(body)));
 });
-var bytes = JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true });
-await File.WriteAllBytesAsync(args[0], bytes);
-if (args.Length > 1)
-{
-    using var fixture = new FrontendFixture();
-    await File.WriteAllBytesAsync(args[1], CheckInJson.Bytes(fixture.Invoke("read-state", "{}")));
-}
-Console.WriteLine($"{cases.Count} cases, {cases.Count(item => JsonSerializer.Serialize(item).Contains("\"FAIL\"", StringComparison.Ordinal))} failed");
-return cases.Count > 0 && cases.All(item => !JsonSerializer.Serialize(item).Contains("\"FAIL\"", StringComparison.Ordinal)) ? 0 : 1;
+await File.WriteAllBytesAsync(args[0], JsonSerializer.SerializeToUtf8Bytes(cases, new JsonSerializerOptions { WriteIndented = true }));
+Console.WriteLine($"{cases.Count} cases, {failures} failed");
+return cases.Count > 0 && failures == 0 ? 0 : 1;

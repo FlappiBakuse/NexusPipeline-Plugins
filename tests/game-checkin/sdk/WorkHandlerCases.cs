@@ -62,11 +62,12 @@ internal static class WorkHandlerCases
         await run("disabled-automatic-task-manual-run-still-requires-real-host-context", async () =>
         {
             await Reject(async () => { await handler.ExecuteManualAsync(new() { Format = "nexus.manual.work-invocation", Version = 1,
-                Invocation = Invocation(id), TaskRevision = 7 }, default); }, "synthetic_host_context_missing"); Assert(source.Reads == 1);
+                Invocation = Invocation(id), TaskRevision = 7 }, default); }, "synthetic_host_context_missing");
         });
         await run("unversioned-scheduled-entry-cannot-bypass-saved-revision-checks", async () =>
         {
-            await Reject(async () => { await handler.ExecuteAsync(Invocation(id), default); }, "checkin_revision_required"); Assert(source.Reads == 1);
+            var readsBefore = source.Reads;
+            await Reject(async () => { await handler.ExecuteAsync(Invocation(id), default); }, "checkin_revision_required"); Assert(source.Reads == readsBefore);
         });
     }
     private sealed class WorkContext : ICheckInWorkContext

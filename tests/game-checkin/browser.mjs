@@ -10,11 +10,15 @@ for (let index = 2; index < process.argv.length; index += 2) args.set(process.ar
 for (const name of ['--host-root', '--work-root', '--bundles', '--view-model', '--output'])
   if (!path.isAbsolute(args.get(name) ?? '')) throw Error(`Pass absolute ${name}`);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..'), output = args.get('--output');
-const expectedChecks = Number(args.get('--case-limit') ?? 12);
-if (!Number.isInteger(expectedChecks) || expectedChecks < 1 || expectedChecks > 12) throw Error('Invalid explicit case limit');
+const limit = args.has('--case-limit') ? Number(args.get('--case-limit')) : undefined;
+if (limit !== undefined && (!Number.isSafeInteger(limit) || limit < 1)) throw Error('Invalid explicit case limit');
+if (fs.existsSync(path.join(output, 'receipt.json'))) throw Error('Keep the previous immutable browser report');
 fs.mkdirSync(output, { recursive: true });
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const receiptBytes = fs.readFileSync(path.join(args.get('--bundles'), 'build-receipt.json')), receipt = JSON.parse(receiptBytes);
+if (receipt.status !== 'PASS') throw Error('Frontend build did not pass');
+for (const input of receipt.inputs)
+  if (sha(fs.readFileSync(path.join(root, input.path))) !== input.sha256) throw Error('Frontend source changed');
 for (const input of receipt.sdkSourceRecords)
   if (sha(fs.readFileSync(path.join(args.get('--host-root'), input.path))) !== input.sha256) throw Error('SDK sources differ from frontend receipt');
 for (const artifact of receipt.artifacts.filter(item => item.path.startsWith('game-checkin/')))
@@ -48,14 +52,16 @@ try {
   const origin = `http://127.0.0.1:${server.address().port}`;
   await page.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
   page.on('pageerror', error => errors.push(String(error))); phase = 'cases'; await page.goto(origin); await page.waitForFunction(() => window.mountFixture);
-  await browserCases(page, checks, output, expectedChecks);
+  await browserCases(page, checks, output, limit);
 } catch (error) { errors.push(String(error)); }
 finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }
-const status = phase === 'launch' ? 'NOT_RUN' : checks.length === expectedChecks && checks.every(check => check.status === 'PASS') && !errors.length ? 'PASS' : 'FAIL';
+const passed = checks.length > 0 && (limit === undefined || checks.length === limit) &&
+  checks.every(check => check.status === 'PASS') && !errors.length;
+const status = phase === 'launch' ? 'NOT_RUN' : passed ? 'PASS' : 'FAIL';
 const result = { status, scope: 'Production createFrontend + real SDK ExtensionScope and real P2 controls with synthetic authenticated Host transport; not installed Host, real account, login or sign-in qualification',
   contractFingerprint: receipt.contractFingerprint, sourceHash: receipt.sourceHash, bundleReceiptSha256: sha(receiptBytes), command: process.argv,
   inputs: ['browser.mjs', 'browser-cases.mjs', 'browser-fixture.mjs'].map(file => ({ path: `tests/game-checkin/${file}`, sha256: sha(fs.readFileSync(path.join(root, 'tests/game-checkin', file))) })),
-  viewModelSha256: sha(fs.readFileSync(args.get('--view-model'))), expectedChecks, milliseconds: Date.now() - started, checks, errors };
+  viewModelSha256: sha(fs.readFileSync(args.get('--view-model'))), caseLimit: limit ?? null, milliseconds: Date.now() - started, checks, errors };
 result.compiledUiSha256 = sha(fs.readFileSync(path.join(output, 'ui.js')));
 result.compiledSdkSha256 = sha(fs.readFileSync(path.join(output, 'sdk.js')));
 result.sdkSourceRecords = receipt.sdkSourceRecords;

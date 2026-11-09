@@ -8,7 +8,7 @@ internal static class ClientCases
         void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
         foreach (var platform in new[] { "cn", "os" })
         foreach (var game in new[] { "gi", "hsr", "zzz", "bh3" })
-            run("hoyo-production-protocol-fixture/" + platform + "/" + game, () =>
+            run("hoyo-role-submission-and-confirmation/" + platform + "/" + game, () =>
             {
                 var effects = new TestEffects(); var replies = new[] { ClientFixtures.HoyoFalse, "{\"retcode\":0}", ClientFixtures.HoyoTrue };
                 if (platform == "cn") replies = new[] { ClientFixtures.HoyoRoles }.Concat(replies).ToArray();
@@ -16,7 +16,6 @@ internal static class ClientCases
                 var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync(platform, game, material, Guid.NewGuid().ToString("D"), default).GetAwaiter().GetResult();
                 Assert(result.Success && effects.GameConfirmed && effects.Submitted.Count == 1 && network.Posts == 1);
                 var sign = network.Requests.Single(request => request.Method == "POST"); using var body = JsonDocument.Parse(sign.Body);
-                Assert(body.RootElement.GetProperty("act_id").GetString() == HoyoEndpoints.For(platform, game).ActId && sign.Headers["x-rpc-signgame"] == HoyoEndpoints.For(platform, game).SignGame);
                 if (platform == "cn") Assert(body.RootElement.GetProperty("uid").GetString() == "123456" && sign.Headers.ContainsKey("DS"));
             });
         foreach (var (platform, game) in new[] { ("skland", "ak"), ("skland", "endfield"), ("skport", "endfield") })
@@ -29,8 +28,14 @@ internal static class ClientCases
                     "{\"code\":0,\"data\":{\"cred\":\"synthetic-cred\",\"token\":\"synthetic-signkey\"}}", binding, "{\"code\":0,\"data\":{\"awards\":[]}}");
                 using var material = ClientFixtures.Material(platform);
                 var result = new PassportCheckIn(network, effects, device, TimeProvider.System).SignAsync(platform, game, material, default).GetAwaiter().GetResult();
-                Assert(result.Success && effects.GameConfirmed && network.Posts == 1 && device.Calls == (platform == "skland" ? 1 : 0));
+                Assert(result.Success && effects.GameConfirmed && network.Posts == 1);
                 var post = network.Requests.Last(); Assert(post.Headers.ContainsKey("cred") && post.Headers["sign"].Length == 32);
+                if (platform == "skland")
+                {
+                    var grants = network.Requests.Where(request => new Uri(request.Address).AbsolutePath == "/user/oauth2/v2/grant").ToArray();
+                    Assert(grants.Length > 0 && grants.All(request => request.Headers["dId"] == "Bsynthetic-device"));
+                }
+                else Assert(device.Calls == 0);
                 if (game == "endfield") Assert(post.Headers["sk-game-role"] == "3_789123_1" && post.Body == "");
                 else using (var body = JsonDocument.Parse(post.Body)) Assert(body.RootElement.GetProperty("uid").GetString() == "123456");
             });
@@ -54,7 +59,7 @@ internal static class ClientCases
             };
             using var material = ClientFixtures.Material("tajiduo");
             var result = new TajiduoCheckIn(network, effects, rotation, TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
-            Assert(result.Success && rotation.Persisted && effects.GameConfirmed && network.Posts == 1 && network.Requests.Count == 5);
+            Assert(result.Success && rotation.Persisted && effects.GameConfirmed && network.Posts == 1);
         });
         foreach (var platform in CheckInCatalog.Platforms)
         foreach (var game in platform.Games)

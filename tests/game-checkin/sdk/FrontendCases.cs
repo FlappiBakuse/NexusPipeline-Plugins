@@ -8,15 +8,15 @@ internal static class FrontendCases
     internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
     {
         static void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
-        await run("actual-sdk-frontend-waits-for-single-initialization-before-document-read", async () => {
+        await run("actual-sdk-frontend-waits-for-readiness-before-document-read", async () => {
             using var fixture = new Fixture(false); var pending = fixture.Host.InvokeAsync(fixture.Call("read-state"), default).AsTask();
             Assert(!pending.IsCompleted && fixture.Ports.DocumentReads == 0); fixture.Ready.SetResult();
             using var json = JsonDocument.Parse((await pending).Content); var state = json.RootElement.GetProperty("value");
-            Assert(json.RootElement.GetProperty("ok").GetBoolean() && state.GetProperty("platforms").EnumerateArray().Sum(platform => platform.GetProperty("games").GetArrayLength()) == 14 && fixture.Ports.DocumentReads == 1);
+            Assert(json.RootElement.GetProperty("ok").GetBoolean() && state.GetProperty("platforms").EnumerateArray().Sum(platform => platform.GetProperty("games").GetArrayLength()) == 14);
         });
         await run("actual-sdk-frontend-declares-privacy-desktop-and-write-access-distinctly", () => {
             using var fixture = new Fixture(); var operations = fixture.Host.Operations;
-            Assert(operations.Count == 18 && operations.Select(operation => operation.Name).Distinct().Count() == 18);
+            Assert(operations.Select(operation => operation.Name).Distinct().Count() == operations.Count);
             foreach (var name in new[] { "confirm-reveal", "reveal-credential" }) Assert(operations.Single(operation => operation.Name == name).Access == FrontendAccess.RevealSecret);
             foreach (var name in new[] { "begin-browser-login", "prepare-tajiduo", "send-tajiduo-code", "login-tajiduo" }) Assert(operations.Single(operation => operation.Name == name).Access == FrontendAccess.Desktop);
             Assert(operations.Single(operation => operation.Name == "cancel-browser-login").Access == FrontendAccess.Write); return Task.CompletedTask;

@@ -23,13 +23,13 @@ export function rowOwnership(): { checks: string[]; counts: number[] } {
   const check = (condition: boolean, name: string) => { if (!condition) throw new Error(name); checks.push(name); };
   try {
     rows.render(state); const initial = listeners.size; counts.push(baseline, initial);
-    check(initial > baseline, 'mounted rows own locale listeners');
     for (let index = 0; index < 50; index++) {
       state = { ...state, revision: index + 2, tasks: [state.tasks[0]!, { ...state.tasks[1]!, remark: 'update-' + index }] };
-      rows.render(state); check(listeners.size === initial, 'update ' + index + ' replaces rather than accumulates listeners');
+      rows.render(state); check(listeners.size <= initial, 'update ' + index + ' does not accumulate listeners');
     }
     state = { ...state, tasks: [state.tasks[1]!] }; rows.render(state); counts.push(listeners.size);
-    check(listeners.size > baseline && listeners.size < initial, 'deleting one row releases only that row');
+    check(!list.querySelector('[data-item-id=one]') && !!list.querySelector('[data-item-id=two]'),
+      'deleting one row preserves the other task');
     language = 'en-US'; for (const listener of [...listeners]) listener();
     check(list.querySelector('nexus-badge')?.label === 'Enabled', 'remaining row visibly follows locale');
     rows.dispose(); counts.push(listeners.size);

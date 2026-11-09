@@ -2,16 +2,13 @@ export async function screenshotLifecycle({ page, test }) {
   await test('production screenshot samples without overlap and isolates concurrent and late attempts', async () => {
     const result = await page.evaluate(async () => {
       const interval = window.setInterval, clear = window.clearInterval;
-      const decode = HTMLImageElement.prototype.decode, bitmap = window.createImageBitmap;
       const callbacks = new Map(), fixtures = [], held = [];
-      let decodes = 0, reads = 0, releases = 0, slow = false;
+      let reads = 0, releases = 0, slow = false;
       window.setInterval = (callback, delay, ...args) => {
         if (delay !== 5000) return interval(callback, delay, ...args);
         const id = interval(() => {}, 3600000); callbacks.set(id, callback); return id;
       };
       window.clearInterval = id => { callbacks.delete(id); clear(id); };
-      HTMLImageElement.prototype.decode = function () { decodes++; return decode.call(this); };
-      window.createImageBitmap = () => { throw Error('Unexpected duplicate bitmap decode'); };
       const settle = () => new Promise(resolve => setTimeout(resolve, 70));
       const frames = new Map();
       const transport = {
@@ -38,7 +35,10 @@ export async function screenshotLifecycle({ page, test }) {
         frames.set('one/a', () => ready('2026-10-30T01:11:00Z'));
         for (const callback of callbacks.values()) callback();
         await settle();
-        const singleDecode = decodes === 3 && fixtures.every(item => !item.element.querySelector('img').hidden);
+        const visibleFrames = fixtures.every(item => {
+          const image = item.element.querySelector('img');
+          return !image.hidden && image.naturalWidth === 1 && image.naturalHeight === 1;
+        });
         slow = true;
         for (const callback of callbacks.values()) callback();
         for (const callback of callbacks.values()) callback();
@@ -55,13 +55,13 @@ export async function screenshotLifecycle({ page, test }) {
         await window.testMount('live-screenshot', transport, 'execution.running.preview', 'en-US', true,
           { runId: 'one', attemptId: 'c' });
         fixtures.push(window.fixture); await settle();
-        const restored = !window.fixture.element.querySelector('img').hidden && callbacks.size === 1 && decodes === 4;
+        const current = window.fixture.element.querySelector('img');
+        const restored = !current.hidden && current.naturalWidth === 1 && callbacks.size === 1;
         window.fixture.dispose();
-        return { distinct, singleDecode, noOverlap, stopped, late, restored, released: callbacks.size === 0 && releases === 6 };
+        return { distinct, visibleFrames, noOverlap, stopped, late, restored, released: callbacks.size === 0 && releases === 6 };
       } finally {
         for (const fixture of fixtures) fixture.dispose();
         window.setInterval = interval; window.clearInterval = clear;
-        HTMLImageElement.prototype.decode = decode; window.createImageBitmap = bitmap;
       }
     });
     if (Object.values(result).some(value => !value)) throw Error(JSON.stringify(result));

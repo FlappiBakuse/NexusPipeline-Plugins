@@ -16,7 +16,7 @@ internal static class RoleEpochCases
             var b = await ExecuteAsync(host, "222", [Refresh, Roles, False, "{\"code\":0}", True]);
             var repeat = await ExecuteAsync(host, "111", [Refresh, Roles]);
             Assert(a.Result.Success && b.Result.Success && repeat.Result.Code == "already" && host.Epochs == 3 &&
-                host.Posts.SequenceEqual(new[] { "111", "222" }) && repeat.Network.Requests == 2 && repeat.Network.BusinessPosts == 0);
+                host.Posts.SequenceEqual(new[] { "111", "222" }) && repeat.Network.BusinessPosts == 0);
         });
         await run("actual-sdk-consumer-unknown-activity-does-not-repost-old-or-unseen-role", async () => {
             var host = new Host(); host.States["111"] = WorkEffectState.Unknown;

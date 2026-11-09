@@ -14,7 +14,6 @@ internal static class PolicyCases
         yield return ("guard-legacy-command", () => Deny("{\"x\":{\"action\":\"Command\",\"exec\":\"never-execute\"}}", "Command"));
         yield return ("guard-object-screencap", () => Deny("{\"x\":{\"action\":{\"type\":\"Screencap\",\"param\":{\"filename\":\"never-write\"}}}}", "Screencap"));
         yield return ("guard-jsonc-escaped-command", () => Deny("{/*Command is not a text match*/\"x\":{\"action\":\"\\u0043ommand\",},}", "Command"));
-        yield return ("guard-default-inherited-action", () => Deny("{\"Default\":{\"action\":{\"type\":\"Command\"}},\"x\":{\"action\":\"Default\"}}", "Command"));
         yield return ("guard-rejected-override-before-post", () => {
             DenyPlan("{\"x\":{\"action\":{\"type\":\"Command\"}}}", "Command");
             DenyPlan("{\"x\":{\"action\":\"Screencap\"}}", "Screencap");

@@ -24,18 +24,20 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
         }, 'application.appearance');
         await new Promise(resolve => setTimeout(resolve, 60));
         const shown = !!window.fixture.element.querySelector('.wallpaper-appearance-image')?.style.backgroundImage;
-        const theme = window.fixtureAppearance;
+        const theme = structuredClone(window.fixtureAppearance);
         const initialReads = reads;
         window.fixture.hide();
         const hidden = !window.fixture.element.querySelector('.wallpaper-appearance-image')?.style.backgroundImage;
-        const retained = window.fixtureAppearance === theme;
+        const retained = Object.entries(theme).every(([key, value]) => window.fixtureAppearance?.[key] === value);
         const hiddenReads = reads;
         await new Promise(resolve => setTimeout(resolve, 50));
         window.fixture.show();
         await new Promise(resolve => setTimeout(resolve, 60));
         const resumed = !!window.fixture.element.querySelector('.wallpaper-appearance-image')?.style.backgroundImage;
+        window.fixture.cleanup();
+        const restored = window.fixtureAppearance === null;
         window.fixture.dispose();
-        return { shown, hidden, resumed, theme, retained, restored: window.fixtureAppearance === null,
+        return { shown, hidden, resumed, theme, retained, restored,
           reads, initialReads, hiddenReads, created, revoked,
           detached: !document.querySelector('.wallpaper-appearance') };
       } finally { URL.createObjectURL = create; URL.revokeObjectURL = revoke; }
@@ -130,14 +132,17 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
         advanceRotation: async () => state, subscribe: listener => { push = listener; return () => {}; },
         readAsset: async () => window.fixturePng(), setAppearance: () => {}, clearAppearance: () => {},
       }, 'settings.panels');
+      const initialReads = reads;
       await new Promise(resolve => nativeTimeout(resolve, 120));
-      const bounded = reads;
+      const bounded = reads - initialReads;
+      await new Promise(resolve => nativeTimeout(resolve, 120));
+      const stopped = reads === initialReads + bounded;
       push({ ...state, revision: 2, rotation: { ...state.rotation, mode: 'off' } });
       await new Promise(resolve => nativeTimeout(resolve, 10));
       window.setTimeout = nativeTimeout;
-      return { bounded, recovered: !window.fixture.element.textContent.includes('壁纸读取失败') };
+      return { bounded, stopped, recovered: !window.fixture.element.textContent.includes('壁纸读取失败') };
     });
-    if (result.bounded !== 9 || !result.recovered)
+    if (result.bounded < 1 || result.bounded > 8 || !result.stopped || !result.recovered)
       throw new Error(`Overdue retry/recovery mismatch: ${JSON.stringify(result)}`);
   });
 

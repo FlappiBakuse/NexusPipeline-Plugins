@@ -13,9 +13,9 @@ for (const argument of ['--work-root', '--output', '--sdk-root']) {
     const root = fs.mkdtempSync(path.join(external, 'frontend-path-'));
     const target = path.join(root, 'target');
     const link = path.join(root, 'junction');
-    fs.mkdirSync(target);
-    fs.symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
     try {
+      fs.mkdirSync(target);
+      fs.symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
       const args = new Map([['--sdk-root', path.join(root, 'sdk')], ['--work-root', path.join(root, 'work')],
         ['--output', path.join(root, 'output')]]);
       args.set(argument, path.join(link, 'uncreated'));
@@ -23,12 +23,11 @@ for (const argument of ['--work-root', '--output', '--sdk-root']) {
         { cwd: repository, encoding: 'utf8', timeout: 10000 });
       assert.ifError(result.error);
       assert.notEqual(result.status, 0);
-      assert.match(result.stderr, /Frontend paths cannot cross links/);
+      assert.match(result.stderr, /link or reparse point/);
       assert.deepEqual(fs.readdirSync(target), []);
-      assert.equal(fs.existsSync(path.join(root, 'work')), false);
-      assert.equal(fs.existsSync(path.join(root, 'output')), false);
+      assert.deepEqual(fs.readdirSync(root).sort(), ['junction', 'target']);
     } finally {
-      fs.unlinkSync(link);
+      if (fs.lstatSync(link, { throwIfNoEntry: false })) fs.unlinkSync(link);
       assert.equal(fs.realpathSync(root), root);
       fs.rmSync(root, { recursive: true });
     }

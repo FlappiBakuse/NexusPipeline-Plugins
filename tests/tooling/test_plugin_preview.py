@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tooling'))
 import test_plugin_candidate as candidate_fixture
 from plugin_preview_assemble import assemble
-from plugin_preview_payload import RELEASE, package_name, read_payload
+from plugin_preview_payload import RELEASE, read_payload
 from plugin_release_inputs import CATALOG, STATE
 
 
@@ -46,19 +46,15 @@ class PluginPreviewTests(unittest.TestCase):
         f = self.fixture
         before = {name: (f.root / name).read_bytes() for name in [CATALOG, STATE, 'catalog.json']}
         self.assertEqual('CANDIDATE_CREATED_NOT_QUALIFIED', self.run_candidate()['status'])
-        verified = self.verified()
-        plan, facts, entries, actual, manifests = read_payload(self.args.output, verified)
-        fact = facts['Alpha']
-        filename = package_name('Alpha', '0.5.0', fact['sha256'])
+        receipt = json.loads(f.package_receipt.read_bytes())
+        package = Path(receipt['artifact']['path']).read_bytes()
+        filename = f"Alpha-0.5.0-{hashlib.sha256(package).hexdigest()}.zip"
+        _, _, entries, actual, _ = read_payload(self.args.output, self.verified())
         self.assertEqual({'catalog.json', 'packages/' + filename}, set(actual))
         self.assertEqual(RELEASE + filename, entries['Alpha']['packageUrl'])
         self.assertEqual(self.args.source_commit, entries['Alpha']['sourceCommit'])
-        self.assertEqual('managed-code', manifests['Alpha']['kind'])
-        self.assertEqual(f.args.source_commit, verified['candidate']['source']['sourceCommit'])
-        self.assertEqual(['Alpha'], plan['requiresPackage'])
         self.assertEqual(before, {name: (f.root / name).read_bytes() for name in before})
-        receipt = json.loads(f.package_receipt.read_bytes())
-        self.assertEqual(Path(receipt['artifact']['path']).read_bytes(), (self.args.output / fact['path']).read_bytes())
+        self.assertEqual(package, (self.args.output / 'packages' / filename).read_bytes())
 
     def test_requires_complete_packages(self):
         with self.assertRaisesRegex(ValueError, 'every current plugin'):

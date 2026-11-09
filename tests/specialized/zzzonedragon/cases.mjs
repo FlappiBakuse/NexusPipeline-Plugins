@@ -25,30 +25,31 @@ const select = id => ['app_list', { match: { property: 'app_id', value: id } }, 
 
 export function cases(invoke) {
   const rows = [], add = (name, input, expect = {}, error) => rows.push({ name, input, expect, ...(error ? { error } : {}) });
-  const observe = (document, lines, extras = {}) => request('observe', document, { tasks: invoke(request('discover', document)).tasks,
+  const observe = (document, lines, extras = {}) => request('observe', document, { tasks: extras.tasks ?? invoke(request('discover', document)).tasks,
     logEvents: events(lines), logComplete: true, ...extras });
   for (const [id, name, isDefault] of sourceApps) {
-    const document = make([id]), tasks = invoke(request('discover', document)).tasks;
-    add('all registered application identities ' + id, request('discover', document), { 'tasks.0.taskId': 'zzzonedragon:01/' + id,
+    const document = make([id]), discover = request('discover', document), tasks = invoke(discover).tasks;
+    const taskId = 'zzzonedragon:01/' + id;
+    add('all registered application identities ' + id, discover, { 'tasks.0.taskId': taskId,
       'tasks.0.title': name, 'tasks.0.isSelected': true, 'tasks.0.workflowRole': technical.includes(id) ? 'technical' : 'business' });
     if (id === 'charge_plan') add('stamina child retains both frozen title locales', request('discover', document), {
       'tasks.1.titleLocales': { 'zh-CN': '副本挑战与电池合成', 'en-US': 'Dungeon challenges and battery crafting' } });
     if (id === 'one_dragon') {
-      add('recursive group app blocked explicitly', request('configuration', document), { 'diagnostics.0.code': 'zzzonedragon_recursive_group_application_unsupported' });
+      add('recursive group app blocked explicitly', request('configuration', document),
+        { 'diagnostics.zzzonedragon_recursive_group_application_unsupported': 'blocking' });
       continue;
     }
-    add('paired outer app and group receipt ' + id, observe(document, [...prefix(document), ...appFlow(id), ...suffix]), { 'observations.0.state': 'succeeded' });
-    add('paired app failure ' + id, observe(document, [...prefix(document), ...appFlow(id, false), ...suffix]), { 'observations.0.state': 'failed' });
-    add('current group already done ' + id, observe(document, [...prefix(document), group('应用已完成 ' + name), ...suffix]),
+    add('paired outer app and group receipt ' + id, observe(document, [...prefix(document), ...appFlow(id), ...suffix], { tasks }), { 'observations.0.state': 'succeeded' });
+    add('paired app failure ' + id, observe(document, [...prefix(document), ...appFlow(id, false), ...suffix], { tasks }), { 'observations.0.state': 'failed' });
+    add('current group already done ' + id, observe(document, [...prefix(document), group('应用已完成 ' + name), ...suffix], { tasks }),
       { 'observations.0.state': 'succeeded', 'observations.0.completionKind': 'satisfied' });
-    add('unpaired terminal not outer identity ' + id, observe(document, [...prefix(document), terminal(name), group('下一个'), ...suffix]), { 'observations.0.state': 'unknown' });
+    add('unpaired terminal not outer identity ' + id, observe(document, [...prefix(document), terminal(name), group('下一个'), ...suffix], { tasks }), { 'observations.0.state': 'unknown' });
     add('registered finite failed subset ' + id, request('retry', document, { tasks, idempotencyKey: 'finite',
-      observations: [{ taskId: tasks[0].taskId, state: 'failed', reasonCode: 'synthetic' }] }), { selectedTaskIds: technical.includes(id) ? [] : [tasks[0].taskId] });
+      observations: [{ taskId, state: 'failed', reasonCode: 'synthetic' }] }), { selectedTaskIds: technical.includes(id) ? [] : [taskId] });
     if (!isDefault) {
       const disabled = make([id, 'email']); disabled.app_list[0].enabled = false;
       add('nondefault disabled removed only from runtime pool ' + id, observe(disabled, [...prefix(disabled), ...appFlow('email'), ...suffix]),
-        { 'tasks': undefined, 'observations.0.state': 'unknown', 'observations.1.state': 'succeeded' });
-      delete rows.at(-1).expect.tasks;
+        { 'observations.0.state': 'unknown', 'observations.1.state': 'succeeded' });
     }
   }
   const document = make(), name = '邮件', complete = [...prefix(document), ...appFlow('email'), ...suffix];
@@ -68,6 +69,7 @@ export function cases(invoke) {
   add('wrong transient disabled name invalidates cursor', observe(document, [group('成功', '获取应用组配置'), group('应用未启用 未知应用'), ...appFlow('email'), ...suffix]), { 'observations.0.state': 'unknown' });
   add('saved order mismatch invalidates cursor', observe(make(['email', 'coffee']), [...prefix(make(['email', 'coffee'])), ...appFlow('coffee'), ...appFlow('email'), ...suffix]), { 'observations.0.state': 'unknown', 'observations.1.state': 'unknown' });
   const chargeDoc = make(['charge_plan']), parent = '体力刷本';
+  const chargeTasks = invoke(request('discover', chargeDoc)).tasks;
   const challenge = (category, { fail = false, recover = false, omitStart = false, omitParent = false, omitAdvance = false, status = fail ? '未完成' : '成功', skip = false } = {}) => {
     const name = category === '合成电池' ? '兑换以太电池' : category + ' 目标A';
     return [category === '合成电池' ? node(parent, '传送', category) : node(parent, '识别副本分类', category),
@@ -75,30 +77,31 @@ export function cases(invoke) {
       terminal(name, !fail, status), ...(!omitParent ? [node(parent, (category === '合成电池' ? '传送' : '识别副本分类') + ' -> ' + category, status)] : []),
       ...(!omitAdvance ? [node(parent, category + ' -> ' + (skip ? '跳过或结束计划' : '挑战完成'), '成功')] : [])];
   };
-  const chargeFlow = middle => [...prefix(chargeDoc), node(parent, '检测游戏窗口'), ...middle, terminal(parent), group('下一个'), ...suffix];
+  const observeCharge = middle => observe(chargeDoc,
+    [...prefix(chargeDoc), node(parent, '检测游戏窗口'), ...middle, terminal(parent), group('下一个'), ...suffix], { tasks: chargeTasks });
   for (const category of ['区域巡防', '实战模拟室', '专业挑战室', '恶名狩猎', '合成电池']) {
-    add('all current charge categories confirmed ' + category, observe(chargeDoc, chargeFlow(challenge(category))),
+    add('all current charge categories confirmed ' + category, observeCharge(challenge(category)),
       { 'observations.0.state': 'succeeded', 'observations.1.state': 'succeeded', 'observations.1.completionKind': 'completed' });
-    add('failed plan skipped but parent success partial ' + category, observe(chargeDoc, chargeFlow(challenge(category, { fail: true }))),
+    add('failed plan skipped but parent success partial ' + category, observeCharge(challenge(category, { fail: true })),
       { 'observations.0.state': 'partial', 'observations.1.state': 'failed' });
-    add('same call native retry recovers after parent acknowledgment ' + category, observe(chargeDoc, chargeFlow(challenge(category, { recover: true }))),
+    add('same call native retry recovers after parent acknowledgment ' + category, observeCharge(challenge(category, { recover: true })),
       { 'observations.0.state': 'succeeded', 'observations.1.state': 'succeeded' });
     for (const missing of ['omitStart', 'omitParent', 'omitAdvance'])
-      add('missing source call proof ' + category + '/' + missing, observe(chargeDoc, chargeFlow(challenge(category, { [missing]: true, fail: missing === 'omitStart' }))),
+      add('missing source call proof ' + category + '/' + missing, observeCharge(challenge(category, { [missing]: true, fail: missing === 'omitStart' })),
         { 'observations.0.state': 'partial', 'observations.1.state': 'failed' });
   }
-  add('other plan success cannot recover abandoned plan', observe(chargeDoc, chargeFlow([...challenge('实战模拟室', { fail: true }), ...challenge('专业挑战室')])),
+  add('other plan success cannot recover abandoned plan', observeCharge([...challenge('实战模拟室', { fail: true }), ...challenge('专业挑战室')]),
     { 'observations.0.state': 'partial', 'observations.1.state': 'failed' });
   for (const status of ['电量不足', '周期挑战有剩余次数，本次跳过深度追猎', '特训目标已达成'])
-    add('normal plan stop is satisfied ' + status, observe(chargeDoc, chargeFlow(challenge('恶名狩猎', { status, skip: true }))),
+    add('normal plan stop is satisfied ' + status, observeCharge(challenge('恶名狩猎', { status, skip: true })),
       { 'observations.0.state': 'succeeded', 'observations.1.state': 'succeeded', 'observations.1.completionKind': 'satisfied' });
-  add('no candidate plan is inapplicable challenge', observe(chargeDoc, chargeFlow([])), { 'observations.1.state': 'succeeded', 'observations.1.completionKind': 'inapplicable' });
+  add('no candidate plan is inapplicable challenge', observeCharge([]), { 'observations.1.state': 'succeeded', 'observations.1.completionKind': 'inapplicable' });
   for (const title of ['实战模拟室 目标A', '兑换以太电池'])
-    add('missing category cannot turn entered child into no-op ' + title, observe(chargeDoc, chargeFlow([node(title, '检测游戏窗口'), terminal(title)])),
+    add('missing category cannot turn entered child into no-op ' + title, observeCharge([node(title, '检测游戏窗口'), terminal(title)]),
       { 'observations.0.state': 'partial', 'observations.1.state': 'failed' });
-  const partialInput = observe(chargeDoc, chargeFlow(challenge('实战模拟室', { fail: true }))), partial = invoke(partialInput).observations;
-  add('partial charge family cannot retry original consumption', request('retry', chargeDoc, { tasks: invoke(request('discover', chargeDoc)).tasks,
-    idempotencyKey: 'finite', observations: partial }), { selectedTaskIds: [] });
+  add('partial charge family cannot retry original consumption', request('retry', chargeDoc, { tasks: chargeTasks, idempotencyKey: 'finite',
+    observations: [{ taskId: 'zzzonedragon:01/charge_plan', state: 'partial' },
+      { taskId: 'zzzonedragon:01/charge_plan/challenges', state: 'failed' }] }), { selectedTaskIds: [] });
   const streamLines = [...prefix(document), node(name, '检测游戏窗口')], streaming = observe(document, streamLines, { logComplete: false });
   const checkpoint = invoke(streaming).observationCheckpoint;
   add('bounded batches preserve outer identity', { ...streaming, observationCheckpoint: checkpoint,
@@ -138,7 +141,7 @@ export function cases(invoke) {
   add('raw YAML requires semantic parser owner', structuredClone(raw), {}, 'zzzonedragon_yaml_semantic_owner_required');
   raw.resources[0].value = make(); raw.resources[0].syntax = 'yaml';
   add('Host YAML value keeps original source identity', raw, { 'tasks.0.isSelected': true });
-  const emptyDrain = observe(chargeDoc, chargeFlow(challenge('合成电池', { fail: true })));
+  const emptyDrain = observeCharge(challenge('合成电池', { fail: true }));
   add('final empty drain preserves partial and charge failure', { ...emptyDrain, observationCheckpoint: invoke(emptyDrain).observationCheckpoint,
     logEvents: [], logComplete: true }, { 'observations.0.state': 'partial', 'observations.1.state': 'failed' });
   return rows;

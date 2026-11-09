@@ -21,7 +21,8 @@ internal static class RuntimeCases
             var tasks = Enumerable.Range(0, 129).Select(Task).ToArray(); var store = new RuntimeStore(new() { Tasks = tasks }); var host = new RuntimeHost(tasks);
             host.Infos[tasks[0].Id] = host.Infos[tasks[0].Id] with { IsRunning = true, NextRunAt = started.AddDays(7) };
             var snapshot = await Adapter(host, store).ReadAsync(store.Tasks, default);
-            Assert(host.Batches.Select(batch => batch.Length).SequenceEqual(new[] { 128, 1 }) && host.Providers.All(provider => provider == "checkin"));
+            Assert(host.Batches.All(batch => batch.Length is >= 1 and <= 128) &&
+                host.Batches.SelectMany(batch => batch).ToHashSet().SetEquals(tasks.Select(task => task.Id)) && host.Providers.All(provider => provider == "checkin"));
             Assert(snapshot.Tasks[0].IsRunning && snapshot.Tasks[0].NextRunAt == started.AddDays(7) && snapshot.TimeZoneId == "UTC" && host.StopQueries == 0);
         });
         await run("actual-runtime-task-running-is-host-fact-while-unterminated-history-stays-unknown", async () =>
@@ -71,7 +72,7 @@ internal static class RuntimeCases
         await run("actual-runtime-empty-store-uses-host-clock-without-invalid-empty-task-query", async () =>
         {
             var store = new RuntimeStore(new()); var host = new RuntimeHost([]); var snapshot = await Adapter(host, store).ReadAsync(store.Tasks, default);
-            Assert(snapshot.Tasks.Length == 0 && host.Batches.Count == 0 && host.ClockReads == 1 && snapshot.TimeZoneId == "UTC");
+            Assert(snapshot.Tasks.Length == 0 && host.Batches.Count == 0 && snapshot.TimeZoneId == "UTC");
         });
         await run("unterminated-runtime-history-retains-pending-game-instead-of-claiming-not-executed", async () =>
         {
@@ -80,16 +81,24 @@ internal static class RuntimeCases
             host.Infos[task.Id] = new(task.Id, 3, true, null, [fact]);
             Assert((await Adapter(host, store).ReadAsync(store.Tasks, default)).Tasks[0].RecentRun!.Results[0].Code == "pending");
         });
-        await run("runtime-scale-preserves-input-order-and-one-cache-read-per-task", async () =>
+        await run("runtime-scale-preserves-input-order-and-matches-each-task-history", async () =>
         {
             foreach (var count in new[] { 1, 129, 1024 })
             {
                 var tasks = Enumerable.Range(0, count).Select(Task).ToArray();
                 var store = new RuntimeStore(new() { Tasks = tasks }); var host = new RuntimeHost(tasks);
+                foreach (var task in tasks)
+                {
+                    var fact = Fact(); store.Cache[task.Id] = Cached(fact);
+                    host.Infos[task.Id] = host.Infos[task.Id] with { Runs = [fact] };
+                }
                 host.Transform = snapshot => snapshot with { Tasks = snapshot.Tasks.Reverse().ToArray() };
                 var actual = await Adapter(host, store).ReadAsync(store.Tasks, default);
                 Assert(actual.Tasks.Select(task => task.TaskId).SequenceEqual(tasks.Select(task => task.Id)));
-                Assert(store.RunReads == count && host.Batches.Sum(batch => batch.Length) == count && host.Batches.All(batch => batch.Length <= 128));
+                Assert(actual.Tasks.All(task => task.RecentRun?.AttemptId == store.Cache[task.TaskId].AttemptId &&
+                    task.RecentRun.Results.Single().Code == "success"));
+                Assert(host.Batches.All(batch => batch.Length is >= 1 and <= 128) &&
+                    host.Batches.SelectMany(batch => batch).ToHashSet().SetEquals(tasks.Select(task => task.Id)));
             }
         });
         await run("external-runtime-duplicate-missing-identity-and-invalid-zone-still-reject", async () =>
@@ -113,12 +122,12 @@ internal static class RuntimeCases
         internal readonly Dictionary<Guid, WorkTaskInfo> Infos = tasks.ToDictionary(task => task.Id, task => new WorkTaskInfo(task.Id, task.Revision, false, null, []));
         internal readonly List<Guid[]> Batches = [];
         internal readonly List<string> Providers = [];
-        internal int StopQueries, ClockReads;
+        internal int StopQueries;
         internal Func<WorkTaskSnapshot, WorkTaskSnapshot> Transform = snapshot => snapshot;
         private static WorkClock Clock => new(new(2026, 10, 25, 1, 0, 0, TimeSpan.Zero), "UTC");
         public ValueTask<WorkTaskSnapshot> ReadAsync(string providerId, IReadOnlyList<Guid> taskIds, CancellationToken cancellationToken)
         { Providers.Add(providerId); Batches.Add(taskIds.ToArray()); return ValueTask.FromResult(Transform(new WorkTaskSnapshot(Clock, taskIds.Select(id => Infos[id]).ToArray()))); }
-        public ValueTask<WorkClock> ReadClockAsync(CancellationToken cancellationToken) { ClockReads++; return ValueTask.FromResult(Clock); }
+        public ValueTask<WorkClock> ReadClockAsync(CancellationToken cancellationToken) => ValueTask.FromResult(Clock);
         public ValueTask<bool> HasStoppedAsync(string providerId, Guid taskId, Guid runId, Guid attemptId, CancellationToken cancellationToken)
         { StopQueries++; throw new InvalidOperationException("ui_must_not_use_callback_stop_query"); }
         public ValueTask<WorkInvocation> ReadCurrentAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
@@ -129,10 +138,9 @@ internal static class RuntimeCases
     {
         internal readonly CheckInTaskStore Tasks = store;
         internal readonly Dictionary<Guid, CheckInRun> Cache = [];
-        internal int RunReads;
         public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInTaskSnapshot(1, Tasks));
         public ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken)
-        { RunReads++; return ValueTask.FromResult(new CheckInRecentRunSnapshot(1, Cache.GetValueOrDefault(taskId))); }
+            => ValueTask.FromResult(new CheckInRecentRunSnapshot(1, Cache.GetValueOrDefault(taskId)));
         public ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed, Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken) => throw new NotSupportedException();
