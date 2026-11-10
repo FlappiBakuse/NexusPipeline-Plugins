@@ -48,6 +48,9 @@ class SliceInputTests(unittest.TestCase):
             'sdkVersion': '0.1.0', 'contractFingerprint': 'b' * 64,
             'managed': {'entryAssembly': 'Slice.dll', 'entryType': 'Owner'}}
         self.write('plugins/managed/live-screenshot/extension.json', json.dumps(self.manifest))
+        context = patch('slice_inputs.dotnet_context', return_value={'path': 'dotnet', 'sdkVersion': '10.0.100'})
+        self.dotnet = context.start()
+        self.addCleanup(context.stop)
 
     def tearDown(self):
         self.scope.cleanup()
@@ -85,6 +88,12 @@ class SliceInputTests(unittest.TestCase):
         source, component = self.component()
         self.save_build('original', source, component)
         self.package['sha256'] = 'c' * 64
+        self.assertIsNone(reusable_build(self.output, 'live-screenshot', self.component()[1]))
+
+    def test_tracks_dotnet_sdk(self):
+        source, component = self.component()
+        self.save_build('original', source, component)
+        self.dotnet.return_value = {'path': 'dotnet', 'sdkVersion': '10.0.300'}
         self.assertIsNone(reusable_build(self.output, 'live-screenshot', self.component()[1]))
 
     def test_refuses_import(self):

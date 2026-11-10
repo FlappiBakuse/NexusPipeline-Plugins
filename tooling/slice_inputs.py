@@ -5,7 +5,9 @@ import json
 import os
 from pathlib import Path
 import platform
+import re
 import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -30,12 +32,20 @@ def tool_sources(root, entries):
     return visited
 
 
-def tool_context(tool, environment):
-    path = shutil.which(tool)
+def dotnet_context(root, environment):
+    search = next((value for key, value in environment.items() if key.upper() == 'PATH'), '')
+    path = shutil.which('dotnet', path=search)
+    if path is None:
+        raise ValueError('A stable .NET 10.0 SDK is required')
+    host = Path(path).resolve(strict=True)
+    result = subprocess.run([str(host), '--version'], cwd=root, env=environment, capture_output=True,
+                            encoding='utf-8', errors='replace', timeout=30)
+    version = result.stdout.strip()
+    if result.returncode or re.fullmatch(r'10\.0\.[1-9][0-9]{2,}', version) is None:
+        raise ValueError('Expected a stable .NET 10.0 SDK: ' + (result.stderr.strip() or version))
     relevant = {key: value for key, value in environment.items() if key.upper().startswith(('DOTNET_', 'MSBUILD', 'NUGET_'))
                 or key.upper() in ('PATH', 'PATHEXT')}
-    return {'tool': tool, 'path': str(Path(path).resolve()) if path else None,
-            'toolSha256': sha(Path(path).read_bytes()) if path else None,
+    return {'tool': 'dotnet', 'path': str(host), 'sdkVersion': version, 'toolSha256': sha(host.read_bytes()),
             'pythonSha256': sha(Path(sys.executable).read_bytes()), 'platform': platform.platform(),
             'configuration': 'Release', 'environmentHash': sha(encode(dict(sorted(relevant.items()))))}
 
@@ -110,5 +120,5 @@ def managed_inputs(root, plugin, source, package, manifest, environment):
     files = json.loads(Path(source['sourceManifestPath']).read_bytes())['files'] if unknown else records(root, paths)
     value = {'algorithm': 'nexus-managed-inputs-v1', 'files': files, 'projects': sorted(path.stem for path in projects),
              'sdkPackageSha256': package['sha256'], 'managed': manifest['managed'], 'execution': manifest.get('execution'),
-             'context': tool_context('dotnet', environment), 'conservativeReasons': sorted(set(unknown))}
+             'context': dotnet_context(plugin, environment), 'conservativeReasons': sorted(set(unknown))}
     return {**value, 'sha256': sha(encode(value))}

@@ -41,12 +41,13 @@ def main():
     cache = output / "cache"
     env = os.environ.copy()
     env.update(TEMP=str(run), TMP=str(run), DOTNET_CLI_HOME=str(cache / "dotnet-home"),
-               DOTNET_CLI_UI_LANGUAGE="en-US", DOTNET_CLI_TELEMETRY_OPTOUT="1")
-    command = ["dotnet", "build", str(projects[0]), "--configuration", "Release", "--nologo", "--disable-build-servers", "-m:1",
+               DOTNET_CLI_UI_LANGUAGE="en-US", DOTNET_CLI_TELEMETRY_OPTOUT="1", DOTNET_NOLOGO="1")
+    component = managed_inputs(Path(source['exportRoot']), plugin, source, package, manifest, env)
+    dotnet = component['context']['path']
+    command = [dotnet, "build", str(projects[0]), "--configuration", "Release", "--nologo", "--disable-build-servers", "--no-incremental", "-m:1",
                "-p:UseArtifactsOutput=true", f"-p:ArtifactsPath={output / 'build'}",
                f"-p:RestorePackagesPath={cache / 'packages' / package['sha256']}", f"-p:RestoreSources={package_path.parent}"]
     start = time.monotonic()
-    component = managed_inputs(Path(source['exportRoot']), plugin, source, package, manifest, env)
     previous = reusable_build(output, args.extension, component)
     if previous is None:
         result = subprocess.run(command, cwd=plugin, env=env, capture_output=True, encoding="utf-8", errors="replace")
@@ -66,7 +67,7 @@ def main():
     try:
         if exit_code == 0:
             worker = previous[0].get('worker') if previous else build_worker(
-                plugin, manifest, output, cache / "packages" / package["sha256"], package_path, env, run)
+                plugin, manifest, output, cache / "packages" / package["sha256"], package_path, env, run, dotnet)
             if worker is not None:
                 receipt["worker"] = worker
                 exit_code = worker["build"]["exitCode"]

@@ -6,7 +6,7 @@ import time
 from source_snapshot import sha
 
 
-def build_worker(plugin, manifest, output, packages, package_path, env, run):
+def build_worker(plugin, manifest, output, packages, package_path, env, run, dotnet):
     declaration = manifest.get("execution")
     configuration = plugin / "build.json"
     if declaration is None:
@@ -22,7 +22,7 @@ def build_worker(plugin, manifest, output, packages, package_path, env, run):
     project = plugin / relative
     if project.suffix != ".csproj" or not project.is_file():
         raise ValueError("Managed worker project is missing")
-    command = ["dotnet", "build", str(project), "--configuration", "Release", "--nologo", "--disable-build-servers", "-m:1",
+    command = [dotnet, "build", str(project), "--configuration", "Release", "--nologo", "--disable-build-servers", "--no-incremental", "-m:1",
                "-p:UseArtifactsOutput=true", f"-p:ArtifactsPath={output / 'build'}",
                f"-p:RestorePackagesPath={packages}", f"-p:RestoreSources={package_path.parent}"]
     started = time.monotonic()
