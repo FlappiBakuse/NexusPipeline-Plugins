@@ -27,6 +27,7 @@ function maaDataMetadata(prefix, project, imports) {
   const pi = JSON.parse(found[0].text), diagnostics = [], visited = new Set();
   if (pi.name !== project) throw new Error(prefix + '_interface_project_unbound');
   const tasks = [...(pi.task ?? [])], presets = [...(pi.preset ?? [])], options = { ...(pi.option ?? {}) };
+  const pretasks = [].concat(pi.pretask ?? []);
   const read = path => {
     if (typeof path !== 'string' || !imports.includes(path)) {
       diagnostics.push(prefix + '_unknown_import_preserved');
@@ -43,6 +44,7 @@ function maaDataMetadata(prefix, project, imports) {
     const part = read(pending.shift());
     if (!part) continue;
     tasks.push(...(part.task ?? [])); presets.push(...(part.preset ?? []));
+    pretasks.push(...[].concat(part.pretask ?? []));
     for (const [name, value] of Object.entries(part.option ?? {})) {
       if (Object.prototype.hasOwnProperty.call(options, name) && !maaDataSame(options[name], value))
         throw new Error(prefix + '_option_definition_ambiguous');
@@ -58,7 +60,7 @@ function maaDataMetadata(prefix, project, imports) {
     const text = nexusReadSource(root + language);
     if (text !== 'null') translations = JSON.parse(text);
   }
-  return { pi: { ...pi, task: tasks, preset: presets, option: options }, translations, diagnostics };
+  return { pi: { ...pi, task: tasks, preset: presets, option: options }, pretasks, translations, diagnostics };
 }
 
 function maaDataDiagnostics(config, prefix) {

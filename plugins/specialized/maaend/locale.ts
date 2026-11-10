@@ -80,8 +80,8 @@ export const locales = {
     },
     "diagnostics": {
       "mxu_finish_action": "The action after MXU finishes may affect subsequent queue work.",
-      "mxu_autostart_invalid": "The automatic-run instance is unset, missing or has a duplicate ID. Use Edit configuration to select a valid instance, close the editor, then reload the plan.",
-      "maaend_auto_start_instance_required": "No valid automatic-run instance is selected. Select one in MaaEnd, save it, then read the script configurations again.",
+      "mxu_autostart_invalid": "The automatic-run instance is unset or invalid. Use Edit configuration to open MaaEnd. Under Settings → General → Auto-execute on startup, select the intended instance, then close MaaEnd and read the configuration again.",
+      "maaend_auto_start_instance_required": "Select the intended instance in MaaEnd under Settings → General → Auto-execute on startup, then read the script configurations again.",
       "mxu_autostart_missing": "No automatic-run instance is selected. Use Edit configuration to select it for this bound user, close the editor, then reload the plan. The active tab is not an automatic-run target.",
       "mxu_task_failed": "Outer task callback failed",
       "mxu_task_running": "Outer task started",
@@ -183,8 +183,8 @@ export const locales = {
     },
     "diagnostics": {
       "mxu_finish_action": "完成后的系统动作可能影响队列后续工作。",
-      "mxu_autostart_invalid": "自动执行实例未设置、已不存在或标识重复。请通过“编辑配置”选择有效实例，关闭编辑器后重新读取计划。",
-      "maaend_auto_start_instance_required": "未设置有效的自动执行实例。请在终末地小助手中选择自动执行实例，保存后重新读取脚本配置。",
+      "mxu_autostart_invalid": "自动执行实例未设置或无效。请通过“编辑配置”打开 MaaEnd，在“设置 → 通用 → 启动后自动执行”选择要运行的实例，关闭 MaaEnd 后重新读取配置。",
+      "maaend_auto_start_instance_required": "请在 MaaEnd 的“设置 → 通用 → 启动后自动执行”选择要运行的实例，然后重新读取脚本配置。",
       "mxu_autostart_missing": "尚未设置自动执行实例。请点击“编辑配置”，在当前绑定用户的配置中选择自动执行的实例，关闭编辑器后重新读取计划；当前打开的配置页不等于自动执行目标。",
       "mxu_task_failed": "外层任务回调失败",
       "mxu_task_running": "外层任务已开始",

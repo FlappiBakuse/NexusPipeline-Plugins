@@ -36,6 +36,27 @@ export function cases(invoke) {
   add('program preparation retains its localized title and technical role',
     input('discover', document([task('launch', { taskName: '__MXU_PRETASK__LaunchGamePC' })])),
     { 'tasks.0.titleLocales': { 'zh-CN': '启动游戏', 'en-US': 'Launch game' }, 'tasks.0.workflowRole': 'technical' }, undefined, pretaskMetadata);
+  const importedMetadata = metadata(), launchImport = 'tasks/pretasks/LaunchGamePC.json';
+  importedMetadata['interface.json'].import = [launchImport];
+  importedMetadata[launchImport] = {
+    pretask: { ...pretaskMetadata['interface.json'].pretask, controller: ['Win32'], option: ['LaunchGamePCLauncherPath', 'LaunchGamePCGameSetting'] },
+    option: {
+      LaunchGamePCLauncherPath: { type: 'select', default_case: 'Auto', cases: [{ name: 'Auto' }] },
+      LaunchGamePCGameSetting: { type: 'select', default_case: 'No', cases: [{ name: 'No' }] }
+    }
+  };
+  const launchProfile = document([task(), task('launch', { taskName: '__MXU_PRETASK__LaunchGamePC' })]);
+  add('declared PC launch import supplies the technical task and business prerequisites', input('discover', launchProfile),
+    { 'tasks.0.taskId': 'maaend:stable/launch', 'tasks.0.isSelected': true, 'tasks.0.workflowRole': 'technical',
+      'tasks.0.retrySafety': 'safe', 'tasks.1.dependencies': ['maaend:stable/launch'],
+      'tasks.1.retryPrerequisites': ['maaend:stable/launch'] }, undefined, importedMetadata);
+  add('imported PC launch options satisfy configuration checks', input('configuration', launchProfile),
+    { diagnostics: [], configPatches: [] }, undefined, importedMetadata);
+  const duplicatePretasks = structuredClone(importedMetadata);
+  duplicatePretasks['interface.json'].pretask = [importedMetadata[launchImport].pretask];
+  add('repeated PC launch definitions do not grant selection', input('discover', launchProfile),
+    { 'tasks.0.dependencies': [], 'tasks.1.isSelected': false, 'diagnostics.maaend_unknown_task_preserved': 'warning' },
+    undefined, duplicatePretasks);
   add('automatic stable instance wins over active page', input('discover'), { 'tasks.0.taskId': 'maaend:stable/t', 'tasks.0.isSelected': true });
   const large = document(); large.unknown.text = '中文\\\"\n'.repeat(8000);
   const largeInput = input('discover', large);

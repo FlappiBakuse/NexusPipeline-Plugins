@@ -7,7 +7,7 @@ const maaendCleanup = ['CloseGame', 'CloseGamePC', '__MXU_POWER__', '__MXU_KILLP
 
 function maaendRead(input) {
   const main = maaDataResource(input, 'main', 'maaend'), document = strictConfigurationJson(main.content, 'maaend');
-  const metadata = maaDataMetadata('maaend', 'MaaEnd', MAAEND_IMPORTS), { pi, translations } = metadata;
+  const metadata = maaDataMetadata('maaend', 'MaaEnd', MAAEND_IMPORTS), { pi, pretasks, translations } = metadata;
   if (document.version !== '1.0' || !Array.isArray(document.instances)) throw new Error('maaend_profile_invalid');
   const id = document.settings?.autoStartInstanceId;
   const instances = document.instances.filter(item => item.id === id);
@@ -16,7 +16,7 @@ function maaendRead(input) {
   const instance = instances[0], instanceIndex = document.instances.indexOf(instance);
   if (!Array.isArray(instance.tasks) || instance.tasks.length > 4096 || new Set(instance.tasks.map(task => task.id)).size !== instance.tasks.length)
     throw new Error('maaend_task_identity_invalid');
-  const definitions = [...(pi.task ?? [])], pretasks = !pi.pretask ? [] : Array.isArray(pi.pretask) ? pi.pretask : [pi.pretask], options = pi.option ?? {};
+  const definitions = [...(pi.task ?? [])], options = pi.option ?? {};
   for (const pretask of pretasks)
     if (typeof pretask.name === 'string' && typeof pretask.exec === 'string')
       definitions.push({ ...pretask, name: '__MXU_PRETASK__' + pretask.name, entry: 'MXU_PRETASK' });
