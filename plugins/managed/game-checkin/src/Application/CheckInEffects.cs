@@ -31,24 +31,3 @@ internal static class CheckInEffectGate
         { return CheckInResults.Result(result.Platform, result.GameCode, "success_unconfirmed", effectState: "unknown"); }
     }
 }
-internal static class CheckInResults
-{
-    internal static CheckInGameResult Result(string platform, string game, string code, bool success = false, string effectState = "notSubmitted") =>
-        new(platform, game, code, code switch {
-            "success" => "签到状态已确认", "already" => "今日已签到", "no_role" => "当前账号没有可签到角色",
-            "role_selection_required" => "多个角色需要明确选择", "success_unconfirmed" or "effect_unknown" => "提交结果未知，不能自动重复",
-            "captcha_required" or "challenge_incomplete" => "需要在官方页面人工验证", "invalid_cookie" or "credential_expired" => "凭据失效，请重新登录",
-            "transport_error" => "官方请求失败", "response_invalid" => "官方响应格式无效",
-            "internal_error" => "本地处理失败，请保留错误记录", "credential_changed" => "凭据已变更，已停止后续操作",
-            "effect_busy" => "相同凭据和游戏已有受理中的操作，结果尚未确认",
-            "tajiduo_sdk_credential_required" => "原生凭据缺少 SDK 登录字段，请重新官方登录或填写完整原生 JSON", _ => "接口状态未通过核验" }, success, effectState);
-    internal static CheckInGameResult Aggregate(string platform, string game, IReadOnlyList<CheckInGameResult> results)
-    {
-        if (results.Count == 0) return Result(platform, game, "no_role");
-        var unknown = results.FirstOrDefault(result => result.EffectState == "unknown");
-        if (unknown is not null) return unknown;
-        var failed = results.FirstOrDefault(result => !result.Success);
-        if (failed is not null) return failed;
-        return Result(platform, game, results.Any(result => result.Code == "success") ? "success" : "already", true, "confirmed");
-    }
-}

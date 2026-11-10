@@ -7,9 +7,6 @@
     <Compile Remove="native-session/**/*.cs" />
     <PackageReference Include="NexusPipeline.Extensibility" Version="[0.1.0]" />
     <Compile Include="../../plugins/managed/maa-framework/src/Domain/**/*.cs" Link="Product/%(RecursiveDir)%(Filename)%(Extension)" />
-    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectImport.cs" Link="Product/MaaProjectImport.cs" />
-    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaMfaImport.cs" Link="Product/MaaMfaImport.cs" />
-    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCfaImport.cs" Link="Product/MaaCfaImport.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectDiscovery.cs" Link="Product/MaaProjectDiscovery.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSelectedFiles.cs" Link="Product/MaaSelectedFiles.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaConfigMounts.cs" Link="Product/MaaConfigMounts.cs" />
