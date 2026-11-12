@@ -79,6 +79,7 @@ export interface CredentialEditor {
 export interface CheckInPorts {
   readonly canReveal: boolean;
   readState(signal: AbortSignal): Promise<CheckInState>;
+  subscribe(listener: () => void): () => void;
   readPublication(operationId: string, signal: AbortSignal): Promise<boolean>;
   saveTask(
     operationId: string,

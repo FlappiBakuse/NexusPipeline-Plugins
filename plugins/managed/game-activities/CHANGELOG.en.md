@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Refresh activity state from subscriptions and load selected feeds on demand while reusing valid caches.
+
 - Reuse loaded covers immediately on page return; use tall narrow SVG navigation chevrons.
 
 - Retry failed covers on manual refresh, allow verified image origins, and center toolbar icons; retain the background when no cover is provided.

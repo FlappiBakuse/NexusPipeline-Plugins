@@ -19,7 +19,6 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
   let settingsVisible = false;
   let appearance: AppearanceFrame | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let pollTimer: ReturnType<typeof setInterval> | undefined;
   let overdueSlot = '';
   let overdueReads = 0;
   let inFlight: Promise<void> | undefined;
@@ -142,14 +141,12 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
   const observeVisibility = () => {
     if (signal.aborted) return;
     if (appearanceVisible || settingsVisible) {
-      if (pollTimer) return;
+      if (unsubscribe) return;
       unsubscribe = ports.subscribe((next) => { void publish(next); });
-      pollTimer = setInterval(() => { void refresh().catch(() => {}); }, 30_000);
       void refresh().catch(() => {});
     } else {
       if (timer) clearTimeout(timer);
-      if (pollTimer) clearInterval(pollTimer);
-      timer = pollTimer = undefined;
+      timer = undefined;
       unsubscribe?.();
       unsubscribe = undefined;
     }
@@ -159,7 +156,6 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
     () => {
       serial++;
       if (timer) clearTimeout(timer);
-      if (pollTimer) clearInterval(pollTimer);
       unsubscribe?.();
       listeners.clear();
       releaseAsset();

@@ -5,6 +5,18 @@ internal static class ReadyCases
     private static readonly AsyncLocal<string?> AcceptedCall = new();
     internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
     {
+        await run("unselected-feeds-remain-unread-and-selected-cache-is-loaded-once", async () =>
+        {
+            var reads = new List<string>(); var docs = new TestDocuments { BeforeRead = reads.Add };
+            var source = ActivitySources.All.First(item => item.GameId == "blue-archive");
+            docs.Values[source.DocumentName] = new(1, "{}"u8.ToArray());
+            await using var service = new ActivityCoordinator(docs, new TestNetwork(), new TestClock());
+            await service.InitializeAsync(default); Check.That(reads.SequenceEqual(new[] { "settings" }));
+            await service.SaveAsync(Guid.NewGuid(), 0, TestActivity.Select("blue-archive"), default);
+            Check.That(reads.Count(name => name == source.DocumentName) == 1);
+            await service.SaveAsync(Guid.NewGuid(), 1, TestActivity.Select("blue-archive"), default);
+            Check.That(reads.Count(name => name == source.DocumentName) == 1);
+        });
         await run("scope-initialization-waits-ready-once-and-cancels-without-consumption", async () =>
         {
             var reads = 0; var docs = new TestDocuments { BeforeRead = _ => Interlocked.Increment(ref reads) };

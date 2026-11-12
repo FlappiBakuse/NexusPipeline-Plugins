@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Synchronize the task page from state events, preserve revisions for unchanged state, and stop hidden subscriptions.
+
 - Use separate rounded task cards with compact spacing and vertically centered content; keep the page title and description without a repeated eyebrow.
 
 - Validate candidate credentials in the live login window; rejection permits continuing or refreshing, and success returns the draft after cleanup.

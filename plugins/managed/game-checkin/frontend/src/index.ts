@@ -58,7 +58,7 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
     dragging = false,
     serial = 0,
     drawnRevision = -1;
-  let timer: ReturnType<typeof setTimeout> | undefined, request: AbortController | undefined;
+  let request: AbortController | undefined;
   let activeEditor: (() => void) | undefined,
     editorOwner: AbortController | undefined,
     editorGeneration = 0;
@@ -152,10 +152,6 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
         panel.say(error instanceof Error ? error.message : String(error), true);
     } finally {
       if (request === active) request = undefined;
-      if (panel.alive() && visible && own === serial)
-        timer = setTimeout(() => {
-          void refresh();
-        }, 5000);
     }
   };
   list.addEventListener(
@@ -191,22 +187,27 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
     },
     { signal: surface.signal }
   );
+  let unsubscribe: (() => void) | undefined;
+  const observe = () => {
+    unsubscribe?.();
+    unsubscribe = visible ? ports.subscribe(() => { if (panel.alive() && visible) void refresh(); }) : undefined;
+  };
   const visibility = surface.onVisibilityChanged((value) => {
     visible = value;
-    clearTimeout(timer);
     request?.abort();
-    timer = undefined;
     serial++;
+    observe();
     if (value) {
       if (state && drawnRevision !== state.revision) draw();
       void refresh();
     }
   });
   draw();
+  observe();
   if (visible) void refresh();
   return () => {
     serial++;
-    clearTimeout(timer);
+    unsubscribe?.();
     request?.abort();
     rows.dispose();
     closeEditor();

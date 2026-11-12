@@ -54,11 +54,18 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
     subscribe(listener) {
       const controller = new AbortController();
       let reading = false, again = false;
+      let publishedRevision: number | undefined;
       const refresh = async () => {
         if (controller.signal.aborted) return;
         if (reading) { again = true; return; }
         reading = true;
-        try { const state = await readState(controller.signal); if (!controller.signal.aborted) listener(state); }
+        try {
+          const state = await readState(controller.signal);
+          if (!controller.signal.aborted && state.revision !== publishedRevision) {
+            publishedRevision = state.revision;
+            listener(state);
+          }
+        }
         catch { /* Failed reads retain the last published snapshot. */ }
         finally {
           reading = false;
@@ -66,8 +73,7 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
         }
       };
       const unsubscribe = transport.subscribe(() => void refresh());
-      const timer = setInterval(() => void refresh(), 5000);
-      return () => { controller.abort(); clearInterval(timer); void unsubscribe(); };
+      return () => { controller.abort(); void unsubscribe(); };
     }
   };
 }

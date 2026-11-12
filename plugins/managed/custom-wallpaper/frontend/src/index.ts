@@ -16,7 +16,6 @@ export function createExtension(ports?: WallpaperPorts): FrontendExtension {
     contractFingerprint,
     async activate(context) {
       const runtime = ports ? createRuntime(ports, context.scope.signal) : undefined;
-      if (runtime) await runtime.refresh();
       context.scope.signal.throwIfAborted();
       context.registerSurface({
         id: 'custom-wallpaper.settings',

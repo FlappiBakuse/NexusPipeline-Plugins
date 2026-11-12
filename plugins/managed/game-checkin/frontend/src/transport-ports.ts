@@ -60,6 +60,10 @@ export function transportPorts(transport: FrontendTransport): CheckInPorts {
   return {
     get canReveal() { return transport.connectionKind === 'local'; },
     readState: signal => state('read-state', {}, signal),
+    subscribe: listener => {
+      const stop = transport.subscribe(listener);
+      return () => { void stop(); };
+    },
     async readPublication(operationId, signal) {
       const result = await call<{ committed: boolean }>('read-publication', { publicationOperationId: operationId }, signal);
       if (!result || typeof result.committed !== 'boolean') throw new CheckInError('checkin_reply_invalid');

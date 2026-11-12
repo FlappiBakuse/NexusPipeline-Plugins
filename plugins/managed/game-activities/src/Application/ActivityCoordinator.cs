@@ -9,6 +9,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     private readonly CancellationTokenSource lifetime = new();
     private CancellationTokenSource selection = new();
     private readonly Dictionary<string, ActivityCachedSource> feeds = ActivitySources.All.ToDictionary(s => s.Id, s => new ActivityCachedSource(s));
+    private readonly HashSet<string> loaded = [];
     private readonly List<Task> workers = [];
     private ActivitySettings settings = new();
     private long settingsRevision, revision = 1, generation;
@@ -38,9 +39,15 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     {
         var saved = await documents.ReadAsync("settings", cancellationToken);
         if (saved is not null) { settings = ActivityJson.Read<ActivitySettings>(saved.Json).Validate(); settingsRevision = saved.Revision; }
-        foreach (var entry in feeds.Values)
+        await LoadSelectedAsync(cancellationToken);
+    }
+    private async Task LoadSelectedAsync(CancellationToken cancellationToken)
+    {
+        foreach (var source in ActivitySources.Selected(settings).Where(source => !loaded.Contains(source.Id)))
         {
+            var entry = feeds[source.Id];
             var document = await documents.ReadAsync(entry.Source.DocumentName, cancellationToken);
+            loaded.Add(source.Id);
             if (document is null) continue;
             entry.Revision = document.Revision;
             try
@@ -89,6 +96,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             await documents.WriteAsync(operationId, "settings", expectedRevision, ActivityJson.Bytes(proposed), cancellationToken);
             var current = await documents.ReadAsync("settings", cancellationToken) ?? throw new ActivityFailure("activity_settings_missing_after_commit");
             settings = ActivityJson.Read<ActivitySettings>(current.Json).Validate(); settingsRevision = current.Revision;
+            await LoadSelectedAsync(cancellationToken);
             generation++; revision++; selection.Cancel(); selection.Dispose(); selection = new(); operation = null;
         }
         finally { gate.Release(); }

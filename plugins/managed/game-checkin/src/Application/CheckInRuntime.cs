@@ -24,6 +24,7 @@ internal sealed record CheckInEditorState(string EditorSessionId, long Revision,
 internal sealed class CheckInViews(ICheckInPersistence persistence, ICheckInRuntime runtime, ICheckInNativeLogin native)
 {
     private long revision;
+    private readonly Dictionary<CheckInClient, (string Json, long Revision)> states = [];
     internal async ValueTask<CheckInState> StateAsync(CheckInClient client, CancellationToken cancellationToken)
     {
         client.Require(); var snapshot = await persistence.ReadTasksAsync(cancellationToken);
@@ -36,8 +37,17 @@ internal sealed class CheckInViews(ICheckInPersistence persistence, ICheckInRunt
                 new(ready, ready ? "ready" : "manualOnly"));
         }).ToArray();
         client.Require();
-        return new(Interlocked.Increment(ref revision), snapshot.Revision, facts.TimeZoneId,
+        var state = new CheckInState(0, snapshot.Revision, facts.TimeZoneId,
             snapshot.Store.Tasks.Select(task => View(task, byId[task.Id])).ToArray(), platforms, facts.NotificationTasks);
+        var json = System.Text.Json.JsonSerializer.Serialize(state);
+        lock (states)
+        {
+            foreach (var expired in states.Keys.Where(owner => owner.Lifetime.IsCancellationRequested).ToArray()) states.Remove(expired);
+            if (states.TryGetValue(client, out var prior) && prior.Json == json) return state with { Revision = prior.Revision };
+            if (!states.ContainsKey(client) && states.Count == 16) states.Remove(states.Keys.First());
+            var current = checked(++revision); states[client] = (json, current);
+            return state with { Revision = current };
+        }
     }
     internal async ValueTask RunNowAsync(CheckInClient client, Guid taskId, CancellationToken cancellationToken)
     {

@@ -8,6 +8,17 @@ internal static class FrontendCases
     internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
     {
         static void Assert(bool value) { if (!value) throw new InvalidOperationException("assertion_failed"); }
+        await run("read-state-keeps-a-stable-version-until-visible-facts-change", async () => {
+            using var fixture = new Fixture();
+            async Task<long> ReadVersion() {
+                using var json = JsonDocument.Parse((await fixture.Host.InvokeAsync(fixture.Call("read-state"), default)).Content);
+                Assert(json.RootElement.GetProperty("ok").GetBoolean());
+                return json.RootElement.GetProperty("value").GetProperty("revision").GetInt64();
+            }
+            var first = await ReadVersion(); Assert(first == await ReadVersion());
+            fixture.EnableBrowser(); var changed = await ReadVersion();
+            Assert(changed > first && changed == await ReadVersion());
+        });
         await run("actual-sdk-frontend-waits-for-readiness-before-document-read", async () => {
             using var fixture = new Fixture(false); var pending = fixture.Host.InvokeAsync(fixture.Call("read-state"), default).AsTask();
             Assert(!pending.IsCompleted && fixture.Ports.DocumentReads == 0); fixture.Ready.SetResult();
@@ -70,9 +81,11 @@ internal static class FrontendCases
         private readonly CheckInBrowserLogins browser;
         private readonly TajiduoLogins tajiduo;
         private readonly Guid clientId = Guid.NewGuid();
+        private readonly Native native = new();
+        internal void EnableBrowser() => native.Ready = true;
         internal Fixture(bool ready = true)
         {
-            if (ready) Ready.SetResult(); clients = new(Scope.Token); var persistence = new SdkCheckInPersistence(Ports, Ports, Ports); var native = new Native(); var runtime = new Runtime();
+            if (ready) Ready.SetResult(); clients = new(Scope.Token); var persistence = new SdkCheckInPersistence(Ports, Ports, Ports); var runtime = new Runtime();
             browser = new(editors, native, new Capture(), (_, _, _) => throw new InvalidOperationException("unexpected_verification"));
             tajiduo = new(editors, new(null!, TimeProvider.System), native, TimeProvider.System);
             var application = new CheckInFrontend(new(persistence, editors, runtime), new(persistence, runtime, native), editors, new(persistence, editors, grants), browser, tajiduo);
@@ -84,7 +97,8 @@ internal static class FrontendCases
     }
     private sealed class Native : ICheckInNativeLogin
     {
-        public ValueTask<CheckInNativeAvailability> ReadAsync(CheckInClient client, CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInNativeAvailability(true, false));
+        internal bool Ready;
+        public ValueTask<CheckInNativeAvailability> ReadAsync(CheckInClient client, CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInNativeAvailability(true, Ready));
         public ValueTask RequireAsync(CheckInClient client, CancellationToken cancellationToken) => throw new InvalidOperationException("read_state_requested_desktop_effect_authority");
     }
     private sealed class Capture : ICheckInBrowserCapture

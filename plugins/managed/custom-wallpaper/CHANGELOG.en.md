@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Synchronize visible wallpaper and settings from subscriptions without unchanged-state polling.
+
 - Add the card description and align category pinning, heading toggles and collapse animation.
 
 - Use public collapsible cards and switch collections under the host settings expansion owner.

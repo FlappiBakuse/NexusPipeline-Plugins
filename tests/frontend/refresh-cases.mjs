@@ -1,5 +1,5 @@
 export async function runRefreshCases({page,test}) {
-  await test('wallpaper unchanged 30-second poll reuses validated asset and display URL',async()=>{
+  await test('wallpaper unchanged page reuses validated asset and display URL without polling',async()=>{
     await page.evaluate(async()=>{
       window.wallpaperCounts={reads:0,states:0,validations:0,created:0,revoked:0};
       const bitmap=window.createImageBitmap,create=URL.createObjectURL,revoke=URL.revokeObjectURL;
@@ -20,7 +20,7 @@ export async function runRefreshCases({page,test}) {
       await page.waitForFunction(()=>document.querySelector('.wallpaper-appearance-image')?.style.backgroundImage);
       await page.waitForTimeout(30100);
       const unchanged=await page.evaluate(()=>({...window.wallpaperCounts}));
-      if(unchanged.states<2||unchanged.reads!==1||unchanged.validations!==1||unchanged.created!==1)
+      if(unchanged.states!==1||unchanged.reads!==1||unchanged.validations!==1||unchanged.created!==1)
         throw Error('Unchanged asset repeated work: '+JSON.stringify(unchanged));
       await page.evaluate(()=>{
         window.wallpaperState={...window.wallpaperState,revision:2,effects:{...window.wallpaperState.effects,blurPx:8}};
@@ -39,7 +39,7 @@ export async function runRefreshCases({page,test}) {
       if(final.reads!==2||final.validations!==2||final.created!==final.revoked)throw Error('Changed asset or URL owner mismatch: '+JSON.stringify(final));
     }finally{await page.evaluate(()=>{window.fixture?.dispose();window.restoreWallpaper();});}
   });
-  await test('wallpaper polling and subscriptions follow appearance and settings visibility', async () => {
+  await test('wallpaper event subscriptions follow appearance and settings visibility', async () => {
     for (const target of ['application.appearance', 'settings.panels']) {
       const result = await page.evaluate(async target => {
         const interval = window.setInterval, clear = window.clearInterval;
@@ -60,7 +60,7 @@ export async function runRefreshCases({page,test}) {
             subscribe: () => { subscriptions++; return () => { subscriptions--; }; }
           }, target);
           await settle();
-          const active = callbacks.size === 1 && subscriptions === 1;
+          const active = callbacks.size === 0 && subscriptions === 1;
           window.fixture.hide(); await settle();
           const hiddenReads = reads;
           for (const callback of callbacks.values()) callback();
@@ -68,7 +68,7 @@ export async function runRefreshCases({page,test}) {
           const hidden = reads === hiddenReads && callbacks.size === 0 && subscriptions === 0;
           state = { ...state, revision: 2 };
           window.fixture.show(); await settle();
-          const restored = reads > hiddenReads && callbacks.size === 1 && subscriptions === 1;
+          const restored = reads > hiddenReads && callbacks.size === 0 && subscriptions === 1;
           window.fixture.dispose();
           return { active, hidden, restored, released: callbacks.size === 0 && subscriptions === 0 };
         } finally {

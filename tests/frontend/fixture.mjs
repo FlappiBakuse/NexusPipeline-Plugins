@@ -133,6 +133,7 @@ await page.evaluate(async () => {
   const ui = await import('/ui.js'); ui.registerElements();
   window.fixturePng = () => new Blob([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC'), char => char.charCodeAt(0))], { type: 'image/png' });
   window.testMount = async (name, ports, target, locale = 'zh-CN', production = false, task = {}) => {
+    if (name === 'game-checkin') ports = { subscribe: () => () => {}, ...ports };
     document.documentElement.lang = locale;
     const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = `/${name}/main.css`;
     document.head.append(style);

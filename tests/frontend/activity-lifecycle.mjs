@@ -9,7 +9,7 @@ export async function activityLifecycle({ page, test }) {
       };
       window.clearInterval = id => { callbacks.delete(id); clear(id); };
       const settle = () => new Promise(resolve => setTimeout(resolve, 40));
-      let reads = 0, details = 0, subscriptions = 0, hold = false, pending;
+      let reads = 0, details = 0, subscriptions = 0, hold = false, pending, publish;
       const feed = { id: 'one', game: 'Game', server: 'CN', enabled: true, cacheState: 'fresh',
         overview: { title: 'One' }, events: [] };
       let state = { revision: 1, settingsRevision: 1, selectedFeedIds: ['one'], gameOrder: ['Game'],
@@ -25,15 +25,18 @@ export async function activityLifecycle({ page, test }) {
             if (operation === 'read-feed') { details++; return { revision: state.revision, feed }; }
             throw Error('Unexpected operation: ' + operation);
           },
-          subscribe: () => { subscriptions++; return () => { subscriptions--; }; }
+          subscribe: listener => { publish = listener; subscriptions++; return () => { subscriptions--; }; }
         }, 'overview.cards', 'zh-CN', true);
         await settle();
-        const initial = reads === 1 && details === 0 && subscriptions === 1 && callbacks.size === 1;
+        const initial = reads === 1 && details === 0 && subscriptions === 1 && callbacks.size === 0;
         for (const callback of callbacks.values()) callback();
         await settle();
-        const reused = reads === 2 && details === 0;
+        const reused = reads === 1 && details === 0;
+        publish();
+        await settle();
+        const refreshed = reads === 2 && details === 0;
         hold = true;
-        for (const callback of callbacks.values()) callback();
+        publish();
         await settle();
         if (!pending) throw Error('Controlled read did not begin');
         window.fixture.hide();
@@ -44,9 +47,9 @@ export async function activityLifecycle({ page, test }) {
         const hidden = callbacks.size === 0 && subscriptions === 0 && reads === before && details === 0;
         hold = false; state = { ...state, revision: 2 };
         window.fixture.show(); await settle();
-        const resumed = reads === before + 1 && details === 0 && subscriptions === 1 && callbacks.size === 1;
+        const resumed = reads === before + 1 && details === 0 && subscriptions === 1 && callbacks.size === 0;
         window.fixture.dispose();
-        return { initial, reused, canceled, hidden, resumed,
+        return { initial, reused, refreshed, canceled, hidden, resumed,
           released: subscriptions === 0 && callbacks.size === 0 };
       } finally {
         window.fixture?.dispose(); window.setInterval = interval; window.clearInterval = clear;
