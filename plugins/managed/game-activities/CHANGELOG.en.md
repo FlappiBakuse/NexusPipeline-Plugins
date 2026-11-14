@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Apply activity settings immediately; Cancel restores the opening values while Save and Close retain changes. Confirm lost replies through read-only commit lookup.
+
 - Refresh activity state from subscriptions and load selected feeds on demand while reusing valid caches.
 
 - Reuse loaded covers immediately on page return; use tall narrow SVG navigation chevrons.

@@ -1,4 +1,7 @@
 export const english: Readonly<Record<string, string>> = {
+  '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
+  '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
+  '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',
   保存脚本项目配置: 'Save script project configuration',
   '脚本项目的受保护字段请在账号绑定中配置。': 'Configure protected project fields in the account binding.',
   项目运行文件: 'Project runtime files',
@@ -149,7 +152,7 @@ export const english: Readonly<Record<string, string>> = {
   已配置: 'Configured',
   未配置: 'Not configured',
   使用新密钥草稿: 'Use new secret draft',
-  保留已存密钥: 'Keep saved secret',
+  取消密钥修改: 'Cancel secret edit',
   清除已存密钥: 'Clear saved secret',
   资源层选项: 'Resource options',
   控制器层选项: 'Controller options',
@@ -162,6 +165,7 @@ export const english: Readonly<Record<string, string>> = {
   '原操作仍未确认，请继续读取原保存结果。': 'The original operation is still unresolved. Read its result again.',
   '受保护保存仅可读取原结果，不能重发秘密写入。': 'Only read the original protected save result. Secret writes cannot be resent.',
   '受保护保存结果待确认，请读取原保存结果。': 'The protected save result is unresolved. Read the original save result.',
-  '原操作确定未被接受，秘密草稿已清理。请重新输入并预览后保存。': 'The original operation was not accepted. Its secret draft was cleared. Re-enter it and preview before saving.',
+  '原操作确定未被接受，草稿已保留。请重新预览后保存。': 'The original operation was not accepted. The draft is retained. Preview again before saving.',
+  '实例定义已保存，当前项目草稿已保留。': 'The instance definition is saved. The current project draft is retained.',
   '原保存已受理，等待恢复完成。请稍后读取原保存结果。': 'The original save was accepted and is awaiting recovery. Read its result again later.'
 };

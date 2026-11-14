@@ -1,6 +1,6 @@
 import { choose, confirm } from './controls.mjs';
 
-async function mountEditor(page) {
+export async function mountEditor(page) {
   await page.evaluate(async () => {
     const profile = { profileId: 'guarded-profile', revision: '1', packageRoot: 'D:/fixture', interfacePath: 'interface.json',
       nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main', taskOccurrences: [],
@@ -67,10 +67,11 @@ export async function maaEditorCases({ page, test }) {
     if (await page.locator('.maa-output').textContent()) throw Error('Obsolete execution preview reached the output');
   });
 
-  await test('Maa hidden editor clears plaintext and refuses late local protected staging without writes', async () => {
+  await test('Maa hidden editor retains input and refuses late local protected staging without writes', async () => {
     await mountEditor(page);
     const secret = page.locator('nexus-text-input[aria-label="Credentials / secret"]').locator('input');
-    await secret.fill('synthetic-secret-only');
+    const value = await page.evaluate(() => crypto.randomUUID());
+    await secret.fill(value);
     await page.evaluate(() => {
       window.maaHashes = [];
       crypto.subtle.digest = (...args) => new Promise(resolve => window.maaHashes.push(() => window.maaHashOriginal(...args).then(resolve)));
@@ -81,6 +82,7 @@ export async function maaEditorCases({ page, test }) {
     await page.evaluate(async () => { window.fixture.hide(); await window.maaHashes[0](); });
     if (await secret.inputValue()) throw Error('Hidden Maa editor kept its secret input');
     await page.evaluate(() => window.fixture.show());
+    if (await secret.inputValue() !== value || await secret.getAttribute('type') !== 'password') throw Error('Maa resume discarded or revealed its protected input');
     if (await page.getByRole('textbox', { name: 'Credentials / user', exact: true }).inputValue() !== 'ordinary-user'
       || await page.evaluate(() => window.maaDraft.options.credentials.secret)) throw Error('Visibility changed ordinary fields or accepted a late secret');
     await secret.fill('synthetic-current-secret'); await page.getByRole('button', { name: '使用新密钥草稿', exact: true }).click();

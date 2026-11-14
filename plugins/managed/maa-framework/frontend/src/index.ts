@@ -23,7 +23,7 @@ function extension(ports?: MaaPorts, transport?: FrontendTransport): FrontendExt
           target,
           mount(surface) {
             const t = localize(context, english);
-            const current = transport ? new MaaHostPorts(transport, surface.context) : ports;
+            const current = transport ? surface.drafts.retain('ports', () => new MaaHostPorts(transport, surface.context)) : ports;
             if (!current) {
               const panel = createPanel(surface, 'MaaFramework', t);
               paragraph(panel.body, t('MaaFramework 编辑服务尚未接入'));

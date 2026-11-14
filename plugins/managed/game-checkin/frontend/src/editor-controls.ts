@@ -30,6 +30,7 @@ export function setting(
     control.description = panel.t(description);
   });
   control.value = value;
+  control.setAttribute('data-draft-field', title);
   control.className = 'checkin-setting';
   control.addEventListener(
     'nexus-change',

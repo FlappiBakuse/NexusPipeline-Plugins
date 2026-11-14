@@ -49,10 +49,6 @@ export function optionFields(
   protectedOnly = false,
   allowSecretEdits = true
 ): void {
-  const clearDrafts = () => {
-    for (const draft of drafts.values()) draft.value = '';
-    drafts.clear();
-  };
   if (protectedOnly && definition.type !== 'input' && definition.type !== 'hotkey') return;
   if (definition.type === 'select' || definition.type === 'switch') {
     choice(
@@ -62,7 +58,6 @@ export function optionFields(
       String(profile.options[key] ?? definition.defaultCase ?? ''),
       (definition.cases || []).map((item) => ({ value: item.name, label: item.label })),
       (value) => {
-        clearDrafts();
         profile.options[key] = value;
         changed(true);
       }
@@ -74,7 +69,6 @@ export function optionFields(
       const values = profile.options[key] ?? definition.defaultCase ?? [],
         selected = new Set(Array.isArray(values) ? values : [values]);
       toggle(panel, parent, definition.label + ' / ' + item.label, selected.has(item.name), (value) => {
-        clearDrafts();
         const current = profile.options[key] ?? definition.defaultCase ?? [],
           next = new Set(Array.isArray(current) ? current : [current]);
         if (value) next.add(item.name);
@@ -85,8 +79,9 @@ export function optionFields(
     }
     return;
   }
+  const snapshot = profile.sourceSnapshot as { compilation?: { compilationFingerprint?: string } } | undefined;
   for (const input of definition.inputs ?? definition.hotkeys ?? []) {
-    const name = scope + '\0' + key + '\0' + input.name,
+    const name = (snapshot?.compilation?.compilationFingerprint || profile.profileId) + '\0' + scope + '\0' + key + '\0' + input.name,
       values = profile.options[key] as Record<string, unknown> | undefined;
     const label = definition.label + ' / ' + input.name;
     if (!input.password) {
@@ -98,6 +93,7 @@ export function optionFields(
       continue;
     }
     if (!allowSecretEdits) { paragraph(parent, label + '：' + panel.t('脚本项目的受保护字段请在账号绑定中配置。')); continue; }
+    drafts.activate(name);
     field(
       panel,
       parent,
@@ -131,7 +127,7 @@ export function optionFields(
       };
       changed(true);
     });
-    button(panel, row, '保留已存密钥', () => {
+    button(panel, row, '取消密钥修改', () => {
       const draft = drafts.get(name);
       if (draft) draft.value = '';
       drafts.delete(name);

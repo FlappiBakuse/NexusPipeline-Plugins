@@ -1,6 +1,9 @@
 # Changelog
 
 ## 0.5.0
+
+- Retain drafts only after editing; show changed-field highlights only after reopening a draft.
+- Show save-or-cancel reminders for restored project drafts. Highlight only modified fields in existing configurations and update the baseline after saving.
 - Strictly parse native/program facts, readonly sources and observation checkpoints, binding selected tasks to frozen enabled occurrences.
 - Connect direct framework instances to project compilation, bounded task adaptation and the existing worker.
 

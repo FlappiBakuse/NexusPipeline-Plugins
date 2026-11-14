@@ -45,7 +45,8 @@ export interface WallpaperPatch {
 export interface WallpaperPorts {
   connectionKind(signal: AbortSignal): Promise<'local' | 'remote'>;
   readState(signal: AbortSignal): Promise<WallpaperState>;
-  saveSettings(patch: WallpaperPatch, revision: number, signal: AbortSignal): Promise<WallpaperState>;
+  readSettingsResult?(operationId: string, signal: AbortSignal): Promise<boolean>;
+  saveSettings(patch: WallpaperPatch, revision: number, signal: AbortSignal, operationId?: string): Promise<WallpaperState>;
   uploadAsset(file: File, signal: AbortSignal): Promise<WallpaperState>;
   savePalette(
     id: string,

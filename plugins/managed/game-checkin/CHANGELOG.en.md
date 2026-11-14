@@ -2,6 +2,10 @@
 
 ## 0.5.0
 
+- Retain drafts only after editing; show changed-field highlights only after reopening a draft.
+
+- Show a reminder when reopening task or login drafts. Highlight changed fields and switches for existing tasks, clearing the highlight when restored to saved values.
+
 - Synchronize the task page from state events, preserve revisions for unchanged state, and stop hidden subscriptions.
 
 - Use separate rounded task cards with compact spacing and vertically centered content; keep the page title and description without a repeated eyebrow.

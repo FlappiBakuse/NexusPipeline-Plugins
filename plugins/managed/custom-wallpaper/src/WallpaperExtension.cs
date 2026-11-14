@@ -9,7 +9,7 @@ public sealed class WallpaperExtension(ExtensionActivationContext context) : IEx
 
     public IReadOnlyList<FrontendOperation> Operations { get; } =
     [new("read-state", FrontendAccess.Read), new("read-asset", FrontendAccess.Read),
-        new("advance-rotation", FrontendAccess.Read), new("save-settings", FrontendAccess.Write),
+        new("read-settings-result", FrontendAccess.Read), new("advance-rotation", FrontendAccess.Read), new("save-settings", FrontendAccess.Write),
         new("upload-asset", FrontendAccess.Write), new("save-palette", FrontendAccess.Write), new("delete-asset", FrontendAccess.Write)];
 
     public ValueTask ActivateAsync(IExtensionScope scope, CancellationToken cancellationToken)

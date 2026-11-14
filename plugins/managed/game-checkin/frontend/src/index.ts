@@ -82,6 +82,7 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
           get context() { return surface.context; },
           get scope() { return surface.scope; },
           signal: AbortSignal.any([surface.signal, owner.signal]),
+          drafts: surface.drafts,
           get visible() { return surface.visible; },
           onVisibilityChanged: surface.onVisibilityChanged.bind(surface),
           setAppearance: surface.setAppearance.bind(surface)

@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Save wallpaper settings immediately without draft recovery, discard or retry-save actions. Restore confirmed values on failure and inspect unknown results without replay.
+
 - Synchronize visible wallpaper and settings from subscriptions without unchanged-state polling.
 
 - Add the card description and align category pinning, heading toggles and collapse animation.

@@ -9,7 +9,7 @@ internal static class CancellationCases
         {
             using var host = new CancellationTokenSource(); using var scope = new CancellationTokenSource(); using var clients = new CheckInClients(scope.Token);
             var first = clients.Get(Guid.NewGuid(), host.Token); var second = clients.Get(Guid.NewGuid(), host.Token);
-            using var editors = new CheckInEditors(new DraftClock()); var materials = new List<CredentialMaterial>();
+            using var editors = new CheckInEditors(); var materials = new List<CredentialMaterial>();
             foreach (var client in new[] { first, second })
             {
                 var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());

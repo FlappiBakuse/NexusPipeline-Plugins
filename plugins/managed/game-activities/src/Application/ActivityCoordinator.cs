@@ -102,6 +102,19 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
         finally { gate.Release(); }
         await TickAsync(cancellationToken);
     }
+    internal async Task ReloadSettingsAsync(CancellationToken cancellationToken)
+    {
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            var current = await documents.ReadAsync("settings", cancellationToken);
+            if (current is null || current.Revision <= settingsRevision) return;
+            settings = ActivityJson.Read<ActivitySettings>(current.Json).Validate(); settingsRevision = current.Revision;
+            await LoadSelectedAsync(cancellationToken);
+            generation++; revision++; selection.Cancel(); selection.Dispose(); selection = new(); operation = null;
+        }
+        finally { gate.Release(); }
+    }
     internal async Task RefreshAsync(Guid operationId, CancellationToken cancellationToken)
     {
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, lifetime.Token);

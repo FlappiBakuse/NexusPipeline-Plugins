@@ -59,6 +59,7 @@ export function taskFields(
     note.setAttribute('aria-label', panel.t('备注'));
   });
   note.className = 'checkin-note';
+  note.setAttribute('data-draft-field', 'remark');
   note.addEventListener(
     'nexus-change',
     (event) => {

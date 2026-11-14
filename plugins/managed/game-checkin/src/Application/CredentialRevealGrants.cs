@@ -33,11 +33,6 @@ internal sealed class CredentialRevealGrants(TimeProvider clock) : IDisposable
             return Math.Max(0, (TimeSpan.FromHours(24) - clock.GetElapsedTime(grant.Start)).TotalSeconds);
         }
     }
-    internal bool IsConfirmed(CheckInClient client)
-    {
-        try { return RemainingSeconds(client) > 0; }
-        catch (CheckInFailure) { return false; }
-    }
     private void Prune()
     {
         foreach (var key in grants.Where(pair => clock.GetElapsedTime(pair.Value.Start) >= TimeSpan.FromHours(24)).Select(pair => pair.Key).ToArray())

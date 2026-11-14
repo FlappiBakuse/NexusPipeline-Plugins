@@ -5,6 +5,7 @@ import {
   type FrontendTransport,
   type ExtensionSurface
 } from '@nexuspipeline/extension-sdk';
+import { SettingsWrites } from '../../../frontend-ui/src/settings-writes.js';
 import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
 import { createPanel } from '../../../frontend-ui/src/elements.js';
 import { localize, type Translate } from '../../../frontend-ui/src/localize.js';
@@ -18,7 +19,7 @@ import { transportPorts } from './transport-ports.js';
 import '../../../frontend-ui/src/style.css';
 import './style.css';
 
-async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, ports?: ActivityPorts, prepared?: ActivityState, covers: ReadonlyMap<string, Blob> = new Map()) {
+async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: string, ports?: ActivityPorts, prepared?: ActivityState, covers: ReadonlyMap<string, Blob> = new Map(), commands?: SettingsWrites<ActivityState>) {
   const panel = createPanel(surface, '游戏活动', t);
   panel.card.classList.add('activity-panel');
   if (!ports) {
@@ -60,7 +61,7 @@ async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: st
   };
   const showSettings = () => {
     if (settings || details || !state) return;
-    settings = openActivitySettings(panel, ports, state, locale, update, () => {
+    settings = openActivitySettings(panel, state, locale, commands!, update, () => {
       settings = undefined;
       reset();
     });
@@ -99,6 +100,7 @@ async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: st
     const selected = feeds()[active]?.id,
       changed = !state || next.revision !== state.revision;
     state = next;
+    commands?.observe(next);
     const parsed = next.serverNowUtc ? Date.parse(next.serverNowUtc) : NaN;
     serverNow = Number.isFinite(parsed) ? parsed : Date.now();
     origin = performance.now();
@@ -171,7 +173,9 @@ async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: st
     unsubscribe?.(); unsubscribe = undefined;
     reading?.abort(); reading = undefined;
   };
-  let initialSnapshot = !!prepared;
+  const initial = commands?.snapshot ?? prepared;
+  let initialSnapshot = !!initial;
+  const stopCommands = commands?.listen(() => update(commands.snapshot));
   const syncDisplay = () => {
     const shown = visible && !document.hidden;
     view.setVisible(shown);
@@ -192,12 +196,13 @@ async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: st
   };
   const visibility = surface.onVisibilityChanged((value) => { visible = value; syncDisplay(); });
   document.addEventListener('visibilitychange', syncDisplay, { signal: panel.signal });
-  if (prepared) update(prepared);
+  if (initial) update(initial);
   await view.ready();
   if (!panel.alive()) { view.dispose(); panel.cleanup(); return; }
   syncDisplay();
   return () => {
     stopDisplay();
+    stopCommands?.();
     visibility();
     details?.dispose();
     settings?.dispose();
@@ -213,6 +218,11 @@ export function createExtension(ports?: ActivityPorts): FrontendExtension {
     contractFingerprint,
     async activate(context) {
       const state = ports ? await ports.readState(context.scope.signal) : undefined;
+      const commands = state && ports ? new SettingsWrites(state, { signal: context.scope.signal,
+        read: () => ports.readState(context.scope.signal),
+        write: (value, before, id) => ports.saveSettings({ ...value, settingsRevision: before.settingsRevision }, context.scope.signal, id),
+        inspect: id => ports.readSettingsResult?.(id, context.scope.signal) ?? Promise.resolve(false)
+      }) : undefined;
       const covers = new Map<string, Blob>();
       const pending = state?.feeds.filter(feed => state.selectedFeedIds.includes(feed.id) && feed.overview.coverId) ?? [];
       let next = 0;
@@ -231,7 +241,7 @@ export function createExtension(ports?: ActivityPorts): FrontendExtension {
         target: 'overview.cards',
         dashboard: { key: 'game-activities', get title() { return localize(context, english)('游戏活动'); },
           get description() { return localize(context, english)('查看订阅游戏的版本与活动。'); }, defaultVisible: true, order: -100 },
-        mount: (surface) => mountCarousel(surface, localize(context, english), context.locale, ports, state, covers)
+        mount: (surface) => mountCarousel(surface, localize(context, english), context.locale, ports, state, covers, commands)
       });
     }
   };

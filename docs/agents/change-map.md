@@ -11,7 +11,7 @@
 | 活动多源加载 | [managed 作者指南](../authors/managed-extensions.md#活动源刷新) | game-activities ActivityCoordinator / SdkActivityPorts | 有界并发、单飞、generation、退避 | 慢/快源与订阅变化两类结果 |
 | 签到登录与白屏 | [前端诊断](../developer/frontend.md#登录失败与白屏的最小诊断) | Host Desktop 登录窗口；CheckInBrowserLogins / credential-fields | 失败可继续、凭据隔离、取消/晚到归属 | 报告平台的实际阶段＋直接相关生命周期场景 |
 | 签到任务/计划/通知 | [签到项目参考](../projects/game-checkin.md) | game-checkin Domain/Application/Host | 平台区服、任务身份、unknown 只读核对、通知不重复签到 | 选定产品假设的策略/SDK最低层 |
-| 壁纸设置集合 | [公共前端](../developer/frontend.md#原子控件和集合一起复用) | custom-wallpaper settings-controls；Host 设置分类 owner | 单展开、置顶、普通草稿、图片引用 | 一个设置导航与编辑流程 |
+| 壁纸设置集合 | [公共前端](../developer/frontend.md#原子控件和集合一起复用) | custom-wallpaper settings-controls；Host 设置分类 owner | 单展开、置顶、即时设置、图片引用 | 一个设置导航与编辑流程 |
 | 实时预览 | [用户范围](../user/managed.md#livescreenshot) | live-screenshot frontend / current-task provider | 当前 run/attempt、隐藏停止、晚到释放 | 当前/旧 attempt 和可见性场景 |
 | 模拟器实例 | [项目参考](../projects/emulator-support.md) | emulator-support Domain/Host＋Host emulation | 精确实例、仅停止自有目标 | 实际受影响厂商选择；需要才用真程序 |
 | Maa 直驱 | [项目参考](../projects/maa-framework.md)、[覆盖参考](../developer/maa-coverage.md) | maa-framework compiler / worker / frontend | 冻结语义、目标权限、回调与进程族停止 | 受影响层；改 UI 不加载原生引擎 |

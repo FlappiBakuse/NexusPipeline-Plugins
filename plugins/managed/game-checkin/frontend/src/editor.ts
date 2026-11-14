@@ -6,6 +6,8 @@ import type { CheckInPorts, CheckInState, CheckInTask, TaskDraft, SecretAction }
 import { CredentialFields } from './credential-fields.js';
 import { taskFields } from './editor-fields.js';
 import { createIdentity } from '../../../frontend-ui/src/identity.js';
+import { draftPresentation } from '../../../frontend-ui/src/draft-presentation.js';
+import { credentialDraft, editorDraft, openDraft } from './editor-draft.js';
 
 export async function openTaskEditor(
   surface: ExtensionSurface,
@@ -15,6 +17,8 @@ export async function openTaskEditor(
   saved: (next: CheckInState) => void,
   t: Translate
 ) {
+  const { scope, state: retained } = editorDraft(surface.drafts, task?.id, ports);
+  const presentation = draftPresentation(scope, !!task, t);
   let visible = surface.visible,
     modal: PluginModal | undefined,
     credentials: CredentialFields | undefined;
@@ -22,34 +26,35 @@ export async function openTaskEditor(
     visible = value;
     credentials?.visibility(value);
     modal?.setVisible(value);
+    if (!value) presentation.detach(); else if (modal) presentation.attach(modal.body);
   });
   let editor;
   try {
-    editor = await ports.openEditor(task?.id, surface.signal, state.configurationRevision);
+    editor = await openDraft(scope, retained, ports, state, task);
   } catch (error) {
     visibility();
     throw error;
   }
   if (surface.signal.aborted) {
     visibility();
-    await ports.closeEditor(editor.editorSessionId);
     return () => {};
   }
   task = editor.task ?? task;
-  let closed = false,
-    busy = false,
-    pending: { operationId: string; committed: boolean } | undefined,
-    lease: ReturnType<typeof setInterval> | undefined;
+  let closed = false;
   const cleanup = () => {
     if (closed) return;
     closed = true;
-    clearInterval(lease);
     visibility();
     credentials?.dispose();
-    void ports.closeEditor(editor.editorSessionId).catch(() => {});
+    if (!scope.signal.aborted && !retained.busy && !retained.pending && !presentation.modified) {
+      const id = retained.editor?.editorSessionId;
+      retained.editor = undefined; retained.draft = undefined; retained.baseline = undefined;
+      if (id) void ports.closeEditor(id).catch(() => console.error('checkin_editor_cleanup_unavailable'));
+    }
   };
   const title = task ? '编辑签到任务' : '新建签到任务';
   const owner = createPanel(surface, title, t);
+  owner.drafts = scope;
   owner.card.classList.add('checkin-modal-owner');
   owner.card.querySelector('h3')?.remove();
   owner.body.hidden = true;
@@ -77,7 +82,7 @@ export async function openTaskEditor(
     }
   };
   dialog.body.prepend(owner.status);
-  const draft: TaskDraft = task
+  const draft: TaskDraft = retained.draft ??= task
     ? {
         id: task.id,
         name: task.name,
@@ -95,15 +100,24 @@ export async function openTaskEditor(
         schedules: [],
         notification: { enabled: false, notificationTaskIds: [] }
       };
-  credentials = new CredentialFields(panel, ports, editor, visible);
+  retained.baseline ??= JSON.stringify(draft);
+  presentation.edited = () => {
+    const values = credentialDraft(scope);
+    return JSON.stringify(retained.draft) !== retained.baseline || presentation.state.changed ||
+      [...values.inputs.values()].some(value => !!value) ||
+      [...values.actions.values()].some(action => action.action !== 'keep') || !!retained.pending;
+  };
+  credentials = new CredentialFields(panel, ports, editor, visible, next => { retained.editor = next; });
   taskFields(panel, dialog.body, state, draft, credentials);
   if (!visible) credentials.visibility(false);
+  presentation.attach(dialog.body);
+  dialog.signal.addEventListener('abort', () => presentation.detach(), { once: true });
   const save = button(panel, dialog.footer, '保存', async () => {
-    if (busy || pending) return;
+    if (retained.busy || retained.pending) return;
     validate(draft, state);
     const command = structuredClone(draft);
     let secrets: Record<string, SecretAction> = {};
-    busy = true;
+    retained.busy = true;
     dialog.element.locked = true;
     save.busy = true;
     dialog.body.inert = true;
@@ -113,18 +127,20 @@ export async function openTaskEditor(
         credentials!.synchronize(await ports.prepareSave(editor.editorSessionId, dialog.signal));
       }
       secrets = credentials!.prepare();
-      pending = { operationId: createIdentity(), committed: false };
-      const next = await ports.saveTask(pending.operationId, command, editor.editorSessionId, secrets, dialog.signal);
+      retained.pending = { operationId: createIdentity(), committed: false };
+      const next = await ports.saveTask(retained.pending.operationId, command, editor.editorSessionId, secrets, scope.signal);
+      retained.pending = undefined;
+      scope.settle('saved');
       if (!closed && dialog.alive()) {
         saved(next);
-        dialog.close();
+        dialog.close('saved');
       }
     } catch (error) {
       const uncertain = (error as { uncertain?: boolean }).uncertain === true;
       if (uncertain) credentials!.clearPlaintext();
-      if (!uncertain) pending = undefined;
-      save.disabled = !!pending;
-      check.hidden = !pending;
+      if (!uncertain) retained.pending = undefined;
+      save.disabled = !!retained.pending;
+      check.hidden = !retained.pending;
       if (!closed)
         owner.say(
           uncertain
@@ -136,51 +152,56 @@ export async function openTaskEditor(
         );
     } finally {
       for (const secret of Object.values(secrets)) if (secret.value !== undefined) secret.value = '';
-      busy = false;
+      retained.busy = false;
       save.busy = false;
       dialog.element.locked = false;
-      dialog.body.inert = !!pending;
+      scope.changed();
     }
   }) as UiElement<'nexus-button'>;
   const check = button(panel, dialog.footer, '检查保存结果', async () => {
-    if (busy || !pending) return;
-    busy = true;
+    if (retained.busy || !retained.pending) return;
+    retained.busy = true;
     check.busy = true;
     dialog.element.locked = true;
     try {
-      if (!pending.committed) pending.committed = await ports.readPublication(pending.operationId, dialog.signal);
-      if (!pending.committed) {
+      if (!retained.pending.committed) retained.pending.committed = await ports.readPublication(retained.pending.operationId, scope.signal);
+      if (!retained.pending.committed) {
         owner.say('保存结果仍待确认，请保留草稿并稍后检查。', true);
         return;
       }
       owner.say('已提交，正在刷新。');
-      const next = await ports.readState(dialog.signal);
+      const next = await ports.readState(scope.signal);
+      retained.pending = undefined;
+      scope.settle('saved');
       if (!closed && dialog.alive()) {
         saved(next);
-        dialog.close();
+        dialog.close('saved');
       }
     } catch {
-      if (!closed) owner.say(pending.committed ? '已提交，刷新失败，请再次检查。' : '保存结果仍待确认，请稍后检查。', true);
+      if (!closed) owner.say(retained.pending?.committed ? '已提交，刷新失败，请再次检查。' : '保存结果仍待确认，请稍后检查。', true);
     } finally {
-      busy = false;
+      retained.busy = false;
       check.busy = false;
       dialog.element.locked = false;
     }
   }) as UiElement<'nexus-button'>;
-  check.hidden = true;
+  check.hidden = !retained.pending;
   save.tone = 'info';
   const cancel = button(panel, dialog.footer, '取消', () => {
-    if (!busy) dialog.close();
+    if (scope.canCancel()) { scope.settle('cancel'); dialog.close('cancel'); }
   }) as UiElement<'nexus-button'>;
   save.style.minWidth = cancel.style.minWidth = '80px';
   dialog.element.append(dialog.footer);
-  lease = setInterval(() => {
-    if (!closed)
-      void ports.leaseEditor(editor.editorSessionId, dialog.signal).catch((error) => {
-        if (!closed && visible)
-          owner.say(error instanceof Error ? error.message : '编辑会话已失效，请关闭后重新编辑。', true);
-      });
-  }, 60_000);
+  const update = () => {
+    save.disabled = retained.busy || !!retained.pending;
+    cancel.disabled = !scope.canCancel();
+    check.hidden = !retained.pending;
+    dialog.element.locked = retained.busy;
+    dialog.body.inert = retained.busy || !!retained.pending;
+  };
+  const stop = scope.onChanged(update);
+  dialog.signal.addEventListener('abort', () => { stop(); }, { once: true });
+  update();
   return dialog.close;
 }
 

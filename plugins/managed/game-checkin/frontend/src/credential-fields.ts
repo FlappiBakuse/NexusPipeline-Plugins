@@ -3,6 +3,7 @@ import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { button, confirm, type Panel } from '../../../frontend-ui/src/elements.js';
 import type { CheckInPlatform, CheckInPorts, CredentialEditor, SecretAction } from './ports.js';
 import { openTajiduo } from './tajiduo-login.js';
+import { credentialDraft, credentialActions } from './editor-draft.js';
 
 const placeholders: Record<string, string> = {
   cn: '米游社 CookieToken 与同版本账号字段',
@@ -23,10 +24,10 @@ interface SecretJob {
 }
 
 export class CredentialFields {
-  private readonly inputs = new Map<string, string>();
+  private readonly inputs;
   private readonly stored = new Map<string, string>();
   private readonly revealed = new Set<string>();
-  private readonly actions = new Map<string, SecretAction>();
+  private readonly actions;
   private readonly timers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly rows = new Map<string, FieldRow>();
   private readonly revisions = new Map<string, number>();
@@ -39,8 +40,13 @@ export class CredentialFields {
     private readonly panel: Panel,
     private readonly ports: CheckInPorts,
     public editor: CredentialEditor,
-    private visible = true
-  ) {}
+    private visible = true,
+    private readonly updated: (editor: CredentialEditor) => void = () => {}
+  ) {
+    const draft = credentialDraft(panel.drafts);
+    this.inputs = draft.inputs;
+    this.actions = draft.actions;
+  }
 
   mount(parent: HTMLElement, platform: CheckInPlatform): void {
     const element = document.createElement('div');
@@ -51,12 +57,13 @@ export class CredentialFields {
   }
   private current(id: string, epoch: number, revision: number): boolean {
     return (
-      this.panel.alive() && this.visible && epoch === this.epoch && revision === (this.revisions.get(id) || 0)
+      this.panel.alive() && !this.panel.drafts.signal.aborted && this.visible && epoch === this.epoch && revision === (this.revisions.get(id) || 0)
     );
   }
   private applyEditor(next: CredentialEditor): void {
     if (typeof next.revision === 'number' && typeof this.editor.revision === 'number' && next.revision < this.editor.revision) return;
     this.editor = next;
+    this.updated(next);
   }
   synchronize(next: CredentialEditor): void {
     this.applyEditor(next);
@@ -111,9 +118,10 @@ export class CredentialFields {
     const inputWrap = document.createElement('div');
     inputWrap.className = 'checkin-credential-input';
     const input = document.createElement('nexus-text-input') as UiElement<'nexus-text-input'>;
+    signal.addEventListener('abort', () => { input.value = ''; }, { once: true });
     let shown = this.revealed.has(id);
     input.type = shown ? 'text' : 'password';
-    input.value = this.inputs.get(id) ?? this.stored.get(id) ?? '';
+    input.value = this.visible ? this.inputs.get(id) ?? this.stored.get(id) ?? '' : '';
     bindLocale(panel.t, panel.signal, input, 'placeholder', () => {
       input.placeholder = panel.t(
         clear ? '将在保存后清除' : current?.configured ? '已配置，点击眼睛显示' : placeholders[id] || '凭据'
@@ -298,25 +306,10 @@ export class CredentialFields {
   }
   prepare(): Record<string, SecretAction> {
     if (this.ports.prepareSave && (this.pendingMetadata || [...this.jobs.values()].some(job => job.browser))) throw new Error('请等待登录窗口关闭。');
-    const prepared: Record<string, SecretAction> = Object.fromEntries(
-      Object.entries(this.editor.fields).map(([id, field]) => [
-        id,
-        { action: 'keep', fieldGeneration: field.fieldGeneration }
-      ])
-    );
-    Object.assign(prepared, Object.fromEntries(this.actions));
-    for (const [id, value] of this.inputs)
-      if (value)
-        prepared[id] = {
-          action: 'set',
-          value,
-          fieldGeneration: this.editor.fields[id]?.fieldGeneration || 0
-        };
-    return prepared;
+    return credentialActions(this.inputs, this.actions, this.editor);
   }
   private forgetValues(): void {
     this.epoch++;
-    this.inputs.clear();
     this.stored.clear();
     this.revealed.clear();
     for (const timer of this.timers.values()) clearTimeout(timer);
@@ -342,7 +335,6 @@ export class CredentialFields {
   }
   dispose(): void {
     this.visibility(false);
-    this.actions.clear();
     for (const row of this.rows.values()) row.owner.abort();
     this.rows.clear();
   }

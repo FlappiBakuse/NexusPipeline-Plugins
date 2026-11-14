@@ -21,6 +21,17 @@ internal sealed class WallpaperService(ExtensionActivationContext context) : IAs
         await _serial.WaitAsync(cancellation);
         try
         {
+            if (call.Operation == "read-settings-result")
+            {
+                using var resultPayload = JsonDocument.Parse(call.Payload);
+                var resultInput = resultPayload.RootElement;
+                Members(resultInput, "operationId");
+                var id = resultInput.GetProperty("operationId").GetGuid();
+                if (id == Guid.Empty) throw new IOException("wallpaper_operation_required");
+                var commit = await Documents.ReadCommitAsync(id, cancellation);
+                return new("application/json", JsonSerializer.SerializeToUtf8Bytes(
+                    new { operationId = id, committed = commit is not null }, StateOptions));
+            }
             var (before, revision) = await LoadAsync(cancellation);
             if (call.Operation == "upload-asset")
             {

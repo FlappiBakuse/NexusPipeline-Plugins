@@ -138,7 +138,7 @@ export function wallpaperControls(
       rotations.inert = switches.inert = effects.inert = true;
       return;
     }
-    rotations.inert = switches.inert = effects.inert = false;
+    rotations.inert = switches.inert = effects.inert = busy;
     enabled.value = state.enabled;
     secondary.value = state.effects.secondaryTransparency;
     mode.value = state.rotation.mode;

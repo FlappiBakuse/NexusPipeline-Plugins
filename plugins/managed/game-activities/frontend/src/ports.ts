@@ -70,7 +70,8 @@ export interface ActivityPorts {
   readState(signal: AbortSignal): Promise<ActivityState>;
   readFeed?(feedId: string, signal: AbortSignal): Promise<ActivityFeed>;
   readCachedCover?(coverId: string, signal: AbortSignal): Promise<Blob>;
-  saveSettings(state: ActivityState, signal: AbortSignal): Promise<ActivityState>;
+  readSettingsResult?(operationId: string, signal: AbortSignal): Promise<boolean>;
+  saveSettings(state: ActivityState, signal: AbortSignal, operationId?: string): Promise<ActivityState>;
   refreshAll(signal: AbortSignal): Promise<ActivityState>;
   readCover(coverId: string, signal: AbortSignal): Promise<Blob>;
   subscribe(listener: (state: ActivityState) => void): () => void;

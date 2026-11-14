@@ -1,6 +1,6 @@
 import { choose, confirm } from './controls.mjs';
 
-async function mountEditor(page, delayed = false) {
+export async function mountEditor(page, delayed = false) {
   await page.evaluate(async delayed => {
     const fields = {
       cn: { configured: true, source: 'manual', fieldGeneration: 3 },
@@ -64,7 +64,7 @@ export async function checkinEditorCases({ page, test }) {
     if (!await page.evaluate(() => window.unknownWrites.length === 1 && window.publicationReads.length > 0 &&
       window.publicationReads.every(id => id === window.unknownWrites[0].operationId))) throw Error('Committed reconciliation sent another save');
   });
-  await test('checkin pending hidden editor never opens a top layer and retains ordinary draft', async () => {
+  await test('checkin pending hidden editor retains drafts and releases visible resources', async () => {
     await mountEditor(page, true);
     await page.waitForFunction(() => window.editorReads.length === 1);
     await page.evaluate(() => { window.fixture.hide(); window.editorReads[0](window.editorMetadata); });
@@ -73,12 +73,14 @@ export async function checkinEditorCases({ page, test }) {
       || await page.evaluate(() => window.manualReads.length)) throw Error('A hidden pending editor exposed its surface or requested plaintext');
     await page.evaluate(() => window.fixture.show());
     await page.getByRole('textbox', { name: '任务名称', exact: true }).fill('Ordinary draft');
-    await secretInput(page, 'cn').fill('synthetic-input-only');
+    const value = await page.evaluate(() => crypto.randomUUID());
+    await secretInput(page, 'cn').fill(value);
     await page.evaluate(() => window.fixture.hide());
     if (await secretInput(page, 'cn').inputValue()) throw Error('Hidden editor retained plaintext');
     await page.evaluate(() => window.fixture.show());
     if (await page.getByRole('textbox', { name: '任务名称', exact: true }).inputValue() !== 'Ordinary draft'
-      || await secretInput(page, 'cn').inputValue()) throw Error('Resume discarded ordinary fields or restored plaintext');
+      || await secretInput(page, 'cn').inputValue() !== value
+      || await secretInput(page, 'cn').getAttribute('type') !== 'password') throw Error('Resume discarded fields or revealed a protected input');
     await editor.getByRole('button', { name: '取消', exact: true }).click();
     await editor.waitFor({ state: 'detached' });
     if (!await page.evaluate(() => window.editorCloses.includes('editor-fields'))) throw Error('Editor session was not released');

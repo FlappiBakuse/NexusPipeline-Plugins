@@ -14,7 +14,7 @@ internal sealed class FrontendFixture : IDisposable
     internal readonly CheckInFrontend Frontend;
     internal FrontendFixture(bool native = false)
     {
-        var clock = new DraftClock(); Editors = new(clock); grants = new(clock); var proof = new FrontendNativeProof(native);
+        var clock = new DraftClock(); Editors = new(); grants = new(clock); var proof = new FrontendNativeProof(native);
         Browser = new(Editors, proof, Capture, (platform, material, token) =>
         {
             string value = ""; material.Use(text => value = text.ToString());

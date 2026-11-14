@@ -10,15 +10,24 @@ function operationId(): string {
 }
 
 export function transportPorts(transport: FrontendTransport): ActivityPorts {
-  const readState = async (signal: AbortSignal): Promise<ActivityState> => {
-    const state = await transport.invoke('read-state', {}, signal) as ActivityState;
-    signal.throwIfAborted();
+  const decode = (input: unknown): ActivityState => {
+    const state = input as ActivityState;
     if (!Number.isSafeInteger(state.revision) || !Number.isSafeInteger(state.settingsRevision) ||
       !Array.isArray(state.feeds) || !Array.isArray(state.selectedFeedIds)) throw new Error('activity_state_invalid');
     return { ...state, feeds: state.feeds.map(feed => ({ ...feed, events: feed.events ?? [] })) };
   };
+  const readState = async (signal: AbortSignal): Promise<ActivityState> => {
+    const value = await transport.invoke('read-state', {}, signal);
+    signal.throwIfAborted(); return decode(value);
+  };
+
   return {
     readState,
+    async readSettingsResult(operationId, signal) {
+      const result = await transport.invoke('read-settings-result', { operationId }, signal) as { operationId: string; committed: boolean };
+      if (result.operationId !== operationId || typeof result.committed !== 'boolean') throw Error('activity_result_unbound');
+      return result.committed;
+    },
     async readFeed(feedId, signal) {
       const result = await transport.invoke('read-feed', { feedId }, signal) as { feed: ActivityFeed };
       if (result.feed.id !== feedId || !Array.isArray(result.feed.events)) throw new Error('activity_feed_identity_invalid');
@@ -29,18 +38,19 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
       try { return image.blob.slice(0, image.blob.size, image.blob.type); }
       finally { image.release(); }
     },
-    async saveSettings(state, signal) {
+    async saveSettings(state, signal, id = operationId()) {
       if (!Number.isSafeInteger(state.settingsRevision)) throw new Error('activity_settings_revision_required');
       const selected = state.selectedFeedIds.map((id) => {
         const feed = state.feeds.find((item) => item.id === id);
         if (!feed) throw new Error('activity_feed_unknown');
         return feed.game;
       });
-      await transport.invoke('save-settings', { expectedRevision: state.settingsRevision, settings: {
+      const result = await transport.invoke('save-settings', { expectedRevision: state.settingsRevision, settings: {
         formatVersion: 1, selectedGames: selected, gameOrder: state.gameOrder,
         progressions: state.progressions, rotationSeconds: state.rotationSeconds, pauseOnInteraction: true
-      } }, signal, operationId());
-      return readState(signal);
+      } }, signal, id);
+      try { signal.throwIfAborted(); return decode(result); }
+      catch (error) { throw Object.assign(error instanceof Error ? error : new Error('activity_save_outcome_unknown'), { uncertain: true }); }
     },
     async refreshAll(signal) {
       await transport.invoke('refresh-all', {}, signal, operationId());

@@ -19,6 +19,23 @@ export interface MaaSecretDraft {
 
 export class MaaSecretDrafts extends Map<string, MaaSecretDraft> {
   private readonly listeners = new Set<() => void>();
+  private readonly active = new Set<string>();
+  private readonly submitted = new Map<string, MaaSecretDraft>();
+  begin(): void { this.active.clear(); }
+  activate(key: string): void { this.active.add(key); }
+  isActive(key: string): boolean { return this.active.has(key); }
+  markSubmitted(): void {
+    this.submitted.clear();
+    for (const key of this.active) {
+      const draft = this.get(key);
+      if (draft?.edit) this.submitted.set(key, draft);
+    }
+  }
+  confirmSaved(): void {
+    for (const [key, draft] of this.submitted) if (this.get(key) === draft) this.delete(key);
+    this.submitted.clear();
+  }
+  notAccepted(): void { this.submitted.clear(); }
   override set(key: string, value: MaaSecretDraft): this {
     const previous = this.get(key);
     if (previous && previous !== value) previous.value = '';
@@ -32,6 +49,8 @@ export class MaaSecretDrafts extends Map<string, MaaSecretDraft> {
   override clear(): void {
     for (const draft of this.values()) draft.value = '';
     super.clear(); this.refresh();
+    this.active.clear();
+    this.submitted.clear();
   }
   watch(listener: () => void, signal: AbortSignal): void {
     if (signal.aborted) return;
@@ -55,8 +74,8 @@ export function projectScope(profile: { sourceSnapshot?: unknown }, scope: strin
   return fingerprint + '/' + scope;
 }
 
-export function secretEdits(drafts: Map<string, MaaSecretDraft>): MaaProtectedEdit[] {
-  return [...drafts.values()].flatMap(draft => draft.edit ? [{ ...draft.edit,
+export function secretEdits(drafts: MaaSecretDrafts): MaaProtectedEdit[] {
+  return [...drafts].flatMap(([key, draft]) => drafts.isActive(key) && draft.edit ? [{ ...draft.edit,
     ...(draft.edit.intent === 'set' ? { value: draft.value } : {}) }] : []);
 }
 

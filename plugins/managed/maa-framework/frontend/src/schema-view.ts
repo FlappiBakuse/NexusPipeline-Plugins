@@ -6,9 +6,7 @@ import { activeOptions, optionFields } from './option-fields.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { requireSecretBindings, type MaaSecretDrafts } from './secret-drafts.js';
 
-export function clearSchemaSecrets(parent: HTMLElement, secrets: MaaSecretDrafts): void {
-  for (const draft of secrets.values()) draft.value = '';
-  secrets.clear();
+export function maskSchemaSecrets(parent: HTMLElement): void {
   parent.querySelectorAll<UiElement<'nexus-text-input'>>('nexus-text-input').forEach((input) => {
     if (input.type === 'password') input.value = '';
   });
@@ -33,7 +31,7 @@ export function drawSchema(
     profile.controller,
     schema.controllers.map((item) => ({ value: item.name, label: item.label })),
     (value) => {
-      clearSchemaSecrets(parent, secretDrafts);
+      maskSchemaSecrets(parent);
       profile.controller = value;
       changed(true);
     }
@@ -45,7 +43,7 @@ export function drawSchema(
     profile.resource,
     schema.resources.map((item) => ({ value: item.name, label: item.label })),
     (value) => {
-      clearSchemaSecrets(parent, secretDrafts);
+      maskSchemaSecrets(parent);
       profile.resource = value;
       changed(true);
     }
@@ -61,7 +59,7 @@ export function drawSchema(
     ],
     preset.select
   );
-  taskFields(panel, parent, schema, profile, changed, fields, () => clearSchemaSecrets(parent, secretDrafts));
+  taskFields(panel, parent, schema, profile, changed, fields, () => maskSchemaSecrets(parent));
   const controller = schema.controllers.find((item) => item.name === profile.controller);
   if (controller?.type === 'Win32') {
     choice(

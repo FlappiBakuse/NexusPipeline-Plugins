@@ -58,7 +58,7 @@ internal static class CredentialCases
         });
         run("editor-client-binding-not-shared-by-account", () =>
         {
-            var owner = Client(); using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), new DraftClock());
+            var owner = Client(); using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>());
             Assert(editor.View(owner).Fields.Count == 6);
             Reject(() => editor.View(owner with { ClientId = Guid.NewGuid() }));
             Reject(() => editor.View(owner with { ActivationScopeId = Guid.NewGuid() }));
@@ -66,7 +66,7 @@ internal static class CredentialCases
         run("login-cancel-rejects-late-candidate-without-touching-saved-state", () =>
         {
             var owner = Client(); var baseline = new Dictionary<string, SavedCredentialField> { ["kuro"] = new(3, true, "browser", "kuro · 12***34") };
-            using var editor = new CredentialEditor(owner, Guid.NewGuid(), 7, baseline, new DraftClock());
+            using var editor = new CredentialEditor(owner, Guid.NewGuid(), 7, baseline);
             var binding = editor.Prepare(owner, "kuro", 0); editor.CancelLogin(owner, "kuro");
             var late = new CredentialMaterial("synthetic", "browser"); Reject(() => editor.Accept(owner, binding, late));
             Reject(() => late.Use(_ => { }));
@@ -74,7 +74,7 @@ internal static class CredentialCases
         });
         run("cancel-after-capture-completes-restores-the-prior-staged-candidate", () =>
         {
-            var owner = Client(); using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), new DraftClock());
+            var owner = Client(); using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>());
             var first = editor.Prepare(owner, "kuro", 0); var original = editor.Accept(owner, first, new("synthetic-first", "browser", "kuro · 12**56"));
             var previous = editor.View(owner);
             var second = editor.Prepare(owner, "kuro", previous.Fields["kuro"].FieldGeneration);
@@ -86,7 +86,7 @@ internal static class CredentialCases
         run("candidate-save-requires-id-generation-owner-and-current-secret-revision", () =>
         {
             var owner = Client(); var task = Guid.NewGuid(); var saved = new Dictionary<string, SavedCredentialField> { ["kuro"] = new(3, true, "manual", null) };
-            using var editor = new CredentialEditor(owner, task, 7, saved, new DraftClock());
+            using var editor = new CredentialEditor(owner, task, 7, saved);
             var binding = editor.Prepare(owner, "kuro", 0); var candidate = editor.Accept(owner, binding, new("synthetic", "browser", "kuro · 12***34"));
             var field = editor.View(owner).Fields["kuro"];
             Reject(() => editor.Reserve(owner, task, new Dictionary<string, CredentialAction> { ["kuro"] = new("set", field.FieldGeneration - 1, CandidateId: candidate) }, saved));
@@ -99,7 +99,7 @@ internal static class CredentialCases
         run("clear-is-explicit-and-cancelled-reservation-retains-draft", () =>
         {
             var owner = Client(); var saved = new Dictionary<string, SavedCredentialField> { ["kuro"] = new(3, true, "manual", null) };
-            using var editor = new CredentialEditor(owner, null, 0, saved, new DraftClock());
+            using var editor = new CredentialEditor(owner, null, 0, saved);
             using (var reservation = editor.Reserve(owner, null, new Dictionary<string, CredentialAction> { ["kuro"] = new("clear", 0) }, saved))
                 Assert(reservation.Changes.Single(change => change.Platform == "kuro").Action == "clear" && reservation.Changes.All(change => change.Material is null));
             Assert(editor.View(owner).Fields["kuro"].Configured);
@@ -108,28 +108,33 @@ internal static class CredentialCases
         run("explicit-new-manual-value-replaces-without-reading-old-browser-secret", () =>
         {
             var owner = Client(); var saved = new Dictionary<string, SavedCredentialField> { ["kuro"] = new(3, true, "browser", null) };
-            using var editor = new CredentialEditor(owner, null, 0, saved, new DraftClock());
+            using var editor = new CredentialEditor(owner, null, 0, saved);
             var edits = new Dictionary<string, CredentialAction> { ["kuro"] = new("set", 0, Value: "synthetic-new") };
             using var reservation = editor.Reserve(owner, null, edits, saved);
             Assert(reservation.Changes.Single(change => change.Platform == "kuro").Material is { Source: "manual", Web: null });
         });
-        run("editor-idle-expiry-and-hard-expiry-cannot-be-extended", () =>
+        run("editor-draft-survives-idle-while-disclosure-grant-expires", () =>
         {
-            var owner = Client(); var clock = new DraftClock();
-            using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), clock);
-            clock.Advance(TimeSpan.FromMinutes(29)); editor.Lease(owner); clock.Advance(TimeSpan.FromMinutes(29)); editor.Lease(owner);
-            clock.Advance(TimeSpan.FromMinutes(29)); editor.Lease(owner); clock.Advance(TimeSpan.FromMinutes(29)); editor.Lease(owner);
-            clock.Advance(TimeSpan.FromMinutes(4)); Reject(() => editor.View(owner));
-            using var idle = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), clock);
-            clock.Advance(TimeSpan.FromMinutes(30)); Reject(() => idle.View(owner));
+            var owner = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors();
+            var editor = editors.Add(owner, null, 0, new Dictionary<string, SavedCredentialField>());
+            var value = Guid.NewGuid().ToString("N"); var material = new CredentialMaterial(value, "browser", "kuro · 12**56");
+            var binding = editor.Prepare(owner, "kuro", 0); var candidate = editor.Accept(owner, binding, material);
+            var grants = new CredentialRevealGrants(clock); grants.Confirm(owner);
+            clock.Advance(TimeSpan.FromHours(25)); Reject(() => grants.RemainingSeconds(owner));
+            var retained = editors.Get(owner, editor.Id).View(owner);
+            Assert(retained.Fields["kuro"].CandidateId == candidate);
+            using (var copy = editor.Candidate(owner, "kuro", retained.Fields["kuro"].FieldGeneration))
+                copy!.Use(actual => Assert(actual.SequenceEqual(value)));
+            editors.Close(owner, editor.Id); Reject(() => material.Use(_ => { }));
+            Reject(() => editors.Get(owner, editor.Id));
         });
         run("client-lifetime-and-committed-editor-cannot-be-reused", () =>
         {
             using var cancellation = new CancellationTokenSource(); var owner = Client() with { Lifetime = cancellation.Token };
-            using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), new DraftClock());
+            using var editor = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>());
             using (var reserved = editor.Reserve(owner, null, new Dictionary<string, CredentialAction>(), new Dictionary<string, SavedCredentialField>())) reserved.Committed = true;
             Reject(() => editor.View(owner));
-            using var second = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>(), new DraftClock());
+            using var second = new CredentialEditor(owner, null, 0, new Dictionary<string, SavedCredentialField>());
             cancellation.Cancel(); Reject(() => second.View(owner));
         });
         run("reveal-confirmation-binds-host-client-and-expires-without-extension", () =>
@@ -145,7 +150,7 @@ internal static class CredentialCases
         run("unreadable-saved-format-preserves-keep-and-only-allows-explicit-clear", () =>
         {
             var owner = Client(); var saved = new Dictionary<string, SavedCredentialField> { ["kuro"] = new(3, true, null, null, "credential_format_unsupported") };
-            using var editor = new CredentialEditor(owner, null, 0, saved, new DraftClock());
+            using var editor = new CredentialEditor(owner, null, 0, saved);
             Assert(editor.View(owner).Fields["kuro"].Error == "credential_format_unsupported");
             Reject(() => editor.Prepare(owner, "kuro", 0));
             Reject(() => editor.Reserve(owner, null, new Dictionary<string, CredentialAction> { ["kuro"] = new("set", 0, Value: "synthetic") }, saved));

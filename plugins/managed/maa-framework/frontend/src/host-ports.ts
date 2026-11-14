@@ -19,7 +19,8 @@ export class MaaHostPorts implements MaaPorts {
   }
 
   async readEditor(context: SurfaceContext, signal: AbortSignal): Promise<MaaEditorState | null> {
-    if (context !== this.context || !['automation.binding.editor', 'automation.script.editor'].includes(context.surfaceId) || !context.entityId) return null;
+    if (context.instanceId !== this.context.instanceId || context.entityId !== this.context.entityId || context.surfaceId !== this.context.surfaceId ||
+        !['automation.binding.editor', 'automation.script.editor'].includes(context.surfaceId) || !context.entityId) return null;
     const state = await this.client.read(signal);
     this.name = state.name;
     if (!this.current) {

@@ -259,34 +259,34 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       throw new Error(`Maa root authority survived change: ${JSON.stringify(draft)}`);
   });
 
-  await test('activities failed save keeps draft and cancel discards it', async () => {
+  await test('activities failed immediate save restores confirmed values', async () => {
     await page.evaluate(async () => {
       window.activityWrites = 0;
-      const state = { revision: 1, selectedFeedIds: ['cn'], rotationSeconds: 30,
+      const state = { revision: 1, settingsRevision: 1, selectedFeedIds: ['cn'], rotationSeconds: 30,
+        gameOrder: ['genshin-impact'], progressions: { 'genshin-impact': 'cn' },
         pauseOnHover: true, pauseWhenHidden: true, feeds: [
-          { id: 'cn', game: 'Game', server: 'CN', progressionId: 'cn', contentLocale: 'zh-CN',
+          { id: 'cn', game: 'genshin-impact', server: 'CN', progressionId: 'cn', contentLocale: 'zh-CN',
             enabled: true, overview: { title: 'CN' }, events: [] },
-          { id: 'jp', game: 'Game', server: 'JP', progressionId: 'jp', contentLocale: 'ja-JP',
+          { id: 'jp', game: 'genshin-impact', server: 'JP', progressionId: 'jp', contentLocale: 'ja-JP',
             enabled: true, overview: { title: 'JP' }, events: [] }],
-        progressionOptions: { Game: [{ value: 'cn', label: 'CN' }, { value: 'jp', label: 'JP' }] } };
+        progressionOptions: { 'genshin-impact': [{ value: 'cn', label: 'CN' }, { value: 'jp', label: 'JP' }] } };
       await window.testMount('game-activities', { readState: async () => state,
         saveSettings: async () => { window.activityWrites++; throw Error('fixture save failed'); },
         refreshAll: async () => state, readCover: async () => new Blob(), subscribe: () => () => {},
       }, 'overview.cards');
     });
     await page.getByRole('button', { name: '活动设置', exact: true }).click();
-    const selection = page.locator('nexus-select[aria-label="Game 内容进度"]');
+    const selection = page.locator('nexus-select[aria-label="原神 内容进度"]');
     await choose(selection, 'jp');
-    await page.locator('nexus-modal').getByRole('button', { name: '保存', exact: true }).click();
     await page.getByText('fixture save failed').waitFor();
-    if (await selection.evaluate(element => element.value) !== 'jp' || await page.locator('dialog[open]').count() !== 1)
-      throw new Error('Failed save lost activity draft or closed dialog');
+    if (await selection.evaluate(element => element.value) !== 'cn' || await page.locator('dialog[open]').count() !== 1)
+      throw new Error('Failed setting did not restore its confirmed value or retain the error surface');
     await page.locator('nexus-modal').getByRole('button', { name: '取消', exact: true }).click();
     await page.locator('nexus-modal').waitFor({ state: 'detached' });
     await page.getByRole('button', { name: '活动设置', exact: true }).click();
-    if (await page.locator('nexus-select[aria-label="Game 内容进度"]').evaluate(element => element.value) !== 'cn')
-      throw new Error('Cancelled activity draft leaked into state');
-    if (await page.evaluate(() => window.activityWrites) !== 1) throw new Error('Cancelled draft wrote settings');
+    if (await page.locator('nexus-select[aria-label="原神 内容进度"]').evaluate(element => element.value) !== 'cn')
+      throw new Error('Activity setting reopened with an uncommitted value');
+    if (await page.evaluate(() => window.activityWrites) !== 1) throw new Error('Cancelling an unchanged activity setting wrote settings');
   });
 
   await test('checkin failed save retains draft through hide and retry', async () => {

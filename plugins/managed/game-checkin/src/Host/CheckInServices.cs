@@ -30,7 +30,7 @@ internal sealed class CheckInServices : IAsyncDisposable
         var targetPort = context.NotificationTargets ?? throw new CheckInFailure("checkin_targets_required");
         var activation = context.Activation ?? throw new CheckInFailure("checkin_activation_required");
         lifetime = CancellationTokenSource.CreateLinkedTokenSource(scopeCancellation);
-        var clock = TimeProvider.System; clients = new(lifetime.Token); editors = new(clock); grants = new(clock);
+        var clock = TimeProvider.System; clients = new(lifetime.Token); editors = new(); grants = new(clock);
         var persistence = new SdkCheckInPersistence(documents, context.Secrets, atomic); var network = new SdkCheckInNetwork(http);
         devices = new(network, clock); var verifier = new CheckInIdentity(network, devices, clock);
         browser = new(editors, native, capture, verifier.VerifyAsync); tajiduo = new(editors, new(network, clock), native, clock);

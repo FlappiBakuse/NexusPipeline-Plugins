@@ -11,7 +11,7 @@ internal static class NativeSessionCases
         CheckInClient Client() => new(Guid.NewGuid(), Guid.NewGuid(), default);
         run("native-login-requires-real-native-proof-before-preparing-field", () =>
         {
-            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors(clock);
+            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors();
             var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
             var network = new ClientNetwork(new TestEffects()) { RequireGameGate = false };
             using var logins = new TajiduoLogins(editors, new(network, clock), new NativeProof(false), clock);
@@ -20,7 +20,7 @@ internal static class NativeSessionCases
         });
         run("sms-cooldown-is-client-wide-across-new-editors-and-cancel", () =>
         {
-            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors(clock);
+            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors();
             var network = new ClientNetwork(new TestEffects(), "{\"code\":0}", "{\"code\":0}") { RequireGameGate = false };
             using var logins = new TajiduoLogins(editors, new(network, clock), new NativeProof(true), clock);
             var first = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
@@ -34,7 +34,7 @@ internal static class NativeSessionCases
         });
         run("native-operation-expiry-and-cross-client-deny-before-http", () =>
         {
-            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors(clock);
+            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors();
             var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
             var network = new ClientNetwork(new TestEffects()) { RequireGameGate = false };
             using var logins = new TajiduoLogins(editors, new(network, clock), new NativeProof(true), clock);
@@ -45,7 +45,7 @@ internal static class NativeSessionCases
         });
         run("native-accepted-candidate-can-be-cancelled-before-ui-acceptance", () =>
         {
-            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors(clock);
+            var client = Client(); var clock = new DraftClock(); using var editors = new CheckInEditors();
             var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
             var network = new ClientNetwork(new TestEffects(), "{\"code\":0,\"result\":{\"token\":\"synthetic-sdk\",\"userId\":\"456789\"}}",
                 "{\"code\":0,\"data\":{\"accessToken\":\"synthetic-access\",\"refreshToken\":\"synthetic-refresh\",\"uid\":\"123456\"}}") { RequireGameGate = false };
@@ -59,7 +59,7 @@ internal static class NativeSessionCases
         run("client-retirement-immediately-clears-candidate-memory", () =>
         {
             using var lifetime = new CancellationTokenSource(); var client = Client() with { Lifetime = lifetime.Token };
-            var clock = new DraftClock(); using var editors = new CheckInEditors(clock); var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
+            var clock = new DraftClock(); using var editors = new CheckInEditors(); var editor = editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
             var binding = editor.Prepare(client, "kuro", 0); var material = new CredentialMaterial("synthetic-sensitive-canary", "browser", "kuro · 12**56");
             editor.Accept(client, binding, material); lifetime.Cancel();
             try { material.Use(_ => { }); throw new InvalidOperationException("candidate_not_cleared"); } catch (ObjectDisposedException) { }

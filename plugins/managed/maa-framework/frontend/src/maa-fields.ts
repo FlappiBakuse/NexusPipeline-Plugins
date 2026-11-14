@@ -3,13 +3,17 @@ import { field, type Panel } from '../../../frontend-ui/src/elements.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
 
 export class MaaFields {
-  private readonly invalid = new Map<string, string>();
+  private readonly invalid;
   private signal: AbortSignal;
   constructor(
     private readonly panel: Panel,
     private readonly changed: () => void
   ) {
     this.signal = panel.signal;
+    this.invalid = panel.drafts.protect('invalid-fields', () => new Map<string, string>(), values => {
+      for (const key of values.keys()) values.set(key, '');
+      values.clear();
+    });
   }
   begin(signal: AbortSignal): void {
     this.signal = signal;
@@ -47,6 +51,7 @@ export class MaaFields {
       display
     );
     input.setAttribute('aria-invalid', String(this.invalid.has(identity)));
+    input.setAttribute('data-draft-field', identity);
   }
 
   json(
@@ -63,6 +68,7 @@ export class MaaFields {
     const input = document.createElement('nexus-text-area') as UiElement<'nexus-text-area'>;
     input.value = this.invalid.get(identity) ?? JSON.stringify(value, null, 2);
     input.rows = 3;
+    input.setAttribute('data-draft-json', '');
     bindLocale(this.panel.t, this.signal, input, 'caption', () => {
       caption.textContent = display ? display() : this.panel.t(title);
       input.setAttribute('aria-label', caption.textContent);

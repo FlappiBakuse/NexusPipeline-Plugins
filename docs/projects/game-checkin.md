@@ -13,7 +13,7 @@
 
 纯业务组件已实现 14 组合校验、多任务、每任务 30 个星期/本地时间计划、顺序编辑与删除投影，最终配置派生日程总数不得超过 4096。任务名称去除首尾空白后按不区分大小写保持唯一。每个计划使用业务 taskId 与 scheduleId 派生的确定性 UUID，保留私有任务 revision 并可反查原任务；无计划任务不伪造启用的计划。Host 即时执行使用原业务 taskId。运行结果独立于任务配置，避免结果刷新改变已冻结的私有配置修订。
 
-凭据草稿仅驻留内存，使用宿主签发的 ClientId、ClientLifetime 与本次 activation 绑定。候选匹配 editor、平台、nonce 与 fieldGeneration；取消后拒绝迟到候选，客户端退役立即清除候选内存。保存预留明确 keep/set/clear，检查秘密基线 revision；预留失败释放新值，提交成功关闭草稿。显示凭据须当前客户端确认，手改值清除网页辅助认证上下文。编辑器及候选空闲 30 分钟、最长两小时；显示确认最长 24 小时，重复确认不延长已有有效期，不跨 Host 重启或客户端共享。
+凭据草稿仅驻留内存，使用宿主签发的 ClientId、ClientLifetime 与本次 activation 绑定，客户端退役或插件停止立即清除。候选匹配 editor、平台、nonce 与 fieldGeneration；关闭视图保留输入和已完成候选，显式取消清除并拒绝迟到结果。编辑器及候选随当前客户端/激活存活，保留容量上限，不用轮询续租。保存预留明确 keep/set/clear，检查秘密基线 revision；预留失败释放新值，提交成功关闭对应草稿。显示凭据须当前客户端确认，手改值清除网页辅助认证上下文；显示确认最长 24 小时，重复确认不延长有效期，不跨 Host 重启或客户端共享。
 
 森空岛会话设备 ID、库街区 distinct_id 与秘密值一起编码给加密 owner；普通状态不返回这些字段。敏感材料、捕获与秘密变更禁止普通 JSON 序列化，释放时清除自有字符缓冲。候选还须经过固定官方当前账号响应核验，不能仅靠捕获到 Cookie 保存。
 
@@ -27,7 +27,7 @@
 
 塔吉多现役官方 1.2.7 APK 的静态调用使用 loginV2/refreshTokenV2、AuthorizationV2 和 SDK token/UID。原生 JSON 可包含 sdkToken/sdkUid，并与 accessToken、refreshToken、uid、deviceId、可选 roleId 一同加密保存。缺 SDK 字段的旧 JSON 可保留，但运行明确拒绝，不能退回旧路由。原生认证密码/验证码仅在本次请求中使用；登录会话最多 15 分钟，同客户端跨窗口共享 60 秒验证码冷却。森空岛手填 APP token 使用官方 Shumei 协议兼容画像生成会话设备 ID；网页捕获的真实会话 dId 优先并随秘密保存，不把兼容画像当成本机硬件检测。
 
-当前验证为 `tests/game-checkin/verify.py` 的 243/243 纯源码组件与模拟网络案例，以及 95/95 正式 SDK DTO/原子适配与 handler 组件。包括任务/计划、风险正反例、角色、捕获候选的跨域半对/账号冲突/完整版本优先/设备 JSON 正反例、编辑取消/代次/过期/客户端隔离、显示确认、未知提交、HTTP origin/MIME/大小/重复字段、身份投影/轮换、Host 运行历史，以及 Shumei RSA/AES/Gzip/DES 编码逆解。正式前端适配声明 18 个操作，Read 不携带操作 ID，Write/RevealSecret/Desktop 必须携带；状态读取等待同一初始化任务，不将失败文档当成空状态。scope 组合在 WaitReady 后初始化，抑制原调用的 AsyncLocal 流，停止时清除草稿并排空初始化。生产 createFrontend、正式 SDK 与 P2 控件的实际 Edge 受控回归 12/12，覆盖十四组合、多计划、秘密操作身份、远程秘密拒绝及明确清除后手填、原提交查询与停止。SDK 与浏览器场景使用模拟 Host ports，不能替代真实 DPAPI 或安装资格。实际平台登录、设备画像请求、签到和领奖均未执行。
+`tests/game-checkin/verify.py` 分别记录纯源码/模拟网络策略、正式 SDK 适配及原包入口的验证回执。范围包括任务/计划、风险门禁、角色、捕获候选身份、编辑取消/代次/客户端隔离、输入保留与披露期限、未知提交、HTTP 边界、凭据轮换及设备编码。生产前端的 Edge 夹具覆盖普通/秘密草稿、计划、关闭重开、显式取消和原操作核对；本轮选择与实际结果记录在对应验收报告。正式前端适配声明 18 个操作，Read 不携带操作 ID，Write/RevealSecret/Desktop 必须携带；状态读取等待同一初始化任务，读取失败保留错误。scope 组合在 WaitReady 后初始化，抑制原调用的 AsyncLocal 流，停止时清除草稿并排空初始化。SDK 与浏览器场景使用模拟 Host ports；真实 DPAPI、设备及平台登录、签到和领奖使用各自验收证据。
 
 登录可用性与动作授权分开：read-state 通过正式 IExtensionDesktop.ReadClientAsync 读取当前客户端的 IsBound/CanCapture，不调用需要 Desktop 执行权的 RequireClientAsync。headless 的 Desktop 端口缺失时仅显示手填，登录动作明确拒绝，不影响手填凭据与后台任务。塔吉多要求实际 native 绑定；五个平台的网页登录还要求捕获 owner 可用。真正登录动作仍在 Host Desktop 门禁下重新核对，不能用 IsLocal 或全局桌面进程在线状态代替。
 
@@ -41,4 +41,4 @@
 
 已保存凭据默认 keep 和空草稿，不在 mount 时读取。只有支持揭示的本地 transport、用户点击眼睛并明确确认后，才依次调用 confirm-reveal/reveal-credential。取消确认零请求，远程编辑禁用保存凭据的揭示，仍可明确清除或输入新值。Host 的当前 client/activation、24 小时且不延长的确认期限保持，单次 UI 明文最长 60 秒并在编辑器关闭/失去可见性时清除。
 
-编辑器显式代理 ExtensionSurface 的 element/context/scope/signal/visible/onVisibilityChanged/setAppearance，保留实时 getter 与原接收者，取消仅合并自身 signal。Edge 夹具使用原型方法和私有字段 getter，覆盖隐藏/恢复清空草稿及取消释放订阅。
+编辑器显式代理 ExtensionSurface 的 element/context/scope/drafts/signal/visible/onVisibilityChanged/setAppearance，保留实时 getter 与原接收者。输入及操作归草稿作用域；视图取消信号只释放显示和临时登录资源。Edge 夹具使用原型方法和私有字段 getter，覆盖关闭重开、秘密默认遮罩、取消清理、未知保存沿原操作核对及订阅释放。

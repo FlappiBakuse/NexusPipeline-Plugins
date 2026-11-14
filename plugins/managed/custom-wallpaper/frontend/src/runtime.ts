@@ -1,3 +1,4 @@
+import { SettingsWrites } from '../../../frontend-ui/src/settings-writes.js';
 import type { WallpaperPorts, WallpaperState } from './ports.js';
 import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
 
@@ -163,7 +164,23 @@ export function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
     },
     { once: true }
   );
+  let settings: SettingsWrites<WallpaperState> | undefined;
+  const settingCommands = () => {
+    if (!state) throw Error('wallpaper_state_unavailable');
+    settings ??= new SettingsWrites(state, { signal, read: async () => {
+      const saved = await ports.readState(signal); await publish(saved); return saved;
+    },
+      write: async (value, before, id) => {
+        const saved = await ports.saveSettings({ enabled: value.enabled, selectedId: value.selectedId, order: [...value.order],
+          rotation: value.rotation, effects: value.effects }, before.revision, signal, id);
+        await publish(saved); return saved;
+      },
+      inspect: id => ports.readSettingsResult?.(id, signal) ?? Promise.resolve(false) });
+    settings.observe(state);
+    return settings;
+  };
   return {
+    settingCommands,
     get state() {
       return state;
     },

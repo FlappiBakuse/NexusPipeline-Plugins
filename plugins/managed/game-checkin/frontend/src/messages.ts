@@ -1,4 +1,7 @@
 export const english: Readonly<Record<string, string>> = {
+  '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
+  '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
+  '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',
   米游社: 'Miyoushe', 森空岛: 'Skland', 库街区: 'Kuro community', 塔吉多: 'Tajiduo',
   原神: 'Genshin Impact', '崩坏：星穹铁道': 'Honkai: Star Rail', 绝区零: 'Zenless Zone Zero', '崩坏3': 'Honkai Impact 3rd',
   明日方舟: 'Arknights', '明日方舟：终末地': 'Arknights: Endfield', 鸣潮: 'Wuthering Waves', 战双帕弥什: 'Punishing: Gray Raven', 异环: 'Neverness to Everness',
@@ -142,8 +145,8 @@ export const english: Readonly<Record<string, string>> = {
     'Credentials can access this account. Allow disclosure on this client for 24 hours? Closing the editor clears displayed values.',
   塔吉多登录: 'Tajiduo login',
   浏览器登录: 'Browser login',
-  '手机号、密码和验证码只用于当前登录，不会保存在普通草稿。':
-    'Phone number, password, and verification code are used only for this login and are not saved in the ordinary draft.',
+  '通过官方账号接口登录。输入草稿仅留在内存，取消或结束界面会话时清除；登录后请保存签到任务使凭据生效。':
+    'Sign in through the official account service. Input drafts stay in memory until cancelled or the UI session ends. Save the check-in task to apply the credentials.',
   手机号: 'Phone number',
   密码或验证码: 'Password or verification code',
   短信验证码: 'SMS code',

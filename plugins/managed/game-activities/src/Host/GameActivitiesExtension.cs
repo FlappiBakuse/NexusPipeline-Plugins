@@ -9,7 +9,7 @@ public sealed class GameActivitiesExtension(ExtensionActivationContext context) 
     private ActivityCoordinator? coordinator;
     public IReadOnlyList<FrontendOperation> Operations { get; } = [new("read-state", FrontendAccess.Read),
         new("read-feed", FrontendAccess.Read), new("read-cover", FrontendAccess.Read), new("read-cached-cover", FrontendAccess.Read),
-        new("save-settings", FrontendAccess.Write), new("refresh-all", FrontendAccess.Write)];
+        new("read-settings-result", FrontendAccess.Read), new("save-settings", FrontendAccess.Write), new("refresh-all", FrontendAccess.Write)];
 
     public async ValueTask ActivateAsync(IExtensionScope scope, CancellationToken cancellationToken)
     {
@@ -37,6 +37,12 @@ public sealed class GameActivitiesExtension(ExtensionActivationContext context) 
             case "read-cover":
                 var image = await service.CoverAsync(ActivityJson.Read<CoverInput>(call.Payload).AssetId, cancellationToken);
                 return new(image.ContentType, image.Bytes);
+            case "read-settings-result":
+                var id = ActivityJson.Read<SavedInput>(call.Payload).OperationId;
+                if (id == Guid.Empty) throw new InvalidOperationException("activity_operation_id_required");
+                var committed = await context.Documents!.ReadCommitAsync(id, cancellationToken);
+                if (committed is not null) await service.ReloadSettingsAsync(cancellationToken);
+                result = new { operationId = id, committed = committed is not null }; break;
             case "save-settings":
                 var input = ActivityJson.Read<SaveInput>(call.Payload);
                 await service.SaveAsync(OperationId(call), input.ExpectedRevision, input.Settings, cancellationToken);
@@ -50,6 +56,7 @@ public sealed class GameActivitiesExtension(ExtensionActivationContext context) 
     }
     private static Guid OperationId(FrontendCall call) => call.OperationId is { } id && id != Guid.Empty ? id :
         throw new InvalidOperationException("activity_operation_id_required");
+    private sealed record SavedInput([property: JsonRequired] Guid OperationId);
     private sealed record FeedInput([property: JsonRequired] string FeedId);
     private sealed record CoverInput([property: JsonRequired] string AssetId);
     private sealed record SaveInput([property: JsonRequired] long ExpectedRevision, [property: JsonRequired] ActivitySettings Settings);

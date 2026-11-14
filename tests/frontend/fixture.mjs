@@ -1,3 +1,4 @@
+import { installFixture } from './fixture-bootstrap.mjs';
 import { screenshotLifecycle } from './screenshot-lifecycle.mjs';
 import { choose, confirm } from './controls.mjs';
 import fs from 'node:fs';
@@ -28,6 +29,8 @@ const buildReceipt = JSON.parse(fs.readFileSync(path.join(bundles, 'build-receip
 if (buildReceipt.status !== 'PASS' || !buildReceipt.artifacts?.some(item => item.path.startsWith(extension + '/')))
   throw new Error('Build the selected extension before its browser fixture');
 function sourceFiles(directory) {
+  if (fs.statSync(directory).isFile()) return [{path:path.relative(hostRoot,directory).replaceAll('\\','/'),
+    sha256:crypto.createHash('sha256').update(fs.readFileSync(directory)).digest('hex')}];
   return fs.readdirSync(directory, {withFileTypes:true}).flatMap(item => {
     const file = path.join(directory, item.name);
     if (item.isSymbolicLink()) throw new Error('Fixture source links are not allowed');
@@ -35,7 +38,7 @@ function sourceFiles(directory) {
       sha256:crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')}];
   });
 }
-const hostUiInputs = ['apps/web/src/ui','apps/web/src/extensions','sdk/frontend/src']
+const hostUiInputs = ['apps/web/src/ui','apps/web/src/extensions','sdk/frontend/src','apps/web/src/app/editor-drafts.ts']
   .flatMap(name => sourceFiles(path.join(hostRoot,name)));
 const esbuild = await import(pathToFileURL(path.join(workRoot, 'node_modules/esbuild/lib/main.js')).href);
 await esbuild.build({ entryPoints: [path.join(hostRoot, 'apps/web/src/ui/register-elements.ts')],
@@ -47,6 +50,7 @@ await esbuild.build({ entryPoints: [path.join(hostRoot, 'apps/web/src/ui/registe
 for (const [entry, name] of [
   ['apps/web/src/extensions/frontend-registry.ts', 'registry.js'],
   ['sdk/frontend/src/index.ts', 'sdk.js'],
+  ['apps/web/src/app/editor-drafts.ts', 'drafts.js'],
 ]) await esbuild.build({ entryPoints: [path.join(hostRoot, entry)],
   outfile: path.join(reportRoot, name), bundle: true, format: 'esm', platform: 'browser', target: 'es2022',
   plugins: [{ name: 'sdk', setup(plugin) {
@@ -62,7 +66,7 @@ const server = http.createServer((request, response) => {
     response.end('<!doctype html><html><head><meta charset="utf-8"><style>body{margin:1rem;background:#101722;color:#edf2ff;font:14px system-ui;--nx-color-surface:#202737;--nx-color-surface-secondary:#252e40;--nx-color-border:#414b60;--nx-color-text:#edf2ff;--nx-color-muted:#a9b4ca;--nx-color-danger:#ff8793;--input-bg:#1c2433}a{color:#a7c7ff}</style></head><body><main id="app"></main></body></html>');
     return;
   }
-  const local = ['/ui.js', '/registry.js', '/sdk.js', '/row-owner.js'].includes(target.pathname);
+  const local = ['/ui.js', '/registry.js', '/sdk.js', '/row-owner.js', '/drafts.js'].includes(target.pathname);
   const file = local ? path.join(reportRoot, target.pathname.slice(1))
     : path.join(bundles, target.pathname.slice(1));
   if (!path.resolve(file).startsWith(path.resolve(local ? reportRoot : bundles) + path.sep)
@@ -129,45 +133,7 @@ async function captureViewports(name) {
   }
 }
 await page.goto(`http://127.0.0.1:${port}/`);
-await page.evaluate(async () => {
-  const ui = await import('/ui.js'); ui.registerElements();
-  window.fixturePng = () => new Blob([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC'), char => char.charCodeAt(0))], { type: 'image/png' });
-  window.testMount = async (name, ports, target, locale = 'zh-CN', production = false, task = {}) => {
-    if (name === 'game-checkin') ports = { subscribe: () => () => {}, ...ports };
-    document.documentElement.lang = locale;
-    const style = document.createElement('link'); style.rel = 'stylesheet'; style.href = `/${name}/main.css`;
-    document.head.append(style);
-    const extension = await import(`/${name}/main.js`);
-    const registered = [];
-    const controller = new AbortController();
-    const owned = [];
-    const localeListeners = new Set();
-    const host = { extensionId: name, scope: { signal: controller.signal, own: value => { owned.push(value); return value; } }, get locale() { return locale; }, appearance: 'dark',
-      onLocaleChanged(listener) { localeListeners.add(listener); return () => localeListeners.delete(listener); },
-      translate: key => key, registerSurface: item => registered.push(item), registerRoute: item => registered.push(item),
-      registerStyle: () => {} };
-    await (production ? extension.createFrontend(ports) : extension.createExtension(ports)).activate(host);
-    const contribution = registered.find(item => item.target === target || (target === 'route' && item.path));
-    if (!contribution) throw new Error(`Missing ${target} contribution`);
-    const element = document.createElement('div'); document.querySelector('#app').append(element);
-    const listeners = new Set();
-    const surface = { element, context: { surfaceId: target === 'route' ? 'application.navigation' : target,
-      instanceId: 'fixture-instance', entityId: 'fixture-entity', runId: 'fixture-run', attemptId: 'fixture-attempt', ...task },
-      signal: controller.signal, visible: true, scope: host.scope,
-      setAppearance(value) { window.fixtureAppearance = value; },
-      onVisibilityChanged(listener) { listeners.add(listener); return () => listeners.delete(listener); } };
-    const cleanup = await contribution.mount(surface);
-    window.fixture = { element, controller, surface, listeners, cleanup, ports,
-      get localeListenerCount() { return localeListeners.size; },
-      setLocale(value) { locale = value; document.documentElement.lang = value;
-        for (const listener of localeListeners) listener(value); },
-      hide() { surface.visible = false; for (const listener of listeners) listener(false); },
-      show() { surface.visible = true; for (const listener of listeners) listener(true); },
-      dispose() { controller.abort(); cleanup?.(); if (target === 'application.appearance') window.fixtureAppearance = null;
-        for (const release of owned.splice(0)) release();
-        element.remove(); style.remove(); } };
-  };
-});
+await installFixture(page);
 
 await test('live screenshot visible frame and cleanup', async () => {
   await page.evaluate(async () => {
@@ -450,6 +416,7 @@ await test('maa discovery tasks and preview', async () => {
   await page.evaluate(() => window.fixture.dispose());
 });
 
+const { draftLifecycleCases } = await import('./draft-lifecycle-cases.mjs'); await draftLifecycleCases({page,test});
 const { runAdditionalCases } = await import('./fixture-cases.mjs');
 await runAdditionalCases({ page, test, reportRoot });
 if (['game-checkin', 'maa-framework'].includes(extension)) {
@@ -492,7 +459,7 @@ for (const input of hostUiInputs) {
 const runtimeArtifacts = ['ui.js','registry.js','sdk.js','row-owner.js'].map(name => ({path:name,
   sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(reportRoot,name))).digest('hex')}));
 const fixtureHash = crypto.createHash('sha256');
-for (const file of ['fixture.mjs', 'checkin-row-owner.ts', 'fixture-cases.mjs', 'checkin-editor-cases.mjs', 'checkin-publication-cases.mjs', 'checkin-layout-cases.mjs', 'maa-editor-cases.mjs', 'maa-project-cases.mjs', 'maa-script-cases.mjs', 'locale-cases.mjs', 'race-cases.mjs', 'activity-rules.mjs', 'activity-surface-cases.mjs', 'activity-lifecycle.mjs', 'activity-cover-cases.mjs', 'screenshot-lifecycle.mjs', 'refresh-cases.mjs', 'controls.mjs'])
+for (const file of ['fixture.mjs', 'fixture-bootstrap.mjs', 'draft-lifecycle-cases.mjs', 'checkin-row-owner.ts', 'fixture-cases.mjs', 'checkin-editor-cases.mjs', 'checkin-publication-cases.mjs', 'checkin-layout-cases.mjs', 'maa-editor-cases.mjs', 'maa-project-cases.mjs', 'maa-script-cases.mjs', 'locale-cases.mjs', 'race-cases.mjs', 'activity-rules.mjs', 'activity-surface-cases.mjs', 'activity-lifecycle.mjs', 'activity-cover-cases.mjs', 'screenshot-lifecycle.mjs', 'refresh-cases.mjs', 'controls.mjs'])
   fixtureHash.update(fs.readFileSync(path.join(repository, 'tests/frontend', file)));
 if (!checks.length) failures.push({name:'selection',error:'Unknown scenario or zero selected cases'});
 const result = { extension, scenario, status: failures.length ? 'FAIL' : 'PASS', scope: 'contract-only browser fixture',

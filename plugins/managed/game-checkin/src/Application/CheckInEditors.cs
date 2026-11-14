@@ -1,6 +1,6 @@
 namespace NexusPipeline.Extensions.GameCheckIn;
 
-internal sealed class CheckInEditors(TimeProvider clock) : IDisposable
+internal sealed class CheckInEditors : IDisposable
 {
     private readonly Dictionary<string, CredentialEditor> editors = new(StringComparer.Ordinal);
     private bool disposed;
@@ -11,7 +11,7 @@ internal sealed class CheckInEditors(TimeProvider clock) : IDisposable
             ObjectDisposedException.ThrowIf(disposed, this); client.Require();
             RemoveExpired();
             if (editors.Count >= 256) throw new CheckInFailure("credential_editor_limit");
-            var editor = new CredentialEditor(client, taskId, revision, saved, clock);
+            var editor = new CredentialEditor(client, taskId, revision, saved);
             editors.Add(editor.Id, editor); return editor;
         }
     }

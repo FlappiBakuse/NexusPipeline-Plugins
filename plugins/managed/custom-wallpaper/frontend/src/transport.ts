@@ -6,12 +6,20 @@ import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
 export function wallpaperPorts(transport: FrontendTransport): WallpaperPorts {
   const readState = async (signal: AbortSignal): Promise<WallpaperState> =>
     decodeState(await transport.invoke('read-state', {}, signal));
-  const write = async (operation: string, input: unknown, signal: AbortSignal): Promise<WallpaperState> =>
-    decodeState(await transport.invoke(operation, input, signal, createIdentity()));
+  const write = async (operation: string, input: unknown, signal: AbortSignal, id = createIdentity()): Promise<WallpaperState> => {
+    const value = await transport.invoke(operation, input, signal, id);
+    try { return decodeState(value); }
+    catch (error) { throw Object.assign(error instanceof Error ? error : new Error('wallpaper_save_outcome_unknown'), { uncertain: true }); }
+  };
   return {
     connectionKind: async () => transport.connectionKind,
     readState,
-    saveSettings: (patch, revision, signal) => write('save-settings', { patch, revision }, signal),
+    async readSettingsResult(operationId, signal) {
+      const result = await transport.invoke('read-settings-result', { operationId }, signal) as { operationId: string; committed: boolean };
+      if (result.operationId !== operationId || typeof result.committed !== 'boolean') throw Error('wallpaper_result_unbound');
+      return result.committed;
+    },
+    saveSettings: (patch, revision, signal, id) => write('save-settings', { patch, revision }, signal, id),
     async uploadAsset(file, signal) {
       await boundedImage(file);
       signal.throwIfAborted();

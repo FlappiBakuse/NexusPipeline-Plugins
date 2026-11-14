@@ -42,7 +42,7 @@ export function createPanel(surface: ExtensionSurface, title: string, t: Transla
       if (alive()) say(error instanceof Error ? error.message : String(error), true);
     }
   };
-  return { card, body, status, alive, say, run, cleanup, signal, t };
+  return { card, body, status, alive, say, run, cleanup, signal, t, drafts: surface.drafts };
 }
 
 export function button(panel: Panel, parent: Element, label: string, action: () => void | Promise<void>, signal = panel.signal) {
@@ -67,7 +67,9 @@ export function field(panel: Panel, parent: Element, label: string, value: strin
     value: string; type: string; readOnly: boolean;
   };
   input.value = value;
+  input.setAttribute('data-draft-field', label);
   input.type = type;
+  if (type === 'password') input.setAttribute('data-sensitive', '');
   if (type === 'password') panel.signal.addEventListener('abort', () => { input.value = ''; }, {once:true});
   bindLocale(panel.t, panel.signal, input, 'aria-label', () => {
     input.setAttribute('aria-label', display ? display() : panel.t(label));
@@ -97,6 +99,7 @@ export function choice(panel: Panel, parent: Element, label: string, value: stri
     select.options = options.map(option => ({ id: option.value || emptyId, label: panel.t(option.label) }));
   });
   select.value = value || emptyId;
+  select.setAttribute('data-draft-field', label);
   bindLocale(panel.t, panel.signal, select, 'aria-label', () => {
     select.setAttribute('aria-label', panel.t(label));
   });
@@ -119,6 +122,7 @@ export function toggle(panel: Panel, parent: Element, label: string, value: bool
   });
   const input = document.createElement('nexus-switch') as HTMLElement & { value: boolean };
   input.value = value;
+  input.setAttribute('data-draft-field', label);
   input.addEventListener('nexus-change', event => {
     const detail = (event as CustomEvent<{ value: boolean }>).detail;
     change(detail.value);

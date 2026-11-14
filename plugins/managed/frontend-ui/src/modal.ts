@@ -2,7 +2,7 @@ import { bindLocale } from './localize.js';
 import type { Panel } from './elements.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 
-export function createModal(panel: Panel, title: string, secondary = false, onClose?: () => void, onDisposed?: () => void, visible = true) {
+export function createModal(panel: Panel, title: string, secondary = false, onClose?: (reason: 'close' | 'cancel' | 'saved') => void, onDisposed?: () => void, visible = true) {
   const element = document.createElement('nexus-modal') as UiElement<'nexus-modal'>;
   bindLocale(panel.t, panel.signal, element, 'title', () => {
     element.title = panel.t(title);
@@ -16,12 +16,12 @@ export function createModal(panel: Panel, title: string, secondary = false, onCl
   const signal = AbortSignal.any([panel.signal, owner.signal]);
   let closing = false, disposed = false, timer: ReturnType<typeof setTimeout> | undefined;
   const dispose = () => { if (disposed) return; disposed = true; clearTimeout(timer); owner.abort(); element.remove(); onDisposed?.(); };
-  const close = () => {
+  const close = (reason: 'close' | 'cancel' | 'saved' = 'close') => {
     if (closing) return;
-    closing = true; element.open = false; element.inert = true; owner.abort(); onClose?.();
+    closing = true; element.open = false; element.inert = true; owner.abort(); onClose?.(reason);
     timer = setTimeout(dispose, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220);
   };
-  element.addEventListener('nexus-close', close, { signal });
+  element.addEventListener('nexus-close', () => close(), { signal });
   panel.signal.addEventListener('abort', dispose, { once: true, signal: owner.signal });
   element.hidden = !visible; element.inert = !visible; panel.card.append(element); element.open = visible;
   return { element, body, footer, signal, close, dispose, alive: () => !closing && !disposed && !panel.signal.aborted,

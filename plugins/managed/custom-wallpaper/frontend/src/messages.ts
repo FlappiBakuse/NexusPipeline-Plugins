@@ -1,4 +1,9 @@
 export const english: Readonly<Record<string, string>> = {
+  '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
+  '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
+  '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',
+  按原操作重试: 'Retry original operation',
+  取消: 'Cancel',
   '同步壁纸、轮换方式和显示效果': 'Sync wallpapers, rotation and display effects',
   '服务端同步到当前 NexusPipeline 实例的全部浏览器。':
     'The server syncs to every browser in this NexusPipeline instance.',

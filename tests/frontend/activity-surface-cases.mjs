@@ -97,23 +97,24 @@ export async function activitySurfaceCases({page,test}) {
     await page.locator('.activity-slide[aria-hidden=false]').getByText('Beta',{exact:true}).waitFor();
   });
 
-  await test('activity settings preserve hidden drafts and reject invalid raw numbers before writes',async()=>{
+  await test('activity settings retain active input while hidden and reject invalid completed values',async()=>{
     await mount();await page.getByRole('button',{name:'活动设置',exact:true}).click();
     const number=page.getByRole('spinbutton',{name:'轮播频率（秒）',exact:true});
     await number.fill('25');
     await page.evaluate(()=>window.fixture.hide());
     if(!await page.locator('nexus-modal').evaluate(element=>!element.open&&element.inert))throw Error('Hidden settings left an active modal');
     await page.evaluate(()=>window.fixture.show());
-    if(await number.inputValue()!=='25')throw Error('Hidden settings lost their draft');
+    if(await number.inputValue()!=='25')throw Error('Hidden settings lost their active input');
+    const before = await page.evaluate(()=>window.activityWrites);
     for(const raw of ['121','10.5','']){
       await number.fill(raw);await page.locator('nexus-modal').getByRole('button',{name:'保存',exact:true}).click();
-      if(await page.evaluate(()=>window.activityWrites)!==0)throw Error('Invalid numeric text caused a save: '+raw);
+      if(await page.evaluate(()=>window.activityWrites)!==before)throw Error('Invalid numeric text caused a save: '+raw);
       if(await number.inputValue()!==raw)throw Error('Invalid numeric text was replaced: '+raw);
       if(await page.locator('nexus-number-input').getAttribute('aria-invalid')!=='true')throw Error('Numeric validity was not public');
     }
     await number.fill('-1');await page.locator('nexus-modal').getByRole('button',{name:'保存',exact:true}).click();
     await page.locator('nexus-modal').waitFor({state:'detached'});
-    if(!await page.evaluate(()=>window.activityWrites===1&&window.activityState.rotationSeconds===-1))throw Error('Corrected interval did not save once');
+    if(!await page.evaluate(before=>window.activityWrites===before+1&&window.activityState.rotationSeconds===-1,before))throw Error('Corrected interval did not save once');
   });
 
   await test('unsubscribed activity progression survives save without subscribing the game',async()=>{

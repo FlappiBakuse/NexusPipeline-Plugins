@@ -39,13 +39,13 @@ internal static class TaskEditingCases
         run("open-editor-requires-current-document-before-reading-secrets", () =>
         {
             var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] });
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
             Reject(() => service.OpenAsync(client, task.Id, 9, default).AsTask().GetAwaiter().GetResult(), "checkin_configuration_conflict");
             Assert(store.SecretReads == 0 && store.Writes == 0);
         });
         run("save-new-task-owns-one-target-and-one-six-field-atomic-publication", () =>
         {
-            var client = Client(); var store = new EditingPersistence(new()); using var editors = new CheckInEditors(TimeProvider.System);
+            var client = Client(); var store = new EditingPersistence(new()); using var editors = new CheckInEditors();
             var service = new CheckInTaskEditing(store, editors, new EditingQuiescence()); var opened = service.OpenAsync(client, null, 0, default).Result;
             var editor = editors.Get(client, opened.Editor.EditorSessionId); var target = editor.TargetId;
             var draft = new CheckInTaskDraft(null, "new", "", true, new() { ["kuro"] = ["ww"] }, [], new());
@@ -59,7 +59,7 @@ internal static class TaskEditingCases
         run("task-save-concurrent-document-conflict-retains-candidate", () =>
         {
             var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] });
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
             var opened = service.OpenAsync(client, task.Id, 0, default).Result;
             var editor = editors.Get(client, opened.Editor.EditorSessionId);
             var binding = editor.Prepare(client, "kuro", 0);
@@ -74,7 +74,7 @@ internal static class TaskEditingCases
             run("lost-atomic-reply-reconciles-original-operation-without-rewrite/" + committed, () =>
             {
                 var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] }) { LoseReply = true, CommitBeforeLostReply = committed };
-                using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+                using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
                 var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor; var operation = Guid.NewGuid();
                 void Save() => service.SaveAsync(client, operation, editor.EditorSessionId, Draft(task) with { Name = "changed" }, new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult();
                 if (committed) Save(); else Reject(Save, "checkin_publication_unknown");
@@ -84,20 +84,20 @@ internal static class TaskEditingCases
         run("delete-clears-only-target-six-secrets-in-same-fact", () =>
         {
             var client = Client(); var task = Task("one"); var other = Task("two"); var store = new EditingPersistence(new() { Tasks = [task, other] });
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
             var result = service.DeleteAsync(client, Guid.NewGuid(), task.Id, 0, default).Result;
             Assert(result.Store.Tasks.Single().Id == other.Id && store.Subject == task.Id && store.Mutations.Length == 6 && store.Mutations.All(change => change.Action == "clear"));
         });
         run("reorder-is-complete-cas-with-no-secret-mutations", () =>
         {
             var client = Client(); var task = Task("one"); var other = Task("two"); var store = new EditingPersistence(new() { Tasks = [task, other] });
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
             var result = service.ReorderAsync(client, Guid.NewGuid(), [other.Id, task.Id], 0, default).Result;
             Assert(result.Store.Tasks[0].Id == other.Id && store.Mutations.Length == 0 && store.Subject is null && store.SecretReads == 0);
         });
         run("editor-capacity-rejects-without-evicting-other-clients", () =>
         {
-            var client = Client(); using var editors = new CheckInEditors(TimeProvider.System);
+            var client = Client(); using var editors = new CheckInEditors();
             for (var index = 0; index < 256; index++) editors.Add(client, null, 0, new Dictionary<string, SavedCredentialField>());
             Reject(() => editors.Add(Client(), null, 0, new Dictionary<string, SavedCredentialField>()), "credential_editor_limit");
         });
@@ -107,7 +107,7 @@ internal static class TaskEditingCases
             var second = first with { Id = Guid.NewGuid().ToString("D") }; var task = Task("one") with { Schedules = [first] };
             var store = new EditingPersistence(new() { Tasks = [task] }); var quiescence = new EditingQuiescence();
             store.BeforeWrite = () => Assert(quiescence.Held && !quiescence.Released);
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, quiescence);
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, quiescence);
             var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor;
             _ = service.SaveAsync(client, Guid.NewGuid(), editor.EditorSessionId, Draft(task) with { Schedules = [second] }, new Dictionary<string, CredentialAction>(), default).Result;
             Assert(quiescence.Released && !quiescence.Held && quiescence.TaskId == task.Id && quiescence.ExpectedRevision == task.Revision);
@@ -116,7 +116,7 @@ internal static class TaskEditingCases
         {
             var client = Client(); var task = Task("one"); var store = new EditingPersistence(new() { Tasks = [task] });
             var quiescence = new EditingQuiescence { OnHold = () => store.Revision++ };
-            using var editors = new CheckInEditors(TimeProvider.System); var service = new CheckInTaskEditing(store, editors, quiescence);
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, quiescence);
             var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor;
             var readsBeforeSave = store.SecretReads;
             Reject(() => service.SaveAsync(client, Guid.NewGuid(), editor.EditorSessionId, Draft(task), new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult(), "checkin_configuration_conflict");

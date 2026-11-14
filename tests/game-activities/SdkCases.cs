@@ -32,7 +32,17 @@ internal static class SdkCases
             Check.That(state.ContentType == "application/json" && Check.Element(System.Text.Json.JsonDocument.Parse(state.Content).RootElement).GetProperty("settingsRevision").GetInt64() == 0);
             var input = ActivityJson.Bytes(new { expectedRevision = 0, settings = new ActivitySettings { RotationSeconds = 40 } });
             await Check.Reject(async () => await extension.InvokeAsync(new("save-settings", null, "fixture", false, input), default), "operation_id");
-            await extension.InvokeAsync(new("save-settings", Guid.NewGuid(), "fixture", false, input), default);
+            var operationId = Guid.NewGuid();
+            await extension.InvokeAsync(new("save-settings", operationId, "fixture", false, input), default);
+            var writes = docs.Writes;
+            var completion = await extension.InvokeAsync(new("read-settings-result", null, "fixture", false,
+                ActivityJson.Bytes(new { operationId })), default);
+            var proof = System.Text.Json.JsonDocument.Parse(completion.Content).RootElement;
+            Check.That(proof.GetProperty("operationId").GetGuid() == operationId && proof.GetProperty("committed").GetBoolean());
+            var missing = await extension.InvokeAsync(new("read-settings-result", null, "fixture", false,
+                ActivityJson.Bytes(new { operationId = Guid.NewGuid() })), default);
+            Check.That(!System.Text.Json.JsonDocument.Parse(missing.Content).RootElement.GetProperty("committed").GetBoolean() &&
+                docs.Writes == writes);
             Check.That(ActivityJson.Read<ActivitySettings>(docs.Values["settings"].Json).RotationSeconds == 40 && net.Calls.Count == 0);
             await extension.InvokeAsync(new("read-feed", null, "fixture", false, "{\"feedId\":\"blue-archive/cn\"}"u8.ToArray()), default);
             Check.That(extension.Operations.Single(op => op.Name == "read-cover").Access == FrontendAccess.Read);

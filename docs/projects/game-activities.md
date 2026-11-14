@@ -7,13 +7,13 @@
 | 来源 | SRA `api/v1/activity/` 下 ba-cn、ba-jp、ba-global、ys、end、xtlr、sr、ww、zzz、nte、nte-en-US，共八游戏 11 feed |
 | 字段 | version / versionName / startTime / endTime / cover / activities；活动 name / description / startTime / endTime / cover / kind；不发布公告链接和抽卡记录 |
 | 配置 | 默认无订阅；完整八游戏 gameOrder；BA cn/jp/global 与 NTE cn/global；轮播 -1 或 10–120 秒；交互暂停；未订阅进度保留 |
-| 并发 | 设置 Documents CAS 与 operationId；丢失响应可重放原请求并读取最新文档；缓存写入独立 feed CAS，不重试覆盖竞争胜出内容 |
+| 并发 | 设置 Documents CAS 与 operationId；丢失响应按原 operationId 只读查询提交结果并同步最新文档；缓存写入独立 feed CAS，不重试覆盖竞争胜出内容 |
 | 刷新 | 六小时、已核实时间边界前后 15 分钟各一次、手动 60 秒持久限流；失败 1/5/30/120 分钟退避，尊重有界 Retry-After |
 | 缓存 | 成功空列表替换旧内容；失败保留内容和 lastGoodAt；单 feed 文档；未知格式不覆盖；元数据与详情分次传输且校验同一视图 revision |
 | 生命周期 | 订阅代次取消、迟到响应检查、唯一 scope 初始化任务先等待宿主明确发布信号，调用等待同一初始化；后台初始化/刷新隔离调用 ExecutionContext；scope 停止取消并等待进行中的请求，清理图片内存；不删除设置或普通缓存 |
 | 时间 | 仅明确 Z/偏移转换为 UTC；无偏移、无效日期保留原值与 unknown；浏览器电脑时区显示，覆盖 DST 重复小时；未知时间不推算边界 |
 | 图片 | JSON 引用绑定 SHA ID；八精确 HTTPS origin；不接收客户端 URL；PNG/JPEG/WebP MIME+签名、单项 8 MiB、内存 32 MiB / 128 项、TTL 淘汰；既有 SDK 图片库持久保存最多32项/32 MiB，文档与引用原子CAS，重启离线复用与有界淘汰 |
-| 前端 | 实际 createFrontend + SDK invoke/image/subscribe；有界快照重读、scope 所有轮询、图片 release；轮播直接切换/暂停/展开、窄屏、详情分组、已结束折叠、设置取消 |
+| 前端 | 实际 createFrontend + SDK invoke/image/subscribe；有界快照重读、scope 所有轮询、图片 release；轮播直接切换/暂停/展开、窄屏、详情分组、已结束折叠、即时设置与取消还原 |
 
 来源字段夹具在 `tests/game-activities/fixtures`；`provenance.json` 记录原 JSON SHA 与精确官方 URL。11 个已登记活动源的无偏移时间按 UTC+8 解释；显式偏移优先，保留原始时间字段。封面 origin 根据这 11 份实际 JSON 中的根封面和活动封面核实：resource.starrailassistant.top、web.hycdn.cn、i0.hdslb.com、prod-alicdn-community.kurobbs.com、webusstatic.yo-star.com、fastcdn.mihoyo.com、sdk.hoyoverse.com、yh.wanmei.com。manifest 不使用通配域名。
 

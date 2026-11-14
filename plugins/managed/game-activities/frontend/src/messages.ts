@@ -1,4 +1,8 @@
 export const english: Readonly<Record<string, string>> = {
+  '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
+  '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
+  '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',
+  按原操作重试: 'Retry original operation',
   '查看订阅游戏的版本与活动。': 'View versions and events for subscribed games.',
   蔚蓝档案: 'Blue Archive',
   原神: 'Genshin Impact',

@@ -76,7 +76,7 @@ internal static class FrontendCases
         internal readonly TaskCompletionSource Ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
         internal readonly SdkCheckInFrontend Host;
         private readonly CheckInClients clients;
-        private readonly CheckInEditors editors = new(TimeProvider.System);
+        private readonly CheckInEditors editors = new();
         private readonly CredentialRevealGrants grants = new(TimeProvider.System);
         private readonly CheckInBrowserLogins browser;
         private readonly TajiduoLogins tajiduo;
