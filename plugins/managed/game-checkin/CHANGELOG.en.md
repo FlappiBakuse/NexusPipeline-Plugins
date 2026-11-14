@@ -2,9 +2,7 @@
 
 ## 0.5.0
 
-- Retain drafts only after editing; show changed-field highlights only after reopening a draft.
-
-- Show a reminder when reopening task or login drafts. Highlight changed fields and switches for existing tasks, clearing the highlight when restored to saved values.
+- Retain only edited drafts and show save-or-cancel reminders when reopening them. Highlight changed fields only in restored existing objects. Saving updates the baseline; cancellation and session disposal clear the corresponding drafts.
 
 - Synchronize the task page from state events, preserve revisions for unchanged state, and stop hidden subscriptions.
 

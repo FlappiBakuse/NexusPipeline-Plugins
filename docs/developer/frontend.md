@@ -29,23 +29,25 @@
 
 ## 状态与拥有期
 
-`SurfaceContext` 与 surface 提供当前实例、任务、信号和可见性。隐藏、卸载、切账号和新 attempt 使旧请求失去发布资格；晚到结果先核对身份，图片租约仍须释放。
+`SurfaceContext` 与 surface 提供实例、任务、信号和可见性。隐藏、卸载、切账号和新 attempt 撤销旧展示请求；晚到结果核对身份并释放图片租约。已受理写入由原操作 owner 结算。
 
-游戏活动与自定义壁纸设置即时提交，不接入 `ExtensionSurface.drafts`。活动弹窗取消还原本次打开前的设置，保存和关闭保持当前值；壁纸无草稿取消或重试保存操作。已受理命令归激活期 owner，未知结果复用 Documents 原操作只读查询，不重发保存。
+| 内容 | owner 与行为 |
+|---|---|
+| 活动和壁纸 | 激活期命令 owner 即时提交；活动取消还原打开基线，保存与关闭保持现状 |
+| 签到任务、Maa 项目和绑定配置 | `ExtensionSurface.drafts` 按实例、插件和目标保留实际编辑；未编辑表单关闭后释放 |
+| 敏感输入 | `drafts.protect` 使用专用内存和清除回调，重开默认遮罩；披露与登录授权另行核验 |
+| 已受理或未知保存 | 沿原 operationId 结算或只读查询；视图卸载释放展示资源 |
+| 父子编辑 | `guardCancel` 先检查整个子树，`settle` 结清所属内容；`onParentSaved` 保留独立配置编辑 |
 
-编辑数据使用 `ExtensionSurface.drafts`，按实例、插件和目标隔离。未编辑的表单关闭后释放，重新进入读取当前已保存值。关闭按钮、Escape、遮罩、切页和隐藏保留已修改的普通输入、无效输入、原修订及原操作；显式取消递归清理所属草稿。成功保存只结清已提交内容，普通快照刷新保留未提交编辑。
+恢复草稿显示保存或取消提醒；已有目标仅在恢复后标记变化字段与开关，首次编辑及新建目标使用普通状态。成功保存更新基线，普通快照刷新保留未提交编辑。
 
-恢复编辑草稿时显示就地提醒，仅恢复草稿后，已有目标中变化的输入与开关以黄色标记，改回基线时清除。新建目标保留恢复提醒，字段不使用黄色状态。普通与敏感展示基线均为内存数据，敏感字段仅记录修改状态，保存后更新当前基线。
-
-秘密输入使用 `drafts.protect` 的专用内存和清除回调，不进普通对象、存储或日志，重开默认遮罩。视图卸载清除 DOM、已披露显示缓存、读取及临时登录资源；输入仍可恢复。取消、确认保存、插件退役及界面会话结束清除相应内容。页面重载、桌面/轻量模式切换和完整退出结束界面会话，不弹出草稿确认。
-
-`guardCancel` 保护在途和未知操作，视图信号只管理展示资源；已受理写入沿草稿信号结清。父定义保存通知 `onParentSaved`，独立配置草稿继续保留。披露确认、登录会话和保存核对仍绑定当前客户端及授权期限，未知写结果沿用原 operationId。
+共享交互规则由 Host 的[编辑草稿](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/developer/frontend-state.md#编辑草稿)维护，公开能力见[扩展前端](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/developer/extension-frontend.md#编辑草稿能力)。插件按所属任务管理普通状态、受保护输入和取消/保存结算，普通对象、浏览器存储和日志不保存秘密。
 
 ## 登录失败与白屏的最小诊断
 
 可信原生菜单提供刷新、完成并验证与取消。验证失败保留隔离会话，成功后清理窗口、Cookie 和捕获值；取消与迟到响应保持原会话归属。
 
-官方未登录页观测覆盖窗口创建、CDP、导航、DOM ready、加载完成及取消清理。米游社出现过主 frame `ERR_CONNECTION_CLOSED`，同环境也已正常显示正文；分别启用 CDP、frame 过滤、导航拦截与权限限制的对照均完成加载。该证据支持修正网络导航失败后的交互，不支持扩大允许来源或调整账号验证协议。
+按窗口创建、CDP、导航、DOM ready、加载完成与取消清理记录阶段。主 frame 导航网络错误保留原会话；捕获、来源和权限检查继续约束原允许范围。
 
 主导航失败会保留窗口，标题显示“官方页面加载失败，请在登录操作中刷新”。刷新重新加载已声明的官方起始地址，初始化、来源检查、秘密隔离与权限限制继续有效。捕获初始化或进程故障仍结束会话。日志只记录阶段、错误数值、来源类别和清理结果，不输出 Cookie、Token 或带查询参数的 URL。
 
@@ -72,7 +74,7 @@ node tests/frontend/fixture.mjs --host-root <同源Host根> --work-root <含play
 
 构建已经串联命名、tsc 和 bundling，统一计划只执行一次并分别归类结果；不再重复跑同一 tsc 或 Vite/esbuild。独立 lint/typecheck 接口若由本轮工具任务新增，文档再按已实现 CLI 微调，未实现前不伪造命令。
 
-源码依据：[表面与命令](../../tooling/build_frontend.mjs)、[精确场景选择](../../tests/frontend/fixture.mjs)、[Host 登录窗口](https://github.com/FlappiBakuse/NexusPipeline/blob/0bb4d144d92805a2d489c65d0be3b7527c7810fd/apps/desktop/login-window.cjs#L19-L100)、[插件账号验证](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/5f88763ca4f49836b0bead262dad4acfacaebb63/plugins/managed/game-checkin/src/Application/CheckInBrowserLogins.cs#L41-L59)。
+源码入口：[前端构建](../../tooling/build_frontend.mjs)、[场景选择](../../tests/frontend/fixture.mjs)、[插件账号验证](../../plugins/managed/game-checkin/src/Application/CheckInBrowserLogins.cs)。
 
 ## 首次准备
 
