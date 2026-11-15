@@ -6,7 +6,7 @@
 
 手写模块由 `adapter/sources.json` 固定顺序合并。任务适配四阶段仅消费 Host 提供的冻结资源；独立来源发现入口通过 Host 有界只读回调列出当前工作配置，不具备文件写入、进程或网络权限。`main` 对应 DailyRoutineTask.json；`routine-configs` 仅对应 DailyRoutineTaskConfigs.json；`devices` 对应 devices.json。独立任务页配置不会供给日常子项，也不会被解释或改写。资源可使用 Host 绑定的 JSON 语义 value，CAS 仍绑定原 resource ID、revision、SHA 和 operation。
 
-按上游 normalize_items 处理：保存顺序优先、已知 ID 首次出现有效、Python bool 真值规则、补缺省项、互斥组按出现顺序选首项。未知项保留只读且不选择；未知启用项阻断配置检查。完整且唯一的显式布尔列表才允许逐项选择重试。
+按上游 normalize_items 处理：保存顺序优先、已知 ID 首次出现有效、Python bool 真值规则、补缺省项、互斥组按出现顺序选首项。未知项及开关保留；未知启用项返回 warning 并限制安全重试范围，配置读取继续。完整且唯一的显式布尔列表才允许逐项选择重试。
 
 ## 全部日常任务
 

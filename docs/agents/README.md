@@ -1,30 +1,23 @@
-# Agents 开工入口
+# Agent 任务地图
 
-这是给本地 Codex/LLM 的任务路由。先读当前用户指令、仓库根 `AGENTS.md` 和本次任务卡，再从[任务地图](change-map.md)定位少量必要材料。用户已经明确的方向和范围持续有效，不逐项重复请求确认。
+读取顺序：[AGENTS](../../AGENTS.md) → 本表相关主题 → 项目页和锁 → 生产 owner、直接消费者及测试。共同流程见 [CONTRIBUTING](../../CONTRIBUTING.md)，实际命令见[构建](../development/building.md)和[验证](../development/validation.md)。
 
-## 本轮固定规则
+| 任务 | 首读 | 代码 owner | 最低验证方向 |
+|---|---|---|---|
+| 程序、配置或日志发现 | [专项指南](../authors/specialized-adapters.md)、[上游依据](../reference/upstream-oracles.md) | 对应 `adapter/discovery.js`、`sources.json` | 固定消费者、真实来源与发现向量 |
+| 配置、任务、观察和重试 | 对应 `docs/projects/<id>.md` | 专项 adapter、`adapter-runtime` | 任务身份、CAS、失败子集与 Unknown 保留 |
+| 普通重试或配置恢复 | [架构](../architecture/overview.md)及 Host 配置/重试参考 | Host 主责，插件给有限声明 | 一条实际受影响消费链 |
+| 活动并发、缓存与状态 | [活动项目](../projects/game-activities.md) | `game-activities` Domain/Application/Host | 并发上界、generation、逐源发布与离线缓存 |
+| 签到、凭据和计划 | [签到项目](../projects/game-checkin.md) | `game-checkin` Domain/Application/Host | 账号隔离、Unknown 只读核对、原操作和通知 |
+| 登录窗口和白屏 | [前端诊断](../development/frontend.md#登录失败与白屏的最小诊断) | Host Desktop、CheckInBrowserLogins | 失败阶段、刷新、取消和迟到归属 |
+| 壁纸和公共 UI | [前端](../development/frontend.md) | `custom-wallpaper`、`frontend-ui`、Host 公共控件 | 即时设置、分类、图片引用和实际消费者 |
+| 当前运行预览 | [实时截图](../user/managed.md#livescreenshot) | `live-screenshot` frontend/current-task | run/attempt、可见性、晚到图片释放 |
+| 模拟器选择与控制 | [模拟器项目](../projects/emulator-support.md) | `emulator-support` Domain/Host、Host emulation | 厂商实例和自有目标，真实程序资格另记 |
+| Maa 编译或 worker | [Maa 项目](../projects/maa-framework.md)、[覆盖](../reference/maa-coverage.md) | `maa-framework` Domain/compiler/worker | 冻结输入、目标能力、回调和进程族停止 |
+| SDK 与产物 | [构建](../development/building.md)、Host SDK 参考 | Host producer → import_sdk → 实际消费者 | 来源、公开 API 编译和必要原包闭包 |
+| 发布或 PR | [发行](../operations/release.md) | `tooling`、`.github/workflows` | 同源原候选、服务端身份及明确授权 |
+| 文档 | [文档导航](../README.md) | 唯一主题页 | 路径、锚点、命令和当前状态 |
 
-1. 优先恢复 main 已证产品行为，保留 next 架构、SDK、目录和代码风格。
-2. 本批选中任务的生产代码、必要产品假设测试源和文档全部完成后，统一执行去重的定向验证。
-3. 代码阶段只做必要读取、分析和编辑，不为建立基线提前跑 lint/typecheck/test/build。
-4. 只保留证明产品或逻辑假设的测试；删除实现断言不等于删除数据、恢复、权限和副作用假设。
-5. 当前任务能用现役 owner/SDK 完成就不扩协议；不新增未来需求、通用框架或独立测试系统。
-6. 失败仅扩大到可解释该失败的直接依赖；通过最低有效证明后停止可选验证。
+插件路径默认位于 `plugins/managed/<id>` 或 `plugins/specialized/<id>`。MaaEnd/MaaS 专项调用上游程序，通用 MaaFramework 使用独立 compiler/worker；分别读取所需资料。
 
-## 工作事实
-
-开始时记录两个本机源码根、当前分支/HEAD/未提交改动与本批选择。审查参考 SHA 见[行为对齐表](../developer/behavior-targets.md)，不要求强制回退到该 SHA。用户已有修改保持；有冲突只隔离受影响文件，不清理整个工作树。
-
-读取顺序：本任务卡 → 当前目标行 → 相关源码 owner → 必要公开契约/固定上游。只有发现实际跨域依赖才继续扩展，不默认遍历完整 Storage、全部 14 插件或整个测试目录。
-
-## 代码完成后的唯一验证入口
-
-先把各卡需要的假设合并到本批统一计划，然后使用[统一定向验证](../developer/validation.md)。一个现役命令可能同时给 lint/typecheck/build 证据，执行一次、分项记录。真实 SDK producer 只准备一次；只有实际公开契约变化才重新导入/验证受影响消费者。
-
-没有真实环境则记 NOT_RUN。不要从旧报告复制 PASS，不将 `local-uncommitted` 冒充固定提交。不要因没有方法级选择器捏造命令参数，先读当前解析器。
-
-## 文档维护
-
-只修改本次行为影响的步骤、规则和一个状态入口。用户页使用任务与界面语言；开发页解释 owner 和不变量；Agents 页保留任务路由。已完成的中间研究不追加到每个 README，必要证据归本批报告。
-
-未经本次授权，不提交、推送、发行或执行真实账号外部动作。普通本地读取、隔离编辑和已选范围的验证按已有授权继续，不引入额外批准仪式。
+共享模块、公开契约或真实直接消费者受到影响时，增加对应最小验证；纯页面修改不自动加载原生引擎，单一上游修复不扩成八个游戏矩阵。

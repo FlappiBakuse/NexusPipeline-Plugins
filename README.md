@@ -2,7 +2,7 @@
 
 为 NexusPipeline 提供脚本接入、游戏签到、活动信息、外观和运行辅助。插件不包含游戏；八个专项也不包含上游自动化软件。普通用户不需要 Node、.NET SDK 或自行构建。
 
-本文档包对应本地开发候选：Host 0.18.0、官方插件 0.5.0、SDK 0.1.0。源码版本不代表已正式发布或已经通过真实平台验收。用户先读[安装与第一次使用](docs/user/README.md)；开发人员查阅[本轮行为对齐表](docs/developer/behavior-targets.md)。
+本文档包对应本地开发候选：Host 0.18.0、官方插件 0.5.0、SDK 0.1.0。源码版本不代表已正式发布或已经通过真实平台验收。用户先读[安装与第一次使用](docs/user/README.md)；开发人员查阅[当前待验证事项](docs/status.md)。
 
 ## 选择插件
 
@@ -30,13 +30,13 @@
 3. 专项先核对已有上游配置、账号与任务；通用插件先完成一个最小设置。首次快照与主动读取的区别见用户入口。
 4. 先查看一次手动操作的实际结果，再启用计划。结果待确认时先核对原结果，不重复触发外部动作。
 
-BAAH 日志与配置修复、OkNTE 日常入口、签到登录、即时设置及编辑草稿分别由所属插件维护。操作步骤见[使用入口](docs/user/README.md#当前操作与排障)，实现范围见[业务行为与验证边界](docs/developer/behavior-targets.md)。实际验收结果绑定对应源码与运行回执。
+BAAH 日志与配置修复、OkNTE 日常入口、签到登录、即时设置及编辑草稿分别由所属插件维护。操作步骤见[使用入口](docs/user/README.md#当前操作与排障)，实现范围见[当前待验证事项](docs/status.md)。实际验收结果绑定对应源码与运行回执。
 
 ## 开发入口
 
-- [作者入门](docs/authors/README.md)：选择最小改动路径与实际构建入口。
-- [开发与验证规则](docs/developer/validation.md)：先完成本批全部代码，再统一定向验证。
-- [Agents 任务地图](docs/agents/change-map.md)：代码 owner、事实源和最低验证范围。
-- [完整文档导航](docs/README.md)：用户、作者、开发者与 Agent 分流。
+- [开发入门](docs/getting-started/development.md)：准备环境与第一次切片构建。
+- [贡献指南](CONTRIBUTING.md)：协作、验证与文档同步。
+- [AGENTS](AGENTS.md) → [任务地图](docs/agents/README.md)：按模块检索。
+- [完整文档导航](docs/README.md)：用户、作者、接口与发行入口。
 
 自有代码与文档的许可证见 [LICENSE](LICENSE)。插件引用的上游和第三方运行时保留各自许可，Maa 的原生运行时按包内声明交付。

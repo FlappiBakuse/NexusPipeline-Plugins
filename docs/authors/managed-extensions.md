@@ -1,6 +1,6 @@
-# managed 扩展：用现有能力完成当前业务
+# managed 扩展开发
 
-managed 插件只消费公共 SDK，代码按现有 `Domain`、`Application`、`Host` 职责放置；目录名称保持 next 风格。先定位需要恢复的产品行为，再修改最小 owner。
+managed 插件只消费公共 SDK，代码按现有 Domain、Application、Host 职责放置。先定位当前产品任务与直接 owner，再修改相应层。
 
 ## 六个插件的主要 owner
 
@@ -21,7 +21,7 @@ managed 插件只消费公共 SDK，代码按现有 `Domain`、`Application`、`
 
 现有 SDK 端口能表达修复时不新增端口。确有缺口时，在任务卡写出生产消费者、缺失能力和最低证明，再同步 Host 权威 schema/SDK；不能手写一套 Host DTO 消除编译错误。
 
-前端编辑草稿、敏感输入和即时设置的实现路径见[状态与拥有期](../developer/frontend.md#状态与拥有期)。
+前端编辑草稿、敏感输入和即时设置的实现路径见[状态与拥有期](../development/frontend.md#状态与拥有期)。
 
 ## 数据与外部效果
 
@@ -47,7 +47,7 @@ managed 插件只消费公共 SDK，代码按现有 `Domain`、`Application`、`
 
 ## 原生与 Maa 范围
 
-Maa 已有独立 worker；本轮不重写引擎或运行协议。任务资源、原生回调排空、Agent 进程族、目标身份和归档输出保持现有单一 owner。没有相应任务卡时不扩设备方法、不增 DLL 搜索路径、不把项目 JSON 中的 PID/路径当成权限。
+Maa 使用独立 worker。任务资源、原生回调排空、Agent 进程族、目标身份和归档输出保持现有单一 owner。没有相应任务卡时不扩设备方法、不增 DLL 搜索路径、不把项目 JSON 中的 PID/路径当成权限。
 
 修改一个按钮或普通任务参数，不要求加载 Maa 原生库。只有实际 worker、native 生命周期或原包闭包被改动，才把对应的 Windows/原生验证加入统一计划。
 
@@ -55,9 +55,9 @@ Maa 已有独立 worker；本轮不重写引擎或运行协议。任务资源、
 
 最终持久结果、发送范围、未知结果不重放、账号隔离、停用后不再工作属于产品假设。内部写入 30/6/2 次、特定类名或同一对象引用不属于必须保留的产品行为。
 
-验证先选择一个被修改插件的现役入口。只有公开边界或副作用需要真实 Host 才升级该一条链；不要把全部平台成功签到、三家模拟器安装或所有 Maa 项目作为每次开发的默认条件。[统一验证规则](../developer/validation.md)定义代码完成后的执行顺序。
+验证先选择一个被修改插件的现役入口。只有公开边界或副作用需要真实 Host 才升级该一条链；不要把全部平台成功签到、三家模拟器安装或所有 Maa 项目作为每次开发的默认条件。[统一验证规则](../development/validation.md)定义代码完成后的执行顺序。
 
-当前代码证据：[活动串行消费](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/5f88763ca4f49836b0bead262dad4acfacaebb63/plugins/managed/game-activities/src/Application/ActivityCoordinator.cs#L127-L168)、[既有 HTTP 上界](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/5f88763ca4f49836b0bead262dad4acfacaebb63/plugins/managed/game-activities/src/Host/SdkActivityPorts.cs#L23-L34)、[签到分类问题](https://github.com/FlappiBakuse/NexusPipeline-Plugins/blob/5f88763ca4f49836b0bead262dad4acfacaebb63/plugins/managed/game-checkin/src/Application/HoyoCheckIn.cs#L24-L47)。
+当前代码证据：[活动协调](../../plugins/managed/game-activities/src/Application/ActivityCoordinator.cs)、[既有 HTTP 上界](../../plugins/managed/game-activities/src/Host/SdkActivityPorts.cs)、[签到请求与错误边界](../../plugins/managed/game-checkin/src/Application/HoyoCheckIn.cs)。
 
 ## 模拟器 provider 描述
 

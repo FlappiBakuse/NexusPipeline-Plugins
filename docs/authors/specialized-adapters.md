@@ -1,66 +1,43 @@
-# 专项适配器：恢复真实上游行为
+# 专项适配器开发
 
-专项的结果由实际程序入口、配置资源、日志生产者和任务消费者共同决定。只让 adapter 返回某个预期 JSON，不能证明它接对了上游。本轮先修已证接线问题，保留 next 的受限脚本、类型化协议、冻结输入及 Host 恢复 owner。
+专项解释真实程序入口、配置、任务和日志，Host 管理文件、进程、事务和恢复。固定上游身份见[来源索引](../reference/upstream-oracles.md)，插件特有语义见[项目参考](../README.md#项目参考)。
 
-## 代码入口与职责
+## 代码入口
 
-| 层 | 责任 | 不承担 |
-|---|---|---|
-| `plugins/specialized/<id>/extension.json` | 当前能力、权限、实例策略、本地化入口 | 自己发放运行或文件权限 |
-| `adapter/discovery.js` | 根据所选根的受限输入发现程序、参数、资源和候选 | 启动程序、写上游文件、猜当前 GUI 账号 |
-| `adapter/main.js` 及 `sources.json` 闭包 | 按现役四阶段请求解释任务、配置、观察和重试 | 任意模块加载、网络、文件或 native 旁路 |
-| `adapter-runtime/core` | 多个现役消费者共有的协议与纯规则 | 反向依赖某个游戏或推测未来格式 |
-| `adapter-runtime/frameworks` | 已支持外部框架的真实共同语义 | 把不同游戏的任务编号、身份强行合并 |
-| Host | 来源准入、writer、配置现场、日志来源、持久状态、恢复与副作用门禁 | 将任意插件建议直接当成授权 |
+| 位置 | 职责 |
+|---|---|
+| `plugins/specialized/<id>/extension.json` | 能力、权限、实例策略与本地化声明 |
+| `adapter/discovery.js` | 用所选根的受限输入发现程序、参数、资源与候选 |
+| `adapter/main.js`、`sources.json` 闭包 | 解释四阶段任务、配置、观察与重试请求 |
+| `adapter-runtime/core` | 多个实际消费者共有的纯协议规则 |
+| `adapter-runtime/frameworks` | 已支持框架的共同配置与日志语义 |
 
-手写源按 `sources.json` 顺序合并为仓外 adapter；不提交生成 bundle，也不把一行入口差异扩成生成器重写。
+手写源按 sources.json 顺序合并到仓外 bundle，不提交生成脚本。适配器不直接启动程序、写文件、联网或加载 native 对象。
 
-## 稳定输入与输出
+## 协议和修复
 
-请求的 format/version/direction、extensionId、phase、operationId 和相应 run/attempt/plan 绑定必须保持。配置提案仍绑定资源 ID、原 SHA、revision、expected 值和操作身份。参数、文件名、任务 ID 的选择必须能追溯到固定上游消费者。
-
-受限发现只读取声明的来源；后续观察使用已经冻结的闭包，不能重新读取变化中的用户目录解释旧计划。JSON/JSONC/YAML 的语义读取由现有 Host 入口负责，不为一种输入再实现通用解析后备路径。
-
-## 本轮必须恢复的三个闭环
-
-### OkNTE 日常入口
-
-固定 v1.4.21 中 `LauncherTask` 是第一项，`DailyRoutineTask` 是第二项；ok-script 2.0.17 的 `-t` 为 1-based。main 的 `-t 2` 进入日常，基线 next 的 `-t 1` 接错任务。本轮直接恢复日常入口，保留其他已证明必要的 next 身份与启动检查。
-
-OkWW 的首项恰是日常，仍使用它自己的 `-t 1`。不把两个插件的参数变为一个无依据的默认值。对 `-a true -u manual` 的差异，只有存在明确上游消费者证据时才一并调整；任务索引修复不授权猜测更新策略。
-
-### BAAH 文件日志
-
-固定 BAAH2.5.1 写 `DATA/LOGS/log_*.txt`；next 声明的 `*.log` 不匹配。观察器只接受主声明文件 `file:0`，stdout 不是等价来源。本轮修正声明，并验证“发现输出→真实文件名→Host 文件流→观察器”这条链。
-
-最小正例是正确文件流形成完整任务结果；相同文字来自 stdout 或缺失文件时仍保持未核实。不得为了让正例通过而取消来源隔离，或用 exit 0 补成功。
+请求保留 format/version/direction、插件、phase、operationId 和 run/attempt/plan 身份。配置提案绑定资源、原 SHA、revision、expected 值与精确 selector；Host 核验权限、物理来源与事务。
 
 ### BAAH 修复闭环
 
-`SAVE_LOG_TO_FILE=false` 同时产生运行阻断诊断和 false→true 的精确修复建议；Host 基线因任何 blocking 而拒绝首次 preview/apply。本轮区分“当前不可运行”与“候选修复是否可安全应用”，对修复后的候选重新验证。
+文件日志关闭时，配置阶段返回运行阻断诊断和 false→true 的精确修复。Host 的 preview/apply 对候选重新核验，保留摘要、修订、原操作、expected-value 和受保护字段。陈旧候选拒绝。运行诊断与修复准入分别归所属 owner，具体键和来源见[BAAH](../projects/baah.md)。
 
-保留 digest、revision、expected-value、原 operationId 与提交核对。不要直接过滤掉全部 blocking，也不要把变更后的建议当成原建议继续提交。主修复点跨 Host 与插件，只验证这一个真实公开消费链即可。
+OkNTE 日常参数、BAAH 日志 glob 和主流来源的独立依据见[上游参考](../reference/upstream-oracles.md)，本页不重复维护参数表。
 
-完整固定证据和链接见[上游 oracle](../developer/upstream-oracles.md)。
+## 配置接续与重试
 
-## 重试与配置接续
+普通调用的活动配置接续由 Host 维护。专项只提出冻结范围内的任务选择或原入口续跑建议，保留原生进度、日期、额度、次数、未知字段和其他实例。
 
-普通脚本入口的旧版接续语义由 Host 负责恢复：下一轮应保留上一轮活动配置中的合法进度。专项只能提出当前范围内的选择或原入口续跑建议，不为每个插件复制一份重试状态机。
+失败子集只包含已选、启用、明确失败且获准安全重试的任务；partial、unknown 和未知副作用保持原事实。技术准备依赖由当前插件声明，Host 冻结并核验 writer 停止、配置还原及预算。
 
-专项失败子集仍遵守当前安全边界：仅已选、启用、明确失败并已证明可安全重试的任务；unknown、partial 和未知外部副作用不盲目重放。技术准备步骤需要按真实新进程依赖保留。日期、额度、计数、游标和未知字段不能被配置修复顺手重置。
+## Maa 数据专项共同边界
 
-未知任务/版本不隐藏。保留支持范围已覆盖的外部旧格式；删除兼容分支需要对应支持来源已取消的证据。本轮不添加新的 Nexus main 运行时兼容协议。
+MaaEnd/MaaStellaSora 调用用户自行安装的上游程序。两者保持数据包：manifest、adapter、说明与本地化；无 DLL、worker、native 或浏览器模块，也不要求安装通用 MaaFramework 驱动。
 
-## 最小验证如何写
+账号配置使用保存快照；interface/import/locale 的只读资料按声明闭包冻结，独立于配置交换。任务保留顺序、选项、自定义名称和未知原值。未知禁用项保留，未知启用项的诊断与重试按各插件实现处理。
 
-代码阶段同时完成必要产品假设用例的修改，但不运行。预期应来自固定上游与已保留 main 行为，不读取被测实现算出自己的 expected。
+日志核对 source、epoch、sequence 与最终 drain，真实进程和恢复事实归 Host。原生编辑通过已有配置事务启动、采集和还原，停止证明通过后才发布结果。各插件实例、格式和日志规则见对应项目页；专项与通用框架的验证归属见[Maa 覆盖](../reference/maa-coverage.md)。
 
-| 改动 | 最低有效证明 |
-|---|---|
-| 日常任务编号 | 发现 argv 对固定消费者确实选中日常；另一个插件编号不被误改 |
-| 日志 glob | 真实命名样例被选择并成为正确 sourceId，错误来源不建立结果 |
-| 修复 blocking | false 候选可预览并在原 CAS 下应用；陈旧候选仍拒绝 |
-| 日志状态 | 已知失败不被后续总横幅覆盖，缺口不被补成成功 |
-| 重试选择 | 保留进度与已完成事实，不扩大到未知或有副作用的任务 |
+## 验证与构建
 
-只改 OkNTE 发现参数时不遍历所有八个游戏的真实安装。共用 runtime 被改动时依据实际消费者增加最小代表样例，不默认重跑每个未受影响的整套 suite。现役命令和选择器限制见[统一验证](../developer/validation.md)。
+按修改选择固定入口消费者、真实日志来源、配置 CAS、任务结果和重试范围等产品假设。共享 runtime 改动扩大到实际消费者。Node 与 Host/Jint 的现役命令由[验证指南](../development/validation.md)维护，构建与打包由[构建指南](../development/building.md)维护。
