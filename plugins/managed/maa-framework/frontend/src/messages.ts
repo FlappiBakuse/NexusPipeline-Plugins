@@ -1,4 +1,6 @@
 export const english: Readonly<Record<string, string>> = {
+  "将在保存后清除": "Will be cleared after saving",
+  "已配置，留空保留": "Configured; leave empty to keep",
   '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
   '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
   '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',

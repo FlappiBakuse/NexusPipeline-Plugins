@@ -1,4 +1,7 @@
 export const english: Readonly<Record<string, string>> = {
+  "所有游戏均可排序，未订阅游戏也可调整；聚焦把手后可用上下方向键排序，保存后生效。": "All games can be reordered, including unsubscribed games. Focus a handle and use the arrow keys; changes apply after saving.",
+  "选择该游戏的内容进度；显示语言不会改变区服，保存后生效。": "Choose the content progression for this game. Display language does not change the region; changes apply after saving.",
+  "填写 10–120 秒；-1 关闭自动轮播，保存后生效。": "Enter 10\u2013120 seconds, or -1 to disable automatic rotation. Changes apply after saving.",
   '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
   '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
   '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',

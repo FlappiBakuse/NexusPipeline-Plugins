@@ -160,13 +160,6 @@
 .checkin-records p {
   margin: 4px 0;
 }
-.checkin-empty {
-  display: block;
-  padding: 40px 20px;
-  border: 1px solid var(--nx-color-border);
-  border-radius: 16px;
-  background: var(--content-card);
-}
 @media (max-width: 900px) {
   .checkin-task-head {
     grid-template-columns: 28px 36px minmax(0, 1fr);

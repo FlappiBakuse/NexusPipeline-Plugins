@@ -2,6 +2,7 @@ import { button, choice, field, paragraph, toggle, type Panel } from '../../../f
 import type { MaaOption, MaaProfile, MaaSchema } from './ports.js';
 import { secretKey, projectScope, type MaaSecretDraft, type MaaSecretDrafts } from './secret-drafts.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
+import type { UiElement } from '@nexuspipeline/extension-sdk';
 
 export function activeOptions(schema: MaaSchema, profile: MaaProfile, selectedRoots?: readonly string[]): string[] {
   const applicable = (item: { controller?: readonly string[]; resource?: readonly string[] }) =>
@@ -94,7 +95,7 @@ export function optionFields(
     }
     if (!allowSecretEdits) { paragraph(parent, label + '：' + panel.t('脚本项目的受保护字段请在账号绑定中配置。')); continue; }
     drafts.activate(name);
-    field(
+    const inputControl = field(
       panel,
       parent,
       label,
@@ -109,6 +110,8 @@ export function optionFields(
     const refresh = () => {
       const binding = (profile.options[key] as Record<string, unknown> | undefined)?.[input.name] as { $maaSecret?: string } | undefined;
       const state = profile.protectedInputs?.find(item => item.key === binding?.$maaSecret);
+      (inputControl as UiElement<'nexus-text-input'>).placeholder = panel.t(
+        drafts.get(name)?.edit?.intent === 'clear' ? '将在保存后清除' : state?.isConfigured ? '已配置，留空保留' : '未配置受保护密钥');
       status.textContent = panel.t(drafts.get(name)?.edit?.intent === 'set' ? '新密钥仅在确认保存后写入' :
         drafts.get(name)?.edit?.intent === 'clear' ? '清除仅在确认保存后生效' : state?.isConfigured ?
           state.isReadable ? '已配置受保护密钥' : '受保护密钥当前不可读取' : '未配置受保护密钥');

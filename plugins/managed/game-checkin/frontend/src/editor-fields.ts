@@ -1,4 +1,5 @@
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { field, type Panel } from '../../../frontend-ui/src/elements.js';
 import { schedules } from './schedule-fields.js';
@@ -96,8 +97,8 @@ export function taskFields(
   const games = document.createElement('div');
   games.className = 'checkin-game-grid';
   body.append(games);
-  for (const platform of state.platforms)
-    selection(
+  for (const platform of state.platforms) {
+    const control = selection(
       panel,
       games,
       () => panel.t(platform.name) + ' ' + panel.t('签到游戏'),
@@ -108,6 +109,8 @@ export function taskFields(
         else delete draft.games[platform.id];
       }
     );
+    fieldHelp(panel, control, '本任务触发时，仅对所选平台游戏执行签到。');
+  }
   for (const platform of state.platforms) credentials.mount(body, platform);
   const notification = document.createElement('div');
   notification.className = 'checkin-notification';

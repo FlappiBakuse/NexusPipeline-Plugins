@@ -1,4 +1,6 @@
 export const english: Readonly<Record<string, string>> = {
+  "本任务触发时，仅对所选平台游戏执行签到。": "This task checks in only for the selected platform games when triggered.",
+  "留空保留已保存凭据；清除操作在保存后生效。": "Leave empty to keep the saved credential; clearing takes effect after saving.",
   '已恢复未保存的草稿，请及时保存或取消。': 'An unsaved draft was restored. Please save or cancel it.',
   '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
   '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',

@@ -1,4 +1,5 @@
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { choice, range, type Panel } from '../../../frontend-ui/src/elements.js';
 import type { WallpaperEffects, WallpaperPatch, WallpaperState } from './ports.js';
@@ -95,6 +96,7 @@ export function wallpaperControls(
     }
   );
   const intervalRow = document.createElement('label');
+  fieldHelp(panel, mode, '按时间随机轮换会按设定间隔切换壁纸；每次启动 Web 随机轮换会在新界面会话准备时选择壁纸。');
   intervalRow.className = 'plugin-field';
   const caption = document.createElement('span');
   bindLocale(panel.t, panel.signal, caption, 'textContent', () => {
@@ -120,6 +122,7 @@ export function wallpaperControls(
   );
   intervalRow.append(caption, interval);
   rotations.append(intervalRow);
+  fieldHelp(panel, interval, '按时间随机轮换时生效，范围为 1–1440 分钟。');
   const effects = document.createElement('div');
   effects.className = 'wallpaper-effects';
   body.append(effects);
@@ -182,6 +185,9 @@ function effectControls(
       }
     ) as UiElement<'nexus-range'>;
     ranges.set(key, element);
+    fieldHelp(panel, element, key === 'blurPx' ? '模糊范围为 0–40 像素。' : key === 'dimPercent'
+      ? '变暗范围为 0–80%，用于调整壁纸与内容的对比度。'
+      : '控制页面卡片、侧边栏和其他表面的透明度，范围为 0–50%。');
   }
   return ranges;
 }

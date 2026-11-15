@@ -1,6 +1,28 @@
 import { choose } from './controls.mjs';
 
 export async function activitySurfaceCases({page,test}) {
+  await test('activity settings apply only on Save and discard Cancel or Close', async () => {
+    for (const action of ['取消', '关闭', '保存']) {
+      await mount();
+      const before = await page.evaluate(() => structuredClone(window.activityState));
+      await page.getByRole('button', { name: '活动设置', exact: true }).click();
+      await page.getByRole('switch', { name: '原神', exact: true }).click();
+      await choose(page.locator('nexus-select[aria-label="蔚蓝档案 内容进度"]'), 'jp');
+      await page.locator('.activity-game-row[data-item-id="honkai-star-rail"] nexus-drag-handle').press('ArrowUp');
+      await page.getByRole('spinbutton', { name: '轮播频率（秒）', exact: true }).fill('45');
+      if (!await page.evaluate(before => window.activityWrites === 0 && JSON.stringify(window.activityState) === JSON.stringify(before), before))
+        throw Error('Editing settings changed the effective subscriptions before Save');
+      await page.locator('nexus-modal').getByRole('button', { name: action, exact: true }).click();
+      await page.locator('nexus-modal').waitFor({ state: 'detached' });
+      if (action === '保存') {
+        if (!await page.evaluate(() => window.activityWrites === 1 && window.activityState.rotationSeconds === 45 &&
+          !window.activityState.selectedFeedIds.includes('gi') && window.activityState.progressions['blue-archive'] === 'jp' &&
+          window.activityState.gameOrder[0] === 'honkai-star-rail')) throw Error('Save did not apply the entire draft once');
+      } else if (!await page.evaluate(before => window.activityWrites === 0 && JSON.stringify(window.activityState) === JSON.stringify(before), before))
+        throw Error(action + ' changed the saved activity settings');
+      await page.evaluate(() => window.fixture.dispose());
+    }
+  });
   await test('activity error toast translates across live locale changes', async () => {
     await mount();
     await page.evaluate(() => { window.fixture.ports.refreshAll = async () => { throw Error('activity_state_invalid'); }; });

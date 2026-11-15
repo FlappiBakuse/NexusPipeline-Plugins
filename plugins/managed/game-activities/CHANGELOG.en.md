@@ -2,7 +2,7 @@
 
 ## 0.5.0
 
-- Apply activity settings immediately; Cancel restores the opening values while Save and Close retain changes. Confirm lost replies through read-only commit lookup.
+- Activity subscriptions, progression, order and rotation interval apply only after Save; Cancel or Close discards edits. Lost responses are reconciled against the original submission.
 
 - Refresh activity state from subscriptions and load selected feeds on demand while reusing valid caches.
 

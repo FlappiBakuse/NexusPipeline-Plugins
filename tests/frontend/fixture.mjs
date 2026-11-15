@@ -1,6 +1,6 @@
 import { installFixture } from './fixture-bootstrap.mjs';
 import { screenshotLifecycle } from './screenshot-lifecycle.mjs';
-import { choose, confirm } from './controls.mjs';
+import { choose, confirm, fieldHelp } from './controls.mjs';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import http from 'node:http';
@@ -254,6 +254,7 @@ await test('wallpaper settings and appearance', async () => {
   });
   await page.locator('.wallpaper-settings').getByRole('button').first().click();
   await page.getByText('A.png').waitFor();
+  await fieldHelp(page, page.getByText('轮换方式', { exact: true }).locator('..').locator('nexus-select'), '按时间随机轮换会按设定间隔切换壁纸');
   if (!await page.locator('nexus-file-picker').count()) throw new Error(`Picker absent initially: ${await page.locator('#app').innerHTML()}`);
   await choose(page.getByText('轮换方式').locator('..').locator('nexus-select'), 'startup');
   await page.locator('.wallpaper-list').waitFor();
@@ -302,6 +303,7 @@ await test('activities carousel and details', async () => {
   await page.locator('nexus-modal').getByRole('button', { name: '关闭', exact: true }).click();
   await page.locator('nexus-modal').waitFor({ state: 'detached' });
   await page.getByRole('button', { name: '活动设置', exact: true }).click();
+  await fieldHelp(page, page.locator('.activity-frequency nexus-number-input'), '填写 10–120 秒');
   await choose(page.locator('nexus-select[aria-label="Game 内容进度"]'), 'jp');
   await page.locator('.activity-game-row[data-item-id="Other"] nexus-drag-handle').press('ArrowUp');
   await page.locator('nexus-modal').getByRole('button', { name: '保存', exact: true }).click();
@@ -343,6 +345,7 @@ await test('checkin task editor and secret draft', async () => {
   });
   await page.getByText('添加签到任务').click();
   await page.locator('.checkin-editor').waitFor();
+  await fieldHelp(page, page.locator('.checkin-credential-input nexus-text-input').first(), '留空保留已保存凭据');
   await page.locator('.checkin-editor nexus-text-input').first().locator('input').fill('每日签到');
   await choose(page.locator('nexus-select[aria-label="米游社 签到游戏"]'), 'game');
   await page.keyboard.press('Escape');

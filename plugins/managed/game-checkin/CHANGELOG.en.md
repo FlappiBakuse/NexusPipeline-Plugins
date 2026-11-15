@@ -2,6 +2,8 @@
 
 ## 0.5.0
 
+- Match the shared empty-state height, text sizes and weights used by Host pages.
+
 - Retain only edited drafts and show save-or-cancel reminders when reopening them. Highlight changed fields only in restored existing objects. Saving updates the baseline; cancellation and session disposal clear the corresponding drafts.
 
 - Synchronize the task page from state events, preserve revisions for unchanged state, and stop hidden subscriptions.

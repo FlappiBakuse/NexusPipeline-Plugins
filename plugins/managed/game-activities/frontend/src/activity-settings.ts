@@ -1,11 +1,12 @@
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { Panel } from '../../../frontend-ui/src/elements.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { button } from '../../../frontend-ui/src/elements.js';
 import { createModal } from '../../../frontend-ui/src/modal.js';
 import type { ActivityFeed, ActivityState } from './ports.js';
 import { activityGames, gameName } from './activity-labels.js';
-import { rebaseSettings, type SettingsWrites } from '../../../frontend-ui/src/settings-writes.js';
+import type { SettingsWrites } from '../../../frontend-ui/src/settings-writes.js';
 
 export function openActivitySettings(
   panel: Panel,
@@ -19,12 +20,8 @@ export function openActivitySettings(
   modal.body.className = 'activity-settings';
   const settings = (value: ActivityState) => ({ selectedFeedIds: [...value.selectedFeedIds],
     gameOrder: [...(value.gameOrder || [])], progressions: { ...value.progressions }, rotationSeconds: value.rotationSeconds });
-  const baseline = settings(state);
-  let owned = settings(state);
-  let changing = Promise.resolve();
+  let saving = false;
   const draft = settings(state);
-  const switches = new Map<string, UiElement<'nexus-switch'>>();
-  const selectors = new Map<string, UiElement<'nexus-select'>>();
   const heading = document.createElement('h3');
   bindLocale(panel.t, modal.signal, heading, 'textContent', () => {
     heading.textContent = panel.t('游戏订阅');
@@ -49,6 +46,7 @@ export function openActivitySettings(
       handle.label = panel.t('调整') + gameName(game, panel.t) + panel.t('的顺序');
     });
     row.append(handle);
+    fieldHelp(panel, handle, '所有游戏均可排序，未订阅游戏也可调整；聚焦把手后可用上下方向键排序，保存后生效。', modal.signal);
     const title = document.createElement('strong');
     bindLocale(panel.t, modal.signal, title, 'textContent', () => {
       title.textContent = gameName(game, panel.t);
@@ -62,13 +60,11 @@ export function openActivitySettings(
     const enabled = document.createElement('nexus-switch') as UiElement<'nexus-switch'>;
     enabled.value = !!selected && draft.selectedFeedIds.includes(selected.id);
     enabled.disabled = !selected;
-    switches.set(game, enabled);
     bindLocale(panel.t, modal.signal, enabled, 'aria-label', () => {
       enabled.setAttribute('aria-label', gameName(game, panel.t));
     });
     const select = document.createElement('nexus-select') as UiElement<'nexus-select'>;
     select.value = draft.progressions[game] ?? selected?.progressionId ?? '';
-    selectors.set(game, select);
     select.options = options.map((item) => ({ id: item.value, label: item.label }));
     bindLocale(panel.t, modal.signal, select, 'aria-label', () => {
       select.setAttribute('aria-label', gameName(game, panel.t) + ' ' + panel.t('内容进度'));
@@ -76,7 +72,6 @@ export function openActivitySettings(
     const change = () => {
       draft.selectedFeedIds = draft.selectedFeedIds.filter((id) => !feeds.some((item) => item.id === id));
       if (enabled.value && selected) draft.selectedFeedIds.push(selected.id);
-      void commit();
     };
     enabled.addEventListener('nexus-change', change, { signal: modal.signal });
     select.addEventListener(
@@ -89,7 +84,10 @@ export function openActivitySettings(
       },
       { signal: modal.signal }
     );
-    if (options.length > 1) row.append(select);
+    if (options.length > 1) {
+      row.append(select);
+      fieldHelp(panel, select, '选择该游戏的内容进度；显示语言不会改变区服，保存后生效。', modal.signal);
+    }
     row.append(enabled);
   }
   list.addEventListener(
@@ -102,7 +100,6 @@ export function openActivitySettings(
       list.ids = ids;
       draft.gameOrder = ids;
       for (const id of ids) list.append(rows.get(id)!);
-      void commit();
     },
     { signal: modal.signal }
   );
@@ -115,7 +112,6 @@ export function openActivitySettings(
   label.append(caption);
   const interval = document.createElement('nexus-number-input') as UiElement<'nexus-number-input'>;
   interval.value = draft.rotationSeconds;
-  interval.addEventListener('nexus-change', () => { void commit(); }, { signal: modal.signal });
   interval.min = -1;
   interval.max = 120;
   interval.setAttribute('aria-required', 'true');
@@ -124,6 +120,7 @@ export function openActivitySettings(
   });
   label.append(interval);
   modal.body.append(label);
+  fieldHelp(panel, interval, '填写 10–120 秒；-1 关闭自动轮播，保存后生效。', modal.signal);
   const selectedFeed = state.feeds.find((item) => state.selectedFeedIds.includes(item.id));
   if (selectedFeed?.lastGoodAt) {
     const help = document.createElement('p');
@@ -159,46 +156,27 @@ export function openActivitySettings(
     draft.rotationSeconds = seconds;
     return true;
   }
-  function commit(): Promise<void> {
-    if (writer.unknown || !valid()) return changing;
-    changing = writer.patch({ ...draft }).then(saved => {
-      owned = settings(saved); update(saved);
-    }).catch(reason => {
-      if (modal.alive()) { error.textContent = panel.t(reason instanceof Error ? reason.message : String(reason)); error.hidden = false; }
-    });
-    return changing;
-  }
-  const cancel = button(panel, modal.footer, '取消', async () => {
+  button(panel, modal.footer, '取消', () => modal.close('cancel'), modal.signal);
+  const save = button(panel, modal.footer, '保存', async () => {
+    if (saving || writer.unknown) return;
+    if (!valid()) { interval.focus(); return; }
+    saving = true; synchronize();
     try {
-      await changing;
-      await writer.settled();
-      const restored = rebaseSettings(settings(writer.value), owned, baseline);
-      const saved = await writer.patch(restored); update(saved);
-      if (!writer.error && modal.alive()) modal.close('cancel');
+      const saved = await writer.patch({ ...draft });
+      update(saved);
+      if (!writer.error && modal.alive()) modal.close('saved');
     } catch (reason) {
       if (modal.alive()) { error.textContent = panel.t(reason instanceof Error ? reason.message : String(reason)); error.hidden = false; }
-    }
-  }, modal.signal);
-  const save = button(panel, modal.footer, '保存', async () => {
-    if (!valid()) { interval.focus(); return; }
-    await commit(); await writer.settled();
-    if (!writer.error && modal.alive()) modal.close('saved');
+    } finally { saving = false; synchronize(); }
   }, modal.signal);
   save.setAttribute('tone', 'info');
   const synchronize = () => {
     if (!modal.alive()) return;
-    list.disabled = writer.unknown; modal.body.inert = writer.unknown;
-    cancel.toggleAttribute('disabled', writer.unknown); save.toggleAttribute('disabled', writer.unknown);
+    list.disabled = saving || writer.unknown; modal.body.inert = saving || writer.unknown;
+    save.toggleAttribute('disabled', saving || writer.unknown);
     if (writer.error) {
-      Object.assign(draft, settings(writer.value));
-      interval.value = writer.value.rotationSeconds;
-      list.ids = draft.gameOrder;
-      for (const id of draft.gameOrder) if (rows.has(id)) list.append(rows.get(id)!);
-      for (const [game, input] of switches) input.value = state.feeds.some(feed =>
-        feed.game === game && draft.selectedFeedIds.includes(feed.id));
-      for (const [game, input] of selectors) input.value = draft.progressions[game] ?? state.feeds.find(feed => feed.game === game)?.progressionId ?? '';
       error.textContent = panel.t(writer.error); error.hidden = false;
-    } else if (!writer.unknown) error.hidden = true;
+    }
   };
   const stop = writer.listen(synchronize);
   modal.signal.addEventListener('abort', stop, { once: true });

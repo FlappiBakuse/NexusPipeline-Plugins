@@ -1,4 +1,5 @@
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { button, confirm, type Panel } from '../../../frontend-ui/src/elements.js';
 import type { CheckInPlatform, CheckInPorts, CredentialEditor, SecretAction } from './ports.js';
@@ -178,6 +179,8 @@ export class CredentialFields {
     controls.append(inputWrap);
     label.append(caption, controls);
     row.element.append(label);
+    fieldHelp(panel, input, () => panel.t(placeholders[id] || '凭据') + '。' + panel.t(
+      '留空保留已保存凭据；清除操作在保存后生效。'), signal);
     if (current?.configured) {
       const control = button(panel, controls, clear ? '将在保存后清除' : '清除已保存凭据', () => {
         this.change(id);

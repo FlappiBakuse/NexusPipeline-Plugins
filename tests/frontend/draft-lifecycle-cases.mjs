@@ -153,7 +153,7 @@ export async function draftLifecycleCases({ page, test }) {
     if (await input().inputValue()) throw Error('Maa parent cancellation retained a secret draft');
   });
 
-  await test('activity settings apply immediately and Cancel restores the current opening', async () => {
+  await test('activity Save remains owned after Close and Cancel discards later edits', async () => {
     await page.evaluate(async () => {
       let state = { revision: 1, settingsRevision: 1, selectedFeedIds: ['gi'], gameOrder: ['genshin-impact'],
         rotationSeconds: 30, pauseOnHover: true, pauseWhenHidden: true, progressions: {},
@@ -172,32 +172,23 @@ export async function draftLifecycleCases({ page, test }) {
     const open = () => page.getByRole('button', { name: '活动设置', exact: true }).click();
     const interval = () => page.locator('nexus-number-input[aria-label="轮播频率（秒）"]').locator('input');
     await open(); await interval().fill('45'); await interval().press('Tab');
-    await page.waitForFunction(() => window.activitySettingState?.rotationSeconds === 45).catch(async reason => {
-      throw Error('Completed activity input was not saved: ' + JSON.stringify(await page.evaluate(() => ({
-        submitted: window.activitySettingWrites.map(item => item.value.rotationSeconds),
-        shown: document.querySelector('nexus-number-input').value,
-        invalid: document.querySelector('nexus-number-input').getAttribute('aria-invalid'),
-        error: document.querySelector('.activity-error')?.textContent
-      }))) + ' ' + reason.message);
-    });
-    await page.locator('nexus-modal').getByRole('button', { name: '关闭', exact: true }).click();
-    await page.locator('nexus-modal').waitFor({ state: 'detached' }); await open();
-    if (await interval().inputValue() !== '45' || await page.locator('.draft-restored').count())
-      throw Error('Activity close did not retain committed settings independently of drafts');
+    if (await page.evaluate(() => window.activitySettingWrites.length) !== 0)
+      throw Error('Completed input was submitted before Save');
     await page.evaluate(() => { window.holdActivitySave = true; });
-    await interval().fill('60'); await interval().press('Tab');
-    await page.waitForFunction(() => !!window.releaseActivitySave).catch(async reason => {
-      throw Error('A pending activity save was not started: ' + JSON.stringify(await page.evaluate(() => ({
-        submitted: window.activitySettingWrites.map(item => item.value.rotationSeconds),
-        shown: document.querySelector('nexus-number-input').value,
-        error: document.querySelector('.activity-error')?.textContent
-      }))) + ' ' + reason.message);
-    });
-    await page.locator('nexus-modal').getByRole('button', { name: '取消', exact: true }).click();
-    await page.evaluate(() => { window.holdActivitySave = false; window.releaseActivitySave(); });
+    await page.locator('nexus-modal').getByRole('button', { name: '保存', exact: true }).click();
+    await page.waitForFunction(() => !!window.releaseActivitySave);
+    await page.locator('nexus-modal').getByRole('button', { name: '关闭', exact: true }).click();
     await page.locator('nexus-modal').waitFor({ state: 'detached' });
-    if (await page.evaluate(() => window.activitySettingState.rotationSeconds) !== 45)
-      throw Error('Activity Cancel did not persist the opening baseline');
+    await page.evaluate(() => { window.holdActivitySave = false; window.releaseActivitySave(); });
+    await page.waitForFunction(() => window.activitySettingState?.rotationSeconds === 45);
+    await open();
+    if (await interval().inputValue() !== '45' || await page.locator('.draft-restored').count())
+      throw Error('Closing the view lost its accepted Save');
+    await interval().fill('60'); await interval().press('Tab');
+    await page.locator('nexus-modal').getByRole('button', { name: '取消', exact: true }).click();
+    await page.locator('nexus-modal').waitFor({ state: 'detached' });
+    if (!await page.evaluate(() => window.activitySettingWrites.length === 1 && window.activitySettingState.rotationSeconds === 45))
+      throw Error('Cancel submitted or retained an unsaved edit');
     await page.evaluate(() => window.fixture.remount()); await open();
     if (await interval().inputValue() !== '45') throw Error('Activity remount lost committed settings');
     const widths = await page.locator('nexus-modal [slot=footer] nexus-button').evaluateAll(elements =>

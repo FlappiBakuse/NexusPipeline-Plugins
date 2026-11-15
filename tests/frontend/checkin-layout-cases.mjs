@@ -1,4 +1,33 @@
 export async function checkinLayoutCases({ page, test }) {
+  await test('checkin empty card shares Host dimensions and typography', async () => {
+    await page.evaluate(async () => {
+      const state = { revision: 1, timeZoneId: 'UTC', platforms: [], notificationTasks: [], tasks: [] };
+      await window.testMount('game-checkin', { readState: async () => state }, 'route');
+    });
+    await page.getByText('还没有签到任务', { exact: true }).waitFor();
+    for (const width of [360, 768, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      const dimensions = await page.locator('.checkin-empty').evaluate(empty => {
+        const reference = document.createElement('nexus-empty-state');
+        reference.title = empty.title; reference.description = empty.description;
+        reference.style.width = empty.getBoundingClientRect().width + 'px';
+        document.body.append(reference);
+        const measure = element => {
+          const title = getComputedStyle(element.shadowRoot.querySelector('h3'));
+          const description = getComputedStyle(element.shadowRoot.querySelector('p'));
+          return { height: element.getBoundingClientRect().height, titleSize: title.fontSize, titleWeight: title.fontWeight,
+            descriptionSize: description.fontSize, descriptionWeight: description.fontWeight };
+        };
+        const result = { actual: measure(empty), reference: measure(reference) };
+        reference.remove();
+        return result;
+      });
+      if (JSON.stringify(dimensions.actual) !== JSON.stringify(dimensions.reference) || dimensions.actual.height !== 147 ||
+        dimensions.actual.titleSize !== '15px' || dimensions.actual.titleWeight !== '700' ||
+        dimensions.actual.descriptionSize !== '13px' || dimensions.actual.descriptionWeight !== '400')
+        throw Error('Check-in empty card differs from Host empty states: ' + JSON.stringify({ width, ...dimensions }));
+    }
+  });
   await test('checkin unchanged page waits for events and resumes current state after hiding', async () => {
     await page.evaluate(async () => {
       window.stateReads = 0; window.stateSubscriptions = 0;

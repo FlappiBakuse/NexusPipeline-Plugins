@@ -165,7 +165,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       }, 'overview.cards');
       await new Promise(resolve => setTimeout(resolve, 30));
       const cacheVisible = window.fixture.element.querySelector('.activity-slide[aria-hidden=false] h3')?.textContent === 'Cached Event'
-        && window.fixture.element.querySelector('[role=alert]')?.textContent === '部分失败，保留原数据';
+        && window.fixture.element.querySelector('nexus-toast[role=alert]')?.message === '部分失败，保留原数据';
       window.fixture.hide();
       release(new Blob(['late']));
       await new Promise(resolve => setTimeout(resolve, 20));
@@ -259,7 +259,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       throw new Error(`Maa root authority survived change: ${JSON.stringify(draft)}`);
   });
 
-  await test('activities failed immediate save restores confirmed values', async () => {
+  await test('activities failed Save retains the draft and Cancel keeps confirmed values', async () => {
     await page.evaluate(async () => {
       window.activityWrites = 0;
       const state = { revision: 1, settingsRevision: 1, selectedFeedIds: ['cn'], rotationSeconds: 30,
@@ -278,9 +278,11 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
     await page.getByRole('button', { name: '活动设置', exact: true }).click();
     const selection = page.locator('nexus-select[aria-label="原神 内容进度"]');
     await choose(selection, 'jp');
+    if (await page.evaluate(() => window.activityWrites) !== 0) throw Error('Draft selection submitted before Save');
+    await page.locator('nexus-modal').getByRole('button', { name: '保存', exact: true }).click();
     await page.getByText('fixture save failed').waitFor();
-    if (await selection.evaluate(element => element.value) !== 'cn' || await page.locator('dialog[open]').count() !== 1)
-      throw new Error('Failed setting did not restore its confirmed value or retain the error surface');
+    if (await selection.evaluate(element => element.value) !== 'jp' || await page.locator('dialog[open]').count() !== 1)
+      throw new Error('Failed Save lost its draft or error surface');
     await page.locator('nexus-modal').getByRole('button', { name: '取消', exact: true }).click();
     await page.locator('nexus-modal').waitFor({ state: 'detached' });
     await page.getByRole('button', { name: '活动设置', exact: true }).click();
