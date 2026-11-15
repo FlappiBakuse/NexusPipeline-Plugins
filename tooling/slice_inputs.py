@@ -2,7 +2,6 @@
 import ast
 import glob
 import json
-import os
 from pathlib import Path
 import platform
 import re

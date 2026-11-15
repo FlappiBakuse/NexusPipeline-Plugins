@@ -1,6 +1,5 @@
 """Validate the stable candidate whitelist and its original package facts."""
 import hashlib
-from pathlib import Path
 import re
 import stat
 import zipfile

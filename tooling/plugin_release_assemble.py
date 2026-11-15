@@ -2,7 +2,6 @@
 import argparse
 from copy import deepcopy
 from datetime import datetime, timezone
-import hashlib
 import json
 from pathlib import Path
 import sys

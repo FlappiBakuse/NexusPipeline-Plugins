@@ -16,11 +16,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'tooling'))
 import test_plugin_release_plan as planning
 from package_extension import archive
-from plugin_release_git import PREFIX, blob_sha
+from plugin_release_git import PREFIX
 from plugin_release_inputs import CATALOG, STATE
 from plugin_release_publish import publish_stable
 from plugin_release_check import verify_original
-from release_candidate import inventory, validate
+from release_candidate import inventory
 from release_provenance import POLICIES
 
 

@@ -163,19 +163,6 @@ export function paragraph(parent: Element, value: string) {
   return element;
 }
 
-export function section(parent: Element, heading: string) {
-  const element = document.createElement('section');
-  const title = document.createElement('h4');
-  title.textContent = heading;
-  element.append(title);
-  parent.append(element);
-  return element;
-}
-
-export function errorText(error: unknown) {
-  return error instanceof Error ? error.message : String(error);
-}
-
 const confirmations = new WeakMap<Panel, Promise<boolean>>();
 export function confirm(panel: Panel, message: string, tone: 'neutral' | 'warning' | 'danger' = 'neutral'): Promise<boolean> {
   if (!panel.alive()) return Promise.resolve(false);
