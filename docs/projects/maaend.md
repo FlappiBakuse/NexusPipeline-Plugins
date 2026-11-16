@@ -8,4 +8,4 @@ MaaEnd 以 `settings.autoStartInstanceId` 唯一匹配实例，使用 `--autosta
 
 任务结果使用五语种成对外层事件，核对当前来源、顺序、缺终态和失败保留。未知任务和原配置保留，重试只投影已知且获准选择的任务。
 
-验证归属见[Maa 覆盖](../reference/maa-coverage.md)，组件入口见[验证指南](../development/validation.md)。真实发行程序与设备资格见[当前状态](../status.md)。
+验证归属见[Maa 覆盖](../reference/maa-coverage.md)，组件入口见[验证指南](../development/validation.md)。

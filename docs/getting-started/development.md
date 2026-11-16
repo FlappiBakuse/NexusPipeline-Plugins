@@ -6,7 +6,7 @@
 
 准备配套 Host 与 Plugins 源码根、独立仓外工作根和需要修改的插件。CI 使用 Windows、Python 3.13、Node 24、.NET 10 稳定 SDK；两仓各自的 `global.json` 均从 10.0.100 起选择稳定功能带。具体依赖以项目和原生锁为准。
 
-只准备当前任务所需组件。依赖、构建、测试实例和报告写显式仓外路径；本机放 `D:\Projects\Temp`。不要在源码树中运行 npm install 或把用户真实运行目录作为 fixture。
+只准备当前任务所需组件。依赖、构建、测试实例和报告写显式仓外路径；示例使用 `C:\NexusWork`。不要在源码树中运行 npm install 或把用户真实运行目录作为 fixture。
 
 ## 选择代码路径
 
@@ -36,4 +36,4 @@ python -B tooling/build_specialized_slice.py --extension oknte --sdk-receipt <�
 
 SDK 不匹配先查 producer、source lock、原包摘要和导入回执，不手改指纹。构建失败读本次原生日志；Maa 缺原生输入时按其 runtime lock 准备，数据专项不需要 worker 或 native DLL。
 
-前端、managed 与 Jint 采用各自[最低验证层](../development/validation.md)。没有 Windows、浏览器或真实厂商条件时明确记未运行，保留已有结果的实际范围。未完成环境资格见[当前状态](../status.md)。
+前端、managed 与 Jint 采用各自[最低验证层](../development/validation.md)。没有 Windows、浏览器或真实厂商条件时明确记未运行，保留已有结果的实际范围。

@@ -40,7 +40,7 @@ Host 从 `BetterGI.exe` 所属安装中明确选择 `User/OneDragon/<配置>.jso
 一条龙序号分母按上游使用全部启用任务数，配置组使用独立组数量；内置任务结束要求对应 TaskRunner 的启动/结束，嵌套 runner 不提前闭合。配置组要求同一组名的加载/结束。异常 continuation、裸任务名、任意脚本正文、最终整轮横幅及未证明正常的中断都不能补造成功。ERR、取消或明确组失败保持失败；成功只在 `logComplete=true` 的完整流结果中交付。
 
 retry 只返回冻结、已启用、已选且明确失败的内置 ID；成功、partial、unknown、原禁用和范围外任务保留。任意配置组的外部副作用未证明安全，不自动重放。选择提案仍需 Host 的安全策略、writer 停止、恢复、预算与绑定配置投影；本适配器不重置累计次数、日期、资源额度或游标。
-每个现存布尔任务开关绑定 `TaskEnabledList` 投影。原一条龙入口在业务循环前执行游戏启动，重试沿用该入口；观察序号与检查点绑定实际重试子集。原插件 ZIP 已通过受控 Host 持久重试，验证旧进程族停止、成功项保留和原配置恢复；真实 BetterGI 游戏会话仍需另行验收。
+每个现存布尔任务开关绑定 `TaskEnabledList` 投影。原一条龙入口在业务循环前执行游戏启动，重试沿用该入口；观察序号与检查点绑定实际重试子集。
 
 ## 配置提案
 
@@ -48,7 +48,7 @@ configuration 输入的 `configurationIntents` 是显式用户意图。每项完
 
 当前允许已有任务布尔开关、同一任务集合的顺序、已知名称映射、受支持完成动作及明确绑定配置的选取。游标不为空时不改任务顺序。任务计数、日期、预算、账号和未知字段没有自动编辑入口。没有文件写入旁路；实际提交和恢复归 Host。
 
-## 验证与剩余资格
+## 验证入口
 
 专属入口：
 
@@ -58,5 +58,3 @@ python -B tests/specialized/bettergi/native_verify.py --host-root <实际Host源
 ```
 
 选择 Jint 入口时由它运行 Node 向量。Node VM 和从实际生产 `BoundedTaskScript.cs` 编译的独立组件探针运行同一套用例。报告分别写入 node-report.json、native/report.json 和 native/receipt.json，记录命令、退出码、耗时、源码和程序集摘要，并区分编译准备与两个解释器的行为结果。
-
-以下仍须由正式整合验证：冻结 SDK producer 的消费身份、完整 TaskAdapterExecutor 及安装包接入、当前 Host 的日志读取与声明绑定、持久选择重试/停止 writer/恢复、实际配置 UI，以及真实 0.66.0 发行二进制的隔离配置消费、受控失败、取消与再运行。未运行资格记 NOT_RUN；不要求真实账号日常或真实奖励核验。

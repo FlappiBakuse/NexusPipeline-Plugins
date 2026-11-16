@@ -19,6 +19,6 @@
 - Register the project compiler through the SDK, using only Host-selected readonly sources and returning a complete closed asset DAG bound to directory and absence observations.
 - Validate Host-saved configuration mounts, instances and all inheritance dependencies, binding revision, contract and snapshot facts; declare resource trees in semantic order for independent Host archiving.
 - Preserve complete readonly assets with blocking diagnostics when business settings prevent execution. Bind original row positions, inheritance origins and original file hashes while continuing to reject source, identity and budget failures.
-- Register only the compiler during extension activation; own task sessions in the independent worker. Initialization publication, Agent execution and complete device combinations still require qualification.
+- Register only the compiler during extension activation; own task sessions in the independent worker.
 - Provide an independent editor index and paged public subgraph bound to the frozen compilation, preserving the complete known editing schema, occurrence identities, and blockers while excluding raw configuration, saved inputs, passwords, and unknown sensitive extensions.
 - Connect source discovery, explicit instance selection, CAS saves and bounded previews through the actual binding surface and authenticated Host project entry. Release replaced previews when the draft changes or closes.

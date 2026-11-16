@@ -19,6 +19,4 @@
 
 验证入口 `tests/game-activities/verify.py` 接收实际 SDK producer receipt、共享 cache 和仓外 output。它编译当前产品源码与真实 SDK 包，运行源字段、时间、配置、缓存、并发、图片、实际 SDK DTO/dispatch 与 scope 组件案例。fake Host ports 用于组件层。可选 `--source-fields` 使用仓外官方 JSON 额外运行源字段用例。
 
-`tests/game-activities/browser.mjs` 使用实际 P2 控件与 SDK ExtensionScope、生产 createFrontend、真实后端生成的 DTO，transport 为受控夹具。验证订阅 CAS/取消、未订阅进度再启用、未知时间、无公告跳转、图片 release、360px 及停止轮询；不等同已安装 Host 的鉴权或网络证据。
-
-当前定向验证为组件 88/88、活动选择与详情焦点浏览器场景、程序集编译与五模块 typecheck/bundle PASS。完整 Host 原包安装后，重启进程并通过拒绝联网的代理读取六张缓存图片，摘要全部一致；未缓存图片请求被拒绝，原代理设置恢复。独立上游二进制资格为 NOT_APPLICABLE。
+`tests/game-activities/browser.mjs` 使用公共控件与 SDK ExtensionScope、生产 createFrontend、真实后端生成的 DTO，transport 为受控夹具。验证订阅 CAS/取消、未订阅进度再启用、未知时间、无公告跳转、图片 release、360px 及停止轮询。

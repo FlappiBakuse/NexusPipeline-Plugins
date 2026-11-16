@@ -10,6 +10,5 @@ MaaEnd 以 settings.autoStartInstanceId 唯一匹配自动实例，使用 --auto
 
 原生编辑在宿主配置事务内运行，保存或取消均通过原现场恢复核验。运行及编辑须证明 writer 停止才能发布或恢复。
 
-真实上游执行、取消、恢复及游戏环境资格见[当前状态](../../../docs/status.md)。
 
 实例启动、Android 与配置回写约束由 manifest 的 instancePolicy 声明，Host 保存和执行均校验同一声明。配置探测提供绑定源码身份的覆盖摘要；未知启用任务不视为完整覆盖。

@@ -11,7 +11,5 @@ LiveScreenshot 0.5.0 在运行任务详情中展示当前游戏或模拟器画�
 暂不可用时先核对目标和程序状态。权限拒绝、身份变化、断连或解码错误仍报告失败，不用反复启动任务绕过。
 并发任务分别持有预览，新 attempt 不沿用旧画面。
 
-需要对应 Host 后端与真实目标环境。受控原生窗口或 Android provider 测试不证明全部厂商已验证，
-缺少实际厂商安装的验证单独记录。
-公开 provider 为 current-task。采集进程、身份验证、取消和回收由 Host 负责。
+需要对应 Host 后端与真实目标环境。公开 provider 为 current-task。采集进程、身份验证、取消和回收由 Host 负责。
 浏览器使用 FrontendTransport.preview 状态联合类型，ready 分支的图片租约必须释放。

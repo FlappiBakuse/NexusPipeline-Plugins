@@ -29,7 +29,6 @@
 | Maa 专项与直驱的覆盖归属 | [Maa 覆盖](reference/maa-coverage.md) | 各自 sources 与 compiler/worker |
 | 图标来源 | [脚本图标](reference/script-icons.md) | 各插件资源和 manifest |
 | PR、候选与 Publisher | [发行](operations/release.md) | `.github/workflows`、`tooling` |
-| 待验证资格 | [当前状态](status.md) | 各轮源码/包绑定的原始回执 |
 
 ## 项目参考
 
@@ -58,10 +57,10 @@
 - README 只保留插件用途、选择和入口；开发流程归 CONTRIBUTING；AGENTS 只保留持续执行约束与路由。
 - 初次教学放 `getting-started`，作者任务放 `authors`，组件原理放 `architecture`，工具/验证放 `development`，跨项目事实参考放 `reference`，插件专属语义留 `projects`，发行流程归 `operations`，用户任务归 `user`。
 - 改公共接口检查 Host 权威与实际镜像；改模块边界检查架构；改命令检查构建/验证；改发行检查 operations；改用户操作更新对应用户页及必要随包说明。只同步受影响主题。
-- 重要且长期改变依赖、信任、持久格式或恢复分工时，在 `docs/decisions/<主题>.md` 记录有依据的背景、选择、原因与后果。当前不补造历史 ADR，也不建立空目录。
+- 重要且长期改变依赖、信任、持久格式或恢复分工时，在 `docs/decisions/<主题>.md` 记录有依据的背景、选择、原因与后果。文档内容范围见[文档决策](decisions/documentation.md)。
 - 模块有独立任务、复杂协议或生命周期时增加项目/模块页并接入本索引；仅有独立执行规则时才增加子 AGENTS。
 - schema 镜像、SDK 身份、本地化 JSON、bundle、manifest 投影和 catalog 由现役 producer 生成；不手写 API 全集、摘要清单或测试方法计数。
 - 先查唯一主题归属，再新增页面；其他位置以相对链接连接，迁移时同步跨仓入口。上游锁变化更新对应语义向量，不在多个入口复制版本/SHA 表。
-- 当前事实给代码或配置依据；固定源码研究、受控组件、安装 Host、真实账号/厂商和正式发行各自记录资格。历史 PASS 保留原身份，未完成项集中在 status。
+- 仓库文档只保留项目已实现的内容；当前事实给出代码或配置依据，长期边界选择归 decisions。
 
 分类参考 [Diátaxis](https://diataxis.fr/)；读者与贡献入口参考 [GitHub Docs](https://github.com/github/docs)、[VS Code](https://github.com/microsoft/vscode) 和 [Kubernetes Community](https://github.com/kubernetes/community)。

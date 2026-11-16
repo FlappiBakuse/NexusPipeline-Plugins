@@ -63,8 +63,6 @@ POST_COMMAND 非空只提议清空；关闭游戏/模拟器/BAAH 的原标志保
 
 retry 输出已选、启用、明确失败的业务任务 ID，自定义任务不自动重放。Host 按冻结依赖补入自动登录和此前启用的显式登录，不因上一轮登录成功而跳过新进程所需的登录。业务与显式登录投影到受完整流水线保护的 TASK_ONOFF，自动登录单独映射 OPEN_GAME_APP_TASK；未启用的登录保持禁用。DO_POST_ALL_TASK 保持原值，PostAllTask 的按日资源记录具有上游持久去重，不进入业务失败集合。writer 停止、恢复、预算与持久授权仍由 Host 实施；适配器不直接执行或修改文件。
 
-## 资格
+## 验证入口
 
 专属 source-derived 用例位于 `tests/specialized/baah/cases.mjs`，可由公共专项组件 runner 装配；同一组输入和期望复用生产 Host BoundedTaskScript/Jint 探针，不复制另一套解释器。34 个任务分别覆盖发现、中英文闭环、前后置失败、缺终态和失败子集；另有同 class 独立身份、条件跳过、资源绑定、日志来源/轮换/重复及原生重启反例。
-
-实际 BAAH 文件日志不含 PID，GUI 下 worker 不能由根进程 PID 代验。原始 ZIP 已通过实际 TaskAdapterExecutor 四阶段校验，并在安装 Host 中完成受控脚本及子进程强制关闭后的两次持久调用；自动/显式登录、安全收尾、成功业务保留、主/附加配置接续、现场原字节恢复和接续证据篡改拒绝分别核验。受控进程输出上游格式的合成日志，不代表运行了真实 BAAH。GUI worker 归属、配置 UI 与真实发行隔离配置消费/受控失败/取消恢复仍单列 NOT_RUN。

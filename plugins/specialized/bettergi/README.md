@@ -20,6 +20,5 @@
 实际提交、writer 停止、恢复、预算与外部配置选择投影仍由 Host 审核和执行。
 
 专属用例与实际 Host interpreter component 验证入口见 `tests/specialized/bettergi`，逐业务来源与验证边界见 `docs/projects/bettergi.md`。
-安装 Host、持久重试、浏览器接入与真实 BetterGI 发行二进制资格仍需独立验证；组件测试通过不代表这些资格完成。
 
 实例启动、Android 与配置回写约束由 manifest 的 instancePolicy 声明，Host 保存和执行均校验同一声明。配置探测提供绑定源码身份的覆盖摘要；未知启用任务不视为完整覆盖。

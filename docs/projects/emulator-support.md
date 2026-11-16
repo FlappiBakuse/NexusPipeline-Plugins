@@ -16,19 +16,16 @@
 
 正常启动可能更新 BlueStacks 的运行状态。Host 在执行准入和运行期核对同一物理实例 generation；普通配置原子替换可以保留该身份，VM 目录重建或端点重分配则拒绝并要求重新发现。启动 Job 在主任务结束前持续归 Host 持有，保留实例时显式移交整个存活进程族，不自行重定向到新端口。
 
-`tests/emulator-support/verify.py` 当前 79/79：实际编译生产解析/发现/选择/会话源码并绑定准确的 SDK 包，使用合成 Host 工具、ADB 与媒体记录。覆盖三厂商格式和 argv、多安装/同名/歧义、原字节变化、实例与 PID 复用、错误码/超时、设备重连、截图失败和取消。组件测试不执行任何真实厂商程序，不构成实际 CLI 或设备资格。
+`tests/emulator-support/verify.py` 实际编译生产解析/发现/选择/会话源码并绑定准确的 SDK 包，使用合成 Host 工具、ADB 与媒体记录。覆盖三厂商格式和 argv、多安装/同名/歧义、原字节变化、实例与 PID 复用、错误码/超时、设备重连、截图失败和取消。组件测试不执行任何真实厂商程序，不构成实际 CLI 或设备资格。
 
 固定 SDK 提供 `IEmulatorRegistration`、`IEmulatorInventory`、`IEmulatorHost` 和 `IEmulatorSession`。
 managed manifest 的 `emulators` 与 `emulator.provide` 必须成对声明；原包生产入口实际注册 `vendors`。
 Host 只有在安装激活发布后才能调用，撤销取消并排空进行中的调用，旧对象失去使用权。
-三项原始 ZIP 的 Host 集成验证覆盖三厂商受控库存、会话和撤销；设备与媒体为明确的受控 port。
 
 `EmulatorInventoryScope` 从 Host 明确给出的根捕获目录、控制程序及其运行文件、配置原字节，
 保持原物理身份和只读句柄，只准许固定的 `list2`/`list` 枚举。程序返回、管道完成及整个
-实际 Job 停止后才返回结果；超时同样先停止。三项受控真实 CLI 测试覆盖正常、非零退出与超时。
-库存入口已接入注册表和显式便携根、正式 Android 脚本选择及计划冻结。运行期采用 Host 的 Android 命令、ADB、截图与收集 owner；三厂商受控 CLI/Job 验证启动、截图、关闭、取消与保留实例交接，不能替代实际厂商安装资格。
+实际 Job 停止后才返回结果；超时同样先停止。
+库存入口已接入注册表和显式便携根、正式 Android 脚本选择及计划冻结。运行期采用 Host 的 Android 命令、ADB、截图与收集 owner。
 
-本机三家实际厂商程序均未安装，真程序 CLI/ADB/截图/关闭分别为 NOT_RUN。
-不能用另一家或受控 CLI 替代该资格；无需真实游戏长跑。
 
-官方协议参考：[雷电 CLI](https://www.ldplayer.net/support/introduction-to-ldplayer-command-line-interface.html?n=1996)、[夜神 CLI](https://support.bignox.com/en/function/command)、[BlueStacks ADB](https://support.bluestacks.com/hc/en-us/articles/23925869130381-How-to-enable-Android-Debug-Bridge-on-BlueStacks-5)、[BlueStacks 多实例端口说明](https://support.bluestacks.com/hc/en-us/articles/360061342631-How-to-transfer-your-apps-from-BlueStacks-4-to-BlueStacks-5)。BlueStacks CLI/配置兼容表以既有项目业务源码为支持依据，仍需实际厂商程序核验。三个闭源产品未登记官方 GitHub 源码，不编造最新 Release tag 或 source SHA。
+官方协议参考：[雷电 CLI](https://www.ldplayer.net/support/introduction-to-ldplayer-command-line-interface.html?n=1996)、[夜神 CLI](https://support.bignox.com/en/function/command)、[BlueStacks ADB](https://support.bluestacks.com/hc/en-us/articles/23925869130381-How-to-enable-Android-Debug-Bridge-on-BlueStacks-5)、[BlueStacks 多实例端口说明](https://support.bluestacks.com/hc/en-us/articles/360061342631-How-to-transfer-your-apps-from-BlueStacks-4-to-BlueStacks-5)。BlueStacks CLI/配置兼容表以既有项目业务源码为支持依据。三个闭源产品未登记官方 GitHub 源码，不编造最新 Release tag 或 source SHA。

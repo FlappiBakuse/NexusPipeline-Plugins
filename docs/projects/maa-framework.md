@@ -40,13 +40,13 @@ MFA 只展开当前控制器、资源及选中 case 的子选项，同一层选�
 
 `MaaProjectInputs` 通过 SDK 冻结项目读取端口消费原编译器资产，以最多128KiB的分块校验完整内容 SHA、长度、分页、index 引用和执行 view；完整 PI 不进入普通 Jint 帧。`MaaRuntimePlan` 从绑定的完整 PI/profile 重新编译 semantic，拒绝与保存计划不一致的内容。任务选择只接受启用 occurrence 的独立 ID，保留原顺序和次数；重复显示名、Entry、禁用行和 pretask 不能被误选为正式任务。返回选项、pipeline、连接与 Agent 声明均为分离副本。
 
-## 生产接线与验证
+## 生产接线
 
 标准 `tests/maa-framework/verify.py --sdk-receipt <正式生产者回执> --output <仓外目录> --cache <共用缓存>` 使用仓内合成输入和真实 SDK 接口。可选 `--corpus <清单>` 核对锁定 MaaEnd/MaaS 的完整 PI 闭包。清单逐项指定 `project`、`root`、`interface`、`inventory`、`taskCount` 和预期阻止执行时的 `blockingDiagnostic`。语料逐文件匹配 inventory，文件、任务、选项和分页数据写入语料回执。
 
 完整元数据使用内部有界页图投影，所有选项、case、控制器、资源与未知扩展字段均可无损恢复。每页 SHA、页闭包、原 source-set 和 compilation 指纹同时校验；缺页、改页、无关页及错误身份拒绝。PI 中完整 pipeline_override 留在 artifact，Jint 按页读取。磁盘上的完整 native resource/pipeline 字节由独立归档 owner 负责。
 
-正式入口在激活时注册 `IProjectCompiler`，compilerId 为 `project`，注册可见性和回调排空沿 Host scope。安装后的编译器、绑定编辑器与独立 worker 使用同一冻结项目。受控安装测试覆盖正常原生任务、截图、Agent 自定义动作，以及初始化成功、失败和取消；四类真实发行项目的完整组合仍需独立验证。
+正式入口在激活时注册 `IProjectCompiler`，compilerId 为 `project`，注册可见性和回调排空沿 Host scope。安装后的编译器、绑定编辑器与独立 worker 使用同一冻结项目。
 
 `MaaCompilationBundle.Build` 从同一冻结 `MaaSourceSet` 和明确选择重新编译 PI、导入配置及 semantic plan。bundle 保留完整 PI artifact/页图、完整 profile（含 SourceSnapshot、保存的选项和未知进度）、完整 semantic 内容及其 Fingerprint，同时绑定所有已读取文件与完整可用输入清单的身份。Host 仍须为实际目录清单及缺失文件提供物理重验，内存清单本身不授予文件访问或 CAS 权限。
 
@@ -87,7 +87,7 @@ Host 以所选 binding 的已保存配置挂载和 revision/read-set 编译，�
 不作为普通 raw Jint 输入；不裁剪 pipeline/选项，不在插件放宽限额。
 native、Agent、Python 和资源树均须声明冻结输入；来源刷新只重编译候选，不重放程序或初始化。
 
-生产绑定表面通过同一 `MaaEditor` 消费分页公开投影，提供来源选择、任务/选项/排序/次数、预设、显式导入和草稿预览。Host 保存与只读原操作查询共享 binding、调用者和原始选择摘要；未知结果不创建另一个保存 ID。原生窗口观察要求当前原生客户端和 manifest 的 `window-inventory` 声明，不扩大执行权限。脚本表面使用独立脚本来源授权和选择 revision，共享编译器、编辑器与预览，不借用账号绑定或提供秘密写入；实际原包浏览器已验证保存及重开。四类真实发行组合与完整设备组合尚未取得资格。受控安装验证不等同这些真实项目资格通过。
+生产绑定表面通过同一 `MaaEditor` 消费分页公开投影，提供来源选择、任务/选项/排序/次数、预设、显式导入和草稿预览。Host 保存与只读原操作查询共享 binding、调用者和原始选择摘要；未知结果不创建另一个保存 ID。原生窗口观察要求当前原生客户端和 manifest 的 `window-inventory` 声明，不扩大执行权限。脚本表面使用独立脚本来源授权和选择 revision，共享编译器、编辑器与预览，不借用账号绑定或提供秘密写入。
 
 编辑普通状态、无效输入及受保护输入使用 SDK 草稿作用域，关闭/切页后恢复原内容和原保存基线；父定义保存通知保留独立项目编辑。父取消清理所属子草稿，未知保存禁止丢弃并沿原操作核对。秘密输入在专用内存中保留，重开默认遮罩，成功保存仅清除该次提交。完整退出、重载、模式切换及插件退役清理会话。
 
@@ -184,7 +184,7 @@ LogDir 保持空，输出只在 CWD/screencap 中；不启用非空 LogDir 的�
 规范化数据总计64MiB；超预算拒绝。只允许 filename 空、format png、quality100；
 拒绝非空路径、Windows 不安全节点名、Command 或无法保持约束的参数，保留原生
 Screencap action/detail、缓存优先捕获及原 next/focus/识别语义，不改成 Custom。
-Agent 动态 ContextOverride/RunActionDirect 的门禁尚未接通，不能以此允许未知 Agent 调用。
+可选输出分支拒绝未知 Agent 动态调用。
 
 native task/controller/callback 完整排空并销毁后才调用 FreezeAsync。返回内部文件名、
 大小、原 SHA、TotalBytes 与 MayOverwrite=true；配额或未知输出失败不能变成成功。
@@ -197,5 +197,3 @@ writer 真正结束，再核验完整文件集、身份与哈希后发布受控�
 持有真实目录身份/no-delete 句柄和独立输入只读 master。实际 C ABI 验证 Screencap detail、
 PNG 参数、文件 SHA、目录替换/输入写拒绝、取消排空、quota 失败、错误 CWD 与缺 scope 拒绝。
 可选真实语料审计只读取锁定资源并调用策略 guard。
-测试子进程不等同 Host Native Job 准入，内部快照不构成完整进程族停止证明；实际输出
-scope/family stop/最终收集的安装验证由受控原包用例单独记录。

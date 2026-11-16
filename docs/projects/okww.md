@@ -39,8 +39,6 @@ Nightmare/Garden/Merge 的捕获异常以及通行证未找到均独立保留 fa
 
 只在权威 daily 明确 failed、配置可确认、未启用 4C 且没有 partial 结果时，返回 `okww:daily`。`nativeResumeScope` 冻结整个已启用任务范围，Host 沿用原入口、配置和进度，并消费同一有限重试预算。原入口重新检查登录与当前日常进度。4C 次数是每次入口的局部计数，即使配置有限也无法证明剩余量，故不自动重放。子项没有独立开关；父成功子失败、单独子失败或范围 unknown 均不重放资源消费。
 
-## 安装与验证状态
+## 验证入口
 
 Host 必须核对实际 pyappify China/Global 渠道、安装可用版本、完整 HEAD、精确 origin、真实 worker/updater 空闲以及冻结后的实际 update 仓任务内容。当前 China 源为 cnb.cool/ok-oldking/ok-ww-update2.git，Global 为 GitHub ok-oldking/ok-ww-update.git；不扩展为域名通配，不用持久 running 标志代替进程事实。根 launcher PID 不冒充真实日志 worker。
-
-260 个源派生合成案例通过 Node VM 与生产 BoundedTaskScript/Jint 组件。原插件 ZIP 已通过受控 Host 的原入口续跑，验证旧进程族停止、完整选择范围、原配置和进度保留、最终恢复。实际上游发行安装、游戏会话和 UI 仍 NOT_RUN；受控输出不替代这些资格。未启动真实游戏/脚本或修改 D:\Scripts。
