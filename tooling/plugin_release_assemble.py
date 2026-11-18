@@ -95,6 +95,8 @@ def assemble(args):
 
 
 def main():
+    from check_shared_tooling import verify
+    verify(Path(__file__).resolve().parents[1])
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("source-root", "partner-root", "distribution-root", "output"):
         parser.add_argument("--" + name, type=Path, required=True)

@@ -45,6 +45,8 @@ Host 通过公开表面统一分类 owner；插件使用公开元素及窄能力
 
 恢复草稿显示保存或取消提醒；已有目标仅在恢复后标记变化字段与开关，首次编辑及新建目标使用普通状态。成功保存更新基线，普通快照刷新保留未提交编辑。
 
+集合删除本次新增的定时项时，业务入口调用展示 owner 的 `discardNewItem(id)` 清除对应字段基线；折叠和隐藏保留基线，已保存项的原基线保留用于撤销与重建。插件警告样式消费宿主现役 `--warning`，与深浅主题同步。
+
 共享交互规则由 Host 的[编辑草稿](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/reference/frontend-state.md#编辑草稿)维护，公开能力见[扩展前端](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/reference/extension-frontend.md#编辑草稿能力)。插件按所属任务管理普通状态、受保护输入和取消/保存结算，普通对象、浏览器存储和日志不保存秘密。
 
 ## 登录失败与白屏的最小诊断

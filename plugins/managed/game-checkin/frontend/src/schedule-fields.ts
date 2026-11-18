@@ -4,6 +4,7 @@ import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { button, type Panel } from '../../../frontend-ui/src/elements.js';
 import type { CheckInSchedule, CheckInState, TaskDraft } from './ports.js';
 import { label, setting } from './editor-controls.js';
+import { draftPresentation } from '../../../frontend-ui/src/draft-presentation.js';
 
 export function schedules(panel: Panel, parent: HTMLElement, state: CheckInState, draft: TaskDraft): void {
   const section = document.createElement('div');
@@ -24,7 +25,8 @@ export function schedules(panel: Panel, parent: HTMLElement, state: CheckInState
   const list = document.createElement('nexus-sortable-list') as UiElement<'nexus-sortable-list'>;
   list.className = 'checkin-schedule-list';
   const rows = new Map<string, { element: HTMLElement; owner: AbortController; summary: () => void }>();
-  const existing = new Set(draft.schedules.map(schedule => schedule.id));
+  const existing = new Set(panel.drafts.retain('schedule-baseline',
+    () => ({ ids: draft.schedules.map(schedule => schedule.id) })).ids);
   const refresh = () => {
     list.ids = draft.schedules.map((schedule) => schedule.id);
     draft.schedules.forEach((schedule, index) => {
@@ -40,6 +42,7 @@ export function schedules(panel: Panel, parent: HTMLElement, state: CheckInState
               rows.get(schedule.id)?.element.remove();
               rows.delete(schedule.id);
               draft.schedules = draft.schedules.filter((item) => item.id !== schedule.id);
+              if (!existing.has(schedule.id)) draftPresentation(panel.drafts, !!draft.id, panel.t).discardNewItem(schedule.id);
               refresh();
             },
             !existing.has(schedule.id)

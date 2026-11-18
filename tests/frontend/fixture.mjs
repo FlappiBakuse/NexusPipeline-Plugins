@@ -420,6 +420,7 @@ await test('maa discovery tasks and preview', async () => {
 });
 
 const { draftLifecycleCases } = await import('./draft-lifecycle-cases.mjs'); await draftLifecycleCases({page,test});
+const { themeConsumerCases } = await import('./theme-consumer-cases.mjs'); await themeConsumerCases({ page, test, hostRoot });
 const { runAdditionalCases } = await import('./fixture-cases.mjs');
 await runAdditionalCases({ page, test, reportRoot });
 if (['game-checkin', 'maa-framework'].includes(extension)) {

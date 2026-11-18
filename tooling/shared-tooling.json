@@ -1,0 +1,33 @@
+{
+  "format": "nexus.shared-tooling",
+  "version": 1,
+  "owner": {
+    "repository": "FlappiBakuse/NexusPipeline",
+    "sourceMode": "committed",
+    "sourceCommit": "729abd7f7293e3585bc63acdeffc22406bd26ae6",
+    "referenceCommit": "729abd7f7293e3585bc63acdeffc22406bd26ae6"
+  },
+  "producer": "tooling/sync_shared_tooling.py",
+  "files": [
+    {
+      "path": "tooling/release_provenance.py",
+      "sourceSha256": "f8bd8158bcff7998ee9db503a0c8df8c2631a41cc5b5b7467f8045513679bef4"
+    },
+    {
+      "path": "tooling/release_github.py",
+      "sourceSha256": "bb62288d41f45dcf7974fe111b5d50d1c8347234a34f6e58de10c52bee882462"
+    },
+    {
+      "path": "tooling/release_candidate.py",
+      "sourceSha256": "c07398ed5f905b1a6a57323b98d2df5b8024fb70faa9dea8356b8ce547727f24"
+    },
+    {
+      "path": "tooling/git_source.py",
+      "sourceSha256": "cec362220da756845b713de71bfc43daeb2eb47314cd0f3186967a54e0fc50d1"
+    },
+    {
+      "path": "tooling/artifact_paths.mjs",
+      "sourceSha256": "c085f00c16d7256e5dfc03862900a0389b057d8b719062692849244491292c37"
+    }
+  ]
+}

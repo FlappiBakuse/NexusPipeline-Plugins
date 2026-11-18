@@ -1,5 +1,6 @@
 [
   "adapter-runtime/core/strict-json.js",
+  "adapter-runtime/core/observation-selection.js",
   "adapter-runtime/core/strict-jsonc.js",
   "adapter/catalog.js",
   "adapter-runtime/frameworks/maa-data.js",

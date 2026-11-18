@@ -48,6 +48,8 @@ fixture 场景必须是现役完整名称；`all` 只在所有该插件场景都
 
 ### 专项组件
 
+MaaEnd、MaaS 与直驱的观察子集协议共用 `adapter-runtime/core/observation-selection.js`；共享向量可执行 `node tests/specialized/observation-selection.mjs <Plugins根> <新仓外报告根>`，同时核验三条实际装配脚本。各插件原有 component 入口继续验证完整观察消费链。
+
 只需要 JS 业务向量时：
 
 ```text
@@ -103,6 +105,10 @@ SDK 输入按真实资格选择：现役 Host `--compile-only` 仍构建独立 c
 源码快照包括仓内docs。业务说明尽量在编码阶段定稿，真实验证结果默认写仓外；验证后纯文档修订单列docs-only delta，并分别保留产物冻结输入与当前工作树身份。不要为了更新一行PASS默认重跑产品，也不把旧回执冒充新全树。只有交付确需含新文档的产物时，补必要的产物准备和文档检查。
 
 ## SDK 消费者与命名职责
+
+CI 选择规则归本仓 `tooling/ci_plan.py` 的 `plugin_scope`，测试调用本仓实际模块；Host 只维护自己的 `host_scope`。本仓入口拒绝 Host 角色，发布包与 catalog/state 仍受原 Publisher 边界保护。
+
+五个公共发行/路径工具由 Host 的 `tooling/sync_shared_tooling.py --plugins-root <本仓根>` 生成。`tooling/shared-tooling.json` 登记固定来源提交和逐文件摘要；本仓运行 `python -B tooling/check_shared_tooling.py` 独立校验。CI 与发行装配入口先校验镜像，跨仓一致性由 Host 同步命令的 `--check` 模式检查。
 
 SDK 独立消费者只编译真实公开类型及调用，归 typecheck；不执行自造 DTO 往返或反射方法存在性断言。SDK 默认打包入口另执行前端生命周期行为测试；`--compile-only` 跳过该行为测试。回执的 `runtimeConsumers` 固定为 NOT_RUN，`lifecycle` 按实际执行记录，`validationMode` 为 compile-only 或 lifecycle。包内容、来源与消费者使用的实际 SDK 身份继续核验。
 

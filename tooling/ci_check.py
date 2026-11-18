@@ -14,6 +14,8 @@ KIND = "plugins"
 
 
 def main():
+    from check_shared_tooling import verify
+    verify(Path(__file__).resolve().parents[1])
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     plan = commands.add_parser("plan")

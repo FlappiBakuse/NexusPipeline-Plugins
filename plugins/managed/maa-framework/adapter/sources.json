@@ -1,5 +1,6 @@
 [
   "adapter-runtime/core/strict-json.js",
+  "adapter-runtime/core/observation-selection.js",
   "adapter-runtime/core/source-discovery.js",
   "adapter/maa-program.js",
   "adapter/maa-native.js",

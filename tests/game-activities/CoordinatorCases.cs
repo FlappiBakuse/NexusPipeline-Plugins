@@ -120,6 +120,7 @@ internal static class CoordinatorCases
             Check.That(TestActivity.Cache(docs).Content?.Overview.Number == "slow");
         });
         await CacheBoundaryCases.RunAsync(run);
+        await FeedQueueCases.RunAsync(run);
         await CoverConcurrencyCases.RunAsync(run);
     }
 }

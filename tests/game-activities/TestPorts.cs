@@ -57,10 +57,13 @@ internal sealed class TestNetwork : IActivityNetwork, IExtensionHttp
     internal Func<Uri, CancellationToken, Task<ActivityResponse>> Handler = (_, _) => Task.FromResult(Feed());
     internal readonly List<Uri> Calls = [];
     internal int MaximumBytes;
+    internal int Active, MaximumActive;
     public async ValueTask<ActivityResponse> GetAsync(Uri uri, int maximumBytes, CancellationToken cancellationToken)
     {
-        lock (Calls) Calls.Add(uri); MaximumBytes = maximumBytes;
-        return await Handler(uri, cancellationToken);
+        lock (Calls) { Calls.Add(uri); Active++; MaximumActive = Math.Max(MaximumActive, Active); }
+        MaximumBytes = maximumBytes;
+        try { return await Handler(uri, cancellationToken); }
+        finally { lock (Calls) Active--; }
     }
     async ValueTask<ExtensionHttpResponse> IExtensionHttp.SendAsync(ExtensionHttpRequest request, CancellationToken cancellationToken)
     {

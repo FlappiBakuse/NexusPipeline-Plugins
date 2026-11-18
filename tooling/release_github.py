@@ -1,3 +1,4 @@
+# Generated from NexusPipeline/tooling/release_github.py; edit the Host owner.
 """Bounded GitHub REST transport used by the protected publication owner."""
 import hashlib
 import json

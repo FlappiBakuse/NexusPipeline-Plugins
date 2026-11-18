@@ -1,3 +1,4 @@
+# Generated from NexusPipeline/tooling/release_candidate.py; edit the Host owner.
 """Read candidate data without importing or executing its source checkout."""
 import hashlib
 import json

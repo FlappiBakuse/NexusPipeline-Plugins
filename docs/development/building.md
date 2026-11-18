@@ -22,6 +22,8 @@ compile-only 生成真实 SDK 与独立 consumer 编译结果；runtimeConsumers
 
 ## 插件切片
 
+原生依赖统一由 `tooling/build_inputs.py --extension <插件ID> --output <仓外根>` 按 manifest 声明准备。CI、stable/preview 与 Host 打包消费同一 producer 的 runtime receipt；固定官方资产身份、摘要和包成员复验均保留。
+
 按类型选择一个入口：
 
 ```text

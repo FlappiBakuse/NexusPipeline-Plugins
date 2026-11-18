@@ -93,6 +93,8 @@ def build(args):
 
 
 def main():
+    from check_shared_tooling import verify
+    verify(Path(__file__).resolve().parents[1])
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--channel', choices=('stable', 'preview'), required=True)
     for name in ('source-root', 'host-root', 'distribution-root', 'output'):

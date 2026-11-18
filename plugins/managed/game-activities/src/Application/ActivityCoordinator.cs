@@ -5,7 +5,10 @@ namespace NexusPipeline.Extensions.GameActivities;
 internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivityNetwork network,
     TimeProvider clock, IActivityImages? imageStore = null) : IAsyncDisposable
 {
+    private const int MaximumConcurrentFeedWorkers = 4;
+    private const int MaximumConcurrentCoverRequests = 4;
     private readonly SemaphoreSlim gate = new(1, 1);
+    private TaskCompletionSource feedQueued = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly CancellationTokenSource lifetime = new();
     private CancellationTokenSource selection = new();
     private readonly Dictionary<string, ActivityCachedSource> feeds = ActivitySources.All.ToDictionary(s => s.Id, s => new ActivityCachedSource(s));
@@ -140,6 +143,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             {
                 foreach (var source in selected.Where(s => !feeds[s.Id].Unsupported))
                     if (operation.FeedIds.Add(source.Id)) operation.Pending.Enqueue(source);
+                feedQueued.TrySetResult();
                 return;
             }
             BeginRefresh(operationId, selected.Where(s => !feeds[s.Id].Unsupported).ToArray());
@@ -159,20 +163,25 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     {
         using (cancellation)
         {
+            var active = new List<Task>(MaximumConcurrentFeedWorkers);
             try
             {
                 while (true)
                 {
-                    ActivitySource[] sources;
+                    ActivitySource[] sources; Task queued;
                     await gate.WaitAsync(cancellation.Token);
                     try
                     {
-                        sources = Enumerable.Range(0, Math.Min(4, op.Pending.Count)).Select(_ => op.Pending.Dequeue()).ToArray();
-                        if (sources.Length == 0) op.Accepting = false;
+                        if (feedQueued.Task.IsCompleted) feedQueued = new(TaskCreationOptions.RunContinuationsAsynchronously);
+                        queued = feedQueued.Task;
+                        sources = Enumerable.Range(0, Math.Min(MaximumConcurrentFeedWorkers - active.Count, op.Pending.Count)).Select(_ => op.Pending.Dequeue()).ToArray();
+                        if (sources.Length == 0 && active.Count == 0) op.Accepting = false;
                     }
                     finally { gate.Release(); }
-                    if (sources.Length == 0) break;
-                    await Task.WhenAll(sources.Select(Refresh));
+                    active.AddRange(sources.Select(Refresh));
+                    if (active.Count == 0) break;
+                    var completed = await Task.WhenAny(active.Append(queued));
+                    if (active.Remove(completed)) await completed;
                 }
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
@@ -184,6 +193,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             }
             finally
             {
+                await Task.WhenAll(active);
                 await gate.WaitAsync();
                 try
                 {
@@ -197,7 +207,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
         async Task Refresh(ActivitySource source)
         {
             try { await RefreshOneAsync(op, source, cancellation.Token); }
-            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
             catch (Exception error) when (error is not OutOfMemoryException)
             {
                 await gate.WaitAsync();
@@ -216,7 +226,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
         }
         if (loop is not null) await loop;
         await Task.WhenAll(workers.ToArray());
-        for (var index = 0; index < 4; index++) await coverRequests.WaitAsync();
+        for (var index = 0; index < MaximumConcurrentCoverRequests; index++) await coverRequests.WaitAsync();
         await gate.WaitAsync();
         try { ClearCovers(); } finally { gate.Release(); }
         coverRequests.Dispose();
@@ -336,7 +346,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     }
 
     private readonly Dictionary<string, ActivityImageEntry> covers = new(StringComparer.Ordinal);
-    private readonly SemaphoreSlim coverRequests = new(4, 4);
+    private readonly SemaphoreSlim coverRequests = new(MaximumConcurrentCoverRequests, MaximumConcurrentCoverRequests);
     private int imageFailures;
     internal async Task<ActivityImage> CachedCoverAsync(string id, CancellationToken cancellationToken)
     {

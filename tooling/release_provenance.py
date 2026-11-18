@@ -1,3 +1,4 @@
+# Generated from NexusPipeline/tooling/release_provenance.py; edit the Host owner.
 """Verify original candidate attempts against GitHub's server-owned records."""
 from datetime import datetime
 import re

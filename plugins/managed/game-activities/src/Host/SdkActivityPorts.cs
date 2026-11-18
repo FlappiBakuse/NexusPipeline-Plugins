@@ -20,11 +20,13 @@ internal sealed class SdkActivityDocuments(IExtensionDocuments documents) : IAct
 
 internal sealed class SdkActivityNetwork(IExtensionHttp http) : IActivityNetwork
 {
-    private readonly SemaphoreSlim requests = new(4, 4);
+    private const int MaximumConcurrentHttpRequests = 4;
+    private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
+    private readonly SemaphoreSlim requests = new(MaximumConcurrentHttpRequests, MaximumConcurrentHttpRequests);
     public async ValueTask<ActivityResponse> GetAsync(Uri uri, int maximumBytes, CancellationToken cancellationToken)
     {
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        budget.CancelAfter(TimeSpan.FromSeconds(15));
+        budget.CancelAfter(RequestTimeout);
         await requests.WaitAsync(budget.Token);
         try
         {

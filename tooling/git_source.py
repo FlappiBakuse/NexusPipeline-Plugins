@@ -1,3 +1,4 @@
+# Generated from NexusPipeline/tooling/git_source.py; edit the Host owner.
 """Bind an explicit clean commit to the original bytes exported by the source owner."""
 import hashlib
 import io

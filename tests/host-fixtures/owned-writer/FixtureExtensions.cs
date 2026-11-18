@@ -5,8 +5,6 @@ internal static partial class FixtureExtensions
     {
         if (args is ["--pretask", "LaunchGamePC"] && File.Exists(Path.Combine(AppContext.BaseDirectory, "maa-startup-fixture.json")))
             return await MaaStartupFixture.RunAsync();
-        if (args is ["maa-plugin", .. var maaArgs]) return await MaaPluginFixture.RunAsync(maaArgs);
-        if (args is ["maa-plugin-harness", .. var maaHarnessArgs]) return await PluginSliceHarness.RunAsync(maaHarnessArgs, "maa-plugin");
         if (args is ["checkin-plugin", .. var checkinArgs]) return await GamePluginFixture.RunAsync(checkinArgs);
         if (args is ["checkin-plugin-harness", .. var checkinHarnessArgs]) return await PluginSliceHarness.RunAsync(checkinHarnessArgs, "checkin-plugin");
         if (args is ["bettergi-plugin", .. var bettergiArgs]) return await BetterGiPluginFixture.RunAsync(bettergiArgs);

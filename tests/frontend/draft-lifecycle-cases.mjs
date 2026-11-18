@@ -3,6 +3,48 @@ import { mountEditor as mountMaa } from './maa-editor-cases.mjs';
 import { choose, confirm } from './controls.mjs';
 
 export async function draftLifecycleCases({ page, test }) {
+  await test('checkin deleted new schedule releases a pristine draft and preserves existing edits', async () => {
+    await page.evaluate(async () => {
+      const task = { id: 'schedule-task', name: 'Saved schedules', remark: '', enabled: true, games: {},
+        schedules: [{ id: 'saved-time', days: [1], time: '09:00', enabled: true }],
+        notification: { enabled: false, notificationTaskIds: [] }, isRunning: false, nextRunAt: null, recentRun: null };
+      const state = { revision: 1, configurationRevision: 1, timeZoneId: 'Asia/Tokyo', tasks: [task], platforms: [], notificationTasks: [] };
+      window.scheduleCloses = 0;
+      await window.testMount('game-checkin', { readState: async () => state, subscribe: () => () => {},
+        openEditor: async () => ({ editorSessionId: 'schedule-editor', task, fields: {} }),
+        readEditor: async () => ({ editorSessionId: 'schedule-editor', task, fields: {} }),
+        closeEditor: async () => { window.scheduleCloses++; } }, 'route');
+    });
+    const open = () => page.getByRole('button', { name: '编辑签到', exact: true }).click();
+    const close = async () => {
+      await page.locator('.checkin-editor').getByRole('button', { name: '关闭', exact: true }).click();
+      await page.locator('.checkin-editor').waitFor({ state: 'detached' });
+    };
+    const changeTime = value => page.locator('nexus-time-picker').last().evaluate((element, value) => {
+      element.value = value;
+      element.dispatchEvent(new CustomEvent('nexus-change', { detail: { value }, bubbles: true, composed: true }));
+    }, value);
+    await open();
+    await page.getByRole('button', { name: '+ 添加定时', exact: true }).click();
+    await changeTime('10:00');
+    await close(); await open();
+    const added = page.locator('.checkin-schedule-card').last();
+    if (!await added.evaluate(element => element.open)) await added.locator('summary').click();
+    await page.getByRole('button', { name: '删除定时', exact: true }).last().click();
+    await close(); await open();
+    if (await page.locator('.draft-restored:visible').count()) throw Error('Deleted new schedule retained a restored draft');
+    if (!await page.evaluate(() => window.scheduleCloses === 1)) throw Error('Pristine schedule editor session was not released');
+    await page.locator('.checkin-schedule-card summary').click();
+    await changeTime('10:30');
+    await page.locator('.checkin-schedule-card summary').click();
+    await close(); await open();
+    if (!await page.locator('.draft-restored:visible').count()) throw Error('Collapsed existing schedule lost its changed draft');
+    await page.locator('.checkin-schedule-card summary').click();
+    if (!await page.locator('nexus-time-picker[data-unsaved=true]').count()) throw Error('Existing time baseline lost its restored highlight');
+    await changeTime('09:00'); await close(); await open();
+    if (await page.locator('.draft-restored:visible').count()) throw Error('Restoring the existing schedule baseline retained a draft');
+  });
+
   await test('checkin draft lifecycle retains secrets and original unknown operation', async () => {
     await mountCheckin(page);
     await page.locator('.checkin-editor').getByRole('button', { name: '关闭', exact: true }).click();

@@ -1,3 +1,4 @@
+// Generated from NexusPipeline/tooling/artifact_paths.mjs; edit the Host owner.
 import fs from 'node:fs';
 import path from 'node:path';
 

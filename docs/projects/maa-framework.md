@@ -177,7 +177,13 @@ override、资源覆盖、识图、失败停止、回调异常、取消排空、
 只读 master；不能从 JSON、路径内容相等或本地客户端标志自行构造权限。会话额外核对
 真实进程 CWD 与该 Root，所有资源、原配置和 runtime 输入根须与输出分离；不会切换 CWD。
 LogDir 保持空，输出只在 CWD/screencap 中；不启用非空 LogDir 的原始文件日志或 detached
-旧图清理线程，SaveDraw/DebugMode/SaveOnError 保持关闭。现役 activation/manifest 不开启此分支。
+旧图清理线程，SaveDraw/DebugMode/SaveOnError 保持关闭。
+
+激活只注册编译器；manifest 声明的普通 owned-worker 创建 `MaaWorkerOutput`，将受保护
+输出目录设为该 worker 的 CWD，并把输出 scope 交给 `MaaTaskSession`。因此普通任务允许
+通过 pipeline guard 的受控 Screencap。显式 initialization 也准备隔离输出目录，但只运行
+已冻结的 pretasks，不创建原生任务会话。输出 scope 的存在不单独授予归档资格；Host 仍须
+核对完整进程族停止、输出身份、格式与配额后才收集并归档图片。
 
 源码 JSON/JSONC 与每次冻结 override 检查继承参数；加载后使用官方 GetNodeList/GetNodeData
 核验实际规范化动作及 Screencap 默认参数。单节点字符串最多256KiB、最多65536节点、
