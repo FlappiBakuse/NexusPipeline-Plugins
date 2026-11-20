@@ -1,4 +1,5 @@
-import { button, choice, field, paragraph, toggle, type Panel } from '../../../frontend-ui/src/elements.js';
+import { button, choice, field, toggle, type Panel } from '../../../frontend-ui/src/elements.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { MaaOption, MaaProfile, MaaSchema } from './ports.js';
 import { secretKey, projectScope, type MaaSecretDraft, type MaaSecretDrafts } from './secret-drafts.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
@@ -93,7 +94,14 @@ export function optionFields(
       });
       continue;
     }
-    if (!allowSecretEdits) { paragraph(parent, label + '：' + panel.t('脚本项目的受保护字段请在账号绑定中配置。')); continue; }
+    if (!allowSecretEdits) {
+      const protectedField = document.createElement('span');
+      protectedField.tabIndex = 0;
+      protectedField.textContent = label;
+      parent.append(protectedField);
+      fieldHelp(panel, protectedField, '脚本项目的受保护字段请在账号绑定中配置。');
+      continue;
+    }
     drafts.activate(name);
     const inputControl = field(
       panel,
@@ -106,17 +114,21 @@ export function optionFields(
     const row = document.createElement('div');
     row.className = 'maa-secret-action';
     parent.append(row);
-    const status = paragraph(row, '');
-    const refresh = () => {
+    const secretState = () => {
       const binding = (profile.options[key] as Record<string, unknown> | undefined)?.[input.name] as { $maaSecret?: string } | undefined;
-      const state = profile.protectedInputs?.find(item => item.key === binding?.$maaSecret);
+      return profile.protectedInputs?.find(item => item.key === binding?.$maaSecret);
+    };
+    const describe = (state = secretState()) => panel.t(drafts.get(name)?.edit?.intent === 'set' ? '新密钥仅在确认保存后写入' :
+      drafts.get(name)?.edit?.intent === 'clear' ? '清除仅在确认保存后生效' : state?.isConfigured ?
+        state.isReadable ? '已配置受保护密钥' : '受保护密钥当前不可读取' : '未配置受保护密钥');
+    const help = fieldHelp(panel, inputControl, () => describe());
+    const refresh = () => {
+      const state = secretState();
       (inputControl as UiElement<'nexus-text-input'>).placeholder = panel.t(
         drafts.get(name)?.edit?.intent === 'clear' ? '将在保存后清除' : state?.isConfigured ? '已配置，留空保留' : '未配置受保护密钥');
-      status.textContent = panel.t(drafts.get(name)?.edit?.intent === 'set' ? '新密钥仅在确认保存后写入' :
-        drafts.get(name)?.edit?.intent === 'clear' ? '清除仅在确认保存后生效' : state?.isConfigured ?
-          state.isReadable ? '已配置受保护密钥' : '受保护密钥当前不可读取' : '未配置受保护密钥');
+      help.content = describe(state);
     };
-    bindLocale(panel.t, panel.signal, status, 'text', refresh);
+    bindLocale(panel.t, panel.signal, inputControl, 'placeholder', refresh);
     drafts.watch(refresh, panel.signal);
     button(panel, row, '使用新密钥草稿', async () => {
       const draft = drafts.get(name);

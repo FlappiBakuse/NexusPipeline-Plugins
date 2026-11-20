@@ -9,7 +9,8 @@
 }
 .checkin-page > .plugin-body {
   display: block;
-}.checkin-heading {
+}
+.checkin-heading {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
@@ -73,16 +74,15 @@
 .checkin-task-copy {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 6px;
 }
 .checkin-task-copy h2 {
   margin: 0;
   font-size: 15px;
-  line-height: 1.4;
+  line-height: 1.5;
   font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .checkin-remark {
   margin: 0;
@@ -101,13 +101,17 @@
 }
 .checkin-task-actions {
   display: flex;
-  gap: 8px;
-  --nx-button-fill: var(--content-control);
-  --nx-color-border: var(--border-strong);
+  gap: 6px;
 }
-.checkin-task-actions > nexus-button {
-  width: 96px;
-  min-width: 0;
+.checkin-task-actions > nexus-icon-button {
+  --size: 40px;
+  --nx-icon-border: var(--border-strong);
+  inline-size: var(--size);
+  block-size: var(--size);
+}
+.checkin-task-actions > [data-action='delete'] {
+  --nx-icon-border: var(--bad-border);
+  --nx-color-text: var(--bad);
 }
 .checkin-records {
   margin: 8px 0 0 88px;
@@ -160,16 +164,8 @@
 .checkin-records p {
   margin: 4px 0;
 }
-@media (max-width: 900px) {
-  .checkin-task-head {
-    grid-template-columns: 28px 36px minmax(0, 1fr);
-  }
-  .checkin-task-actions {
-    grid-column: 2 / -1;
-    display: grid;
-    grid-template-columns: 96px 96px minmax(0, 96px);
-    margin-top: 0;
-  }
+@media (max-width: 600px) or (pointer: coarse) {
+  .checkin-task-actions > nexus-icon-button { --size: 44px; }
 }
 @media (max-width: 600px) {
   .checkin-main-fields {
@@ -190,11 +186,13 @@
     padding-left: 0;
     padding-right: 8px;
   }
-  .checkin-task-actions {
-    --nx-action-height: 44px;
+  .checkin-task-head {
+    grid-template-columns: 28px 36px minmax(0, 1fr) auto;
+    gap: 6px;
   }
-  .checkin-task-actions > nexus-button {
-    width: 100%;
+  .checkin-task-head > nexus-drag-handle {
+    --nx-drag-size: 28px;
+    width: 28px;
   }
   .checkin-records {
     margin-left: 40px;

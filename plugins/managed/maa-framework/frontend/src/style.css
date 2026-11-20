@@ -42,10 +42,6 @@
   --nx-input-weight: 600;
   --nx-textarea-padding: 12px;
 }
-.maa-source-summary {
-  margin: 14px 0;
-  font-size: 14px;
-}
 .maa-actions {
   display: flex;
   flex-wrap: wrap;

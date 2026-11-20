@@ -6,5 +6,6 @@ globalThis.nexusDiscoverScript = input => {
   for (const [id, name] of [['farm-4c', 'FarmEchoTask.json'], ['nightmare', 'NightmareNestTask.json']])
     if (sourceExists(root + name)) resources.push(sourceResource(id, root + name));
   return sourceResult(input, [sourceCandidate('daily', '单账号日常', 'ok-ww.exe', ['-t', '1', '-e'], resources,
-    ['data/apps/ok-ww/working/logs/*.log'])]);
+    ['data/apps/ok-ww/working/logs/*.log'])], [],
+    sourceEditor(input, 'ok-ww.exe', [root.slice(0, -1)], false));
 };

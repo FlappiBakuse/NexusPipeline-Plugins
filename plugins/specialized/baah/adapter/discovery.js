@@ -29,10 +29,15 @@ function baahStorageSuffix(filename) {
   return (h0 >>> 0).toString(16).padStart(8, '0');
 }
 
-globalThis.nexusDiscoverScript = input => sourceResult(input,
-  sourceFiles('BAAH_CONFIGS', /\.json$/i).map(path => {
+globalThis.nexusDiscoverScript = input => {
+  const paths = sourceFiles('BAAH_CONFIGS', /\.json$/i);
+  const candidates = paths.map(path => {
     const name = path.slice('BAAH_CONFIGS/'.length), storage = 'DATA/USER_STORAGE/STORAGE' + baahStorageSuffix(name) + '.json';
     return sourceCandidate(path, name, 'BAAH.exe', [name], [sourceResource('main', path),
       sourceResource('software-config', 'DATA/CONFIGS/software_config.json'),
       ...(sourceExists(storage) ? [sourceResource('progress', storage)] : [])], ['DATA/LOGS/log_*.txt']);
-  }));
+  });
+  return sourceResult(input, candidates, input.purpose === 'edit' && candidates.some(item => !item) ?
+    ['baah_source_software_config_missing'] : [],
+    sourceEditor(input, 'BAAH.exe', ['BAAH_CONFIGS', 'DATA/CONFIGS/software_config.json', 'DATA/USER_STORAGE'], true));
+};

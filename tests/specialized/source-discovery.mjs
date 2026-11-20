@@ -30,7 +30,7 @@ try {
   preparationError = String(error);
 }
 
-function discover(extension, files) {
+function discover(extension, files, purpose) {
   const entries = new Map([['', new Map()]]);
   for (const file of Object.keys(files)) {
     const parts = file.split('/');
@@ -53,7 +53,7 @@ function discover(extension, files) {
   }, { codeGeneration: { strings: false, wasm: false } });
   scripts.get(extension).runInContext(context, { timeout: 1000 });
   const result = vm.runInContext(`JSON.stringify(nexusDiscoverScript(${JSON.stringify({ format: 'nexus.script.source', version: 1,
-    direction: 'request', extensionId: extension, operationId: 'cc11af43-7f60-450b-a003-3458bbd197fe' })}))`, context, { timeout: 1000 });
+    direction: 'request', extensionId: extension, operationId: 'cc11af43-7f60-450b-a003-3458bbd197fe', purpose })}))`, context, { timeout: 1000 });
   return JSON.parse(result);
 }
 function test(name, action) {
@@ -154,6 +154,21 @@ test('MaaEnd offers the configured auto-start instance for each declared interfa
     'config/mxu-MaaEnd.json': '{"version":"1.0","settings":{"autoStartInstanceId":"one"},"instances":[{"id":"one"},{"id":"two"}]}' });
   assert.deepEqual(result.candidates.map(row => row.candidateId).sort(), ['assets/interface.json:config/mxu-MaaEnd.json:one', 'interface.json:config/mxu-MaaEnd.json:one']);
   for (const row of result.candidates) assert.deepEqual(row.arguments, ['--autostart', '--quit-after-run']);
+});
+test('MaaEnd edit discovery counts selectable instances across a document once', () => {
+  const result = discover('maaend', { 'MaaEnd.exe': '', 'interface.json': '{}', 'assets/interface.json': '{}',
+    'mxu.json': '{"version":"1.0","settings":{"autoStartInstanceId":"one"},"instances":[{"id":"one"},{"id":"two"}]}' }, 'edit');
+  assert.deepEqual(result.candidates.map(row => row.candidateId), ['mxu.json:one', 'mxu.json:two']);
+  assert.deepEqual(result.editor.arguments, []);
+  assert.equal(result.editor.executable, 'MaaEnd.exe');
+  assert.deepEqual(result.candidates[1].instance, { collection: 'instances', identity: 'id', value: 'two', selection: ['settings', 'autoStartInstanceId'] });
+});
+test('BetterGI can open its editor before the first profile exists', () => {
+  const result = discover('bettergi', { 'BetterGI.exe': '' }, 'edit');
+  assert.deepEqual(result.candidates, []);
+  assert.equal(result.editor.canCreate, true);
+  assert.deepEqual(result.editor.arguments, []);
+  assert.ok(result.editor.scopes.includes('User/OneDragon'));
 });
 test('MaaS independent instances ignore active GUI selection and bind named shared config', () => {
   const result = discover('maas', { 'MFAAvalonia.exe': '', 'interface.json': '{}',

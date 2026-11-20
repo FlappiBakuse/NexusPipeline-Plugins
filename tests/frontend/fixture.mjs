@@ -254,9 +254,10 @@ await test('wallpaper settings and appearance', async () => {
   });
   await page.locator('.wallpaper-settings').getByRole('button').first().click();
   await page.getByText('A.png').waitFor();
-  await fieldHelp(page, page.getByText('轮换方式', { exact: true }).locator('..').locator('nexus-select'), '按时间随机轮换会按设定间隔切换壁纸');
+  const rotationMode = page.locator('nexus-select[aria-label="轮换方式"]');
+  await fieldHelp(page, rotationMode, '按时间随机轮换会按设定间隔切换壁纸');
   if (!await page.locator('nexus-file-picker').count()) throw new Error(`Picker absent initially: ${await page.locator('#app').innerHTML()}`);
-  await choose(page.getByText('轮换方式').locator('..').locator('nexus-select'), 'startup');
+  await choose(rotationMode, 'startup');
   await page.locator('.wallpaper-list').waitFor();
   await page.locator('nexus-sortable-list nexus-drag-handle').last().press('ArrowUp');
   await page.waitForTimeout(150);

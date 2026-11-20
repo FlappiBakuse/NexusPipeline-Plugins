@@ -32,17 +32,17 @@ export async function draftLifecycleCases({ page, test }) {
     if (!await added.evaluate(element => element.open)) await added.locator('summary').click();
     await page.getByRole('button', { name: '删除定时', exact: true }).last().click();
     await close(); await open();
-    if (await page.locator('.draft-restored:visible').count()) throw Error('Deleted new schedule retained a restored draft');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('Deleted new schedule retained a restored draft');
     if (!await page.evaluate(() => window.scheduleCloses === 1)) throw Error('Pristine schedule editor session was not released');
     await page.locator('.checkin-schedule-card summary').click();
     await changeTime('10:30');
     await page.locator('.checkin-schedule-card summary').click();
     await close(); await open();
-    if (!await page.locator('.draft-restored:visible').count()) throw Error('Collapsed existing schedule lost its changed draft');
+    if (!await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('Collapsed existing schedule lost its changed draft');
     await page.locator('.checkin-schedule-card summary').click();
     if (!await page.locator('nexus-time-picker[data-unsaved=true]').count()) throw Error('Existing time baseline lost its restored highlight');
     await changeTime('09:00'); await close(); await open();
-    if (await page.locator('.draft-restored:visible').count()) throw Error('Restoring the existing schedule baseline retained a draft');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('Restoring the existing schedule baseline retained a draft');
   });
 
   await test('checkin draft lifecycle retains secrets and original unknown operation', async () => {
@@ -50,7 +50,7 @@ export async function draftLifecycleCases({ page, test }) {
     await page.locator('.checkin-editor').getByRole('button', { name: '关闭', exact: true }).click();
     await page.locator('.checkin-editor').waitFor({ state: 'detached' });
     await page.getByRole('button', { name: '添加签到任务', exact: true }).click();
-    if (await page.locator('.draft-restored:visible').count()) throw Error('An untouched new task became a draft');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('An untouched new task became a draft');
     const secret = await page.evaluate(() => crypto.randomUUID());
     const input = () => page.locator('nexus-text-input[aria-label="cn 凭据"]').locator('input');
     await page.getByRole('textbox', { name: '任务名称', exact: true }).fill('Retained task');
@@ -104,7 +104,7 @@ export async function draftLifecycleCases({ page, test }) {
     const open = () => page.getByRole('button', { name: '编辑签到', exact: true }).click();
     await open();
     const name = () => page.getByRole('textbox', { name: '任务名称', exact: true });
-    if (await page.locator('.draft-restored:visible').count()) throw Error('A first editing session showed a recovery reminder');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('A first editing session showed a recovery reminder');
     await name().fill('Changed task');
     if (await page.locator('.checkin-editor [data-unsaved=true]').count()) throw Error('First-session input was highlighted');
     const enabled = () => page.getByRole('switch', { name: '启用此任务', exact: true });
@@ -112,7 +112,7 @@ export async function draftLifecycleCases({ page, test }) {
     if (await page.locator('.checkin-editor [data-unsaved=true]').count()) throw Error('First-session switch was highlighted');
     await page.locator('.checkin-editor').getByRole('button', { name: '关闭', exact: true }).click();
     await page.locator('.checkin-editor').waitFor({ state: 'detached' }); await open();
-    await page.locator('.draft-restored:visible').waitFor();
+    await page.locator('nexus-toast.draft-restored-toast:visible').waitFor();
     if (await page.locator('.checkin-editor [data-unsaved=true]').count() !== 2) throw Error('Restored fields were not highlighted');
     if (await name().inputValue() !== 'Changed task' || await enabled().getAttribute('aria-checked') !== 'false')
       throw Error('Restoring an existing task lost the edited values');
@@ -120,7 +120,7 @@ export async function draftLifecycleCases({ page, test }) {
     await page.waitForFunction(() => !document.querySelector('.checkin-editor [data-unsaved=true]'));
     await page.locator('.checkin-editor').getByRole('button', { name: '取消', exact: true }).click();
     await page.locator('.checkin-editor').waitFor({ state: 'detached' }); await open();
-    if (await page.locator('.draft-restored:visible').count()) throw Error('Cancellation retained a recovery reminder');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('Cancellation retained a recovery reminder');
   });
 
   await test('checkin login draft lifecycle preserves input while closing authentication resources', async () => {
@@ -158,7 +158,7 @@ export async function draftLifecycleCases({ page, test }) {
   await test('Maa draft lifecycle retains invalid input secrets and unknown save', async () => {
     await mountMaa(page);
     await page.evaluate(() => window.fixture.remount());
-    if (await page.locator('.draft-restored:visible').count()) throw Error('An untouched Maa configuration became a draft');
+    if (await page.locator('nexus-toast.draft-restored-toast:visible').count()) throw Error('An untouched Maa configuration became a draft');
     await page.getByRole('button', { name: '读取项目', exact: true }).click();
     const secret = await page.evaluate(() => crypto.randomUUID());
     const input = () => page.locator('nexus-text-input[aria-label="Credentials / secret"]').locator('input');
@@ -224,7 +224,7 @@ export async function draftLifecycleCases({ page, test }) {
     await page.evaluate(() => { window.holdActivitySave = false; window.releaseActivitySave(); });
     await page.waitForFunction(() => window.activitySettingState?.rotationSeconds === 45);
     await open();
-    if (await interval().inputValue() !== '45' || await page.locator('.draft-restored').count())
+    if (await interval().inputValue() !== '45' || await page.locator('nexus-toast.draft-restored-toast').count())
       throw Error('Closing the view lost its accepted Save');
     await interval().fill('60'); await interval().press('Tab');
     await page.locator('nexus-modal').getByRole('button', { name: '取消', exact: true }).click();

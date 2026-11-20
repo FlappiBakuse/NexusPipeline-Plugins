@@ -7,6 +7,7 @@ import { createModal } from '../../../frontend-ui/src/modal.js';
 import type { ActivityFeed, ActivityState } from './ports.js';
 import { activityGames, gameName } from './activity-labels.js';
 import type { SettingsWrites } from '../../../frontend-ui/src/settings-writes.js';
+import { surfaceToast } from '../../../frontend-ui/src/toast.js';
 
 export function openActivitySettings(
   panel: Panel,
@@ -29,6 +30,7 @@ export function openActivitySettings(
   modal.body.append(heading);
   const list = document.createElement('nexus-sortable-list') as UiElement<'nexus-sortable-list'>;
   list.className = 'activity-game-list';
+  list.dataset.surface = 'raised';
   modal.body.append(list);
   const known = [...activityGames.map((item) => item[0] as string), ...state.feeds.map((item) => item.game)];
   const order = [...new Set([...(draft.gameOrder ?? []), ...known])];
@@ -120,14 +122,12 @@ export function openActivitySettings(
   });
   label.append(interval);
   modal.body.append(label);
-  fieldHelp(panel, interval, '填写 10–120 秒；-1 关闭自动轮播，保存后生效。', modal.signal);
   const selectedFeed = state.feeds.find((item) => state.selectedFeedIds.includes(item.id));
-  if (selectedFeed?.lastGoodAt) {
-    const help = document.createElement('p');
-    help.className = 'activity-settings-cache';
+  fieldHelp(panel, interval, () => {
+    const rule = panel.t('填写 10–120 秒；-1 关闭自动轮播，保存后生效。');
+    if (!selectedFeed?.lastGoodAt) return rule;
     const zone = state.displayZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
-    bindLocale(panel.t, modal.signal, help, 'textContent', () => {
-      help.textContent =
+    return rule + '\n' +
         panel.t(selectedFeed.cacheState === 'stale' ? '缓存待更新' : '缓存有效') +
         ' · ' +
         panel.t('最近成功') +
@@ -138,19 +138,13 @@ export function openActivitySettings(
         ' (' +
         zone +
         ')';
-    });
-    modal.body.append(help);
-  }
-  const error = document.createElement('p');
-  error.className = 'activity-error';
-  error.setAttribute('role', 'alert');
-  error.hidden = true;
-  modal.body.append(error);
+  }, modal.signal);
+  const toast = surfaceToast(modal.body, panel.t, modal.signal);
   function valid(): boolean {
     const seconds = interval.value;
     if (interval.getAttribute('aria-invalid') === 'true' || seconds === null ||
         !Number.isInteger(seconds) || seconds !== -1 && (seconds < 10 || seconds > 120)) {
-      error.textContent = panel.t('请输入 10–120 之间的整数，或 -1。'); error.hidden = false;
+      toast.show('请输入 10–120 之间的整数，或 -1。', 'danger');
       return false;
     }
     draft.rotationSeconds = seconds;
@@ -166,17 +160,18 @@ export function openActivitySettings(
       update(saved);
       if (!writer.error && modal.alive()) modal.close('saved');
     } catch (reason) {
-      if (modal.alive()) { error.textContent = panel.t(reason instanceof Error ? reason.message : String(reason)); error.hidden = false; }
+      if (modal.alive() && !writer.error)
+        toast.show(reason instanceof Error ? reason.message : String(reason), 'danger');
     } finally { saving = false; synchronize(); }
   }, modal.signal);
   save.setAttribute('tone', 'info');
+  let lastError = '';
   const synchronize = () => {
     if (!modal.alive()) return;
     list.disabled = saving || writer.unknown; modal.body.inert = saving || writer.unknown;
     save.toggleAttribute('disabled', saving || writer.unknown);
-    if (writer.error) {
-      error.textContent = panel.t(writer.error); error.hidden = false;
-    }
+    if (writer.error && writer.error !== lastError) toast.show(writer.error, 'danger');
+    lastError = writer.error || '';
   };
   const stop = writer.listen(synchronize);
   modal.signal.addEventListener('abort', stop, { once: true });

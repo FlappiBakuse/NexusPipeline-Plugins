@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Activity subscriptions, progression, order and rotation interval apply only after Save; Cancel or Close discards edits. Lost responses are reconciled against the original submission.

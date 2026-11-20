@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Retain only edited drafts and show save-or-cancel reminders when reopening them. Highlight changed fields only in restored existing objects. Saving updates the baseline; cancellation and session disposal clear the corresponding drafts.

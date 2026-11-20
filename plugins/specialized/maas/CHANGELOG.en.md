@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 - Localize missing configuration, defaults, targets and interface import diagnostics while preserving validation and repair previews.
 - Bind task logs to the upstream Monitor source, MonitorLog operation and selected instance; ignore matching text from other sources.

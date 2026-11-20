@@ -164,13 +164,14 @@ export function paragraph(parent: Element, value: string) {
 }
 
 const confirmations = new WeakMap<Panel, Promise<boolean>>();
-export function confirm(panel: Panel, message: string, tone: 'neutral' | 'warning' | 'danger' = 'neutral'): Promise<boolean> {
+export function confirm(panel: Panel, message: string, tone: 'neutral' | 'warning' | 'danger' = 'neutral',
+  title = '确认'): Promise<boolean> {
   if (!panel.alive()) return Promise.resolve(false);
   const pending = confirmations.get(panel);
   if (pending) return Promise.resolve(false);
   const result = new Promise<boolean>(resolve => {
     const dialog = document.createElement('nexus-confirm-dialog');
-    Object.assign(dialog, { open: true, title: panel.t('确认'), message, tone });
+    Object.assign(dialog, { open: true, title: panel.t(title), message, tone });
     const scope = new AbortController();
     const finish = (value: boolean) => {
       scope.abort(); Object.assign(dialog, { open: false }); dialog.inert = true;

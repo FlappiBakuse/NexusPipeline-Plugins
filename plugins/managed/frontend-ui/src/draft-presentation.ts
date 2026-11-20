@@ -1,5 +1,6 @@
-import { bindLocale, type Translate } from './localize.js';
+import type { Translate } from './localize.js';
 import type { EditorDraftScope } from '@nexuspipeline/extension-sdk';
+import { surfaceToast } from './toast.js';
 
 type Field = HTMLElement & { value: unknown; checked?: boolean; type?: string };
 type Baseline = { value: unknown; changed: boolean; sensitive: boolean; itemId: string };
@@ -13,7 +14,9 @@ const same = (a: unknown, b: unknown): boolean => {
 
 export class DraftPresentation {
   readonly state = { restored: false, changed: false };
-  private notice?: HTMLElement;
+  private readonly opened = new WeakSet<HTMLElement>();
+  private readonly restored = new WeakMap<HTMLElement, boolean>();
+  private notice?: AbortController;
   private readonly baseline = new Map<string, Baseline>();
   private readonly nodes = new Map<Field, string>();
   private root?: HTMLElement;
@@ -25,14 +28,30 @@ export class DraftPresentation {
 
   constructor(public existing: boolean, private readonly translate: Translate) {}
 
-  attach(root: HTMLElement): void {
-    if (this.root === root) return;
-    this.detach();
-    this.state.restored = this.retained;
-    this.root = root;
-    root.classList.add('draft-surface');
-    this.controller = new AbortController();
-    const signal = this.controller.signal;
+  attach(root: HTMLElement, visible = true): void {
+    if (this.root !== root) {
+      this.detach();
+      this.state.restored = this.restored.get(root) ?? this.retained;
+      this.restored.set(root, this.state.restored);
+      this.root = root;
+      root.classList.add('draft-surface');
+      this.controller = new AbortController();
+      this.watchFields(root, this.controller.signal);
+    }
+    if (visible && !this.opened.has(root)) {
+      this.opened.add(root);
+      if (this.state.restored) {
+        const notice = new AbortController();
+        this.notice = notice;
+        const toast = surfaceToast(root.parentElement ?? root, this.translate, notice.signal);
+        toast.element.className = 'draft-restored-toast';
+        toast.element.addEventListener('nexus-close', () => notice.abort(), { once: true, signal: notice.signal });
+        toast.show('已恢复未保存的草稿，请及时保存或取消。', 'warning');
+      }
+    }
+  }
+
+  private watchFields(root: HTMLElement, signal: AbortSignal): void {
     const edit = (event: Event) => {
       const input = event.composedPath().find((node): node is Field => node instanceof HTMLElement && this.nodes.has(node as Field));
       if (!input) return;
@@ -71,16 +90,6 @@ export class DraftPresentation {
 
   private scan(): void {
     if (!this.root) return;
-    if (!this.notice?.isConnected) {
-      this.notice = document.createElement('p'); this.notice.className = 'draft-restored';
-      this.notice.setAttribute('role', 'status');
-      const notice = this.notice;
-      bindLocale(this.translate, this.controller!.signal, notice, 'textContent', () => {
-        notice.textContent = this.translate('已恢复未保存的草稿，请及时保存或取消。');
-      });
-      this.root.prepend(this.notice);
-    }
-    this.notice.hidden = !this.state.restored;
     this.nodes.clear();
     const counts = new Map<string, number>();
     for (const element of this.root.querySelectorAll<Field>(fields)) {
@@ -124,15 +133,19 @@ export class DraftPresentation {
   }
 
   saved(): void {
+    this.notice?.abort();
     this.existing = true;
     this.baseline.clear();
     this.state.restored = false;
+    if (this.root) this.restored.set(this.root, false);
     this.state.changed = false;
     this.retained = false;
     this.scan();
   }
   detach(): void {
     if (this.root) this.retained = this.modified;
+    this.notice?.abort();
+    this.notice = undefined;
     this.controller?.abort(); this.observer?.disconnect();
     for (const element of this.nodes.keys()) element.removeAttribute('data-observe-value');
     for (const [key, value] of this.baseline) if (!value.changed) this.baseline.delete(key);

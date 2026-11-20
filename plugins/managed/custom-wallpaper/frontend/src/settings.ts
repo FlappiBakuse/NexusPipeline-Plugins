@@ -17,11 +17,16 @@ export function mountSettings(surface: ExtensionSurface, ports: WallpaperPorts |
   panel.body.replaceChildren();
   let state: WallpaperState | undefined, writer: SettingsWrites<WallpaperState> | undefined;
   let visible = surface.visible, stopWrites: (() => void) | undefined;
+  let presentedError = '';
   const current = () => writer?.value ?? state;
   const queue = (patch: WallpaperPatch) => {
     if (!runtime || !state) return;
     writer = runtime.settingCommands();
-    void writer.patch(patch).catch(error => panel.say(error instanceof Error ? error.message : String(error), true));
+    const commands = writer;
+    void commands.patch(patch).catch(error => {
+      if (visible && !commands.error && !panel.signal.aborted)
+        panel.say(error instanceof Error ? error.message : String(error), true);
+    });
   };
   const controls = wallpaperControls(panel, panel.body, current, queue, effects => runtime?.preview(effects));
   controls.body.prepend(panel.status);
@@ -33,7 +38,11 @@ export function mountSettings(surface: ExtensionSurface, ports: WallpaperPorts |
     const value = current();
     controls.update(value, !!writer?.unknown, runtime?.error || writer?.error || '');
     assets?.render(value);
-    panel.say(writer?.error || '', !!writer?.error);
+    const writeError = visible ? writer?.error || '' : '';
+    if (writeError !== presentedError) {
+      presentedError = writeError;
+      panel.say(writeError, !!writeError);
+    }
   };
   controls.root.addEventListener('nexus-toggle', () => assets?.setVisible(visible && controls.root.expanded),
     { signal: panel.signal });

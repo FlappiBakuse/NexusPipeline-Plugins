@@ -1,5 +1,5 @@
 import type { ExtensionSurface, UiElement } from '@nexuspipeline/extension-sdk';
-import { button, choice, createPanel, paragraph, type Panel } from '../../../frontend-ui/src/elements.js';
+import { button, choice, createPanel, type Panel } from '../../../frontend-ui/src/elements.js';
 import { type Translate } from '../../../frontend-ui/src/localize.js';
 import type { MaaPorts } from './ports.js';
 import { drawSchema, maskSchemaSecrets } from './schema-view.js';
@@ -25,6 +25,7 @@ export class MaaEditor {
   private readonly visibility: () => void;
   private readonly imports: MaaImport;
   private visible: boolean;
+  private reading = true;
   private readonly saver: MaaSave;
 
   constructor(
@@ -36,7 +37,7 @@ export class MaaEditor {
     this.draft = retained.state; this.secrets = retained.secrets;
     this.panel = createPanel(surface, 'MaaFramework', t);
     this.presentation = draftPresentation(surface.drafts, !!this.draft.profile?.revision, t);
-    this.presentation.attach(this.panel.body);
+    this.presentation.attach(this.panel.body, surface.visible);
     this.panel.signal.addEventListener('abort', () => this.presentation.detach(), { once: true });
     this.panel.card.classList.add('maa-editor');
     this.view = this.panel;
@@ -69,15 +70,17 @@ export class MaaEditor {
     const stop = surface.drafts.onParentSaved(() => this.panel.say('实例定义已保存，当前项目草稿已保留。'));
     const changed = surface.drafts.onChanged(() => { if (this.visible && this.panel.alive()) this.draw(); });
     this.panel.signal.addEventListener('abort', () => { stop(); changed(); }, { once: true });
-    void this.panel.run(() => this.start());
+    void this.panel.run(async () => {
+      try { await this.start(); }
+      finally { this.reading = false; if (this.panel.alive() && !this.draft.editor) this.draw(); }
+    });
   }
   private async start(): Promise<void> {
     if (this.draft.profile && this.draft.editor) { this.draw(); return; }
     const next = await this.ports.readEditor(this.surface.context, this.panel.signal);
     if (!this.panel.alive()) return;
     if (!next) {
-      this.panel.body.replaceChildren();
-      paragraph(this.panel.body, this.panel.t('当前编辑区没有 Maa 配置'));
+      if (this.visible) this.panel.say('当前编辑区没有 Maa 配置');
       return;
     }
     this.draft.editor = next;
@@ -144,11 +147,14 @@ export class MaaEditor {
     const { profile, editor } = this.draft;
     panel.body.replaceChildren();
     if (!profile || !editor) {
-      paragraph(panel.body, panel.t('正在读取 Maa 配置…'));
+      if (this.reading) {
+        const spinner = document.createElement('nexus-spinner') as UiElement<'nexus-spinner'>;
+        spinner.label = panel.t('正在读取 Maa 配置…');
+        panel.body.append(spinner);
+      }
       return;
     }
     if (editor.providerId !== 'maa-framework') {
-      paragraph(panel.body, panel.t('此编辑区属于其他执行提供者'));
       return;
     }
     const fields = document.createElement('div');

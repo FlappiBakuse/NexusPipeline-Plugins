@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 - Configuration discovery explains how to select a missing automatic-run instance in both languages.
 - Localize missing configuration, defaults, targets and interface import diagnostics while preserving validation and repair previews.

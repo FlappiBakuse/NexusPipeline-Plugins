@@ -123,17 +123,13 @@
   white-space: nowrap;
 }
 .wallpaper-item-copy > span,
-.wallpaper-empty,
-.wallpaper-limits {
+.wallpaper-empty {
   color: var(--nx-color-muted);
   font-size: 12px;
 }
 .wallpaper-empty {
   margin: 0;
   padding: 24px;
-}
-.wallpaper-limits {
-  margin: 16px 0 0;
 }
 .wallpaper-appearance {
   position: absolute;

@@ -95,6 +95,7 @@ function scheduleRow(panel: Panel, schedule: CheckInSchedule, index: () => numbe
   });
   const card = document.createElement('details');
   card.className = 'checkin-schedule-card';
+  card.dataset.surface = 'collapsible';
   card.open = expanded;
   const heading = document.createElement('summary'),
     title = document.createElement('strong'),

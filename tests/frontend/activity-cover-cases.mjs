@@ -52,6 +52,8 @@ export async function activityCoverCases({ page, test }) {
     if (await page.evaluate(() => window.coverAttempts) !== firstAttempts) throw Error('A loaded cover was downloaded again');
     for (const name of ['放大卡片', '暂停轮播', '刷新', '活动设置']) {
       const button = page.getByRole('button', { name, exact: true }); await button.hover();
+      if (await button.evaluate(element => !!element.getRootNode().host.closest('nexus-tooltip')))
+        throw Error(name + ' repeats its action name in a delayed bubble');
       const offset = await button.evaluate(element => {
         const glyph = element.getRootNode().host.querySelector('[slot=icon]').getBoundingClientRect();
         const box = element.getBoundingClientRect();

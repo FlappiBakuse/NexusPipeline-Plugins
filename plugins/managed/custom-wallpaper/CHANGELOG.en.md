@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Nested cards and controls on main pages follow transparency; secondary overlays retain their palette while opaque. Dragging effect sliders shows no highlight frame.

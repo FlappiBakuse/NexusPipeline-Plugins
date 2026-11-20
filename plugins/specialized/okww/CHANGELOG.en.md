@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 - Localize missing configuration, defaults, targets and interface import diagnostics while preserving validation and repair previews.
 - Provide Chinese and English configuration diagnostics while preserving warning, admission and repair conditions.

@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Discover daily execution with `-t 2 -e`, selecting the upstream DailyRoutineTask.

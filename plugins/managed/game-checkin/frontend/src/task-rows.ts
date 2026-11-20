@@ -1,6 +1,6 @@
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
-import { button, type Panel } from '../../../frontend-ui/src/elements.js';
+import type { Panel } from '../../../frontend-ui/src/elements.js';
 import type { CheckInRun, CheckInState, CheckInTask } from './ports.js';
 
 interface TaskRow {
@@ -49,7 +49,8 @@ export class TaskRows {
         );
         const active =
           document.activeElement instanceof HTMLElement && old?.element.contains(document.activeElement)
-            ? { tag: document.activeElement.localName, text: document.activeElement.textContent }
+            ? { tag: document.activeElement.localName, text: document.activeElement.textContent,
+                action: document.activeElement.dataset.action }
             : undefined;
         old?.owner.abort();
         const row = this.create(task, state, old?.element);
@@ -60,7 +61,7 @@ export class TaskRows {
         });
         if (active)
           Array.from(row.element.querySelectorAll<HTMLElement>(active.tag))
-            .find((element) => element.textContent === active.text)
+            .find((element) => active.action ? element.dataset.action === active.action : element.textContent === active.text)
             ?.focus();
       }
       const element = this.rows.get(task.id)!.element;
@@ -128,10 +129,8 @@ export class TaskRows {
     });
     const copy = document.createElement('div');
     copy.className = 'checkin-task-copy';
-    const name = document.createElement('h2'),
-      text = document.createElement('nexus-overflow-text') as UiElement<'nexus-overflow-text'>;
-    text.text = task.name;
-    name.append(text);
+    const name = document.createElement('h2');
+    name.textContent = task.name;
     copy.append(name);
     if (task.remark) {
       const note = document.createElement('p');
@@ -166,14 +165,19 @@ export class TaskRows {
     copy.append(meta);
     const actions = document.createElement('div');
     actions.className = 'checkin-task-actions';
-    for (const [id, label, action] of [
-      ['run', '立即签到', this.actions.run],
-      ['edit', '编辑签到', this.actions.edit],
-      ['delete', '删除签到', this.actions.remove]
+    for (const [id, icon, label, action] of [
+      ['run', 'dispatch', '立即签到', this.actions.run],
+      ['edit', 'edit', '编辑签到', this.actions.edit],
+      ['delete', 'trash', '删除签到', this.actions.remove]
     ] as const) {
-      const control = button(panel, actions, label, async () => {
+      const control = document.createElement('nexus-icon-button') as UiElement<'nexus-icon-button'>;
+      control.icon = icon;
+      bindLocale(panel.t, signal, control, 'label', () => { control.label = panel.t(label); });
+      control.dataset.action = id;
+      control.disabled = task.isRunning && id !== 'delete';
+      control.addEventListener('click', () => { void panel.run(async () => {
         if (task.isRunning && id !== 'delete') return;
-        const controls = Array.from(actions.querySelectorAll<UiElement<'nexus-button'>>('nexus-button'));
+        const controls = actions.querySelectorAll<UiElement<'nexus-icon-button'>>('nexus-icon-button');
         controls.forEach((item) => {
           item.disabled = true;
         });
@@ -185,10 +189,8 @@ export class TaskRows {
               item.disabled = task.isRunning && item.dataset.action !== 'delete';
             });
         }
-      }) as UiElement<'nexus-button'>;
-      control.dataset.action = id;
-      control.disabled = task.isRunning && id !== 'delete';
-      if (label === '删除签到') control.tone = 'danger';
+      }); }, { signal });
+      actions.append(control);
     }
     head.append(handle, avatar, copy, actions);
     element.append(head);

@@ -16,6 +16,8 @@
   },
   "specialized": {
     "adapterEntry": "adapter/main.js",
+    "exclusiveProgram": true,
+    "exclusiveProgramInUserSession": true,
     "sourceDiscovery": true,
     "instancePolicy": {
       "selfManagedPcLaunch": false,

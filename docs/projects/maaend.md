@@ -4,6 +4,8 @@
 
 MaaEnd 以 `settings.autoStartInstanceId` 唯一匹配实例，使用 `--autostart --quit-after-run`。未设置、缺失或歧义时保留阻断诊断，通过已有配置编辑选择有效自动实例。
 
+首次编辑枚举 `mxu.json` 或 `config/mxu-*.json` 中的独立实例。打开程序时只带入当前选择。保存时只能保留一个实例，其 ID 成为账号配置的自动启动实例。安装目录中的原实例和自动启动设置在编辑结束后恢复。
+
 从主 interface 及声明导入闭包按顺序收集 pretask，保留身份、选择、依赖和配置校验。`tests/specialized/maaend/cases.mjs` 的 `tasks/pretasks/LaunchGamePC.json` 是额外配置形态夹具，来源研究记录指向 MaaEnd 3.0.0；当前支持锁仍以 upstream.json 为准。
 
 任务结果使用五语种成对外层事件，核对当前来源、顺序、缺终态和失败保留。未知任务和原配置保留，重试只投影已知且获准选择的任务。

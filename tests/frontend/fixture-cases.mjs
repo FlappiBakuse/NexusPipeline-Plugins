@@ -1,4 +1,4 @@
-import { choose, confirm } from './controls.mjs';
+import { choose, confirm, fieldHelp } from './controls.mjs';
 export async function runAdditionalCases({ page, test, reportRoot }) {
   await test('wallpaper appearance mount hide resume and dispose', async () => {
     const result = await page.evaluate(async () => {
@@ -249,8 +249,9 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
         saveBinding: async () => {},
       }, 'automation.script.editor');
     });
-    await page.getByText('请先选择项目接口，再继续编辑配置。').waitFor();
-    await choose(page.getByText('项目接口').locator('..').locator('nexus-select'), 'alt.json');
+    const interfaceField = page.locator('nexus-select[aria-label="项目接口"]');
+    await fieldHelp(page, interfaceField, '请先选择项目接口，再继续编辑配置。');
+    await choose(interfaceField, 'alt.json');
     await page.getByText('高级设置').click();
     await page.getByText('Controller', { exact: true }).waitFor();
     const draft = await page.evaluate(() => window.maaDraft);

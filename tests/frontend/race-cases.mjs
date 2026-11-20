@@ -30,8 +30,8 @@ async function mountMaa(page) {
   await page.getByRole('textbox',{name:'Credentials / user',exact:true}).waitFor();
 }
 
-async function mountCheckin(page, delayed = false, withTasks = false) {
-  await page.evaluate(async ({delayed,withTasks}) => {
+async function mountCheckin(page, delayed = false, withTasks = false, deferredSms = false) {
+  await page.evaluate(async ({delayed,withTasks,deferredSms}) => {
     window.sessionRequests=[]; window.closedSessions=[]; window.canceledLogins=[]; window.loginRequests=[]; window.savedSecrets=undefined;
     const state = {revision:1,timeZoneId:'UTC',notificationTasks:[],tasks:[],
       platforms:[{id:'tajiduo',name:'塔吉多',games:[],browserLogin:{ready:true,status:'ready'}}]};
@@ -53,14 +53,18 @@ async function mountCheckin(page, delayed = false, withTasks = false) {
       openEditor:()=>delayed?new Promise(resolve=>window.sessionRequests.push(resolve)):Promise.resolve({editorSessionId:'editor-a',fields:{}}),
       closeEditor:async id=>{window.closedSessions.push(id);},leaseEditor:async()=>{},
       readEditor:async()=>({editorSessionId:'editor-a',fields:{}}),
-      prepareTajiduo:async()=>({operationId:'login-a'}),sendTajiduoCode:async()=>{},
+      prepareTajiduo:async()=>({operationId:'login-a'}),
+      sendTajiduoCode: deferredSms ? () => {
+        window.smsCalls++;
+        return new Promise((resolve, reject) => { window.smsResolve = resolve; window.smsReject = reject; });
+      } : async () => {},
       loginTajiduo:()=>new Promise(resolve=>window.loginRequests.push(resolve)),
       cancelTajiduo:async id=>{window.canceledLogins.push(id);},cancelBrowserLogin:async()=>{},
       saveTask:async (_operationId,_draft,_session,secrets)=>{window.savedSecrets=structuredClone(secrets);return {...state,revision:2};},
     };
-    window.loginPorts=ports;
+    window.smsCalls = 0;
     await window.testMount('game-checkin',ports,'route');
-  },{delayed,withTasks});
+  },{delayed,withTasks,deferredSms});
   await page.getByText('添加签到任务',{exact:true}).waitFor();
 }
 
@@ -83,10 +87,7 @@ export async function runRaceCases({page,test}) {
     await login.getByText('取消',{exact:true}).click();
   });
   await test('checkin SMS pending locks fields, refuses duplicate sends and retains retryable errors',async()=>{
-    await mountCheckin(page);await page.getByText('添加签到任务',{exact:true}).click();
-    await page.evaluate(()=>{
-      window.smsCalls=0;window.loginPorts.sendTajiduoCode=()=>{window.smsCalls++;return new Promise((resolve,reject)=>{window.smsResolve=resolve;window.smsReject=reject;});};
-    });
+    await mountCheckin(page, false, false, true);await page.getByText('添加签到任务',{exact:true}).click();
     await page.getByText('塔吉多登录',{exact:true}).click();
     const login=page.locator('nexus-modal.checkin-login-modal');
     await login.getByRole('textbox',{name:'手机号',exact:true}).fill('12345678901');
@@ -102,8 +103,9 @@ export async function runRaceCases({page,test}) {
     await login.getByText('发送验证码',{exact:true}).click();await page.waitForFunction(()=>window.smsCalls===2);
     await page.evaluate(()=>window.smsResolve());
     await login.getByRole('status').filter({hasText:'验证码已发送'}).waitFor();
-    await login.getByText('发送验证码',{exact:true}).click();
-    await login.getByRole('alert').filter({hasText:'60 秒内'}).waitFor();
+    const cooldown = login.getByRole('button', { name: /发送验证码 \(\d+s\)/ });
+    await cooldown.waitFor();
+    if (!await cooldown.isDisabled()) throw Error('SMS action was available during the cooldown');
     if(await page.evaluate(()=>window.smsCalls)!==2)throw Error('SMS throttle sent an extra request');
     await login.getByText('取消',{exact:true}).click();
   });

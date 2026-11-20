@@ -55,7 +55,6 @@ export function createCarousel(
     expanded = false,
     paused = false;
   const timings = new Map<string, HTMLElement>();
-  const tooltips = new Map<UiElement<'nexus-icon-button'>, UiElement<'nexus-tooltip'>>();
   const icon = (parent: Element, label: string, glyph: string, action: () => void, className = '') => {
     const button = document.createElement('nexus-icon-button') as UiElement<'nexus-icon-button'>;
     bindLocale(panel.t, panel.signal, button, 'label', () => {
@@ -74,17 +73,7 @@ export function createCarousel(
       },
       { signal }
     );
-    if (className) parent.append(button);
-    else {
-      const tooltip = document.createElement('nexus-tooltip') as UiElement<'nexus-tooltip'>;
-      bindLocale(panel.t, signal, tooltip, 'content', () => {
-        tooltip.content = panel.t(label);
-      });
-      tooltip.anchor = button;
-      tooltip.append(button);
-      parent.append(tooltip);
-      tooltips.set(button, tooltip);
-    }
+    parent.append(button);
     return button;
   };
   const expandButton = icon(tools, '放大卡片', '', actions.expand);
@@ -107,12 +96,7 @@ export function createCarousel(
   next.querySelector('span')!.append(pageChevron('next'));
   stage.append(viewport, tools, indicators);
   panel.body.append(stage);
-  const showTool = (button: UiElement<'nexus-icon-button'>, show: boolean) => {
-    button.hidden = !show;
-    const tooltip = tooltips.get(button);
-    if (tooltip) tooltip.hidden = !show;
-  };
-  for (const button of [expandButton, pauseButton, refreshButton]) showTool(button, false);
+  for (const button of [expandButton, pauseButton, refreshButton]) button.hidden = true;
   settingsButton.disabled = true;
   previous.hidden = next.hidden = indicators.hidden = true;
   stage.setAttribute('aria-busy', 'true');
@@ -272,9 +256,8 @@ export function createCarousel(
       track.append(empty);
     }
     previous.hidden = next.hidden = indicators.hidden = feeds.length < 2;
-    showTool(expandButton, !!feeds.length);
-    showTool(refreshButton, !!feeds.length);
-    showTool(pauseButton, nextState.rotationSeconds >= 0 && feeds.length > 1);
+    expandButton.hidden = refreshButton.hidden = !feeds.length;
+    pauseButton.hidden = nextState.rotationSeconds < 0 || feeds.length <= 1;
     settingsButton.disabled = false;
     status(nextState);
     select(index);
@@ -291,14 +274,10 @@ export function createCarousel(
     );
     bindLocale(panel.t, panel.signal, expandButton, 'label', () => {
       expandButton.label = panel.t(expanded ? '缩小卡片' : '放大卡片');
-      tooltips.get(expandButton)!.content = expandButton.label;
     });
     bindLocale(panel.t, panel.signal, pauseButton, 'label', () => {
       pauseButton.label = panel.t(paused ? '继续轮播' : '暂停轮播');
-      tooltips.get(pauseButton)!.content = pauseButton.label;
     });
-    tooltips.get(expandButton)!.content = expandButton.label;
-    tooltips.get(pauseButton)!.content = pauseButton.label;
     expandButton.setAttribute('aria-pressed', String(expanded));
     pauseButton.setAttribute('aria-pressed', String(paused));
     pauseButton.querySelector('span')!.textContent = paused ? '▶️' : '⏸️';
@@ -328,7 +307,6 @@ export function createCarousel(
       if (visible === value) return;
       visible = value;
       release(true);
-      if (!value) for (const tooltip of tooltips.values()) tooltip.open = false;
       if (value)
         for (const [index, feed] of items.entries())
           void loadCover(feed, track.children[index]!.querySelector('img')!, generation);

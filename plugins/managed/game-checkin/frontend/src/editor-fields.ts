@@ -74,6 +74,7 @@ export function taskFields(
   });
   const group = document.createElement('details');
   group.className = 'checkin-game-section';
+  group.dataset.surface = 'collapsible';
   group.open = true;
   const summary = document.createElement('summary'),
     heading = document.createElement('strong'),

@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Match the shared empty-state height, text sizes and weights used by Host pages.

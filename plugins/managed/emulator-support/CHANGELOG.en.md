@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Implement vendor-specific discovery, selection, control arguments and bounded session policies for LDPlayer, Nox and BlueStacks.

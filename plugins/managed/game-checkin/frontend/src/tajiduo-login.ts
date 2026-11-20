@@ -1,7 +1,9 @@
 import { draftPresentation } from '../../../frontend-ui/src/draft-presentation.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
-import { button, choice, field, paragraph, type Panel } from '../../../frontend-ui/src/elements.js';
+import { button, choice, field, type Panel } from '../../../frontend-ui/src/elements.js';
 import { createModal } from '../../../frontend-ui/src/modal.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
+import { surfaceToast } from '../../../frontend-ui/src/toast.js';
 import type { CheckInPorts, CredentialEditor } from './ports.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 
@@ -50,29 +52,20 @@ export async function openTajiduo(
   modal.signal.addEventListener('abort', () => presentation.detach(), { once: true });
   const child = { ...panel, signal: modal.signal, alive: () => panel.alive() && modal.alive() };
   let busy = false;
-  const status = document.createElement('p');
-  status.hidden = true;
+  const status = surfaceToast(modal.body, panel.t, modal.signal);
   child.run = async (action) => {
     try {
       await action();
     } catch (error) {
       if (child.alive()) {
-        status.hidden = false;
-        status.setAttribute('role', 'alert');
-        bindLocale(panel.t, panel.signal, status, 'textContent', () => {
-          status.textContent = panel.t(
+        status.show(
             error instanceof Error && error.message === 'code_request_throttled'
               ? '60 秒内请勿重复发送验证码'
-              : '登录未完成，请检查信息、网络或官方账号状态后重试。'
-          );
-        });
+              : '登录未完成，请检查信息、网络或官方账号状态后重试。',
+          'danger');
       }
     }
   };
-  paragraph(
-    modal.body,
-    panel.t('通过官方账号接口登录。输入草稿仅留在内存，取消或结束界面会话时清除；登录后请保存签到任务使凭据生效。')
-  );
   const mode = choice(
     child,
     modal.body,
@@ -95,9 +88,10 @@ export async function openTajiduo(
         });
       }
       send.hidden = mode.value !== 'sms';
-      status.hidden = true;
+      status.show('');
     }
   );
+  fieldHelp(child, mode, '通过官方账号接口登录。输入草稿仅留在内存，取消或结束界面会话时清除；登录后请保存签到任务使凭据生效。');
   phone = field(child, modal.body, '手机号', draft.phone, value => { draft.phone = value; }, 'tel');
   value = field(child, modal.body, draft.mode === 'sms' ? '短信验证码' : '密码', draft.values[draft.mode], value => { draft.values[draft.mode] = value; }, 'password');
   const setBusy = (next: boolean) => {
@@ -105,7 +99,7 @@ export async function openTajiduo(
     (mode as UiElement<'nexus-select'>).toggleAttribute('inert', next);
     (phone as UiElement<'nexus-text-input'>).disabled = next;
     (value as UiElement<'nexus-text-input'>).disabled = next;
-    (send as UiElement<'nexus-button'>).disabled = next;
+    updateSend();
     (submit as UiElement<'nexus-button'>).disabled = next;
     bindLocale(panel.t, panel.signal, submit, 'textContent', () => {
       submit.textContent = panel.t(next ? '正在登录…' : '登录');
@@ -119,17 +113,22 @@ export async function openTajiduo(
       await ports.sendTajiduoCode(prepared.operationId, phone!.value.trim(), modal.signal);
       if (!child.alive() || !callbacks.current()) return;
       draft.sentAt = Date.now();
-      status.hidden = false;
-      status.setAttribute('role', 'status');
-      bindLocale(panel.t, panel.signal, status, 'textContent', () => {
-        status.textContent = panel.t('验证码已发送，请输入收到的验证码。60 秒内请勿重复发送。');
-      });
+      status.show('验证码已发送，请输入收到的验证码。60 秒内请勿重复发送。');
     } finally {
       if (child.alive()) setBusy(false);
     }
   });
+  function updateSend(): void {
+    const seconds = draft.sentAt === null ? 0 : Math.max(0, Math.ceil((draft.sentAt + 60_000 - Date.now()) / 1000));
+    (send as UiElement<'nexus-button'>).disabled = busy || seconds > 0;
+    bindLocale(panel.t, modal.signal, send, 'textContent', () => {
+      send.textContent = panel.t('发送验证码') + (seconds > 0 ? ' (' + seconds + 's)' : '');
+    });
+  }
+  updateSend();
+  const countdown = setInterval(updateSend, 1000);
+  modal.signal.addEventListener('abort', () => clearInterval(countdown), { once: true });
   send.hidden = draft.mode !== 'sms';
-  modal.body.append(status);
   button(child, modal.footer, '取消', () => modal.close('cancel'));
   const submit = button(child, modal.footer, '登录', async () => {
     if (busy) return;

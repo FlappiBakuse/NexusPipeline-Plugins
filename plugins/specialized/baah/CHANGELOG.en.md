@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 
 - Match `DATA/LOGS/log_*.txt` and allow the authorized file-log repair while execution is blocked.

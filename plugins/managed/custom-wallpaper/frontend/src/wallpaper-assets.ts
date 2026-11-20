@@ -2,6 +2,7 @@ import { bindLocale } from '../../../frontend-ui/src/localize.js';
 import type { UiElement } from '@nexuspipeline/extension-sdk';
 import { button, type Panel } from '../../../frontend-ui/src/elements.js';
 import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import { derivePalette } from './palette.js';
 import type { WallpaperPorts, WallpaperState } from './ports.js';
 
@@ -14,8 +15,7 @@ interface AssetRow {
 export class WallpaperAssets {
   private readonly list = document.createElement('nexus-sortable-list') as UiElement<'nexus-sortable-list'>;
   private readonly empty = document.createElement('p');
-  private readonly limits = document.createElement('p');
-  private readonly help = document.createElement('span');
+  private readonly help: UiElement<'nexus-tooltip'>;
   private readonly picker = document.createElement('nexus-file-picker') as UiElement<'nexus-file-picker'>;
   private readonly rows = new Map<string, AssetRow>();
   private readonly images = new Map<string, { size: number; url: string }>();
@@ -49,7 +49,8 @@ export class WallpaperAssets {
       },
       { signal: panel.signal }
     );
-    uploadRow.append(picker, this.help);
+    uploadRow.append(picker);
+    this.help = fieldHelp(panel, picker, () => this.uploadHelp());
     this.list.className = 'wallpaper-list';
     bindLocale(panel.t, panel.signal, this.list, 'aria-label', () => {
       this.list.setAttribute('aria-label', panel.t('壁纸顺序'));
@@ -58,8 +59,7 @@ export class WallpaperAssets {
     bindLocale(panel.t, panel.signal, this.empty, 'textContent', () => {
       this.empty.textContent = panel.t('尚未添加壁纸。');
     });
-    this.limits.className = 'wallpaper-limits';
-    parent.append(uploadRow, this.list, this.limits);
+    parent.append(uploadRow, this.list);
     this.list.addEventListener(
       'nexus-reorder',
       (event) => {
@@ -114,18 +114,15 @@ export class WallpaperAssets {
     this.list.ids = ids;
     if (ids.length) this.empty.remove();
     else this.list.append(this.empty);
-    const limits = state.limits || { maxAssetBytes: 8388608, maxAssets: 32, maxTotalBytes: 268435456 };
-    bindLocale(this.panel.t, this.panel.signal, this.help, 'textContent', () => {
-      this.help.textContent = this.panel
-        .t('JPEG、PNG、WebP，单张最大 {size} KB')
-        .replace('{size}', String(Math.floor(limits.maxAssetBytes / 1024)));
-    });
-    bindLocale(this.panel.t, this.panel.signal, this.limits, 'textContent', () => {
-      this.limits.textContent = this.panel
-        .t('最多 {count} 张，实例总容量 {size} MiB。')
-        .replace('{count}', String(limits.maxAssets))
-        .replace('{size}', String(Math.floor(limits.maxTotalBytes / 1048576)));
-    });
+    this.help.content = this.uploadHelp(state.limits);
+  }
+
+  private uploadHelp(limits = this.state()?.limits): string {
+    const { maxAssetBytes, maxAssets, maxTotalBytes } = limits ??
+      { maxAssetBytes: 8388608, maxAssets: 32, maxTotalBytes: 268435456 };
+    return this.panel.t('JPEG、PNG、WebP，单张最大 {size} KB').replace('{size}', String(Math.floor(maxAssetBytes / 1024))) +
+      '\n' + this.panel.t('最多 {count} 张，实例总容量 {size} MiB。')
+        .replace('{count}', String(maxAssets)).replace('{size}', String(Math.floor(maxTotalBytes / 1048576)));
   }
 
   private createRow(id: string, name: string, size: number, fingerprint: string): AssetRow {

@@ -123,7 +123,7 @@ function mountPreview(surface: ExtensionSurface, t: Translate, ports?: Screensho
       if (panel.alive() && visible && own === serial) {
         show(frame, decoded); acquired = undefined; decoded = undefined;
       }
-    } catch (error) {
+    } catch {
       if (panel.alive() && visible && own === serial && !nextRequest.signal.aborted) {
         clearImage();
         source.tone = 'neutral';
@@ -131,7 +131,6 @@ function mountPreview(surface: ExtensionSurface, t: Translate, ports?: Screensho
         bindLocale(t, panel.signal, message, 'textContent', () => {
           message.textContent = t('暂时无法获取游戏窗口画面');
         });
-        panel.say(error instanceof Error ? error.message : String(error), true);
       }
     } finally {
       decoded?.release();

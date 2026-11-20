@@ -26,12 +26,25 @@ function sourceCandidate(candidateId, title, executable, args, resources, logPat
   return { candidateId, title, executable, arguments: args, resources, logPaths };
 }
 
-function sourceResult(input, candidates, diagnostics = []) {
+function sourceEditor(input, executable, scopes, canCreate, exclusiveProgram = false) {
+  if (input.purpose !== 'edit' || !sourceExists(executable)) return undefined;
+  return { executable, arguments: [], scopes, canCreate, exclusiveProgram };
+}
+
+function sourceConfiguration(input, path, code, diagnostics, parse) {
+  const content = nexusReadSource(path);
+  if (input.purpose !== 'edit') return parse(content);
+  try { return parse(content); }
+  catch { diagnostics.push(code); return null; }
+}
+
+function sourceResult(input, candidates, diagnostics = [], editor) {
   if (input?.format !== 'nexus.script.source' || input.version !== 1 || input.direction !== 'request' ||
       typeof input.operationId !== 'string' || typeof input.extensionId !== 'string') throw new Error('script_source_request_invalid');
   const selected = candidates.filter(Boolean);
   if (selected.length > 128 || new Set(selected.map(item => item.candidateId)).size !== selected.length)
     throw new Error('script_source_candidates_invalid');
   return { format: input.format, version: 1, direction: 'response', operationId: input.operationId,
-    extensionId: input.extensionId, candidates: selected, diagnostics };
+    extensionId: input.extensionId, candidates: selected, diagnostics,
+    ...(input.purpose === 'edit' ? { purpose: 'edit', ...(editor ? { editor } : {}) } : {}) };
 }

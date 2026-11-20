@@ -80,9 +80,24 @@ export async function checkinLayoutCases({ page, test }) {
     const cards = await page.locator('.checkin-task').evaluateAll(rows => rows.map(row => ({ top: row.getBoundingClientRect().top, bottom: row.getBoundingClientRect().bottom, border: getComputedStyle(row).borderBottomWidth, radius: getComputedStyle(row).borderRadius })));
     if (cards.length !== 2 || cards[1].top <= cards[0].bottom || cards.some(card => parseFloat(card.border) <= 0 || parseFloat(card.radius) <= 0)) throw Error('Tasks must have separate rounded borders and spacing');
     if (await page.locator('.checkin-eyebrow').count()) throw Error('Page eyebrow remains');
-    await page.setViewportSize({ width: 640, height: 900 });
-    const overflow = await page.locator('.checkin-task').first().evaluate(row => row.scrollWidth > row.clientWidth);
-    if (overflow) throw Error('Compact task row overflows on a narrow viewport');
+    for (const width of [1280, 640, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      const layout = await page.locator('.checkin-task').first().evaluate(row => {
+        const name = row.querySelector('h2');
+        const actions = [...row.querySelectorAll('.checkin-task-actions > nexus-icon-button')];
+        const boxes = actions.map(element => element.getBoundingClientRect());
+        return {
+          fitsCard: row.scrollWidth <= row.clientWidth,
+          titleFits: getComputedStyle(name).overflow === 'visible' && name.getBoundingClientRect().right <= boxes[0]?.left,
+          squareActions: boxes.length === 3 && boxes.every(box => box.width === box.height && box.top === boxes[0].top),
+          labeledIcons: actions.every(element => {
+            const button = element.shadowRoot.querySelector('button');
+            return Boolean(button.getAttribute('aria-label') && !button.textContent.trim() && button.querySelector('svg path'));
+          })
+        };
+      });
+      if (Object.values(layout).some(value => !value)) throw Error(JSON.stringify({ width, layout }));
+    }
     await page.evaluate(() => window.fixture.dispose());
   });
 }

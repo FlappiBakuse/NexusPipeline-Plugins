@@ -110,7 +110,7 @@ export async function openTaskEditor(
   credentials = new CredentialFields(panel, ports, editor, visible, next => { retained.editor = next; });
   taskFields(panel, dialog.body, state, draft, credentials);
   if (!visible) credentials.visibility(false);
-  presentation.attach(dialog.body);
+  presentation.attach(dialog.body, visible);
   dialog.signal.addEventListener('abort', () => presentation.detach(), { once: true });
   const save = button(panel, dialog.footer, '保存', async () => {
     if (retained.busy || retained.pending) return;

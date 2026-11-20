@@ -83,7 +83,7 @@ export const english: Readonly<Record<string, string>> = {
   下次: 'Next',
   未安排下次运行: 'No upcoming run',
   运行记录: 'Run history',
-  '删除此任务、计划和凭据？': 'Delete this task, schedules and credentials?',
+  '删除「{name}」也会移除该任务的签到计划和凭据。': 'Deleting “{name}” also removes its check-in schedules and credentials.',
   游戏签到: 'Game check-in',
   签到服务尚未接入: 'Check-in service is not connected',
   '正在读取签到任务…': 'Loading check-in tasks…',

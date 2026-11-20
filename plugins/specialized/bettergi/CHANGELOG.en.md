@@ -1,5 +1,3 @@
-# Changelog
-
 ## 0.5.0
 - Provide Chinese and English configuration diagnostics while preserving warning, admission and repair conditions.
 - Include Chinese and English titles for every built-in task while preserving custom group names and frozen task semantics.

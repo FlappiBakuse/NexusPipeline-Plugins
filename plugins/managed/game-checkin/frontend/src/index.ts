@@ -121,7 +121,8 @@ function mountPage(surface: ExtensionSurface, t: Translate, provided?: CheckInPo
     run: async (task) => update(await ports.runTask(task.id, surface.signal)),
     remove: async (task) => {
       const expectedRevision = state?.configurationRevision;
-      if (await confirm(panel, t('删除此任务、计划和凭据？'), 'danger'))
+      const message = t('删除「{name}」也会移除该任务的签到计划和凭据。').replace('{name}', () => task.name);
+      if (await confirm(panel, message, 'danger', '删除签到任务'))
         update(await ports.deleteTask(task.id, surface.signal, expectedRevision));
     }
   });

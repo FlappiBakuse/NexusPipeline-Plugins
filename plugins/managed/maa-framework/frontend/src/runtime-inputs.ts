@@ -1,4 +1,5 @@
-import { button, field, paragraph, type Panel } from '../../../frontend-ui/src/elements.js';
+import { button, field, type Panel } from '../../../frontend-ui/src/elements.js';
+import { fieldHelp } from '../../../frontend-ui/src/field-help.js';
 import type { MaaProfile } from './ports.js';
 import { record, text } from './project-client.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
@@ -36,7 +37,6 @@ export function drawRuntime(panel: Panel, parent: HTMLElement, profile: MaaProfi
   bindLocale(panel.t, panel.signal, summary, 'textContent', () => { summary.textContent = panel.t('项目运行文件'); });
   section.append(summary);
   parent.append(section);
-  paragraph(section, panel.t('路径相对于所选脚本目录；保存不会启动程序或安装依赖。'));
   const inputs = profile.runtimeInputs ??= { executables: [], directories: [] };
   section.open = inputs.executables.length > 0 || inputs.directories.length > 0;
   inputs.executables.forEach((item, index) => {
@@ -44,7 +44,8 @@ export function drawRuntime(panel: Panel, parent: HTMLElement, profile: MaaProfi
     row.className = 'maa-runtime-program';
     section.append(row);
     field(panel, row, '项目程序名称', item.program, value => { item.program = value; changed(); });
-    field(panel, row, '程序或解释器相对路径', item.path, value => { item.path = value; changed(); });
+    const input = field(panel, row, '程序或解释器相对路径', item.path, value => { item.path = value; changed(); });
+    fieldHelp(panel, input, '路径相对于所选脚本目录；保存不会启动程序或安装依赖。');
     button(panel, row, '移除程序', () => { inputs.executables.splice(index, 1); changed(true); });
   });
   button(panel, section, '添加运行程序', () => {
@@ -55,7 +56,8 @@ export function drawRuntime(panel: Panel, parent: HTMLElement, profile: MaaProfi
     const row = document.createElement('div');
     row.className = 'maa-runtime-directory';
     section.append(row);
-    field(panel, row, '附加运行目录', directory, value => { inputs.directories[index] = value; changed(); });
+    const input = field(panel, row, '附加运行目录', directory, value => { inputs.directories[index] = value; changed(); });
+    fieldHelp(panel, input, '路径相对于所选脚本目录；保存不会启动程序或安装依赖。');
     button(panel, row, '移除目录', () => { inputs.directories.splice(index, 1); changed(true); });
   });
   button(panel, section, '添加运行目录', () => {

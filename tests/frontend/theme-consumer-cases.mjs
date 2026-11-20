@@ -23,12 +23,12 @@ export async function themeConsumerCases({ page, test, hostRoot }) {
       const colors = await page.evaluate(theme => {
         document.body.dataset.theme = theme;
         document.body.style.setProperty('--accent', '#257045');
-        const notice = getComputedStyle(document.querySelector('.draft-restored'));
+        const notice = getComputedStyle(document.querySelector('nexus-toast.draft-restored-toast'));
         const field = getComputedStyle(document.querySelector('[data-unsaved=true]'));
-        return { color: notice.color, outline: field.outlineColor, border: notice.borderTopColor };
+        return { outline: field.outlineColor, border: notice.borderTopColor };
       }, theme);
       const expected = (theme === 'light' || theme === 'system' && system === 'light') ? 'rgb(166, 106, 11)' : 'rgb(246, 191, 97)';
-      if (colors.color !== expected || colors.outline !== expected || colors.border === 'rgba(0, 0, 0, 0)')
+      if (colors.outline !== expected || colors.border !== expected)
         throw Error('Restored draft warning did not follow ' + theme + '/' + system + ': ' + JSON.stringify(colors));
     }
   });

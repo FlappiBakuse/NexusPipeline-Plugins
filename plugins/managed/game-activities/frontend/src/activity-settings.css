@@ -8,7 +8,6 @@
   overflow: hidden;
   border: 1px solid var(--nx-color-border);
   border-radius: 12px;
-  background: var(--nx-color-surface);
 }
 .activity-game-row {
   display: flex;
@@ -41,13 +40,4 @@
 .activity-frequency > nexus-number-input {
   display: block;
   width: 100%;
-}
-.activity-error {
-  color: var(--nx-color-danger);
-  font-size: 13px;
-}
-.activity-settings-cache {
-  margin: 16px 0 0;
-  color: var(--nx-color-muted);
-  font-size: 13px;
 }

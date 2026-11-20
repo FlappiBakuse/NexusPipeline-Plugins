@@ -20,4 +20,3 @@
 @media (max-width:480px) { .plugin-panel { padding:.7rem; } }
 .draft-surface [data-unsaved=true] { outline:2px solid var(--warning); outline-offset:2px; border-radius:var(--nx-radius-sm,8px); }
 .draft-surface [data-unsaved=true][aria-invalid=true] { outline-color:var(--nx-color-danger,#c74646); }
-.draft-restored { color:var(--warning); background:var(--warn-soft); border:1px solid color-mix(in srgb,var(--warning) 45%,transparent); border-radius:8px; padding:10px 12px; margin:0 0 16px; font-size:13px; }
