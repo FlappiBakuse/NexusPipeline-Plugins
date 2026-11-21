@@ -18,6 +18,19 @@ const statusLabels: Record<string, string> = {
   unknown: '结果待确认'
 };
 
+function recordSummary(panel: Panel, title: string): HTMLElement {
+  const summary = document.createElement('summary');
+  const caption = document.createElement('span');
+  bindLocale(panel.t, panel.signal, caption, 'textContent', () => {
+    caption.textContent = panel.t(title);
+  });
+  const arrow = document.createElement('nexus-icon') as UiElement<'nexus-icon'>;
+  arrow.name = 'chevronRight';
+  arrow.setAttribute('aria-hidden', 'true');
+  summary.append(caption, arrow);
+  return summary;
+}
+
 export class TaskRows {
   private readonly rows = new Map<string, TaskRow>();
   constructor(
@@ -202,11 +215,7 @@ export class TaskRows {
   private records(panel: Panel, runs: readonly CheckInRun[], state: CheckInState): HTMLDetailsElement {
     const details = document.createElement('details');
     details.className = 'checkin-records';
-    const summary = document.createElement('summary');
-    bindLocale(panel.t, panel.signal, summary, 'textContent', () => {
-      summary.textContent = panel.t('运行记录');
-    });
-    details.append(summary);
+    details.append(recordSummary(panel, '运行记录'));
     const list = document.createElement('ol');
     for (const run of runs) {
       const item = document.createElement('li'),
@@ -232,14 +241,10 @@ export class TaskRows {
       }
       if (run.diagnostics?.length) {
         const diagnostic = document.createElement('details'),
-          label = document.createElement('summary'),
           raw = document.createElement('pre');
         diagnostic.dataset.runId = run.id || run.startedAt;
-        bindLocale(panel.t, panel.signal, label, 'textContent', () => {
-          label.textContent = panel.t('本次脱敏诊断');
-        });
         raw.textContent = JSON.stringify(run.diagnostics, null, 2);
-        diagnostic.append(label, raw);
+        diagnostic.append(recordSummary(panel, '本次脱敏诊断'), raw);
         item.append(diagnostic);
       }
       list.append(item);

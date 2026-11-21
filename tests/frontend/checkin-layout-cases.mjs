@@ -100,4 +100,22 @@ export async function checkinLayoutCases({ page, test }) {
     }
     await page.evaluate(() => window.fixture.dispose());
   });
+  await test('checkin records and nested diagnostics share the disclosure chevron', async () => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.evaluate(async () => {
+      const run = { id: 'run', status: 'failed', startedAt: '2026-01-01T00:00:00Z', results: [],
+        diagnostics: [{ description: 'Fixture' }] };
+      const task = { id: 'task', name: 'Task', remark: '', enabled: false, games: {}, schedules: [],
+        notification: { enabled: false, notificationTaskIds: [] }, isRunning: false, recentRun: run };
+      const state = { revision: 1, timeZoneId: 'UTC', platforms: [], notificationTasks: [], tasks: [task] };
+      await window.testMount('game-checkin', { readState: async () => state }, 'route');
+    });
+    for (const summary of [page.locator('.checkin-records > summary'), page.locator('[data-run-id="run"] > summary')]) {
+      const arrow = summary.locator('nexus-icon');
+      const state = () => arrow.evaluate(icon => [icon.name, getComputedStyle(icon).rotate]);
+      if (String(await state()) !== 'chevronRight,none') throw Error('Collapsed record must point right');
+      await summary.click();
+      if (String(await state()) !== 'chevronRight,90deg') throw Error('Expanded record must point down');
+    }
+  });
 }

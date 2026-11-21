@@ -121,26 +121,21 @@
 .checkin-records summary {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 8px;
   cursor: pointer;
   list-style: none;
 }
 .checkin-records summary::-webkit-details-marker {
   display: none;
 }
-.checkin-records summary::before {
-  content: '';
+.checkin-records summary > nexus-icon {
   flex: none;
-  width: 0;
-  height: 0;
-  margin: 0;
-  border: 4px solid transparent;
-  border-left-color: currentColor;
-  transform: none;
-  transform-origin: 2px 4px;
+  color: var(--nx-color-accent);
 }
-.checkin-records[open] > summary::before {
-  transform: rotate(90deg);
+.checkin-records details[open] > summary > nexus-icon,
+.checkin-records[open] > summary > nexus-icon {
+  rotate: 90deg;
 }
 .checkin-records ol {
   display: grid;
