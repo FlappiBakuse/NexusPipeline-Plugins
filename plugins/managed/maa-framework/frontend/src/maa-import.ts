@@ -20,9 +20,9 @@ export class MaaImport {
       pending: undefined as { profile?: MaaProfile; details: unknown; key: string } | undefined }));
   }
 
-  initialize(mode: MaaEditorState['mode']): void {
+  initialize(overwrite: boolean): void {
     if (this.state.initialized) return;
-    this.state.mode = mode === 'binding' ? 'overwrite' : 'new';
+    this.state.mode = overwrite ? 'overwrite' : 'new';
     this.state.initialized = true;
   }
   invalidate(): void {

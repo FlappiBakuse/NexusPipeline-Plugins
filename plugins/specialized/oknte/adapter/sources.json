@@ -1,7 +1,6 @@
 [
   "adapter-runtime/core/strict-json.js",
   "adapter/model.js",
-  "adapter/options.js",
   "adapter/configuration.js",
   "adapter/observation.js",
   "adapter/main.js",

@@ -4,7 +4,7 @@ import { createModal, type PluginModal } from '../../../frontend-ui/src/modal.js
 import type { Translate } from '../../../frontend-ui/src/localize.js';
 import type { CheckInPorts, CheckInState, CheckInTask, TaskDraft, SecretAction } from './ports.js';
 import { CredentialFields } from './credential-fields.js';
-import { taskFields } from './editor-fields.js';
+import { taskFields } from './task-fields.js';
 import { createIdentity } from '../../../frontend-ui/src/identity.js';
 import { draftPresentation } from '../../../frontend-ui/src/draft-presentation.js';
 import { credentialDraft, editorDraft, openDraft } from './editor-draft.js';

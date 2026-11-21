@@ -63,8 +63,9 @@ def run_check(root, kind, plan, partner, output):
 
     save()
     try:
+        python("source-check", root, "tooling/source_checks.py")
         if not plan["productionRequired"]:
-            report.update(status="PASS", scope="No production input changes; no product compiler or tests invoked")
+            report.update(status="PASS", scope="Source check only; no product compiler or tests invoked")
             return report
         scope = plan["scope"]
         host = partner

@@ -10,7 +10,7 @@ internal sealed class MaaProjectCompiler : IProjectCompiler
     public async ValueTask<JsonElement> DiscoverAsync(ISelectedSource source, JsonElement selection, CancellationToken cancellationToken)
     {
         var choice = MaaCompilerChoice.Read(selection, false); var files = new MaaSelectedFiles(source, cancellationToken);
-        await MaaSourceDiscovery.CaptureAsync(files, choice);
+        await MaaSourceCapture.CaptureDiscoveryAsync(files, choice);
         var candidates = MaaProjectDiscovery.Discover(files.Snapshot(), choice.InterfacePath);
         return JsonSerializer.SerializeToElement(candidates);
     }

@@ -1,4 +1,3 @@
-import { resizeCarousel } from './carousel-size.js';
 import { bindLocale } from '../../../frontend-ui/src/localize.js';
 import type { ExtensionSurface, UiElement } from '@nexuspipeline/extension-sdk';
 import type { Panel } from '../../../frontend-ui/src/elements.js';
@@ -6,7 +5,6 @@ import { boundedImage, loadedImages } from '../../../frontend-ui/src/image-bound
 import type { ActivityFeed, ActivityPorts, ActivityState } from './ports.js';
 import { formatTime, remaining } from './time-view.js';
 import { gameName } from './activity-labels.js';
-import { pageChevron } from './carousel-icons.js';
 
 export function createCarousel(
   panel: Panel,
@@ -318,4 +316,38 @@ export function createCarousel(
       stage.remove();
     }
   };
+}
+
+function resizeCarousel(stage: HTMLElement, expanded: boolean, signal: AbortSignal): void {
+  const viewport = stage.querySelector<HTMLElement>('.activity-viewport')!;
+  const surfaces = [viewport, ...stage.querySelectorAll<HTMLElement>('.activity-slide')];
+  const before = viewport.getBoundingClientRect().height;
+  for (const surface of surfaces)
+    for (const animation of surface.getAnimations()) animation.cancel();
+  stage.classList.toggle('activity-expanded', expanded);
+  const after = viewport.getBoundingClientRect().height;
+  const duration = getComputedStyle(stage).getPropertyValue('--nx-motion-duration-normal');
+  if (!before || before === after || signal.aborted || matchMedia('(prefers-reduced-motion: reduce)').matches ||
+      duration && parseFloat(duration) === 0) return;
+  const animations = surfaces.map(surface => surface.animate([{ height: before + 'px' }, { height: after + 'px' }],
+    { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' }));
+  const cancel = () => animations.forEach(animation => animation.cancel());
+  signal.addEventListener('abort', cancel, { once: true });
+  void Promise.all(animations.map(animation => animation.finished)).catch(() => {})
+    .finally(() => signal.removeEventListener('abort', cancel));
+}
+
+function pageChevron(direction: 'previous' | 'next'): SVGSVGElement {
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('viewBox', '0 0 14 26');
+  icon.setAttribute('fill', 'none');
+  icon.setAttribute('stroke', 'currentColor');
+  icon.setAttribute('stroke-width', '2');
+  icon.setAttribute('stroke-linecap', 'round');
+  icon.setAttribute('stroke-linejoin', 'round');
+  icon.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', direction === 'previous' ? 'M10 3 4 13 10 23' : 'M4 3 10 13 4 23');
+  icon.append(path);
+  return icon;
 }

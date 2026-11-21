@@ -95,6 +95,7 @@ export interface MaaProfile {
 }
 
 export interface MaaEditorState {
+  readonly isDraft?: boolean;
   readonly providerId: string;
   readonly mode: 'script' | 'binding';
   readonly userId?: string;

@@ -5,7 +5,6 @@
   "adapter/catalog.js",
   "adapter-runtime/frameworks/maa-data.js",
   "adapter/model.js",
-  "adapter/options.js",
   "adapter/configuration.js",
   "adapter/observation.js",
   "adapter/main.js",

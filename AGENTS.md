@@ -26,11 +26,13 @@
 - 专项脚本只返回受限协议结果；物理文件、writer、进程和事务由 Host 管理。未知任务与原字节保留，Unknown/partial 副作用不自动重放。
 - 普通状态使用 revision/CAS，keep/set/clear 明确区分。秘密不进入普通 DTO、浏览器存储、日志、截图或 Git。
 - 前端复用 SDK 和 frontend-ui；订阅、取消、幂等、单源发布及晚到结果绑定所属 scope。
-- 手写文本 UTF-8、LF。命名和例外见[Host 命名规范](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/development/naming.md)。文件上限：C#450、TS/JS350、Vue300、CSS350、工具400、测试500、JSON/YAML350、文档400行；函数目标60行，超过100行审查职责。
+- 手写文本使用 UTF-8、LF，每文件最多 800 个物理行，覆盖源码、测试、工具、工程配置和文档。命名和例外见[Host 命名规范](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/development/naming.md)。函数目标 60 行，超过 100 行审查职责。
 - SDK source/identity/lock 和本地化资源由现役 producer 更新，不手填身份或 PASS。依赖、fixture、包与回执写显式仓外根，本机放 Temp。
 - 删除代码先核对符号与[加载约定](docs/architecture/overview.md#从加载约定定位)，包括 manifest、拼接脚本、常量生成、SDK 实现和原生回调；保留公开类型的外部调用边界。
 
 ## 实现、验证与交付
+
+- 整仓文本与行数检查使用 `python -B tooling/source_checks.py`。
 
 - 按 [CONTRIBUTING](CONTRIBUTING.md)完成本批选定代码、必要断言和文档后，再执行合并的定向计划；失败只补直接影响。
 - 构建入口示例：`python -B tooling/build_specialized_slice.py --extension oknte --sdk-receipt <同源SDK回执> --output <仓外根>`；完整输入和打包见[构建](docs/development/building.md)。

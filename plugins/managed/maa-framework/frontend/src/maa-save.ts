@@ -10,7 +10,8 @@ export class MaaSave {
     private readonly panel: Panel,
     private readonly surface: ExtensionSurface,
     private readonly ports: MaaPorts,
-    private readonly secrets: MaaSecretDrafts
+    private readonly secrets: MaaSecretDrafts,
+    private readonly isDraft: () => boolean
   ) {
     this.state = surface.drafts.retain('save', () => {
       const state = { saving: false, uncertain: false };
@@ -40,7 +41,7 @@ export class MaaSave {
         this.secrets.confirmSaved();
         draftPresentation(this.surface.drafts, true, this.panel.t).saved();
         this.state.uncertain = false;
-        this.panel.say('已保存');
+        this.panel.say(this.isDraft() ? '已保留到草稿，保存账号后生效。' : '已保存');
       } else this.panel.say('原操作仍未确认，请继续读取原保存结果。');
     } finally { this.state.saving = false; this.surface.drafts.changed(); }
   }
@@ -52,9 +53,9 @@ export class MaaSave {
     try {
       await this.ports.retrySave(this.surface.drafts.signal);
       this.secrets.confirmSaved();
-        draftPresentation(this.surface.drafts, true, this.panel.t).saved();
+      draftPresentation(this.surface.drafts, true, this.panel.t).saved();
       this.state.uncertain = false;
-      this.panel.say('已保存');
+      this.panel.say(this.isDraft() ? '已保留到草稿，保存账号后生效。' : '已保存');
     } catch (error) {
       this.state.uncertain = (error as { uncertain?: boolean }).uncertain === true;
       throw error;
@@ -93,7 +94,7 @@ export class MaaSave {
       this.secrets.confirmSaved();
         draftPresentation(this.surface.drafts, true, this.panel.t).saved();
       clearProtected();
-      if (this.panel.alive()) this.panel.say('已保存');
+      if (this.panel.alive()) this.panel.say(this.isDraft() ? '已保留到草稿，保存账号后生效。' : '已保存');
     } catch (error) {
       this.state.uncertain = (error as { uncertain?: boolean }).uncertain === true;
       if (!this.uncertain) this.secrets.notAccepted();

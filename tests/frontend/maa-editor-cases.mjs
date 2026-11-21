@@ -1,8 +1,8 @@
 import { choose, confirm } from './controls.mjs';
 
-export async function mountEditor(page) {
-  await page.evaluate(async () => {
-    const profile = { profileId: 'guarded-profile', revision: '1', packageRoot: 'D:/fixture', interfacePath: 'interface.json',
+export async function mountEditor(page, draft = false) {
+  await page.evaluate(async draft => {
+    const profile = { profileId: 'guarded-profile', revision: draft ? '0' : '1', packageRoot: 'D:/fixture', interfacePath: 'interface.json',
       nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main', taskOccurrences: [],
       options: { credentials: { user: 'original-user' } }, resourceOptions: {}, controllerOptions: {},
       sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } },
@@ -16,7 +16,7 @@ export async function mountEditor(page) {
     window.maaHashOriginal ??= crypto.subtle.digest.bind(crypto.subtle);
     crypto.subtle.digest = window.maaHashOriginal;
     await window.testMount('maa-framework', {
-      readEditor: async () => ({ providerId: 'maa-framework', mode: 'binding', profile }),
+      readEditor: async () => ({ providerId: 'maa-framework', mode: 'binding', isDraft: draft, profile }),
       discover: async () => { window.maaDiscoveries++; return { interfaceCandidates: ['interface.json'], candidates: [], schema }; },
       inspect: async () => ({ schema }),
       preview: (value, signal) => new Promise(resolve => window.maaPreviews.push({ value, signal, resolve })),
@@ -27,13 +27,26 @@ export async function mountEditor(page) {
         if (window.maaUnknown) throw Object.assign(Error('synthetic unknown outcome'), { uncertain: true });
       },
     }, 'automation.binding.editor');
-  });
-  await page.getByRole('button', { name: '读取项目', exact: true }).click();
+  }, draft);
+  if (!draft) await page.getByRole('button', { name: '读取项目', exact: true }).click();
   await page.getByRole('textbox', { name: 'Credentials / user', exact: true }).waitFor();
-  if (await page.evaluate(() => window.maaDiscoveries)) throw Error('Binding editor discovered sources before the legacy Read project action');
+  if (await page.evaluate(() => window.maaDiscoveries) !== (draft ? 1 : 0)) throw Error('Maa binding discovery used the wrong editor lifecycle');
 }
 
 export async function maaEditorCases({ page, test }) {
+  await test('Maa new binding discovers sources and retains configuration for its outer account save', async () => {
+    await mountEditor(page, true);
+    await page.getByRole('textbox', { name: 'Credentials / user', exact: true }).fill('draft-user');
+    await page.getByRole('button', { name: '只读执行预览', exact: true }).click();
+    await page.waitForFunction(() => window.maaPreviews.length === 1);
+    await page.evaluate(() => window.maaPreviews[0].resolve({ ready: true }));
+    await page.locator('.maa-output').filter({ hasText: '"ready": true' }).waitFor();
+    await page.getByRole('button', { name: '保留到草稿', exact: true }).click(); await confirm(page);
+    await page.getByText('已保留到草稿，保存账号后生效。', { exact: true }).waitFor();
+    if (!await page.evaluate(() => window.maaWrites.length === 1 && window.maaWrites[0].options.credentials.user === 'draft-user'))
+      throw Error('New Maa binding retained the wrong candidate');
+  });
+
   await test('Maa invalid JSON and counts block preview through redraw until corrected', async () => {
     await mountEditor(page);
     const area = page.locator('nexus-text-area[aria-label="资源层选项覆盖（JSON）"]').locator('textarea');

@@ -3,8 +3,6 @@
   "adapter/catalog.js",
   "adapter/model.js",
   "adapter/configuration.js",
-  "adapter/charge.js",
-  "adapter/protocol.js",
   "adapter/observation.js",
   "adapter/main.js",
   "adapter-runtime/core/source-discovery.js",

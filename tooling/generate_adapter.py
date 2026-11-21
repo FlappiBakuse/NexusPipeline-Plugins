@@ -3,6 +3,7 @@ import json
 from pathlib import PurePosixPath
 from source_snapshot import sha
 from localization import adapter_titles
+from source_checks import exceeds_source_limit
 
 
 def assemble_adapter(plugin):
@@ -31,7 +32,7 @@ def assemble_adapter(plugin):
                 raise ValueError("Adapter source cannot pass through a link")
         data = path.read_bytes()
         text = data.decode("utf-8")
-        if not text or "\r" in text or "\0" in text or text.startswith("\ufeff") or not text.endswith("\n") or len(text.splitlines()) > 350:
+        if not text or "\r" in text or "\0" in text or text.startswith("\ufeff") or not text.endswith("\n") or exceeds_source_limit(text):
             raise ValueError("Adapter source violates UTF-8/LF or handwritten size bounds")
         parts.append(data)
         records.append({"path": name, "sha256": sha(data)})

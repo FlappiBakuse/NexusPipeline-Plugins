@@ -12,7 +12,7 @@ internal static class DiscoveryCases
             source.Add(CompilerFixture.Input("interface.json", CompilerFixture.Interface().ToJsonString()));
             source.Add(CompilerFixture.Input("Assets/icon.png", "not-read"));
             var files = new MaaSelectedFiles(source, CancellationToken.None);
-            MaaSourceDiscovery.CaptureAsync(files, new(null, "project", "zh_cn", null)).AsTask().GetAwaiter().GetResult();
+            MaaSourceCapture.CaptureDiscoveryAsync(files, new(null, "project", "zh_cn", null)).AsTask().GetAwaiter().GetResult();
             Assert(source.Lists.Contains("") && !source.Lists.Contains("assets") && source.Reads.Contains("interface.json"));
         });
         run("discovery-all-four-sources-preserve-same-labels-as-distinct-explicit-identities", () => {

@@ -5,6 +5,8 @@ export const english: Readonly<Record<string, string>> = {
   '设置已在其他位置更改，请检查当前值。': 'Settings changed elsewhere. Check the current values.',
   '设置结果待确认，请稍后查看。': 'The settings result is awaiting confirmation. Check again shortly.',
   保存脚本项目配置: 'Save script project configuration',
+  保留到草稿: 'Keep in draft',
+  '已保留到草稿，保存账号后生效。': 'Kept in the draft. Save the account to apply it.',
   '脚本项目的受保护字段请在账号绑定中配置。': 'Configure protected project fields in the account binding.',
   项目运行文件: 'Project runtime files',
   '路径相对于所选脚本目录；保存不会启动程序或安装依赖。': 'Paths are relative to the selected script directory. Saving does not start programs or install dependencies.',

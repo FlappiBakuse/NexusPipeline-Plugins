@@ -1,10 +1,8 @@
 import type { ExtensionSurface } from '@nexuspipeline/extension-sdk';
-import type { AppearanceFrame, createRuntime } from './runtime.js';
+import type { AppearanceFrame, WallpaperRuntime } from './index.js';
 import { accentHex } from './palette.js';
 
-type Runtime = ReturnType<typeof createRuntime>;
-
-export function mountAppearance(surface: ExtensionSurface, runtime: Runtime | undefined) {
+export function mountAppearance(surface: ExtensionSurface, runtime: WallpaperRuntime | undefined) {
   if (!runtime) return () => {};
   const layer = document.createElement('div');
   const image = document.createElement('div');

@@ -149,7 +149,8 @@ function bgiObserveRecords(input, tasks, events, checkpoint) {
     if (envelope) bgiScopeMessage(envelope, selected, state);
   }
   const observations = selected.map(task => state.results.find(item => item.taskId === task.taskId) ||
-    { taskId: task.taskId, state: 'unknown', reasonCode: 'bettergi_task_terminal_missing' });
+    { taskId: task.taskId, state: 'unknown', reasonCode: state.seen.includes(task.taskId)
+      ? 'adapter_task_missing_terminal' : 'bettergi_task_terminal_missing' });
   const next = JSON.stringify(state);
   if (next.length > 65536) throw new Error('bettergi_observation_checkpoint_limit');
   return { observations, checkpoint: next };

@@ -41,7 +41,7 @@ export class MaaEditor {
     this.panel.signal.addEventListener('abort', () => this.presentation.detach(), { once: true });
     this.panel.card.classList.add('maa-editor');
     this.view = this.panel;
-    this.saver = new MaaSave(this.panel, surface, ports, this.secrets);
+    this.saver = new MaaSave(this.panel, surface, ports, this.secrets, () => this.draft.editor?.isDraft === true);
     this.fields = new MaaFields(this.panel, () => this.changed());
     this.imports = new MaaImport(
       this.panel,
@@ -87,12 +87,12 @@ export class MaaEditor {
     this.presentation.existing = !!next.profile.revision && next.profile.revision !== '0';
     this.draft.profile = structuredClone(next.profile);
     this.draft.sources.id = next.sourceId || '';
-    this.imports.initialize(next.mode);
-    this.draft.sources.confirmed = Boolean(this.draft.profile.revision);
+    this.draft.sources.confirmed = !!this.draft.profile.revision && this.draft.profile.revision !== '0';
+    this.imports.initialize(next.mode === 'binding' && (!next.isDraft || this.draft.sources.confirmed));
     if (next.packageRoot && next.packageRoot.toLowerCase() !== this.draft.profile.packageRoot.toLowerCase())
       this.resetRoot(next.packageRoot);
     this.draw();
-    if (next.mode === 'script') await this.discover();
+    if (next.mode === 'script' || next.isDraft && !this.draft.sources.confirmed) await this.discover();
   }
   private resetRoot(root: string): void {
     maskSchemaSecrets(this.panel.body);
@@ -227,7 +227,8 @@ export class MaaEditor {
     button(panel, actions, '查找并选择 Win32 窗口', () => this.selectWindow(fields));
     button(panel, actions, '预览显式导入', () => this.imports.preview());
     button(panel, actions, '使用已预览映射', () => this.imports.apply());
-    const save = button(panel, actions, this.draft.editor?.mode === 'script' ? '保存脚本项目配置' : '保存用户配置', () => this.save(save)) as UiElement<'nexus-button'>;
+    const label = this.draft.editor?.isDraft ? '保留到草稿' : this.draft.editor?.mode === 'script' ? '保存脚本项目配置' : '保存用户配置';
+    const save = button(panel, actions, label, () => this.save(save)) as UiElement<'nexus-button'>;
     save.disabled = this.saver.uncertain;
     button(panel, actions, '读取原保存结果', async () => {
       try {

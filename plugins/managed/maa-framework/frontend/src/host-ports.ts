@@ -31,7 +31,7 @@ export class MaaHostPorts implements MaaPorts {
     }
     this.current.protectedInputs = this.client.protectedStates;
     return { providerId: 'maa-framework', mode: context.surfaceId === 'automation.script.editor' ? 'script' : 'binding', userId: context.entityId, expectedUserRevision: this.client.selectionVersion,
-      packageRoot: this.name, profile: structuredClone(this.current) };
+      isDraft: this.client.isDraft, packageRoot: this.name, profile: structuredClone(this.current) };
   }
 
   async discover(_root: string, path: string, signal: AbortSignal): Promise<MaaDiscovery> {

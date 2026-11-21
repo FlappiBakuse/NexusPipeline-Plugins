@@ -36,7 +36,7 @@ def verify_component(repo, args, run, native_path):
     probe = scripts / 'bettergi/NativeProbe.csproj'
     inputs = [interpreter, probe, probe.with_suffix('.cs'), Path(__file__).resolve(),
               scripts / 'assemble.py', scripts / 'maa-fixture.mjs', scripts / 'component-runner.mjs',
-              repo / 'tooling/generate_adapter.py', repo / 'tooling/localization.py',
+              repo / 'tooling/generate_adapter.py', repo / 'tooling/localization.py', repo / 'tooling/source_checks.py',
               plugin / 'extension.json', plugin / 'locale.ts', args.jint_assembly, args.acornima_assembly,
               plugin / 'adapter/sources.json', *sorted((scripts / args.extension).glob('*.mjs'))]
     if args.extension == 'bettergi':

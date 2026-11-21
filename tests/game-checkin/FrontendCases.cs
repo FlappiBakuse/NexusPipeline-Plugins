@@ -58,7 +58,7 @@ internal static class FrontendCases
                 "{\"kuro\":{\"action\":\"keep\",\"fieldGeneration\":0,\"password\":\"synthetic\"}}" })
             {
                 using var json = CheckInJson.Parse(Encoding.UTF8.GetBytes(body));
-                try { CheckInFrontendInputs.Actions(json.RootElement); throw new InvalidOperationException("rejection_expected"); } catch (CheckInFailure) { }
+                try { CheckInFrontendInputs.ParseCredentialEditActions(json.RootElement); throw new InvalidOperationException("rejection_expected"); } catch (CheckInFailure) { }
             }
         });
         run("editor-save-blocks-pending-login-without-closing-draft", () =>

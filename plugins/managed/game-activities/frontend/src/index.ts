@@ -10,12 +10,11 @@ import { boundedImage } from '../../../frontend-ui/src/image-bound.js';
 import { createPanel } from '../../../frontend-ui/src/elements.js';
 import { localize, type Translate } from '../../../frontend-ui/src/localize.js';
 import type { PluginModal } from '../../../frontend-ui/src/modal.js';
-import type { ActivityFeed, ActivityPorts, ActivityState } from './ports.js';
+import { transportPorts, type ActivityFeed, type ActivityPorts, type ActivityState } from './ports.js';
 import { createCarousel } from './carousel-view.js';
 import { openActivityDetails } from './activity-details.js';
 import { openActivitySettings } from './activity-settings.js';
 import { english } from './messages.js';
-import { transportPorts } from './transport-ports.js';
 import '../../../frontend-ui/src/style.css';
 import './style.css';
 

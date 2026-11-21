@@ -16,6 +16,7 @@ function sequence(value: unknown, zero = false): number {
 }
 
 export class MaaProjectClient {
+  isDraft = false;
   private revision = 0;
   private choiceRevision = 0;
   private previewId = '';
@@ -36,6 +37,7 @@ export class MaaProjectClient {
   async read(signal: AbortSignal): Promise<{ name: string; selection: Record<string, unknown> | null }> {
     const value = record(await this.transport.project(this.context, 'context', {}, signal));
     if (value.providerId !== 'maa-framework' || value.compilerId !== 'project') throw new Error('maa_editor_provider_unbound');
+    this.isDraft = value.isDraft === true;
     this.revision = sequence(this.context.surfaceId === 'automation.script.editor' ? value.scriptRevision : value.bindingRevision); this.choiceRevision = sequence(value.selectionRevision, true);
     this.states = (Array.isArray(value.protectedInputs) ? value.protectedInputs : []).map(item => {
       const state = record(item);

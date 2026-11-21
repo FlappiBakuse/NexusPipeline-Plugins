@@ -11,9 +11,7 @@
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSelectedFiles.cs" Link="Product/MaaSelectedFiles.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaConfigMounts.cs" Link="Product/MaaConfigMounts.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCompilerChoice.cs" Link="Product/MaaCompilerChoice.cs" />
-    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSourceDiscovery.cs" Link="Product/MaaSourceDiscovery.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaSourceCapture.cs" Link="Product/MaaSourceCapture.cs" />
-    <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProgramSources.cs" Link="Product/MaaProgramSources.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaCompilerAssets.cs" Link="Product/MaaCompilerAssets.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectCompiler.cs" Link="Product/MaaProjectCompiler.cs" />
     <Compile Include="../../plugins/managed/maa-framework/src/Application/MaaProjectInputs.cs" Link="Product/MaaProjectInputs.cs" />

@@ -9,7 +9,7 @@ import {
 } from '@nexuspipeline/extension-sdk';
 import { confirm, button, createPanel } from '../../../frontend-ui/src/elements.js';
 import { localize, type Translate } from '../../../frontend-ui/src/localize.js';
-import { openTaskEditor } from './editor.js';
+import { openTaskEditor } from './task-editor.js';
 import type { CheckInPorts, CheckInState, CheckInTask } from './ports.js';
 import { TaskRows } from './task-rows.js';
 import { english } from './messages.js';
