@@ -33,7 +33,13 @@ internal static class SdkCases
             var input = ActivityJson.Bytes(new { expectedRevision = 0, settings = new ActivitySettings { RotationSeconds = 40 } });
             await Check.Reject(async () => await extension.InvokeAsync(new("save-settings", null, "fixture", false, input), default), "operation_id");
             var operationId = Guid.NewGuid();
-            await extension.InvokeAsync(new("save-settings", operationId, "fixture", false, input), default);
+            var settingsReads = 0;
+            docs.BeforeRead = name => { if (name == "settings") settingsReads++; };
+            var saved = await extension.InvokeAsync(new("save-settings", operationId, "fixture", false, input), default);
+            using var savedJson = System.Text.Json.JsonDocument.Parse(saved.Content);
+            Check.That(savedJson.RootElement.GetProperty("settingsRevision").GetInt64() == 1 &&
+                savedJson.RootElement.GetProperty("rotationSeconds").GetInt32() == 40);
+            if (settingsReads != 0) throw new InvalidOperationException($"fresh settings receipt should need zero readbacks, observed {settingsReads}");
             var writes = docs.Writes;
             var completion = await extension.InvokeAsync(new("read-settings-result", null, "fixture", false,
                 ActivityJson.Bytes(new { operationId })), default);
@@ -47,6 +53,25 @@ internal static class SdkCases
             await extension.InvokeAsync(new("read-feed", null, "fixture", false, "{\"feedId\":\"blue-archive/cn\"}"u8.ToArray()), default);
             Check.That(extension.Operations.Single(op => op.Name == "read-cover").Access == FrontendAccess.Read);
             await scope.DisposeAsync(); Check.That(docs.Values.ContainsKey("settings"));
+        });
+        await run("unbound-fresh-settings-receipt-cannot-publish-proposed-settings", async () =>
+        {
+            foreach (var fault in new[] { "operation", "revision", "digest" })
+            {
+                var docs = new TestDocuments();
+                await using var service = new ActivityCoordinator(new SdkActivityDocuments(docs), new TestNetwork(), new TestClock());
+                await service.InitializeAsync(default);
+                docs.RewriteReceipt = receipt => fault switch {
+                    "operation" => receipt with { OperationId = Guid.NewGuid() },
+                    "revision" => receipt with { Revision = receipt.Revision + 1 },
+                    _ => receipt with { Sha256 = new string('0', 64) }
+                };
+                await Check.Reject(() => service.SaveAsync(Guid.NewGuid(), 0, new ActivitySettings { RotationSeconds = 45 }, default), "commit_unverified");
+                Check.That(docs.Writes == 1 && (await TestActivity.State(service)).GetProperty("settingsRevision").GetInt64() == 0);
+                await service.ReloadSettingsAsync(default);
+                var current = await TestActivity.State(service);
+                Check.That(current.GetProperty("settingsRevision").GetInt64() == 1 && current.GetProperty("rotationSeconds").GetInt32() == 45);
+            }
         });
         await ReadyCases.RunAsync(run);
         await ImageCacheCases.RunAsync(run);

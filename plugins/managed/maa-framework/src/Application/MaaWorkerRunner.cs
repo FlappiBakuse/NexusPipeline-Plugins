@@ -1,5 +1,6 @@
 using System.Text.Json;
 using NexusPipeline.Extensibility.Execution;
+using NexusPipeline.Extensibility.Protocol;
 
 namespace NexusPipeline.Extensions.MaaFramework;
 
@@ -15,20 +16,22 @@ internal static class MaaWorkerRunner
         MaaDeviceController? controller = null;
         MaaWorkerProject? project = null;
         MaaProgramInputs? programs = null;
+        ExecutionProviderBootstrap? bootstrap = null;
         var outcome = "failed"; var reason = "maa_worker_failed"; var exit = 1;
         var phase = "project";
         try
         {
             var token = channel.Stopping;
-            await using var reader = await ExecutionProjectReader.ConnectAsync(channel.Bootstrap, token).ConfigureAwait(false);
-            if (channel.Bootstrap.Purpose is not (null or "initialization")) throw new MaaInputFailure("maa_runtime_purpose_invalid");
+            bootstrap = channel.Bootstrap;
+            await using var reader = await ExecutionProjectReader.ConnectAsync(bootstrap, token).ConfigureAwait(false);
+            if (bootstrap.Purpose is not (null or "initialization")) throw new MaaInputFailure("maa_runtime_purpose_invalid");
             project = await MaaProjectInputs.ReadAsync(new MaaProjectSource(reader), token,
-                channel.Bootstrap.Purpose == "initialization").ConfigureAwait(false);
-            MaaWorkerPolicy.Require(project, channel.Bootstrap.Device?.Kind ?? "");
+                bootstrap.Purpose == "initialization").ConfigureAwait(false);
+            MaaWorkerPolicy.Require(project, bootstrap.Device?.Kind ?? "");
             phase = "workspace";
             workspace = channel.OpenWorkspace();
             phase = "resources";
-            resources = await MaaFrozenResources.CreateAsync(new MaaResourceSource(reader), channel.Bootstrap.Project!.Fingerprint,
+            resources = await MaaFrozenResources.CreateAsync(new MaaResourceSource(reader), bootstrap.Project!.Fingerprint,
                 project.Plan.ResourcePaths, workspace.InputDirectory, workspace.RequireHeld, token,
                 programInputs: project.Plan.Programs.Length > 0 || project.Plan.Runtime?.NativeDirectory is not null).ConfigureAwait(false);
             var package = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, ".."));
@@ -50,12 +53,12 @@ internal static class MaaWorkerRunner
                 if (project.PreparationOccurrences.Count > 0)
                 {
                     phase = "preparation";
-                    var preparationFacts = new MaaProgramFacts(channel.Bootstrap, project);
+                    var preparationFacts = new MaaProgramFacts(bootstrap, project);
                     await (programs ?? throw new MaaInputFailure("maa_runtime_preparation_unbound"))
                         .RunPretasksAsync(project.PreparationOccurrences, token, preparationFacts.WriteAsync, retainChildren: true).ConfigureAwait(false);
                 }
                 phase = "device";
-                controller = new(await ExecutionDeviceClient.ConnectAsync(channel.Bootstrap, token).ConfigureAwait(false));
+                controller = new(await ExecutionDeviceClient.ConnectAsync(bootstrap, token).ConfigureAwait(false));
                 await controller.ConfigureAsync(project.Plan.Controller, token).ConfigureAwait(false);
                 session = new(inputs, controller, TimeSpan.FromDays(1), TimeSpan.FromSeconds(8), output,
                     payloadFactory: protectedInputs.PayloadAsync, agents: programs?.Agents());
@@ -95,8 +98,8 @@ internal static class MaaWorkerRunner
         }
         try
         {
-            if (session is not null && project is not null)
-                await MaaWorkerFacts.WriteAsync(channel.Bootstrap, project, session.Facts).ConfigureAwait(false);
+            if (session is not null && project is not null && bootstrap is not null)
+                await MaaWorkerFacts.WriteAsync(bootstrap, project, session.Facts).ConfigureAwait(false);
         }
         catch { outcome = "failed"; reason = "maa_native_facts_unavailable"; exit = 1; }
         if (output is not null) await output.DisposeAsync().ConfigureAwait(false);

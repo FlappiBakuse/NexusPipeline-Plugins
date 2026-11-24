@@ -27,14 +27,6 @@ internal static class ActivityTimes
         return new(instant.ToUniversalTime(), raw, explicitOffset ? "explicit" : "source-default",
             explicitOffset ? null : fallback == 480 ? "UTC+8" : "UTC" + suffix);
     }
-    internal static string Phase(ActivityEvent value, DateTimeOffset now)
-    {
-        var start = value.Start?.InstantUtc; var end = value.PlayEnd?.InstantUtc;
-        if (start is not null && end is not null && start >= end) return "unknown";
-        if (end <= now) return "ended";
-        if (start > now) return "upcoming";
-        return start is not null && end is not null ? "ongoing" : "unknown";
-    }
     internal static string Hash(string value) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     internal static string[] Boundaries(ActivitySource source, ActivityCache cache, DateTimeOffset now)
     {

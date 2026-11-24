@@ -26,31 +26,6 @@ internal static class PolicyCases
             var deleted = CheckInEdits.Delete(reordered, first.Id); Assert(deleted.Tasks.Single().Id == other.Id);
             Reject(() => CheckInEdits.Reorder(store, [first.Id, first.Id]));
         });
-        foreach (var (effect, signed, error, action) in new (string, bool?, string?, string)[] {
-            ("confirmed", null, null, "finish"), ("new", false, null, "requestHostSubmissionPermit"),
-            ("new", null, null, "finish"), ("new", true, null, "recordReadonlyConfirmation"),
-            ("unknown", false, null, "finish"), ("unknown", null, null, "finish"),
-            ("unknown", true, null, "recordReadonlyConfirmation"), ("new", false, "captcha_required", "finish") })
-            run($"submission-policy/{effect}/{signed}/{error}", () =>
-            {
-                var decision = SignInPolicy.BeforeSubmission(effect, signed, error); Assert(decision.Action == action);
-                if (effect == "unknown" && signed != true) Assert(!decision.IsSuccess && decision.EffectState == "unknown");
-            });
-        run("post-without-positive-confirmation-remains-unknown", () =>
-        {
-            Assert(SignInPolicy.AfterSubmission(true, null).IsSuccess);
-            Assert(!SignInPolicy.AfterSubmission(false, null).IsSuccess && SignInPolicy.AfterSubmission(null, null).EffectState == "unknown");
-            Assert(!SignInPolicy.AfterSubmission(true, "captcha_required").IsSuccess);
-        });
-        run("tajiduo-refresh-must-persist-before-role-or-sign-state-read", () =>
-        {
-            Assert(SignInPolicy.TajiduoNext("refreshReceived", false, 0, false, null).Action == "requestAtomicRefreshPersistence");
-            Assert(SignInPolicy.TajiduoNext("refreshPersisted", false, 1, true, false).Action == "finish");
-            Assert(SignInPolicy.TajiduoNext("refreshPersisted", true, 0, false, null).Action == "readRoles");
-            Assert(SignInPolicy.TajiduoNext("rolesResolved", true, 2, false, false).Code == "role_selection_required");
-            Assert(SignInPolicy.TajiduoNext("rolesResolved", true, 1, false, null).Action == "readTodayState");
-            Assert(SignInPolicy.TajiduoNext("stateRead", true, 1, false, null).Action == "finish");
-        });
         run("authenticated-hoyolab-with-no-game-roles-can-save", () =>
         {
             using var capture = new CredentialMaterial("ltoken_v2=synthetic; ltuid_v2=123456", "browser");

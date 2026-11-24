@@ -1,5 +1,6 @@
 import { registerElements } from '/ui.js';
 import { ExtensionScope } from '/sdk.js';
+import { EditorDraftStore } from '/drafts.js';
 import { createFrontend } from '/plugin.js';
 
 registerElements();
@@ -49,7 +50,9 @@ await extension.activate({ extensionId: extension.extensionId, scope, locale: 'z
   registerSurface(value) { if (value.target === 'automation.binding.editor') contribution = value; },
   registerRoute() {}, registerStyle() {}, onLocaleChanged: () => () => {}, translate: text => text });
 const context = Object.freeze({ surfaceId: 'automation.binding.editor', instanceId: model.instanceId, entityId: model.bindingId });
+const drafts = new EditorDraftStore(error => { throw error; });
 const surface = { element: document.querySelector('#app'), context, scope, signal: scope.signal, visible: true,
+  drafts: drafts.target(model.instanceId, 'bindings', model.bindingId).child('extension/' + extension.extensionId).child(context.surfaceId),
   onVisibilityChanged() { return () => {}; }, setAppearance() {} };
 const cleanup = await contribution.mount(surface);
-window.disposeFixture = async () => { cleanup?.(); await scope.dispose(); };
+window.disposeFixture = async () => { cleanup?.(); drafts.dispose(); await scope.dispose(); };

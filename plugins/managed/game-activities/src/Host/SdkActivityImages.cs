@@ -14,7 +14,8 @@ internal sealed class SdkActivityImages(IExtensionDocuments documents, IExtensio
         var entry = cache.Entries.SingleOrDefault(item => item.CoverId == coverId);
         if (entry is null) return null;
         var image = await images.ReadAsync(entry.ImageId, cancellationToken);
-        if (image.Info.SizeBytes != entry.SizeBytes) throw new ActivityFailure("activity_cover_cache_unbound");
+        if (image.Info.SizeBytes != entry.SizeBytes || image.Content.Length != entry.SizeBytes)
+            throw new ActivityFailure("activity_cover_cache_unbound");
         return new(image.Info.ContentType, image.Content);
     }
 

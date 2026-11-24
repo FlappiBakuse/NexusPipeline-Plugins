@@ -1,5 +1,4 @@
 import type { FrontendTransport, SurfaceContext } from '@nexuspipeline/extension-sdk';
-import { createIdentity } from '../../../frontend-ui/src/identity.js';
 import type { MaaDiscovery, MaaEditorState, MaaPorts, MaaProfile } from './ports.js';
 import { MaaProjectClient, record, text } from './project-client.js';
 import { profileView, schemaView, selectionView } from './project-view.js';
@@ -14,7 +13,7 @@ export class MaaHostPorts implements MaaPorts {
   private sourceId = '';
   private name = '';
 
-  constructor(private readonly transport: FrontendTransport, private readonly context: SurfaceContext) {
+  constructor(transport: FrontendTransport, private readonly context: SurfaceContext) {
     this.client = new MaaProjectClient(transport, context);
   }
 
@@ -92,19 +91,6 @@ export class MaaHostPorts implements MaaPorts {
     return { ...structuredClone(profile), taskOccurrences: next.taskOccurrences, pretaskOccurrences: next.pretaskOccurrences };
   }
 
-  async findWindows(profile: MaaProfile, signal: AbortSignal): ReturnType<MaaPorts['findWindows']> {
-    if (!this.view || schemaView(this.view).controllers.find(item => item.name === profile.controller)?.type !== 'Win32')
-      throw new Error('maa_editor_controller_unbound');
-    const value = await this.transport.invoke('find-windows', {}, signal, createIdentity());
-    if (!Array.isArray(value)) throw new Error('maa_editor_windows_invalid');
-    return value.map(item => {
-      const row = record(item);
-      if (!Number.isSafeInteger(row.handle) || !Number.isSafeInteger(row.processId)) throw new Error('maa_editor_windows_invalid');
-      return { handle: Number(row.handle), pid: Number(row.processId), title: text(row.title), executable: text(row.executable),
-        startedAtUtc: typeof row.startedAtUtc === 'string' ? row.startedAtUtc : undefined };
-    });
-  }
-
   publishDraft(_context: SurfaceContext, profile: MaaProfile, sourceId: string): void {
     this.current = structuredClone(profile);
     this.sourceId = sourceId;
@@ -126,7 +112,6 @@ export class MaaHostPorts implements MaaPorts {
   private empty(id: string): MaaProfile {
     return { schemaVersion: 1, profileId: id, revision: this.client.selectionVersion, packageRoot: this.name,
       interfacePath: '', nativeDirectory: '', nativeVersion: '5.14.3', language: 'zh_cn', controller: '', resource: '',
-      taskOccurrences: [], options: {}, resourceOptions: {}, controllerOptions: {}, windowSelection: 'exact_process',
-      windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
+      taskOccurrences: [], options: {}, resourceOptions: {}, controllerOptions: {} };
   }
 }

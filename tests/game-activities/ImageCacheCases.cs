@@ -21,9 +21,18 @@ internal static class ImageCacheCases
             clock.Advance(TimeSpan.FromDays(1));
             await using var restarted = new ActivityCoordinator(docs, offline, clock, new SdkActivityImages(docs, assets));
             await restarted.InitializeAsync(default);
+            var before = (assets.Lists, assets.Reads);
+            for (var count = 0; count < 3; count++)
+                Check.That((await restarted.CachedCoverAsync(id, default)).Bytes.Span.SequenceEqual(bytes));
             Check.That((await restarted.CoverAsync(id, default)).Bytes.Span.SequenceEqual(bytes) && offline.Calls.Count == 0);
+            if ((assets.Lists - before.Lists, assets.Reads - before.Reads) != (1, 1))
+                throw new InvalidOperationException($"reopened cover expected one inventory and one image read, observed {assets.Lists - before.Lists} and {assets.Reads - before.Reads}");
+            clock.Advance(TimeSpan.FromMinutes(31));
+            Check.That((await restarted.CachedCoverAsync(id, default)).Bytes.Span.SequenceEqual(bytes));
+            Check.That((assets.Lists - before.Lists, assets.Reads - before.Reads) == (2, 2) && offline.Calls.Count == 0);
             await restarted.SaveAsync(Guid.NewGuid(), 1, new ActivitySettings(), default);
             await Check.Reject(() => restarted.CoverAsync(id, default), "unknown");
+            await Check.Reject(() => restarted.CachedCoverAsync(id, default), "unknown");
         });
         await run("persistent-cover-evicts-old-references-and-preserves-unknown-document", async () =>
         {
@@ -49,6 +58,9 @@ internal static class ImageCacheCases
             docs.BeforeWrite = name => { if (name == "cover-cache") docs.Values[name] = saved with { Revision = saved.Revision + 1 }; };
             await Check.Reject(async () => await cache.SaveAsync(id, new("image/png", new byte[] { 2 }), new HashSet<string> { id }, default), "revision_conflict");
             Check.That((await cache.ReadAsync(id, default))!.Bytes.Span.SequenceEqual(new byte[] { 1 }));
+            var imageId = assets.Assets.Keys.Single();
+            assets.Assets[imageId] = assets.Assets[imageId] with { Content = new byte[] { 1, 2 } };
+            await Check.Reject(async () => await cache.ReadAsync(id, default), "unbound");
         });
     }
 }

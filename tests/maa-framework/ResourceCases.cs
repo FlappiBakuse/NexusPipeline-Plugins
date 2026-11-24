@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using NexusPipeline.Extensibility.Execution;
 using NexusPipeline.Extensibility.Protocol;
 using NexusPipeline.Extensions.MaaFramework;
 
@@ -29,6 +30,15 @@ internal static class ResourceCases
                 () => { if (++count > 5) throw new OperationCanceledException(); }, default).GetAwaiter().GetResult().Dispose());
             BundleCases.Assert(source.Chunks < source.Contents.Count);
         });
+        run("resources-recheck-workspace-after-a-file-chunk-arrives", () => {
+            var current = true;
+            var source = new Source { BeforeChunkReturn = () => current = false };
+            var path = NewRoot();
+            Denied(() => MaaFrozenResources.CreateAsync(source, Source.Fingerprint, ["assets/resource"], path,
+                () => { if (!current) throw new IOException("resource_workspace_revoked"); }, default).GetAwaiter().GetResult().Dispose());
+            BundleCases.Assert(source.Chunks == 1);
+            BundleCases.Assert(Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories).All(file => new FileInfo(file).Length == 0));
+        });
     }
     private static MaaFrozenResources Read(Source source, string path) =>
         MaaFrozenResources.CreateAsync(source, Source.Fingerprint, ["assets/resource"], path, () => { }, default).GetAwaiter().GetResult();
@@ -42,6 +52,7 @@ internal static class ResourceCases
     {
         internal const string Fingerprint = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
         internal string? Fault { get; init; }
+        internal Action? BeforeChunkReturn { get; init; }
         internal int Pages { get; private set; }
         internal int Chunks { get; private set; }
         internal Dictionary<string, byte[]> Contents { get; } = Enumerable.Range(0, 17).ToDictionary(index =>
@@ -79,13 +90,13 @@ internal static class ResourceCases
                 Fingerprint = Fault == "page-fingerprint" ? new string('e', 64) : Fingerprint,
                 Entries = Entries().Skip(checked((int)index)).Take(16).ToArray() });
         }
-        public Task<ExecutionProjectResponse> FileAsync(string name, string path, long offset, int maximum, CancellationToken cancellation)
+        public Task<ExecutionProjectChunk> FileAsync(string name, string path, long offset, int maximum, CancellationToken cancellation)
         {
             Chunks++; var content = Contents[path]; var bytes = content.AsSpan(checked((int)offset), Math.Min(maximum, content.Length - checked((int)offset))).ToArray();
             if (Fault == "chunk" && bytes.Length > 0) bytes[0] ^= 1;
-            return Task.FromResult(Response("file") with { Offset = offset + (Fault == "offset" ? 1 : 0), Sha256 = Hash(content),
-                SizeBytes = content.LongLength + (Fault == "file-length" ? 1 : 0), ContentBase64 = Convert.ToBase64String(bytes),
-                Fingerprint = Fault == "chunk-fingerprint" ? new string('e', 64) : Fingerprint });
+            BeforeChunkReturn?.Invoke();
+            return Task.FromResult(new ExecutionProjectChunk(Fault == "chunk-fingerprint" ? new string('e', 64) : Fingerprint, "file",
+                offset + (Fault == "offset" ? 1 : 0), content.LongLength + (Fault == "file-length" ? 1 : 0), Hash(content), bytes));
         }
         private static ExecutionProjectResponse Response(string kind) => new() { Kind = kind, Fingerprint = Fingerprint, Sequence = 1 };
         private static ExecutionProjectResponseEntriesItem Row(string path, string kind, long bytes, string? sha = null) =>

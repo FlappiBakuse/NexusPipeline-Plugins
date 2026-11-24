@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusScriptSource = function(input) {
+globalThis.nexusScriptSource = discoverFromSource(function(input) {
   const root = sourceEntries(''), candidates = [], sources = [];
   const interfaces = ['interface.json', 'interface.jsonc', 'assets/interface.json', 'assets/interface.jsonc']
     .filter(path => sourceExists(path));
@@ -51,4 +51,4 @@ globalThis.nexusScriptSource = function(input) {
       Language: 'zh_cn', ClientKind: source.kind, Source: { Kind: source.kind, Path: source.path, InstanceId: source.id } } });
   }
   return sourceResult(input, candidates, []);
-};
+});

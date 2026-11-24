@@ -62,37 +62,10 @@ export function drawSchema(
   );
   taskFields(panel, parent, schema, profile, changed, fields, () => maskSchemaSecrets(parent));
   const controller = schema.controllers.find((item) => item.name === profile.controller);
-  if (controller?.type === 'Win32') {
-    choice(
-      panel,
-      parent,
-      '运行时窗口选择',
-      profile.windowSelection,
-      [
-        { value: 'exact_process', label: '只使用已选进程生命期' },
-        { value: 'executable', label: '按完整路径重新发现' }
-      ],
-      (value) => {
-        profile.windowSelection = value as MaaProfile['windowSelection'];
-        changed();
-      }
-    );
-    fields.number(parent, '窗口等待上限（毫秒）', profile.windowWaitMilliseconds, 1, 30000, (value) => {
-      profile.windowWaitMilliseconds = value;
-      changed();
-    });
-    field(panel, parent, '窗口进程完整路径（运行时复核身份）', profile.windowExecutable, (value) => {
-      profile.windowExecutable = value;
-      changed();
-    });
-  } else if (controller?.type === 'Adb') {
-    field(panel, parent, 'ADB.exe', profile.adbPath, (value) => {
-      profile.adbPath = value;
-      changed();
-    });
-    field(panel, parent, '精确 ADB serial/address', profile.adbSerial, (value) => {
-      profile.adbSerial = value;
-      changed();
+  if (controller?.type === 'Win32' || controller?.type === 'Adb') {
+    const guidance = paragraph(parent, '');
+    bindLocale(panel.t, panel.signal, guidance, 'text', () => {
+      guidance.textContent = panel.t('请在 NexusPipeline 的运行目标配置中选择 PC 窗口或 Android 设备。');
     });
   }
   for (const key of activeOptions(schema, profile))

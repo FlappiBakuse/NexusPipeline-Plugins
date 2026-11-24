@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Cryptography;
+using System.Text.Json;
 
 namespace NexusPipeline.Extensions.GameActivities;
 
@@ -59,7 +61,10 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 entry.Cache = cache.Validate(entry.Source);
             }
             catch (Exception error) when (error is not OutOfMemoryException)
-            { entry.Unsupported = true; }
+            {
+                entry.Unsupported = true;
+                ReportFailure("feed-cache", error, sourceId: source.Id);
+            }
         }
     }
     internal void Start() => loop = RunLoopAsync();
@@ -96,9 +101,24 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
         try
         {
             lifetime.Token.ThrowIfCancellationRequested();
-            await documents.WriteAsync(operationId, "settings", expectedRevision, ActivityJson.Bytes(proposed), cancellationToken);
-            var current = await documents.ReadAsync("settings", cancellationToken) ?? throw new ActivityFailure("activity_settings_missing_after_commit");
-            settings = ActivityJson.Read<ActivitySettings>(current.Json).Validate(); settingsRevision = current.Revision;
+            var json = ActivityJson.Bytes(proposed);
+            var sha256 = Convert.ToHexStringLower(SHA256.HashData(json));
+            var commit = await documents.WriteAsync(operationId, "settings", expectedRevision, json, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (commit.OperationId != operationId || commit.Revision <= 0 || commit.Revision - 1 != expectedRevision || commit.Sha256 != sha256)
+                throw new ActivityFailure("activity_settings_commit_unverified");
+
+            if (commit.IsNew)
+            {
+                settings = proposed;
+                settingsRevision = commit.Revision;
+            }
+            else
+            {
+                var current = await documents.ReadAsync("settings", cancellationToken) ?? throw new ActivityFailure("activity_settings_missing_after_commit");
+                settings = ActivityJson.Read<ActivitySettings>(current.Json).Validate();
+                settingsRevision = current.Revision;
+            }
             await LoadSelectedAsync(cancellationToken);
             generation++; revision++; selection.Cancel(); selection.Dispose(); selection = new(); operation = null;
         }
@@ -187,6 +207,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
             catch (Exception error) when (error is not OutOfMemoryException)
             {
+                ReportFailure("refresh-queue", error, op.Id);
                 await gate.WaitAsync();
                 try { op.Failed++; }
                 finally { gate.Release(); }
@@ -210,6 +231,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
             catch (Exception error) when (error is not OutOfMemoryException)
             {
+                ReportFailure("refresh-worker", error, op.Id, source.Id);
                 await gate.WaitAsync();
                 try { op.Failed++; }
                 finally { gate.Release(); }
@@ -236,20 +258,27 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
     private async Task RefreshOneAsync(ActivityRefreshOperation op, ActivitySource source, CancellationToken cancellationToken)
     {
         ActivityContent? content = null; string[] diagnostics = []; ActivityFailure? failure = null;
+        var phase = "feed-transport";
+        Exception? feedFailure = null;
         try
         {
             var response = await network.GetAsync(source.Endpoint, 4194304, cancellationToken);
             if (response.StatusCode != 200) throw new ActivityFailure("activity_http_" + response.StatusCode, RetryAfter(response));
+            phase = "feed-parse";
             (content, diagnostics) = SraFeed.Parse(source, response.Content);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException)
-        { failure = error as ActivityFailure ?? new ActivityFailure("activity_feed_read_failed"); }
+        {
+            feedFailure = error;
+            failure = error as ActivityFailure ?? new ActivityFailure("activity_feed_read_failed");
+        }
         await gate.WaitAsync(cancellationToken);
         try
         {
             cancellationToken.ThrowIfCancellationRequested(); lifetime.Token.ThrowIfCancellationRequested();
             if (op.Generation != generation || !ActivitySources.Selected(settings).Any(s => s.Id == source.Id)) return;
+            if (feedFailure is not null) ReportFailure(phase, feedFailure, op.Id, source.Id);
             var entry = feeds[source.Id]; var old = entry.Cache; var now = clock.GetUtcNow();
             var markers = old.BoundaryChecks.Where(pair => now - pair.Value < TimeSpan.FromDays(2)).TakeLast(1024).ToDictionary();
             foreach (var key in ActivityTimes.Boundaries(source, old, now)) markers[key] = now;
@@ -271,20 +300,39 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
             {
                 op.Checked++; op.Failed++;
                 // A competing activation owns the winning bytes; never retry with a newer CAS against stale content.
-                var winner = await documents.ReadAsync(source.DocumentName, cancellationToken);
-                if (winner is not null)
+                Exception? winnerFailure = null;
+                try
                 {
-                    try
+                    var winner = await documents.ReadAsync(source.DocumentName, cancellationToken);
+                    if (winner is not null)
                     {
-                        var cache = ActivityJson.Read<ActivityCache>(winner.Json);
-                        entry.Cache = cache.Validate(source); entry.Revision = winner.Revision;
+                        try
+                        {
+                            var cache = ActivityJson.Read<ActivityCache>(winner.Json);
+                            entry.Cache = cache.Validate(source); entry.Revision = winner.Revision;
+                        }
+                        catch (Exception parse) when (parse is not OutOfMemoryException)
+                        { winnerFailure = parse; entry.Unsupported = true; }
                     }
-                    catch (Exception parse) when (parse is not OutOfMemoryException) { entry.Unsupported = true; }
                 }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+                catch (Exception lookup) when (lookup is not OutOfMemoryException) { winnerFailure = lookup; }
+                ReportFailure("feed-persistence", error, op.Id, source.Id, winnerFailure);
             }
             revision++;
         }
         finally { gate.Release(); }
+    }
+
+    private static void ReportFailure(string phase, Exception error, Guid? operationId = null, string? sourceId = null,
+        Exception? secondary = null)
+    {
+        try
+        {
+            Console.Error.WriteLine(JsonSerializer.Serialize(new { kind = "activity.failure", phase, operationId, sourceId,
+                exceptionType = error.GetType().Name, secondaryType = secondary?.GetType().Name }));
+        }
+        catch (Exception outputFailure) when (outputFailure is IOException or ObjectDisposedException) { }
     }
     private DateTimeOffset? RetryAfter(ActivityResponse response)
     {
@@ -356,8 +404,14 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
         {
             if (id.Length != 64 || !id.All(Uri.IsHexDigit) || ResolveCover(id) is null)
                 throw new ActivityFailure("activity_cover_unknown");
-            if (covers.TryGetValue(id, out var entry) && entry.Image is { } image) return image;
-            if (imageStore is not null && await imageStore.ReadAsync(id, combined.Token) is { } saved) return saved;
+            if (covers.TryGetValue(id, out var entry) && entry.Expires > clock.GetUtcNow() && entry.Image is { } image) return image;
+            if (imageStore is not null && await imageStore.ReadAsync(id, combined.Token) is { } saved)
+            {
+                combined.Token.ThrowIfCancellationRequested();
+                covers.Remove(id);
+                Remember(id, saved);
+                return saved;
+            }
             throw new ActivityFailure("activity_cover_not_cached");
         }
         finally { gate.Release(); }
@@ -392,9 +446,11 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 }
             }
             finally { gate.Release(); }
+            var phase = "cover-transport";
             try
             {
                 var response = await network.GetAsync(new Uri(url), 8388608, combined.Token);
+                phase = "cover-validation";
                 var mime = response.Headers.FirstOrDefault(pair => pair.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)).Value?.FirstOrDefault()?.Split(';')[0].Trim().ToLowerInvariant() ?? "";
                 if (response.StatusCode != 200 || response.Content.Length is < 1 or > 8388608 || ActivityCovers.MediaType(response.Content.Span, mime) is null)
                     throw new ActivityFailure("activity_cover_content_invalid");
@@ -408,6 +464,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                         var currentIds = feeds.Values.SelectMany(feed => (feed.Cache.Content?.Events.Select(item => item.CoverUrl) ?? [])
                             .Prepend(feed.Cache.Content?.Overview.CoverUrl)).Select(ActivityCovers.Identity)
                             .Where(value => value is not null).Select(value => value!).ToHashSet(StringComparer.Ordinal);
+                        phase = "cover-persistence";
                         await Detached(async () => await imageStore.SaveAsync(id, image, currentIds, combined.Token));
                         RequireCover();
                     }
@@ -422,6 +479,7 @@ internal sealed class ActivityCoordinator(IActivityDocuments documents, IActivit
                 try
                 {
                     RequireCover();
+                    ReportFailure(phase, error);
                     covers[id] = new(null, clock.GetUtcNow() + TimeSpan.FromMinutes(1)); Interlocked.Increment(ref imageFailures);
                     while (covers.Count > 128) covers.Remove(covers.MinBy(pair => pair.Value.Expires).Key);
                 }

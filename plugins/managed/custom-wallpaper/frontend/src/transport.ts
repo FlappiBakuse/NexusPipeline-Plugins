@@ -37,20 +37,29 @@ export function wallpaperPorts(transport: FrontendTransport): WallpaperPorts {
       return image.blob;
     },
     advanceRotation: readState,
-    subscribe(listener) {
+    subscribe(listener, readFailed) {
       const request = new AbortController();
       let pending: Promise<void> | undefined;
-      let changed = false;
+      let changed = false, stale = false;
       const publish = () => {
         changed = true;
         if (pending || request.signal.aborted) return;
         pending = (async () => {
           do {
             changed = false;
-            const next = await readState(request.signal);
-            if (!request.signal.aborted) listener(next);
+            try {
+              const next = await readState(request.signal);
+              if (request.signal.aborted) return;
+              listener(next);
+              stale = false;
+            } catch {
+              if (!request.signal.aborted && !stale) {
+                stale = true;
+                try { readFailed(); } catch { }
+              }
+            }
           } while (changed && !request.signal.aborted);
-        })().catch(() => {}).finally(() => {
+        })().finally(() => {
           pending = undefined;
           if (changed && !request.signal.aborted) publish();
         });

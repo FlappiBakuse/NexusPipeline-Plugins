@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using NexusPipeline.Extensibility.Compilation;
+using NexusPipeline.Extensibility.Execution;
 using NexusPipeline.Extensibility.Protocol;
 using NexusPipeline.Extensions.MaaFramework;
 
@@ -33,6 +34,22 @@ internal static class ProjectInputCases
             run("runtime-source-rejects-mixed-input-" + fault, () => {
                 var source = new Source { Fault = fault }; BundleCases.Reject(() => source.Read());
             });
+        (string Name, string Asset, Action<JsonObject> Change)[] edits = [
+            ("profile-options", "bundle-artifact", doc => doc["profile"]!["Tasks"]![0]!["Options"]!["Mode"] = "other"),
+            ("retained-profile-snapshot", "bundle-artifact", doc => doc["profile"]!["SourceSnapshot"]!["instances"]![0]!["upstreamProgress"]!["count"] = 8),
+            ("semantic-entry", "bundle-artifact", doc => doc["semantic"]!["Tasks"]![0]!["Entry"] = "other"),
+            ("semantic-fingerprint", "bundle-artifact", doc => doc["semanticFingerprint"] = new string('0', 64)),
+            ("source-read-set", "bundle-artifact", doc => doc["profile"]!["Sources"]![0]!["Identity"] = "other"),
+            ("selection", "bundle-artifact", doc => doc["selection"]!["Language"] = "other"),
+            ("execution-repeat", "execution", doc => doc["Tasks"]![0]!["RepeatCount"] = 99),
+            ("index-artifact-reference", "bundle-index", doc => doc["artifact"]!["sha256"] = new string('0', 64))
+        ];
+        foreach (var (name, asset, change) in edits)
+            run("worker-source-rejects-replaced-frozen-asset/" + name, () => {
+                var source = new Source(); source.Replace(asset, change);
+                BundleCases.Reject(() => source.Read());
+                BundleCases.Assert(source.Reads.Contains(asset));
+            });
     }
 
     private sealed class Source : IMaaProjectSource
@@ -51,6 +68,12 @@ internal static class ProjectInputCases
             contents = Result.Assets.ToDictionary(asset => asset.Name, asset => asset.Content.ToArray(), StringComparer.Ordinal);
         }
         internal MaaWorkerProject Read() => MaaProjectInputs.ReadAsync(this, default).GetAwaiter().GetResult();
+        internal void Replace(string name, Action<JsonObject> edit)
+        {
+            var document = MaaJson.Read(contents[name]);
+            edit(document);
+            contents[name] = JsonSerializer.SerializeToUtf8Bytes(document);
+        }
         public Task<ExecutionProjectResponse> ManifestAsync(CancellationToken cancellation)
         {
             var view = MaaJson.Read(JsonSerializer.SerializeToUtf8Bytes(Result.ExecutionView));
@@ -73,7 +96,7 @@ internal static class ProjectInputCases
             if (Fault == "duplicate" && assets.Length > 1) assets[1] = assets[0];
             return Task.FromResult(Response("assets") with { Index = Fault == "inventory-offset" ? index + 1 : index, Assets = assets });
         }
-        public Task<ExecutionProjectResponse> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation)
+        public Task<ExecutionProjectChunk> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation)
         {
             Reads.Add(name); Chunks++; var bytes = contents[name]; var count = Math.Min(maximumBytes, bytes.Length - checked((int)offset));
             var chunk = bytes.AsSpan(checked((int)offset), count).ToArray();
@@ -83,9 +106,8 @@ internal static class ProjectInputCases
                 var index = MaaJson.Read(bytes); index["artifact"]!["bytes"] = 1; bytes = JsonSerializer.SerializeToUtf8Bytes(index);
                 chunk = bytes.AsSpan(checked((int)offset), Math.Min(maximumBytes, bytes.Length - checked((int)offset))).ToArray();
             }
-            return Task.FromResult(Response("asset") with { Offset = Fault == "chunk-offset" ? offset + 1 : offset,
-                Sha256 = Fault == "digest" ? new string('0', 64) : MaaCompilationBundle.Hash(bytes),
-                SizeBytes = bytes.Length, ContentBase64 = Convert.ToBase64String(chunk) });
+            return Task.FromResult(new ExecutionProjectChunk(Fingerprint, "asset", Fault == "chunk-offset" ? offset + 1 : offset,
+                bytes.Length, Fault == "digest" ? new string('0', 64) : MaaCompilationBundle.Hash(bytes), chunk));
         }
         private static ExecutionProjectResponse Response(string kind) => new() { Fingerprint = Fingerprint, Sequence = 1, Kind = kind };
     }

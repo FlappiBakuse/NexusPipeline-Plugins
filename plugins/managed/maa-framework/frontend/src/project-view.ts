@@ -54,8 +54,7 @@ export function profileView(index: Record<string, unknown>, id: string, revision
     controller: text(saved.Controller), resource: text(saved.Resource), taskOccurrences: occurrences(saved.Tasks),
     pretaskOccurrences: occurrences(saved.Pretasks), options: structuredClone(record(saved.GlobalOptions)),
     resourceOptions: structuredClone(record(saved.ResourceOptions)), controllerOptions: structuredClone(record(saved.ControllerOptions)),
-    windowSelection: 'exact_process', windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowWaitMilliseconds: 10000,
-    adbPath: '', adbSerial: '', sourceBinding: { sourceKind: text(source.Kind), sourcePath: text(source.Path),
+    sourceBinding: { sourceKind: text(source.Kind), sourcePath: text(source.Path),
       sourceInstanceId: text(source.InstanceId), interfaceRelativePath: text(selected.InterfacePath) },
     sourceSnapshot: { compilation: structuredClone(index.compilation), configurationBindings: structuredClone(index.configurationBindings) } };
 }

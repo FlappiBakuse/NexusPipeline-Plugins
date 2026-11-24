@@ -117,18 +117,20 @@ internal sealed class MaaFrozenResources : IDisposable
         {
             for (long offset = 0; offset < entry.SizeBytes;)
             {
-                RequireCurrent(); cancellation.ThrowIfCancellationRequested();
+                cancellation.ThrowIfCancellationRequested();
                 var maximum = checked((int)Math.Min(131072, entry.SizeBytes - offset));
                 var response = await source.FileAsync(tree, entry.Path, offset, maximum, cancellation).ConfigureAwait(false);
+                RequireCurrent(); cancellation.ThrowIfCancellationRequested();
                 if (response.Kind != "file" || response.Fingerprint != fingerprint || response.Offset != offset ||
-                    response.SizeBytes != entry.SizeBytes || response.Sha256 != entry.Sha256 || response.ContentBase64 is null) throw Invalid();
-                var bytes = Convert.FromBase64String(response.ContentBase64);
+                    response.SizeBytes != entry.SizeBytes || response.Sha256 != entry.Sha256) throw Invalid();
+                var bytes = response.Content;
                 if (bytes.Length != maximum) throw Invalid();
-                hash.AppendData(bytes); await output.WriteAsync(bytes, cancellation).ConfigureAwait(false); offset += bytes.Length;
+                hash.AppendData(bytes.Span); await output.WriteAsync(bytes, cancellation).ConfigureAwait(false); offset += bytes.Length;
             }
             if (Convert.ToHexStringLower(hash.GetHashAndReset()) != entry.Sha256) throw Invalid();
             await output.FlushAsync(cancellation).ConfigureAwait(false);
         }
+        RequireCurrent(); cancellation.ThrowIfCancellationRequested();
         held.File(destination, entry.SizeBytes, entry.Sha256!);
     }
 

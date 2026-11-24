@@ -3,13 +3,14 @@ import { choose, confirm } from './controls.mjs';
 export async function mountEditor(page, draft = false) {
   await page.evaluate(async draft => {
     const profile = { profileId: 'guarded-profile', revision: draft ? '0' : '1', packageRoot: 'D:/fixture', interfacePath: 'interface.json',
-      nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main', taskOccurrences: [],
+      nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main',
+      taskOccurrences: [{ occurrenceId: 'daily-one', taskName: 'Daily', order: 0, enabled: true, repeatCount: 1,
+        options: {}, pipelineOverride: {} }],
       options: { credentials: { user: 'original-user' } }, resourceOptions: {}, controllerOptions: {},
-      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } },
-      windowSelection: 'exact_process', windowHandle: 0, windowProcessId: 0, windowExecutable: '', windowWaitMilliseconds: 10000,
-      adbPath: '', adbSerial: '' };
+      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } } };
     const schema = { projectName: 'Guarded Maa', projectVersion: '1', controllers: [{ name: 'win', label: 'Win32', type: 'Win32' }],
-      resources: [{ name: 'main', label: 'Main' }, { name: 'other', label: 'Other' }], tasks: [], presets: [], globalOptions: ['credentials'],
+      resources: [{ name: 'main', label: 'Main' }, { name: 'other', label: 'Other' }],
+      tasks: [{ name: 'Daily', label: 'Daily', repeatable: true }], presets: [], globalOptions: ['credentials'],
       options: { credentials: { label: 'Credentials', type: 'input', inputs: [{ name: 'user', label: 'User' }, { name: 'secret', label: 'Secret', password: true }] } } };
     window.maaPreviews = []; window.maaSecrets = []; window.maaWrites = []; window.maaDraft = undefined;
     window.maaDiscoveries = 0; window.maaUnknown = false;
@@ -57,14 +58,14 @@ export async function maaEditorCases({ page, test }) {
     await choose(page.locator('nexus-select[aria-label="Resource"]'), 'other');
     if (await area.inputValue() !== '[]') throw Error('Redraw discarded an invalid ordinary draft');
     await area.fill('{}');
-    const count = page.getByRole('textbox', { name: '窗口等待上限（毫秒）', exact: true });
-    for (const value of ['', '1.5', '30001']) {
+    const count = page.getByRole('textbox', { name: 'Daily · 重复次数', exact: true });
+    for (const value of ['', '1.5', '101']) {
       await count.fill(value); await page.getByRole('button', { name: '只读执行预览', exact: true }).click();
       if (await page.evaluate(() => window.maaPreviews.length)) throw Error('Invalid count reached the preview port');
     }
-    await count.fill('12000'); await page.getByRole('button', { name: '只读执行预览', exact: true }).click();
+    await count.fill('12'); await page.getByRole('button', { name: '只读执行预览', exact: true }).click();
     await page.waitForFunction(() => window.maaPreviews.length === 1);
-    if (!await page.evaluate(() => window.maaPreviews[0].value.windowWaitMilliseconds === 12000
+    if (!await page.evaluate(() => window.maaPreviews[0].value.taskOccurrences[0].repeatCount === 12
       && !Array.isArray(window.maaPreviews[0].value.resourceOptions))) throw Error('Corrected fields were not captured');
   });
 

@@ -30,7 +30,7 @@ export async function runLocaleCases({ page, test, reportRoot }) {
         setAppearance: () => {}, saveSettings: async () => state, readAsset: async () => window.fixturePng() },
       'settings.panels', 'en-US');
     });
-    await page.locator('.wallpaper-settings>summary').click();
+    await page.locator('.wallpaper-settings').getByRole('button').first().click();
     await page.getByText('Rotation mode').waitFor();
     await page.getByText('No wallpapers added yet.').waitFor();
     const interval = page.getByRole('spinbutton', { name: 'Rotation interval (minutes)', exact: true });
@@ -96,9 +96,7 @@ export async function runLocaleCases({ page, test, reportRoot }) {
       const profile = { profileId: 'en-profile', revision: '', packageRoot: 'D:/project',
         interfacePath: 'interface.json', nativeDirectory: '', language: 'en_us',
         controller: 'win', resource: 'main', taskOccurrences: [], options: {},
-        resourceOptions: {}, controllerOptions: {}, windowSelection: 'exact_process',
-        windowExecutable: '', windowHandle: 0, windowProcessId: 0, windowWaitMilliseconds: 10000,
-        adbPath: '', adbSerial: '' };
+        resourceOptions: {}, controllerOptions: {} };
       const schema = { projectName: 'Project', projectVersion: '1',
         controllers: [{ name: 'win', label: 'Win32', type: 'Win32' }],
         resources: [{ name: 'main', label: 'Main' }], tasks: [], options: {}, presets: [] };
@@ -110,7 +108,9 @@ export async function runLocaleCases({ page, test, reportRoot }) {
     await page.getByText('Advanced settings').click();
     await page.getByRole('textbox',{name:'Interface relative path',exact:true}).waitFor();
     await page.getByText('Add task occurrence',{exact:true}).waitFor();
-    await page.getByText('Runtime window selection',{exact:true}).waitFor();
+    await page.getByText('Choose the PC window or Android device in the NexusPipeline run target settings.', { exact: true }).waitFor();
     await page.screenshot({ path: path.join(reportRoot, 'locale-maa-1280.png'), fullPage: true });
+    await page.evaluate(() => window.fixture.setLocale('zh-CN'));
+    await page.getByText('请在 NexusPipeline 的运行目标配置中选择 PC 窗口或 Android 设备。', { exact: true }).waitFor();
   });
 }

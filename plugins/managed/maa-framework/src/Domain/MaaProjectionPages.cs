@@ -9,7 +9,6 @@ internal sealed class MaaProjectionPages
 {
     internal const int MaximumPageBytes = 65536;
     internal readonly Dictionary<string, byte[]> Contents = new(StringComparer.Ordinal);
-    private readonly HashSet<string> read = new(StringComparer.Ordinal);
     internal JsonObject Encode(JsonNode? value, int depth = 0)
     {
         if (depth > 64) throw new MaaInputFailure("maa_projection_depth");
@@ -50,36 +49,5 @@ internal sealed class MaaProjectionPages
         }
         Save(); return new() { ["kind"] = kind, ["count"] = count, ["pages"] = references };
     }
-    internal JsonNode? Decode(JsonObject node, int depth = 0)
-    {
-        if (depth > 64) throw new MaaInputFailure("maa_projection_depth");
-        var kind = MaaJson.Required(node, "kind");
-        if (kind == "inline") return node["value"]?.DeepClone();
-        var values = new List<JsonNode?>();
-        foreach (var reference in MaaJson.Objects(node["pages"]))
-        {
-            var sha = MaaJson.Required(reference, "sha256");
-            if (!Contents.TryGetValue(sha, out var bytes) || bytes.Length > MaximumPageBytes ||
-                bytes.Length != reference["bytes"]!.GetValue<int>() || Hash(bytes) != sha) throw new MaaInputFailure("maa_projection_page_changed");
-            var page = JsonNode.Parse(bytes) as JsonArray ?? throw new MaaInputFailure("maa_projection_page_invalid");
-            if (page.Count != reference["count"]!.GetValue<int>()) throw new MaaInputFailure("maa_projection_page_invalid");
-            read.Add(sha); values.AddRange(page.Select(item => item?.DeepClone()));
-        }
-        if (values.Count != node["count"]!.GetValue<int>()) throw new MaaInputFailure("maa_projection_page_invalid");
-        if (kind == "array") return new JsonArray(values.Select(item => Decode(MaaJson.Object(item), depth + 1)).ToArray());
-        if (kind == "string") return JsonValue.Create(string.Concat(values.Select(item => item!.GetValue<string>())));
-        if (kind != "object") throw new MaaInputFailure("maa_projection_page_invalid");
-        var result = new JsonObject();
-        foreach (var value in values.Select(MaaJson.Object))
-        {
-            if (value["name"] is not JsonValue key || !key.TryGetValue<string>(out var name))
-                throw new MaaInputFailure("maa_projection_page_invalid");
-            if (result.ContainsKey(name)) throw new MaaInputFailure("maa_projection_page_invalid");
-            result.Add(name, Decode(MaaJson.Object(value["node"]), depth + 1));
-        }
-        return result;
-    }
-    internal void RequireComplete()
-    { if (!read.SetEquals(Contents.Keys)) throw new MaaInputFailure("maa_projection_pages_unreferenced"); }
     private static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 }

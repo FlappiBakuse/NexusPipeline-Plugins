@@ -4,10 +4,11 @@ using NexusPipeline.Extensibility.Scheduling;
 namespace NexusPipeline.Extensions.GameCheckIn;
 
 internal sealed record CheckInWorkClock(DateTimeOffset UtcNow, string TimeZoneId);
+internal sealed record CheckInWorkExecution(CheckInTask Task, CheckInExecutionIdentity Identity);
 internal interface ICheckInWorkContext
 {
     ValueTask<CheckInWorkClock> ReadClockAsync(CancellationToken cancellationToken);
-    ValueTask<CheckInExecutionIdentity> ReadAsync(ScheduledInvocation invocation, Guid businessTaskId, long taskRevision,
+    ValueTask<CheckInWorkExecution> ReadAsync(ScheduledInvocation invocation, Guid businessTaskId, long taskRevision,
         string trigger, CancellationToken cancellationToken);
 }
 
@@ -78,17 +79,23 @@ internal sealed class CheckInWorkHandler(ICheckInPersistence persistence, CheckI
 
     private async ValueTask<ScheduledWorkResult> ExecuteAsync(CheckInTask task, ScheduledInvocation invocation, string trigger, CancellationToken cancellationToken)
     {
-        var identity = await context.ReadAsync(invocation, task.Id, task.Revision, trigger, cancellationToken);
+        var execution = await context.ReadAsync(invocation, task.Id, task.Revision, trigger, cancellationToken);
+        var identity = execution.Identity;
         if (!Guid.TryParseExact(invocation.RunId, "D", out var runId) || !Guid.TryParseExact(invocation.AttemptId, "D", out var attemptId) ||
-            identity.RunId != runId || identity.AttemptId != attemptId || identity.Trigger != trigger)
+            identity.RunId != runId || identity.AttemptId != attemptId || identity.Trigger != trigger ||
+            execution.Task.Id != task.Id || execution.Task.Revision != task.Revision)
             throw new CheckInFailure("checkin_execution_identity_invalid");
-        var result = await runner.ExecuteAsync(task.Id, task.Revision, identity, cancellationToken);
+        var result = await runner.ExecuteAsync(execution.Task, identity, cancellationToken);
         var outcome = result.Results.Any(game => game.EffectState == "unknown") ? "unverified" : result.Status switch {
             "success" => "succeeded", "partial" => "partial", "failed" => "failed", "cancelled" => "cancelled", _ => "unverified" };
         var reason = "checkin_" + (outcome == "succeeded" ? "completed" : outcome);
-        try { _ = await submissions.SubmitAsync(task, result, invocation, cancellationToken); }
+        try { _ = await submissions.SubmitAsync(execution.Task, result, invocation, cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-        catch (Exception error) when (error is not OutOfMemoryException) { reason = "checkin_notification_unknown"; }
+        catch (Exception error) when (error is not OutOfMemoryException)
+        {
+            CheckInDiagnostics.Failure(error, "notification-submission");
+            reason = "checkin_notification_unknown";
+        }
         return new() { Format = "nexus.schedule.work-result", Version = 1, Invocation = invocation,
             BusinessOutcome = outcome, ReasonCode = reason };
     }

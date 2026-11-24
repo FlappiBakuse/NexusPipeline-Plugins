@@ -1,4 +1,5 @@
 using NexusPipeline.Extensions.GameCheckIn;
+using System.Text.Json;
 
 internal static class TaskEditingCases
 {
@@ -81,6 +82,32 @@ internal static class TaskEditingCases
                 Assert(store.Writes == 1 && store.QueriedOperations.Count > 0 && store.QueriedOperations.All(id => id == operation));
                 Assert(store.Store.Tasks.Single().Name == (committed ? "changed" : "one"));
             });
+        run("unknown-task-publication-logs-original-and-lookup-failures-once-without-rewrite", () =>
+        {
+            var client = Client(); var task = Task("one");
+            var store = new EditingPersistence(new() { Tasks = [task] }) { LoseReply = true, FailLookup = true };
+            using var editors = new CheckInEditors(); var service = new CheckInTaskEditing(store, editors, new EditingQuiescence());
+            var editor = service.OpenAsync(client, task.Id, 0, default).Result.Editor;
+            var operation = Guid.NewGuid();
+            using var output = new StringWriter();
+            var previous = Console.Error;
+            try
+            {
+                Console.SetError(output);
+                Reject(() => service.SaveAsync(client, operation, editor.EditorSessionId, Draft(task),
+                    new Dictionary<string, CredentialAction>(), default).AsTask().GetAwaiter().GetResult(), "checkin_publication_unknown");
+            }
+            finally { Console.SetError(previous); }
+            Assert(store.Writes == 1 && store.QueriedOperations.SequenceEqual([operation]));
+            var text = output.ToString();
+            using var log = JsonDocument.Parse(text);
+            Assert(log.RootElement.GetProperty("operationId").GetGuid() == operation);
+            Assert(log.RootElement.GetProperty("phase").GetString() == "task-publication");
+            Assert(log.RootElement.GetProperty("exceptionType").GetString() == nameof(IOException) &&
+                log.RootElement.GetProperty("secondaryType").GetString() == nameof(InvalidOperationException));
+            Assert(!text.Contains("synthetic_reply_lost", StringComparison.Ordinal) &&
+                !text.Contains("synthetic-private-read", StringComparison.Ordinal));
+        });
         run("delete-clears-only-target-six-secrets-in-same-fact", () =>
         {
             var client = Client(); var task = Task("one"); var other = Task("two"); var store = new EditingPersistence(new() { Tasks = [task, other] });
@@ -129,7 +156,7 @@ internal sealed class EditingPersistence(CheckInTaskStore initial) : ICheckInPer
     internal CheckInTaskStore Store = initial;
     internal long Revision;
     internal int SecretReads, Writes;
-    internal bool LoseReply, CommitBeforeLostReply;
+    internal bool LoseReply, CommitBeforeLostReply, FailLookup;
     internal Guid? Subject;
     internal readonly List<Guid> QueriedOperations = [];
     internal CredentialMutation[] Mutations = [];
@@ -138,18 +165,22 @@ internal sealed class EditingPersistence(CheckInTaskStore initial) : ICheckInPer
     public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInTaskSnapshot(Revision, Store.Validate()));
     public ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken)
     { SecretReads++; return ValueTask.FromResult(new CheckInCredentialRead(0, false, null)); }
-    public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed,
+    public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, ReadOnlyMemory<byte> document,
         Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken)
     {
         BeforeWrite?.Invoke(); Writes++; if (Revision != expectedDocumentRevision) throw new CheckInFailure("checkin_configuration_conflict");
         Subject = secretSubjectId; Mutations = changes.ToArray();
-        if (!LoseReply || CommitBeforeLostReply) { Store = proposed; Revision++; commit = new(operationId, Revision, true,
-            Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(CheckInJson.Bytes(proposed)))); }
+        if (!LoseReply || CommitBeforeLostReply) { Store = CheckInJson.Read<CheckInTaskStore>(document); Revision++; commit = new(operationId, Revision, true,
+            Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(document.Span))); }
         if (LoseReply) throw new IOException("synthetic_reply_lost");
         return ValueTask.FromResult(commit!);
     }
     public ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken)
-    { QueriedOperations.Add(operationId); return ValueTask.FromResult(commit); }
+    {
+        QueriedOperations.Add(operationId);
+        if (FailLookup) throw new InvalidOperationException("synthetic-private-read");
+        return ValueTask.FromResult(commit);
+    }
     public ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken) => throw new NotSupportedException();
     public ValueTask<long> WriteRunAsync(Guid operationId, Guid taskId, long expectedRevision, CheckInRun run, CancellationToken cancellationToken) => throw new NotSupportedException();
 }

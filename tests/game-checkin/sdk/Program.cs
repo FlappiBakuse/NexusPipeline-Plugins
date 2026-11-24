@@ -30,8 +30,10 @@ await Run("actual-sdk-six-field-atomic-save-and-owned-secret-memory", async () =
     using var material = new CredentialMaterial("synthetic-sensitive-canary", "manual");
     var changes = CheckInCatalog.Platforms.Select(platform => new CredentialMutation(platform.Id, 0, platform.Id == "kuro" ? "set" : "keep", platform.Id == "kuro" ? material : null)).ToArray();
     var store = new CheckInTaskStore { Tasks = [new() { Id = id, Revision = 1, Name = "one", Games = new() { ["kuro"] = ["ww"] } }] };
-    var op = Guid.NewGuid(); var committed = await adapter.PublishAsync(op, 0, store, id, changes, default);
+    ReadOnlyMemory<byte> document = CheckInJson.Bytes(store);
+    var op = Guid.NewGuid(); var committed = await adapter.PublishAsync(op, 0, document, id, changes, default);
     Assert(committed.Revision == 1 && ports.AtomicWrites == 1 && ports.SingleWrites == 0 && ports.Applies == 0 && ports.Transferred.Count == 6);
+    Assert(ports.AtomicInput.Equals(document) && ports.Document!.Json.Span.SequenceEqual(document.Span));
     Assert(!Encoding.UTF8.GetString(ports.Document!.Json.Span).Contains("synthetic-sensitive-canary", StringComparison.Ordinal));
     try { ports.Transferred.Single(change => change.Kind == SecretChangeKind.Set).UseValue(_ => { }); throw new InvalidOperationException("transferred_not_cleared"); } catch (ObjectDisposedException) { }
     using var saved = await adapter.ReadCredentialAsync(id, "kuro", default); saved.Material!.Use(value => Assert(value.SequenceEqual("synthetic-sensitive-canary")));
@@ -41,10 +43,32 @@ await Run("atomic-rejection-disposes-every-sdk-change-without-ordinary-write", a
 {
     using var ports = new PersistencePorts { RejectAtomic = true }; var adapter = new SdkCheckInPersistence(ports, ports, ports);
     using var material = new CredentialMaterial("synthetic-sensitive-canary", "manual");
-    try { await adapter.PublishAsync(Guid.NewGuid(), 0, new(), Guid.NewGuid(), [new("kuro", 0, "set", material)], default); throw new InvalidOperationException("rejection_expected"); }
+    try { await adapter.PublishAsync(Guid.NewGuid(), 0, CheckInJson.Bytes(new CheckInTaskStore()), Guid.NewGuid(), [new("kuro", 0, "set", material)], default); throw new InvalidOperationException("rejection_expected"); }
     catch (IOException) { }
     Assert(ports.Document is null && ports.SingleWrites == 0 && ports.Applies == 0);
     try { ports.Transferred.Single().UseValue(_ => { }); throw new InvalidOperationException("rejected_memory_not_cleared"); } catch (ObjectDisposedException) { }
+});
+await Run("task-order-lost-reply-verifies-atomic-document-bytes-on-the-original-operation", async () =>
+{
+    var first = new CheckInTask { Id = Guid.NewGuid(), Revision = 1, Name = "原始顺序", Games = new() { ["kuro"] = ["ww"] } };
+    var second = first with { Id = Guid.NewGuid(), Name = "second" };
+    var store = new CheckInTaskStore { Tasks = [first, second] };
+    using var ports = new PersistencePorts { Document = new(1, "fixture", CheckInJson.Bytes(store)), ThrowAfterCommit = true };
+    var persistence = new SdkCheckInPersistence(ports, ports, ports);
+    using var editors = new CheckInEditors();
+    using var lifetime = new CancellationTokenSource();
+    using var clients = new CheckInClients(default);
+    var editing = new CheckInTaskEditing(persistence, editors, null!);
+    var operation = Guid.NewGuid();
+    var order = new[] { second.Id, first.Id };
+
+    var result = await editing.ReorderAsync(clients.Get(Guid.NewGuid(), lifetime.Token), operation, order, 1, default);
+
+    var expected = CheckInJson.Bytes(CheckInEdits.Reorder(store, order));
+    Assert(result.Revision == 2 && ports.AtomicWrites == 1 && ports.SingleWrites == 0 && ports.CommitReads == 1);
+    Assert(ports.Document!.Json.Span.SequenceEqual(expected) && result.Store.Tasks.Select(task => task.Id).SequenceEqual(order));
+    Assert((await persistence.ReadPublicationAsync(operation, default))?.Sha256 ==
+        Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(expected)));
 });
 await Run("unknown-task-format-and-case-alias-preserve-original-document", async () =>
 {

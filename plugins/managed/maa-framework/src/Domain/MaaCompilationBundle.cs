@@ -66,25 +66,6 @@ internal sealed record MaaCompilationBundle(byte[] Artifact, string ArtifactSha2
             throw new MaaInputFailure("maa_compilation_selection_invalid");
     }
 
-    internal JsonObject Verify(MaaSourceSet frozenSources, string expectedArtifactSha256,
-        CancellationToken cancellationToken = default)
-    {
-        RequireBudget(MaximumExecutionBytes);
-        if (ArtifactSha256 != expectedArtifactSha256 || Hash(Artifact) != ArtifactSha256 || Hash(Execution) != ExecutionSha256 || Hash(Index) != IndexSha256 ||
-            SnapshotFingerprint != frozenSources.SnapshotFingerprint) throw new MaaInputFailure("maa_compilation_changed");
-        var artifact = MaaJson.Read(Artifact);
-        var selection = JsonSerializer.Deserialize<MaaCompilationSelection>(artifact["selection"]!.ToJsonString())
-            ?? throw new MaaInputFailure("maa_compilation_selection_invalid");
-        _ = MaaCompactProjection.Restore(Pi, MaaJson.Required(artifact, "compilationFingerprint"));
-        var expected = Build(frozenSources, selection, cancellationToken: cancellationToken);
-        if (!Artifact.AsSpan().SequenceEqual(expected.Artifact) || !Index.AsSpan().SequenceEqual(expected.Index) || !Execution.AsSpan().SequenceEqual(expected.Execution) ||
-            SourceFingerprint != expected.SourceFingerprint || SemanticFingerprint != expected.SemanticFingerprint || CanExecute != expected.CanExecute ||
-            !BlockingDiagnostics.SequenceEqual(expected.BlockingDiagnostics) ||
-            !Pi.Artifact.AsSpan().SequenceEqual(expected.Pi.Artifact) || !Pi.View.AsSpan().SequenceEqual(expected.Pi.View) ||
-            Pi.ArtifactSha256 != expected.Pi.ArtifactSha256 || Pi.ViewSha256 != expected.Pi.ViewSha256)
-            throw new MaaInputFailure("maa_compilation_changed");
-        return MaaJson.Read(Execution);
-    }
     internal static MaaCompilationState Prepare(MaaSourceSet sources, MaaCompilationSelection selection, CancellationToken cancellation)
     {
         var project = new MaaPiCompiler(sources, selection.ClientKind).Compile(selection.InterfacePath, selection.Language, cancellation);

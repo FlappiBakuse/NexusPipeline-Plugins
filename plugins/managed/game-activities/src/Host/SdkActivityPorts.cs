@@ -14,7 +14,7 @@ internal sealed class SdkActivityDocuments(IExtensionDocuments documents) : IAct
         ReadOnlyMemory<byte> json, CancellationToken cancellationToken)
     {
         var result = await documents.WriteAsync(operationId, name, expectedRevision, json, cancellationToken);
-        return new(result.Revision, result.IsNew);
+        return new(result.OperationId, result.Revision, result.Sha256, result.IsNew);
     }
 }
 

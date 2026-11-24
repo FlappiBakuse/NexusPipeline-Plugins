@@ -1,7 +1,7 @@
 namespace NexusPipeline.Extensions.GameActivities;
 
 internal sealed record ActivityDocument(long Revision, ReadOnlyMemory<byte> Json);
-internal sealed record ActivityDocumentCommit(long Revision, bool IsNew);
+internal sealed record ActivityDocumentCommit(Guid OperationId, long Revision, string Sha256, bool IsNew);
 internal interface IActivityDocuments
 {
     ValueTask<ActivityDocument?> ReadAsync(string name, CancellationToken cancellationToken);

@@ -30,13 +30,43 @@ internal static class DraftCases
             var draft = new JsonObject { ["Tasks"] = new JsonArray(Row(rows[1], 0, true, 2), Row(rows[0], 1, false, 1)),
                 ["GlobalOptions"] = new JsonObject { ["Mode"] = "A" } };
             var bundle = MaaCompilationBundle.Build(source, Selection with { Profile = draft });
-            var view = bundle.Verify(source, bundle.ArtifactSha256); var full = MaaJson.Read(bundle.Artifact);
+            var view = MaaJson.Read(bundle.Execution); var full = MaaJson.Read(bundle.Artifact);
             BundleCases.Assert(bundle.ArtifactSha256 != original.ArtifactSha256);
             BundleCases.Assert(view["Tasks"]![0]!["Id"]!.GetValue<string>() == rows[1]["Id"]!.GetValue<string>());
             BundleCases.Assert(view["Tasks"]![0]!["RepeatCount"]!.GetValue<int>() == 2 && !view["Tasks"]![1]!["Enabled"]!.GetValue<bool>());
             BundleCases.Assert(MaaJson.Objects(full["semantic"]!["Tasks"]).Single()["OccurrenceId"]!.GetValue<string>() == rows[1]["Id"]!.GetValue<string>());
             BundleCases.Assert(JsonNode.DeepEquals(raw["profile"]!["SourceSnapshot"], full["profile"]!["SourceSnapshot"]));
             BundleCases.Assert(MaaJson.Read(original.Artifact)["profile"]!["GlobalOptions"] is JsonObject);
+        });
+        run("draft-selects-one-mfa-duplicate-without-committing-source-flags-or-progress", () =>
+        {
+            var instance = CompilerFixture.Mfa();
+            var rows = instance["TaskItems"]!.AsArray();
+            var duplicate = rows[0]!.DeepClone();
+            duplicate["repeat_count"] = 1;
+            duplicate["upstreamProgress"] = new JsonObject { ["counter"] = 17 };
+            rows.Add(duplicate);
+            rows.Add(new JsonObject { ["name"] = "unknown", ["entry"] = "UnknownEntry", ["default_check"] = false,
+                ["upstreamProgress"] = new JsonObject { ["counter"] = 99 } });
+            var source = CompilerFixture.Sources(("appsettings.json", new JsonObject()), ("config/config.json", CompilerFixture.Mfa()),
+                ("config/instances/one.json", instance));
+            var selection = new MaaCompilationSelection("assets/interface.json", "mfa", "zh_cn", new("mfa", "config/instances/one.json", "one"));
+            var original = MaaCompilationBundle.Build(source, selection);
+            var imported = MaaJson.Objects(MaaJson.Read(original.Artifact)["profile"]!["Tasks"]);
+            var ids = imported.Select(row => MaaJson.Required(row, "Id")).ToArray();
+            BundleCases.Assert(ids.Distinct().Count() == 3 && JsonNode.DeepEquals(imported[0]["Name"], imported[1]["Name"]));
+
+            var draftRows = new JsonArray(imported.Select((row, index) => Row(row, index, index == 1, index == 0 ? 2 : 1)).ToArray());
+            var draft = new JsonObject { ["Tasks"] = draftRows };
+            var bundle = MaaCompilationBundle.Build(source, selection with { Profile = draft });
+            var view = JsonSerializer.Deserialize<JsonElement>(bundle.Execution);
+            var plan = MaaRuntimePlan.Read(bundle.Artifact, bundle.Pi.Artifact, view);
+            BundleCases.Assert(plan.Select([ids[1]]).Single().SourceId == "1");
+            BundleCases.Reject(() => plan.Select([ids[0]]));
+            BundleCases.Reject(() => plan.Select([ids[2]]));
+            var profile = MaaJson.Read(bundle.Artifact)["profile"]!;
+            BundleCases.Assert(JsonNode.DeepEquals(profile["SourceSnapshot"]!["instance"], instance) &&
+                !profile["Tasks"]![2]!["Enabled"]!.GetValue<bool>());
         });
         run("draft-adds-a-new-independent-occurrence-from-the-original-pi-definition", () =>
         {

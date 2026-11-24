@@ -28,10 +28,11 @@ internal sealed class SdkCheckInRotation(IWorkTasks tasks, ICheckInPersistence p
             finally { Array.Clear(stored); }
             var operationId = Operation(current);
             var json = CheckInJson.Bytes(snapshot.Store);
-            var publication = await persistence.PublishAsync(operationId, snapshot.Revision, snapshot.Store, taskId,
+            var sha256 = Convert.ToHexStringLower(SHA256.HashData(json));
+            var publication = await persistence.PublishAsync(operationId, snapshot.Revision, json, taskId,
                 [new("tajiduo", expectedSecretRevision, "set", replacement)], cancellationToken);
             return publication.OperationId == operationId && publication.Revision == snapshot.Revision + 1 &&
-                publication.Sha256 == Convert.ToHexStringLower(SHA256.HashData(json));
+                publication.Sha256 == sha256;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException) { return false; }

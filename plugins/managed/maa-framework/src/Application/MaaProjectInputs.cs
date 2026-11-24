@@ -9,15 +9,15 @@ internal interface IMaaProjectSource
 {
     Task<ExecutionProjectResponse> ManifestAsync(CancellationToken cancellation);
     Task<ExecutionProjectResponse> AssetsAsync(long index, CancellationToken cancellation);
-    Task<ExecutionProjectResponse> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation);
+    Task<ExecutionProjectChunk> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation);
 }
 
 internal sealed class MaaProjectSource(ExecutionProjectReader reader) : IMaaProjectSource
 {
     public Task<ExecutionProjectResponse> ManifestAsync(CancellationToken cancellation) => reader.ManifestAsync(cancellation);
     public Task<ExecutionProjectResponse> AssetsAsync(long index, CancellationToken cancellation) => reader.AssetsAsync(index, cancellation);
-    public Task<ExecutionProjectResponse> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation)
-        => reader.ReadAssetAsync(name, offset, maximumBytes, cancellation);
+    public Task<ExecutionProjectChunk> ReadAsync(string name, long offset, int maximumBytes, CancellationToken cancellation)
+        => reader.ReadAssetChunkAsync(name, offset, maximumBytes, cancellation);
 }
 
 internal static class MaaProjectInputs
@@ -85,12 +85,13 @@ internal static class MaaProjectInputs
         {
             var maximum = Math.Min(131072, bytes.Length - position);
             var response = await source.ReadAsync(asset.Name, position, maximum, cancellation).ConfigureAwait(false);
+            cancellation.ThrowIfCancellationRequested();
             if (response.Kind != "asset" || response.Fingerprint != fingerprint || response.Offset != position ||
-                response.SizeBytes != asset.SizeBytes || response.Sha256 != asset.Sha256 || response.ContentBase64 is null)
+                response.SizeBytes != asset.SizeBytes || response.Sha256 != asset.Sha256)
                 throw new MaaInputFailure("maa_runtime_content_unbound");
-            if (!Convert.TryFromBase64String(response.ContentBase64, bytes.AsSpan(position, maximum), out var count) || count != maximum)
-                throw new MaaInputFailure("maa_runtime_content_invalid");
-            position += count;
+            if (response.Content.Length != maximum) throw new MaaInputFailure("maa_runtime_content_invalid");
+            response.Content.CopyTo(bytes.AsMemory(position, maximum));
+            position += response.Content.Length;
         }
         if (MaaCompilationBundle.Hash(bytes) != asset.Sha256) throw new MaaInputFailure("maa_runtime_content_changed");
         return bytes;

@@ -26,20 +26,29 @@ internal static class ClientCases
                 var sign = network.Requests.Single(request => request.Method == "POST"); using var body = JsonDocument.Parse(sign.Body);
                 if (platform == "cn") Assert(body.RootElement.GetProperty("uid").GetString() == "123456" && sign.Headers.ContainsKey("DS"));
             });
-        foreach (var info in new[] { ClientFixtures.HoyoTrue, "{\"retcode\":0,\"data\":{}}", "{\"retcode\":0,\"data\":{\"risk_code\":1,\"gt\":\"synthetic\",\"challenge\":\"synthetic\"}}" })
-            run("hoyo-no-submit-on-already-unknown-or-risk/" + info.Length, () =>
+        const string missingStatus = "{\"retcode\":0,\"data\":{}}";
+        const string challenge = "{\"retcode\":0,\"data\":{\"is_sign\":true,\"risk_code\":1,\"gt\":\"synthetic\",\"challenge\":\"synthetic\"}}";
+        foreach (var (info, code, confirmed) in new[] { (ClientFixtures.HoyoTrue, "already", true),
+            (missingStatus, "verification_state_unknown", false), (challenge, "captcha_required", false) })
+            run("hoyo-readonly-result-without-submitting/" + code, () =>
             {
                 var effects = new TestEffects(); var network = new ClientNetwork(effects, info); using var material = ClientFixtures.Material("os");
                 var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync("os", "gi", material, "", default).GetAwaiter().GetResult();
-                Assert(network.Posts == 0 && effects.Submitted.Count == 0 && result.Success == (info == ClientFixtures.HoyoTrue));
+                Assert(network.Requests.Count == 1 && network.Posts == 0 && effects.Submitted.Count == 0 &&
+                    result.Code == code && result.Success == confirmed && effects.GameConfirmed == confirmed &&
+                    result.EffectState == (confirmed ? "confirmed" : "notSubmitted"));
             });
-        run("unknown-total-claim-never-repeats-hoyo-post", () =>
-        {
-            var effects = new TestEffects { GameState = "unknown" }; var network = new ClientNetwork(effects, ClientFixtures.HoyoFalse);
-            using var material = ClientFixtures.Material("os");
-            var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync("os", "gi", material, "", default).GetAwaiter().GetResult();
-            Assert(!result.Success && result.EffectState == "unknown" && network.Posts == 0 && effects.Submitted.Count == 0);
-        });
+        foreach (var (status, info, confirmed) in new[] { ("unsigned", ClientFixtures.HoyoFalse, false),
+            ("missing", missingStatus, false), ("signed", ClientFixtures.HoyoTrue, true) })
+            run("unknown-hoyo-claim-reconciles-without-post/" + status, () =>
+            {
+                var effects = new TestEffects { GameState = "unknown", RoleState = "unknown" };
+                var network = new ClientNetwork(effects, info); using var material = ClientFixtures.Material("os");
+                var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync("os", "gi", material, "", default).GetAwaiter().GetResult();
+                Assert(network.Requests.Count == 1 && network.Posts == 0 && effects.Submitted.Count == 0 &&
+                    result.Code == (confirmed ? "already" : "effect_unknown") && result.Success == confirmed &&
+                    result.EffectState == (confirmed ? "confirmed" : "unknown") && effects.GameConfirmed == confirmed);
+            });
         run("network-unknown-after-submission-does-not-repeat-post", () =>
         {
             var effects = new TestEffects(); var network = new ClientNetwork(effects, ClientFixtures.HoyoFalse);
@@ -48,8 +57,8 @@ internal static class ClientCases
             var result = new HoyoCheckIn(network, effects, TimeProvider.System).SignAsync("os", "gi", material, "", default).GetAwaiter().GetResult();
             Assert(!result.Success && result.EffectState == "unknown" && network.Posts == 1);
         });
-        foreach (var confirmation in new[] { ClientFixtures.HoyoFalse, "invalid" })
-            run("post-accepted-but-unverified-never-reposts/" + confirmation, () =>
+        foreach (var (status, confirmation) in new[] { ("unsigned", ClientFixtures.HoyoFalse), ("invalid", "invalid"), ("challenge", challenge) })
+            run("post-accepted-but-unverified-never-reposts/" + status, () =>
             {
                 var effects = new TestEffects(); var network = new ClientNetwork(effects, ClientFixtures.HoyoFalse, "{\"retcode\":0}", confirmation);
                 using var material = ClientFixtures.Material("os");
@@ -140,6 +149,15 @@ internal static class ClientCases
             var result = new TajiduoCheckIn(network, effects, new TestRotation(), TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
             Assert(result.Code == "role_selection_required" && network.Posts == 0 &&
                 network.Requests.All(request => new Uri(request.Address).AbsolutePath is "/usercenter/api/refreshTokenV2" or "/usercenter/api/v2/getGameRoles"));
+        });
+        run("tajiduo-missing-today-state-blocks-the-sign-request-after-confirmed-rotation", () =>
+        {
+            var effects = new TestEffects(); var rotation = new TestRotation();
+            var network = new ClientNetwork(effects, ClientFixtures.Refresh, ClientFixtures.NativeRoles, "{\"code\":0,\"data\":{}}");
+            using var material = ClientFixtures.Material("tajiduo");
+            var result = new TajiduoCheckIn(network, effects, rotation, TimeProvider.System).SignAsync(material, default).GetAwaiter().GetResult();
+            Assert(rotation.Persisted && effects.Submitted.Count == 0 && network.Posts == 0 && network.Requests.Count == 3 &&
+                result.Code == "verification_state_unknown" && result.EffectState == "notSubmitted" && !result.Success);
         });
         run("tajiduo-unknown-total-claim-readonly-reconciles-without-repost", () =>
         {

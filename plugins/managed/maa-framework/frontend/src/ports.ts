@@ -79,14 +79,6 @@ export interface MaaProfile {
   options: Record<string, unknown>;
   resourceOptions: Record<string, unknown>;
   controllerOptions: Record<string, unknown>;
-  windowSelection: 'exact_process' | 'executable';
-  windowHandle: number;
-  windowProcessId: number;
-  windowStartedAtUtc?: string;
-  windowExecutable: string;
-  windowWaitMilliseconds: number;
-  adbPath: string;
-  adbSerial: string;
   sourceBinding?: { sourceKind: string; sourceInstanceId: string; sourcePath?: string; interfaceRelativePath?: string } | null;
   sourceSnapshot?: unknown;
   dependencyLock?: unknown;
@@ -122,18 +114,6 @@ export interface MaaPorts {
   inspect(profile: MaaProfile, signal: AbortSignal): Promise<{ schema?: MaaSchema; profile?: MaaProfile; discovery?: MaaDiscovery }>;
   preview(profile: MaaProfile, signal: AbortSignal): Promise<unknown>;
   applyPreset(profile: MaaProfile, name: string, signal: AbortSignal): Promise<MaaProfile>;
-  findWindows(
-    profile: MaaProfile,
-    signal: AbortSignal
-  ): Promise<
-    readonly {
-      handle: number;
-      title: string;
-      pid: number;
-      executable: string;
-      startedAtUtc?: string;
-    }[]
-  >;
   previewImport(
     kind: string,
     path: string,

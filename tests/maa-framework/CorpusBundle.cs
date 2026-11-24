@@ -37,7 +37,6 @@ internal static class CorpusBundle
         }
         var sources = new MaaSourceSet(inputs);
         var bundle = MaaCompilationBundle.Build(sources, new(project.InterfacePath, project.ClientKind, "zh_cn", selection));
-        _ = bundle.Verify(sources, bundle.ArtifactSha256);
         var selected = new SelectedSourceFixture();
         foreach (var input in inputs) selected.Add(input);
         if (selection.Kind == "mxu") selected.Mount(selection.Path, NexusPipeline.Extensibility.Compilation.SourceEntryKind.File, "corpus");

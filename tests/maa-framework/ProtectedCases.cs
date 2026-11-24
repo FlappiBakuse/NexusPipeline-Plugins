@@ -16,8 +16,6 @@ internal static class ProtectedCases
             Check(key != MaaProtectedInput.Key("ResourceOptions", "Credentials", "token"));
             Check(MaaProtectedInput.Key("GlobalOptions", "a.b", "c") != MaaProtectedInput.Key("GlobalOptions", "a", "b.c"));
             Check(MaaProtectedInput.Key("GlobalOptions", "口令", "值").Length == 70);
-            MaaProtectedInput.RequireBinding(MaaProtectedInput.Binding(key), "GlobalOptions", "Credentials", "token");
-            Reject(() => MaaProtectedInput.RequireBinding(MaaProtectedInput.Binding(key), "another-task", "Credentials", "token"));
             Reject(() => MaaProtectedInput.ReadBinding(JsonValue.Create("secret:opaque-token")));
             Reject(() => MaaProtectedInput.ReadBinding(new JsonObject { ["$maaSecret"] = key, ["value"] = "plaintext" }));
         });
@@ -71,8 +69,8 @@ internal static class ProtectedCases
             var draft = new JsonObject { ["GlobalOptions"] = new JsonObject { ["Credentials"] = new JsonObject { ["token"] = MaaProtectedInput.Binding(binding) } } };
             var bound = MaaCompilationBundle.Build(sources, selection with { Profile = draft });
             Check(bound.CanExecute);
-            var editor = MaaEditorProjection.Restore(MaaEditorProjection.Build(bound));
-            Check(MaaProtectedInput.ReadBinding(editor["profile"]!["GlobalOptions"]!["Credentials"]!["token"]) == binding);
+            var editor = MaaJson.Read(MaaEditorProjection.Build(bound).Index);
+            Check(MaaProtectedInput.ReadBinding(editor["profile"]!["GlobalOptions"]!["value"]!["Credentials"]!["token"]) == binding);
             Check(!editor["privacy"]!["protectedInputValuesAvailable"]!.GetValue<bool>());
             draft["GlobalOptions"]!["Credentials"]!["token"] = "secret:opaque-token";
             Reject(() => MaaCompilationBundle.Build(sources, selection with { Profile = draft }));
@@ -84,11 +82,23 @@ internal static class ProtectedCases
             var sources = new MaaSourceSet([CompilerFixture.Input("assets/interface.json", pi.ToJsonString()), CompilerFixture.Input("mxu.json", CompilerFixture.Mxu().ToJsonString())]);
             var selection = new MaaCompilationSelection("assets/interface.json", "mxu", "zh_cn", new("mxu", "mxu.json", "one"));
             var project = new MaaPiCompiler(sources, "mxu").Compile("assets/interface.json");
-            var draft = new JsonObject { ["GlobalOptions"] = new JsonObject { ["Credentials"] = new JsonObject
-                { ["token"] = MaaProtectedInput.Binding(MaaProtectedInput.Key(project.CompilationFingerprint + "/another-occurrence", "Credentials", "token")) } } };
-            var blocked = MaaCompilationBundle.Build(sources, selection with { Profile = draft });
-            Check(!blocked.CanExecute && blocked.BlockingDiagnostics.Any(issue => issue.Code == "maa_password_binding_changed"));
-            Check(MaaEditorProjection.Restore(MaaEditorProjection.Build(blocked))["schema"]!["option"]!["Credentials"] is JsonObject);
+            var foreignPi = pi.DeepClone().AsObject();
+            foreignPi["name"] = "Separate project";
+            var foreign = new MaaPiCompiler(new([CompilerFixture.Input("assets/interface.json", foreignPi.ToJsonString())]), "mxu")
+                .Compile("assets/interface.json");
+            Check(foreign.CompilationFingerprint != project.CompilationFingerprint);
+            var scope = project.CompilationFingerprint + "/GlobalOptions";
+            foreach (var (otherScope, option, field) in new[] {
+                (foreign.CompilationFingerprint + "/GlobalOptions", "Credentials", "token"),
+                (project.CompilationFingerprint + "/another-occurrence", "Credentials", "token"),
+                (scope, "OtherCredentials", "token"), (scope, "Credentials", "other-token") })
+            {
+                var draft = new JsonObject { ["GlobalOptions"] = new JsonObject { ["Credentials"] = new JsonObject
+                    { ["token"] = MaaProtectedInput.Binding(MaaProtectedInput.Key(otherScope, option, field)) } } };
+                var blocked = MaaCompilationBundle.Build(sources, selection with { Profile = draft });
+                Check(!blocked.CanExecute && blocked.BlockingDiagnostics.Any(issue => issue.Code == "maa_password_binding_changed"));
+                Check(MaaJson.Read(MaaEditorProjection.Build(blocked).Index)["schema"]!["value"]!["option"]!["Credentials"] is JsonObject);
+            }
             pi["task"]![0]!["pipeline_override"] = new JsonObject { ["Entry"] = new JsonObject
                 { ["text"] = MaaProtectedInput.Deferred(key, definition["inputs"]![0]!.AsObject(), "Win32") } };
             var injected = new MaaSourceSet([CompilerFixture.Input("assets/interface.json", pi.ToJsonString())]);

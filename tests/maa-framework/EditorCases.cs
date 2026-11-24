@@ -39,9 +39,9 @@ internal static class EditorCases
             var config = CompilerFixture.Mxu(); config["instances"]![0]!["tasks"]![0]!["optionValues"] = new JsonObject();
             var bundle = MaaCompilationBundle.Build(new MaaSourceSet([
                 CompilerFixture.Input("assets/interface.json", pi.ToJsonString()), CompilerFixture.Input("mxu.json", config.ToJsonString())]), BundleCases.Selection);
-            var view = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle));
-            Assert(view["schema"]!["option"]!["Mode"]!["default_case"]!.GetValue<string>() == "A");
-            Assert(view["profile"]!["Tasks"]![0]!["Options"]!["Mode"] is null);
+            var view = MaaJson.Read(MaaEditorProjection.Build(bundle).Index);
+            Assert(view["schema"]!["value"]!["option"]!["Mode"]!["default_case"]!.GetValue<string>() == "A");
+            Assert(view["profile"]!["Tasks"]!["value"]![0]!["Options"]!["Mode"] is null);
             var option = pi["option"]!["Mode"]!.AsObject(); option["default_case"] = "unknown";
             Assert(MaaOptionDefaults.Selection(option, "mfa")!.GetValue<string>() == "A");
             Assert(new MaaEditorSchema().Build(pi, "mfa")["option"]!["Mode"]!["default_case"]!.GetValue<string>() == "A");
@@ -50,60 +50,57 @@ internal static class EditorCases
         run("editor-retains-explicit-runtime-selection-for-reopening", () => {
             var runtime = new MaaRuntimeSelection("runtime/native", new Dictionary<string, string> { ["python"] = "python/python.exe" }, ["python/Lib"]);
             var bundle = MaaCompilationBundle.Build(BundleCases.Sources(), BundleCases.Selection with { Runtime = runtime });
-            var restored = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle));
+            var index = MaaJson.Read(MaaEditorProjection.Build(bundle).Index);
             var expected = JsonSerializer.SerializeToNode(runtime);
-            Assert(JsonNode.DeepEquals(restored["selection"]!["Runtime"], expected));
+            Assert(JsonNode.DeepEquals(index["selection"]!["Runtime"], expected));
         });
         run("editor-declared-ordinary-inputs-remain-editable-without-serializing-protected-or-unknown-values", () => {
-            var bundle = Fixture(); var editor = MaaEditorProjection.Build(bundle); var restored = MaaEditorProjection.Restore(editor);
+            var bundle = Fixture(); var editor = MaaEditorProjection.Build(bundle); var index = MaaJson.Read(editor.Index);
             var text = Encoding.UTF8.GetString(editor.Index) + string.Concat(editor.Pages.Values.Select(Encoding.UTF8.GetString));
             Assert(!text.Contains("PRIVATE_SENTINEL", StringComparison.Ordinal) && !text.Contains("SourceSnapshot", StringComparison.Ordinal));
-            Assert(restored["schema"]!["option"]!["Password"]!["inputs"]![0]!["password"]!.GetValue<bool>() &&
-                restored["schema"]!["option"]!["Password"]!["inputs"]![0]!["default"] is null &&
-                restored["schema"]!["option"]!["Plain"]!["inputs"]![0]!["default"]!.GetValue<string>() == "public-schema-default");
-            Assert(restored["profile"]!["Tasks"]![0]!["Options"]!["Mode"]!.GetValue<string>() == "B" &&
-                restored["profile"]!["Tasks"]![0]!["Options"]!["Plain"]!["Message"]!.GetValue<string>() == "saved-public-input" &&
-                restored["schema"]!["option"]!["Unused"]!["default_case"] is null && restored["translations"]!.AsObject().Count == 3);
+            var options = index["schema"]!["value"]!["option"]!;
+            var saved = index["profile"]!["Tasks"]!["value"]![0]!["Options"]!;
+            Assert(options["Password"]!["inputs"]![0]!["password"]!.GetValue<bool>() &&
+                options["Password"]!["inputs"]![0]!["default"] is null &&
+                options["Plain"]!["inputs"]![0]!["default"]!.GetValue<string>() == "public-schema-default");
+            Assert(saved["Mode"]!.GetValue<string>() == "B" && saved["Plain"]!["Message"]!.GetValue<string>() == "saved-public-input" &&
+                options["Unused"]!["default_case"] is null && index["translations"]!["value"]!.AsObject().Count == 3);
             var declaration = MaaJson.Object(MaaJson.Read(bundle.Pi.Artifact)["declaration"]);
             var protectedValue = MaaEditorSchema.Selections(new JsonObject { ["Password"] = new JsonObject { ["Password"] = "PASSWORD_PRIVATE_SENTINEL" } }, declaration);
             Assert(protectedValue["Password"]!.AsObject().Count == 0 && !protectedValue.ToJsonString().Contains("PRIVATE_SENTINEL", StringComparison.Ordinal));
             Assert(Encoding.UTF8.GetString(bundle.Artifact).Contains("PROGRESS_PRIVATE_SENTINEL", StringComparison.Ordinal));
         });
         run("editor-occurrences-retain-identities-order-and-origin-without-unknown-human-content", () => {
-            var bundle = Fixture(); var view = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle));
-            var rows = view["profile"]!["Tasks"]!.AsArray(); var privateRows = MaaJson.Read(bundle.Artifact)["profile"]!["Tasks"]!.AsArray();
+            var bundle = Fixture(); var view = MaaJson.Read(MaaEditorProjection.Build(bundle).Index);
+            var rows = view["profile"]!["Tasks"]!["value"]!.AsArray(); var privateRows = MaaJson.Read(bundle.Artifact)["profile"]!["Tasks"]!.AsArray();
             Assert(rows.Count == 2 && rows[1]!["Name"] is null && rows[1]!["Entry"] is null && !rows[1]!["DefinitionKnown"]!.GetValue<bool>());
             for (var index = 0; index < rows.Count; index++) foreach (var key in new[] { "Id", "SourceId", "Order", "Enabled", "RepeatCount", "Role" })
                 Assert(JsonNode.DeepEquals(rows[index]![key], privateRows[index]![key]));
             Assert(rows[0]!["Origin"]!["Pointer"]!.GetValue<string>() == "/instances/0/tasks/0" && rows[0]!["Origin"]!["SnapshotPointer"] is null);
         });
         run("editor-readonly-blocker-preserves-code-and-authoritative-false-without-detail", () => {
-            var bundle = Fixture(blocked: true); var view = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle));
+            var bundle = Fixture(blocked: true); var view = MaaJson.Read(MaaEditorProjection.Build(bundle).Index);
             Assert(!view["compilation"]!["canExecute"]!.GetValue<bool>() && view["compilation"]!["semanticFingerprint"] is null &&
-                view["diagnostics"]!.AsArray().Any(item => item!["code"]!.GetValue<string>() == "maa_enabled_task_unmapped") &&
+                view["diagnostics"]!["value"]!.AsArray().Any(item => item!["code"]!.GetValue<string>() == "maa_enabled_task_unmapped") &&
                 !view.ToJsonString().Contains("UNKNOWN_NAME_PRIVATE_SENTINEL", StringComparison.Ordinal));
         });
         run("editor-large-display-text-is-complete-and-every-page-is-bounded", () => {
-            var bundle = Fixture(true); var editor = MaaEditorProjection.Build(bundle); var view = MaaEditorProjection.Restore(editor);
-            Assert(editor.Pages.Count > 0 && editor.Index.Length <= 524288 && editor.Pages.Values.All(page => page.Length <= 65536) &&
-                view["schema"]!["description"]!.GetValue<string>() == string.Concat(Enumerable.Repeat("选项😀", 10000)));
+            var bundle = Fixture(true); var editor = MaaEditorProjection.Build(bundle); var view = MaaJson.Read(editor.Index);
+            var description = ProjectionCases.Member(editor.Pages, view["schema"]!, "description");
+            Assert(CorpusCases.PackedCount(editor.Pages, description) > 1 &&
+                editor.Pages.Count > 0 && editor.Index.Length <= 524288 && editor.Pages.Values.All(page => page.Length <= 65536) &&
+                string.Concat(ProjectionCases.PageRows(editor.Pages, description).Select(value => value!.GetValue<string>())) ==
+                    string.Concat(Enumerable.Repeat("选项😀", 10000)));
             Reject(() => MaaEditorProjection.Build(bundle, 1));
         });
-        run("editor-missing-changed-extra-pages-and-index-identity-are-rejected", () => {
-            var editor = MaaEditorProjection.Build(Fixture(true)); var pages = editor.Pages.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray());
-            var key = pages.Keys.First(); pages.Remove(key); Reject(() => MaaEditorProjection.Restore(editor with { Pages = pages }));
-            pages = editor.Pages.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray()); pages[key][0] ^= 1;
-            Reject(() => MaaEditorProjection.Restore(editor with { Pages = pages }));
-            pages = editor.Pages.ToDictionary(pair => pair.Key, pair => pair.Value); pages.Add(new('0', 64), "[]"u8.ToArray());
-            Reject(() => MaaEditorProjection.Restore(editor with { Pages = pages }));
-            var index = editor.Index.ToArray(); index[^2] ^= 1; Reject(() => MaaEditorProjection.Restore(editor with { Index = index }));
-        });
         run("editor-binding-is-the-exact-frozen-bundle-and-original-file-sha", () => {
-            var bundle = Fixture(); var view = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle));
+            var bundle = Fixture(); var view = MaaJson.Read(MaaEditorProjection.Build(bundle).Index);
+            var binding = view["configurationBindings"]!["value"]![0]!;
             Assert(view["compilation"]!["bundleArtifactSha256"]!.GetValue<string>() == bundle.ArtifactSha256 &&
                 view["compilation"]!["snapshotFingerprint"]!.GetValue<string>() == bundle.SnapshotFingerprint &&
-                view["configurationBindings"]![0]!["SourceSha256"]!.GetValue<string>() != view["configurationBindings"]![0]!["SnapshotSha256"]!.GetValue<string>());
+                binding["SourceSha256"]!.GetValue<string>() != binding["SnapshotSha256"]!.GetValue<string>());
             var bytes = bundle.Artifact.ToArray(); bytes[^2] ^= 1; Reject(() => MaaEditorProjection.Build(bundle with { Artifact = bytes }));
+            var index = bundle.Index.ToArray(); index[^2] ^= 1; Reject(() => MaaEditorProjection.Build(bundle with { Index = index }));
             Reject(() => MaaEditorProjection.Build(bundle with { CanExecute = !bundle.CanExecute }));
             Reject(() => MaaEditorProjection.Build(bundle with { SourceFingerprint = new('0', 64) }));
         });
@@ -122,7 +119,7 @@ internal static class EditorCases
                     CompilerFixture.Input("config/config.json", global.ToJsonString()), CompilerFixture.Input("config/instances/one.json",
                         "{\"CurrentControllerName\":\"PC\",\"Resource\":\"Official\",\"privateValue\":\"MFA_PRIVATE_SENTINEL\"}") };
                 var bundle = MaaCompilationBundle.Build(new(inputs), new("assets/interface.json", "mfa", "zh_cn", new("mfa", "config/instances/one.json", "one")));
-                var editor = MaaEditorProjection.Restore(MaaEditorProjection.Build(bundle)); var origin = editor["profile"]!["Tasks"]![0]!["Origin"]!;
+                var editor = MaaJson.Read(MaaEditorProjection.Build(bundle).Index); var origin = editor["profile"]!["Tasks"]!["value"]![0]!["Origin"]!;
                 Assert(origin["Kind"]!.GetValue<string>() == (inherited ? "inherited" : "default") &&
                     !editor.ToJsonString().Contains("MFA_PRIVATE_SENTINEL", StringComparison.Ordinal));
                 Assert(inherited ? origin["Path"]!.GetValue<string>() == "config/config.json" : origin["Path"] is null && origin["Pointer"] is null && origin["Index"] is null);

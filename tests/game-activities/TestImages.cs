@@ -4,14 +4,16 @@ using NexusPipeline.Extensibility.State;
 internal sealed class TestImages(TestDocuments documents) : IExtensionImages
 {
     internal readonly Dictionary<string, ExtensionImageContent> Assets = [];
+    internal int Lists, Reads;
     private readonly Dictionary<string, string[]> references = [];
     public ValueTask<IReadOnlyList<ExtensionImageInfo>> ListAsync(string name, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        Lists++;
         return ValueTask.FromResult<IReadOnlyList<ExtensionImageInfo>>((references.GetValueOrDefault(name) ?? []).Select(id => Assets[id].Info).ToArray());
     }
     public ValueTask<ExtensionImageContent> ReadAsync(string id, CancellationToken cancellationToken)
-    { cancellationToken.ThrowIfCancellationRequested(); return ValueTask.FromResult(Assets[id]); }
+    { cancellationToken.ThrowIfCancellationRequested(); Reads++; return ValueTask.FromResult(Assets[id]); }
     public async ValueTask<DocumentCommit> WriteAsync(Guid operation, string name, long expected, ReadOnlyMemory<byte> json,
         IReadOnlyList<string> ids, ExtensionImageInput? addition, CancellationToken cancellationToken)
     {

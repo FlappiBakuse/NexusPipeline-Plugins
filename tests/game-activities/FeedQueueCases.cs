@@ -1,9 +1,46 @@
 using NexusPipeline.Extensions.GameActivities;
+using System.Text;
+using System.Text.Json;
 
 internal static class FeedQueueCases
 {
     internal static async Task RunAsync(Func<string, Func<Task>, Task> run)
     {
+        await run("feed-failure-logs-its-actual-stage-and-retains-the-last-good-snapshot", async () =>
+        {
+            foreach (var transportFailure in new[] { true, false })
+            {
+                const string marker = "synthetic-sensitive-feed-body";
+                var docs = new TestDocuments(); var http = new TestNetwork(); var clock = new TestClock();
+                var selected = TestActivity.Select("blue-archive");
+                var source = ActivitySources.Selected(selected).Single();
+                var (content, _) = SraFeed.Parse(source, TestNetwork.Feed("retained").Content);
+                await docs.WriteAsync(Guid.NewGuid(), "settings", 0, ActivityJson.Bytes(selected), default);
+                await docs.WriteAsync(Guid.NewGuid(), source.DocumentName, 0, ActivityJson.Bytes(new ActivityCache
+                    { FeedId = source.Id, Content = content, LastGoodAt = clock.Now, NextCheckAt = clock.Now.AddHours(6) }), default);
+                http.Handler = (_, _) => transportFailure ? Task.FromException<ActivityResponse>(new IOException(marker)) :
+                    Task.FromResult(new ActivityResponse(200, new Dictionary<string, string[]>(), Encoding.UTF8.GetBytes(marker)));
+                await using var service = new ActivityCoordinator(docs, new SdkActivityNetwork(http), clock);
+                await service.InitializeAsync(default);
+                var operation = Guid.NewGuid();
+                using var output = new StringWriter();
+                var previous = Console.Error;
+                try
+                {
+                    Console.SetError(output);
+                    await service.RefreshAsync(operation, default);
+                    await TestActivity.Idle(service);
+                }
+                finally { Console.SetError(previous); }
+                var cache = TestActivity.Cache(docs);
+                Check.That(cache.Content?.Overview.Number == "retained" && cache.FailureCount == 1 && http.Calls.Count == 1);
+                var text = output.ToString();
+                using var log = JsonDocument.Parse(text);
+                Check.That(log.RootElement.GetProperty("operationId").GetGuid() == operation &&
+                    log.RootElement.GetProperty("phase").GetString() == (transportFailure ? "feed-transport" : "feed-parse") &&
+                    !text.Contains(marker, StringComparison.Ordinal));
+            }
+        });
         await run("fifth-feed-starts-and-publishes-before-slow-first-feed", async () =>
         {
             var docs = new TestDocuments(); var http = new TestNetwork();
@@ -40,6 +77,7 @@ internal static class FeedQueueCases
             var docs = new TestDocuments(); var http = new TestNetwork(); var clock = new TestClock();
             var selected = Selected(); var sources = ActivitySources.Selected(selected);
             const string cover = "https://i0.hdslb.com/feed-queue.png";
+            byte[] coverBytes = [137, 80, 78, 71, 13, 10, 26, 10];
             await docs.WriteAsync(Guid.NewGuid(), "settings", 0, ActivityJson.Bytes(selected), default);
             foreach (var source in sources.Skip(1))
             {
@@ -47,14 +85,16 @@ internal static class FeedQueueCases
                 await docs.WriteAsync(Guid.NewGuid(), source.DocumentName, 0, ActivityJson.Bytes(new ActivityCache
                     { FeedId = source.Id, Content = content, LastGoodAt = clock.Now, NextCheckAt = clock.Now.AddHours(6) }), default);
             }
-            var first = Signal(); var coverStarted = Signal(); var filled = Signal(); var release = Signal();
+            var first = Signal(); var coverStarted = Signal(); var filled = Signal();
+            var releaseFeeds = Signal(); var releaseCover = Signal();
             http.Handler = async (url, token) =>
             {
+                var isCover = url.Host == "i0.hdslb.com";
                 if (url.AbsolutePath.EndsWith("ba-cn.json", StringComparison.Ordinal)) first.TrySetResult();
-                else if (url.Host == "i0.hdslb.com") coverStarted.TrySetResult();
+                else if (isCover) coverStarted.TrySetResult();
                 if (http.Active == 4) filled.TrySetResult();
-                await release.Task.WaitAsync(token);
-                return url.Host == "i0.hdslb.com" ? TestNetwork.Image([137, 80, 78, 71, 13, 10, 26, 10]) : TestNetwork.Feed("joined");
+                await (isCover ? releaseCover : releaseFeeds).Task.WaitAsync(token);
+                return isCover ? TestNetwork.Image(coverBytes) : TestNetwork.Feed("joined", cover: cover);
             };
             await using var service = new ActivityCoordinator(docs, new SdkActivityNetwork(http), clock);
             await service.InitializeAsync(default); await service.TickAsync(default);
@@ -66,9 +106,12 @@ internal static class FeedQueueCases
                 await service.RefreshAsync(Guid.NewGuid(), default);
                 await filled.Task.WaitAsync(TimeSpan.FromSeconds(5));
                 Check.That(http.Active == 4 && http.MaximumActive == 4);
+                releaseFeeds.TrySetResult();
+                await TestActivity.Idle(service);
+                Check.That(!image.IsCompleted);
             }
-            finally { release.TrySetResult(); }
-            await image; await TestActivity.Idle(service);
+            finally { releaseFeeds.TrySetResult(); releaseCover.TrySetResult(); }
+            Check.That((await image).Bytes.Span.SequenceEqual(coverBytes));
             lock (http.Calls) Check.That(http.Calls.Count(url => url.Host != "i0.hdslb.com") == 5);
             Check.That(http.MaximumActive == 4 && http.Active == 0);
         });

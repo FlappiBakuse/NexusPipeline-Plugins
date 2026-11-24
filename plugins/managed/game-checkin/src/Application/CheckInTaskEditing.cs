@@ -68,22 +68,25 @@ internal sealed class CheckInTaskEditing(ICheckInPersistence persistence, CheckI
     private async ValueTask<CheckInPublication> PublishAsync(Guid operationId, long revision, CheckInTaskStore proposed,
         Guid? taskId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken)
     {
-        var sha256 = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(CheckInJson.Bytes(proposed)));
+        var document = CheckInJson.Bytes(proposed);
+        var sha256 = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(document));
         try
         {
-            var publication = await persistence.PublishAsync(operationId, revision, proposed, taskId, changes, cancellationToken);
+            var publication = await persistence.PublishAsync(operationId, revision, document, taskId, changes, cancellationToken);
             return Match(publication);
         }
         catch (CheckInFailure) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException)
         {
             // The original operation identity is the only safe lookup after losing a publication response.
+            Exception? lookupFailure = null;
             try
             {
                 var committed = await persistence.ReadPublicationAsync(operationId, cancellationToken);
                 if (committed is not null) return Match(committed);
             }
-            catch (Exception lookupError) when (lookupError is not OutOfMemoryException) { }
+            catch (Exception lookupError) when (lookupError is not OutOfMemoryException) { lookupFailure = lookupError; }
+            CheckInDiagnostics.Failure(error, "task-publication", operationId, lookupFailure);
             throw new CheckInFailure("checkin_publication_unknown");
         }
         CheckInPublication Match(CheckInPublication publication) => publication.OperationId == operationId && publication.Revision == revision + 1 && publication.Sha256 == sha256

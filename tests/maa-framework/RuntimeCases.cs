@@ -64,6 +64,21 @@ internal static class RuntimeCases
             view["artifactSha256"] = MaaCompilationBundle.Hash(bytes);
             Reject(() => MaaRuntimePlan.Read(bytes, bundle.Pi.Artifact, JsonSerializer.SerializeToElement(view)));
         });
+        foreach (var (field, expectedError) in new[] {
+            ("profile-options", "maa_runtime_view_changed"), ("source-read-set", "maa_runtime_sources_changed") })
+            run("runtime-rejects-rehashed-" + field, () => {
+                var bundle = MaaCompilationBundle.Build(BundleCases.Sources(), BundleCases.Selection);
+                var full = MaaJson.Read(bundle.Artifact);
+                var profile = full["profile"]!;
+                if (field == "profile-options") profile["Tasks"]![0]!["Options"]!["Mode"] = "A";
+                else profile["Sources"]![0]!["Identity"] = "other-physical-file";
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(full);
+                var view = MaaJson.Read(bundle.Execution);
+                view["artifactSha256"] = MaaCompilationBundle.Hash(bytes);
+                try { MaaRuntimePlan.Read(bytes, bundle.Pi.Artifact, JsonSerializer.SerializeToElement(view)); }
+                catch (MaaInputFailure failure) when (failure.Message == expectedError) { return; }
+                throw new InvalidOperationException("expected_" + expectedError);
+            });
         run("runtime-cancellation-never-yields-submissions", () => {
             var bundle = MaaCompilationBundle.Build(BundleCases.Sources(), BundleCases.Selection);
             using var cancellation = new CancellationTokenSource(); cancellation.Cancel();

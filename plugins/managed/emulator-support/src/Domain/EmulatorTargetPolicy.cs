@@ -23,13 +23,11 @@ internal static class EmulatorTargetPolicy
         {
             if (installation.Vendor == EmulatorVendors.LdPlayer && instance.Index is >= 0)
                 return new(installation.Control.Id, [quit ? "quit" : "launch", "--index", instance.Index.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)]);
-            if (installation.Vendor == EmulatorVendors.Nox && (instance.Index is >= 0 || instance.ControlName is { } name && Selector(name)))
+            if (installation.Vendor == EmulatorVendors.Nox && (instance.Index is >= 0 || instance.ControlName is { } name && EmulatorPaths.Selector(name)))
                 return new(installation.Control.Id, [quit ? "quit" : "launch", instance.Index is { } number ? "-index:" + number.ToString(System.Globalization.CultureInfo.InvariantCulture) : "-name:" + instance.ControlName]);
-            if (installation.Vendor == EmulatorVendors.BlueStacks && !quit && Selector(instance.Identity))
+            if (installation.Vendor == EmulatorVendors.BlueStacks && !quit && EmulatorPaths.Selector(instance.Identity))
                 return new(installation.Control.Id, ["--instance", instance.Identity], true);
             throw new EmulatorException("emulator_target_source_unbound");
         }
     }
-    private static bool Selector(string value) => value.Length is > 0 and <= 128 &&
-        value.All(character => char.IsLetterOrDigit(character) || character is ' ' or '_' or '-' or '.');
 }

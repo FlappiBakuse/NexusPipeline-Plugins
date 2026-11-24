@@ -1,4 +1,5 @@
 import type { FrontendTransport } from '@nexuspipeline/extension-sdk';
+import { createIdentity } from '../../../frontend-ui/src/identity.js';
 
 export interface TimePoint {
   readonly instantUtc: string | null;
@@ -76,22 +77,18 @@ export interface ActivityPorts {
   saveSettings(state: ActivityState, signal: AbortSignal, operationId?: string): Promise<ActivityState>;
   refreshAll(signal: AbortSignal): Promise<ActivityState>;
   readCover(coverId: string, signal: AbortSignal): Promise<Blob>;
-  subscribe(listener: (state: ActivityState) => void): () => void;
-}
-
-function operationId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6]! & 15) | 64;
-  bytes[8] = (bytes[8]! & 63) | 128;
-  const hex = [...bytes].map((value) => value.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  subscribe(listener: (state: ActivityState) => void, readFailed: () => void): () => void;
 }
 
 export function transportPorts(transport: FrontendTransport): ActivityPorts {
   const decode = (input: unknown): ActivityState => {
     const state = input as ActivityState;
-    if (!Number.isSafeInteger(state.revision) || !Number.isSafeInteger(state.settingsRevision) ||
-      !Array.isArray(state.feeds) || !Array.isArray(state.selectedFeedIds)) throw new Error('activity_state_invalid');
+    if (!state || !Number.isSafeInteger(state.revision) || !Number.isSafeInteger(state.settingsRevision) ||
+      !Array.isArray(state.feeds) || !Array.isArray(state.selectedFeedIds) ||
+      state.gameOrder !== undefined && !Array.isArray(state.gameOrder) || state.feeds.some(feed =>
+        !feed || typeof feed.id !== 'string' || typeof feed.game !== 'string' || typeof feed.server !== 'string' ||
+        typeof feed.enabled !== 'boolean' || typeof feed.overview?.title !== 'string' ||
+        feed.events != null && !Array.isArray(feed.events))) throw new Error('activity_state_invalid');
     return { ...state, feeds: state.feeds.map(feed => ({ ...feed, events: feed.events ?? [] })) };
   };
   const readState = async (signal: AbortSignal): Promise<ActivityState> => {
@@ -116,7 +113,7 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
       try { return image.blob.slice(0, image.blob.size, image.blob.type); }
       finally { image.release(); }
     },
-    async saveSettings(state, signal, id = operationId()) {
+    async saveSettings(state, signal, id = createIdentity()) {
       if (!Number.isSafeInteger(state.settingsRevision)) throw new Error('activity_settings_revision_required');
       const selected = state.selectedFeedIds.map((id) => {
         const feed = state.feeds.find((item) => item.id === id);
@@ -131,7 +128,7 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
       catch (error) { throw Object.assign(error instanceof Error ? error : new Error('activity_save_outcome_unknown'), { uncertain: true }); }
     },
     async refreshAll(signal) {
-      await transport.invoke('refresh-all', {}, signal, operationId());
+      await transport.invoke('refresh-all', {}, signal, createIdentity());
       return readState(signal);
     },
     async readCover(id, signal) {
@@ -139,9 +136,9 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
       try { return image.blob.slice(0, image.blob.size, image.blob.type); }
       finally { image.release(); }
     },
-    subscribe(listener) {
+    subscribe(listener, readFailed) {
       const controller = new AbortController();
-      let reading = false, again = false;
+      let reading = false, again = false, stale = false;
       let publishedRevision: number | undefined;
       const refresh = async () => {
         if (controller.signal.aborted) return;
@@ -149,12 +146,18 @@ export function transportPorts(transport: FrontendTransport): ActivityPorts {
         reading = true;
         try {
           const state = await readState(controller.signal);
-          if (!controller.signal.aborted && state.revision !== publishedRevision) {
-            publishedRevision = state.revision;
+          if (controller.signal.aborted) return;
+          if (stale || state.revision !== publishedRevision) {
             listener(state);
+            publishedRevision = state.revision;
+            stale = false;
+          }
+        } catch {
+          if (!controller.signal.aborted && !stale) {
+            stale = true;
+            try { readFailed(); } catch { }
           }
         }
-        catch { /* Failed reads retain the last published snapshot. */ }
         finally {
           reading = false;
           if (again) { again = false; void refresh(); }

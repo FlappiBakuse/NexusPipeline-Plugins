@@ -74,9 +74,9 @@ internal static class WorkHandlerCases
     {
         internal int Reads;
         public ValueTask<CheckInWorkClock> ReadClockAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInWorkClock(DateTimeOffset.UtcNow, "UTC"));
-        public ValueTask<CheckInExecutionIdentity> ReadAsync(ScheduledInvocation invocation, Guid businessTaskId, long taskRevision,
+        public ValueTask<CheckInWorkExecution> ReadAsync(ScheduledInvocation invocation, Guid businessTaskId, long taskRevision,
             string trigger, CancellationToken cancellationToken)
-        { Reads++; return ValueTask.FromException<CheckInExecutionIdentity>(new CheckInFailure("synthetic_host_context_missing")); }
+        { Reads++; return ValueTask.FromException<CheckInWorkExecution>(new CheckInFailure("synthetic_host_context_missing")); }
     }
     private sealed class Targets(NotificationTargets targets) : INotificationTargets
     { public ValueTask<NotificationTargets> ReadAsync(CancellationToken cancellationToken) => ValueTask.FromResult(targets); }

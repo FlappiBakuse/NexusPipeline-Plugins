@@ -45,16 +45,6 @@ internal static class ModelCases
         foreach (var input in new[] { "2026-10-25T12:00:00", "2026-11-01", "2026-11-01T01:30", "2026-02-30T10:00:00Z", "bad", "2026-10-25 12:00" })
             await run("unknown-time/" + input, () => Check.Sync(() =>
             { var parsed = ActivityTimes.Parse(input); Check.That(parsed?.InstantUtc is null && parsed?.RawValue == input && parsed.TimeBasis == "unknown"); }));
-        await run("event-groups-and-invalid-interval", () => Check.Sync(() =>
-        {
-            var now = DateTimeOffset.Parse("2026-10-25T12:00Z");
-            ActivityEvent Event(string? start, string? end) => new("id", "title", null, null, ActivityTimes.Parse(start), ActivityTimes.Parse(end), null);
-            Check.That(ActivityTimes.Phase(Event("2026-10-25T11:00Z", "2026-10-25T13:00Z"), now) == "ongoing");
-            Check.That(ActivityTimes.Phase(Event("2026-10-25T13:00Z", "2026-10-25T14:00Z"), now) == "upcoming");
-            Check.That(ActivityTimes.Phase(Event("2026-10-25T10:00Z", "2026-10-25T12:00Z"), now) == "ended");
-            Check.That(ActivityTimes.Phase(Event("2026-10-25T14:00Z", "2026-10-25T13:00Z"), now) == "unknown");
-            Check.That(ActivityTimes.Phase(Event("2026-10-25T11:00", "2026-10-25T13:00"), now) == "unknown");
-        }));
         await run("defaults-none-full-game-order", () => Check.Sync(() =>
         { var settings = new ActivitySettings().Validate(); Check.That(settings.GameOrder.Length == 8 && ActivitySources.All.Length == 11 && ActivitySources.Selected(settings).Length == 0); }));
         await run("progressions-persist-while-unsubscribed", () => Check.Sync(() =>

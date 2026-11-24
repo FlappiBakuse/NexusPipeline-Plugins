@@ -56,5 +56,5 @@ export interface WallpaperPorts {
   deleteAsset(id: string, signal: AbortSignal): Promise<WallpaperState>;
   readAsset(id: string, signal: AbortSignal): Promise<Blob>;
   advanceRotation(signal: AbortSignal): Promise<WallpaperState>;
-  subscribe(listener: (state: WallpaperState) => void): () => void;
+  subscribe(listener: (state: WallpaperState) => void, readFailed: () => void): () => void;
 }

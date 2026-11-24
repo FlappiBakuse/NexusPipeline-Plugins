@@ -38,13 +38,11 @@ internal sealed class SdkCheckInPersistence(IExtensionDocuments documents, IExte
         });
         return new(after.Revision, true, material, error);
     }
-    public async ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed,
+    public async ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, ReadOnlyMemory<byte> document,
         Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken)
     {
         if (changes.Count > 6 || changes.Select(change => change.Platform).Distinct(StringComparer.Ordinal).Count() != changes.Count ||
             changes.Count > 0 && (secretSubjectId is null || secretSubjectId == Guid.Empty)) throw new CheckInFailure("credential_publication_invalid");
-        // Only the internal edit owner and credential rotation publish an already validated snapshot.
-        var json = JsonSerializer.SerializeToUtf8Bytes(proposed, CheckInJson.Options);
         var edits = new List<DocumentSecretEdit>();
         try
         {
@@ -56,7 +54,7 @@ internal sealed class SdkCheckInPersistence(IExtensionDocuments documents, IExte
             }
         }
         catch { foreach (var edit in edits) edit.Change.Dispose(); throw; }
-        var committed = await atomic.WriteAsync(operationId, "tasks", expectedDocumentRevision, json, edits, cancellationToken);
+        var committed = await atomic.WriteAsync(operationId, "tasks", expectedDocumentRevision, document, edits, cancellationToken);
         return new(committed.OperationId, committed.Revision, committed.IsNew, committed.Sha256);
     }
     public async ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken)
@@ -75,12 +73,24 @@ internal sealed class SdkCheckInPersistence(IExtensionDocuments documents, IExte
         var bytes = JsonSerializer.SerializeToUtf8Bytes(document, CheckInJson.Options);
         var sha256 = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(bytes));
         DocumentCommit? committed;
+        Exception? publicationFailure = null;
         try { committed = await documents.WriteAsync(operationId, RunName(taskId), expectedRevision, bytes, cancellationToken); }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException)
-        { committed = await documents.ReadCommitAsync(operationId, cancellationToken); }
+        {
+            publicationFailure = error;
+            try { committed = await documents.ReadCommitAsync(operationId, cancellationToken); }
+            catch (Exception lookupFailure) when (lookupFailure is not OutOfMemoryException)
+            {
+                CheckInDiagnostics.Failure(error, "run-publication", operationId, lookupFailure);
+                throw;
+            }
+        }
         if (committed?.OperationId != operationId || committed.Revision != expectedRevision + 1 || committed.Sha256 != sha256)
+        {
+            if (publicationFailure is not null) CheckInDiagnostics.Failure(publicationFailure, "run-publication", operationId);
             throw new CheckInFailure("checkin_run_publication_unknown");
+        }
         return committed.Revision;
     }
     private static SecretChange ConvertChange(CredentialMutation mutation)

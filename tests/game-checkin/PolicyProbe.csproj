@@ -24,7 +24,7 @@
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInClients.cs" Link="Product/CheckInClients.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInCredentials.cs" Link="Product/CheckInCredentials.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInBrowserLogins.cs" Link="Product/CheckInBrowserLogins.cs" />
-    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInRuntime.cs" Link="Product/CheckInRuntime.cs" />
+    <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInViews.cs" Link="Product/CheckInViews.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInFrontend.cs" Link="Product/CheckInFrontend.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInProtocols.cs" Link="Product/CheckInProtocols.cs" />
     <Compile Include="../../plugins/managed/game-checkin/src/Application/CheckInRunner.cs" Link="Product/CheckInRunner.cs" />

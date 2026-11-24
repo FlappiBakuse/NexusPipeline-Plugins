@@ -22,7 +22,9 @@ for (const item of receipt.sdkSourceRecords)
 for (const item of receipt.artifacts)
   if (sha(fs.readFileSync(path.join(args.get('--bundles'), item.path))) !== item.sha256) throw Error('Frontend bundle changed');
 const esbuild = await import(pathToFileURL(path.join(args.get('--work-root'), 'node_modules/esbuild/lib/main.js')).href);
-for (const [source, target] of [['apps/web/src/ui/register-elements.ts', 'ui.js'], ['sdk/frontend/src/index.ts', 'sdk.js']])
+const hostModules = [['apps/web/src/ui/register-elements.ts', 'ui.js'], ['apps/web/src/app/editor-drafts.ts', 'drafts.js'],
+  ['sdk/frontend/src/index.ts', 'sdk.js']];
+for (const [source, target] of hostModules)
   await esbuild.build({ entryPoints: [path.join(args.get('--host-root'), source)], outfile: path.join(output, target),
     bundle: true, format: 'esm', platform: 'browser', target: 'es2022', plugins: [{ name: 'sdk', setup(plugin) {
       plugin.onResolve({ filter: /^@nexuspipeline\/extension-sdk$/ }, () => ({ path: path.join(args.get('--host-root'), 'sdk/frontend/src/index.ts') }));
@@ -48,6 +50,7 @@ asset('index', { format: 'maa.editor.index', version: 1, compilation: { canExecu
     Pretasks: inline([]), GlobalOptions: inline({}), ResourceOptions: inline({}), ControllerOptions: inline({}) } });
 fs.writeFileSync(path.join(output, 'model.json'), JSON.stringify(model));
 const routes = new Map([['/ui.js', path.join(output, 'ui.js')], ['/sdk.js', path.join(output, 'sdk.js')],
+  ['/drafts.js', path.join(output, 'drafts.js')],
   ['/plugin.js', path.join(args.get('--bundles'), 'maa-framework/main.js')], ['/plugin.css', path.join(args.get('--bundles'), 'maa-framework/main.css')],
   ['/fixture.js', path.join(root, 'tests/maa-framework/browser-fixture.mjs')], ['/model.json', path.join(output, 'model.json')]]);
 const server = http.createServer((request, response) => {
@@ -78,6 +81,7 @@ const status = phase === 'launch' ? 'NOT_RUN' : passed ? 'PASS' : 'FAIL';
 const result = { status, scope: 'Actual production Maa frontend, SDK scope and Host elements with controlled project transport; not installed provider or real execution',
   contractFingerprint: receipt.contractFingerprint, sourceHash: receipt.sourceHash, bundleReceiptSha256: sha(receiptBytes), command: process.argv,
   inputs: ['browser.mjs', 'browser-cases.mjs', 'browser-fixture.mjs'].map(file => ({ path: 'tests/maa-framework/' + file, sha256: sha(fs.readFileSync(path.join(root, 'tests/maa-framework', file))) })),
+  hostInputs: hostModules.map(([file]) => ({ path: file, sha256: sha(fs.readFileSync(path.join(args.get('--host-root'), file))) })),
   viewModelSha256: sha(fs.readFileSync(path.join(output, 'model.json'))), milliseconds: Date.now() - started, checks, errors };
 fs.writeFileSync(path.join(output, 'receipt.json'), JSON.stringify(result, null, 2) + '\n'); console.log(JSON.stringify(result));
 process.exitCode = status === 'PASS' ? 0 : 1;

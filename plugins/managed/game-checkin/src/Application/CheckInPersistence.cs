@@ -12,7 +12,7 @@ internal interface ICheckInPersistence
 {
     ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken);
     ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken);
-    ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed,
+    ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, ReadOnlyMemory<byte> document,
         Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken);
     ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken);
     ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken);

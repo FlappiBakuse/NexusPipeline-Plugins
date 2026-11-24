@@ -7,6 +7,7 @@ internal sealed class PersistencePorts : IExtensionDocuments, IExtensionSecretPo
     private readonly Dictionary<(Guid, string), Field> fields = [];
     private readonly Dictionary<Guid, DocumentCommit> commits = [];
     internal ExtensionDocument? Document;
+    internal ReadOnlyMemory<byte> AtomicInput;
     internal Action? BeforeAtomic;
     internal bool RejectAtomic, RaceState, ThrowAfterCommit;
     internal int CommitReads;
@@ -24,7 +25,7 @@ internal sealed class PersistencePorts : IExtensionDocuments, IExtensionSecretPo
         IReadOnlyList<DocumentSecretEdit> changes, CancellationToken cancellationToken)
     {
         BeforeAtomic?.Invoke();
-        AtomicWrites++; Transferred = changes.Select(change => change.Change).ToList();
+        AtomicWrites++; AtomicInput = json; Transferred = changes.Select(change => change.Change).ToList();
         try
         {
             if (RejectAtomic) throw new IOException("synthetic_rejected_before_publication");

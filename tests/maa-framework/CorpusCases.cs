@@ -41,8 +41,8 @@ internal static class CorpusCases
                 var json = JsonSerializer.SerializeToUtf8Bytes(project.Declaration);
                 var bundle = CorpusBundle.Build(name, project, used.Values, expected, source["blockingDiagnostic"]?.GetValue<string>());
                 var projection = bundle.Pi;
-                if (!JsonNode.DeepEquals(MaaCompactProjection.Restore(projection, project.CompilationFingerprint), project.Declaration))
-                    throw new InvalidDataException("corpus_projection_not_lossless");
+                if (!JsonNode.DeepEquals(MaaJson.Read(projection.Artifact)["declaration"], project.Declaration))
+                    throw new InvalidDataException("corpus_full_declaration_changed");
                 var artifacts = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(reportPath)!, "..", "..", "projection-artifacts"));
                 Directory.CreateDirectory(artifacts);
                 void Save(string sha, byte[] content)
@@ -55,28 +55,40 @@ internal static class CorpusCases
                 Save(projection.ArtifactSha256, projection.Artifact); Save(projection.ViewSha256, projection.View);
                 foreach (var page in projection.Pages) Save(page.Key, page.Value);
                 Save(bundle.ArtifactSha256, bundle.Artifact); Save(bundle.ExecutionSha256, bundle.Execution); Save(bundle.IndexSha256, bundle.Index);
-                var editor = MaaEditorProjection.Build(bundle); var publicEditor = MaaEditorProjection.Restore(editor);
-                BundleCases.Assert(publicEditor["schema"]!["task"]!.AsArray().Count == project.Tasks.Length &&
-                    publicEditor["schema"]!["option"]!.AsObject().Count == project.Options.Count &&
-                    publicEditor["profile"]!["Tasks"]!.AsArray().Count == project.Tasks.Length);
+                var editor = MaaEditorProjection.Build(bundle); var publicEditor = MaaJson.Read(editor.Index);
+                var schema = publicEditor["schema"]!;
+                int SchemaCount(string member) => schema["value"] is JsonObject inline ? CountMembers(inline[member]!) :
+                    PackedCount(editor.Pages, ProjectionCases.Member(editor.Pages, schema, member));
+                BundleCases.Assert(SchemaCount("task") == project.Tasks.Length && SchemaCount("option") == project.Options.Count &&
+                    PackedCount(editor.Pages, publicEditor["profile"]!["Tasks"]!) == project.Tasks.Length);
                 Save(editor.IndexSha256, editor.Index); foreach (var page in editor.Pages) Save(page.Key, page.Value);
                 rows.Add(new { project = name, status = "PASS", files = used.Count, rawBytes = used.Values.Sum(input => input.Content.Length),
                     largestInput = used.Values.Max(input => input.Content.Length), tasks = project.Tasks.Length, options = project.Options.Count,
                     compiledDeclarationBytes = json.Length, compiledDeclarationSha256 = Convert.ToHexStringLower(SHA256.HashData(json)),
                     project.SourceFingerprint, project.ClientKind, project.CompilationFingerprint, project.Sources,
                     projectionArtifactBytes = projection.Artifact.Length, projection.ArtifactSha256, projectionViewBytes = projection.View.Length,
-                    projection.ViewSha256, externalizedPipelines = projection.Bindings.Length, losslessRoundtrip = true, projectionDirectory = artifacts,
+                    projection.ViewSha256, externalizedPipelines = projection.Bindings.Length, fullDeclarationPreserved = true, projectionDirectory = artifacts,
                     projectionPages = projection.Pages.Count, projectionPageBytes = projection.Pages.Values.Sum(page => page.Length),
                     largestProjectionPage = projection.Pages.Count == 0 ? 0 : projection.Pages.Values.Max(page => page.Length),
                     bundleArtifactBytes = bundle.Artifact.Length, bundleArtifactSha256 = bundle.ArtifactSha256, executionBytes = bundle.Execution.Length,
                     bundleIndexBytes = bundle.Index.Length, bundle.IndexSha256,
                     bundle.ExecutionSha256, bundle.SemanticFingerprint, bundleSnapshotFingerprint = bundle.SnapshotFingerprint,
                     editorIndexBytes = editor.Index.Length, editorIndexSha256 = editor.IndexSha256, editorPages = editor.Pages.Count,
-                    editorPageBytes = editor.Pages.Values.Sum(page => page.Length), editorTranslationCount = publicEditor["translations"]!.AsObject().Count,
+                    editorPageBytes = editor.Pages.Values.Sum(page => page.Length), editorTranslationCount = PackedCount(editor.Pages, publicEditor["translations"]!),
                     bundle.CanExecute, bundle.BlockingDiagnostics,
                     qualification = "Read-only PI and SDK compilation with a synthetic saved profile and one enabled task" });
             });
         }
         File.WriteAllText(reportPath, JsonSerializer.Serialize(rows, new JsonSerializerOptions { WriteIndented = true }) + "\n");
     }
+
+    internal static int PackedCount(IReadOnlyDictionary<string, byte[]> pages, JsonNode node)
+    {
+        if (node["value"] is JsonNode inline) return CountMembers(inline);
+        var count = ProjectionCases.PageRows(pages, node).Count();
+        BundleCases.Assert(count == node["count"]!.GetValue<int>());
+        return count;
+    }
+
+    private static int CountMembers(JsonNode node) => node is JsonArray rows ? rows.Count : node.AsObject().Count;
 }

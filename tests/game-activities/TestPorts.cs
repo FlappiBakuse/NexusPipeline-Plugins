@@ -19,6 +19,7 @@ internal sealed class TestDocuments : IActivityDocuments, IExtensionDocuments
     internal bool LoseReply;
     internal Action<string>? BeforeRead;
     internal Action<string>? BeforeWrite;
+    internal Func<DocumentCommit, DocumentCommit>? RewriteReceipt;
     public ValueTask<ActivityDocument?> ReadAsync(string name, CancellationToken cancellationToken)
     { cancellationToken.ThrowIfCancellationRequested(); BeforeRead?.Invoke(name); lock (Values) return ValueTask.FromResult(Values.GetValueOrDefault(name)); }
     public ValueTask<ActivityDocumentCommit> WriteAsync(Guid id, string name, long expected, ReadOnlyMemory<byte> json, CancellationToken cancellationToken)
@@ -35,7 +36,7 @@ internal sealed class TestDocuments : IActivityDocuments, IExtensionDocuments
             var revision = Values.GetValueOrDefault(name)?.Revision ?? 0;
             if (revision != expected) throw new InvalidOperationException("revision_conflict");
             if (json.Length > 1048576) throw new InvalidOperationException("document_too_large");
-            var commit = new ActivityDocumentCommit(revision + 1, true);
+            var commit = new ActivityDocumentCommit(id, revision + 1, ActivityTimes.Hash(Encoding.UTF8.GetString(json.Span)), true);
             Values[name] = new(commit.Revision, json.ToArray()); commits[id] = (name, expected, json.ToArray(), commit); Writes++;
             if (LoseReply) { LoseReply = false; throw new IOException("lost_reply"); }
             return ValueTask.FromResult(commit);
@@ -44,11 +45,15 @@ internal sealed class TestDocuments : IActivityDocuments, IExtensionDocuments
     async ValueTask<ExtensionDocument?> IExtensionDocuments.ReadAsync(string name, CancellationToken cancellationToken)
     { var value = await ReadAsync(name, cancellationToken); return value is null ? null : new(value.Revision, ActivityTimes.Hash(Encoding.UTF8.GetString(value.Json.Span)), value.Json); }
     async ValueTask<DocumentCommit> IExtensionDocuments.WriteAsync(Guid operationId, string name, long expectedRevision, ReadOnlyMemory<byte> json, CancellationToken cancellationToken)
-    { var result = await WriteAsync(operationId, name, expectedRevision, json, cancellationToken); return new(operationId, result.Revision, ActivityTimes.Hash(Encoding.UTF8.GetString(json.Span)), result.IsNew); }
+    {
+        var result = await WriteAsync(operationId, name, expectedRevision, json, cancellationToken);
+        var receipt = new DocumentCommit(result.OperationId, result.Revision, result.Sha256, result.IsNew);
+        return RewriteReceipt?.Invoke(receipt) ?? receipt;
+    }
     ValueTask<DocumentCommit?> IExtensionDocuments.ReadCommitAsync(Guid operationId, CancellationToken cancellationToken)
     {
         lock (Values) return ValueTask.FromResult(commits.TryGetValue(operationId, out var value) ?
-            new DocumentCommit(operationId, value.Commit.Revision, ActivityTimes.Hash(Encoding.UTF8.GetString(value.Json)), false) : null);
+            new DocumentCommit(value.Commit.OperationId, value.Commit.Revision, value.Commit.Sha256, false) : null);
     }
 }
 

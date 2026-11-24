@@ -4,6 +4,9 @@ using System.Text.Json.Nodes;
 
 namespace NexusPipeline.Extensions.MaaFramework;
 
+internal sealed record MaaConfigBinding(string Path, string ResourceId, long Revision, string SourceSha256,
+    string RelativePath, long ContractRevision, string ContractSha256, string SnapshotSha256);
+
 internal sealed record MaaSourceInput(string Path, ReadOnlyMemory<byte> Content, string Sha256, string Identity);
 internal sealed record MaaSourceProof(string Path, string Sha256, string Identity, int Bytes);
 internal sealed class MaaSourceSet

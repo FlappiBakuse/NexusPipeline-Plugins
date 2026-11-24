@@ -59,16 +59,6 @@ internal static class MaaEditorProjection
         if (pages.Contents.Values.Sum(page => (long)page.Length) + index.Length > 32 * 1024 * 1024) throw new MaaInputFailure("maa_editor_budget");
         return new(index, MaaCompilationBundle.Hash(index), pages.Contents.ToDictionary(pair => pair.Key, pair => pair.Value.ToArray(), StringComparer.Ordinal));
     }
-    internal static JsonObject Restore(MaaEditorArtifact editor)
-    {
-        if (MaaCompilationBundle.Hash(editor.Index) != editor.IndexSha256) throw new MaaInputFailure("maa_editor_changed");
-        var index = MaaJson.Read(editor.Index); var pages = new MaaProjectionPages();
-        foreach (var page in editor.Pages) pages.Contents.Add(page.Key, page.Value);
-        foreach (var key in new[] { "schema", "translations", "configurationBindings", "diagnostics" }) index[key] = pages.Decode(MaaJson.Object(index[key]));
-        var profile = MaaJson.Object(index["profile"]);
-        foreach (var key in new[] { "Tasks", "Pretasks", "GlobalOptions", "ResourceOptions", "ControllerOptions" }) profile[key] = pages.Decode(MaaJson.Object(profile[key]));
-        pages.RequireComplete(); return index;
-    }
     private static JsonObject Select(JsonObject source, params string[] names)
     {
         var result = new JsonObject(); foreach (var name in names) if (source.TryGetPropertyValue(name, out var value)) result[name] = value?.DeepClone();

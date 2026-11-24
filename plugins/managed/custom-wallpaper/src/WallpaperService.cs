@@ -36,8 +36,7 @@ internal sealed class WallpaperService(ExtensionActivationContext context) : IAs
             if (call.Operation == "upload-asset")
             {
                 var next = Upload(before, call);
-                await SaveAsync(call, revision, next, new(call.ContentType, call.Payload), cancellation);
-                return await StateAsync(cancellation);
+                return await SaveStateAsync(call, revision, next, new(call.ContentType, call.Payload), cancellation);
             }
             using var payload = JsonDocument.Parse(call.Payload);
             var input = payload.RootElement;
@@ -61,8 +60,7 @@ internal sealed class WallpaperService(ExtensionActivationContext context) : IAs
                 "save-palette" => Palette(before, input),
                 _ => throw new IOException("wallpaper_operation_unknown")
             };
-            await SaveAsync(call, revision, nextDocument, null, cancellation);
-            return await StateAsync(cancellation);
+            return await SaveStateAsync(call, revision, nextDocument, null, cancellation);
         }
         finally { _serial.Release(); }
     }
@@ -78,13 +76,20 @@ internal sealed class WallpaperService(ExtensionActivationContext context) : IAs
         return (document, saved?.Revision ?? 0);
     }
 
-    private ValueTask<DocumentCommit> SaveAsync(FrontendCall call, long revision, WallpaperDocument document,
+    private async ValueTask<FrontendResult> SaveStateAsync(FrontendCall call, long revision, WallpaperDocument document,
         ExtensionImageInput? addition, CancellationToken cancellation)
     {
         WallpaperJson.Validate(document);
-        return Images.WriteAsync(call.OperationId ?? throw new IOException("wallpaper_operation_required"), DocumentName,
-            revision, JsonSerializer.SerializeToUtf8Bytes(document, WallpaperJson.Options), document.Assets.Select(asset => asset.Id).ToArray(),
-            addition, cancellation);
+        var operationId = call.OperationId ?? throw new IOException("wallpaper_operation_required");
+        var json = JsonSerializer.SerializeToUtf8Bytes(document, WallpaperJson.Options);
+        var sha256 = Convert.ToHexStringLower(SHA256.HashData(json));
+        var commit = await Images.WriteAsync(operationId, DocumentName, revision, json,
+            document.Assets.Select(asset => asset.Id).ToArray(), addition, cancellation);
+        cancellation.ThrowIfCancellationRequested();
+        if (commit.OperationId != operationId || commit.Revision <= 0 || commit.Revision - 1 != revision || commit.Sha256 != sha256)
+            throw new IOException("wallpaper_commit_unverified");
+        if (commit.IsNew) return await StateAsync(document, commit.Revision, cancellation);
+        return await StateAsync(cancellation);
     }
 
     private async ValueTask<FrontendResult> StateAsync(CancellationToken cancellation)
@@ -142,7 +147,6 @@ internal sealed class WallpaperService(ExtensionActivationContext context) : IAs
                 before.Rotation.EpochUnixMs : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             result = result with { Rotation = new(mode, interval, epoch) };
         }
-        WallpaperJson.Validate(result);
         return result;
     }
 

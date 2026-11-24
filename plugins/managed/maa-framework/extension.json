@@ -13,9 +13,6 @@
     "configuration.edit"
   ],
   "permissions": {
-    "desktopAccess": [
-      "window-inventory"
-    ],
     "processAccess": [
       "owned-worker",
       "selected-upstream"

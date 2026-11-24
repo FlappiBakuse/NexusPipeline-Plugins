@@ -34,6 +34,15 @@ export async function activitySurfaceCases({page,test}) {
     await page.getByText('活动数据无效，请刷新活动。', { exact: true }).waitFor();
   });
 
+  await test('activity subscription reports a stale snapshot and recovers at the same revision', async () => {
+    await mount();
+    await page.evaluate(() => window.activitySubscription.failed?.());
+    await page.getByText('刷新失败，保留原数据', { exact: true }).waitFor();
+    await page.locator('.activity-slide[aria-hidden=false]').getByText('Alpha', { exact: true }).waitFor();
+    await page.evaluate(() => window.activitySubscription.deliver(window.activityState));
+    await page.getByText('刷新失败，保留原数据', { exact: true }).waitFor({ state: 'hidden' });
+  });
+
   async function mount(localZone=false) {
     await page.evaluate(async localZone=>{
       const point={instantUtc:'2030-01-01T00:00:00Z',rawValue:'',timeBasis:'utc',sourceZone:'UTC'};
@@ -47,7 +56,9 @@ export async function activitySurfaceCases({page,test}) {
           feed('blue-archive','ba-cn','Blue Archive'),feed('blue-archive','ba-jp','Blue Archive JP','jp')]};
       if(localZone)delete state.displayZone;
       window.activityReads=0;window.activityWrites=0;window.activityState=state;
-      await window.testMount('game-activities',{readState:async()=>state,subscribe:()=>()=>{},refreshAll:async()=>state,
+      await window.testMount('game-activities',{readState:async()=>state,subscribe:(deliver,failed)=>{
+        window.activitySubscription={deliver,failed};return()=>{};
+      },refreshAll:async()=>state,
         readCover:async()=>{window.activityReads++;return window.fixturePng();},
         saveSettings:async value=>{window.activityWrites++;state={...value,revision:state.revision+1};window.activityState=state;return state;}},'overview.cards');
     },localZone);

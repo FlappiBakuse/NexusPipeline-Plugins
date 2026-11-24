@@ -49,7 +49,6 @@ PatternCases.Run(Run);
 EffectiveCases.Run(Run);
 DiscoveryCases.Run(Run);
 ProjectionCases.Run(Run);
-IndexedSelectionCases.Run(Run);
 BundleCases.Run(Run);
 DraftCases.Run(Run);
 RuntimeCases.Run(Run);

@@ -5,9 +5,7 @@ async function mountMaa(page) {
     const profile = { profileId: 'profile', revision: '1', packageRoot: 'D:/fixture', interfacePath: 'interface.json',
       nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main', taskOccurrences: [],
       options: { credentials: { user: 'old-user', server: 'old-server' } }, resourceOptions: {}, controllerOptions: {},
-      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } },
-      windowSelection: 'exact_process', windowHandle: 0, windowProcessId: 0, windowExecutable: '',
-      windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
+      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } } };
     const schema = { projectName: 'Race Maa', projectVersion: '1', controllers: [{name:'win',label:'Win32',type:'Win32'}],
       resources: [{name:'main',label:'Main'}], tasks: [], presets: [], globalOptions: ['credentials'],
       options: { credentials: {label:'Credentials',type:'input',inputs:[
@@ -21,7 +19,7 @@ async function mountMaa(page) {
       readEditor: async () => ({providerId:'maa-framework',mode:'binding',profile}),
       discover: async () => ({interfaceCandidates:['interface.json'],candidates:[],schema}),
       inspect: async () => ({ schema }), preview: async () => ({}), applyPreset: async value => value,
-      findWindows: async () => [], saveBinding: async () => {},
+      saveBinding: async () => {},
       previewImport: (kind,path,instance) => new Promise(resolve => window.importRequests.push({kind,path,instance,resolve})),
       publishDraft: (_context,next) => {window.publishedProfile = next;},
     }, 'automation.binding.editor');

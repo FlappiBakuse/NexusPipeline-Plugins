@@ -1,9 +1,8 @@
 import type { ExtensionSurface, UiElement } from '@nexuspipeline/extension-sdk';
-import { button, choice, createPanel, type Panel } from '../../../frontend-ui/src/elements.js';
+import { button, createPanel, type Panel } from '../../../frontend-ui/src/elements.js';
 import { type Translate } from '../../../frontend-ui/src/localize.js';
 import type { MaaPorts } from './ports.js';
 import { drawSchema, maskSchemaSecrets } from './schema-view.js';
-import { resetPackageRoot } from './maa-profile.js';
 import { MaaFields } from './maa-fields.js';
 import { defaultTasks } from './task-fields.js';
 import { MaaImport } from './maa-import.js';
@@ -96,7 +95,13 @@ export class MaaEditor {
   }
   private resetRoot(root: string): void {
     maskSchemaSecrets(this.panel.body);
-    resetPackageRoot(this.draft.profile!, root);
+    const profile = this.draft.profile!;
+    profile.packageRoot = root;
+    profile.sourceBinding = profile.sourceSnapshot = null;
+    profile.dependencyLock = profile.runtimeInputs = null;
+    profile.authorizedFingerprint = '';
+    profile.nativeDirectory = '';
+    profile.nativeVersion = '';
     this.draft.schema = undefined;
     this.draft.sources.discovery = undefined;
     this.draft.sources.id = '';
@@ -163,12 +168,12 @@ export class MaaEditor {
     if (editor.mode === 'script') {
       if (!this.draft.sources.draw(panel, fields, profile, () => this.changed(), () => this.discover())) {
         this.scriptActions();
-        this.projectActions(fields);
+        this.projectActions();
         return;
       }
       if (!this.draft.advanced) {
         this.scriptActions();
-        this.projectActions(fields);
+        this.projectActions();
         return;
       }
     }
@@ -195,7 +200,7 @@ export class MaaEditor {
         editor.mode !== 'script'
       );
     if (editor.mode === 'script') this.scriptActions();
-    this.projectActions(fields);
+    this.projectActions();
     this.output.hidden = false;
   }
   private scriptActions(): void {
@@ -209,7 +214,7 @@ export class MaaEditor {
     button(this.view, actions, '重新查找来源', () => this.discover());
     this.output.hidden = false;
   }
-  private projectActions(fields: HTMLElement): void {
+  private projectActions(): void {
     const panel = this.view,
       actions = document.createElement('div');
     actions.className = 'maa-actions';
@@ -224,7 +229,6 @@ export class MaaEditor {
       this.fields.clear();
       this.changed(true);
     });
-    button(panel, actions, '查找并选择 Win32 窗口', () => this.selectWindow(fields));
     button(panel, actions, '预览显式导入', () => this.imports.preview());
     button(panel, actions, '使用已预览映射', () => this.imports.apply());
     const label = this.draft.editor?.isDraft ? '保留到草稿' : this.draft.editor?.mode === 'script' ? '保存脚本项目配置' : '保存用户配置';
@@ -283,32 +287,6 @@ export class MaaEditor {
       this.draft.previewProfile = JSON.stringify(profile);
       this.output.textContent = JSON.stringify(result, null, 2);
     }
-  }
-  private async selectWindow(parent: HTMLElement): Promise<void> {
-    this.fields.check();
-    const version = this.draft.version;
-    const windows = await this.ports.findWindows(structuredClone(this.draft.profile!), this.panel.signal);
-    if (!this.current(version)) return;
-    choice(
-      this.view,
-      parent,
-      '匹配的窗口',
-      '',
-      [
-        { value: '', label: '请选择' },
-        ...windows.map((item) => ({ value: String(item.handle), label: item.title + ' · PID ' + item.pid }))
-      ],
-      (value) => {
-        const selected = windows.find((item) => String(item.handle) === value);
-        if (!selected) return;
-        this.draft.profile!.windowHandle = selected.handle;
-        this.draft.profile!.windowProcessId = selected.pid;
-        this.draft.profile!.windowStartedAtUtc = selected.startedAtUtc;
-        this.draft.profile!.windowExecutable = selected.executable;
-        this.draft.profile!.windowSelection = 'executable';
-        this.changed(true);
-      }
-    );
   }
   private async save(control: UiElement<'nexus-button'>): Promise<void> {
     if (this.saver.locked) return;

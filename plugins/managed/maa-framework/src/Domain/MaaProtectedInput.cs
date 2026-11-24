@@ -19,11 +19,6 @@ internal static class MaaProtectedInput
         return RequireKey(key);
     }
 
-    internal static void RequireBinding(JsonNode? node, string scope, string option, string input)
-    {
-        if (ReadBinding(node) != Key(scope, option, input)) throw new MaaInputFailure("maa_password_binding_unbound");
-    }
-
     internal static JsonObject Deferred(string key, JsonObject definition, string controller, string? part = null, bool raw = false) => new()
     {
         ["$maaProtected"] = new JsonObject

@@ -219,7 +219,7 @@ export function createCarousel(
         meta.append(badge);
       }
       const title = document.createElement('h3');
-      bindLocale(panel.t, panel.signal, title, 'textContent', () => {
+      bindLocale(panel.t, contentSignal, title, 'textContent', () => {
         title.textContent = feed.overview.title || panel.t('当前活动概览');
       });
       const timing = document.createElement('div');
@@ -230,7 +230,7 @@ export function createCarousel(
       const hit = document.createElement('button');
       hit.type = 'button';
       hit.className = 'activity-hit';
-      bindLocale(panel.t, panel.signal, hit, 'aria-label', () => {
+      bindLocale(panel.t, contentSignal, hit, 'aria-label', () => {
         hit.setAttribute('aria-label', panel.t('查看') + gameName(feed.game, panel.t) + panel.t('活动详情'));
       });
       hit.addEventListener('click', () => actions.details(feed), { signal: contentSignal });
@@ -239,7 +239,7 @@ export function createCarousel(
       const indicator = document.createElement('button');
       indicator.type = 'button';
       indicator.className = 'activity-indicator';
-      bindLocale(panel.t, panel.signal, indicator, 'aria-label', () => {
+      bindLocale(panel.t, contentSignal, indicator, 'aria-label', () => {
         indicator.setAttribute('aria-label', panel.t('显示') + ' ' + gameName(feed.game, panel.t));
       });
       indicator.addEventListener('click', () => actions.select(position), { signal: contentSignal });
@@ -248,7 +248,7 @@ export function createCarousel(
     if (!feeds.length) {
       const empty = document.createElement('p');
       empty.className = 'activity-empty';
-      bindLocale(panel.t, panel.signal, empty, 'textContent', () => {
+      bindLocale(panel.t, contentSignal, empty, 'textContent', () => {
         empty.textContent = panel.t('请选择要订阅的游戏。');
       });
       track.append(empty);

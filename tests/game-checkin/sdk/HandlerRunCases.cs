@@ -17,7 +17,20 @@ internal static class HandlerRunCases
                     fixture.Store.Run.Results.Single().Code == "credential_not_configured");
                 Assert(fixture.Store.CredentialReads.Count > 0 && fixture.Store.CredentialReads.All(read => read == (fixture.Task.Id, "kuro")));
                 if (!planned) Assert(!fixture.Task.Enabled && fixture.Task.Schedules.Length == 0);
+                if (fixture.Store.TaskReads != 2)
+                    throw new InvalidOperationException($"ordinary task document reads: expected 2, observed {fixture.Store.TaskReads}");
             });
+        await run("actual-handler-rechecks-private-revision-after-reading-current-host-invocation", async () => {
+            var fixture = new Fixture(true);
+            fixture.Host.OnReadCurrent = () => fixture.Store.Current = fixture.Task with { Revision = 4 };
+            try { await fixture.ExecuteAsync(); }
+            catch (CheckInFailure error) when (error.Code == "checkin_task_revision_conflict")
+            {
+                Assert(fixture.Store.TaskReads == 2 && fixture.Store.Run is null && fixture.Store.CredentialReads.Count == 0 && fixture.Submission.Calls == 0);
+                return;
+            }
+            throw new InvalidOperationException("changed private revision was accepted");
+        });
         await run("actual-handler-notification-acceptance-failure-preserves-business-result-and-does-not-repeat", async () => {
             var fixture = new Fixture(false); fixture.Submission.Fail = true; var result = await fixture.ExecuteAsync();
             Assert(result.BusinessOutcome == "failed" && result.ReasonCode == "checkin_notification_unknown" && fixture.Submission.Calls == 1 &&
@@ -31,6 +44,7 @@ internal static class HandlerRunCases
         internal readonly Store Store;
         internal readonly Submission Submission = new();
         internal readonly ScheduledInvocation Invocation;
+        internal readonly WorkContextCases.WorkTasks Host;
         private readonly CheckInWorkHandler handler;
         private readonly bool planned;
         internal Fixture(bool planned)
@@ -41,11 +55,13 @@ internal static class HandlerRunCases
                 Notification = new() { Enabled = true, NotificationTaskIds = [target.ToString("D")] } };
             Store = new(Task); var execution = new Execution(); var targets = new SdkCheckInNotifications(new Targets(target));
             var protocols = new CheckInProtocols(null!, execution, null!, TimeProvider.System);
-            handler = new(Store, new(Store, protocols, execution, TimeProvider.System), new Context(), targets, new(Submission, targets));
             var subject = planned ? CheckInPlans.Identity(Task.Id, schedule) : Task.Id;
-            Invocation = new() { Format = "nexus.schedule.invocation", Version = 1, SubjectId = subject.ToString("D"), RunId = Guid.NewGuid().ToString("D"),
-                AttemptId = Guid.NewGuid().ToString("D"), InstanceId = Guid.NewGuid().ToString("D"), OccurrenceId = Guid.NewGuid().ToString("D"),
-                DeadlineUtc = DateTimeOffset.UtcNow.AddMinutes(30).ToString("O"), NotificationOperationId = Guid.NewGuid().ToString("D"), NotificationTaskIds = [target.ToString("D")] };
+            Host = new(Task.Id);
+            Host.Current = Host.Current with { SubjectId = subject };
+            handler = new(Store, new(Store, protocols, execution, TimeProvider.System), new SdkCheckInWork(Host, Store), targets, new(Submission, targets));
+            Invocation = new() { Format = "nexus.schedule.invocation", Version = 1, SubjectId = subject.ToString("D"), RunId = Host.Current.RunId.ToString("D"),
+                AttemptId = Host.Current.AttemptId.ToString("D"), InstanceId = Guid.NewGuid().ToString("D"), OccurrenceId = Guid.NewGuid().ToString("D"),
+                DeadlineUtc = Host.Current.DeadlineUtc.ToString("O"), NotificationOperationId = Guid.NewGuid().ToString("D"), NotificationTaskIds = [target.ToString("D")] };
         }
         internal ValueTask<ScheduledWorkResult> ExecuteAsync() => planned ? handler.ExecutePlannedAsync(new() {
             Format = "nexus.schedule.planned-invocation", Version = 1, Invocation = Invocation, OwnerTaskId = Task.Id.ToString("D"), PlansRevision = 11, TaskRevision = 3 }, default) :
@@ -54,21 +70,18 @@ internal static class HandlerRunCases
     private sealed class Store(CheckInTask task) : ICheckInPersistence
     {
         internal CheckInRun? Run;
+        internal CheckInTask Current = task;
+        internal int TaskReads;
         internal readonly List<(Guid, string)> CredentialReads = [];
-        public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInTaskSnapshot(11, new() { Tasks = [task] }));
+        public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken)
+        { TaskReads++; return ValueTask.FromResult(new CheckInTaskSnapshot(11, new() { Tasks = [Current] })); }
         public ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken)
         { CredentialReads.Add((taskId, platform)); return ValueTask.FromResult(new CheckInCredentialRead(0, false, null)); }
         public ValueTask<CheckInRecentRunSnapshot> ReadRunAsync(Guid taskId, CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInRecentRunSnapshot(0, Run));
         public ValueTask<long> WriteRunAsync(Guid operationId, Guid taskId, long expectedRevision, CheckInRun run, CancellationToken cancellationToken)
         { Run = run; return ValueTask.FromResult(expectedRevision + 1); }
-        public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed, Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, ReadOnlyMemory<byte> document, Guid? secretSubjectId, IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken) => throw new NotSupportedException();
-    }
-    private sealed class Context : ICheckInWorkContext
-    {
-        public ValueTask<CheckInWorkClock> ReadClockAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInWorkClock(DateTimeOffset.UtcNow, "UTC"));
-        public ValueTask<CheckInExecutionIdentity> ReadAsync(ScheduledInvocation invocation, Guid businessTaskId, long taskRevision, string trigger, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(new CheckInExecutionIdentity(Guid.Parse(invocation.RunId), Guid.Parse(invocation.AttemptId), trigger, new(2026, 10, 25)));
     }
     private sealed class Execution : ICheckInExecutionPorts
     {

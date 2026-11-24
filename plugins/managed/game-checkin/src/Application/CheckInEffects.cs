@@ -28,6 +28,9 @@ internal static class CheckInEffectGate
         try { await effects.GameConfirmedAsync(gate.Lease, cancellationToken); return result; }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
         catch (Exception error) when (error is not OutOfMemoryException)
-        { return CheckInResults.Result(result.Platform, result.GameCode, "success_unconfirmed", effectState: "unknown"); }
+        {
+            CheckInDiagnostics.Failure(error, "game-confirmation");
+            return CheckInResults.Result(result.Platform, result.GameCode, "success_unconfirmed", effectState: "unknown");
+        }
     }
 }

@@ -8,7 +8,8 @@ export async function mountProject(page, surface = 'automation.binding.editor') 
     const imported = { Controller: 'win', Resource: 'main', Tasks: [{ Id: id, SourceId: 'source-task-one', Name: 'Daily',
       Order: 0, Enabled: true, RepeatCount: 1, Options: {}, DefinitionKnown: true }], Pretasks: [],
       GlobalOptions: { Login: { user: 'original-user' } }, ResourceOptions: {}, ControllerOptions: {} };
-    const schema = { name: 'Production Maa', version: '1', controller: [{ name: 'win', label: 'Win32', type: 'Win32' }],
+    const schema = { name: 'Production Maa', version: '1', controller: [{ name: 'win', label: 'Win32', type: 'Win32' },
+      { name: 'android', label: 'Android', type: 'Adb' }],
       resource: [{ name: 'main', label: 'Main' }], task: [{ name: 'Daily', label: 'Daily', default_check: true, repeatable: true }],
       option: { Login: { label: 'Credentials', type: 'input', inputs: [{ name: 'user' }, { name: 'secret', password: true }] },
         Mode: { label: 'Run mode', type: 'select', default_case: 'normal', cases: [
@@ -91,6 +92,23 @@ export async function previewSave(page, mode = '') {
 }
 
 export async function maaProjectCases({ page, test }) {
+  await test('Production Maa editor saves the controller and points device selection to NexusPipeline', async () => {
+    await mountProject(page);
+    const guidance = page.getByText('请在 NexusPipeline 的运行目标配置中选择 PC 窗口或 Android 设备。', { exact: true });
+    if (!await guidance.isVisible() || await page.getByText('运行时窗口选择', { exact: true }).count() ||
+        await page.getByRole('button', { name: '查找并选择 Win32 窗口', exact: true }).count())
+      throw Error('Win32 editor offered obsolete device selection or omitted the NexusPipeline target location');
+    await choose(page.locator('nexus-select[aria-label="Controller"]'), 'android');
+    if (!await guidance.isVisible() || await page.getByRole('textbox', { name: 'ADB.exe', exact: true }).count() ||
+        await page.getByRole('textbox', { name: '精确 ADB serial/address', exact: true }).count())
+      throw Error('Android editor offered obsolete device fields or omitted the NexusPipeline target location');
+    await previewSave(page);
+    await page.getByText('已保存', { exact: true }).waitFor();
+    const saved = await page.evaluate(() => window.maaProject.selection.Profile);
+    if (saved.Controller !== 'android' || saved.Resource !== 'main' || saved.GlobalOptions.Login.user !== 'original-user')
+      throw Error('Maa project selection lost the controller, resource or options');
+  });
+
   await test('Production Maa frontend edits independent tasks and saves its actual projected draft', async () => {
     await mountProject(page);
     if (await page.locator('nexus-select[aria-label="Run mode"] input[role=combobox]').inputValue() !== 'Normal' ||

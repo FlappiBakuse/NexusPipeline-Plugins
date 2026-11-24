@@ -184,7 +184,11 @@ async function mountCarousel(surface: ExtensionSurface, t: Translate, locale: st
     if (!shown) { stopDisplay(); return; }
     if (unsubscribe) return;
     const owner = new AbortController(); reading = owner;
-    unsubscribe = ports.subscribe(update);
+    unsubscribe = ports.subscribe(update, () => {
+      if (!panel.alive() || owner.signal.aborted || reading !== owner) return;
+      panel.status.setAttribute('role', 'alert');
+      panel.say('刷新失败，保留原数据', true);
+    });
     rotation = setInterval(rotate, 250);
     countdown = setInterval(() => view.tick(), 1000);
     if (initialSnapshot) { initialSnapshot = false; return; }

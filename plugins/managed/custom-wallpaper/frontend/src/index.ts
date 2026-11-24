@@ -181,7 +181,13 @@ function createRuntime(ports: WallpaperPorts, signal: AbortSignal) {
     if (signal.aborted) return;
     if (appearanceVisible || settingsVisible) {
       if (unsubscribe) return;
-      unsubscribe = ports.subscribe((next) => { void publish(next); });
+      unsubscribe = ports.subscribe(next => {
+        void publish(next).catch(() => { if (!signal.aborted) error = 'wallpaper_state_unavailable'; });
+      }, () => {
+        if (signal.aborted) return;
+        error = 'wallpaper_state_unavailable';
+        if (state) listeners.forEach(listener => listener(state!));
+      });
       void refresh().catch(() => {});
     } else {
       if (timer) clearTimeout(timer);

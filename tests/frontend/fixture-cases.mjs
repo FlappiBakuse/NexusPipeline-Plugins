@@ -231,9 +231,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
       const profile = { profileId: 'saved', revision: '', packageRoot: 'D:/old',
         interfacePath: 'interface.json', nativeDirectory: 'native', nativeVersion: '1',
         language: 'zh_cn', controller: 'adb', resource: 'main', taskOccurrences: [], options: {},
-        resourceOptions: {}, controllerOptions: {}, windowSelection: 'exact_process',
-        windowHandle: 12, windowProcessId: 44, windowExecutable: 'old.exe',
-        windowWaitMilliseconds: 10000, adbPath: 'adb.exe', adbSerial: 'serial',
+        resourceOptions: {}, controllerOptions: {},
         sourceBinding: { sourceKind: 'mxu', sourceInstanceId: 'one' },
         sourceSnapshot: { saved: true }, dependencyLock: { saved: true },
         runtimeInputs: { saved: true }, authorizedFingerprint: 'old-authority' };
@@ -246,7 +244,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
         discover: async () => ({ interfaceCandidates: ['interface.json', 'alt.json'],
           candidates: [{ id: 'source', name: 'Source', kind: 'mxu', instanceId: 'one' }], schema }),
         inspect: async () => ({ schema }), preview: async () => ({}), applyPreset: async value => value,
-        findWindows: async () => [], previewImport: async () => ({ details: {} }),
+        previewImport: async () => ({ details: {} }),
         publishDraft: (_context, value) => { window.maaDraft = value; },
         saveBinding: async () => {},
       }, 'automation.script.editor');
@@ -258,7 +256,7 @@ export async function runAdditionalCases({ page, test, reportRoot }) {
     await page.getByText('Controller', { exact: true }).waitFor();
     const draft = await page.evaluate(() => window.maaDraft);
     if (draft?.packageRoot !== 'D:/new' || draft?.interfacePath !== 'alt.json' || draft?.sourceBinding !== null || draft?.dependencyLock !== null
-      || draft?.authorizedFingerprint !== '' || draft?.windowHandle !== 0)
+      || draft?.authorizedFingerprint !== '')
       throw new Error(`Maa root authority survived change: ${JSON.stringify(draft)}`);
   });
 

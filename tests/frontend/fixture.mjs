@@ -248,12 +248,20 @@ await test('wallpaper settings and appearance', async () => {
         assets: state.assets.filter(item => item.id !== id) }; return state; },
       readAsset: async () => window.fixturePng(),
       advanceRotation: async () => state,
-      subscribe: callback => { callbacks.add(callback); return () => callbacks.delete(callback); },
+      subscribe: (callback, failed) => {
+        window.wallpaperSubscription = { failed, recover: () => callback(state) };
+        callbacks.add(callback); return () => callbacks.delete(callback);
+      },
       setAppearance: () => { window.appearanceApplied = true; }, clearAppearance: () => {},
     }, 'settings.panels');
   });
   await page.locator('.wallpaper-settings').getByRole('button').first().click();
   await page.getByText('A.png').waitFor();
+  await page.evaluate(() => window.wallpaperSubscription.failed?.());
+  await page.getByText('读取失败', { exact: true }).waitFor();
+  await page.getByText('A.png').waitFor();
+  await page.evaluate(() => window.wallpaperSubscription.recover());
+  await page.getByText('读取失败', { exact: true }).waitFor({ state: 'hidden' });
   const rotationMode = page.locator('nexus-select[aria-label="轮换方式"]');
   await fieldHelp(page, rotationMode, '按时间随机轮换会按设定间隔切换壁纸');
   if (!await page.locator('nexus-file-picker').count()) throw new Error(`Picker absent initially: ${await page.locator('#app').innerHTML()}`);
@@ -377,9 +385,8 @@ await test('maa discovery tasks and preview', async () => {
   await page.evaluate(async () => {
     const profile = { profileId: 'profile', revision: '', packageRoot: 'D:/project', interfacePath: 'interface.json',
       nativeDirectory: '', language: 'zh_cn', controller: 'win', resource: 'main', taskOccurrences: [], options: {},
-      resourceOptions: {}, controllerOptions: {}, windowSelection: 'exact_process', windowExecutable: '',
-      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } },
-      windowHandle: 0, windowProcessId: 0, windowWaitMilliseconds: 10000, adbPath: '', adbSerial: '' };
+      resourceOptions: {}, controllerOptions: {},
+      sourceSnapshot: { compilation: { compilationFingerprint: 'a'.repeat(64) } } };
     const schema = { projectName: 'Fixture Maa', projectVersion: '1',
       controllers: [{ name: 'win', label: 'Win32', type: 'Win32' }], resources: [{ name: 'main', label: 'Main' }],
       tasks: [{ name: 'daily', label: 'Daily', defaultCheck: true, groups: ['daily-group'] }],
@@ -393,7 +400,7 @@ await test('maa discovery tasks and preview', async () => {
     await window.testMount('maa-framework', { readEditor: async () => ({ providerId: 'maa-framework', mode: 'binding', profile }),
       discover: async () => ({ interfaceCandidates: ['interface.json'], candidates: [], schema }),
       inspect: async () => ({ schema }), preview: async () => ({ ready: true }), applyPreset: async p => p,
-      findWindows: async () => [], previewImport: async () => ({ details: {}, profile }),
+      previewImport: async () => ({ details: {}, profile }),
       publishDraft: (context, next) => {
         window.publishedProfile = next;
       }, saveBinding: async () => {},

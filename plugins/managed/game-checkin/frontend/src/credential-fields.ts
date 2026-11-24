@@ -319,6 +319,7 @@ export class CredentialFields {
     this.timers.clear();
   }
   clearPlaintext(): void {
+    this.inputs.clear();
     this.forgetValues();
     for (const id of this.rows.keys()) this.draw(id);
   }

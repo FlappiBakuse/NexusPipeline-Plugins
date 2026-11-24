@@ -8,6 +8,7 @@ internal sealed class RunnerPersistence(CheckInTask task) : ICheckInPersistence,
     internal int Writes, RejectWrite;
     internal long RunRevision;
     internal readonly List<Guid> Operations = [];
+    internal Action<CheckInRun>? OnPublished;
     public ValueTask<CheckInTaskSnapshot> ReadTasksAsync(CancellationToken cancellationToken) => ValueTask.FromResult(new CheckInTaskSnapshot(1, new() { Tasks = [task] }));
     public ValueTask<CheckInCredentialRead> ReadCredentialAsync(Guid taskId, string platform, CancellationToken cancellationToken)
         => ValueTask.FromResult(new CheckInCredentialRead(7, Materials.ContainsKey(platform), Materials.GetValueOrDefault(platform)?.Copy()));
@@ -18,9 +19,10 @@ internal sealed class RunnerPersistence(CheckInTask task) : ICheckInPersistence,
         if (Writes == RejectWrite) throw new CheckInFailure("checkin_run_publication_unknown");
         if (expectedRevision != RunRevision) throw new InvalidOperationException("synthetic_run_revision_conflict");
         _ = new CheckInRunDocument { Run = run }.Validate(); Operations.Add(operationId); Saved = run with { Results = run.Results.ToArray() };
+        OnPublished?.Invoke(Saved);
         return ValueTask.FromResult(++RunRevision);
     }
-    public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, CheckInTaskStore proposed, Guid? secretSubjectId,
+    public ValueTask<CheckInPublication> PublishAsync(Guid operationId, long expectedDocumentRevision, ReadOnlyMemory<byte> document, Guid? secretSubjectId,
         IReadOnlyList<CredentialMutation> changes, CancellationToken cancellationToken) => throw new NotSupportedException();
     public ValueTask<CheckInPublication?> ReadPublicationAsync(Guid operationId, CancellationToken cancellationToken) => throw new NotSupportedException();
     public void Dispose() { foreach (var material in Materials.Values) material.Dispose(); }
