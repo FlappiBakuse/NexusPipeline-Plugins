@@ -47,13 +47,56 @@ export function cases(invoke) {
   add('terminal alone cannot invent progress', observe(logs(['All tasks have been completed!'])), { 'observations.0.state': 'unknown' });
   add('async named failure wins after terminal', observe(logs(['Starting task: ' + name, 'All tasks have been completed!', 'Task failed: ' + name])),
     { 'observations.0.state': 'failed' });
+  const continued = document([item({ remark: 'failed' }), item({ remark: 'later' })]);
+  const continuedTasks = invoke(input('discover', continued), sources).tasks;
+  add('native queue failure summary does not fail the later task', input('observe', continued, {}, {
+    tasks: continuedTasks, logComplete: true, logEvents: logs([
+      '开始任务：failed', '任务失败：failed', '开始任务：later', '任务运行失败！',
+    ], 'one/stable'),
+  }), { 'observations.0.state': 'failed', 'observations.1.state': 'unknown' });
+  add('unattributed queue failure keeps task outcome unknown',
+    observe(logs(['Starting task: ' + name, 'Task execution failed!'])), { 'observations.0.state': 'unknown' });
+  const duplicates = document([item(), item()]);
+  add('named failure cannot be attributed to either duplicate', input('observe', duplicates, {}, {
+    tasks: invoke(input('discover', duplicates), sources).tasks, logComplete: true,
+    logEvents: logs(['Starting task: ' + name, 'Starting task: ' + name, 'Task failed: ' + name, 'Task execution failed!']),
+  }), { 'observations.0.state': 'unknown', 'observations.1.state': 'unknown' });
   add('drain incomplete does not publish success', observe(logs(['Starting task: ' + name, 'All tasks have been completed!']), { logComplete: false }),
     { 'observations.0.state': 'unknown' });
   add('gap invalidates order proof', observe([...logs(['Starting task: ' + name]), ...logs(['All tasks have been completed!'], 'stable', 3)]),
     { 'observations.0.state': 'unknown' });
   add('retry known failed local task', input('retry', document(), {}, { tasks: frozen, idempotencyKey: 'bounded',
     observations: [{ taskId: 'maas:stable/0', state: 'failed' }] }), { selectedTaskIds: ['maas:stable/0'] });
+  for (const continues of [false, true]) {
+    const stopped = { ...document([item({ remark: 'first' }), item({ remark: 'pending' })]), ContinueRunningWhenError: continues };
+    add('a scoped failed queue only proves pending work when configured to stop ' + continues, input('observe', stopped, {}, {
+      tasks: invoke(input('discover', stopped), sources).tasks, logComplete: true,
+      logEvents: logs(['Starting task: first', 'Task failed: first', 'Task execution failed!'])
+    }), { 'observations.1': { taskId: 'maas:stable/1', state: 'unknown', ...(continues
+      ? { reasonCode: 'maas_native_scope_incomplete' } : { reasonCode: 'maas_queue_stopped_before_task', completionKind: 'notExecuted' }) } });
+  }
   const repeated = document([item({ repeat_count: 3 })]), repeatedTasks = invoke(input('discover', repeated), sources).tasks;
+  add('repeated task carries a stable execution identity for Host admission', input('discover', repeated), {
+    'tasks.0.executionTaskId': 'maas:stable/0', 'tasks.0.repetitionLimit': 3,
+    'tasks.0.projection.repetitionSelector': ['TaskItems', 0, 'repeat_count'],
+  });
+  const trace = (outcomes, pid = 9504) => outcomes.flatMap((outcome, index) =>
+    ['Starting', outcome].map((event, part) => ({ sourceId: 'file:1', epoch: 1, sequence: index * 2 + part + 1,
+      text: '[2026-11-24 11:47:49.763][INF][Px' + pid + '][Tx4384][Utils/EventDispatcher.hpp][L65]' +
+        '[MaaNS::EventDispatcher::notify] !!!OnEventNotify!!! [handle=true] [msg=Tasker.Task.' + event + '] [details=' +
+        JSON.stringify({ entry, hash: '37a77cd793c798e9', task_id: 200000001 + index, uuid: '0000000000040706' }) + '] ' })));
+  const repeatObservation = (outcomes, pid = 9504, completed = 0) => input('observe', repeated, {}, {
+    tasks: repeatedTasks, upstreamProcessId: 9504, logComplete: true,
+    ...(completed ? { repetitionOffsets: [{ taskId: repeatedTasks[0].taskId, completedRepetitions: completed }] } : {}),
+    logEvents: [...logs([...outcomes.map(() => 'Starting task: ' + name), ...(outcomes.includes('Failed')
+      ? ['Task failed: ' + name, 'Task execution failed!'] : ['All tasks have been completed!'])]), ...trace(outcomes, pid)]
+  });
+  add('native task identities prove exactly one completed repetition', repeatObservation(['Succeeded', 'Failed', 'Failed']),
+    { 'observations.0.state': 'failed', 'observations.0.completedRepetitions': 1 });
+  add('native remaining repetitions account for the bound prior offset', repeatObservation(['Succeeded', 'Succeeded'], 9504, 1),
+    { 'observations.0.state': 'succeeded', 'observations.0.completedRepetitions': 3 });
+  add('a different native process cannot authorize replay', repeatObservation(['Succeeded', 'Failed', 'Failed'], 2632),
+    { 'observations.0': { taskId: repeatedTasks[0].taskId, state: 'failed', reasonCode: 'maas_named_or_queue_failure' } });
   for (const completed of [0, 2, 3]) add('retry finite repeated task completed ' + completed,
     input('retry', repeated, {}, { tasks: repeatedTasks, idempotencyKey: 'repeat',
       observations: [{ taskId: 'maas:stable/0', state: 'failed', completedRepetitions: completed }] }),

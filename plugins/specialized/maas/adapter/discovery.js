@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const candidates = [], diagnostics = [];
   const editor = sourceEditor(input, 'MFAAvalonia.exe', ['config', 'appsettings.json'], false, true);
   if (!sourceExists('appsettings.json')) return sourceResult(input, [], ['maas_source_settings_missing'], editor);
@@ -18,11 +18,12 @@ globalThis.nexusDiscoverScript = input => {
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(id)) { diagnostics.push('maas_source_instance_invalid'); continue; }
     for (const pi of input.purpose === 'edit' ? interfaces.slice(0, 1) : interfaces) {
       const candidate = sourceCandidate(input.purpose === 'edit' ? path : pi + ':' + path, id + ' · ' + pi, 'MFAAvalonia.exe', ['--instance', id],
-        [sourceResource('main', path), sourceResource('global', globalPath), sourceResource('settings', 'appsettings.json')], ['logs/log-*.log']);
+        [sourceResource('main', path), sourceResource('global', globalPath), sourceResource('settings', 'appsettings.json')],
+        ['logs/log-*.log', 'debug/maafw*.log']);
       if (candidate) candidate.exclusiveProgram = true;
       else if (input.purpose === 'edit') diagnostics.push('maas_source_global_missing');
       candidates.push(candidate);
     }
   }
   return sourceResult(input, candidates, [...new Set(diagnostics)], editor);
-};
+});

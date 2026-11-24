@@ -16,7 +16,7 @@ fs.mkdirSync(output, { recursive: true });
 const scripts = new Map(), adapters = [], results = [];
 let preparationError;
 try {
-  for (const id of ['baah', 'bettergi', 'march7th', 'oknte', 'okww', 'zzzonedragon', 'maaend', 'maas']) {
+  for (const id of ['baah', 'bettergi', 'march7th', 'oknte', 'okww', 'zzzonedragon', 'maaend', 'maas', 'maa-framework']) {
     const directory = path.join(output, id);
     const assembly = spawnSync(process.env.NEXUS_TEST_PYTHON_EXE || 'python', ['-B',
       path.join(root, 'tests/specialized/assemble.py'), root, id, directory], { encoding: 'utf8', timeout: 30000 });
@@ -31,17 +31,14 @@ try {
 }
 
 function discover(extension, files, purpose) {
-  const entries = new Map([['', new Map()]]);
-  for (const file of Object.keys(files)) {
-    const parts = file.split('/');
-    for (let index = 0; index < parts.length; index++) {
-      const parent = parts.slice(0, index).join('/');
-      if (!entries.has(parent)) entries.set(parent, new Map());
-      entries.get(parent).set(parts[index], index === parts.length - 1 ? 'file' : 'directory');
-    }
-  }
+  return discoveryRunner(extension)(files, purpose);
+}
+
+function discoveryRunner(extension, observeList = () => {}) {
+  let entries, files;
   const context = vm.createContext({
     nexusListSource(relative) {
+      observeList(relative);
       let parent = '';
       for (const name of relative ? relative.split('/') : []) {
         assert.equal(entries.get(parent)?.get(name), 'directory', 'Only observed exact directory names may be listed');
@@ -52,9 +49,22 @@ function discover(extension, files, purpose) {
     nexusReadSource(relative) { assert.ok(Object.hasOwn(files, relative)); return files[relative]; }
   }, { codeGeneration: { strings: false, wasm: false } });
   scripts.get(extension).runInContext(context, { timeout: 1000 });
-  const result = vm.runInContext(`JSON.stringify(nexusDiscoverScript(${JSON.stringify({ format: 'nexus.script.source', version: 1,
-    direction: 'request', extensionId: extension, operationId: 'cc11af43-7f60-450b-a003-3458bbd197fe', purpose })}))`, context, { timeout: 1000 });
-  return JSON.parse(result);
+  return (currentFiles, purpose) => {
+    files = currentFiles;
+    entries = new Map([['', new Map()]]);
+    for (const file of Object.keys(files)) {
+      const parts = file.split('/');
+      for (let index = 0; index < parts.length; index++) {
+        const parent = parts.slice(0, index).join('/');
+        if (!entries.has(parent)) entries.set(parent, new Map());
+        entries.get(parent).set(parts[index], index === parts.length - 1 ? 'file' : 'directory');
+      }
+    }
+    const entry = extension === 'maa-framework' ? 'nexusScriptSource' : 'nexusDiscoverScript';
+    const result = vm.runInContext(`JSON.stringify(${entry}(${JSON.stringify({ format: 'nexus.script.source', version: 1,
+      direction: 'request', extensionId: extension, operationId: 'cc11af43-7f60-450b-a003-3458bbd197fe', purpose })}))`, context, { timeout: 1000 });
+    return JSON.parse(result);
+  };
 }
 function test(name, action) {
   if (preparationError !== undefined) return;
@@ -80,6 +90,19 @@ test('BAAH single config uses its explicit filename and software config', () => 
 test('BAAH multiple configs remain distinct and no storage file is treated as a task config', () => {
   const result = discover('baah', { ...baah, 'BAAH_CONFIGS/two.json': '{}', 'DATA/USER_STORAGE/STORAGEabcd.json': '{}' });
   assert.deepEqual(result.candidates.map(item => item.candidateId).sort(), ['BAAH_CONFIGS/one.json', 'BAAH_CONFIGS/two.json']);
+});
+test('BAAH lists each exact directory once per discovery and reads new listings on the next invocation', () => {
+  const reads = [];
+  const run = discoveryRunner('baah', directory => reads.push(directory));
+  const populated = Object.fromEntries(Array.from({ length: 32 }, (_, index) => [`BAAH_CONFIGS/task-${index}.json`, '{}']));
+  const inputs = { 'BAAH.exe': '', 'DATA/CONFIGS/software_config.json': '{}', 'DATA/USER_STORAGE/unrelated.json': '{}' };
+  assert.equal(run({ ...inputs, ...populated }).candidates.length, 32);
+  const first = reads.splice(0);
+  assert.deepEqual(run({ ...inputs, 'BAAH_CONFIGS/replaced.json': '{}' }).candidates.map(item => item.candidateId), ['BAAH_CONFIGS/replaced.json']);
+  const paths = ['', 'BAAH_CONFIGS', 'DATA', 'DATA/CONFIGS', 'DATA/USER_STORAGE'];
+  assert.equal(first.length, paths.length, `first invocation listed ${first.length} directories`);
+  assert.deepEqual(first.sort(), paths);
+  assert.deepEqual(reads.sort(), paths);
 });
 test('Missing BAAH executable yields no runnable source', () => {
   const { 'BAAH.exe': ignored, ...files } = baah; assert.equal(discover('baah', files).candidates.length, 0);
@@ -183,6 +206,15 @@ test('MaaS unrelated Assets directory is not probed through a lowercase alias', 
   const result = discover('maas', { 'MFAAvalonia.exe': '', 'interface.json': '{}', 'Assets/icon.png': '',
     'appsettings.json': '{}', 'config/config.json': '{}', 'config/instances/one.json': '{}' });
   assert.deepEqual(result.candidates.map(row => row.candidateId), ['interface.json:config/instances/one.json']);
+});
+test('MaaFramework compiles the named MXU instance from the observed interface and executable', () => {
+  const result = discover('maa-framework', { 'Maa.exe': '', 'interface.json': '{}',
+    'mxu.json': '{"version":"1.0","instances":[{"id":"named","name":"Named"}]}' });
+  assert.equal(result.candidates.length, 1);
+  const candidate = result.candidates[0];
+  assert.equal(candidate.executable, 'Maa.exe');
+  assert.deepEqual(candidate.projectSelection, { InterfacePath: 'interface.json', Language: 'zh_cn',
+    ClientKind: 'mxu', Source: { Kind: 'mxu', Path: 'mxu.json', InstanceId: 'named' } });
 });
 const prepared = preparationError === undefined;
 const passed = prepared && results.length > 0 && results.every(item => item.status === 'PASS');

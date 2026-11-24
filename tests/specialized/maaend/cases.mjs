@@ -52,6 +52,19 @@ export function cases(invoke) {
       'tasks.1.retryPrerequisites': ['maaend:stable/launch'] }, undefined, importedMetadata);
   add('imported PC launch options satisfy configuration checks', input('configuration', launchProfile),
     { diagnostics: [], configPatches: [] }, undefined, importedMetadata);
+  const launchTasks = invoke(input('discover', launchProfile), importedMetadata).tasks;
+  add('original PC pretask stdout pairs start and completion', input('observe', launchProfile, {
+    tasks: launchTasks, logComplete: true,
+    logEvents: events(['Running pre-task: __MXU_PRETASK__LaunchGamePC', 'Pre-task completed: __MXU_PRETASK__LaunchGamePC'], 'stdout', ' ')
+  }), { 'observations.0.state': 'succeeded' }, undefined, importedMetadata);
+  add('PC pretask envelope cannot complete an ordinary task', input('observe', launchProfile, {
+    tasks: launchTasks, logComplete: true,
+    logEvents: events(['Running pre-task: SellProduct', 'Pre-task completed: SellProduct'], 'stdout', ' ')
+  }), { 'observations.1.state': 'unknown' }, undefined, importedMetadata);
+  add('ordinary task envelope cannot complete a PC pretask', input('observe', launchProfile, {
+    tasks: launchTasks, logComplete: true,
+    logEvents: events(['Task started: __MXU_PRETASK__LaunchGamePC', 'Task completed: __MXU_PRETASK__LaunchGamePC'], 'stdout', ' ')
+  }), { 'observations.0.state': 'unknown' }, undefined, importedMetadata);
   const duplicatePretasks = structuredClone(importedMetadata);
   duplicatePretasks['interface.json'].pretask = [importedMetadata[launchImport].pretask];
   add('repeated PC launch definitions do not grant selection', input('discover', launchProfile),
@@ -90,6 +103,26 @@ export function cases(invoke) {
   add('late failure wins over successful terminal', input('observe', document(), { tasks: frozen, logComplete: true,
     logEvents: events(['Task started: SellProduct', 'Task completed: SellProduct', 'Task failed: SellProduct'], 'stdout', ' ') }),
     { 'observations.0.state': 'failed' });
+  const stopped = document([task('first', { customName: 'First' }), task('pending', { customName: 'Pending' })]);
+  const stoppedTasks = invoke(input('discover', stopped), sources).tasks;
+  const stopTrace = (message, entry, id, sequence) => ({ sourceId: 'file:0', epoch: 1, sequence,
+    text: '[2026-11-24 13:13:25.911][INF][Px11116][Tx30949][Utils/EventDispatcher.hpp][L65][MaaNS::EventDispatcher::notify]' +
+      ' !!!OnEventNotify!!! [handle=true] [msg=Tasker.Task.' + message + '] [details=' +
+      JSON.stringify({ entry, hash: '238199f1fab4fe1c', task_id: id, uuid: '00000000005A0682' }) + '] ' });
+  const stopOutput = events(['Task started: First', 'Task failed: First', 'Task started: Stop Task', 'Task completed: Stop Task'], 'stdout', ' ');
+  const nativeStop = [stopTrace('Starting', 'OutpostTradingSchedule', 200000001, 1),
+    stopTrace('Failed', 'OutpostTradingSchedule', 200000001, 2), stopTrace('Starting', 'MaaTaskerPostStop', 200000003, 3),
+    stopTrace('Succeeded', 'MaaTaskerPostStop', 200000003, 4)];
+  for (const confirmed of [false, true]) add('the scope needs a native stop before authorizing pending work ' + confirmed,
+    input('observe', stopped, { tasks: stoppedTasks, upstreamProcessId: 11116, logComplete: true,
+      logEvents: [...stopOutput, ...(confirmed ? nativeStop : nativeStop.slice(0, 3))] }),
+    { 'observations.1': { taskId: 'maaend:stable/pending', state: 'unknown', ...(confirmed
+      ? { reasonCode: 'maaend_native_stop_before_task', completionKind: 'notExecuted' } : { reasonCode: 'maaend_paired_terminal_missing' }) } });
+  add('invalid supplemental stdout discards its decisions despite complete native logs',
+    input('observe', stopped, { tasks: stoppedTasks, upstreamProcessId: 11116, logComplete: true,
+      logEvents: [...stopOutput, ...nativeStop, { sourceId: 'stdout', epoch: 1, sequence: 1, text: '' }] }),
+    { 'observations.0.reasonCode': 'maaend_scope_or_stream_incomplete', 'observations.0.state': 'unknown',
+      'observations.1.reasonCode': 'maaend_scope_or_stream_incomplete', 'observations.1.state': 'unknown' });
   const repeated = document([task(), task('second')]);
   add('same-name ambiguity never attributes success', input('observe', repeated, { tasks: invoke(input('discover', repeated), sources).tasks,
     logComplete: true, logEvents: events(['Task started: SellProduct', 'Task completed: SellProduct'], 'stdout', ' ') }),

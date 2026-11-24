@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const candidates = [], diagnostics = [], edit = input.purpose === 'edit';
   const interfaces = ['interface.json', 'interface.jsonc', 'assets/interface.json', 'assets/interface.jsonc'].filter(path => sourceExists(path));
   const paths = sourceFiles('config', /^mxu-.+\.json$/);
@@ -20,7 +20,7 @@ globalThis.nexusDiscoverScript = input => {
     for (const pi of edit ? interfaces.slice(0, 1) : interfaces) for (const instance of selected) {
       const candidate = sourceCandidate((edit ? '' : pi + ':') + path + ':' + instance.id,
         (instance.name || instance.id) + ' · ' + path + ' · ' + (edit ? instance.id : pi),
-        'MaaEnd.exe', ['--autostart', '--quit-after-run'], [sourceResource('main', path)], []);
+        'MaaEnd.exe', ['--autostart', '--quit-after-run'], [sourceResource('main', path)], ['debug/maafw*.log']);
       if (candidate) {
         candidate.exclusiveProgram = true;
         if (edit) candidate.instance = { collection: 'instances', identity: 'id', value: instance.id,
@@ -31,4 +31,4 @@ globalThis.nexusDiscoverScript = input => {
   }
   return sourceResult(input, candidates, [...new Set(diagnostics)],
     sourceEditor(input, 'MaaEnd.exe', ['config', 'mxu.json'], interfaces.length > 0, true));
-};
+});

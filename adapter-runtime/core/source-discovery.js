@@ -1,11 +1,25 @@
 'use strict';
 
+let directoryListings;
+
+function discoverFromSource(discover) {
+  return input => {
+    const previous = directoryListings;
+    directoryListings = new Map();
+    try { return discover(input); }
+    finally { directoryListings = previous; }
+  };
+}
+
 function sourceEntries(path) {
+  const cached = directoryListings.get(path);
+  if (cached) return cached;
   if (path && !sourceExists(path, 'directory')) return [];
   const rows = JSON.parse(nexusListSource(path));
   if (!Array.isArray(rows) || rows.length > 4096 || rows.some(row => !row || typeof row.name !== 'string' ||
       !['file', 'directory'].includes(row.kind) || !row.name || /[\\/:\u0000-\u001f]/.test(row.name)))
     throw new Error('script_source_listing_invalid');
+  directoryListings.set(path, rows);
   return rows;
 }
 

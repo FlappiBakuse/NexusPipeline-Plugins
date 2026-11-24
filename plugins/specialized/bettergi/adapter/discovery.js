@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const paths = sourceFiles('User/OneDragon', /\.json$/i), names = new Map(), candidates = [], diagnostics = [];
   for (const path of paths) {
     const document = sourceConfiguration(input, path, 'bettergi_configuration_incomplete', diagnostics,
@@ -27,4 +27,4 @@ globalThis.nexusDiscoverScript = input => {
   }
   return sourceResult(input, candidates, [...new Set(diagnostics)],
     sourceEditor(input, 'BetterGI.exe', ['User/OneDragon', 'User/config.json'], true, true));
-};
+});

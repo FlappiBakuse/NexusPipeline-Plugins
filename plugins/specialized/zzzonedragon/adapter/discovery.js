@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const candidates = [], diagnostics = [];
   for (const item of sourceEntries('config').filter(row => row.kind === 'directory' && /^\d{2}$/.test(row.name))) {
     const id = item.name, root = 'config/' + id + '/', modern = root + 'one_dragon/_group.yml', legacy = root + 'one_dragon_app.yml';
@@ -18,4 +18,4 @@ globalThis.nexusDiscoverScript = input => {
   }
   return sourceResult(input, candidates, [...new Set(diagnostics)],
     sourceEditor(input, 'OneDragon-Launcher.exe', ['config'], true));
-};
+});

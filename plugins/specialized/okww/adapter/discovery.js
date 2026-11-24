@@ -1,6 +1,6 @@
 'use strict';
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const root = 'data/apps/ok-ww/working/configs/';
   const resources = [sourceResource('main', root + 'DailyTask.json'), sourceResource('devices', root + 'devices.json')];
   for (const [id, name] of [['farm-4c', 'FarmEchoTask.json'], ['nightmare', 'NightmareNestTask.json']])
@@ -8,4 +8,4 @@ globalThis.nexusDiscoverScript = input => {
   return sourceResult(input, [sourceCandidate('daily', '单账号日常', 'ok-ww.exe', ['-t', '1', '-e'], resources,
     ['data/apps/ok-ww/working/logs/*.log'])], [],
     sourceEditor(input, 'ok-ww.exe', [root.slice(0, -1)], false));
-};
+});

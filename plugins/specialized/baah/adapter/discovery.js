@@ -29,7 +29,7 @@ function baahStorageSuffix(filename) {
   return (h0 >>> 0).toString(16).padStart(8, '0');
 }
 
-globalThis.nexusDiscoverScript = input => {
+globalThis.nexusDiscoverScript = discoverFromSource(input => {
   const paths = sourceFiles('BAAH_CONFIGS', /\.json$/i);
   const candidates = paths.map(path => {
     const name = path.slice('BAAH_CONFIGS/'.length), storage = 'DATA/USER_STORAGE/STORAGE' + baahStorageSuffix(name) + '.json';
@@ -40,4 +40,4 @@ globalThis.nexusDiscoverScript = input => {
   return sourceResult(input, candidates, input.purpose === 'edit' && candidates.some(item => !item) ?
     ['baah_source_software_config_missing'] : [],
     sourceEditor(input, 'BAAH.exe', ['BAAH_CONFIGS', 'DATA/CONFIGS/software_config.json', 'DATA/USER_STORAGE'], true));
-};
+});

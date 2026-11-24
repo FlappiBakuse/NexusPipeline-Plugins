@@ -73,7 +73,7 @@ function maasRow({ item, index, position, id, byKey, byEntry, controller, resour
   if (typeof title !== 'string' || !title.trim() || title.length > 256) throw new Error('maas_title_invalid');
   const entry = definition?.entry ?? item.entry, role = entry === 'ComputerOperationAction' || entry === 'KillProcessAction' ? 'cleanup' :
     special || definition?.name === '登录游戏' ? 'technical' : 'business';
-  return { item, index, definition, known, compatible, enabled, count, title, role, special,
+  return { item, index, definition, known, compatible, enabled, count, title, entry, role, special,
     taskId: 'maas:' + id + '/' + (index === null ? 'default-' + position : index) };
 }
 
@@ -82,14 +82,16 @@ function maasTasks(config) {
   return config.rows.map(row => {
     const projected = row.known && config.localTasks && row.origin.Kind === 'local' && row.index !== null && typeof row.item.default_check === 'boolean';
     const login = row.known && row.definition?.name === '登录游戏';
-    const task = { taskId: row.taskId, executionTaskId: row.executionTaskId, title: row.title, isSelected: row.enabled && row.compatible, isEnabled: row.enabled,
+    const repetitionLimit = row.role === 'business' && row.count > 1 && row.count <= 100 ? row.count : undefined;
+    const task = { taskId: row.taskId, executionTaskId: repetitionLimit === undefined ? row.executionTaskId : row.taskId, title: row.title, isSelected: row.enabled && row.compatible, isEnabled: row.enabled,
       ...(row.known && !row.item.remark && !row.item.display_name_override ? { titleLocales: nexusTaskLocales(row.definition?.name ?? row.item.name) } : {}),
       retrySafety: row.known && projected && (row.role === 'business' && row.count <= 100 || login && row.count === 1) ? 'safe' : 'unknown',
-      ...(row.role === 'business' && row.count > 1 && row.count <= 100 ? { repetitionLimit: row.count } : {}),
+      ...(repetitionLimit === undefined ? {} : { repetitionLimit }),
       dependencies: row.role === 'business' ? dependencies.slice() : [], workflowRole: row.role,
       ...(projected ? { projection: { resourceId: config.main.resourceId, relativePath: config.main.relativePath ?? '',
         selector: ['TaskItems', row.index, 'default_check'] } } : {}),
       ...(row.role === 'business' && preparation.length ? { retryPrerequisites: preparation.slice().sort() } : {}) };
+    if (projected && repetitionLimit !== undefined) task.projection.repetitionSelector = ['TaskItems', row.index, 'repeat_count'];
     if (row.enabled && row.compatible && (row.definition?.name === '登录游戏' || row.item.entry === 'CustomProgramAction')) dependencies.push(row.taskId);
     if (row.enabled && row.compatible && login && task.retrySafety === 'safe') preparation.push(row.taskId);
     return task;

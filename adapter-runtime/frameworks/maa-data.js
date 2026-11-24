@@ -68,3 +68,13 @@ function maaDataDiagnostics(config, prefix) {
   if (config.rows.some(row => !row.known)) diagnostics.push({ code: prefix + '_unknown_task_preserved', severity: 'warning', resourceId: config.main.resourceId });
   return diagnostics;
 }
+
+function maaDataNativeTask(text, processId, prefix) {
+  const match = /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}\]\[INF\]\[Px(\d+)\]\[Tx\d+\]\[Utils\/EventDispatcher\.hpp\]\[L\d+\]\[MaaNS::EventDispatcher::notify\] !!!OnEventNotify!!! \[handle=true\] \[msg=Tasker\.Task\.(Starting|Succeeded|Failed)\] \[details=(\{.*\})\]\s*$/.exec(text);
+  if (!match || Number(match[1]) !== processId) return null;
+  const value = strictConfigurationJson(match[3], prefix);
+  if (typeof value.entry !== 'string' || !Number.isSafeInteger(value.task_id) || value.task_id < 1 ||
+      typeof value.hash !== 'string' || !/^[0-9a-f]{16}$/i.test(value.hash) ||
+      typeof value.uuid !== 'string' || !/^[0-9a-f]{16}$/i.test(value.uuid)) throw new Error(prefix + '_native_task_identity_unbound');
+  return { kind: match[2], entry: value.entry, id: value.task_id, scope: JSON.stringify([value.hash, value.uuid]) };
+}
