@@ -106,7 +106,7 @@ async function compileFrontend() {
     .filter(file => file.endsWith('.ts')).map(file => path.join(repository, 'plugins/managed/frontend-ui/src', file)),
     ...names.flatMap(name => fs.readdirSync(path.join(repository, `plugins/managed/${name}/frontend/src`))
       .filter(file => file.endsWith('.ts')).map(file => path.join(repository, `plugins/managed/${name}/frontend/src`, file)))];
-  const sourceFiles = [fileURLToPath(import.meta.url), path.join(repository, 'tooling/frontend_inputs.mjs'), path.join(repository, 'tooling/frontend_names.mjs'),
+  const sourceFiles = [fileURLToPath(import.meta.url), path.join(repository, 'tooling/frontend_inputs.mjs'), path.join(repository, 'tooling/frontend_syntax.mjs'),
     path.join(repository, 'tooling/artifact_paths.mjs'), ...inputs,
     path.join(repository, 'plugins/managed/frontend-ui/src/style.css'),
     ...names.flatMap(name => fs.readdirSync(path.join(repository, `plugins/managed/${name}/frontend/src`))
@@ -128,11 +128,11 @@ async function compileFrontend() {
   }, files: inputs }, null, 2));
   const tsc = path.join(workRoot, 'node_modules/typescript/bin/tsc');
   stage = 'lint';
-  const naming = spawnSync(process.execPath, [path.join(repository, 'tooling/frontend_names.mjs'),
+  const syntax = spawnSync(process.execPath, [path.join(repository, 'tooling/frontend_syntax.mjs'),
     '--root', repository, '--modules', path.join(workRoot, 'node_modules'), ...names.flatMap(name => ['--extension', name])], { encoding: 'utf8' });
-  if (naming.stdout) fs.writeFileSync(path.join(output, 'naming-receipt.json'), naming.stdout);
-  if (naming.status !== 0) process.stderr.write((naming.stderr ?? '') + (naming.stdout ?? ''));
-  requireSuccess(naming, 'Frontend lint');
+  if (syntax.stdout) fs.writeFileSync(path.join(output, 'naming-receipt.json'), syntax.stdout);
+  if (syntax.status !== 0) process.stderr.write((syntax.stderr ?? '') + (syntax.stdout ?? ''));
+  requireSuccess(syntax, 'Frontend lint');
   responsibilities.lint = 'PASS';
   stage = 'typecheck';
   if (!compilationReused) {

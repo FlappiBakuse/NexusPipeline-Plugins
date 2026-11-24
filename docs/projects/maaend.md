@@ -8,6 +8,10 @@ MaaEnd 以 `settings.autoStartInstanceId` 唯一匹配实例，使用 `--autosta
 
 从主 interface 及声明导入闭包按顺序收集 pretask，保留身份、选择、依赖和配置校验。`tests/specialized/maaend/cases.mjs` 的 `tasks/pretasks/LaunchGamePC.json` 是额外配置形态夹具，来源研究记录指向 MaaEnd 3.0.0；当前支持锁仍以 upstream.json 为准。
 
+原版英文输出的 `Running pre-task` 和 `Pre-task completed` 仅归属同名的已选前置任务。普通任务仍按各自的开始与终态配对。
+
 任务结果使用五语种成对外层事件，核对当前来源、顺序、缺终态和失败保留。未知任务和原配置保留，重试只投影已知且获准选择的任务。
+
+确认未启动任务时，标准输出须覆盖按顺序到达的任务，MaaFramework 文件日志须同时给出同一进程和任务队列的原生终态及停止事件。标准输出出现解码断点时撤销该来源的任务归属。
 
 验证归属见[Maa 覆盖](../reference/maa-coverage.md)，组件入口见[验证指南](../development/validation.md)。

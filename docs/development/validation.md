@@ -11,7 +11,7 @@
 | test | 被选产品假设是否成立 | 有明确输入、操作、可观察结果的最小场景 |
 | build | 是否形成该任务需要交付的完整插件/客户端产物 | 受影响 slice/包；不是默认重建全部 14 个插件 |
 
-现役构建入口组合执行多种职责。`build_frontend.mjs` 同时执行命名、tsc 与 bundle，统一计划调用一次，并把结果分别归类。managed build 同时产生类型诊断与程序集，不能为“四部分”再编译一次。
+现役构建入口组合执行多种职责。`build_frontend.mjs` 同时执行语法检查、tsc 与 bundle，统一计划调用一次，并把结果分别归类。managed build 同时产生类型诊断与程序集，不能为“四部分”再编译一次。
 
 CLI 参数以现役解析器为准，构建与产品行为测试分别记录。
 
@@ -37,7 +37,7 @@ CLI 参数以现役解析器为准，构建与产品行为测试分别记录。
 
 ### 整仓源码
 
-`python -B tooling/source_checks.py` 检查手写文本和每文件 800 个物理行的上限，PR 生产检查调用一次。专项装配复用同一行数规则，并校验来源路径和解释器输入字节上限。稳定目录及其投影由发行工具生成并校验。
+`python -B tooling/source_checks.py` 检查文本编码与换行，PR 生产检查调用一次。专项装配校验来源路径、文本格式、已登记输入和解释器输入字节上限。稳定目录及其投影由发行工具生成并校验。
 
 ### 前端单模块
 
@@ -116,4 +116,4 @@ CI 选择规则归本仓 `tooling/ci_plan.py` 的 `plugin_scope`，测试调用�
 
 SDK 独立消费者只编译真实公开类型及调用，归 typecheck；不执行自造 DTO 往返或反射方法存在性断言。SDK 默认打包入口另执行前端生命周期行为测试；`--compile-only` 跳过该行为测试。回执的 `runtimeConsumers` 固定为 NOT_RUN，`lifecycle` 按实际执行记录，`validationMode` 为 compile-only 或 lifecycle。包内容、来源与消费者使用的实际 SDK 身份继续核验。
 
-命名检查归 lint，规则与逐项例外见[Host 命名规范](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/development/naming.md)。
+命名与文件组织按[本仓 AGENTS](../../AGENTS.md)审查。构建核对前端语法、实际消费者类型与产物来源。

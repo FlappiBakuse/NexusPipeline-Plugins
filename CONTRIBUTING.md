@@ -16,7 +16,7 @@
 
 插件只消费公开 SDK；普通数据使用 Documents/CAS，秘密使用专用端口。未知提交只读核对，取消、scope 撤销、迟到结果与 writer 停止保持原归属。[架构](docs/architecture/overview.md)、[managed 指南](docs/authors/managed-extensions.md)和[专项指南](docs/authors/specialized-adapters.md)维护各自约束。
 
-文本使用 UTF-8、LF。命名口径由[配套 Host 规范](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/development/naming.md)与实际检查器维护，固定外部签名使用逐项例外。注释说明非显然原因。生成 bundle、本地化 JSON 和 SDK 镜像只通过现役 producer 更新。
+文本使用 UTF-8、LF。代码审查核对名称、功能内聚和调用成本，保留公开合同、固定外部签名和动态入口。注释说明非显然原因。生成 bundle、本地化 JSON 和 SDK 镜像只通过现役 producer 更新。
 
 构建、依赖、包、测试实例与报告全部进入显式仓外根，本机使用 Temp；用户配置与夹具分离。上游源码用于研究，仓库构建/测试不依赖本机 Reference。
 

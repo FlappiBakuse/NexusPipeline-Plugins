@@ -6,6 +6,8 @@
 
 单文件快照使用已绑定 sourcePath 识别实例，写回继续使用快照内 relativePath 与原修订。配置提案只覆盖授权选择，保留其他实例和未知字段。
 
-日志只接收上游 Monitor 来源、MonitorLog 操作和所选实例范围；顺序与有限重复用于归属，同名歧义保持未核实。原生编辑对绑定 settings 的 NoAutoStart 使用有限 prepare/commit 补丁，取消恢复原字节且不执行 commit。
+任务日志绑定所选实例的上游 Monitor 来源和 MonitorLog 操作。具名失败须唯一匹配任务，队列失败汇总保留为队列终态。有限重复另核对 `debug/maafw.log` 中当前进程的原生任务身份、开始及终态。Host 根据累计成功次数临时写入授权的 `repeat_count`，执行后恢复原次数。原生编辑对绑定 settings 的 NoAutoStart 使用有限 prepare/commit 补丁，取消恢复原字节且不执行 commit。
+
+当冻结的 `ContinueRunningWhenError` 为 `false`、Monitor 完整记录了有序前缀和具名失败，且队列以失败结束时，已选但未开始的后续任务可按未执行项进入重试。
 
 验证归属见[Maa 覆盖](../reference/maa-coverage.md)，组件入口见[验证指南](../development/validation.md)。

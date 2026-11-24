@@ -26,7 +26,7 @@
 - 专项脚本只返回受限协议结果；物理文件、writer、进程和事务由 Host 管理。未知任务与原字节保留，Unknown/partial 副作用不自动重放。
 - 普通状态使用 revision/CAS，keep/set/clear 明确区分。秘密不进入普通 DTO、浏览器存储、日志、截图或 Git。
 - 前端复用 SDK 和 frontend-ui；订阅、取消、幂等、单源发布及晚到结果绑定所属 scope。
-- 手写文本使用 UTF-8、LF，每文件最多 800 个物理行，覆盖源码、测试、工具、工程配置和文档。命名和例外见[Host 命名规范](https://github.com/FlappiBakuse/NexusPipeline/blob/next/docs/development/naming.md)。函数目标 60 行，超过 100 行审查职责。
+- 手写文本使用 UTF-8、LF。按功能、资源生命周期和契约组织文件，并使用能说明职责的名称。超过 800 个物理行的文件或超过 100 行的函数提示审查职责与导航成本。记录公开入口、实际阅读和修改的文件、跨文件调用跳转及独立消费者。
 - SDK source/identity/lock 和本地化资源由现役 producer 更新，不手填身份或 PASS。依赖、fixture、包与回执写显式仓外根，本机放 Temp。
 - 删除代码先核对符号与[加载约定](docs/architecture/overview.md#从加载约定定位)，包括 manifest、拼接脚本、常量生成、SDK 实现和原生回调；保留公开类型的外部调用边界。
 

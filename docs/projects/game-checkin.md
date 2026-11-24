@@ -19,7 +19,7 @@
 
 `LoginPolicies.cs` 提供固定起始页、允许 origin、popup、cookie domain/path/name、localStorage 与只读 JSON 捕获规则。五个平台沿原生 WebView 桥；塔吉多使用短信/密码与原生 JSON。浏览器/远程仅手填。HoYoLAB 当前账号验证使用无 uid 参数的固定当前用户接口，要求响应 UID 与 Cookie UID 一致；空角色列表不影响已认证身份。公共用户资料查询不能作为登录有效证明。
 
-`SignInPolicy` 将“明确未签”“提交未知”“已确认”分开：只有新的 Host effect 且明确未签才请求宿主提交许可；未知提交只能只读核对，Busy 不发任何平台 HTTP。多角色任一失败或未知不能变为整游戏成功。塔吉多仅在新活动 claim 后刷新凭据，可靠原子保存后再查角色与今日状态；未知活动只用已有 access token 读取角色与状态，不刷新。刷新取消或保存结果未知时停止并保留 unknown，多角色不猜选；提交后正向复核才确认成功。没有社区币、分享、云游戏或付费补签策略。
+各平台按官方接口的状态和回执处理签到。状态查询型接口在宿主授予新效果且状态明确未签时请求提交许可。未知效果只读核对，Busy 状态拦截平台 HTTP 请求。多角色均确认后才算整游戏成功。塔吉多在获得新的活动 claim 后刷新凭据，原子保存成功后才查角色与今日状态。未知活动用已有 access token 只读查询。刷新取消或保存结果未知时保留 unknown 并停止。多角色需要明确选择，提交后须经正向复核才确认成功。签到范围限于常规每日签到。
 
 正式 WorkEffects 适配只转发 Host 签发的 activity/role lease，核对当前真实 business task owner，拒绝外来 ID、状态篡改或将活动当角色提交。Host 从实际秘密版本调用纯身份投影：Cookie 的固定完整认证对按固定次序编码，token 保持原始大小写；辅助网页设备与来源不参与 family。塔吉多只投影 SDK token/UID，轮换必须保持 format、source、mask、web 及 uid/device/role/SDK 认证对不变，仅允许合法 access/refresh 变化。原子轮换失败后不通过提交查询恢复 HTTP 权限。
 
