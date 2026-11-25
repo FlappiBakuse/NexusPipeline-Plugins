@@ -127,6 +127,14 @@ export function cases(invoke) {
   const orderDoc = make(['email', 'coffee']), orderInput = request('configuration', orderDoc), orderPatch = patch(orderInput,
     [{ selector: ['app_list'], expected: orderDoc.app_list, value: orderDoc.app_list.toReversed() }]); orderInput.configurationIntents = [orderPatch];
   add('order permutation preserves all saved bytes', orderInput, { configPatches: [orderPatch] });
+  const missingSingle = request('configuration');
+  missingSingle.resources[2] = resource({ instance_list: [{ idx: 1, active: true }, { idx: 2, active: false }] }, 'global');
+  add('missing instance mode adds exact absence CAS', missingSingle, {
+    'configPatches.0.edits': [{ selector: ['instance_run'], expected: null, expectedExists: false, value: '仅运行当前' }]
+  });
+  const wrongActive = request('discover');
+  wrongActive.resources[2] = resource({ instance_run: '仅运行当前', instance_list: [{ idx: 2, active: true }] }, 'global');
+  add('plan blocks a different active instance', wrongActive, { 'diagnostics.zzzonedragon_bound_instance_inactive': 'blocking' });
   const globalInput = request('configuration'); globalInput.resources[2] = resource({ instance_run: '全部实例', after_done: '关机', instance_list: [{ idx: 1 }, { idx: 2 }] }, 'global');
   add('single instance and finish CAS do not remove other account settings', globalInput, { 'configPatches.0.edits': [
     { selector: ['instance_run'], expected: '全部实例', value: '仅运行当前' }, { selector: ['after_done'], expected: '关机', value: '无' }] });

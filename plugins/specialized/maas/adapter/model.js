@@ -33,13 +33,26 @@ function maasRead(input) {
   const resources = (pi.resource ?? []).filter(item => !maasArray(item.controller).length || maasArray(item.controller).includes(controller?.name));
   const resource = resources.find(item => same(item.name, get('Resource'))) ?? resources[0];
   if (!controller || !resource || !maasObject(options)) throw new Error('maas_controller_resource_required');
-  const saved = get('TaskItems', []), currentTasks = get('CurrentTasks', []);
-  if (!Array.isArray(saved) || !Array.isArray(currentTasks) || saved.length > 4096) throw new Error('maas_task_items_invalid');
-  const localTasks = Array.isArray(instance.TaskItems), rows = saved.map((item, index) => ({ item, index }));
-  const existing = new Set(saved.map(maasKey)), presetKey = get('InstancePresetKey', ''), preset = pi.preset?.find(item => item.name === presetKey);
+  const prefixes = id === 'default' ? ['Instance.default.', ''] : ['Instance.' + id + '.', 'Instance.default.', ''];
+  const localTasks = maasOwn(instance, 'TaskItems');
+  const queuePrefix = localTasks ? undefined : prefixes.find(prefix => maasOwn(global, prefix + 'TaskItems'));
+  const queueState = key => maasOwn(instance, key) ? instance[key] :
+    queuePrefix === undefined ? undefined : global[queuePrefix + key];
+  const saved = localTasks || queuePrefix !== undefined ? queueState('TaskItems') : [];
+  const currentTasks = queueState('CurrentTasks') ?? [], deleted = queueState('DeletedTaskNames') ?? [];
+  const keepEmpty = queueState('KeepEmptyTaskQueue') ?? false;
+  if (!localTasks && queuePrefix === undefined && ['CurrentTasks', 'DeletedTaskNames', 'MissingTaskSessions', 'KeepEmptyTaskQueue']
+    .some(key => maasOwn(instance, key) || prefixes.some(prefix => maasOwn(global, prefix + key))))
+    throw new Error('maas_task_items_invalid');
+  if (!Array.isArray(saved) || !Array.isArray(currentTasks) || !Array.isArray(deleted) || typeof keepEmpty !== 'boolean' ||
+      saved.length > 4096 || saved.some(item => item !== null && !maasObject(item))) throw new Error('maas_task_items_invalid');
+  const rows = saved.flatMap((item, index) => item === null ? [] : [{ item, index }]);
+  const existing = new Set(rows.map(({ item }) => maasKey(item))), presetKey = get('InstancePresetKey', ''),
+    preset = pi.preset?.find(item => item.name === presetKey);
   for (const definition of definitions) {
     const key = maasKey(definition);
-    if (existing.has(key) || currentTasks.includes(key) || presetKey && !preset?.task?.some(item => item.name === definition.name)) continue;
+    if (keepEmpty && !rows.length || existing.has(key) || currentTasks.includes(key) || deleted.includes(key) ||
+        deleted.includes(definition.name) || presetKey && !preset?.task?.some(item => item.name === definition.name)) continue;
     const item = { ...definition }; delete item.option;
     rows.push({ item, index: null }); existing.add(key);
   }

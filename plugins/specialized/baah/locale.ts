@@ -6,6 +6,7 @@ export const locales = {
       "summary": "Manage BAAH script instances, configuration files, logs, and retry-failed-task behavior."
     },
     "tasks": {
+      "战斗通行证": {"title": "Battle Pass"},
       "log_in": {"title": "Log in"},
       "momotalk": {"title": "MomoTalk"},
       "event_recap": {"title": "Event recap"},
@@ -82,6 +83,7 @@ export const locales = {
       "summary": "BAAH（BlueArchiveArisHelper）专项脚本实例配置接管：按用户指定配置文件名无头运行，自动适配配置与日志，支持仅重试失败任务"
     },
     "tasks": {
+      "战斗通行证": {"title": "战斗通行证"},
       "log_in": {"title": "登录游戏"},
       "momotalk": {"title": "清momotalk"},
       "event_recap": {"title": "活动一览"},

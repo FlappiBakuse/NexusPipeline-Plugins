@@ -4,7 +4,7 @@
 
 以 `config/instances` 中稳定文件 ID 选择实例，使用 `--instance`。配置继承顺序为 local 非 null → 当前实例 global → default global → global 普通字段；DefaultConfig 缺失时保留原有 `config/config.json` 来源选择。
 
-单文件快照使用已绑定 sourcePath 识别实例，写回继续使用快照内 relativePath 与原修订。配置提案只覆盖授权选择，保留其他实例和未知字段。
+MFAAvalonia 2.16.6 的队列按 TaskItems 所在配置层读取，同层保存已删除项和显式空队列。单文件快照使用已绑定 sourcePath 识别实例，写回继续使用快照内 relativePath 与原修订。配置提案只覆盖授权选择，保留其他实例和未知字段。
 
 任务日志绑定所选实例的上游 Monitor 来源和 MonitorLog 操作。具名失败须唯一匹配任务，队列失败汇总保留为队列终态。有限重复另核对 `debug/maafw.log` 中当前进程的原生任务身份、开始及终态。Host 根据累计成功次数临时写入授权的 `repeat_count`，执行后恢复原次数。原生编辑对绑定 settings 的 NoAutoStart 使用有限 prepare/commit 补丁，取消恢复原字节且不执行 commit。
 

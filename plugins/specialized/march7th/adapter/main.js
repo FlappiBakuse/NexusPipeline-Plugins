@@ -6,7 +6,7 @@ globalThis.nexusTaskAdapter = function(input) {
   const response = { format: input.format, version: 1, direction: 'response', phase: input.phase, extensionId: input.extensionId, operationId: input.operationId };
   for (const key of ['runId', 'attemptId', 'planDigest']) if (input[key] !== undefined) response[key] = input[key];
   const config = march7thRead(input), tasks = march7thTasks(config);
-  if (input.phase === 'discover') return { ...response, tasks };
+  if (input.phase === 'discover') return { ...response, tasks, diagnostics: march7thConfiguration(input, config).diagnostics };
   if (input.phase === 'configuration') return { ...response, ...march7thConfiguration(input, config) };
   march7thFreeze(input, tasks);
   if (input.phase === 'observe') return { ...response, ...march7thObserve(input, config, tasks) };

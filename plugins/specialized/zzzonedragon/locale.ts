@@ -39,6 +39,7 @@ export const locales = {
       "dodge_assistant": {"title": "Dodge assistant"}
     },
     "diagnostics": {
+      "zzzonedragon_bound_instance_inactive": "Activate the bound account in the native editor before running it.",
       "zzz_application_start": "Confirmed the current application started in its group",
       "zzz_charge_child_error": "The current stamina mission raised an exception or failed",
       "zzz_charge_abandoned": "Upstream skipped a failed stamina plan; other successes do not recover it",
@@ -94,6 +95,7 @@ export const locales = {
       "dodge_assistant": {"title": "闪避助手"}
     },
     "diagnostics": {
+      "zzzonedragon_bound_instance_inactive": "请在原生编辑器激活当前绑定的账号实例。",
       "zzz_application_start": "已确认应用组中当前应用开始执行",
       "zzz_charge_child_error": "当前体力副本执行出现异常或失败",
       "zzz_charge_abandoned": "上游已跳过失败的体力计划，其他计划成功不能抵消",

@@ -67,7 +67,12 @@ function maaCases(add) {
   add('maaend', 'maaend_manual_launcher_invalid', sample => launch(sample, true));
   add('maaend', 'maaend_launcher_mode_unknown', sample => launch(sample, false));
   add('maas', 'maas_missing_profile_default_used', sample => edit(sample, 'settings', value => { value.DefaultConfig = 'Missing'; }));
-  add('maas', 'maas_local_task_items_required', sample => edit(sample, 'main', value => { delete value.TaskItems; }));
+  add('maas', 'maas_local_task_items_required', sample => edit(sample, 'main', value => {
+    delete value.TaskItems; delete value.CurrentTasks;
+  }));
+  add('maas', 'partial task state with missing task list', sample => edit(sample, 'main', value => {
+    delete value.TaskItems;
+  }), 'maas_task_items_invalid');
   add('maas', 'maas_new_defaults_require_native_materialization', sample => {
     sample.sourceFiles['interface.json'].task.push({ name: 'Future task', entry: 'FutureEntry', default_check: true });
   });

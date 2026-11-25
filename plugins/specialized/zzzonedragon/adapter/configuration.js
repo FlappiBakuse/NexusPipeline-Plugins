@@ -62,10 +62,18 @@ function zzzConfiguration(input, config) {
   if (!account || typeof account.game_path !== 'string' || !account.game_path.trim()) add('zzzonedragon_bound_game_path_required', 'account:' + config.id);
   if (!global) add('zzzonedragon_single_instance_global_required', 'global');
   else {
+    if (zzzOwn(global, 'instance_list')) {
+      const instances = global.instance_list;
+      const active = Array.isArray(instances) ? instances.filter(item => item?.active === true) : [];
+      if (active.length !== 1 || active[0].idx !== Number(config.id))
+        add('zzzonedragon_bound_instance_inactive', 'global');
+    }
     const edits = [];
     if ((global.instance_run ?? '全部实例') !== '仅运行当前') {
       add('zzzonedragon_single_current_instance_required', 'global');
-      if (zzzOwn(global, 'instance_run')) edits.push({ selector: ['instance_run'], expected: global.instance_run, value: '仅运行当前' });
+      const exists = zzzOwn(global, 'instance_run');
+      edits.push({ selector: ['instance_run'], expected: exists ? global.instance_run : null,
+        ...(exists ? {} : { expectedExists: false }), value: '仅运行当前' });
     }
     if (!['无', '关闭游戏'].includes(global.after_done ?? '无')) {
       add('zzzonedragon_finish_action_requires_host_policy', 'global');

@@ -6,7 +6,7 @@ globalThis.nexusTaskAdapter = function(input) {
   const response = { format: input.format, version: 1, direction: 'response', phase: input.phase, extensionId: input.extensionId, operationId: input.operationId };
   for (const key of ['runId', 'attemptId', 'planDigest']) if (input[key] !== undefined) response[key] = input[key];
   const config = okwwRead(input), tasks = okwwTasks(config);
-  if (input.phase === 'discover') return { ...response, tasks };
+  if (input.phase === 'discover') return { ...response, tasks, diagnostics: okwwConfiguration(input, config).diagnostics };
   if (input.phase === 'configuration') return { ...response, ...okwwConfiguration(input, config) };
   okwwFreeze(input, tasks);
   if (input.phase === 'observe') return { ...response, ...okwwObserve(input, config, tasks) };

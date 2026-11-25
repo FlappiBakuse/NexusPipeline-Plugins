@@ -1,6 +1,8 @@
 'use strict';
 
 const MAAS_ENTRIES = {
+  "爬塔（神经网络）": "星塔_神经网络_入口",
+  "自动爬塔（维塔）": "星塔_入口_agent",
   "登录游戏": "登录_登录",
   "领取每日奖励": "采购_入口",
   "魔王之塔": "魔王之塔_入口",
@@ -21,6 +23,10 @@ const MAAS_ENTRIES = {
 };
 
 const MAAS_IMPORTS = [
+  "interface/tasks/climb_tower_neural.json",
+  "interface/tasks/climb_tower_vita.json",
+  "interface/presets/daily_weekly.json",
+  "interface/presets/ascension_and_other.json",
   "interface/tasks/common.json",
   "interface/tasks/login.json",
   "interface/tasks/shop.json",

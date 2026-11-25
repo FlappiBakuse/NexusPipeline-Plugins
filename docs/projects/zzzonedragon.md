@@ -1,6 +1,6 @@
 # ZenlessZoneZeroOneDragon
 
-插件 `zzzonedragon` 0.5.0 对应官方稳定 v2.5.6，完整源码 `8fe22ef0cf127f596ba6b28047416fb68dacc797`。release/tag/tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/zzzonedragon/upstream.json)。来源完整性不代表发行二进制业务通过。
+插件 `zzzonedragon` 0.5.0 对应官方稳定 v2.6.1，完整源码 `3cbeda9e20a0bf1ab84ab56861bb01b7ee668aa8`。release/tag/tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/zzzonedragon/upstream.json)。来源完整性不代表发行二进制业务通过。
 
 ## 四阶段、实例与配置
 
@@ -10,7 +10,7 @@
 
 保存的应用身份和顺序固定，重复 app_id 沿原支持边界拒绝歧义并保留原字节。未知项保持可见只读；未知启用项阻断。19 个默认注册项缺失时，原生运行态将它们按 priority 前置为 disabled，不虚构保存任务和可写选择字段。现代已注册非默认且 disabled 的保存项被原生 manager 移出运行池，发现仍保留原行；启用的已知非默认项按原保存位置运行。
 
-Host 启动 owner 必须传单一两位实例 -i，拒绝逗号多实例，并将编辑工作副本限制为仅运行当前。配置 CAS 只提案已有 instance_run/after_done 字段，不删除其他账号实例、改认证会话或清空未知设置。配置隔离不能证明游戏已登录所选账号。
+Host 启动 owner 必须传单一两位实例 -i，拒绝逗号多实例，并将编辑工作副本限制为仅运行当前。配置 CAS 可设置缺失的 instance_run 或修复现有 after_done；已绑定实例须与原生活动实例一致，不删除其他账号实例、改认证会话或清空未知设置。配置隔离不能证明游戏已登录所选账号。
 
 ## 全部已知应用
 

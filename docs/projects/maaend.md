@@ -6,7 +6,7 @@ MaaEnd 以 `settings.autoStartInstanceId` 唯一匹配实例，使用 `--autosta
 
 首次编辑枚举 `mxu.json` 或 `config/mxu-*.json` 中的独立实例。打开程序时只带入当前选择。保存时只能保留一个实例，其 ID 成为账号配置的自动启动实例。安装目录中的原实例和自动启动设置在编辑结束后恢复。
 
-从主 interface 及声明导入闭包按顺序收集 pretask，保留身份、选择、依赖和配置校验。`tests/specialized/maaend/cases.mjs` 的 `tasks/pretasks/LaunchGamePC.json` 是额外配置形态夹具，来源研究记录指向 MaaEnd 3.0.0；当前支持锁仍以 upstream.json 为准。
+从主 interface 及声明导入闭包按顺序收集 pretask，保留身份、选择、依赖和配置校验。`tests/specialized/maaend/cases.mjs` 的 `tasks/pretasks/LaunchGamePC.json` 是对齐 3.2.0 的 PC 前置夹具。PlayCover 前置与关闭任务保留定义，在 Windows 上不纳入执行计划。
 
 原版英文输出的 `Running pre-task` 和 `Pre-task completed` 仅归属同名的已选前置任务。普通任务仍按各自的开始与终态配对。
 

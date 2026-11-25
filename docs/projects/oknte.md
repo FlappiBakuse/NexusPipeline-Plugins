@@ -1,6 +1,6 @@
 # OkNTE
 
-插件 `oknte` 0.5.0 对应官方 v1.4.21，源码 `460a7687faa7dc928f7a9c4593d7031e21df493c`。完整 release/tag/tree 与资产摘要见 [upstream.json](../../plugins/specialized/oknte/upstream.json)。requirements 固定 ok-script 2.0.17；官方 PyPI wheel SHA256 `49720827f267297620208bc5fe6981203eb6472868fe2de59d12329ed7494e44` 已核验并审阅 Logger/TaskExecutor。该事实不代表发行安装实际捆绑组合已运行。
+插件 `oknte` 0.5.0 对应官方 v1.5.12，源码 `adf9f82f5c55c83eea706af73cf6b01efe0ea9a5`。完整 release/tag/tree 与资产摘要见 [upstream.json](../../plugins/specialized/oknte/upstream.json)。requirements 固定 ok-script 3.0.13。该事实不代表发行安装实际捆绑组合已运行。
 
 ## 四阶段与资源
 
@@ -12,6 +12,7 @@
 
 | ID | 名称 | 缺省选择 | 互斥组 |
 | --- | --- | --- | --- |
+| anomaly_pilgrimage | 异象巡礼 | 关 | — |
 | daily_anomaly | 异象界域 | 开 | anomaly |
 | daily_anomaly_hunter | 异象追猎 | 关 | anomaly |
 | coffee | 一咖舍 | 关 | — |
@@ -20,6 +21,7 @@
 | fountain | 喷泉签到 | 关 | — |
 | furniture | 异象家具 | 关 | — |
 | gift | 羁遇赠礼 | 关 | — |
+| store_purchase | 商店购买 | 关 | — |
 
 独立战斗、钓鱼、小游戏、触发器和 LauncherTask 不属于日常分母，不从框架任务类列表自动增加业务范围。
 
@@ -27,7 +29,7 @@
 
 只接收声明的主文件 `file:0`；精确按固定官方 wheel 的时间/级别/线程/Owner:message 解析，线程必须 TaskExecutor。DailyRoutineTask 的“开始执行日常任务”打开范围，逐项名称必须匹配冻结的日常顺序。成对开始和任务完成/失败是权威结果；语言不支持按 ID 关闭该项为 succeeded+inapplicable。
 
-v1.4.21 `_run_routine_task` 将 do_run 的 None 明确映射 SKIPPED，且不写完成/失败行。在日志连续、已知日常范围内，下一项开始或日常结束之前没有终态，才按真实控制流证明该项返回 None，标 inapplicable，不能宣称实际操作完成。异常、错误顺序、缺口和轮转不能借此推断跳过。
+v1.5.12 `_run_routine_task` 将 do_run 的 None 明确映射 SKIPPED，且不写完成/失败行。在日志连续、已知日常范围内，下一项开始或日常结束之前没有终态，才按真实控制流证明该项返回 None，标 inapplicable，不能宣称实际操作完成。异常、错误顺序、缺口和轮转不能借此推断跳过。
 
 “任务运行失败”及正式失败保持 failed，迟到正式失败不能被成功覆盖。日常异常或 TaskExecutor 的“日常任务 exception stopped”只令当前已开始项失败，后续确认未执行项保持 unknown+notExecuted。已完成项保留。报告摘要、子任务/启动器/框架完成、其他线程、stdout 和其他文件均不能建立日常结果。成功还需日常范围结束/异常退出后最终日志排空。checkpoint 只用于当前 run/attempt/plan。
 
@@ -42,3 +44,5 @@ CAS 允许完整唯一列表中按 id 的 enabled、原任务字节的顺序置�
 ## 验证入口
 
 PC 游戏仍由 OkNTE 自己的启动器链路负责。Host 必须核对实际 pyappify China/Global 渠道、可用版本、完整安装 HEAD、精确 origin、真实 worker/updater 空闲及冻结后的任务源码。持久 running 标志不能代替进程事实，也不能把根 launcher PID 当 worker。主仓源码和固定 wheel 只供业务研究，不替代实际发行 update 仓文件身份。
+
+当前 Windows 入口按工作目录和唯一的发行渠道核对安装画像、运行代码及仓副本；启动使用类名定位日常任务，并指定手动更新模式。

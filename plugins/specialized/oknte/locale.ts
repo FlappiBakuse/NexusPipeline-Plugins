@@ -6,6 +6,8 @@ export const locales = {
       "summary": "Single-account daily task plans and observations."
     },
     "tasks": {
+      "store_purchase": {"title": "Store Purchase"},
+      "anomaly_pilgrimage": {"title": "Anomaly Pilgrimage"},
       "cinema_date": {"title": "Cinema date"},
       "coffee": {"title": "Coffee"},
       "daily_anomaly": {"title": "Anomaly Realm"},
@@ -16,6 +18,9 @@ export const locales = {
       "gift": {"title": "Gifts"}
     },
     "diagnostics": {
+      "oknte_runtime_working_source_unverified": "Working sources differ from the selected installed repository.",
+      "oknte_runtime_profile_unverified": "The installed version or selected distribution channel could not be verified.",
+      "oknte_runtime_installation_required": "Install and configure the supported upstream runtime first.",
       "runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
       "oknte_item_completed": "Daily item reported completion",
       "oknte_item_failed": "Daily item reported failure",
@@ -43,6 +48,8 @@ export const locales = {
       "summary": "单账号日常任务计划、配置隔离与任务结果判定"
     },
     "tasks": {
+      "store_purchase": {"title": "商店购买"},
+      "anomaly_pilgrimage": {"title": "异象巡礼"},
       "cinema_date": {"title": "影院约会"},
       "coffee": {"title": "一咖舍"},
       "daily_anomaly": {"title": "异象界域"},
@@ -53,6 +60,9 @@ export const locales = {
       "gift": {"title": "羁遇赠礼"}
     },
     "diagnostics": {
+      "oknte_runtime_working_source_unverified": "工作目录中的运行源码与当前安装仓不一致。",
+      "oknte_runtime_profile_unverified": "当前安装版本或选中的发行渠道未通过核对。",
+      "oknte_runtime_installation_required": "请先安装并配置支持的上游运行环境。",
       "runtime_unqualified": "官方发行版本或更新状态未就绪，已阻止自动运行。请先完成官方 Global 启动器初始化并关闭它，再检查支持版本。",
       "oknte_item_completed": "日常子任务报告完成",
       "oknte_item_failed": "日常子任务报告失败",

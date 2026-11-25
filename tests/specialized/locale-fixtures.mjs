@@ -41,7 +41,7 @@ async function prepareFixture(root, output, extensionId, selection) {
   }
   if (extensionId === 'zzzonedragon') {
     const document = JSON.parse(row.input.resources[0].content);
-    document.app_list.push({ app_id: 'Future 用户任务 Ω', enabled: true });
+    document.app_list.push({ app_id: 'Future 用户任务 Ω', enabled: false });
     row.input.resources[0].content = JSON.stringify(document);
   }
   if (extensionId === 'maas') {

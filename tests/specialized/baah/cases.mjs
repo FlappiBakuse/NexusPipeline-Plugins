@@ -56,6 +56,14 @@ export function cases(invoke) {
   const mixed = configuration(['登录游戏', '邮件']);
   mixed.OPEN_GAME_APP_TASK = true; mixed.DO_POST_ALL_TASK = true;
   const mixedTasks = invoke(request('discover', mixed)).tasks;
+  const battlePass = configuration(['战斗通行证']);
+  const passSequence = input => input.map(line => line.replace('2.5.1 - ', '2.5.15 - '));
+  observe('battle pass success requires claim and outer terminal', battlePass,
+    passSequence([activation(), ...flow('InBattlePass', [log('领取战斗通行证奖励成功')])]), 'succeeded');
+  observe('battle pass partial with later claim after entry failure', battlePass,
+    passSequence([activation(), ...flow('InBattlePass', [log('尝试进入战斗通行证页面失败，跳过任务', 'WARN'), log('领取战斗通行证奖励成功')])]), 'partial');
+  observe('battle pass missing claim stays unknown', battlePass,
+    passSequence([activation(), ...flow('InBattlePass')]), 'unknown');
   const mixedIds = ['baah:automatic-login', 'baah:0/0/登录游戏', 'baah:0/1/邮件', 'baah:automatic-cleanup'];
   add('retry excludes failed technical and cleanup steps', request('retry', mixed, { tasks: mixedTasks,
     idempotencyKey: 'mixed-failed', observations: mixedIds.map(taskId => ({ taskId, state: 'failed', reasonCode: 'synthetic' })) }),

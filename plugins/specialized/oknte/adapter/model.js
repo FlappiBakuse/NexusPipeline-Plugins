@@ -1,11 +1,13 @@
 'use strict';
 
 const OKNTE_ITEMS = [
+  { id: 'anomaly_pilgrimage', title: '异象巡礼', defaultEnabled: false },
   { id: 'daily_anomaly', title: '异象界域', defaultEnabled: true, group: 'anomaly' },
   { id: 'daily_anomaly_hunter', title: '异象追猎', defaultEnabled: false, group: 'anomaly' },
   { id: 'coffee', title: '一咖舍', defaultEnabled: false }, { id: 'daily_claim', title: '日常领取', defaultEnabled: true },
   { id: 'cinema_date', title: '影院约会', defaultEnabled: false }, { id: 'fountain', title: '喷泉签到', defaultEnabled: false },
-  { id: 'furniture', title: '异象家具', defaultEnabled: false }, { id: 'gift', title: '羁遇赠礼', defaultEnabled: false }
+  { id: 'furniture', title: '异象家具', defaultEnabled: false }, { id: 'gift', title: '羁遇赠礼', defaultEnabled: false },
+  { id: 'store_purchase', title: '商店购买', defaultEnabled: false }
 ];
 const oknteObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const oknteOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);

@@ -8,7 +8,8 @@ const BAAH_FAILURE_TEXTS = {
     'Status_error: 推剧情任务执行失败, 返回', 'STATUS_ERROR: Event story task execution failed, returning'],
   InMomotalk: ['未检测到momotalk弹窗，跳过此任务', 'The momotalk popup is not detected. Skip this task'],
   BuyAP: ['未找到购买按钮', "Can't find buy button", '購入ボタンが見つかりません', '识别单价失败', 'Recognize price failed', '価格の認識に失敗しました'],
-  Attendance: ['进入统合出席簿失败', 'Failed to enter the Attendance page']
+  Attendance: ['进入统合出席簿失败', 'Failed to enter the Attendance page'],
+  InBattlePass: ['尝试进入战斗通行证页面失败，跳过任务', 'Failed to enter the Battle Pass page, skipping task']
 };
 const BAAH_NORMAL_TEXTS = {
   InMomotalk: ['未检测到红点标记，跳过此任务', 'No red dot detected, skipping this task'],
@@ -20,7 +21,7 @@ const BAAH_NORMAL_TEXTS = {
 
 function baahResult(state, taskId, outcome, reason, generation, recovered = false) {
   const prior = state.results.find(item => item.taskId === taskId);
-  if (prior?.state === 'failed' && !recovered) return;
+  if (prior?.state === 'partial' || prior?.state === 'failed' && !recovered && outcome !== 'partial') return;
   const result = { taskId, state: outcome, reasonCode: reason, generation };
   if (prior) Object.assign(prior, result);
   else state.results.push(result);
@@ -29,7 +30,7 @@ function baahResult(state, taskId, outcome, reason, generation, recovered = fals
 function baahFail(state, root, reason) {
   if (!root?.taskId) return;
   root.failed = true;
-  baahResult(state, root.taskId, 'failed', reason, state.generation);
+  baahResult(state, root.taskId, root.claimed ? 'partial' : 'failed', reason, state.generation);
   if (state.incidents.length >= 128) throw new Error('baah_incident_limit');
   state.incidents.push({ taskId: root.taskId, generation: state.generation, reasonCode: reason });
 }
@@ -57,7 +58,7 @@ function baahObserve(input, config, tasks) {
       state.stack = []; state.ordered = false; state.resume = null;
     }
     state.epoch = event.epoch; state.sequence = event.sequence;
-    const envelope = event.text.match(/^2\.5\.1 - \d{2}:\d{2} - (INFO|WARN|WARNING|ERROR) : (.*)$/);
+    const envelope = event.text.match(/^2\.5\.(?:1|12|15) - \d{2}:\d{2} - (INFO|WARN|WARNING|ERROR) : (.*)$/);
     if (!envelope) continue;
     const [, level, text] = envelope;
     const activation = text.match(/^(?:当前激活: pipeline |Now activated pipeline )(\d+)$/);
@@ -99,6 +100,12 @@ function baahObserve(input, config, tasks) {
       continue;
     }
     if (!root || !top) continue;
+    if (root === top && top.name === 'InBattlePass' && top.stage === 'run' &&
+        ['领取战斗通行证奖励成功', 'Successfully collected Battle Pass reward'].includes(text)) {
+      root.claimed = true;
+      if (root.failed) baahResult(state, root.taskId, 'partial', 'baah_business_failed', state.generation);
+      continue;
+    }
     if (level === 'ERROR' || BAAH_FAILURE_TEXTS[top.name]?.includes(text) ||
         top.name === 'InFreeAward' && /^(免费奖励领取失败\(|Free award collection failed \()/.test(text))
       baahFail(state, root, 'baah_business_failed');
@@ -124,7 +131,7 @@ function baahObserve(input, config, tasks) {
     }
     const end = text.match(/^(?:任务([^\s]+)执行结束|Task ([^\s]+) execution completed)$/);
     if (end && (end[1] || end[2]) === top.name) {
-      if (state.stack.length === 1 && top.stage === 'post' && !root.failed) {
+      if (state.stack.length === 1 && top.stage === 'post' && !root.failed && (root.name !== 'InBattlePass' || root.claimed)) {
         const prior = state.results.find(item => item.taskId === root.taskId);
         const recovered = prior?.state === 'failed' && state.generation > prior.generation;
         baahResult(state, root.taskId, 'succeeded', recovered ? 'baah_recovered_after_pipeline_restart' :

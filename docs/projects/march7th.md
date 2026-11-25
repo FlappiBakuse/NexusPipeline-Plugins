@@ -1,6 +1,6 @@
 # March7thAssistant
 
-插件 `march7th` 0.5.0 对应稳定发行 v2026.10.16，完整源码 `34c6e4aba914bb8c0cbe1a27e49151cce26f94b4`。来源、tag、tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/march7th/upstream.json)。归档核验不代表二进制业务实测。
+插件 `march7th` 0.5.0 对应稳定发行 v2026.11.24，完整源码 `07496b452e73fd9d47c3be3de706c787645231db`。来源、tag、tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/march7th/upstream.json)。归档核验不代表二进制业务实测。
 
 手写模块顺序见 `adapter/sources.json`。任务适配四阶段只消费冻结资源，返回任务发现、观察、失败子集及 CAS 提案。独立的来源发现入口通过 Host 有界只读回调列出启动器、worker 和配置，不具备文件写入、网络或进程权限。
 
@@ -10,7 +10,7 @@
 
 支持固定默认 main：game.start → Daily.start → reward.start → game.stop。routine 只执行 prepare_daily(ignore_refresh=True) 和 reward，与 main 不等价；不把自定义 workflow、循环、中途接管或其他命令行入口伪装成相同范围。部署启动 owner 必须绑定这一入口。
 
-按已核实上游默认值发现 13 个一级入口和 19 个子开关。父禁用只抑制子任务选择，不清除子项原值。已知辅助及历史开关原样保留；未知启用项保留只读并阻断配置检查。
+按已核实上游默认值发现 13 个一级入口和 19 个子开关。父禁用只抑制子任务选择，不清除子项原值。游戏优化和按键检测按上游划为辅助配置，已知辅助及历史开关原样保留；未知启用项保留只读并阻断配置检查。
 主文件中实际存在的已知布尔开关携带任务投影，固定原资源 ID、相对文件和字段选择器；缺省推导值不伪造写入目标。观察和重试核对该冻结映射，不自动增加前提授权。
 
 ## 全部任务
@@ -76,4 +76,4 @@
 
 运行 `tests/specialized/verify.py --extension march7th`，显式传入当前 Host 源码、Jint/Acornima 程序集及仓外 output/work-root。runner 复用仓外编译槽，记录实际源码和程序集摘要，核对两个解释器执行相同的非空用例集合；缺少原生报告、超时或未执行均失败。
 
-来源发现固定默认命令 `March7th Launcher.exe main --exit`，要求 Launcher 和 Assistant 同时存在。
+默认日常执行由 `March7th Assistant.exe main --non-interactive --after-finish Exit` 负责。配置继续通过 Launcher 编辑。独立工作流由上游编辑器管理，发现时给出提示。

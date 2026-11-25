@@ -76,7 +76,8 @@ function bgiScopeMessage(message, tasks, state) {
     scope = { sourceId: message.sourceId, context: message.context, active: null, closed: true, depth: 0 };
     state.scopes.push(scope);
   }
-  const outer = message.logger === 'BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel';
+  const solo = message.logger === 'BetterGenshinImpact.GameTask.OneDragon.OneDragonTask';
+  const outer = solo || message.logger === 'BetterGenshinImpact.ViewModel.Pages.OneDragonFlowViewModel';
   const runner = message.logger === 'BetterGenshinImpact.GameTask.TaskRunner';
   const service = message.logger === 'BetterGenshinImpact.Service.ScriptService';
   const marker = outer && message.text.match(/^(一条龙|配置组)任务执行: (\d+)\/(\d+)$/);
@@ -84,7 +85,7 @@ function bgiScopeMessage(message, tasks, state) {
     if (scope.active && !scope.closed) bgiAmbiguousScope(state, scope, 'bettergi_scope_terminal_missing');
     const builtin = marker[1] === '一条龙', pool = tasks.filter(task => BGI_BUILTINS.includes(task.title) === builtin);
     const task = pool[Number(marker[2]) - 1];
-    if (!task || Number(marker[3]) !== (builtin ? tasks.length : pool.length)) {
+    if (!task || Number(marker[3]) !== (!solo && builtin ? tasks.length : pool.length)) {
       scope.active = null;
       return;
     }
@@ -93,14 +94,18 @@ function bgiScopeMessage(message, tasks, state) {
       if (!state.ambiguous.includes(task.taskId)) state.ambiguous.push(task.taskId);
       bgiSetObservation(state, task.taskId, 'unknown', 'bettergi_scope_repeated');
     } else state.seen.push(task.taskId);
-    Object.assign(scope, { active: task.taskId, builtin, closed: false, depth: 0,
+    Object.assign(scope, { active: task.taskId, builtin, solo, closed: false, depth: 0,
       failed: false, ambiguous: repeated, groupStarted: false });
     return;
   }
   if (!scope.active) return;
   const task = tasks.find(item => item.taskId === scope.active);
   if (scope.closed) {
-    if (['ERR', 'FTL'].includes(message.level))
+    const soloFailure = scope.solo === true && message.level === 'ERR' &&
+      (message.text.startsWith(task.title + '失败：') || task.title === '领取每日奖励' &&
+        /^(领取纪行奖励失败：|领取纪行奖励执行异常：)/.test(message.text));
+    if (soloFailure) bgiSetObservation(state, task.taskId, 'failed', 'bettergi_scope_failed');
+    else if (['ERR', 'FTL'].includes(message.level))
       bgiSetObservation(state, task.taskId, 'unknown', 'bettergi_late_error_scope_unbound');
     return;
   }

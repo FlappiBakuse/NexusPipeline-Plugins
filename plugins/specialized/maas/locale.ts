@@ -6,6 +6,8 @@ export const locales = {
       "summary": "Run the locally installed upstream application with independent configurations, tasks and logs."
     },
     "tasks": {
+      "爬塔（神经网络）": {"title": "Tower (Neural Network)"},
+      "自动爬塔（维塔）": {"title": "Auto Tower (Vita)"},
       "bond_gifts": {"title": "Bond gifts"},
       "bounty_trial_quick_battle": {"title": "Bounty trial quick battle"},
       "claim_and_dispatch_commissions": {"title": "Claim and dispatch commissions"},
@@ -63,6 +65,8 @@ export const locales = {
       "summary": "调用本机已安装的上游程序，管理独立配置、任务与日志。"
     },
     "tasks": {
+      "爬塔（神经网络）": {"title": "爬塔（神经网络）"},
+      "自动爬塔（维塔）": {"title": "自动爬塔（维塔）"},
       "bond_gifts": {"title": "心链送礼"},
       "bounty_trial_quick_battle": {"title": "悬赏试炼快速战斗"},
       "claim_and_dispatch_commissions": {"title": "领取并重新派遣委托"},

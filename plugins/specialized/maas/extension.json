@@ -20,6 +20,14 @@
     "sourceDiscovery": true,
     "readOnlySources": {
       "entries": [
+        "interface/tasks/climb_tower_neural.json",
+        "interface/tasks/climb_tower_vita.json",
+        "interface/presets/daily_weekly.json",
+        "interface/presets/ascension_and_other.json",
+        "assets/interface/tasks/climb_tower_neural.json",
+        "assets/interface/tasks/climb_tower_vita.json",
+        "assets/interface/presets/daily_weekly.json",
+        "assets/interface/presets/ascension_and_other.json",
         "interface.json",
         "interface.jsonc",
         "assets/interface.json",

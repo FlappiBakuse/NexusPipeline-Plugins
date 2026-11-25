@@ -152,5 +152,7 @@ const MARCH7TH_DEFAULTS = {
     "FightNotCompleted": "锄大地未完成",
     "RelicBagFull": "遗器背包已满"
   },
+  "game_optimization_enable": true,
+  "auto_detect_game_hotkeys_enable": true,
   "universe_count": 34
 };

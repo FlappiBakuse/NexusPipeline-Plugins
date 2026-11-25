@@ -1,12 +1,12 @@
 # BetterGI 0.5.0
 
-仅支持当前锁定的 BetterGI 0.66.0。来源为官方非 draft、非 prerelease Release，完整 commit 为 `0af68c28f6b0e714d5304625ce644736d508022e`，tree 为 `b6c9b16ce2372abb54478179daa7e01486ac8ec8`。发行资产与源码锁见 [upstream.json](../../plugins/specialized/bettergi/upstream.json)。源码归档核验不代替二进制资格。
+仅支持当前锁定的 BetterGI 0.67.0。来源为官方非 draft、非 prerelease Release，完整 commit 为 `6c222e1f1d0b8a6c7a1321cebee6fc626920c932`，tree 为 `b719d51705776af4e386122bcdc3eb57f2e98cd5`。发行资产与源码锁见 [upstream.json](../../plugins/specialized/bettergi/upstream.json)。源码归档核验不代替二进制资格。
 
 适配器手写入口是 `plugins/specialized/bettergi/adapter/main.js`；`adapter/sources.json` 为按序输入清单，包含 JSON 读取、配置与任务、日志模块。构建只将这些源合并到显式仓外产物，不把上游源码或生成 runtime 放入仓库。
 
 ## 配置与任务身份
 
-Host 从 `BetterGI.exe` 所属安装中明确选择 `User/OneDragon/<配置>.json`，绑定内存资源 `one-dragon`；附加 `User/config.json` 绑定 `extra-user-config`。多配置不能任取第一个；选择另一配置时，Host 必须同时绑定该配置的真实快照、名称、摘要和修订。上游命令行是 `BetterGI.exe startOneDragon <配置名称>`，游戏启动由上游执行；适配器不自行启动游戏。
+Host 从 `BetterGI.exe` 所属安装中明确选择 `User/OneDragon/<配置>.json`，绑定内存资源 `one-dragon`；附加 `User/config.json` 绑定 `extra-user-config`。多配置不能任取第一个；选择另一配置时，Host 必须同时绑定该配置的真实快照、名称、摘要和修订。新版日志由 OneDragonTask 产出任务序位。上游命令行是 `BetterGI.exe startOneDragon <配置名称>`，游戏启动由上游执行；适配器不自行启动游戏。
 
 现代 `TaskDefinitions` 将 ID 映射为名称，`TaskOrder` 恢复执行顺序，`TaskEnabledList` 保存开关，`NextTaskId` 限定本轮范围。旧配置以键作为名称和身份。同名任务保留不同 `bettergi:<原键>`。未列入 TaskOrder 的键、仅有定义的条目及未知配置字段保留，不擅自加入执行范围。
 
@@ -37,7 +37,7 @@ Host 从 `BetterGI.exe` 所属安装中明确选择 `User/OneDragon/<配置>.jso
 
 `logEvents` 只接受主声明文件流 sourceId=`file:0`，epoch、sequence 和 `observationCheckpoint` 支持跨批正文及活动范围；其他文件流不归并。checkpoint 绑定 run、attempt、plan 和进程 PID。重复 sequence 忽略，旧 epoch 忽略，序列缺口或轮换不能拼接未闭合范围。完整闭合的历史范围可跨轮换保留。checkpoint 由 Host 在同一冻结调用链中持有，适配器不自行持久化。
 
-一条龙序号分母按上游使用全部启用任务数，配置组使用独立组数量；内置任务结束要求对应 TaskRunner 的启动/结束，嵌套 runner 不提前闭合。配置组要求同一组名的加载/结束。异常 continuation、裸任务名、任意脚本正文、最终整轮横幅及未证明正常的中断都不能补造成功。ERR、取消或明确组失败保持失败；成功只在 `logComplete=true` 的完整流结果中交付。
+一条龙序号分母按上游使用全部启用任务数，0.67 的 SoloTask 执行器按内置任务和配置组分别计数；内置任务结束要求对应 TaskRunner 的启动/结束，嵌套 runner 不提前闭合。配置组要求同一组名的加载/结束。异常 continuation、裸任务名、任意脚本正文、最终整轮横幅及未证明正常的中断都不能补造成功。ERR、取消或明确组失败保持失败；成功只在 `logComplete=true` 的完整流结果中交付。
 
 retry 只返回冻结、已启用、已选且明确失败的内置 ID；成功、partial、unknown、原禁用和范围外任务保留。任意配置组的外部副作用未证明安全，不自动重放。选择提案仍需 Host 的安全策略、writer 停止、恢复、预算与绑定配置投影；本适配器不重置累计次数、日期、资源额度或游标。
 每个现存布尔任务开关绑定 `TaskEnabledList` 投影。原一条龙入口在业务循环前执行游戏启动，重试沿用该入口；观察序号与检查点绑定实际重试子集。

@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 
 const entries = [['daily_anomaly', '异象界域', true], ['daily_anomaly_hunter', '异象追猎', false], ['coffee', '一咖舍', false],
-  ['daily_claim', '日常领取', true], ['cinema_date', '影院约会', false], ['fountain', '喷泉签到', false], ['furniture', '异象家具', false], ['gift', '羁遇赠礼', false]];
+  ['daily_claim', '日常领取', true], ['cinema_date', '影院约会', false], ['fountain', '喷泉签到', false], ['furniture', '异象家具', false], ['gift', '羁遇赠礼', false],
+  ['anomaly_pilgrimage', '异象巡礼', false], ['store_purchase', '商店购买', false]];
 const resource = (document, resourceId = 'main') => { const content = typeof document === 'string' ? document : JSON.stringify(document);
   return { resourceId, revision: 7, content, sha256: createHash('sha256').update(content).digest('hex') }; };
 const make = (ids = ['daily_claim']) => ({ 'Routine Items': entries.map(([id]) => ({ id, enabled: ids.includes(id), opaque: { savedCounter: 3 } })),
@@ -56,10 +57,10 @@ export function cases(invoke) {
   add('unexplained wrong order is unknown', observe(['coffee', 'daily_claim'], [rootStart, '开始任务: 日常领取', '任务完成: 日常领取', rootEnd]), state('daily_claim', 'unknown'));
   const absent = { frameworkProgress: { done: 8 } };
   const defaultTasks = invoke(request('discover', absent)).tasks;
-  add('defaults selected without manufacturing persisted safety', request('discover', absent), { 'tasks.0.isSelected': true, 'tasks.0.retrySafety': 'unknown', 'tasks.3.isSelected': true });
+  add('defaults selected without manufacturing persisted safety', request('discover', absent), { 'tasks.0.isSelected': false, 'tasks.1.isSelected': true, 'tasks.1.retrySafety': 'unknown', 'tasks.4.isSelected': true });
   add('implicit selection cannot independently retry', request('retry', absent, { tasks: defaultTasks, idempotencyKey: 'finite', observations: [{ taskId: 'oknte:daily_claim', state: 'failed', reasonCode: 'synthetic' }] }), { selectedTaskIds: [] });
   const mutual = make(['daily_anomaly', 'daily_anomaly_hunter']); mutual['Routine Items'].reverse();
-  add('mutual group first in stored native order wins', request('discover', mutual), { 'tasks.6.taskId': 'oknte:daily_anomaly_hunter', 'tasks.6.isSelected': true, 'tasks.7.taskId': 'oknte:daily_anomaly', 'tasks.7.isSelected': false });
+  add('mutual group first in stored native order wins', request('discover', mutual), { 'tasks.8.taskId': 'oknte:daily_anomaly_hunter', 'tasks.8.isSelected': true, 'tasks.9.taskId': 'oknte:daily_anomaly', 'tasks.9.isSelected': false });
   const duplicate = make(['daily_claim']); duplicate['Routine Items'].unshift({ id: 'daily_claim', enabled: false });
   add('upstream first duplicate retained no independent retry', request('discover', duplicate), { 'tasks.0.taskId': 'oknte:daily_claim', 'tasks.0.isSelected': false, 'tasks.0.retrySafety': 'unknown' });
   for (const [value, enabled] of [[[], false], [{}, false], ['false', true], [0, false], [-1, true], [null, false]]) {
@@ -67,7 +68,7 @@ export function cases(invoke) {
     add('Python truth projection ' + JSON.stringify(value), request('discover', document), { 'tasks.3.isSelected': enabled, 'tasks.3.retrySafety': 'unknown' });
   }
   const unknown = make(); unknown['Routine Items'].push({ id: 'future', enabled: true, progress: 9 });
-  add('unknown row retained read only', request('discover', unknown), { 'tasks.8.taskId': 'oknte:unknown/8/future', 'tasks.8.isEnabled': true, 'tasks.8.isSelected': false });
+  add('unknown row retained read only', request('discover', unknown), { 'tasks.10.taskId': 'oknte:unknown/10/future', 'tasks.10.isEnabled': true, 'tasks.10.isSelected': false });
   const unrelated = request('discover', make(['coffee']));
   unrelated.resources.push(resource('unparseable standalone configuration', 'CoffeeTask'));
   add('standalone config cannot alter routine selection', unrelated, { 'tasks.2.taskId': 'oknte:coffee', 'tasks.2.isSelected': true,

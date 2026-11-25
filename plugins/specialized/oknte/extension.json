@@ -20,7 +20,9 @@
     "instancePolicy": {
       "selfManagedPcLaunch": true,
       "supportsAndroid": false,
-      "requiresConfigurationSync": true
+      "requiresConfigurationSync": true,
+      "gamePathResource": "devices",
+      "gamePathSelector": ["pc_full_path"]
     }
   },
   "gameName": "异环",

@@ -1,6 +1,6 @@
 # BAAH 0.5.0
 
-上游只支持锁定的官方稳定发行 BAAH2.5.1，来源与完整 SHA/tree 见 [upstream.json](../../plugins/specialized/baah/upstream.json)。上游源码仅作实现依据，不作为构建或测试输入。四阶段入口、按序手写源清单与权限见 `plugins/specialized/baah`。
+上游只支持锁定的官方稳定发行 BAAH2.5.15，来源与完整 SHA/tree 见 [upstream.json](../../plugins/specialized/baah/upstream.json)。上游源码仅作实现依据，不作为构建或测试输入。四阶段入口、按序手写源清单与权限见 `plugins/specialized/baah`。
 
 ## 身份、配置与恢复
 
@@ -8,7 +8,7 @@ Host 明确绑定选中用户 `BAAH_CONFIGS/<用户>.json` 为 main，附加软�
 
 目录发现以明确配置文件名作为启动参数；单候选可直接选定，多候选由用户选择。已存在的 `DATA/USER_STORAGE/STORAGE<文件名 UTF-8 SHA1 前八位>.json` 作为 progress 资源单独保存和恢复；不把其他用户的存储或持久历史当作本轮任务结果，也不向 progress 提议配置修复。
 
-Task.run 的前置→执行→后置→结束按栈归属。类名相同也必须按已确认活动 pipeline 顺序定位；没有激活身份、跨日志缺口或冲突顺序时不凭唯一 class 猜测成功。嵌套 CloseInform 在登录下无弹窗可正常跳过，其余前后置失败保留。文件信封来自锁定 MyLogger；stdout、另一文件流、旧版本文字和正文引用不替代主 file:0。
+Task.run 的前置→执行→后置→结束按栈归属。类名相同也必须按已确认活动 pipeline 顺序定位；没有激活身份、跨日志缺口或冲突顺序时不凭唯一 class 猜测成功。嵌套 CloseInform 在登录下无弹窗可正常跳过，其余前后置失败保留。文件信封来自锁定 MyLogger；stdout、另一文件流、未核对的版本信封和正文引用不替代主 file:0。
 
 checkpoint 仅沿本轮 run/attempt/plan 传递，最多 64 KiB。ERROR、价格不可读、无购买按钮、入口失败和前后置失败保持失败；返回主页和所有任务结束不补终态。明确 pipeline 重启及新完整执行可恢复此前失败，历史 incident 保留。原生 CURRENT_PERIOD_TASK_INDEX 是 sessiondict 进度，只读取日志，不写持久文件清零。
 
@@ -24,6 +24,7 @@ checkpoint 仅沿本轮 run/attempt/plan 传递，最多 64 KiB。ERROR、价格
 | 清momotalk | InMomotalk | 无红点 satisfied；无法进入弹窗失败 |
 | 活动一览 | InEventRecap | 入口或剧情子流程明确失败不被外层结束覆盖 |
 | 长期签到 | Attendance | 出席簿入口失败保留 |
+| 战斗通行证 | InBattlePass | 领取确认须与外层终态配对，已领取后失败保留 partial |
 | 咖啡馆 | InCafe | 独立序位；邀请、摸头、收取开关保留 |
 | 咖啡馆只摸头 | InCafe | 与咖啡馆独立身份，不按 class 合并 |
 | 课程表 | InTimeTable | 前后置完整闭环；课程参数保留 |

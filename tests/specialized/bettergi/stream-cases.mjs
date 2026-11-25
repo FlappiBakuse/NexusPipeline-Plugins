@@ -60,6 +60,18 @@ export function streamCases(invoke) {
   add('closed tasks survive primary file rotation', request('observe', multiple, { tasks: multiTasks,
     logEvents: events(builtinFlow(2, 2), 1, 1), logComplete: true, observationCheckpoint: completedFirst }),
     { 'observations.0.state': 'succeeded', 'observations.1.state': 'succeeded' });
+  const solo = line => line.replace('ViewModel.Pages.OneDragonFlowViewModel', 'GameTask.OneDragon.OneDragonTask');
+  const named = configuration(['领取邮件', '自定义组', '合成树脂']), names = invoke(request('discover', named)).tasks;
+  const latest = request('observe', named, { tasks: names, logComplete: true, logEvents: events([
+    ...builtinFlow(1, 2).map(solo), ...outer('配置组任务执行: 1/1').map(solo),
+    ...message('GameTask.OneDragon.OneDragonTask', '执行配置组任务时失败', 'DBG'),
+    ...builtinFlow(2, 2).map(solo), ...outer('一条龙和配置组任务结束').map(solo)
+  ]) });
+  add('0.67 uses independent built-in denominators and retains group failure', latest,
+    { 'observations.0.state': 'succeeded', 'observations.1.state': 'failed', 'observations.2.state': 'succeeded' });
+  add('0.67 named result after runner termination remains failed', observe(events([
+    ...builtinFlow().map(solo), ...message('GameTask.TaskRunner', '领取邮件失败：业务失败', 'ERR')
+  ])), { 'observations.0.state': 'failed' });
   return rows;
 }
 

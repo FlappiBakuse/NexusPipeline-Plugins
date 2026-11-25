@@ -40,6 +40,7 @@ export const locales = {
       "activity_journey_highlights_notification_enable": {"title": "Journey Highlights notification"}
     },
     "diagnostics": {
+      "march7th_custom_workflow_requires_native_editor": "Custom workflows are available in the native editor. This binding runs the default daily workflow.",
       "march7th_instance_locked": "The selected instance is locked",
       "march7th_instance_not_found": "The selected instance was not found",
       "march7th_instance_teleport_failed": "Teleport may have failed",
@@ -112,6 +113,7 @@ export const locales = {
       "activity_journey_highlights_notification_enable": {"title": "旅途拾忆通知"}
     },
     "diagnostics": {
+      "march7th_custom_workflow_requires_native_editor": "检测到自定义工作流，请在原生编辑器中管理。当前绑定运行默认日常。",
       "march7th_instance_locked": "指定副本未解锁",
       "march7th_instance_not_found": "未找到指定副本",
       "march7th_instance_teleport_failed": "传送可能失败",

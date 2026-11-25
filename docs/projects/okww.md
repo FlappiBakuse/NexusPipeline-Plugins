@@ -1,12 +1,14 @@
 # OkWutheringWaves
 
-插件 `okww` 0.5.0 对应官方 v3.7.12，完整源码 `46113e464b823c95d5df988f8eba8b2dd8b45e5e`。release/tag/tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/okww/upstream.json)。requirements 固定 ok-script 2.0.17，官方 PyPI wheel SHA256 `49720827f267297620208bc5fe6981203eb6472868fe2de59d12329ed7494e44` 已核验并审阅实际 Logger/TaskExecutor。归档和 wheel 源码核对不代表发行二进制通过。
+插件 `okww` 0.5.0 对应官方 v3.8.14，完整源码 `0224d2ff2c632e85322ae23e0930fac2f95a6139`。release/tag/tree 与官方资产摘要见 [upstream.json](../../plugins/specialized/okww/upstream.json)。requirements 固定 ok-script 3.0.13，官方 PyPI wheel SHA256 `49720827f267297620208bc5fe6981203eb6472868fe2de59d12329ed7494e44` 已核验并审阅实际 Logger/TaskExecutor。归档和 wheel 源码核对不代表发行二进制通过。
 
 ## 四阶段输入
 
 `adapter/sources.json` 固定手写模块顺序；任务适配四阶段只消费请求资源；独立来源发现入口通过 Host 有界只读回调列出当前工作配置，不具备文件写入、进程或网络权限。`main` 对应 DailyTask.json，`farm-4c` 对应 FarmEchoTask.json，`nightmare` 对应 NightmareNestTask.json，`devices` 对应 devices.json。已绑定的 resource.value 可优先供语义读取，CAS 仍绑定原字节 SHA/revision/operation。其他独立任务页面不改变日常范围。
 
 ## 全部日常范围
+
+脚本库的专项来源区域提供独立的多账号只读预览。预览按 `MultiAccountConfig.json` 的 `accounts` 保存顺序展示匿名序号、启用状态、任务和覆盖项数量。`task: null` 对应仅登录。`MultiAccountDailyTask.json` 单独提供按账号配置的开关状态。来源发现继续使用单账号 `DailyTask` 创建脚本及绑定，多账号预览没有运行入口。
 
 | ID | 选择条件与职责 |
 | --- | --- |
@@ -42,3 +44,5 @@ Nightmare/Garden/Merge 的捕获异常以及通行证未找到均独立保留 fa
 ## 验证入口
 
 Host 必须核对实际 pyappify China/Global 渠道、安装可用版本、完整 HEAD、精确 origin、真实 worker/updater 空闲以及冻结后的实际 update 仓任务内容。当前 China 源为 cnb.cool/ok-oldking/ok-ww-update2.git，Global 为 GitHub ok-oldking/ok-ww-update.git；不扩展为域名通配，不用持久 running 标志代替进程事实。根 launcher PID 不冒充真实日志 worker。
+
+当前 Windows 入口按工作目录和唯一的发行渠道核对安装画像、运行代码及仓副本；启动使用类名定位日常任务，并指定手动更新模式。

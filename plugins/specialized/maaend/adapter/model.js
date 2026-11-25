@@ -3,7 +3,7 @@
 const maaendObject = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const maaendOwn = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 const maaendTechnical = ['AndroidOpenGame', 'LaunchGameLinux', '__MXU_LAUNCH__', '__MXU_SLEEP__', '__MXU_WAITUNTIL__', '__MXU_NOTIFY__', '__MXU_WEBHOOK__'];
-const maaendCleanup = ['CloseGame', 'CloseGamePC', '__MXU_POWER__', '__MXU_KILLPROC__'];
+const maaendCleanup = ['CloseGame', 'CloseGamePC', 'CloseGamePlayCover', '__MXU_POWER__', '__MXU_KILLPROC__'];
 
 function maaendRead(input) {
   const main = maaDataResource(input, 'main', 'maaend'), document = strictConfigurationJson(main.content, 'maaend');
@@ -34,7 +34,8 @@ function maaendRead(input) {
     const special = maaendTechnical.includes(task.taskName) || maaendCleanup.includes(task.taskName);
     const definition = matches.length === 1 ? matches[0] : special ? { name: task.taskName, entry: 'MXU_SPECIAL' } : null;
     const known = !!definition && (special || definition.entry === 'MXU_PRETASK' || MAAEND_ENTRIES[task.taskName] === definition.entry);
-    const compatible = known && (!definition.controller?.length || definition.controller.includes(controller.name)) &&
+    const windowsApplicable = !['CloseGamePlayCover', '__MXU_PRETASK__LaunchGamePlayCover'].includes(task.taskName);
+    const compatible = known && windowsApplicable && (!definition.controller?.length || definition.controller.includes(controller.name)) &&
       (!definition.resource?.length || definition.resource.includes(resource.name));
     let label = definition?.label || task.taskName;
     if (label.startsWith('$')) label = translations[label.slice(1)] || task.taskName;

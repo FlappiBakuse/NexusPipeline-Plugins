@@ -25,6 +25,7 @@ globalThis.nexusDiscoverScript = discoverFromSource(input => {
         candidate.exclusiveProgram = true;
         if (edit) candidate.instance = { collection: 'instances', identity: 'id', value: instance.id,
           selection: ['settings', 'autoStartInstanceId'] };
+        else candidate.runIdentity = path + ':' + instance.id;
       }
       candidates.push(candidate);
     }

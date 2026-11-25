@@ -121,15 +121,18 @@ export function cases(invoke) {
   const retained = { name: 'retired', entry: 'unknown', default_check: false, progress: { counter: 9 },
     option: [{ name: 'unknown', data: { untouched: 'yes' } }] };
   const inherited = document([item(), retained]);
-  for (const missing of [true, false]) {
-    const overlay = input('configuration', missing ? {} : { TaskItems: null }, inherited);
-    add(missing ? 'materialization binds absent task list' : 'materialization binds explicit null task list', overlay, {
-      configPatches: [intent(overlay, [
-        { selector: ['TaskItems'], expected: null, ...(missing ? { expectedExists: false } : {}), value: inherited.TaskItems },
-        { selector: ['CurrentTasks'], expected: null, expectedExists: false, value: [key, 'retired<|||>unknown'] }
-      ])]
-    });
-  }
+  const overlay = input('configuration', {}, inherited);
+  add('materialization binds absent task list', overlay, {
+    configPatches: [intent(overlay, [
+      { selector: ['TaskItems'], expected: null, expectedExists: false, value: inherited.TaskItems },
+      { selector: ['CurrentTasks'], expected: null, expectedExists: false, value: [key, 'retired<|||>unknown'] }
+    ])]
+  });
+  add('explicit null queue does not read another layer', input('configuration', { TaskItems: null }, inherited), {}, 'maas_task_items_invalid');
+  add('explicit empty queue does not revive default tasks', input('discover', { TaskItems: [], KeepEmptyTaskQueue: true }),
+    { tasks: [] });
+  add('deleted tasks do not revive when a matching definition exists', input('discover', { TaskItems: [], DeletedTaskNames: [key] }),
+    { tasks: [] });
   add('materialized local tasks need no patch', input('configuration'), { configPatches: [] });
   const defaults = metadata();
   defaults['interface.json'].task.push({ name: '领取邮箱奖励', entry: '邮箱_入口', default_check: false, option: ['Choice'] });

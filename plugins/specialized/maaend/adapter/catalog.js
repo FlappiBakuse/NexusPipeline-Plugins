@@ -1,6 +1,10 @@
 'use strict';
 
 const MAAEND_ENTRIES = {
+  "AutoDailyMission": "AutoDailyMissionMain",
+  "OperatorGrowth": "OperatorGrowthSchedule",
+  "WarEcho": "WarEchoEntry",
+  "CloseGamePlayCover": "CloseGamePlayCover",
   "SellProduct": "OutpostTradingSchedule",
   "SeizeDeliveryJobs": "SeizeDeliveryJobsCheckOngoingJob",
   "DeliveryJobs": "DeliveryJobsMain",
@@ -58,6 +62,11 @@ const MAAEND_ENTRIES = {
 const MAAEND_RETIRED = ['DevTest', 'WebEvent202605'];
 
 const MAAEND_IMPORTS = [
+  "tasks/pretasks/LaunchGamePlayCover.json",
+  "tasks/AutoDailyMission.json",
+  "tasks/OperatorGrowth.json",
+  "tasks/WarEcho.json",
+  "tasks/CloseGamePlayCover.json",
   "tasks/pretasks/LaunchGamePC.json",
   "tasks/OutpostTrading.json",
   "tasks/SeizeDeliveryJobs.json",

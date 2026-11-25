@@ -5,5 +5,7 @@
   "adapter/observation.js",
   "adapter/main.js",
   "adapter-runtime/core/source-discovery.js",
+  "adapter-runtime/core/ok-script-source.js",
+  "adapter/account-preview.js",
   "adapter/discovery.js"
 ]

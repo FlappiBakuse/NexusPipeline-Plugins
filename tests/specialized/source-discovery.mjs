@@ -46,7 +46,11 @@ function discoveryRunner(extension, observeList = () => {}) {
       }
       return JSON.stringify([...(entries.get(relative) || [])].map(([name, kind]) => ({ name, kind })));
     },
-    nexusReadSource(relative) { assert.ok(Object.hasOwn(files, relative)); return files[relative]; }
+    nexusReadSource(relative) {
+      assert.ok(Object.hasOwn(files, relative));
+      const file = files[relative];
+      return Buffer.isBuffer(file) ? new TextDecoder('utf-8', { fatal: true }).decode(file) : file;
+    }
   }, { codeGeneration: { strings: false, wasm: false } });
   scripts.get(extension).runInContext(context, { timeout: 1000 });
   return (currentFiles, purpose) => {
@@ -128,12 +132,16 @@ test('BetterGI malformed config is rejected without falling back to another conf
 });
 test('March7th uses launcher and requires separate worker', () => {
   const files = { 'March7th Launcher.exe': '', 'March7th Assistant.exe': '', 'config.yaml': '{}' };
-  assert.equal(discover('march7th', files).candidates[0].executable, 'March7th Launcher.exe');
+  assert.equal(discover('march7th', files).candidates[0].executable, 'March7th Assistant.exe');
+  assert.deepEqual(discover('march7th', files).candidates[0].arguments, ['main', '--non-interactive', '--after-finish', 'Exit']);
+  assert.equal(discover('march7th', files, 'edit').editor.executable, 'March7th Launcher.exe');
   delete files['March7th Assistant.exe']; assert.equal(discover('march7th', files).candidates.length, 0);
 });
-for (const [extension, app, task, launchNumber] of [
-  ['oknte', 'ok-nte', 'DailyRoutineTask', '2'],
-  ['okww', 'ok-ww', 'DailyTask', '1']
+for (const [extension, app, task, version, origin, sourcePaths] of [
+  ['oknte', 'ok-nte', 'DailyRoutineTask', 'v1.5.12', 'BnanZ0/ok-nte-update.git',
+    ['requirements.txt', 'src/config.py', 'src/tasks/daily/DailyRoutineTask.py']],
+  ['okww', 'ok-ww', 'DailyTask', 'v3.8.14', 'ok-oldking/ok-ww-update2.git',
+    ['requirements.txt', 'config.py', 'src/task/DailyTask.py']]
 ]) {
   test(extension + ' binds installed working directory and single account task', () => {
     const directory = 'data/apps/' + app + '/working/configs/';
@@ -141,10 +149,19 @@ for (const [extension, app, task, launchNumber] of [
     if (extension === 'oknte') bindings['routine-configs'] = directory + 'DailyRoutineTaskConfigs.json';
     const files = Object.fromEntries(Object.values(bindings).map(file => [file, '{}']));
     files[app + '.exe'] = '';
+    const layout = 'data/apps/' + app + '/';
+    const appJson = { installed: true, current_version: version, current_profile: 'China',
+      profiles: [{ name: 'China', main_script: 'main.py', git_url: 'https://cnb.cool/' + origin }] };
+    files[layout + 'app.json'] = JSON.stringify(appJson);
+    for (const path of sourcePaths) for (const directory of ['working/', 'repo/']) files[layout + directory + path] = 'verified assignment';
     if (extension === 'oknte') files[directory + 'CoffeeTask.json'] = '{}';
     const result = discover(extension, files); assert.equal(result.candidates.length, 1);
     const [candidate] = result.candidates;
-    assert.deepEqual(candidate.arguments, ['-t', launchNumber, '-e']);
+    assert.deepEqual(candidate.arguments, ['-u', 'manual', '-t', task, '-e']);
+    assert.deepEqual(discover(extension, { ...files, [layout + 'app.json']: JSON.stringify({ ...appJson, current_version: 'v99.0' }) }).candidates, []);
+    const changed = discover(extension, { ...files, [layout + 'working/' + sourcePaths[1]]: 'different code' });
+    assert.deepEqual(changed.candidates, []);
+    assert.deepEqual(changed.diagnostics, [extension + '_runtime_working_source_unverified']);
     assert.deepEqual(resourcePaths(candidate), Object.entries(bindings).sort());
     for (const file of Object.values(bindings)) {
       const incomplete = { ...files };
@@ -153,6 +170,67 @@ for (const [extension, app, task, launchNumber] of [
     }
   });
 }
+const okwwLayout = 'data/apps/ok-ww/';
+const okwwConfigs = okwwLayout + 'working/configs/';
+const okwwAccounts = okwwConfigs + 'MultiAccountConfig.json';
+const okwwMode = okwwConfigs + 'MultiAccountDailyTask.json';
+const okwwFiles = {
+  'ok-ww.exe': '',
+  [okwwLayout + 'app.json']: JSON.stringify({ installed: true, current_version: 'v3.8.14', current_profile: 'China',
+    profiles: [{ name: 'China', main_script: 'main.py', git_url: 'https://cnb.cool/ok-oldking/ok-ww-update2.git' }] }),
+  ...Object.fromEntries(['working/', 'repo/'].flatMap(directory =>
+    ['requirements.txt', 'config.py', 'src/task/DailyTask.py'].map(file => [okwwLayout + directory + file, 'fixture']))),
+  [okwwConfigs + 'DailyTask.json']: '{}',
+  [okwwConfigs + 'devices.json']: '{}',
+  [okwwMode]: '{"Per-account Configuration":true}'
+};
+const sampleOkwwAccounts = [
+  { account_key: 'fixture-account-first', task: { module: 'src.task.DailyTask', class: 'DailyTask' }, config: { private_value: 'do-not-return' } },
+  { account_key: 'fixture-account-second', enabled: false, task: null, config: {} },
+  { account_key: 'fixture-account-third', enabled: true,
+    task: { module: 'src.task.OtherTask', class: 'OtherTask' }, config: { option: 1, other: 2 } }
+];
+test('OkWW edit discovery exposes only ordered redacted multi-account configuration summaries', () => {
+  const files = { ...okwwFiles, [okwwAccounts]: JSON.stringify({ accounts: sampleOkwwAccounts }) };
+  const result = discover('okww', files, 'edit');
+  assert.deepEqual(result.accountPreview, { state: 'ready', mode: 'enabled', accounts: [
+    { enabled: true, task: 'DailyTask', overrideCount: 1 },
+    { enabled: false, task: 'loginOnly', overrideCount: 0 },
+    { enabled: true, task: 'unknown', overrideCount: 2 }
+  ] });
+  assert.deepEqual(result.candidates.map(row => row.candidateId), ['daily']);
+  assert.ok(!JSON.stringify(result).includes('fixture-account-'));
+  assert.ok(!JSON.stringify(result).includes('do-not-return'));
+  assert.ok(!Object.hasOwn(discover('okww', files), 'accountPreview'));
+});
+test('OkWW read-only preview works when the installed version has no runnable candidate', () => {
+  const files = { ...okwwFiles,
+    [okwwLayout + 'app.json']: okwwFiles[okwwLayout + 'app.json'].replace('v3.8.14', 'v3.8.15'),
+    [okwwAccounts]: '{"accounts":[]}', [okwwMode]: '{"Per-account Configuration":false}' };
+  const result = discover('okww', files, 'edit');
+  assert.deepEqual(result.accountPreview, { state: 'empty', mode: 'disabled', accounts: [] });
+  assert.deepEqual(result.candidates, []);
+  assert.deepEqual(result.diagnostics, ['okww_runtime_profile_unverified']);
+});
+test('OkWW keeps daily discovery available for missing or invalid multi-account configuration', () => {
+  const missing = discover('okww', okwwFiles, 'edit');
+  assert.deepEqual(missing.accountPreview, { state: 'empty', mode: 'enabled', accounts: [] });
+  for (const content of ['{', '{"accounts":[],"accounts":[]}',
+    JSON.stringify({ accounts: [sampleOkwwAccounts[0], sampleOkwwAccounts[0]] }),
+    JSON.stringify({ accounts: [{ ...sampleOkwwAccounts[0], enabled: 'false' }] }),
+    JSON.stringify({ accounts: [{ ...sampleOkwwAccounts[0], task: { module: 'src.task.MultiAccountConfigTask', class: 'MultiAccountConfigTask' } }] })
+  ]) {
+    const result = discover('okww', { ...okwwFiles, [okwwAccounts]: content }, 'edit');
+    assert.deepEqual(result.accountPreview, { state: 'invalid', mode: 'enabled', accounts: [] });
+    assert.deepEqual(result.candidates.map(row => row.candidateId), ['daily']);
+  }
+});
+test('OkWW preserves daily discovery when optional account files are not valid UTF-8', () => {
+  const invalid = Buffer.from([0xff]);
+  const result = discover('okww', { ...okwwFiles, [okwwMode]: invalid, [okwwAccounts]: invalid }, 'edit');
+  assert.deepEqual(result.accountPreview, { state: 'invalid', mode: 'unknown', accounts: [] });
+  assert.deepEqual(result.candidates.map(row => row.candidateId), ['daily']);
+});
 test('ZZZ explicit two digit instances retain account and group together', () => {
   const files = { 'OneDragon-Launcher.exe': '', 'config/one_dragon.yml': '{}' };
   for (const id of ['01', '02', '3', 'active']) {
@@ -176,7 +254,10 @@ test('MaaEnd offers the configured auto-start instance for each declared interfa
   const result = discover('maaend', { 'MaaEnd.exe': '', 'interface.json': '{}', 'assets/interface.json': '{}',
     'config/mxu-MaaEnd.json': '{"version":"1.0","settings":{"autoStartInstanceId":"one"},"instances":[{"id":"one"},{"id":"two"}]}' });
   assert.deepEqual(result.candidates.map(row => row.candidateId).sort(), ['assets/interface.json:config/mxu-MaaEnd.json:one', 'interface.json:config/mxu-MaaEnd.json:one']);
-  for (const row of result.candidates) assert.deepEqual(row.arguments, ['--autostart', '--quit-after-run']);
+  for (const row of result.candidates) {
+    assert.deepEqual(row.arguments, ['--autostart', '--quit-after-run']);
+    assert.equal(row.runIdentity, 'config/mxu-MaaEnd.json:one');
+  }
 });
 test('MaaEnd edit discovery counts selectable instances across a document once', () => {
   const result = discover('maaend', { 'MaaEnd.exe': '', 'interface.json': '{}', 'assets/interface.json': '{}',
@@ -199,6 +280,7 @@ test('MaaS independent instances ignore active GUI selection and bind named shar
     'config/instances/first.json': '{}', 'config/instances/second.json': '{}' });
   assert.deepEqual(result.candidates.map(row => row.arguments).sort(), [['--instance', 'first'], ['--instance', 'second']]);
   for (const row of result.candidates) {
+    assert.equal(row.runIdentity, 'config/instances/' + row.arguments[1] + '.json');
     assert.deepEqual(row.resources.filter(item => item.resourceId === 'global').map(item => item.path), ['config/mfa_saved.json']);
   }
 });

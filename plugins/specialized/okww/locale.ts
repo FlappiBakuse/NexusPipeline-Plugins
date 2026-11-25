@@ -21,6 +21,9 @@ export const locales = {
       "stamina_tacet": {"title": "Daily stamina: Tacet Suppression"}
     },
     "diagnostics": {
+      "okww_runtime_working_source_unverified": "Working sources differ from the selected installed repository.",
+      "okww_runtime_profile_unverified": "The installed version or selected distribution channel could not be verified.",
+      "okww_runtime_installation_required": "Install and configure the supported upstream runtime first.",
       "farm_4c_configuration_unsupported": "Daily 4C requires Weekly Challenge or Boss Challenge teleport and a positive finite integer repeat count. No settings were changed.",
       "runtime_unqualified": "Official release identity or updater state is not ready. Automatic execution is blocked. Initialize and close the official Global launcher, then check the supported version.",
       "okww_battle_pass_not_found": "The battle pass entry was not found; reward collection is unconfirmed",
@@ -65,6 +68,9 @@ export const locales = {
       "stamina_tacet": {"title": "日常体力：无音区"}
     },
     "diagnostics": {
+      "okww_runtime_working_source_unverified": "工作目录中的运行源码与当前安装仓不一致。",
+      "okww_runtime_profile_unverified": "当前安装版本或选中的发行渠道未通过核对。",
+      "okww_runtime_installation_required": "请先安装并配置支持的上游运行环境。",
       "farm_4c_configuration_unsupported": "日常附加刷 4C 需要启用每周挑战或首领挑战传送，并设置正整数的有限刷取次数；未修改任何配置。",
       "runtime_unqualified": "官方发行版本或更新状态未就绪，已阻止自动运行。请先完成官方 Global 启动器初始化并关闭它，再检查支持版本。",
       "okww_battle_pass_not_found": "未找到通行证入口，奖励领取未确认",

@@ -6,6 +6,10 @@ export const locales = {
       "summary": "Run the locally installed upstream application with independent configurations, tasks and logs."
     },
     "tasks": {
+      "AutoDailyMission": {"title": "Daily Missions"},
+      "OperatorGrowth": {"title": "Operator Growth"},
+      "WarEcho": {"title": "War Echo"},
+      "CloseGamePlayCover": {"title": "Close Game (PlayCover)"},
       "AccountSwitch": {"title": "🔑 Auto Account Switch"},
       "AeroSalvage": {"title": "🎈Aerial Salvage"},
       "AndroidOpenGame": {"title": "🎮 Launch Game (Android)"},
@@ -109,6 +113,10 @@ export const locales = {
       "summary": "调用本机已安装的上游程序，管理独立配置、任务与日志。"
     },
     "tasks": {
+      "AutoDailyMission": {"title": "每日任务"},
+      "OperatorGrowth": {"title": "干员养成"},
+      "WarEcho": {"title": "战事回响"},
+      "CloseGamePlayCover": {"title": "关闭游戏（PlayCover）"},
       "AccountSwitch": {"title": "🔑自动切换账号"},
       "AeroSalvage": {"title": "🎈浮空回收"},
       "AndroidOpenGame": {"title": "🎮打开游戏（安卓端）"},

@@ -20,7 +20,10 @@ globalThis.nexusDiscoverScript = discoverFromSource(input => {
       const candidate = sourceCandidate(input.purpose === 'edit' ? path : pi + ':' + path, id + ' · ' + pi, 'MFAAvalonia.exe', ['--instance', id],
         [sourceResource('main', path), sourceResource('global', globalPath), sourceResource('settings', 'appsettings.json')],
         ['logs/log-*.log', 'debug/maafw*.log']);
-      if (candidate) candidate.exclusiveProgram = true;
+      if (candidate) {
+        candidate.exclusiveProgram = true;
+        if (input.purpose !== 'edit') candidate.runIdentity = path;
+      }
       else if (input.purpose === 'edit') diagnostics.push('maas_source_global_missing');
       candidates.push(candidate);
     }

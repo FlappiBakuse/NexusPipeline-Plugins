@@ -20,6 +20,16 @@
     "sourceDiscovery": true,
     "readOnlySources": {
       "entries": [
+        "tasks/pretasks/LaunchGamePlayCover.json",
+        "tasks/AutoDailyMission.json",
+        "tasks/OperatorGrowth.json",
+        "tasks/WarEcho.json",
+        "tasks/CloseGamePlayCover.json",
+        "assets/tasks/pretasks/LaunchGamePlayCover.json",
+        "assets/tasks/AutoDailyMission.json",
+        "assets/tasks/OperatorGrowth.json",
+        "assets/tasks/WarEcho.json",
+        "assets/tasks/CloseGamePlayCover.json",
         "interface.json",
         "interface.jsonc",
         "assets/interface.json",

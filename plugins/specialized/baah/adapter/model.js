@@ -2,6 +2,7 @@
 
 const BAAH_CLASSES = {
   '登录游戏': 'EnterGame', '清momotalk': 'InMomotalk', '活动一览': 'InEventRecap', '长期签到': 'Attendance',
+  '战斗通行证': 'InBattlePass',
   '咖啡馆': 'InCafe', '咖啡馆只摸头': 'InCafe', '课程表': 'InTimeTable', '社团': 'InClub', '制造': 'InCraft',
   '商店': 'InShop', '每日免费奖励': 'InFreeAward', '购买AP': 'BuyAP', '悬赏通缉': 'InWanted',
   '特殊任务': 'InSpecial', '学园交流会': 'InExchange', '战术大赛': 'InContest', '战术测试': 'InExam',
@@ -49,7 +50,7 @@ function baahTasks(config) {
     tasks.push({ taskId: `baah:${config.index}/${index}/${name}`, title: name, isSelected: known && enabled,
       isEnabled: enabled, dependencies: known && enabled ? [...prerequisites] : [],
       retryPrerequisites: known && enabled ? [...prerequisites].sort() : [],
-      retrySafety: known && !unknownEnabled && name !== '自定义任务' ? 'safe' : 'unknown',
+      retrySafety: known && !unknownEnabled && !['自定义任务', '战斗通行证'].includes(name) ? 'safe' : 'unknown',
       workflowRole: name === '登录游戏' ? 'technical' : 'business',
       ...(known ? { titleLocales: nexusTaskLocales(name), projection: projection(['TASK_ORDER_GROUP', 'ALL_PIPELINES', config.index, 'TASK_ONOFF', index]) } : {}) });
     if (name === '登录游戏' && enabled) prerequisites.push(`baah:${config.index}/${index}/${name}`);

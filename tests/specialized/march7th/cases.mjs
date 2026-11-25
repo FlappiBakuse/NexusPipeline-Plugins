@@ -168,5 +168,12 @@ export function cases(invoke) {
   const nested = request('discover'); nested.resources[0].relativePath = 'profile/config.yaml';
   add('projection preserves exact declared resource file', nested,
     { ['tasks.' + index('daily_enable') + '.projection.relativePath']: 'profile/config.yaml' });
+  const auxiliary = make();
+  auxiliary.game_optimization_enable = true;
+  auxiliary.auto_detect_game_hotkeys_enable = true;
+  const auxiliaryTasks = invoke(request('discover', auxiliary)).tasks;
+  add('desktop support switches do not become tasks or disable retry', request('discover', auxiliary), { tasks: auxiliaryTasks });
+  if (auxiliaryTasks.some(task => /game_optimization|auto_detect_game_hotkeys/.test(task.taskId)) ||
+      !auxiliaryTasks.some(task => task.isSelected && task.retrySafety === 'safe')) throw new Error('Auxiliary settings changed task scope');
   return rows;
 }
