@@ -7,7 +7,8 @@
   display: block;
   overflow: hidden;
   border: 1px solid var(--nx-color-border);
-  border-radius: 12px;
+  border-radius: var(--nx-radius-md);
+  box-shadow: var(--nx-surface-shadow);
 }
 .activity-game-row {
   display: flex;

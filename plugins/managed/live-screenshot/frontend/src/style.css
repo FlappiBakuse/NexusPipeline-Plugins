@@ -2,9 +2,10 @@
   display: block;
   padding: 12px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 8px;
+  border-radius: var(--nx-radius-md);
   background: var(--content-card, var(--nx-color-surface));
   line-height: 1.5;
+  box-shadow: var(--nx-surface-shadow);
 }
 .screenshot-panel > .plugin-body {
   display: grid;
@@ -29,8 +30,9 @@
   min-height: 180px;
   overflow: hidden;
   border: 1px solid var(--nx-color-border);
-  border-radius: 6px;
+  border-radius: var(--nx-radius-md);
   background: var(--content-card, var(--nx-color-surface));
+  box-shadow: var(--nx-surface-shadow);
 }
 .screenshot-stage > span {
   color: var(--nx-color-muted);
@@ -41,7 +43,6 @@
   width: 100%;
   max-height: 420px;
   object-fit: contain;
-  border-radius: 6px;
 }
 .screenshot-footer {
   color: var(--nx-color-muted);

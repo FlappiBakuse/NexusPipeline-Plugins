@@ -73,7 +73,8 @@
   display: block;
   overflow: hidden;
   border: 1px solid var(--nx-color-border);
-  border-radius: 8px;
+  border-radius: var(--nx-radius-md);
+  box-shadow: var(--nx-surface-shadow);
 }
 .wallpaper-item {
   display: grid;
@@ -91,7 +92,7 @@
   width: 72px;
   height: 44px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--nx-radius-compact);
   background: var(--content-control);
 }
 .wallpaper-thumbnail > img {
@@ -106,10 +107,6 @@
 .wallpaper-item > nexus-button {
   width: 48px;
   --nx-button-padding: 0 10px;
-  --nx-button-radius: 6px;
-}
-.wallpaper-upload > nexus-file-picker {
-  --nx-button-radius: 6px;
 }
 .wallpaper-item-copy {
   display: grid;

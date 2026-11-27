@@ -6,7 +6,7 @@
 }
 .checkin-editor > [slot='footer'] > nexus-button:last-child {
   --nx-button-fill: var(--content-control);
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
   --nx-color-text: var(--nx-color-muted);
 }.checkin-edit-body,
 .checkin-main-fields {
@@ -38,13 +38,14 @@
 .checkin-edit-body nexus-text-input,
 .checkin-edit-body nexus-text-area,
 .checkin-edit-body nexus-select {
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
 }
 .checkin-setting {
   min-height: 68px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 10px;
+  border-radius: var(--nx-radius-md);
   background: var(--content-control);
+  box-shadow: var(--nx-surface-shadow);
 }
 .checkin-main-fields > .checkin-setting {
   margin-top: -4px;
@@ -52,7 +53,8 @@
 .checkin-game-section {
   overflow: visible;
   border: 1px solid var(--nx-color-border);
-  border-radius: 12px;
+  border-radius: var(--nx-radius-md);
+  box-shadow: var(--nx-surface-shadow);
 }
 .checkin-game-section > summary {
   display: flex;
@@ -138,7 +140,7 @@
 }
 .checkin-credential-controls > nexus-button {
   flex: none;
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
 }
 .checkin-schedules > h3 {
   margin: 0 0 4px;
@@ -234,7 +236,7 @@
 .checkin-days > nexus-button {
   min-width: 0;
   --nx-button-fill: var(--content-control);
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
   --nx-color-text: var(--nx-color-muted);
 }
 .checkin-days > nexus-button[aria-pressed='true'] {
@@ -246,7 +248,7 @@
   display: grid;
   gap: 16px;
   line-height: 1.5;
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
 }
 .checkin-login > p {
   margin: 14px 0;
@@ -270,7 +272,7 @@
 }
 .checkin-login-modal > [slot='footer'] > nexus-button {
   min-width: 80px;
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
 }
 @media (max-width: 720px) {
   .checkin-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }

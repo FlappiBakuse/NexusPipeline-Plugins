@@ -21,7 +21,8 @@
 集合级规则也需要统一：
 
 - 成组开关使用 `nexus-switch-list`，由组件绘制外框和可见开关之间的分隔线。
-- 自绘内嵌区块使用 `data-surface="raised"`。Host 负责卡片底板、内嵌区块和填写控件的颜色层级。
+- 自绘内嵌区块使用 `data-surface="raised"`。有外框的卡片、字段和动作控件共用宿主的 `1px solid var(--nx-color-border)` 和 `--nx-surface-shadow`。无外框的空态与分组保持平面布局。
+- 自绘圆角使用宿主变量。独立卡片和模态窗口取 `--nx-radius-lg`，内嵌区块和浮层取 `--nx-radius-md`，两者均为 10 px。常规操作取 `--nx-radius-sm`，紧凑选项和徽标取 `--nx-radius-compact`。同一媒体外框下的图片和遮罩共用一次裁切。
 - `nexus-collapsible-card` 为标题与展开内容提供同一底色，内容容器直接继承卡片主题。
 - 设置分类由宿主与插件共享展开状态，保持单展开、选中置顶、重复点击关闭和视口稳定。
 - 有顺序语义的集合继续使用公共 sortable/drag-handle；重排时验证身份集合，保持普通草稿与焦点。

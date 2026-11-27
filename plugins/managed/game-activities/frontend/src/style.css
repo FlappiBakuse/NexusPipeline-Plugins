@@ -18,10 +18,11 @@
   position: relative;
   min-width: 0;
   border: 1px solid var(--nx-color-border);
-  border-radius: 12px;
+  border-radius: var(--nx-radius-lg);
   overflow: hidden;
   background: #18232d;
   color: white;
+  box-shadow: var(--nx-surface-shadow);
 }
 .activity-viewport {
   min-height: 190px;
@@ -74,8 +75,8 @@
   font-size: 12px;
 }
 .activity-meta > span {
-  border: 1px solid #ffffff50;
-  border-radius: 16px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: var(--nx-radius-pill);
   padding: 2px 8px;
   background: #0003;
   font-size: 11px;
@@ -109,6 +110,7 @@
   border-radius: 0;
   background: transparent;
   cursor: pointer;
+  box-shadow: none;
 }
 .activity-hit:hover {
   background: transparent;
@@ -157,7 +159,7 @@
   height: 40px;
   color: white;
   background: #0003;
-  border: 1px solid #ffffff30;
+  border: 1px solid var(--nx-color-border);
   border-radius: 50%;
 }
 .activity-previous {
@@ -196,12 +198,13 @@
   border: 0;
   appearance: none;
   background: transparent;
+  box-shadow: none;
 }
 .activity-indicator::after {
   content: '';
   width: 32px;
   height: 3px;
-  border-radius: 2px;
+  border-radius: var(--nx-radius-pill);
   background: #fff6;
   transform: translateY(4px);
 }

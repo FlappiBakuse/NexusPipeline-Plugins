@@ -15,9 +15,10 @@
   display: inline-block;
   padding: 4px 10px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 20px;
+  border-radius: var(--nx-radius-pill);
   color: var(--nx-color-accent);
   font-size: 12px;
+  box-shadow: var(--nx-surface-shadow);
 }
 .activity-help {
   color: var(--nx-color-muted);
@@ -45,7 +46,7 @@
   padding: 2px 8px;
   font-size: 12px;
   color: var(--nx-color-muted);
-  border-radius: 5px;
+  border-radius: var(--nx-radius-compact);
   background: var(--content-control);
 }
 .activity-group {
@@ -74,6 +75,7 @@
   border-radius: 50%;
   background: var(--nx-color-muted);
   transform: none;
+  box-shadow: none;
 }
 .activity-ongoing > summary::before {
   background: var(--success);
@@ -98,9 +100,10 @@
   padding: 20px;
   margin-top: 12px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 8px;
+  border-radius: var(--nx-radius-md);
   overflow: hidden;
   background: var(--content-control);
+  box-shadow: var(--nx-surface-shadow);
 }
 .activity-event-cover {
   position: absolute;

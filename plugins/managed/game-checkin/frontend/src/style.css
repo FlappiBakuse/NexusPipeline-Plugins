@@ -44,8 +44,9 @@
   min-width: 0;
   padding: 12px 12px 12px 4px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 16px;
+  border-radius: var(--nx-radius-lg);
   background: var(--content-card);
+  box-shadow: var(--nx-surface-shadow);
 }
 .checkin-task-head {
   display: grid;
@@ -64,12 +65,13 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  border: 1px solid var(--nx-color-border);
+  border-radius: var(--nx-radius-compact);
   color: var(--nx-color-accent);
   background: var(--accent-soft);
   font-size: 13px;
   font-weight: 650;
+  box-shadow: var(--nx-surface-shadow);
 }
 .checkin-task-copy {
   min-width: 0;
@@ -105,12 +107,10 @@
 }
 .checkin-task-actions > nexus-icon-button {
   --size: 40px;
-  --nx-icon-border: var(--border-strong);
   inline-size: var(--size);
   block-size: var(--size);
 }
 .checkin-task-actions > [data-action='delete'] {
-  --nx-icon-border: var(--bad-border);
   --nx-color-text: var(--bad);
 }
 .checkin-records {
@@ -147,8 +147,9 @@
 .checkin-records li {
   padding: 12px;
   border: 1px solid var(--nx-color-border);
-  border-radius: 10px;
+  border-radius: var(--nx-radius-md);
   background: var(--content-card-soft);
+  box-shadow: var(--nx-surface-shadow);
 }
 .checkin-run-heading {
   display: flex;

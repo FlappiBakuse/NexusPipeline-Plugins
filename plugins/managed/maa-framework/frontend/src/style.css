@@ -1,9 +1,10 @@
 .plugin-panel.maa-editor {
   padding: 0;
   border: 1px solid var(--nx-color-border);
-  border-radius: 12px;
+  border-radius: var(--nx-radius-md);
   background: var(--content-card, var(--nx-color-surface));
   line-height: 1.5;
+  box-shadow: var(--nx-surface-shadow);
 }
 .maa-editor [data-maa-preview] details {
   margin: 8px 0 8px 12px;
@@ -49,7 +50,7 @@
   margin: 16px 0 0;
 }
 .maa-actions > nexus-button {
-  --nx-color-border: var(--border-strong);
+  --nx-color-border: var(--border);
 }
 .maa-secret-action {
   display: grid;
